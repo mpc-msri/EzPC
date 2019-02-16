@@ -1,0 +1,21 @@
+(*
+	This example shows the usage of if-else conditional block.
+*)
+
+def void main(){
+	int32_al a = 5;
+
+	(*
+		Following executes a if-else block based on the public bool value b.
+		In general, the condition can be any arbitrary public expression evaluating to either true or false. 
+	*)
+
+	bool_pl b = true;
+	if (b){
+		a = 20;
+	}
+	else{
+		a = 30;
+	};
+	output(CLIENT, a);
+}

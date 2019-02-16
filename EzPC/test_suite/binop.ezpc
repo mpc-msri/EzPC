@@ -1,0 +1,33 @@
+(*
+	This example shows different kinds of binary operations that can be performed in ezpc.
+*)
+
+def void main() {
+	uint32_al a = 5u;
+	uint32_al b = 10u;
+	uint32_al c;
+	bool_bl e;
+
+	uint32_pl d;
+
+	c = a+b;
+	c = a-b;
+	c = a*b;
+	c = b/4u;
+	d = 10u%4u;
+	c = b>>2u;
+	c = b<<2u;
+	c = a^b;
+	c = a&b;
+	c = a|b;
+	c = 2^^10;
+	c = b>>>2u;
+	e = true&&false;
+	e = false||false;
+	e = false@true;
+	e = a>b;
+	e = (a==b);
+	e = a>=b;
+	e = a<=b;
+	e = a<b;
+}

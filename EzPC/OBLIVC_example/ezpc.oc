@@ -1,0 +1,29 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <inttypes.h>
+
+
+#include <obliv.oh>
+#include "ezpc.h"
+int role;
+
+
+void ezpc_main(void* arg) {
+protocolIO *io = arg;
+role = io->role;
+
+obliv uint32_t a;
+uint32_t __tmp_in_a;
+if ((role == 1)) {
+scanf("%" SCNu32 , &__tmp_in_a);
+}
+a = feedOblivLong(__tmp_in_a, 1);
+obliv uint32_t b = 1;
+obliv if (b) {
+a = (uint32_t)1;;
+} else {
+a = (uint32_t)2;;
+};
+revealOblivLong(add_to_output_queue(io, 2), a, 2);
+}
+

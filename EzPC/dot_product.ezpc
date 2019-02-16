@@ -1,0 +1,37 @@
+uint32 dim = 2
+
+def void fneffect (uint32_al[dim] x)
+{
+  x[0] = 0u;
+}
+
+def uint32_al fn(const uint32_al[dim] x) {
+	return x[0];
+}
+
+def uint32_al fnn (uint32_al x) {
+	return x;
+}
+
+
+def void main ()
+{
+  input(SERVER, w, uint32_al[dim]);
+  input(SERVER, b, uint32_bl);
+  input(CLIENT, x, uint32_al[dim]);
+  uint32_al acc = 0u;
+
+  uint32_pl lower = 0u;
+  uint32_pl upper = dim;
+
+  for i=[lower - lower : upper] { acc = acc + w[i] * x[i] };
+  output(CLIENT, (acc > b) ? 1 : 0);
+  output(CLIENT, w);
+
+  uint32_pl tt = 0u;
+  if(tt == 0u) { tt = 0u; };
+
+  uint32_al tmp = fn (w);
+  fneffect(w);
+}
+

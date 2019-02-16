@@ -1,0 +1,19 @@
+(*
+	Following shows how functions are declared and used in ezpc.
+	In general, functions are declared with 
+	def <return type> <function name>(<arg1 type> <arg1 name>, ... )
+
+	The function definition can be prefixed with keywords like 
+	partition, inline 
+	for partitioning about this function and inlining respectively.
+*)
+
+def uint32_al hello(uint32_al a){
+	return a+5u;
+}
+
+def void main(){
+	uint32_al b = 10u;
+	uint32_al c = hello(b);	
+	output(SERVER, c);
+}

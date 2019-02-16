@@ -1,0 +1,22 @@
+(*
+	This example sums up numbers from 0 to 100 using a for loop.
+*)
+
+def void main(){
+	int32_al summ = 0;
+	int32_pl N = 100;
+	int32_al[N] arr;
+
+	(*
+		Following executes a for loop from 0 to N, both bounds inclusive.
+		In general, both the bounds can be arbitrary integer expressions.
+	*)
+	for i=[0:N]{
+		arr[i] = i; 
+	};
+	for i=[0:N]{
+		summ = summ + arr[i];
+	};
+
+	output(CLIENT, summ);
+}

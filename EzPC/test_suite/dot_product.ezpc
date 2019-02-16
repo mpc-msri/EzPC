@@ -1,0 +1,26 @@
+(*
+	This example shows how something like logistic regression can be written in ezpc.
+	The below program calculates (<w;x> > b), where w and x are vetors of same length and b is a scalar.
+*)
+
+uint32 dim = 2u
+
+def void main(){
+	(*
+		In the below program, server inputs the model i.e. w and b and 
+		client inputs the input x.
+		The output (<w;x> > b) is calculated and output shared with client.
+	*)
+
+	input(SERVER, w, int32_al[dim]);
+	input(SERVER, b, int32_bl);
+	input(CLIENT, x, int32_al[dim]);
+	int32_al acc = 0;
+
+	uint32_pl lower = 0u;
+	uint32_pl upper = dim;
+
+	for i=[lower - lower : upper] { acc = acc + (w[i] * x[i]); };
+	output(CLIENT, ((acc > b) ? 1 : 0));
+}
+

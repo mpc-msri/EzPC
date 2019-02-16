@@ -1,0 +1,140 @@
+(*************** gt ***************)
+def bool_bl signedgtbl(int64_bl x, int64_bl y){
+	uint64_bl ux = x;
+	uint64_bl uy = y;
+	uint64_bl signBitX = (x & (1L<<63L));
+	uint64_bl signBitY = (y & (1L<<63L));
+	return ((signBitX ^ signBitY) > 0uL) ? ((signBitX > 0uL) ? false : true) : (ux > uy); 
+}
+
+(*************** arshift ***************)
+(* 
+* Note : Since the 2nd arg is public, another function with signed int as 2nd arg is not needed.
+*)
+def int64_bl signedarshiftbl(int64_bl x, uint64_pl y){
+	uint64_bl ux = x;
+	uint64_bl signBitX = (x & (1L<<63L));
+	return ((signBitX > 0uL) ? (0uL - ((0uL - ux) >> y)) : (ux >> y));
+}
+
+(*************** lt ***************)
+def bool_bl unsignedltbl(uint64_bl x, uint64_bl y){
+	return (y > x);
+}
+
+def bool_bl signedltbl(int64_bl x, int64_bl y){
+	return (y > x);
+}
+
+(*************** leq ***************)
+def bool_bl unsignedleqbl(uint64_bl x, uint64_bl y){
+	return !(x > y);
+}
+
+def bool_bl signedleqbl(int64_bl x, int64_bl y){
+	return !(x > y)
+}
+
+(*************** geq ***************)
+def bool_bl unsignedgeqbl(uint64_bl x, uint64_bl y){
+	return !(y > x);
+}
+
+def bool_bl signedgeqbl(int64_bl x, int64_bl y){
+	return !(y > x);
+}
+
+(*************** equals ***************)
+def bool_bl unsignedequalsbl(uint64_bl x, uint64_bl y){
+	return (!(x < y)) && (!(y < x));
+}
+
+def bool_bl signedequalsbl(int64_bl x, int64_bl y){
+	return (!(x < y)) && (!(y < x));
+}
+
+(*************** div ***************)
+(*
+* Long division implemented in ezpc
+* If getQuotient is true, return quotient
+* 	else return remainder
+*)
+def uint64_bl longDivision(uint64_bl x, uint64_bl y, bool_pl getQuotient){
+	(* Long division *)
+	uint64_bl q = 0uL;
+	uint64_bl divisor = 0uL;
+	bool_bl cond = false;
+	
+	for iter=[0:64]
+	{
+		uint64_pl i = 63L - iter;
+
+		divisor = divisor << 1uL;
+		divisor = divisor +_bl ((x & (1uL << i)) >>> i);
+
+		cond = (divisor >= y);
+		divisor = (cond) ? (divisor -_bl y) : divisor;
+
+		q = q << 1uL;
+		q = (cond) ? q + 1uL : q;
+	};
+
+	(*At the end of this loop, q is the quotient and divisor contains the remainder*)
+	return (getQuotient ? q : divisor);
+} 
+
+def uint64_bl unsigneddivbl(uint64_bl x, uint64_bl y){
+	return longDivision(x, y, true);
+}
+
+def uint64_bl unsigneddival(uint64_al x, uint64_al y){
+	uint64_bl bx = x;
+	uint64_bl by = y;
+	return bx/by;
+}
+
+def int64_bl signeddivbl(int64_bl x, int64_bl y){
+	bool_bl isXNeg = (x < 0L);
+	bool_bl isYNeg = (y < 0L);
+	uint64_bl ux = isXNeg ? (0L - x) : x;
+	uint64_bl uy = isYNeg ? (0L - y) : y;
+	uint64_bl ures = ux/uy;
+	bool_bl isResNeg = (isXNeg @ isYNeg);
+	return (isResNeg ? (0uL - ures) : ures);
+}
+
+def int64_bl signeddival(int64_al x, int64_al y){
+	int64_bl bx = x;
+	int64_bl by = y;
+	return bx/by;
+}
+
+(*************** mod ***************)
+(*
+* NOTE : Given any signed/unsigned ints x and y, following is always true : 
+* 		 	x = (x/y) * y + (x%y)
+*)
+def uint64_bl unsignedmodbl(uint64_bl x, uint64_bl y){
+	return longDivision(x, y, false);
+}
+
+def uint64_bl unsignedmodal(uint64_al x, uint64_al y){
+	uint64_bl bx = x;
+	uint64_bl by = y;
+	return bx%by;
+}
+
+def int64_bl signedmodbl(int64_bl x, int64_bl y){
+	bool_bl isXNeg = (x < 0L);
+	bool_bl isYNeg = (y < 0L);
+	uint64_bl ux = isXNeg ? (0L - x) : x;
+	uint64_bl uy = isYNeg ? (0L - y) : y;
+	uint64_bl urem = ux%uy;
+	return (isXNeg ? (0uL - urem) : urem);
+}
+
+def int64_bl signedmodal(int64_al x, int64_al y){
+	int64_bl bx = x;
+	int64_bl by = y;
+	return bx%by;
+}
