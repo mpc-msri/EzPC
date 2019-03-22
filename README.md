@@ -36,6 +36,7 @@ This repository contains EzPC - a language for secure machine learning.
 # If you get errors in menhir installation do:
 # run - "opam depext conf-m4.1"
 # then again run - "opam install menhir"
+>> opam install StdInt
 >> cd ezpc/
 >> make # Use make debug to get a debug build
 >> ./ezpc.sh --help # Shows usage
