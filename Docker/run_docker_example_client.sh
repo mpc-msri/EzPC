@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd ../ABY-latest/ABY/build/bin/
+cd ../../ABY-latest/ABY/build/bin/
 rm -r client
 mkdir client
 cp docker_binop_example* client/.
@@ -9,4 +9,4 @@ pwd
 
 ./docker_binop_example -r 0
 
-cd ../../../../../ezpc
+cd ../../../../../EzPC

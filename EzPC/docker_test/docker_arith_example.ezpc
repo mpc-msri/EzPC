@@ -1,0 +1,9 @@
+def void main() {
+	uint32_al a = 5u;
+	uint32_al b = 10u;
+	uint32_al c;	
+	c = a+b;	
+	output(ALL, c);
+	c = b-a;
+	output(ALL, c);
+}
