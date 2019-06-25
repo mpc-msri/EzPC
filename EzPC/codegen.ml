@@ -335,7 +335,7 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
 
      (* list of dimensions, if an array else empty *)
      let el = if is_arr then snd (get_array_bt_and_dimensions t) else [] in
-     
+
      (* the share typed variable *)
      let decl = Base_s (Decl (t, Var x |> mk_dsyntax "", None) |> mk_dsyntax "") in
 
@@ -360,10 +360,14 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
                       ) (0, Var x |> mk_dsyntax "") el))
      in
 
+     (* conditional expression for role == r *)
+     let r_cmp =
+       let role_var = { name = "role"; index = 0 } in
+       Base_e (Binop (Is_equal, Var role_var |> mk_dsyntax "", Role r |> mk_dsyntax "", Some Public) |> mk_dsyntax "")
+     in
+     
      (* this is the innermost loop body *)
      let base_init =
-       let role_var = { name = "role"; index = 0 } in
-       let r_cmp = Base_e (Binop (Is_equal, Var role_var |> mk_dsyntax "", Role r |> mk_dsyntax "", Some Public) |> mk_dsyntax "") in
        (* if role == r then cin into the temporary variable *)
        let cin = Cin ("cin", Base_e (Var tmp_var_name |> mk_dsyntax "") , bt) in
 
@@ -396,8 +400,24 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
               ) el (List.length el - 1, base_init))
      in
 
+     (* adding a print statement for the input *)
+     (*
+      * ideally we want cout for a string, can be added easily to codegenast.ml,
+      * but for now abusing the codegen for variables
+      *)
+     let print_input_message =
+       let x = { name = "\"Input " ^ x.name ^ ":\""; index = 0 } in
+       let cout_stmt = Cout ("cout", Base_e (Var x |> mk_dsyntax ""), bt) in
+
+       (* is_secret_label l is also a proxy for codegen ABY, since labels are erased already if codegen CPP *)
+       if is_secret_label l then
+         If_codegen (Public, r_cmp, cout_stmt, None)
+       else
+         cout_stmt
+     in
+     
      (* stitch *)
-     o_codegen_stmt g (Seq_codegen (decl, Seq_codegen (decl_tmp, loops)))
+     o_codegen_stmt g (Seq_codegen (decl, Seq_codegen (Seq_codegen (print_input_message, decl_tmp), loops)))
 
   | Output (e_role, e, Some t) when is_role e_role ->
      let r = get_role e_role in
