@@ -109,3 +109,24 @@ Sample compilation of ezpc program to cpp
 - Copy the contents of `EzPC/OBLIVC_example` folder to `obliv-c/test/oblivc/ezpc` folder
 - Change directory to `obliv-c/test/oblivc/ezpc` and do `make`
 - Run the generated `a.out` file in `obliv-c/test/oblivc/ezpc` with -r 0 and -r 1 parameters to run client and server respectively. (`./a.out -r 0` and `./a.out -r 1`)
+
+# Express Installation/Running with Docker (easier)
+
+EzPC is shipped with a Dockerfile which can be used to generate Docker image for the project. This Dockerfile will yeild a Docker image with EzPC project set up by default and all dependencies including ABY will be automatically installed.<br />
+Follow the following instructions to set up the Docker image:<br />
+- Install Docker on your system (works with all major OS).
+- Go to Docker directory of EzPC project and run `sudo docker build -t ezpc_image .` (in you CLI). If you want to build the image without using cache then add `--no-cache` option (not required unless you want to use a different commit of EzPC or ABY).
+- The above step might take 30-40 minutes. After it is done, spin the docker image by using `sudo docker run -it ezpc_image`.
+- You are now inside the docker container with EzPC project already setup and ready to use. (Refer the image down below to get an idea of directory structure of the project)
+- To run your first EzPC test program, go to Docker directory inside your running Docker container and run `./compile_docker_example.sh`. This will ask you to either compile a binary op example or an arithmetic one. 
+- After compilation is done, you are now ready to run the example.
+- Open another session of CLI/terminal on your computer and run `docker container ls`.
+- Copy the value in the field CONTAINER_ID and then run `docker exec -it CONTAINER_ID /bin/bash` (replacing CONTAINER_ID in the command with the copied value).
+- This will open another session of the same Docker container.
+- Now that you have 2 sessions open, you can run client on one session and server on the other.
+- Enter Docker directory in both the sessions and run `./run_docker_example_server.sh` in one and `./run_docker_example_client.sh` in the other.
+- This will execute the example and you will get result on client and server.
+- In order to see the EzPC files which were used in this example, you can find them in EzPC/docker_test directory.
+- NOTE: Any changes that you make inside Docker container will be lost as soon as you `exit` the container. In order to save your changes before exiting, use `docker commit CONTAINER_ID ezpc_image`.<br /><br />
+![alt-text](https://github.com/mayank0403/mayank0403.github.io/blob/master/images/EzPC-Docker-Structure%20(3)%20(1).jpg)
+ 

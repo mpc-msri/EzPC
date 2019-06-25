@@ -49,7 +49,7 @@ WORKDIR /ezpc-workdir/ABY-latest/ABY
 RUN cd src/examples/docker-test && cp -r ../../../../../EzPC/EzPC/ABY_example/* .
 
 WORKDIR /ezpc-workdir/EzPC
-RUN git checkout -b docker_specific_branch c0ef6819a5e9bf25c36df4dc5181f2bdeac7a9cc
+RUN git checkout -b docker_specific_branch c8b45fd28fb41c46d3054f4fbe7c1b0dddb87ccd
 
 #EzPC specific ocaml packages
 RUN opam init
