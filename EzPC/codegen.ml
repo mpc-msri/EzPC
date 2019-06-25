@@ -750,7 +750,7 @@ let o_one_program ((globals, main):global list * codegen_stmt) (ofname:string) :
   in
 
   let file = seq (seq main_prelude (seq main_body main_end)) (o_codegen_stmt g out_files_close_stmt |> fst) in
-  let file = seq file (o_str "\n}\n") in
+  let file = seq file (o_str "\nreturn 0;\n}\n") in
   
   let b = Buffer.create 0 in
   file b;
