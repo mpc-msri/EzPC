@@ -422,8 +422,22 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
   | Output (e_role, e, Some t) when is_role e_role ->
      let r = get_role e_role in
      let bt, l = get_bt_and_label t in
-     if not (l |> get_opt |> is_secret_label) then o_codegen_stmt g (Cout ("cout", Base_e e, bt))
+
+     if not (l |> get_opt |> is_secret_label) then
+      let print_output_msg =
+        let msg = Var { name = "\"Value of " ^ (expr_to_string e) ^ ":\""; index = 0 } |> mk_dsyntax "" in
+        Cout ("cout", Base_e msg, bt)
+      in
+      o_codegen_stmt g (Seq_codegen (print_output_msg, Cout ("cout", Base_e e, bt)))
      else
+      let print_output_msg =
+        let msg = Var { name = "\"Value of " ^ (expr_to_string e) ^ ":\""; index = 0 } |> mk_dsyntax "" in
+        App_codegen ("add_print_msg_to_output_queue", [Base_e (Var { name = "out_q"; index = 0 } |> mk_dsyntax "");
+                                                       Base_e msg;
+                                                       Base_e e_role;
+                                                       Base_e (Var { name = "cout"; index = 0 } |> mk_dsyntax "")])
+      in
+
        let is_arr = is_array_typ t in
        
        (* bt is the base type and sl is the secret label *)
@@ -462,7 +476,7 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
                                                    Base_e (Var { name = "cout"; index = 0 } |> mk_dsyntax "")]))
        in
 
-       o_codegen_stmt g output_gate_loops
+       o_codegen_stmt g (Seq_codegen (print_output_msg, output_gate_loops))
 
   | Skip s -> (if s = "" then o_null else seq o_newline (seq (o_comment s) o_newline)), g
            

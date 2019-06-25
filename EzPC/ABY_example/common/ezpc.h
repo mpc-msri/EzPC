@@ -67,11 +67,15 @@ share* arithmetic_right_shift(Circuit* c, share* val, uint32_t shift_factor) {
  * and adds the returned share to this queue
  * this queue is then flushed at the end after we have done exec
  */
+
 struct output_queue_elmt {
-  share *ptr;
-  e_role role;  //who should we output the clear value to
   ostream& os;  //output stream to which we will output (cout or files), can this be a reference to prevent copying?
+  e_role role;  //who should we output the clear value to
+  enum {PrintMsg, PrintValue } kind;
+  string msg;
+  share *ptr;
 };
+
 typedef  vector<output_queue_elmt> output_queue;
 /*
  * called from the EzPC generated code
@@ -81,9 +85,16 @@ void add_to_output_queue(output_queue &q,
 			 e_role role,
 			 ostream &os)
 {
-  struct output_queue_elmt elmt { ptr, role, os };
+  struct output_queue_elmt elmt { os, role, output_queue_elmt::PrintValue, "", ptr };
   q.push_back(elmt);
 }
+
+void add_print_msg_to_output_queue (output_queue &q, string msg, e_role role, ostream &os)
+{
+  struct output_queue_elmt elmt { os, role, output_queue_elmt::PrintMsg, msg, NULL };
+  q.push_back(elmt); 
+}
+
 /*
  * flush the queue
  * both parties call this function with their role
@@ -92,11 +103,17 @@ void add_to_output_queue(output_queue &q,
 void flush_output_queue(output_queue &q, e_role role, uint32_t bitlen)
 {
   for(output_queue::iterator it = q.begin(); it != q.end(); ++it) {  //iterate over the queue
-    if(it->role == ALL || it->role == role) {  //if the queue element role is same as mine
-      if(bitlen == 32) {  //output to the stream
-        it->os << it->ptr->get_clear_value<uint32_t>() << endl;
-      } else {
-        it->os << it->ptr->get_clear_value<uint64_t>() << endl;
+    if (it->kind == output_queue_elmt::PrintValue) {
+      if(it->role == ALL || it->role == role) {  //if the queue element role is same as mine
+        if(bitlen == 32) {  //output to the stream
+          it->os << it->ptr->get_clear_value<uint32_t>() << endl;
+        } else {
+          it->os << it->ptr->get_clear_value<uint64_t>() << endl;
+        }
+      }
+    } else {
+      if(it->role == ALL || it->role == role) {  //if the queue element role is same as mine
+        it->os << it->msg << endl;
       }
     }
   }
