@@ -1,0 +1,9 @@
+def void main() {
+	bool_bl e = false;
+	bool_bl f = true;
+	
+	e = e&&f;
+	e = e||f;
+	
+	output(ALL, e);
+}
