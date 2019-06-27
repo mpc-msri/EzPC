@@ -178,6 +178,13 @@ let tac_global (g0:gamma) (d:global) :global * gamma =
          local_bindings = empty_stack;
          f_return_typ = None
        }
+    | Extern_fun (quals, fname, bs, ret_t) ->
+       Extern_fun (quals, fname, bs, ret_t),
+       { g0 with
+         top_level_functions = g0.top_level_functions @ [fname, (bs, ret_t)];
+         local_bindings = empty_stack;
+         f_return_typ = None
+       }
     | Global_const (t, e_var, _) ->
        d,
        { g0 with top_level_consts = g0.top_level_consts @ [get_var e_var, t] }
@@ -301,6 +308,7 @@ let cse_global (tbl:cse_t) (d:global) :global * cse_t =
   let aux (d:global') :global' * cse_t =
     match d with
     | Fun (quals, fname, bs, body, ret_t) -> Fun (quals, fname, bs, body |> cse_stmt tbl |> snd, ret_t), tbl
+    | Extern_fun (quals, fname, bs, ret_t) -> Extern_fun (quals, fname, bs, ret_t), tbl
     | Global_const (t, e_var, init) ->
        let init = init |> lookup_cse_expr tbl |> fst in
        Global_const (t, e_var, init), add_subst_entry tbl (e_var, init)
@@ -313,6 +321,7 @@ let cse_program (p:program) :program =
       subst_list = [];
       fdefs = p |> List.map (fun d -> match d.data with
                                       | Fun (_, f, bs, _, _) -> [f, bs]
+                                      | Extern_fun (_, f, bs, _) -> [f, bs]
                                       | _ -> []) |> List.flatten
     }
   in

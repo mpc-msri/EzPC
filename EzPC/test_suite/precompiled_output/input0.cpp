@@ -6,20 +6,20 @@
 
 using namespace std;
 
-uint32_t public_arshift(uint32_t x, uint32_t y){
+uint32_t public_lrshift(uint32_t x, uint32_t y){
 return (x >> y);
 }
 
-int32_t public_arshift(int32_t x, uint32_t y){
+int32_t public_lrshift(int32_t x, uint32_t y){
+return ((int32_t)(((uint32_t)x) >> y));
+}
+
+uint64_t public_lrshift(uint64_t x, uint64_t y){
 return (x >> y);
 }
 
-uint64_t public_arshift(uint64_t x, uint64_t y){
-return (x >> y);
-}
-
-int64_t public_arshift(int64_t x, uint64_t y){
-return (x >> y);
+int64_t public_lrshift(int64_t x, uint64_t y){
+return ((int64_t)(((uint64_t)x) >> y));
 }
 
 template<typename T>
@@ -360,6 +360,9 @@ bcirc = (sharings)[S_BOOL]->GetCircuitBuildRoutine();
 
 
 share* w;
+if ((role == SERVER)) {
+cout << ("Input w:") << endl;
+}
 /* Variable to read the clear value corresponding to the input variable w at (126,1-126,28) */
 uint32_t __tmp_in_w;
 if ((role == SERVER)) {
@@ -368,6 +371,9 @@ cin >> __tmp_in_w;
 w = (role == SERVER) ? acirc->PutINGate(__tmp_in_w, bitlen, SERVER) : acirc->PutDummyINGate(bitlen);
 
 share* x;
+if ((role == SERVER)) {
+cout << ("Input x:") << endl;
+}
 /* Variable to read the clear value corresponding to the input variable x at (127,1-127,28) */
 uint32_t __tmp_in_x;
 if ((role == SERVER)) {
@@ -376,6 +382,9 @@ cin >> __tmp_in_x;
 x = (role == SERVER) ? ycirc->PutINGate(__tmp_in_x, bitlen, SERVER) : ycirc->PutDummyINGate(bitlen);
 
 auto z = make_vector<share*>( (int32_t)10);
+if ((role == SERVER)) {
+cout << ("Input z:") << endl;
+}
 /* Variable to read the clear value corresponding to the input variable z at (128,1-128,32) */
 uint32_t __tmp_in_z;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)10; i0++){
@@ -386,6 +395,9 @@ z[i0] = (role == SERVER) ? acirc->PutINGate(__tmp_in_z, bitlen, SERVER) : acirc-
 }
 
 auto a = make_vector<share*>( (int32_t)10,  (int32_t)100);
+if ((role == CLIENT)) {
+cout << ("Input a:") << endl;
+}
 /* Variable to read the clear value corresponding to the input variable a at (129,1-129,37) */
 uint32_t __tmp_in_a;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)10; i0++){
@@ -398,6 +410,9 @@ a[i0][i1] = (role == CLIENT) ? acirc->PutINGate(__tmp_in_a, bitlen, CLIENT) : ac
 }
 
 share* b;
+if ((role == SERVER)) {
+cout << ("Input b:") << endl;
+}
 /* Variable to read the clear value corresponding to the input variable b at (130,1-130,26) */
 uint32_t __tmp_in_b;
 if ((role == SERVER)) {
@@ -406,6 +421,9 @@ cin >> __tmp_in_b;
 b = (role == SERVER) ? ycirc->PutINGate(__tmp_in_b, 1, SERVER) : ycirc->PutDummyINGate(1);
 
 share* c;
+if ((role == SERVER)) {
+cout << ("Input c:") << endl;
+}
 /* Variable to read the clear value corresponding to the input variable c at (131,1-131,26) */
 uint32_t __tmp_in_c;
 if ((role == SERVER)) {
@@ -414,5 +432,6 @@ cin >> __tmp_in_c;
 c = (role == SERVER) ? ycirc->PutINGate(__tmp_in_c, 1, SERVER) : ycirc->PutDummyINGate(1);
 party->ExecCircuit();
 flush_output_queue(out_q, role, bitlen);
+return 0;
 }
 

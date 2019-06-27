@@ -62,7 +62,7 @@ let match_stmt_option msg str =
 %token EOF
 %token DEF
 %token SERVER CLIENT ALL
-%token PARTITION INLINE UNROLL CONST
+%token PARTITION INLINE UNROLL CONST EXTERN
 %token <string> ID
 
 %nonassoc SEMICOLON
@@ -143,8 +143,9 @@ binder_l:
 global:
   | PARTITION;  DEF; typ = ret_typ_; fn_name = ID; LPAREN; bl = binder_l; RPAREN; LBRACE; s = option(stmt); RBRACE { astnd(Fun ([Ast.Partition], fn_name, bl, (match_stmt_option "Empty Function" s), typ)) $startpos $endpos }
   | INLINE;  DEF; typ = ret_typ_; fn_name = ID; LPAREN; bl = binder_l; RPAREN; LBRACE; s = option(stmt); RBRACE { astnd(Fun ([Ast.Inline], fn_name, bl, (match_stmt_option "Empty Function" s), typ)) $startpos $endpos }
+  | EXTERN; typ = ret_typ_; fn_name = ID; LPAREN; bl = binder_l; RPAREN; SEMICOLON { astnd(Extern_fun ([Ast.Extern], fn_name, bl, typ)) $startpos $endpos }
   | DEF; typ = ret_typ_; fn_name = ID; LPAREN; bl = binder_l; RPAREN; LBRACE; s = option(stmt); RBRACE { astnd(Fun ([], fn_name, bl, (match_stmt_option "Empty Function" s), typ)) $startpos $endpos }
-  | typ = base_type; e = expr; EQUALS; value = expr { astnd (Global_const (astnd (Ast.Base (typ, Some Public)) $startpos $endpos, e, value)) $startpos $endpos }
+  | typ = base_type; e = expr; EQUALS; value = expr; SEMICOLON { astnd (Global_const (astnd (Ast.Base (typ, Some Public)) $startpos $endpos, e, value)) $startpos $endpos }
   ;
 
 (* This is ugly, we should write it better so that we don't have to write a rule for every qualifier *)

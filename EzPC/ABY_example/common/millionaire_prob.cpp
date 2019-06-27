@@ -6,20 +6,20 @@
 
 using namespace std;
 
-uint32_t public_arshift(uint32_t x, uint32_t y){
+uint32_t public_lrshift(uint32_t x, uint32_t y){
 return (x >> y);
 }
 
-int32_t public_arshift(int32_t x, uint32_t y){
+int32_t public_lrshift(int32_t x, uint32_t y){
+return ((int32_t)(((uint32_t)x) >> y));
+}
+
+uint64_t public_lrshift(uint64_t x, uint64_t y){
 return (x >> y);
 }
 
-uint64_t public_arshift(uint64_t x, uint64_t y){
-return (x >> y);
-}
-
-int64_t public_arshift(int64_t x, uint64_t y){
-return (x >> y);
+int64_t public_lrshift(int64_t x, uint64_t y){
+return ((int64_t)(((uint64_t)x) >> y));
 }
 
 template<typename T>
@@ -348,6 +348,22 @@ share* __tac_var77 = signedmodbl(bx, by);
 return __tac_var77;
 }
 
+const uint32_t dim =  (int32_t)2;
+
+void fneffect(auto& x){
+x[ (int32_t)0] = put_cons32_gate(acirc,  (uint32_t)0);
+}
+
+share* fn(const auto& x){
+/* Temporary variable for sub-expression on source location: (124,8-124,12) */
+share* __tac_var78 = x[ (int32_t)0];
+return __tac_var78;
+}
+
+share* fnn(share* x){
+return x;
+}
+
 
 int64_t ezpc_main (e_role role, char* address, uint16_t port, seclvl seclvl,
 uint32_t nvals, uint32_t nthreads, e_mt_gen_alg mt_alg,
@@ -359,9 +375,87 @@ acirc = (sharings)[S_ARITH]->GetCircuitBuildRoutine();
 bcirc = (sharings)[S_BOOL]->GetCircuitBuildRoutine();
 
 
-share* x = put_cons32_gate(acirc,  (int32_t)2);
-add_to_output_queue(out_q, acirc->PutOUTGate(x, CLIENT), CLIENT, cout);
+auto w = make_vector<share*>( (int32_t)2);
+if ((role == SERVER)) {
+cout << ("Input w:") << endl;
+}
+/* Variable to read the clear value corresponding to the input variable w at (131,2-131,34) */
+uint32_t __tmp_in_w;
+for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)2; i0++){
+if ((role == SERVER)) {
+cin >> __tmp_in_w;
+}
+w[i0] = (role == SERVER) ? acirc->PutINGate(__tmp_in_w, bitlen, SERVER) : acirc->PutDummyINGate(bitlen);
+}
+
+share* b;
+if ((role == SERVER)) {
+cout << ("Input b:") << endl;
+}
+/* Variable to read the clear value corresponding to the input variable b at (132,2-132,29) */
+uint32_t __tmp_in_b;
+if ((role == SERVER)) {
+cin >> __tmp_in_b;
+}
+b = (role == SERVER) ? ycirc->PutINGate(__tmp_in_b, bitlen, SERVER) : ycirc->PutDummyINGate(bitlen);
+
+auto x = make_vector<share*>( (int32_t)2);
+if ((role == CLIENT)) {
+cout << ("Input x:") << endl;
+}
+/* Variable to read the clear value corresponding to the input variable x at (133,2-133,34) */
+uint32_t __tmp_in_x;
+for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)2; i0++){
+if ((role == CLIENT)) {
+cin >> __tmp_in_x;
+}
+x[i0] = (role == CLIENT) ? acirc->PutINGate(__tmp_in_x, bitlen, CLIENT) : acirc->PutDummyINGate(bitlen);
+}
+
+share* acc = put_cons32_gate(acirc,  (uint32_t)0);
+
+uint32_t lower =  (uint32_t)0;
+
+uint32_t upper =  (int32_t)2;
+/* Temporary variable for sub-expression on source location: (137,9-137,22) */
+uint32_t __tac_var79 = ( (uint32_t)0 -  (uint32_t)0);
+for (uint32_t i = __tac_var79; i <  (int32_t)2; i++){
+/* Temporary variable for sub-expression on source location: (137,46-137,50) */
+share* __tac_var80 = w[i];
+/* Temporary variable for sub-expression on source location: (137,40-137,50) */
+share* __tac_var81 = acirc->PutADDGate(acc, __tac_var80);
+/* Temporary variable for sub-expression on source location: (137,53-137,57) */
+share* __tac_var82 = x[i];
+acc = acirc->PutMULGate(__tac_var81, __tac_var82);
+}
+/* Temporary variable for sub-expression on source location: (138,18-138,21) */
+share* __tac_var83 = ycirc->PutA2YGate(acc);
+/* Temporary variable for sub-expression on source location: (138,18-138,25) */
+share* __tac_var84 = ycirc->PutGTGate(__tac_var83, b);
+/* Temporary variable for sub-expression on source location: (138,29-138,30) */
+share* __tac_var85 = put_cons32_gate(ycirc,  (int32_t)1);
+/* Temporary variable for sub-expression on source location: (138,33-138,34) */
+share* __tac_var86 = put_cons32_gate(ycirc,  (int32_t)0);
+/* Temporary variable for sub-expression on source location: (138,17-138,34) */
+share* __tac_var87 = ycirc->PutMUXGate(__tac_var85, __tac_var86, __tac_var84);
+add_print_msg_to_output_queue(out_q, "Value of __tac_var87:", CLIENT, cout);
+add_to_output_queue(out_q, ycirc->PutOUTGate(__tac_var87, CLIENT), CLIENT, cout);
+add_print_msg_to_output_queue(out_q, "Value of w:", CLIENT, cout);
+for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)2; i0++){
+add_to_output_queue(out_q, acirc->PutOUTGate(w[i0], CLIENT), CLIENT, cout);
+}
+
+uint32_t tt =  (uint32_t)0;
+/* Temporary variable for sub-expression on source location: (141,5-141,13) */
+uint32_t __tac_var88 = ( (uint32_t)0 ==  (uint32_t)0);
+if (__tac_var88) {
+tt =  (uint32_t)0;
+}
+
+share* tmp = fn(w);
+fneffect(w);
 party->ExecCircuit();
 flush_output_queue(out_q, role, bitlen);
+return 0;
 }
 

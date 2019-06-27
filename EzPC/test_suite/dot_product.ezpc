@@ -3,7 +3,7 @@
 	The below program calculates (<w;x> > b), where w and x are vetors of same length and b is a scalar.
 *)
 
-uint32 dim = 2u
+uint32 dim = 2u;
 
 def void main(){
 	(*

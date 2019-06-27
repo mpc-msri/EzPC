@@ -174,6 +174,18 @@ let infer_op_labels_global (g0:gamma) (d:global) :global * gamma =
          top_level_functions = g0.top_level_functions @ [fname, (bs, ret_t)];
          local_bindings = empty_stack;
          f_return_typ = None }
+    | Extern_fun (quals, fname, bs, ret_t) ->
+       let g = { g0 with local_bindings = singleton_stack [] } in
+       let g, bs = bs |> List.fold_left (fun (g, bs) (x, t) ->
+                             let t = t |> infer_typ_label (x.name ^ (Global.Metadata.sprint_metadata "" t.metadata)) |> infer_op_labels_typ g in
+                             add_local_binding g x t, bs @ [x, t]) (g, [])
+       in
+       let ret_t = infer_ret_typ_label ret_t in
+       Extern_fun (quals, fname, bs, ret_t),
+       { g0 with
+         top_level_functions = g0.top_level_functions @ [fname, (bs, ret_t)];
+         local_bindings = empty_stack;
+         f_return_typ = None }
     | Global_const (t, e_var, init) ->
        (*
         * Note that global constants are assigned Public label in the parser itself
@@ -300,6 +312,7 @@ let insert_coercions_global (g0:gamma) (d:global) :global * gamma =
        let g = enter_fun g0 d in
        let body, _ = insert_coercions_stmt g body in
        Fun (quals, fname, bs, body, ret_t), add_fun g0 d
+    | Extern_fun (quals, fname, bs, ret_t) -> Extern_fun (quals, fname, bs, ret_t), add_fun g0 d
     | Global_const (t, e_var, init) ->
        Global_const (t, e_var, init),
        add_global_const g0 d

@@ -373,6 +373,9 @@ let o_global (d:global) :comp =
   | Fun (_, fname, bs, body, ret_t) ->
      let header = seq (o_ret_typ ret_t) (seq o_space (o_hd_and_args (o_str fname) (List.map o_binder bs))) in
      seq header (seq (o_str " {\n") (seq (o_stmt body) (o_str "\n}\n")))
+  | Extern_fun (_, fname, bs, ret_t) ->
+     let header = seq (o_ret_typ ret_t) (seq o_space (o_hd_and_args (o_str fname) (List.map o_binder bs))) in
+     o_with_semicolon (seq (o_str "extern ") header)
   | Global_const (t, e_var, init) -> seq (o_with_semicolon (seq (o_str "const ") (o_decl (o_typ t) (o_expr e_var) (Some (o_expr init))))) o_newline
 
 let c_prelude_string : string = 
