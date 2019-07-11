@@ -1,6 +1,9 @@
 # Introduction 
 This repository contains EzPC - a language for secure machine learning.
 
+# Developer Guide
+Refer to the repository's Wiki section for EzPC's developer guide to how to code in EzPC.
+
 # Requirements
 - [] unzip (Use apt-get install unzip for this)
 - [] opam (Ocaml package manager) ( wget https://raw.github.com/ocaml/opam/master/shell/opam_installer.sh -O - | sh -s /usr/local/bin)
