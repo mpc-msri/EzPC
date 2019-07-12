@@ -6,20 +6,20 @@
 
 using namespace std;
 
-uint32_t public_arshift(uint32_t x, uint32_t y){
+uint32_t public_lrshift(uint32_t x, uint32_t y){
 return (x >> y);
 }
 
-int32_t public_arshift(int32_t x, uint32_t y){
+int32_t public_lrshift(int32_t x, uint32_t y){
+return ((int32_t)(((uint32_t)x) >> y));
+}
+
+uint64_t public_lrshift(uint64_t x, uint64_t y){
 return (x >> y);
 }
 
-uint64_t public_arshift(uint64_t x, uint64_t y){
-return (x >> y);
-}
-
-int64_t public_arshift(int64_t x, uint64_t y){
-return (x >> y);
+int64_t public_lrshift(int64_t x, uint64_t y){
+return ((int64_t)(((uint64_t)x) >> y));
 }
 
 template<typename T>
@@ -362,6 +362,9 @@ bcirc = (sharings)[S_BOOL]->GetCircuitBuildRoutine();
 
 
 auto w = make_vector<share*>( (uint32_t)2);
+if ((role == SERVER)) {
+cout << ("Input w:") << endl;
+}
 /* Variable to read the clear value corresponding to the input variable w at (129,1-129,32) */
 uint32_t __tmp_in_w;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (uint32_t)2; i0++){
@@ -372,6 +375,9 @@ w[i0] = (role == SERVER) ? acirc->PutINGate(__tmp_in_w, bitlen, SERVER) : acirc-
 }
 
 share* b;
+if ((role == SERVER)) {
+cout << ("Input b:") << endl;
+}
 /* Variable to read the clear value corresponding to the input variable b at (130,1-130,27) */
 uint32_t __tmp_in_b;
 if ((role == SERVER)) {
@@ -380,6 +386,9 @@ cin >> __tmp_in_b;
 b = (role == SERVER) ? ycirc->PutINGate(__tmp_in_b, bitlen, SERVER) : ycirc->PutDummyINGate(bitlen);
 
 auto x = make_vector<share*>( (uint32_t)2);
+if ((role == CLIENT)) {
+cout << ("Input x:") << endl;
+}
 /* Variable to read the clear value corresponding to the input variable x at (131,1-131,32) */
 uint32_t __tmp_in_x;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (uint32_t)2; i0++){
@@ -415,8 +424,10 @@ share* __tac_var84 = put_cons32_gate(ycirc,  (int32_t)1);
 share* __tac_var85 = put_cons32_gate(ycirc,  (int32_t)0);
 /* Temporary variable for sub-expression on source location: (136,17-136,34) */
 share* __tac_var86 = ycirc->PutMUXGate(__tac_var84, __tac_var85, __tac_var83);
+add_print_msg_to_output_queue(out_q, "Value of __tac_var86:", CLIENT, cout);
 add_to_output_queue(out_q, ycirc->PutOUTGate(__tac_var86, CLIENT), CLIENT, cout);
 party->ExecCircuit();
 flush_output_queue(out_q, role, bitlen);
+return 0;
 }
 

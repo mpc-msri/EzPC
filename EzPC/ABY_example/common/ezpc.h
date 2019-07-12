@@ -52,13 +52,32 @@ share* logical_right_shift(Circuit* c, share* val, uint32_t shift_factor) {
   return create_new_share( tmp , c );
 }
 
+share* get_zero_share(Circuit* c, int bitlen){
+  if (bitlen == 32)
+    return put_cons32_gate(c, 0);
+  else
+    return put_cons64_gate(c, 0);
+}
+
 share* arithmetic_right_shift(Circuit* c, share* val, uint32_t shift_factor) {
-  share* is_pos = c->PutGTGate(c->PutSUBGate(put_cons32_gate(c, 0),val), val);
-  val = c->PutMUXGate(val, c->PutSUBGate(put_cons32_gate(c, 0),val), is_pos);
-  vector<uint32_t> tmp = val->get_wires();
-  tmp.erase(tmp.begin(), tmp.begin() + shift_factor);
-  share* x = create_new_share(tmp, c);
-  return c->PutMUXGate(x, c->PutSUBGate(put_cons32_gate(c, 0),x), is_pos);
+  int bitlen = (val->get_wires()).size();
+  share* neg_val = c->PutSUBGate(get_zero_share(c, bitlen), val);
+  share* is_pos = c->PutGTGate(neg_val, val);
+  val = c->PutMUXGate(val, neg_val, is_pos);
+  vector<uint32_t> val_wires = val->get_wires();
+
+  vector<uint32_t> zero_share_wires = (get_zero_share(c, bitlen))->get_wires();
+  vector<uint32_t> new_val_wires(bitlen, 0);
+  for(int i=0; i<bitlen; i++){
+    if (i >= (bitlen - shift_factor)){
+      new_val_wires[i] = zero_share_wires[i];
+    }
+    else{
+      new_val_wires[i] = val_wires[i+shift_factor];
+    }
+  }
+  share* x = create_new_share(new_val_wires, c);
+  return c->PutMUXGate(x, c->PutSUBGate(get_zero_share(c, bitlen), x), is_pos);
 }
 
 /*

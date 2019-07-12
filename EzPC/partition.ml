@@ -281,6 +281,7 @@ let partition (p:program) :codegen_program =
   let g = {
       fdefs = p |> List.map (fun d -> match d.data with
                              | Fun (quals, f, bs, body, ret_t) -> [f, (quals, bs, body, ret_t)]
+                             | Extern_fun (quals, f, bs, ret_t) -> [f, (quals, bs, (Skip "Adding NoOp for extern func.") |> mk_dsyntax "", ret_t)]
                              | _ -> []) |> List.flatten;
       bindings = []
     }

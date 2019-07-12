@@ -385,12 +385,13 @@ let rec check_no_return (s:stmt) (reason:string) :unit result =
   | Output _ -> Well_typed ()
   | Skip _ -> Well_typed ()
 
-let check_fn_qualifiers (quals:qualifier list) (ret_t:ret_typ) (body:stmt) :unit result =
+let check_fn_qualifiers (quals:qualifier list) (ret_t:ret_typ) (body:stmt option) :unit result =
   if quals |> List.mem Inline then
     bind (match ret_t with
           | Void _ -> Well_typed ()
           | Typ t -> Type_error ("Non-void functions cannot be inlined", t.metadata)
-         ) (fun _ -> check_no_return body "Inline functions cannot have return statements")
+         ) (fun _ -> if quals |> List.mem Extern then Well_typed ()
+                     else check_no_return (get_opt body) "Inline functions cannot have return statements")
   else Well_typed ()
             
 let tc_global (g0:gamma) (d:global) :gamma result =
@@ -406,7 +407,16 @@ let tc_global (g0:gamma) (d:global) :gamma result =
                           bind (tc_stmt { g with top_level_functions = (fname, (bs, ret_t))::g.top_level_functions;
                                                  f_return_typ = Some ret_t;
                                         } body) (fun _ ->
-                                 bind (check_fn_qualifiers quals ret_t body ) (fun _ -> Well_typed (add_fun g0 d.data))))))
+                                 bind (check_fn_qualifiers quals ret_t (Some body) ) (fun _ -> Well_typed (add_fun g0 d.data))))))
+  | Extern_fun (quals, fname, bs, ret_t) ->
+     bind (check_global_name_is_fresh g0 fname d.metadata) (fun _ ->
+            let g_body = { g0 with local_bindings = singleton_stack [] } in
+            bind (List.fold_left (fun res (x, t) ->
+                      bind res (fun g ->
+                             bind (check_type_well_formedness g t) (fun _ -> Well_typed (add_local_binding g x t)))
+                    ) (Well_typed g_body) bs) (fun g ->
+                   bind (check_ret_typ_well_formedness g ret_t) (fun _ ->
+                                 bind (check_fn_qualifiers quals ret_t None ) (fun _ -> Well_typed (add_fun g0 d.data)))))
   | Global_const (t, e_var, init) when is_var e_var ->
      let x = get_var e_var in
      bind (check_base_type_and_label e_var t Public) (fun t ->

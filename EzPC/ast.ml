@@ -62,6 +62,7 @@ type qualifier =
   | Inline       (* functions having this qualifier get their applications inlined *)
   | Unroll       (* for loops that should be unrolled statically *)
   | Immutable    (* array types can be immutable *)
+  | Extern       (* extern function declaration *)
 
 type qualifiers = qualifier list
   
@@ -107,6 +108,7 @@ type binder = var * typ                                                  (* bind
 
 type global' =
   | Fun of qualifiers * string * binder list * stmt * ret_typ (* function name, parameters, body, return type *)
+  | Extern_fun of qualifiers * string * binder list * ret_typ (* function name, parameters, return type - no body *)
   | Global_const of typ * expr * expr                         (* type, var, initializer *)
 
 type global = global' syntax
@@ -392,6 +394,7 @@ let erase_labels_global (d:global) :global =
   let aux (d:global') :global' =
     match d with
     | Fun (quals, fname, bs, body, ret_t) -> Fun (quals, fname, bs |> List.map erase_labels_binder, body |> erase_labels_stmt, ret_t |> erase_labels_ret_typ)
+    | Extern_fun (quals, fname, bs, ret_t) -> Extern_fun (quals, fname, bs |> List.map erase_labels_binder, ret_t |> erase_labels_ret_typ)
     | Global_const (t, e_var, init) -> Global_const (t |> erase_labels_typ, e_var |> erase_labels_expr, init |> erase_labels_expr)
   in
   { d with data = aux d.data }

@@ -96,6 +96,7 @@ rule read =
   | "return" { RETURN }
   | "partition" { PARTITION }
   | "inline" { INLINE }
+  | "extern" { EXTERN }
   | "unroll" { UNROLL }
   | "const" { CONST }
   | "if" { IF }

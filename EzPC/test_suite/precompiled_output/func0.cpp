@@ -6,20 +6,20 @@
 
 using namespace std;
 
-uint32_t public_arshift(uint32_t x, uint32_t y){
+uint32_t public_lrshift(uint32_t x, uint32_t y){
 return (x >> y);
 }
 
-int32_t public_arshift(int32_t x, uint32_t y){
+int32_t public_lrshift(int32_t x, uint32_t y){
+return ((int32_t)(((uint32_t)x) >> y));
+}
+
+uint64_t public_lrshift(uint64_t x, uint64_t y){
 return (x >> y);
 }
 
-uint64_t public_arshift(uint64_t x, uint64_t y){
-return (x >> y);
-}
-
-int64_t public_arshift(int64_t x, uint64_t y){
-return (x >> y);
+int64_t public_lrshift(int64_t x, uint64_t y){
+return ((int64_t)(((uint64_t)x) >> y));
 }
 
 template<typename T>
@@ -370,8 +370,10 @@ bcirc = (sharings)[S_BOOL]->GetCircuitBuildRoutine();
 share* b = put_cons32_gate(acirc,  (uint32_t)10);
 
 share* c = hello(b);
+add_print_msg_to_output_queue(out_q, "Value of c:", SERVER, cout);
 add_to_output_queue(out_q, acirc->PutOUTGate(c, SERVER), SERVER, cout);
 party->ExecCircuit();
 flush_output_queue(out_q, role, bitlen);
+return 0;
 }
 

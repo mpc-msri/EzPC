@@ -1,4 +1,4 @@
-uint32 dim = 2
+uint32 dim = 2;
 
 def void fneffect (uint32_al[dim] x)
 {

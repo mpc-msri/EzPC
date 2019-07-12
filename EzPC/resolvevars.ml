@@ -163,6 +163,17 @@ let resolve_vars_global (g0:gamma) (d:global) :(gamma * global) result =
                      ) (Success (g, []))) (fun (g, bs) ->
               bind (resolve_vars_ret_typ g ret_t) (fun ret_t ->
                      bind (resolve_vars_stmt g body) (fun (_, body) -> Success (g0, Fun (quals, fname, bs, body, ret_t)))))
+    | Extern_fun (quals, fname, bs, ret_t) ->
+       let g = [] |> push_stack g0 in
+       bind (bs |> List.fold_left (fun res (x, t) ->
+                       bind res (fun (g, bs) ->
+                              bind (t |> resolve_vars_typ g) (fun t ->
+                                     bind (x |> gen_fresh_var) (fun x ->
+                                            let scope, rest = pop_stack g in
+                                            Success ((scope @ [x.name, x]) |> push_stack rest,
+                                                     bs @ [x, t]))))
+                     ) (Success (g, []))) (fun (g, bs) ->
+              bind (resolve_vars_ret_typ g ret_t) (fun ret_t -> Success (g0, Extern_fun (quals, fname, bs, ret_t))))
     | Global_const (t, e_var, init) when is_var e_var ->
        let x = get_var e_var in
        bind (resolve_vars_typ g0 t) (fun t ->
