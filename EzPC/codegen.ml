@@ -77,7 +77,7 @@ let o_sunop (l:secret_label) (op:unop) (c:comp) :comp =
   let c_op =
     match op with
     | U_minus -> failwith "Codegen: unary minus is not being produced by lexer or parser right now."
-    | Bitwise_neg -> o_str "PutINVGate"
+    | Bitwise_neg 
     | Not -> o_str "PutINVGate"
   in
   o_cbfunction_maybe_coerce true l c_op [c]

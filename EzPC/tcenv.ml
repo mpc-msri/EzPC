@@ -40,29 +40,17 @@ let enter_fun (g:gamma) (d:global') :gamma =
        local_bindings = singleton_stack bs;
        f_return_typ = Some ret_t
      }
-  | Extern_fun (quals, fname, bs, ret_t) ->
-     { g with
-       top_level_functions = (fname, (bs, ret_t))::g.top_level_functions;
-       local_bindings = singleton_stack bs;
-       f_return_typ = Some ret_t
-     }
   | _ -> failwith "TcEnv::enter_fun should be called with a Fun global"
 
 let add_fun (g:gamma) (d:global') :gamma =
   match d with
-  | Fun (quals, fname, bs, body, ret_t) ->     
+  | Fun (quals, fname, bs, _, ret_t) | Extern_fun (quals, fname, bs, ret_t) ->
      { g with
        top_level_functions = g.top_level_functions @ [fname, (bs, ret_t)];
        local_bindings = empty_stack;
        f_return_typ = None
      }
-  | Extern_fun (quals, fname, bs, ret_t) ->     
-     { g with
-       top_level_functions = g.top_level_functions @ [fname, (bs, ret_t)];
-       local_bindings = empty_stack;
-       f_return_typ = None
-     }
-  | _ -> failwith "TcEnv::add_fun should be called with a Fun global"
+  | _ -> failwith "TcEnv::add_fun should be called with a Fun/Extern_Fun global"
 
 let add_global_const (g:gamma) (d:global') :gamma =
   match d with

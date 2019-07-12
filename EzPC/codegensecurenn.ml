@@ -156,7 +156,7 @@ and o_expr (g:gamma) (e:expr) :comp =
 
   | Unop (op, e, Some Public) -> seq (o_punop op) (seq o_space (o_expr e))
   
-  | Unop (op, e, Some (Secret s)) -> o_sunop s op (o_expr e)
+  | Unop (op, e, Some (Secret s)) -> seq (o_sunop s op (o_expr e)) (seq o_space (o_expr e))
 
   | Binop (op, e1, e2, Some Public) ->
      o_paren (match op with
@@ -195,8 +195,6 @@ and o_codegen_expr (g:gamma) (e:codegen_expr) :comp =
       in
       o_cbfunction sl (o_str "funcReconstruct2PCCons") [o_codegen_expr e; o_reveal_bitmask]
 
-  | Clear_val (e, bt) -> seq (o_codegen_expr e) (seq (o_str "->get_clear_value<") (seq (o_basetyp bt) (o_str ">()")))
-
   | Conditional_codegen (e1, e2, e3, l) ->
      let c1, c2, c3 = o_codegen_expr e1, o_codegen_expr e2, o_codegen_expr e3 in
      (match l with
@@ -204,6 +202,7 @@ and o_codegen_expr (g:gamma) (e:codegen_expr) :comp =
       | Secret sl -> failwith "Secret conditionals not allowed for this backend.")
 
   | App_codegen_expr (f, el) -> o_app (o_str f) (List.map o_codegen_expr el)
+  | Clear_val _ -> failwith ("Codegen_expr Clear_val is unsupported by this backend.") 
                                       
 let o_typ (t:typ) :comp =
   match t.data with
@@ -387,7 +386,6 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
          aux e
        in
 
-       (* now we are going to put two nested loops, one for output gates, and one for cout *)
        let output_gate_loops =
          let aux (s:codegen_stmt) :codegen_stmt =
            List.fold_right (fun e (i, s) ->
@@ -399,10 +397,7 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
                             s)
              ) el (List.length el - 1, s) |> snd
          in
-         aux (App_codegen ("add_to_output_queue", [Base_e (Var { name = "out_q"; index = 0 } |> mk_dsyntax "");
-                                                   Output_g (r, sl, elmt_of_e);
-                                                   Base_e e_role;
-                                                   Base_e (Var { name = "cout"; index = 0 } |> mk_dsyntax "")]))
+         aux (Cout ("cout", (Output_g (r, sl, elmt_of_e)), bt))
        in
 
        o_codegen_stmt g output_gate_loops
@@ -428,23 +423,9 @@ and o_codegen_stmt (g:gamma) (s:codegen_stmt) :comp * gamma =
      o_with_semicolon (seq (o_str s) (seq (o_str " << ") (seq (o_paren (o_codegen_expr g e)) (o_str " << endl")))),
      g
 
-  | Dump_interim (e_var, t, f) when is_var e_var -> failwith "Codegen: Dumping of interim shares is not yet supported by this backend."
+  | Dump_interim _ | Read_interim _ -> failwith "Codegen: Dumping/Reading of interim shares is not supported by this backend."
 
-  | Read_interim (e_var, t, f) when is_var e_var -> failwith "Codegen: Reading of interim shares is not yet supported by this backend."
-
-  | Open_file (write, x, f) ->
-     (if write then
-        let c = o_str ("ofstream " ^ x ^ ";\n" ^ x ^ ".open(\"" ^ f ^ "\", ios::out | ios::trunc);\n") in
-        out_files := !out_files @ [x];
-        c
-      else o_str ("ifstream " ^ x ^ ";\n" ^ x ^ ".open(\"" ^ f ^ "\", ios::in);\n")),
-     g
-
-  | Close_file f -> o_str (f ^ ".close ();\n"), g
-
-  | Dump_interim _ -> failwith "Impossible! we don't support dumping of arbitrary shares"
-
-  | Read_interim _ -> failwith "Impossible! we don't support reading of arbitrary shares"
+  | Open_file _ | Close_file _ -> failwith "Codegen: Opening/Closing of file is not supported by this backend."
 
   | Assign_codegen (e1, e2) -> o_with_semicolon (o_assign (o_codegen_expr g e1) (o_codegen_expr g e2)), g
            
@@ -485,9 +466,7 @@ let o_global (g0:gamma) (d:global) :comp * gamma =
      seq header (seq (o_str "{\n") (seq (o_stmt g body |> fst) (o_str "\n}\n"))),
      add_fun g0 d.data
   | Extern_fun (_, fname, bs, ret_t) ->
-     (* let header = seq (o_ret_typ ret_t) (seq o_space (o_hd_and_args (o_str fname) (List.map o_binder bs))) in
-     o_with_semicolon (seq (o_str "extern ") header), *)
-     o_str "",
+     o_null,
      add_fun g0 d.data
   | Global_const (t, e_var, init) ->
      seq (o_with_semicolon (seq (o_str "const ") (o_decl (o_typ t) (o_expr g0 e_var) (Some (o_expr g0 init))))) o_newline,
@@ -573,7 +552,6 @@ AESObject* aes_conv_opti_b_2;\n\
 AESObject* aes_conv_opti_c_1;\n\
 ParallelAESObject* aes_parallel;\n\
 \n\
-output_queue out_q;\n\
 "
 
 let securenn_main_decl :string =
@@ -633,10 +611,6 @@ let securenn_postlude_string :string =
   cout << NUM_ITERATIONS << \" iterations, \" << whichNetwork << \", batch size \" << MINI_BATCH_SIZE << endl;\n\
   cout << \"----------------------------------\" << endl << endl;\n\
 \n\
-\n\
-  cout<<\"**************RESULTS***************\"<<endl;\n\
-  flush_output_queue(out_q, role);\n\
-  cout<<\"************************************\"<<endl;\n\
 \n\
 /****************************** CLEAN-UP ******************************/\n\
   delete aes_common;\n\
@@ -703,11 +677,7 @@ let o_one_program ((globals, main):global list * codegen_stmt) (ofname:string) :
     else o_null
   in
 
-  let out_files_close_stmt =
-    !out_files |> List.fold_left (fun s f -> Seq_codegen (s, Close_file f)) (Base_s (Skip "" |> mk_dsyntax ""))
-  in
-
-  let file = seq (seq main_prelude (seq main_body main_end)) (o_codegen_stmt g out_files_close_stmt |> fst) in
+  let file = seq main_prelude (seq main_body main_end) in
   let file = seq file (o_str "\n}\n") in
   
   let b = Buffer.create 0 in
