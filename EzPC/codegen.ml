@@ -707,10 +707,12 @@ Circuit* ycirc;\n\
 Circuit* acirc;\n\
 Circuit* bcirc;\n\
 uint32_t bitlen = " ^ string_of_int bitlen ^ ";\n\
-output_queue out_q;\n"
+output_queue out_q;\n\
+e_role role;\n"
 
 let aby_main_prelude_string :string =
-"party = new ABYParty(role, address, port, seclvl, bitlen, nthreads, mt_alg, 520000000);\n\
+"role = role_param;\n\
+party = new ABYParty(role_param, address, port, seclvl, bitlen, nthreads, mt_alg, 520000000);\n\
 std::vector<Sharing*>& sharings = party->GetSharings();\n\
 ycirc = (sharings)[S_YAO]->GetCircuitBuildRoutine();\n\
 acirc = (sharings)[S_ARITH]->GetCircuitBuildRoutine();\n\
@@ -725,7 +727,7 @@ let o_one_program ((globals, main):global list * codegen_stmt) (ofname:string) :
 
   let main_header =
     if Config.get_codegen () = Config.CPP then o_str "\n\nint main () {\n"
-    else o_str "\n\nint64_t ezpc_main (e_role role, char* address, uint16_t port, seclvl seclvl,\n\
+    else o_str "\n\nint64_t ezpc_main (e_role role_param, char* address, uint16_t port, seclvl seclvl,\n\
                 uint32_t nvals, uint32_t nthreads, e_mt_gen_alg mt_alg,\n\
                 e_sharing sharing) {\n"
   in
