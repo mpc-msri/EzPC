@@ -1,5 +1,7 @@
 # Introduction 
-This repository contains EzPC - a language for secure machine learning.
+This repository contains code for EzPC - a language for secure machine learning.
+Project webpage: https://aka.ms/ezpc
+Paper link: https://www.microsoft.com/en-us/research/publication/ezpc-programmable-efficient-and-scalable-secure-two-party-computation-for-machine-learning/
 
 # Developer Guide
 Refer to the repository's Wiki section for EzPC's developer guide to how to code in EzPC.
