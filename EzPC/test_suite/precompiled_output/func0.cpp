@@ -51,6 +51,7 @@ Circuit* acirc;
 Circuit* bcirc;
 uint32_t bitlen = 32;
 output_queue out_q;
+e_role role;
 
 share* signedgtbl(share* x, share* y){
 
@@ -357,10 +358,11 @@ return __tac_var79;
 }
 
 
-int64_t ezpc_main (e_role role, char* address, uint16_t port, seclvl seclvl,
+int64_t ezpc_main (e_role role_param, char* address, uint16_t port, seclvl seclvl,
 uint32_t nvals, uint32_t nthreads, e_mt_gen_alg mt_alg,
 e_sharing sharing) {
-party = new ABYParty(role, address, port, seclvl, bitlen, nthreads, mt_alg, 520000000);
+role = role_param;
+party = new ABYParty(role_param, address, port, seclvl, bitlen, nthreads, mt_alg, 520000000);
 std::vector<Sharing*>& sharings = party->GetSharings();
 ycirc = (sharings)[S_YAO]->GetCircuitBuildRoutine();
 acirc = (sharings)[S_ARITH]->GetCircuitBuildRoutine();

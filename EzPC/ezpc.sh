@@ -4,40 +4,46 @@ POSITIONAL=()
 allArgs=""
 while [[ $# -gt 0 ]]
 do
-key="$1"
+	key="$1"
 
-case $key in
-	--bitlen)
-	BITLEN="$2"
-	allArgs="${allArgs} $1 $2"
-	shift # past argument
-	shift # past value
-	;;
-	--o_prefix)
-	OPREFIX="$2"
-	allArgs="${allArgs} $1 $2"
-	shift # past argument
-	shift # past value
-	;;
-	--help)
-	HELP=Y
-	shift # past one arg
-	;;
-	--codegen| --bool_sharing| --shares_dir)
-	allArgs="${allArgs} $1 $2"
-	shift # past argument
-	shift # past value
-	;;
-	--disable-tac| --disable-cse| --dummy_inputs| --debug_partitions)
-	allArgs="${allArgs} $1"
-	shift # past one arg
-	;;
-	*)    # unknown option
-	# allArgs="${allArgs} $1"
-	POSITIONAL+=("$1") # save it in an array for later
-	shift # past argument
-	;;
-esac
+	case $key in
+		--bitlen)
+		BITLEN="$2"
+		allArgs="${allArgs} $1 $2"
+		shift # past argument
+		shift # past value
+		;;
+		--o_prefix)
+		OPREFIX="$2"
+		allArgs="${allArgs} $1 $2"
+		shift # past argument
+		shift # past value
+		;;
+		--help)
+		HELP=Y
+		shift # past one arg
+		;;
+		--codegen)
+		CODEGEN="$2"
+		allArgs="${allArgs} $1 $2"
+		shift # past argument
+		shift # past value
+		;;
+		--bool_sharing| --shares_dir)
+		allArgs="${allArgs} $1 $2"
+		shift # past argument
+		shift # past value
+		;;
+		--disable-tac| --disable-cse| --dummy_inputs| --debug_partitions)
+		allArgs="${allArgs} $1"
+		shift # past one arg
+		;;
+		*)    # unknown option
+		# allArgs="${allArgs} $1"
+		POSITIONAL+=("$1") # save it in an array for later
+		shift # past argument
+		;;
+	esac
 done
 set -- "${POSITIONAL[@]}" # restore positional parameters
 
@@ -61,12 +67,26 @@ if [ -z ${HELP} ]; then
 	actualFileName="${baseFileName%.*}"
 	newFileNamePrefix="${fullFilePath}/${actualFileName}"
 	newFileName1="${newFileNamePrefix}__temp1.${extension}"
-	### 	Next echo the #include line to the top of the file.
-	echo -e "#include \"${LIBRARYNAME}\"\n" | cat - ${FILENAME} > ${newFileName1}
-	###		Finally run the C++ preprocessor
-	newFileName2="${newFileNamePrefix}__temp2.${extension}"
-	echo -e "Running cpp preprocessor to include library files :::"
-	cpp -E -P "${newFileName1}" > "${newFileName2}"
+	newFileName2="${newFileNamePrefix}.${extension}"
+	addEzPCLib=false
+
+	if [ -z ${CODEGEN} ]; then
+		addEzPCLib=true
+	else
+		codegenUpperCase=$(echo "${CODEGEN}" | awk '{print toupper($0)}')
+		if [ "$codegenUpperCase" == "ABY" ] || [ "$codegenUpperCase" == "CPP" ] ; then
+			addEzPCLib=true
+		fi
+	fi
+
+	if [ "$addEzPCLib" = true ]; then
+		newFileName2="${newFileNamePrefix}__temp2.${extension}"
+		### 	Next echo the #include line to the top of the file.
+		echo -e "#include \"${LIBRARYNAME}\"\n" | cat - ${FILENAME} > ${newFileName1}
+		###		Finally run the C++ preprocessor
+		echo -e "Running cpp preprocessor to include library files :::"
+		cpp -E -P "${newFileName1}" > "${newFileName2}"
+	fi
 
 	# Now run the actual ezpc compiler on newFileName2
 	echo -e "Running ezpc compiler on generated file :::"
