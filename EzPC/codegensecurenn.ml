@@ -587,6 +587,7 @@ let securenn_main_prelude_string :string =
   aes_conv_opti_b_2 = new AESObject(\"files/keyD\");\n\
   aes_conv_opti_c_1 = new AESObject(\"files/keyD\");\n\
   aes_parallel = new ParallelAESObject(argv[5]);\n\
+  instanceID = atoi(argv[6]);\n\
 \n\
   if (!STANDALONE)\n\
   {\n\
