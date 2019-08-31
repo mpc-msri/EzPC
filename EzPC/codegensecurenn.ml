@@ -557,6 +557,7 @@ ParallelAESObject* aes_parallel;\n\
 let securenn_main_decl :string =
 "
 \n\
+extern int instanceID;
 int main(int argc, char** argv)\n\
 {\n\
 "
