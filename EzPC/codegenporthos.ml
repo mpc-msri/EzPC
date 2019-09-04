@@ -474,6 +474,8 @@ let o_global (g0:gamma) (d:global) :comp * gamma =
 
 let prelude_string :string =
 "\
+#include \"globals.h\"\n\
+\n\
 #include<vector>\n\
 #include<math.h>\n\
 #include<cstdlib>\n\
@@ -484,52 +486,52 @@ let prelude_string :string =
 using namespace std;\n\
 \n\
 uint32_t public_lrshift(uint32_t x, uint32_t y){\n\
-  return (x >> y);\n\
+return (x >> y);\n\
 }\n\
 \n\
 int32_t public_lrshift(int32_t x, uint32_t y){\n\
-  return ((int32_t)(((uint32_t)x) >> y));\n\
+return ((int32_t)(((uint32_t)x) >> y));\n\
 }\n\
 \n\
 uint64_t public_lrshift(uint64_t x, uint64_t y){\n\
-  return (x >> y);\n\
+return (x >> y);\n\
 }\n\
 \n\
 int64_t public_lrshift(int64_t x, uint64_t y){\n\
-  return ((int64_t)(((uint64_t)x) >> y));\n\
+return ((int64_t)(((uint64_t)x) >> y));\n\
 }\n\
 \n\
 template<typename T>\n\
 vector<T> make_vector(size_t size) {\n\
-  return std::vector<T>(size);\n\
+return std::vector<T>(size);\n\
 }\n\
 \n\
 template <typename T, typename... Args>\n\
-  auto make_vector(size_t first, Args... sizes)\n\
+auto make_vector(size_t first, Args... sizes)\n\
 {\n\
-  auto inner = make_vector<T>(sizes...);\n\
-  return vector<decltype(inner)>(first, inner);\n\
+auto inner = make_vector<T>(sizes...);\n\
+return vector<decltype(inner)>(first, inner);\n\
 }\n\
 \n\
 template<typename T>\n\
 ostream& operator<< (ostream &os, const vector<T> &v)\n\
 {\n\
-  for(auto it = v.begin (); it != v.end (); ++it) {\n\
-    os << *it << endl;\n\
-  }\n\
-  return os;\n\
+for(auto it = v.begin (); it != v.end (); ++it) {\n\
+os << *it << endl;\n\
+}\n\
+return os;\n\
 }\n\
 \n\
 "
                                    
-let securenn_prelude_string :string =
+let porthos_prelude_string :string =
 "\
 #include \"ezpc.h\"\n\
 \n\
 extern int partyNum;\n\
 vector<uint64_t*> toFreeMemoryLaterArr;\n\
 int NUM_OF_PARTIES;\n\
-
+\n\
 AESObject* aes_common;\n\
 AESObject* aes_indep;\n\
 AESObject* aes_a_1;\n\
@@ -554,7 +556,7 @@ ParallelAESObject* aes_parallel;\n\
 \n\
 "
 
-let securenn_main_decl :string =
+let porthos_main_decl :string =
 "
 \n\
 extern int instanceID;
@@ -562,107 +564,108 @@ int main(int argc, char** argv)\n\
 {\n\
 "
 
-let securenn_main_prelude_string :string =
+let porthos_main_prelude_string :string =
 "\
-  parseInputs(argc, argv, false);\n\
-  string whichNetwork = \"No Network\";\n\
+parseInputs(argc, argv);\n\
+string whichNetwork = \"Your Network\";\n\
+show_porthos_mode();\n\
+string indep_key_location, common_key_location;\n\
+if(partyNum == PARTY_A){\n\
+  indep_key_location = \"files/keyA\";\n\
+  common_key_location = \"files/keyAB\";\n\
+}\n\
+else if(partyNum == PARTY_B){\n\
+  indep_key_location = \"files/keyB\";\n\
+  common_key_location = \"files/keyAB\";\n\
+}\n\
+else{\n\
+  indep_key_location = \"files/keyB\";\n\
+  common_key_location = \"files/keyAB\";\n\
+}\n\
+aes_indep = new AESObject(indep_key_location);\n\
+aes_common = new AESObject(common_key_location);\n\
+aes_a_1 = new AESObject(\"files/keyD\");\n\
+aes_a_2 = new AESObject(\"files/keyD\");\n\
+aes_b_1 = new AESObject(\"files/keyD\");\n\
+aes_b_2 = new AESObject(\"files/keyD\");\n\
+aes_c_1 = new AESObject(\"files/keyD\");\n\
+aes_share_conv_bit_shares_p0_p2 = new AESObject(\"files/keyD\");\n\
+aes_share_conv_bit_shares_p1_p2 = new AESObject(\"files/keyD\");\n\
+aes_share_conv_shares_mod_odd_p0_p2 = new AESObject(\"files/keyD\");\n\
+aes_share_conv_shares_mod_odd_p1_p2 = new AESObject(\"files/keyD\");\n\
+aes_comp_msb_shares_lsb_p0_p2 = new AESObject(\"files/keyD\");\n\
+aes_comp_msb_shares_lsb_p1_p2 = new AESObject(\"files/keyD\");\n\
+aes_comp_msb_shares_bit_vec_p0_p2 = new AESObject(\"files/keyD\");\n\
+aes_comp_msb_shares_bit_vec_p1_p2 = new AESObject(\"files/keyD\");\n\
+aes_conv_opti_a_1 = new AESObject(\"files/keyD\");\n\
+aes_conv_opti_a_2 = new AESObject(\"files/keyD\");\n\
+aes_conv_opti_b_1 = new AESObject(\"files/keyD\");\n\
+aes_conv_opti_b_2 = new AESObject(\"files/keyD\");\n\
+aes_conv_opti_c_1 = new AESObject(\"files/keyD\");\n\
+aes_parallel = new ParallelAESObject(common_key_location);\n\
 \n\
-  aes_indep = new AESObject(argv[4]);\n\
-  aes_common = new AESObject(argv[5]);\n\
-  aes_a_1 = new AESObject(\"files/keyD\");\n\
-  aes_a_2 = new AESObject(\"files/keyD\");\n\
-  aes_b_1 = new AESObject(\"files/keyD\");\n\
-  aes_b_2 = new AESObject(\"files/keyD\");\n\
-  aes_c_1 = new AESObject(\"files/keyD\");\n\
-  aes_share_conv_bit_shares_p0_p2 = new AESObject(\"files/keyD\");\n\
-  aes_share_conv_bit_shares_p1_p2 = new AESObject(\"files/keyD\");\n\
-  aes_share_conv_shares_mod_odd_p0_p2 = new AESObject(\"files/keyD\");\n\
-  aes_share_conv_shares_mod_odd_p1_p2 = new AESObject(\"files/keyD\");\n\
-  aes_comp_msb_shares_lsb_p0_p2 = new AESObject(\"files/keyD\");\n\
-  aes_comp_msb_shares_lsb_p1_p2 = new AESObject(\"files/keyD\");\n\
-  aes_comp_msb_shares_bit_vec_p0_p2 = new AESObject(\"files/keyD\");\n\
-  aes_comp_msb_shares_bit_vec_p1_p2 = new AESObject(\"files/keyD\");\n\
-  aes_conv_opti_a_1 = new AESObject(\"files/keyD\");\n\
-  aes_conv_opti_a_2 = new AESObject(\"files/keyD\");\n\
-  aes_conv_opti_b_1 = new AESObject(\"files/keyD\");\n\
-  aes_conv_opti_b_2 = new AESObject(\"files/keyD\");\n\
-  aes_conv_opti_c_1 = new AESObject(\"files/keyD\");\n\
-  aes_parallel = new ParallelAESObject(argv[5]);\n\
-  instanceID = atoi(argv[6]);\n\
+if (MPC)\n\
+{\n\
+initializeMPC();\n\
+initializeCommunication(argv[2], partyNum);\n\
+synchronize(2000000); \n\
+}\n\
 \n\
-  if (!STANDALONE)\n\
-  {\n\
-    initializeMPC();\n\
-    initializeCommunication(argv[3], partyNum);\n\
-    synchronize(2000000); \n\
-  }\n\
+if (PARALLEL) aes_parallel->precompute();\n\
 \n\
-  if (PARALLEL)\n\
-    aes_parallel->precompute();\n\
-\n\
-  e_role role = partyNum;\n\
-  start_m();\n\
+e_role role = partyNum;\n\
 "
 
-let securenn_postlude_string :string = 
+let porthos_postlude_string :string = 
 "\n\
-  end_m(whichNetwork);\n\
-\n\
-  cout << \"----------------------------------\" << endl;\n\
-  cout << NUM_OF_PARTIES << \"PC code, P\" << partyNum << endl;\n\
-  cout << NUM_ITERATIONS << \" iterations, \" << whichNetwork << \", batch size \" << MINI_BATCH_SIZE << endl;\n\
-  cout << \"----------------------------------\" << endl << endl;\n\
+cout << \"----------------------------------\" << endl;\n\
+cout << NUM_OF_PARTIES << \"PC code, P\" << partyNum << endl;\n\
+cout << NUM_ITERATIONS << \" iterations, \" << whichNetwork << endl;\n\
+cout << \"----------------------------------\" << endl << endl;\n\
 \n\
 \n\
 /****************************** CLEAN-UP ******************************/\n\
-  delete aes_common;\n\
-  delete aes_indep;\n\
-  delete aes_a_1;\n\
-  delete aes_a_2;\n\
-  delete aes_b_1;\n\
-  delete aes_b_2;\n\
-  delete aes_c_1;\n\
-  delete aes_share_conv_bit_shares_p0_p2;\n\
-  delete aes_share_conv_bit_shares_p1_p2;\n\
-  delete aes_share_conv_shares_mod_odd_p0_p2;\n\
-  delete aes_share_conv_shares_mod_odd_p1_p2;\n\
-  delete aes_comp_msb_shares_lsb_p0_p2;\n\
-  delete aes_comp_msb_shares_lsb_p1_p2;\n\
-  delete aes_comp_msb_shares_bit_vec_p0_p2;\n\
-  delete aes_comp_msb_shares_bit_vec_p1_p2;\n\
-  delete aes_conv_opti_a_1;\n\
-  delete aes_conv_opti_a_2;\n\
-  delete aes_conv_opti_b_1;\n\
-  delete aes_conv_opti_b_2;\n\
-  delete aes_conv_opti_c_1;\n\
-  delete aes_parallel;\n\
-  // delete config;\n\
-  // delete l0;\n\
-  // delete l1;\n\
-  // delete l2;\n\
-  // delete l3;\n\
-  // delete network;\n\
-  if (partyNum != PARTY_S)\n\
-    deleteObjects();\n\
+delete aes_common;\n\
+delete aes_indep;\n\
+delete aes_a_1;\n\
+delete aes_a_2;\n\
+delete aes_b_1;\n\
+delete aes_b_2;\n\
+delete aes_c_1;\n\
+delete aes_share_conv_bit_shares_p0_p2;\n\
+delete aes_share_conv_bit_shares_p1_p2;\n\
+delete aes_share_conv_shares_mod_odd_p0_p2;\n\
+delete aes_share_conv_shares_mod_odd_p1_p2;\n\
+delete aes_comp_msb_shares_lsb_p0_p2;\n\
+delete aes_comp_msb_shares_lsb_p1_p2;\n\
+delete aes_comp_msb_shares_bit_vec_p0_p2;\n\
+delete aes_comp_msb_shares_bit_vec_p1_p2;\n\
+delete aes_conv_opti_a_1;\n\
+delete aes_conv_opti_a_2;\n\
+delete aes_conv_opti_b_1;\n\
+delete aes_conv_opti_b_2;\n\
+delete aes_conv_opti_c_1;\n\
+delete aes_parallel;\n\
+deleteObjects();\n\
 \n\
-  return 0;\n\
+return 0;\n\
 "
 
 let o_one_program ((globals, main):global list * codegen_stmt) (ofname:string) :unit =
   let prelude =
     if Config.get_codegen () = Config.CPP then o_str prelude_string
     else
-      o_str (prelude_string ^ "\n" ^ (securenn_prelude_string))
+      o_str (prelude_string ^ "\n" ^ (porthos_prelude_string))
   in
 
   let main_header =
     if Config.get_codegen () = Config.CPP then o_str "\n\nint main () {\n"
-    else o_str securenn_main_decl
+    else o_str porthos_main_decl
   in
 
   let main_prelude =
     if Config.get_codegen () = Config.CPP then o_null
-    else seq (o_str securenn_main_prelude_string) o_newline
+    else seq (o_str porthos_main_prelude_string) o_newline
   in
   
   let main_prelude, g =
@@ -674,8 +677,8 @@ let o_one_program ((globals, main):global list * codegen_stmt) (ofname:string) :
   in
   let main_body, g = o_codegen_stmt ([] |> push_local_scope g) main in
   let main_end =
-    if Config.get_codegen () = Config.SECURENN then
-      o_str securenn_postlude_string
+    if Config.get_codegen () = Config.PORTHOS then
+      o_str porthos_postlude_string
     else o_null
   in
 

@@ -2,7 +2,7 @@ type codegen =
   | ABY
   | CPP
   | OBLIVC
-  | SECURENN
+  | PORTHOS
 
 type bool_sharing_mode =
   | Yao

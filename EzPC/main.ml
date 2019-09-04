@@ -63,7 +63,7 @@ let tc_and_codegen (p:program) (file:string) :unit =
            let p = partition p in
            print_msg ("Split the program into " ^ string_of_int (p |> snd |> List.length) ^ " partition(s), generating .cpp files");
            if Config.get_codegen () = OBLIVC then Codegenoblivc.o_program p file
-           else if Config.get_codegen () = SECURENN then Codegensecurenn.o_program p file
+           else if Config.get_codegen () = PORTHOS then Codegenporthos.o_program p file
            else Codegen.o_program p file;
            Well_typed ()) in
   match x with
@@ -90,9 +90,9 @@ let specs = Arg.align [
                                                    | "ABY" -> ABY |> Config.set_codegen
                                                    | "CPP" -> CPP |> Config.set_codegen
                                                    | "OBLIVC" -> OBLIVC |> Config.set_codegen
-                                                   | "SECURENN" -> SECURENN |> Config.set_codegen
+                                                   | "PORTHOS" -> PORTHOS |> Config.set_codegen
                                                    | _ -> failwith "Invalid codegen mode"),
-                 " Codegen mode (ABY or CPP or OBLIVC or SECURENN, default ABY)");
+                 " Codegen mode (ABY or CPP or OBLIVC or PORTHOS, default ABY)");
                 ("--o_prefix", Arg.String (fun s -> o_prefix := s), " Prefix for output files, default is the input file prefix");
                 ("--disable-tac", Arg.Unit Config.disable_tac, " Disable 3-address code transformation (also disables the CSE optimization)");
                 ("--disable-cse", Arg.Unit Config.disable_cse, " Disable Common Subexpression Elimination optimization");
