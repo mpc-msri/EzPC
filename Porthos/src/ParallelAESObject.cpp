@@ -22,11 +22,12 @@ void swapSmallTypes(smallType *a,
 
 ParallelAESObject::precompute()
 {
+	//TODO (Mayank): Fix hardcoded 1 values.
 	for (size_t i = 0; i < PC_CALLS_MAX*SHUFFLE_MAX*NO_CORES; ++i)
-		randomNumber[i] = 1;
+		randomNumber[i] = 1; //randomNumber[i] = aes_common->get8Bits();
 
 	for (size_t i = 0; i < PC_CALLS_MAX*NONZERO_MAX*NO_CORES; ++i)
-		randomNonZero[i] = 1;
+		randomNonZero[i] = 1; //randomNonZero[i] = aes_common->randNonZeroModPrime();
 }
 
 
