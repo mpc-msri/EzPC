@@ -1,0 +1,3 @@
+- Blog link : https://blogs.technet.microsoft.com/machinelearning/2018/03/07/using-microsoft-ai-to-build-a-lung-disease-prediction-model-using-chest-x-ray-images/
+- Download keras model from https://chestxray.blob.core.windows.net/chestxraytutorial/tutorial_xray/chexray_14_weights_712split_epoch_054_val_loss_191.2588.hdf5
+- Convert the keras model to tensorflow using keras to tf converter. Link : https://github.com/amir-abdi/keras_to_tensorflow

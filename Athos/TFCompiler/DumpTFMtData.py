@@ -1,0 +1,115 @@
+import numpy
+import tensorflow as tf
+from tensorflow.tools.graph_transforms import TransformGraph
+
+def get_optimized_graph_def(output_tensor):
+  #First save the graph def
+  graph_def = tf.get_default_graph().as_graph_def()
+  transforms = [
+   'remove_nodes(op=Identity)', 
+   'strip_unused_nodes',
+   'fold_batch_norms',
+   'fold_constants(ignore_errors=true)'
+   # 'merge_duplicate_nodes', # Removing this otherwise in the output graph the topological ordering is broken - fix some other day #TODO_nishkum
+  ]
+  optimized_graph_def = TransformGraph(graph_def, [], [output_tensor.name], transforms)
+  return optimized_graph_def
+
+def save_graph_metadata(output_tensor, sess, feed_dict):
+  #First save the graph def
+  graph_def = tf.get_default_graph().as_graph_def()
+  transforms = [
+   'remove_nodes(op=Identity)', 
+   'strip_unused_nodes',
+   'fold_batch_norms',
+   'fold_constants(ignore_errors=true)'
+   # 'merge_duplicate_nodes', # Removing this otherwise in the output graph the topological ordering is broken - fix some other day #TODO_nishkum
+  ]
+  optimized_graph_def = TransformGraph(graph_def, [], [output_tensor.name], transforms)
+  with open('./graphDef.mtdata', 'w') as f:
+    f.write(str(optimized_graph_def))
+
+  # Save size information for tensors on which output depends
+  tensors_to_evaluate = []
+  tensors_to_evaluate_names = []
+  graph = tf.get_default_graph()
+  for node in optimized_graph_def.node:
+    cur_output = graph.get_operation_by_name(node.name).outputs[0]
+    tensors_to_evaluate.append(cur_output)
+    tensors_to_evaluate_names.append(node.name)
+  tensors_evaluated = sess.run(tensors_to_evaluate, feed_dict)
+  tensors_shape = list(map(lambda x : x.shape, tensors_evaluated))
+
+  # Write size info in a file
+  with open('./sizeInfo.mtdata','w') as f:
+    for ii, curr in enumerate(tensors_to_evaluate_names):
+      curShape = tensors_shape[ii]
+      f.write(tensors_to_evaluate_names[ii] + ' ')
+      for dim in curShape:
+        f.write(str(dim)+' ')
+      f.write('\n')
+
+  return optimized_graph_def
+
+def updateWeightsForBN(optimized_graph_def, sess, feed_dict):
+  def findNodeInGraphDefWithName(graphDef, curName):
+    for curNode in graphDef.node:
+      if curNode.name == curName:
+        return curNode
+    return None
+
+  print("Updating weights for BN...")
+
+  graph = tf.get_default_graph()
+  graphDef = optimized_graph_def
+
+  for node in graphDef.node:
+      if (node.op == 'FusedBatchNorm'):
+        print("node.name = {0}".format(node.name))
+        gamma = graph.get_operation_by_name(node.input[1]).outputs[0]
+        beta = graph.get_operation_by_name(node.input[2]).outputs[0]
+        mu = graph.get_operation_by_name(node.input[3]).outputs[0]
+        variance = graph.get_operation_by_name(node.input[4]).outputs[0]
+
+        epsilon = 1e-5 # Taken from non-fused BN of TF
+        rsigma = tf.rsqrt(variance + epsilon)
+
+        sess.run(tf.assign(gamma, gamma*rsigma))
+        sess.run(tf.assign(beta, beta - gamma*mu))
+        sess.run(tf.assign(mu, tf.zeros(tf.shape(mu))))
+        sess.run(tf.assign(variance, tf.fill(tf.shape(variance), 1-epsilon)))
+
+  print("BN weight updation done. Continuing...")
+
+def dumpImageDataInt(imgData, filename, scalingFac, writeMode):
+  print("Dumping image data...")
+  with open(filename, writeMode) as ff:
+    for xx in numpy.nditer(imgData, order='C'):
+      ff.write(str(int(xx * (1<<scalingFac))) + ' ')
+    ff.write('\n\n')
+
+def dumpTrainedWeightsInt(sess, evalTensors, filename, scalingFac, writeMode, alreadyEvaluated=False):
+  print("Dumping trained weights...")
+  if alreadyEvaluated: finalParameters = evalTensors
+  else: finalParameters = map(lambda x : sess.run(x), evalTensors)
+  with open(filename, writeMode) as ff:
+    for ii, curParameterVal in enumerate(finalParameters):
+      for xx in numpy.nditer(curParameterVal, order='C'):
+        ff.write(str(int(xx * (1<<scalingFac))) + ' ')
+      ff.write('\n\n')
+
+def dumpTrainedWeightsFloat(sess, evalTensors, filename, writeMode, alreadyEvaluated=False):
+  print("Dumping trained weights float...")
+  if alreadyEvaluated: finalParameters = evalTensors
+  else: finalParameters = map(lambda x : sess.run(x), evalTensors)
+  with open(filename, writeMode) as ff:
+    for ii, curParameterVal in enumerate(finalParameters):
+      for xx in numpy.nditer(curParameterVal, order='C'):
+        ff.write((str(xx)) + ' ')
+      ff.write('\n\n')
+
+def dumpImgAndWeightsData(sess, imgData, evalTensors, filename, scalingFac, alreadyEvaluated=False):
+  print("Starting to dump data...")
+  dumpImageDataInt(imgData, filename, scalingFac, 'w')
+  dumpTrainedWeightsInt(sess, evalTensors, filename, scalingFac, 'a', alreadyEvaluated=alreadyEvaluated)
+

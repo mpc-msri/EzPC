@@ -1,0 +1,59 @@
+(**************************)
+extern void MatMulCSF2D(int32_pl i, int32_pl j, int32_pl k, int32_al[i][j] A, int32_al[j][k] B, int32_al[i][k] C, int32_pl consSF);
+
+(**************************)
+extern void ArgMax1(int32_pl outArrS1, int32_pl inArrS1, int32_pl inArrS2, int32_al[inArrS1][inArrS2] inArr, int32_pl dim, int32_al[outArrS1] outArr);
+
+extern void ArgMax3(int32_pl outs1, int32_pl outs2, int32_pl outs3, 
+			   int32_pl ins1, int32_pl ins2, int32_pl ins3, int32_pl ins4,
+			   int32_al[ins1][ins2][ins3][ins4] inArr, int32_pl dim, int32_al[outs1][outs2][outs3] outArr);
+
+
+(**************************)
+extern void Relu2(int32_pl s1, int32_pl s2, int32_al[s1][s2] inArr, int32_al[s1][s2] outArr);
+extern void Relu4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_al[s1][s2][s3][s4] inArr, int32_al[s1][s2][s3][s4] outArr);
+
+(**************************)
+extern void ElemWiseMul2(int32_pl s1, int32_pl s2, int32_al[s1][s2] arr1, int32_al[s1][s2] arr2, int32_al[s1][s2] outArr, int32_pl shrout);
+extern void ElemWiseMul4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_al[s1][s2][s3][s4] arr1, int32_al[s1][s2][s3][s4] arr2, int32_al[s1][s2][s3][s4] outArr, int32_pl shrout);
+
+(**************************)
+extern void MaxPool(int32_pl N, int32_pl H, int32_pl W, int32_pl C, 
+				  int32_pl ksizeH, int32_pl ksizeW,
+				  int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight,
+				  int32_pl strideH, int32_pl strideW,
+				  int32_pl N1, int32_pl imgH, int32_pl imgW, int32_pl C1,
+  				  int32_al[N1][imgH][imgW][C1] inArr, 
+				  int32_al[N][H][W][C] outArr);
+
+(**************************)
+extern void AvgPool(int32_pl N, int32_pl H, int32_pl W, int32_pl C, 
+				  int32_pl ksizeH, int32_pl ksizeW,
+				  int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight,
+				  int32_pl strideH, int32_pl strideW,
+				  int32_pl N1, int32_pl imgH, int32_pl imgW, int32_pl C1,
+  				  int32_al[N1][imgH][imgW][C1] inArr, 
+				  int32_al[N][H][W][C] outArr);
+
+(**************************)
+extern void FusedBatchNorm4411(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_al[s1][s2][s3][s4] inArr, int32_al[s4] multArr, int32_al[s4] biasArr, int32_pl consSF, int32_al[s1][s2][s3][s4] outputArr);
+
+(**************************)
+extern void ReduceMean24(int32_pl outS1, int32_pl outS2, 
+					  int32_pl inS1, int32_pl inS2, int32_pl inS3, int32_pl inS4, 
+					  int32_al[inS1][inS2][inS3][inS4] inputArr,
+					  int32_pl[2] axes,
+					  int32_al[outS1][outS2] outputArr
+					  );
+
+(**************************)
+extern void ClearMemSecret1(int32_pl s1, int32_al[s1] arr);
+extern void ClearMemSecret2(int32_pl s1, int32_pl s2, int32_al[s1][s2] arr);
+extern void ClearMemSecret3(int32_pl s1, int32_pl s2, int32_pl s3, int32_al[s1][s2][s3] arr);
+extern void ClearMemSecret4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_al[s1][s2][s3][s4] arr);
+
+extern void ClearMemPublic2(int32_pl s1, int32_pl s2, int32_pl[s1][s2] arr);
+
+(**************************)
+extern void StartComputation();
+extern void EndComputation();

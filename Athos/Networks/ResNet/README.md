@@ -1,0 +1,2 @@
+- Source of Pre-trained model: https://github.com/tensorflow/models/tree/master/official/r1/resnet
+	- Resnet-50 v2, fp32, Acc 76.47%, (NHWC)

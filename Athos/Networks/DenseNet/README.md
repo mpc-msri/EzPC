@@ -1,0 +1,1 @@
+- Source of Pretrained model: https://github.com/pudae/tensorflow-densenet

@@ -1,0 +1,312 @@
+(**************************)
+def void MatMulCSF2D(int32_pl i, int32_pl j, int32_pl k, int64_al[i][j] A, int64_al[j][k] B, int64_al[i][k] C, int64_pl consSF){
+	for i1=[0:i]{
+		for i2=[0:k]{
+			C[i1][i2] = 0L;
+			for i3=[0:j]{
+				C[i1][i2] = C[i1][i2] +_al (A[i1][i3]*B[i3][i2]);
+			};
+			C[i1][i2] = C[i1][i2] >> consSF;
+		};
+	};
+}
+
+(**************************)
+def void ArgMax1(int32_pl outArrS1, int32_pl inArrS1, int32_pl inArrS2, int64_al[inArrS1][inArrS2] inArr, int32_pl dim, int64_al[outArrS1] outArr){
+	for od=[0:inArrS1]{
+		int64_al maxi = inArr[od][0];
+		int64_al maxiIdx = 0L;
+		for i=[0:inArrS2]{
+			int64_pl iL = i;
+			maxiIdx = (inArr[od][i] > maxi) ? iL : maxiIdx;
+			maxi = (inArr[od][i] > maxi) ? inArr[od][i] : maxi;
+		};
+		outArr[od] = maxiIdx;
+	};
+}
+
+def void ArgMax3(int32_pl outs1, int32_pl outs2, int32_pl outs3, 
+			   int32_pl ins1, int32_pl ins2, int32_pl ins3, int32_pl ins4,
+			   int64_al[ins1][ins2][ins3][ins4] inArr, int32_pl dim, int64_al[outs1][outs2][outs3] outArr)
+{
+	for iter1=[0:ins1]{
+		for iter2=[0:ins2]{
+			for iter3=[0:ins3]{
+				int64_al maxi = inArr[iter1][iter2][iter3][0];
+				int64_al maxiIdx = 0L;
+				for i=[0:ins4]{
+					int64_pl iL = i;
+					maxiIdx = (inArr[iter1][iter2][iter3][i] > maxi) ? iL : maxiIdx;
+					maxi = (inArr[iter1][iter2][iter3][i] > maxi) ? inArr[iter1][iter2][iter3][i] : maxi;
+				};
+				outArr[iter1][iter2][iter3] = maxiIdx;
+			}
+		}
+	}
+}
+
+(**************************)
+def void Relu2(int32_pl s1, int32_pl s2, int64_al[s1][s2] inArr, int64_al[s1][s2] outArr){
+	for i1=[0:s1]{
+		for i2=[0:s2]{
+			outArr[i1][i2] = (inArr[i1][i2] > 0L ? inArr[i1][i2] : 0L);
+		};
+	};
+}
+
+def void Relu4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int64_al[s1][s2][s3][s4] inArr, int64_al[s1][s2][s3][s4] outArr){
+	for i1=[0:s1]{
+		for i2=[0:s2]{
+			for i3=[0:s3]{
+				for i4=[0:s4]{
+					outArr[i1][i2][i3][i4] = (inArr[i1][i2][i3][i4] > 0L ? inArr[i1][i2][i3][i4] : 0L);
+				};
+			};
+		};
+	};
+}
+
+
+(**************************)
+def void ElemWiseMul2(int32_pl s1, int32_pl s2, int64_al[s1][s2] arr1, int64_al[s1][s2] arr2, int64_al[s1][s2] outArr, int64_pl shrout){
+	for i1=[0:s1]{
+		for i2=[0:s2]{
+			outArr[i1][i2] = ((arr1[i1][i2] * arr2[i1][i2]) >> shrout);
+		};
+	};
+}
+
+def void ElemWiseMul4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int64_al[s1][s2][s3][s4] arr1, int64_al[s1][s2][s3][s4] arr2, int64_al[s1][s2][s3][s4] outArr, int64_pl shrout){
+	for i1=[0:s1]{
+		for i2=[0:s2]{
+			for i3=[0:s3]{
+				for i4=[0:s4]{
+					outArr[i1][i2][i3][i4] = ((arr1[i1][i2][i3][i4] * arr2[i1][i2][i3][i4]) >> shrout);
+				};
+			};
+		};
+	};
+}
+
+(**************************)
+def void ElemWiseDiv2(int32_pl s1, int32_pl s2, int64_al[s1][s2] arr1, int64_al[s1][s2] arr2, int64_al[s1][s2] outArr, int64_pl shrout){
+	for i1=[0:s1]{
+		for i2=[0:s2]{
+			outArr[i1][i2] = ((arr1[i1][i2] / arr2[i1][i2]) << shrout);
+		};
+	};
+}
+
+(**************************)
+def void Floor2(int32_pl s1, int32_pl s2, int64_al[s1][s2] inArr, int64_al[s1][s2] outArr, int64_pl curSF){
+	for i1=[0:s1]{
+		for i2=[0:s2]{
+			int64_pl mask = ~((1L<<curSF) - 1L);
+			outArr[i1][i2] = (inArr[i1][i2] & mask);
+		};
+	};
+}
+
+
+(**************************)
+(* int64_al[N][H][W][C] input *)
+def void MaxPool(int32_pl N, int32_pl H, int32_pl W, int32_pl C,
+				  int32_pl ksizeH, int32_pl ksizeW,
+				  int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight,
+				  int32_pl strideH, int32_pl strideW,
+				  int32_pl N1, int32_pl imgH, int32_pl imgW, int32_pl C1,
+  				  int64_al[N1][imgH][imgW][C1] inArr, 
+				  int64_al[N][H][W][C] outArr){
+	
+	for n=[0:N]{
+		for c=[0:C]{
+			int32_pl leftTopCornerH = 0 - zPadHLeft;
+			int32_pl extremeRightBottomCornerH = imgH - 1 + zPadHRight;
+			int32_pl ctH = 0;
+			while((leftTopCornerH + ksizeH - 1) <= extremeRightBottomCornerH){
+				int32_pl leftTopCornerW = 0 - zPadWLeft;
+				int32_pl extremeRightBottomCornerW = imgW - 1 + zPadWRight;
+				int32_pl ctW = 0;
+				while((leftTopCornerW + ksizeW - 1) <= extremeRightBottomCornerW){
+
+					int64_al maxi = 0L;
+					if ((((leftTopCornerH < 0) || (leftTopCornerH >= imgH)) || ((leftTopCornerW < 0) || (leftTopCornerW >= imgW)))){
+						maxi = 0L;
+					}
+					else{
+						maxi = inArr[n][leftTopCornerH][leftTopCornerW][c];
+					};
+					for fh=[0:ksizeH]{
+						for fw=[0:ksizeW]{
+							int32_pl curPosH = leftTopCornerH + fh;
+							int32_pl curPosW = leftTopCornerW + fw;
+							int64_al temp = 0L;
+							if ((((curPosH < 0) || (curPosH >= imgH)) || ((curPosW < 0) || (curPosW >= imgW)))){
+								temp = 0L;
+							}
+							else{
+								temp = inArr[n][curPosH][curPosW][c];
+							};
+							maxi = ((maxi < temp) ? temp : maxi);
+						};
+					};
+
+					outArr[n][ctH][ctW][c] = maxi;
+					leftTopCornerW = leftTopCornerW + strideW;
+					ctW = ctW + 1;
+				};
+
+				leftTopCornerH = leftTopCornerH + strideH;
+				ctH = ctH + 1;
+			};
+		};
+	};
+
+}
+
+
+(**************************)
+(* int64_al[N][H][W][C] input *)
+def void AvgPool(int32_pl N, int32_pl H, int32_pl W, int32_pl C,
+				  int32_pl ksizeH, int32_pl ksizeW,
+				  int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight,
+				  int32_pl strideH, int32_pl strideW,
+				  int32_pl N1, int32_pl imgH, int32_pl imgW, int32_pl C1,
+  				  int64_al[N1][imgH][imgW][C1] inArr, 
+				  int64_al[N][H][W][C] outArr){
+
+	int32_pl rows = N*C*H*W;
+	int64_al[rows] filterAvg;
+
+	int32_pl rowIdx = 0;
+	for n=[0:N]{
+		for c=[0:C]{
+			int32_pl leftTopCornerH = 0 - zPadHLeft;
+			int32_pl extremeRightBottomCornerH = imgH - 1 + zPadHRight;
+			int32_pl ctH = 0;
+			while((leftTopCornerH + ksizeH - 1) <= extremeRightBottomCornerH){
+				int32_pl leftTopCornerW = 0 - zPadWLeft;
+				int32_pl extremeRightBottomCornerW = imgW - 1 + zPadWRight;
+				int32_pl ctW = 0;
+				while((leftTopCornerW + ksizeW - 1) <= extremeRightBottomCornerW){
+
+					int64_al curFilterSum = 0L;
+					for fh=[0:ksizeH]{
+						for fw=[0:ksizeW]{
+							int32_pl curPosH = leftTopCornerH + fh;
+							int32_pl curPosW = leftTopCornerW + fw;
+							int64_al temp = 0L;
+							if ((((curPosH < 0) || (curPosH >= imgH)) || ((curPosW < 0) || (curPosW >= imgW)))){
+								temp = 0L;
+							}
+							else{
+								temp = inArr[n][curPosH][curPosW][c];
+							};
+							curFilterSum = curFilterSum + temp;
+						};
+					};
+
+					int64_pl ksizeH64 = ksizeH;
+					int64_pl ksizeW64 = ksizeW;
+					int64_pl filterSz64 = (ksizeH64) * (ksizeW64);
+					int64_al curFilterAvg = curFilterSum/filterSz64;
+					filterAvg[rowIdx] = curFilterAvg;
+					rowIdx = rowIdx + 1;
+
+					leftTopCornerW = leftTopCornerW + strideW;
+					ctW = ctW + 1;
+				};
+
+				leftTopCornerH = leftTopCornerH + strideH;
+				ctH = ctH + 1;
+			};
+		};
+	};
+
+	for n=[0:N]{
+		for c=[0:C]{
+			for h=[0:H]{
+				for w=[0:W]{
+					outArr[n][h][w][c] = filterAvg[(n*C*H*W) + (c*H*W) + (h*W) + w];
+				};
+			};
+		};
+	};
+
+}
+
+
+(**************************)
+def void FusedBatchNorm4411(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int64_al[s1][s2][s3][s4] inArr, int64_al[s4] multArr, int64_al[s4] biasArr, int32_pl consSF, int64_al[s1][s2][s3][s4] outputArr){
+	for i1=[0:s1]{
+		for i2=[0:s2]{
+			for i3=[0:s3]{
+				for i4=[0:s4]{
+					int64_al t1 = (inArr[i1][i2][i3][i4] *_al multArr[i4]);
+					int64_al t2 = (t1 >> consSF);
+					outputArr[i1][i2][i3][i4] = t2 + biasArr[i4];
+				};
+			};
+		};
+	};
+}
+
+(**************************)
+def void ReduceMean24(int32_pl outS1, int32_pl outS2, 
+					  int32_pl inS1, int32_pl inS2, int32_pl inS3, int32_pl inS4, 
+					  int64_al[inS1][inS2][inS3][inS4] inputArr,
+					  int32_pl[2] axes,
+					  int64_al[outS1][outS2] outputArr
+					  )
+{
+	for i1=[0:outS1]{
+		for i2=[0:outS2]{
+			int64_al summ = 0L;
+			for i=[0:inS2]{
+				for j=[0:inS3]{
+					summ = summ + inputArr[i1][i][j][i2];
+				};
+			};
+			int64_pl numElem = inS2*inS3;
+			summ = summ / numElem;
+			outputArr[i1][i2] = summ;
+		};
+	};
+}
+
+(**************************)
+def void ClearMemSecret1(int32_pl s1, int64_al[s1] arr)
+{
+	return;
+}
+
+def void ClearMemSecret2(int32_pl s1, int32_pl s2, int64_al[s1][s2] arr)
+{
+	return;
+}
+
+def void ClearMemSecret3(int32_pl s1, int32_pl s2, int32_pl s3, int64_al[s1][s2][s3] arr)
+{
+	return;
+}
+
+def void ClearMemSecret4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int64_al[s1][s2][s3][s4] arr)
+{
+	return;
+}
+
+def void ClearMemPublic2(int32_pl s1, int32_pl s2, int32_pl[s1][s2] arr)
+{
+	return;
+}
+
+(**************************)
+def void StartComputation()
+{
+	return;
+}
+
+def void EndComputation()
+{
+	return;
+}
