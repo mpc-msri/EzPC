@@ -26,7 +26,7 @@ Runs the ResNet-50 code written in TensorFlow to dump the metadata which is requ
 This command execution should result in 2 files which will be used for further compilation - `./Networks/ResNet/graphDef.mtdata` and `./Networks/ResNet/sizeInfo.mtdata`. In addition, a file `./Networks/ResNet/ResNet_img_input.inp` should be created which contains the ResNet-50 pretrained-model and image in a format which can be used later by Porthos.
 - `./CompileTF.sh -b 64 -s 12 -t PORTHOS -f ./Networks/ResNet/ResNet_main.py`
 Using the `CompileTF.sh` script to compile the model to Porthos. This should result in creation of the file - `./Networks/ResNet/ResNet_main_64_porthos0.cpp`.
-- `cp ./Networks/ResNet/ResNet_main_64_porthos.cpp ../Porthos/main.cpp`
+- `cp ./Networks/ResNet/ResNet_main_64_porthos0.cpp ../Porthos/main.cpp`
 Copy the compiled file to Porthos.
 - `cd ../Porthos && make clean && make -j` 
 - Finally run the 3 parties. Open 3 terminals and run the following in each for the 3 parties.
