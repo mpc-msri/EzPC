@@ -22,21 +22,17 @@ The codebase is organized as follows:
 Here we provide an example on how to use Athos to compile TensorFlow based ResNet-50 code to Porthos semi-honest 3PC protocol. The relevant TensorFlow code for ResNet-50 can be found in `./Networks/ResNet/ResNet_main.py`.
 - Refer to `./Networks/ResNet/README.md` for instructions on how to download and extract the ResNet-50 pretrained model from the official TensorFlow model page.
 - `cd ./Networks/ResNet && python3 ResNet_main.py --runPrediction True --scalingFac 12 --saveImgAndWtData True && cd -`
-
 Runs the ResNet-50 code written in TensorFlow to dump the metadata which is required by Athos for further compilation. 
 This command execution should result in 2 files which will be used for further compilation - `./Networks/ResNet/graphDef.mtdata` and `./Networks/ResNet/sizeInfo.mtdata`. In addition, a file `./Networks/ResNet/ResNet_img_input.inp` should be created which contains the ResNet-50 pretrained-model and image in a format which can be used later by Porthos.
 - `./CompileTF.sh -b 64 -s 12 -t PORTHOS -f ./Networks/ResNet/ResNet_main.py`
-
 Using the `CompileTF.sh` script to compile the model to Porthos. This should result in creation of the file - `./Networks/ResNet/ResNet_main_64_porthos.cpp`.
 - `cp ./Networks/ResNet/ResNet_main_64_porthos.cpp ../Porthos/main.cpp`
-
 Copy the compiled file to Porthos.
 - `cd ../Porthos && make clean && make -j` 
 - Finally run the 3 parties. Open 3 terminals and run the following in each for the 3 parties.
 `./party0.sh < ../Athos/Networks/ResNet/ResNet_img_input.inp` ,
 `./party1.sh` ,
 `./party2.sh`.
-
 Once the above runs, the final answer for prediction should appear in the output of party1. For the sample image, this answer should be 249 for ResNet and 248 for DenseNet/SqueezeNet.
 
 Instructions on how to run the particular TensorFlow model in `./Networks` can vary. Please refer to the appropriate readme in each model folder to get more insights. But once that is done, the further compilation commands are the same.
