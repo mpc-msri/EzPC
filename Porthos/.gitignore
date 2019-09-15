@@ -1,0 +1,5 @@
+util/Miracl/
+**/*.o
+**/*.out
+*.log
+**/*.swp

@@ -1,0 +1,3 @@
+- Model taken from :https://github.com/kaizouman/tensorsandbox/tree/master/cifar10/models/squeeze
+- First run python3 Util.py, which will preprocess all the CIFAR 10 images.
+- Then run
