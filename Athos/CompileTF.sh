@@ -161,7 +161,4 @@ elif [ "$compilationTargetLower" == "porthos" ]; then
 	# cd "$porthosFullDirPath"
 	# make -j
 	echo -e "All compilation done."
-else
-	echo -e "Compilation target other than cpp and Porthos. Current compilation target = $compilationTargetHigher."
-	echo -e "Leaving the compiled file as ezpc file at apt location."
 fi
