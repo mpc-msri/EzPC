@@ -156,10 +156,10 @@ if [ "$compilationTargetLower" == "cpp" ]; then
 elif [ "$compilationTargetLower" == "porthos" ]; then
 	cd - > /dev/null
 	python3 ./HelperScripts/AthosToPorthosTemp.py "$fullDirPath/$finalCodeOutputFileName"
-	cd "$fullDirPath"
-	cp "$finalCodeOutputFileName" "$porthosFullDirPath/src/main.cpp"
-	cd "$porthosFullDirPath"
-	make -j
+	# cd "$fullDirPath"
+	# cp "$finalCodeOutputFileName" "$porthosFullDirPath/src/main.cpp"
+	# cd "$porthosFullDirPath"
+	# make -j
 	echo -e "All compilation done."
 else
 	echo -e "Compilation target other than cpp and Porthos. Current compilation target = $compilationTargetHigher."
