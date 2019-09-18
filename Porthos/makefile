@@ -1,4 +1,3 @@
-
 CXX=g++
 SRC_CPP_FILES     := $(wildcard src/*.cpp)
 EX_NN_CPP_FILES	  := $(wildcard src/example_neural_nets/*.cpp)

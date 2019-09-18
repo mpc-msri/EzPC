@@ -1,6 +1,6 @@
 /*
 
-Authors: Mayank Rathee, Nishant Kumar.
+Authors: Nishant Kumar, Mayank Rathee.
 
 Copyright:
 Copyright (c) 2018 Microsoft Research

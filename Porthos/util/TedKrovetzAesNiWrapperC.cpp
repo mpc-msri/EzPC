@@ -1,3 +1,17 @@
+/**
+* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+*
+* Copyright(c) 2013 Ted Krovetz.
+* This file is part of the SCAPI project, is was taken from the file ocb.c written by Ted Krovetz.
+* Some changes and additions have been made and only part of the file written by Ted Krovetz has been copied 
+* only for the use of this project.
+*
+* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+*
+*/
+
+// Copyright(c) 2013 Ted Krovetz.
+
 #include "TedKrovetzAesNiWrapperC.h"
 #include <iostream>
 #include <cstring>
