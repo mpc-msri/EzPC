@@ -34,4 +34,5 @@ Also, use the second build command for Mac to be safe. Read the Caveats part of 
 
 - Matrix multiplication assembly code only works for Intel C/C++ compiler. The non-assembly code has correctness issues when both the multiplicands are large uint64_t's
 
-
+# Acknowledgement
+This codebase is based on an early fork of [this github repo](https://github.com/snwagh/securenn-public).
