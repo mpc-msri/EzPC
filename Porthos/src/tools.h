@@ -13,8 +13,6 @@
 #include <smmintrin.h>
 #include <vector>
 #include <time.h>
-#include "main_gf_funcs.h"
-// #include "../util/sha256.h"
 #include <string>
 #include <openssl/sha.h>
 #include <math.h>
