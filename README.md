@@ -1,8 +1,9 @@
 # CrypTFlow: an end-to-end system for secure TensorFlow inference.
 #### Nishant Kumar, Mayank Rathee, Nishanth Chandran, Divya Gupta, Aseem Rastogi, Rahul Sharma
-Project webpage: https://aka.ms/ezpc
 
 Paper link: [eprint](https://eprint.iacr.org/2019/1049), [arXiv](https://arxiv.org/abs/1909.07814).
+Project webpage: https://aka.ms/ezpc.
+
 ## Introduction
 CrypTFlow consists of 3 components:
 - Athos: an end-to-end compiler from TensorFlow to a variety of semi-honest MPC protocols. Athos leverages EzPC as a low-level intermediate language.
