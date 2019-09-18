@@ -1,3 +1,13 @@
+/*
+ * 	BMR_BGW_aux.cpp
+ * 
+ *      Author: Aner Ben-Efraim, Satyanarayana
+ * 	
+ * 	year: 2016
+ *	
+ *	Modified for crypTFlow. 
+ */
+
 #ifndef TOOLS_H
 #define TOOLS_H
 #pragma once
