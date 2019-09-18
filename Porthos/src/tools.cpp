@@ -1,3 +1,13 @@
+/*
+ * 	BMR_BGW_aux.cpp
+ * 
+ *      Author: Aner Ben-Efraim, Satyanarayana
+ * 	
+ * 	year: 2016
+ *	
+ *	Modified for crypTFlow. 
+ */
+
 #include "tools.h"
 #include <stdint.h>
 #include <mutex> 
