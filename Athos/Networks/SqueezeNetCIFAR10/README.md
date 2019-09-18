@@ -1,4 +1,4 @@
-This folder contains code for the SqueezeNet network on the CIFAR10 dataset. Original source code is taken from [this](https://github.com/kaizouman/tensorsandbox/tree/master/cifar10/models/squeeze) github repo and modified slightly for our purposes.
+This folder contains code for the SqueezeNet network on the CIFAR10 dataset. Original source code of model is taken from [this](https://github.com/kaizouman/tensorsandbox/tree/master/cifar10/models/squeeze) github repo. For preprocessing the code is based on [this github repo](https://github.com/deep-diver/CIFAR10-img-classification-tensorflow). Both the model and preprocessing code were further modified for our purposes.
 
 ## Setup
 - Setup CIFAR10 dataset first using the following command: `cd ../../HelperScripts && ./SetupCIFAR10.sh && cd -`. This sets up the CIFAR10 dataset in this folder:`../../HelperScripts/CIFAR10/`.
