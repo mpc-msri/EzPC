@@ -8,6 +8,7 @@ This folder contains code for Porthos - a semi-honest 3 party secure computation
 * sudo apt-get install make
 
 # Running the protocol
+- First setup Eigen library, used for fast matrix multiplication by Porthos, by running `./setup-eigen.sh`.
 - To compile use `make clean && make -j`.
 - Currently the codebase contains precompiled code the following 3 neural networks: ResNet-50, DenseNet-121 and SqueezeNet for ImageNet, checked into the following folder: `./src/example_neural_nets`. Toggle the flag in `./src/example_neural_nets/network_config.h` to switch the network which runs. Note that if there is more than one network flag uncommented (meaning ON) or if there is already a main file in src, the compilation will error out saying multiple declarations of main function.
 - To run for example the ResNet-50 code, use the following commands:
