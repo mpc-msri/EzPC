@@ -12,7 +12,7 @@ Below we list the packages required to get Athos up and running. We only mention
 The codebase is organized as follows:
 - `HelperScripts`: This folder contains numerous helper scripts which help from automated setup of ImageNet/CIFAR10 dataset to finding accuracy from output files. Please refer to each of the scripts for further instructions on how to use them.
 - `Networks`: This folder contains the code in TensorFlow of the various benchmarks/networks we run in CrypTFlow. Among other networks, it includes code for ResNet, DenseNet, SqueezeNet for ImageNet dataset, SqueezeNet for CIFAR10 dataset, Lenet, Logistic Regression and a chest x-ray demo network.
-- `SeeDot`: This contains code for SeeDot, a high-level intermediate language on which Athos performs various optimizations before compiling from MPC protocols.
+- `SeeDot`: This contains code for SeeDot, a high-level intermediate language on which Athos performs various optimizations before compiling to MPC protocols.
 - `TFCompiler`: This contains python modules which are called from the TensorFlow code for dumping of TensorFlow metadata (required by Athos for compilation to MPC protocols).
 - `TFEzPCLibrary`: This contains library code written in EzPC for the TensorFlow nodes required during compilation.
 - `CompileTF.sh`: The Athos compilation script. Try `./CompileTF.sh --help` for options.
