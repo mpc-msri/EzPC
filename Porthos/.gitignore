@@ -3,3 +3,4 @@ util/Miracl/
 **/*.out
 *.log
 **/*.swp
+lib_eigen/
