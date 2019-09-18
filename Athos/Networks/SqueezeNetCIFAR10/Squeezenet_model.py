@@ -355,7 +355,7 @@ def train(sqn, save_model_path):
 	batch_size = 128
 	keep_probability = 0.7
 	learning_rate = 0.001
-	n_batches = 1 #CIFAR10 dataset in the python version has 5 batches
+	n_batches = 5 #CIFAR10 dataset in the python version has 5 batches
 
 	x = tf.placeholder(tf.float32, shape=(None, 32, 32, 3), name='input_x')
 	y =  tf.placeholder(tf.float32, shape=(None, 10), name='output_y')
@@ -571,7 +571,7 @@ def main():
 				findAndSaveCorrectTestImg(pred, testing_features, testing_labels, './testPred/CorrectImg/', './testPred/IncorrectImg/', './testPred/TestInputs/', sess, sqn, scalingFac)
 
 			if (inp == 'savegraphAndDataBatch' or inp=='testSingleTestInpAndSaveData'):
-				outputFileName = 'SqNet_CIFAR_inpu.inp'
+				outputFileName = 'SqNet_CIFAR_input.inp'
 				for ii,curFeature in enumerate(testing_features):
 					if ii == 0 :
 						DumpTFMtData.dumpImageDataInt(curFeature, outputFileName, scalingFac, 'w')

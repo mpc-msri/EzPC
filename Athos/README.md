@@ -3,7 +3,7 @@ This folder contains code for Athos - an end-to-end compiler from TensorFlow to 
 
 # Requirements/Setup 
 Below we list the packages required to get Athos up and running. We only mention the packages on which the system has been tested thus far. We will update this in due time with more information on requirements. 
-- axel: download manager used to download pretrained models `sudo apt-get install axel`.
+- axel: download manager used to download pre-trained models `sudo apt-get install axel`.
 - python3.6
 - TensorFlow 1.11
 - Numpy
@@ -11,9 +11,9 @@ Below we list the packages required to get Athos up and running. We only mention
 # Directory structure
 The codebase is organized as follows:
 - `HelperScripts`: This folder contains numerous helper scripts which help from automated setup of ImageNet/CIFAR10 dataset to finding accuracy from output files. Please refer to each of the scripts for further instructions on how to use them.
-- `Networks`: This folder contains the code in TensorFlow of the various benchmarks/networks we run in CrypTFlow. Among other networks, it includes code for ResNet, DenseNet, SqueezeNet for ImageNet dataset, SqueezeNet for CIFAR10 dataset, Lenet, Logistic Regression and a chest x-ray demo network.
+- `Networks`: This folder contains the code in TensorFlow of the various benchmarks/networks we run in CrypTFlow. Among other networks, it includes code for ResNet, DenseNet, SqueezeNet for ImageNet dataset, SqueezeNet for CIFAR10 dataset, Lenet, Logistic Regression, and a chest x-ray demo network.
 - `SeeDot`: This contains code for SeeDot, a high-level intermediate language on which Athos performs various optimizations before compiling to MPC protocols.
-- `TFCompiler`: This contains python modules which are called from the TensorFlow code for dumping of TensorFlow metadata (required by Athos for compilation to MPC protocols).
+- `TFCompiler`: This contains python modules which are called from the TensorFlow code for the dumping of TensorFlow metadata (required by Athos for compilation to MPC protocols).
 - `TFEzPCLibrary`: This contains library code written in EzPC for the TensorFlow nodes required during compilation.
 - `CompileTF.sh`: The Athos compilation script. Try `./CompileTF.sh --help` for options.
 - `Paths.config`: This can be used to override the default folders for EzPC and Porthos.
@@ -37,3 +37,9 @@ Once the above runs, the final answer for prediction should appear in the output
 
 Instructions on how to run the particular TensorFlow model in `./Networks` can vary. Please refer to the appropriate readme in each model folder to get more insights. But once that is done, the further compilation commands are the same.
 
+# Preprocessing images and running inference on ImageNet validation dataset
+- First setup the ImageNet validation dataset using the script provided in `./HelperScripts/Prepare_ImageNet_Val.sh`. This sets up the ImageNet validation dataset in the folder - `./HelperScripts/ImageNet_ValData`.
+- Each of the network folders - `./Networks/ResNet`, `./Networks/DenseNet` and `./Networks/SqueezeNetImgNet` is provided with these folders:
+-- `PreProcessingImages`: This folder contains code for preprocessing the images. Code borrowed from the appropriate repository from where the model code is taken
+and modified for our purposes (check the apt network folder for more details on the source of the model).
+-- `AccuracyAnalysisHelper`: This contains further scripts for automating ImageNet dataset preprocessing and inference. Check the apt scripts for more information.
