@@ -4,7 +4,7 @@ Implementations are our own, but the network descriptions are taken from elsewhe
 1. *Network A*: This network was first used in [SecureML](https://eprint.iacr.org/2017/396.pdf). The network description is taken from fig. 10 of [MiniONN paper](https://eprint.iacr.org/2017/452.pdf).
 2. *Network B*: Network description taken from fig. 12 of [MiniONN paper](https://eprint.iacr.org/2017/452.pdf).
 3. *Network C*: Network description taken from the [public implementation](https://github.com/snwagh/securenn-public/blob/master/src/main.cpp) of SecureNN.
-4. *Network D*: Network description taken fromm fig. 3 of [Chameleon paper](https://eprint.iacr.org/2017/1164.pdf]).
+4. *Network D*: Network description taken from fig. 3 of [Chameleon paper](https://eprint.iacr.org/2017/1164.pdf]).
 
 
 ## Setup
