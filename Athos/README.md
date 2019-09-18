@@ -40,6 +40,6 @@ Instructions on how to run the particular TensorFlow model in `./Networks` can v
 # Preprocessing images and running inference on ImageNet validation dataset
 - First setup the ImageNet validation dataset using the script provided in `./HelperScripts/Prepare_ImageNet_Val.sh`. This sets up the ImageNet validation dataset in the folder - `./HelperScripts/ImageNet_ValData`.
 - Each of the network folders - `./Networks/ResNet`, `./Networks/DenseNet` and `./Networks/SqueezeNetImgNet` is provided with these folders:
--- `PreProcessingImages`: This folder contains code for preprocessing the images. Code borrowed from the appropriate repository from where the model code is taken
+	* `PreProcessingImages`: This folder contains code for preprocessing the images. Code borrowed from the appropriate repository from where the model code is taken
 and modified for our purposes (check the apt network folder for more details on the source of the model).
--- `AccuracyAnalysisHelper`: This contains further scripts for automating ImageNet dataset preprocessing and inference. Check the apt scripts for more information.
+	* `AccuracyAnalysisHelper`: This contains further scripts for automating ImageNet dataset preprocessing and inference. Check the apt scripts for more information.
