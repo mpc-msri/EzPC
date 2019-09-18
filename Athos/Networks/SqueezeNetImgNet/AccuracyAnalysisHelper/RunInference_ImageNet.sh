@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Authors: Nishant Kumar.
 
 # Copyright:
@@ -18,7 +20,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-#!/bin/bash
 
 NUMIMAGES=1000
 NUMPROCESSES=6

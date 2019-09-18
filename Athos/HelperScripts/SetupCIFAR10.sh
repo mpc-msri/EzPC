@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Authors: Nishant Kumar.
 
 # Copyright:
@@ -17,8 +19,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
-#!/bin/bash
 
 cifar10DownloadLink="https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz"
 axel -a -n 3 -c --output CIFAR10 "$cifar10DownloadLink"

@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Authors: Nishant Kumar.
 
 # Copyright:
@@ -17,8 +19,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
-#!/bin/bash
 
 kerasModelLink="https://chestxray.blob.core.windows.net/chestxraytutorial/tutorial_xray/chexray_14_weights_712split_epoch_054_val_loss_191.2588.hdf5"
 axel -a -n 3 -c --output PreTrainedModel/KerasModel "$kerasModelLink"

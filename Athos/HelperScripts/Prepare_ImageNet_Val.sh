@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Authors: Nishant Kumar.
 
 # Copyright:
