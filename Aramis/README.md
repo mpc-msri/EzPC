@@ -53,7 +53,7 @@ Aramis already has the following example compiled NNs in `party0/src/example_neu
 # Adding Custom Intel-registered Keys to Aramis
 If you have registered you own keys with Intel, then you can follow these steps to use them instead of the preincluded ones.
 * Go to `service-provider/defs.h` and update your Intel assigned SPID and QUOTE_SIGN_TYPE in the file.
-* You must have recieved a `RK_PUB` (or a certificate file of IAS) file from Intel after registeration. Append Certification and Private Key components in that file after one another in order and put them in the `service-provider/cert_and_key.pem` overwriting the previous certificate and private key.
+* Create an empty pem file with the name - "cert_and_key.pem" and put in the certificate that you used to register to Intel developer account and in a new line of this file (cert_and_key.pem) after the certificate, put the key that you used while generating the certificate. If you used openssl to generate the certificate, then the certificate.pem and key.pem files are both created in the same directory. Put this file in the `service-provider/cert_and_key.pem` overwriting the previous certificate and private key.
 * Overwrite the files `party0/Enclave/Enclave_private.pem`, `party1/Enclave/Enclave_private.pem` and `party2/Enclave/Enclave_private.pem` with you self-signed private key that you created for registering with Intel. (Previous section of README, point 1).
 * Go to file `service-provider/IAS_web_service/IAS_web_service.cpp` in the funtion `send_to_ias_sig_rl()` and update the values `subscription_key_p` and `subscription_key_s` with your primary and secondary subscription keys.
 
