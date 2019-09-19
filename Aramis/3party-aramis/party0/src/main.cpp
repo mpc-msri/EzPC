@@ -29,7 +29,7 @@ SOFTWARE.
 // SGX instream
 #include "../utils_sgx_port/utils_input_sgx.h"
 
-#ifdef INC_RESNET
+#ifdef INC_NN
 
 sgx_instream cin = sgx_instream();
 

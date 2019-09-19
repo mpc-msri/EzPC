@@ -21,7 +21,7 @@ SOFTWARE.
 
 //Which benchmark to run
 
-#define INC_RESNET
+#define INC_NN
 //#define RESNET18
 //#define RESNET34
 //#define RESNET50
