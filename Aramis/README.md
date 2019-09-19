@@ -36,7 +36,7 @@ Aramis already has the following example compiled NNs in `party0/src/example_neu
 * The 4 benchmarks from SecureNN paper.
 
 # Programming in SGX
-* You can debug SGX applications using a tool that comes with SGX SDK called `sgx-gdb`. When running it, you might face a SIGILL interrupt, enter `c` and continue. You will need to do this 4 times. Don't worry, this will not have any effect on your debugging.
+* You can debug SGX applications using a tool that comes with SGX SDK called `sgx-gdb`. When running Aramis with it, you might face a SIGILL interrupt at the beginning itself, enter `c` and continue. You will need to do this 4 times. Don't worry, this will not have any effect on your debugging. This fault comes because of absence of access to CPU_ID to SGX SSL lib.
 * If you want to benchmark the peak memory usage of your SGX application, then you can use `sgx_emmt` tool. To use it, run your application with `sgx-gdb` and enter `enable sgx_emmt` before running you application.
 * You might face a SIGILL or SEGFAULT error while running a big NN in Aramis. This occurs when you try to use more memory during runtime than what is specified in the file `party0/Enclave/Enclave.config.xml`. There are 2 lines there, one for `StackMaxSize` and the other for `HeapMaxSize`. To fix SIGLL or SEGFAULT, you can increase these values. Try increasing only the `HeakMaxSize` value first and it the faults are still there, then increase `StackMaxSize` slowly and try to run. These values are in Hex representation of the number of Bytes the program is expected to use during runtime. Remember to run `./update_all.sh` after any change that you make to `party0/` directory to update `party1/` and `party2/` directories automatically.
 
