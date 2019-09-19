@@ -20,6 +20,25 @@ This directory contains code for Aramis - a novel technique that uses hardware w
 * Open up 4 terminal sessions for party0, party1, party2 and service provider and enter their respective directories on each terminal window.
 * Run `make clean && make` in each window and this should compile Aramis.
 * Now, to run, in the window for party0, run `./aramis < <Path to input image file>`, on windows for party1 and party2, run `./aramis` and on the service-provider window, run `./truce-server`.
+* Note that you will need an input image file to run a NN. For this, refer to Athos and Porthos documentation on how to generate input image file. Use the path of that image file in the previous step.
+
+# Running Aramis on Athos compiled NNs
+* Go to `party0/` directory. Note that this should be your main working directory. You should make all changes here and then run `./update-all.sh` in this directory to update `party1/` and `party2/` automatically.
+* Athos compiled files can be found in Porthos directory. You can take any Porthos NN file and compile it to Aramis. Suppose that you want to run ResNet50 in Aramis. Porthos (Athos compiled) code for ResNet50 resides in `Porthos/src/example_neural_nets/mainResNet50.cpp`. Open the file `Aramis/3party-aramis/party0/compile_porthos_to_aramis.py` and update the path of `porthos_file` object to `../../../Porthos/src/example_neural_nets/mainResNet50.cpp`.
+* Now in the same `party0/` directory, run `./compile_to_aramis.sh`. This will compile the NN to Aramis and also automatically update `party1/` and `party2/` directories.
+* After this, you can follow the instructions as mentioned in the previous section of this README. (Running Aramis section).
+
+# Included Examples
+Aramis already has the following example compiled NNs in `party0/src/example_neural_nets/` directory. To run these examples, copy the code of the respective example file (cpp file) to `party0/src/main.cpp` and overwrite it. Also, go to `party0/src/network_config.h` file and change the preprocessor flag to the network that you want to run. Finally, run `./update_all` to update code of the other 2 parties as well.
+* ResNet50 and other ResNet variants.
+* DenseNet121
+* SqeezeNet
+* The 4 benchmarks from SecureNN paper.
+
+# Programming in SGX
+* You can debug SGX applications using a tool that comes with SGX SDK called `sgx-gdb`. When running it, you might face a SIGILL interrupt, enter `c` and continue. You will need to do this 4 times. Don't worry, this will not have any effect on your debugging.
+* If you want to benchmark the peak memory usage of your SGX application, then you can use `sgx_emmt` tool. To use it, run your application with `sgx-gdb` and enter `enable sgx_emmt` before running you application.
+* You might face a SIGILL or SEGFAULT error while running a big NN in Aramis. This occurs when you try to use more memory during runtime than what is specified in the file `party0/Enclave/Enclave.config.xml`. There are 2 lines there, one for `StackMaxSize` and the other for `HeapMaxSize`. To fix SIGLL or SEGFAULT, you can increase these values. Try increasing only the `HeakMaxSize` value first and it the faults are still there, then increase `StackMaxSize` slowly and try to run. These values are in Hex representation of the number of Bytes the program is expected to use during runtime. 
 
 # Some Notes Regarding SGX Configuration and Aramis
 * The project's Remote Attestation handling routine is totally compatible with Intel IAS API version 3, revision 5.
