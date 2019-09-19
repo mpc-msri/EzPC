@@ -1,0 +1,11 @@
+**/*.o
+**/*.out
+**/*_u.*
+**/*_t.*
+**/*.so
+**/dumpsign.txt
+**/app
+**/*.swp
+**/sgx-gdb
+**/sgx-gdb*
+**/aramis

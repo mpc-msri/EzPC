@@ -1,0 +1,22 @@
+<EnclaveConfiguration>
+  <ProdID>0</ProdID>
+  <ISVSVN>0</ISVSVN>
+  <StackMaxSize>0x1988000</StackMaxSize>
+  <HeapMaxSize>0x44f84000</HeapMaxSize>
+  <!-- SqueezeNet for ImageNet with all opti 484000, 107ac000 --> 
+  <!-- SqueezeNet for ImageNet with all opti HEAP 484000, 16c00000 --> 
+  <!-- Any older network (Aramis old numbers taken with) 7f6000, 5075000 -->
+  <!-- SecureML 5000, 875000 -->
+  <!-- SecureML with opti c8000, 47e000 -->
+  <!-- Resnet 1313000, 77360000 -->
+  <!-- Resnet with all opti 1988000, 44f84000 -->
+  <!-- Densenet 1d4c000, 2f2e7000 -->
+  <!-- Densenet with all opti 1d4c000, 31131000 -->
+  <!-- ResNet50 with all opti 1d4c000, 1e848000 -->
+  <TCSNum>10</TCSNum>
+  <TCSPolicy>1</TCSPolicy>
+  <!-- Recommend changing 'DisableDebug' to 1 to make the enclave undebuggable for enclave release -->
+  <DisableDebug>0</DisableDebug>
+  <MiscSelect>0</MiscSelect>
+  <MiscMask>0xFFFFFFFF</MiscMask>
+</EnclaveConfiguration>

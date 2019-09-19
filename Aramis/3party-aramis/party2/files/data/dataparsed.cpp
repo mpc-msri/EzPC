@@ -1,0 +1,11 @@
+#include "dataparsed.h"
+//int dataAC[6272];
+//int dataBD[6272];
+//int labelAC[80];
+//int labelBD[80];
+//int test_dataAC[6272];
+//int test_dataBD[6272];
+//int test_labelAC[80];
+//int test_labelBD[80];
+//int datasample[6272];
+//int labelsample[80];

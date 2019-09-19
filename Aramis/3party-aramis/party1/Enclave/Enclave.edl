@@ -1,0 +1,201 @@
+/*
+ * Copyright (C) 2011-2019 Intel Corporation. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above copyright
+ *     notice, this list of conditions and the following disclaimer in
+ *     the documentation and/or other materials provided with the
+ *     distribution.
+ *   * Neither the name of Intel Corporation nor the names of its
+ *     contributors may be used to endorse or promote products derived
+ *     from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+
+/*
+ * Modified by Mayank Rathee, Microsoft Research India.
+ * mayankrathee.japan@gmail.com
+ */
+
+/* Enclave.edl - Top EDL file. */
+
+enclave {
+
+	from "sgx_tstdc.edl" import *;
+	from "sgx_tae_service.edl" import *;
+	from "TrustedLibrary/sgx_tprotected_fs.edl" import *;
+	include "sgx_tprotected_fs.h"
+	include "user_types.h" /* buffer_t */
+	include "stdbool.h"
+	include "stdint.h"
+	include "sgx_report.h"
+	include "../truce_headers/IAS_report.h"
+	include "../truce_headers/truce_record.h"
+	include "../truce_headers/defs.h"
+	include "sgx_quote.h"
+
+
+	from "Edger8rSyntax/Types.edl" import *;
+	from "Edger8rSyntax/Pointers.edl" import *;
+	from "Edger8rSyntax/Arrays.edl" import *;
+	from "Edger8rSyntax/Functions.edl" import *;
+
+	from "TrustedLibrary/Libc.edl" import *;
+	from "TrustedLibrary/Libcxx.edl" import ecall_exception, ecall_map;
+	from "TrustedLibrary/Thread.edl" import *;
+
+	trusted {
+
+		public sgx_status_t ECALL_generate_keys();
+
+		public sgx_status_t ECALL_get_public_keys_size([out] uint32_t *pub_keys_size);
+		public sgx_status_t ECALL_get_public_keys([out,size=pub_keys_size] uint8_t *p_public_keys,
+				uint32_t pub_keys_size);
+
+		public sgx_status_t ECALL_create_enclave_report(
+				[in]  const sgx_target_info_t *p_target_info,
+				[out] sgx_report_t *p_report);
+
+		public sgx_status_t ECALL_get_sealed_keys_size([out] uint32_t *sealed_keys_size);
+
+		public sgx_status_t ECALL_seal_keys(
+				[out,size=sealed_keys_size] uint8_t *sealed_keys,
+				uint32_t sealed_keys_size);
+
+		public sgx_status_t ECALL_unseal_keys(
+				[in,size=sealed_keys_size] const uint8_t *sealed_keys,
+				uint32_t sealed_keys_size);
+
+		public sgx_status_t ECALL_add_secret(
+				[in,size=secret_buf_size] const uint8_t *secret_buf,
+				uint32_t secret_buf_size, [out,size=ptbacksize] uint8_t* ptback, uint32_t ptbacksize, [out, size=4] uint32_t* ptactualsize);
+
+		public sgx_status_t ECALL_integer_arithmetic([in, out, size=4]uint32_t *input);
+
+		public sgx_status_t ECALL_generate_signature( [in, size=data_size] uint8_t* data, uint32_t data_size, [in, out, size=64] uint8_t* signature);
+
+		public sgx_status_t verify_signature_and_data([in, size=data_size] uint8_t* pdata, uint32_t data_size, [in, size=64] uint8_t* sig, uint32_t serverid);
+
+		public sgx_status_t verify_IAS_report_inside_enclave([in, size=t_id_size] truce_id_t* t_id, uint32_t t_id_size, [in, size=t_rec_size] truce_record_t* t_rec, uint32_t t_rec_size, [in, size=mrenclave_size] sgx_measurement_t* expected_mrenclave, uint32_t mrenclave_size, [in, size=mrsigner_size] sgx_measurement_t* expected_mrsigner, uint32_t mrsigner_size, [in, size=keysize] uint8_t* publickeys, uint32_t keysize, uint32_t serverid, int sequence);
+
+		public sgx_status_t aes_decrypt_message_mac([in, size=len] uint8_t *encMessageIn, size_t len, [in, out, size=lenOut] uint8_t *decMessageOut, size_t lenOut, int targetparty);
+
+		public sgx_status_t aes_encrypt_message_mac([in, size=len] uint8_t *decMessageIn, size_t len, [in, out, size=lenOut] uint8_t *encMessageOut, size_t lenOut, int targetparty);
+
+		public sgx_status_t encrypt_and_sign_aes_key([in, out, size=encdatalen] uint8_t* encdata, [in, out, size=64] uint8_t* signature, uint32_t encdatalen, uint32_t partyid, int sequence);
+
+		public sgx_status_t ECALL_save_keys_from_report([in, size=t_id_size] truce_id_t* t_id, uint32_t t_id_size, [in, size=t_rec_size] truce_record_t* t_rec, uint32_t t_rec_size, [in, size=mrenclave_size] sgx_measurement_t* expected_mrenclave, uint32_t mrenclave_size, [in, size=mrsigner_size] sgx_measurement_t* expected_mrsigner, uint32_t mrsigner_size, [in, size=keysize] uint8_t* publickeys, uint32_t keysize, uint32_t serverid, int sequence);
+
+		void ocall_print_string([in, string] const char *str);
+
+		public void main_securenn(int pnum);
+
+		public sgx_status_t ECALL_get_RSA_cipher_size([in, out, size=4] uint32_t* rsasize, int partyid, int sequence);
+		
+		public sgx_status_t decrypt_verify_aes_key_and_save([in, size=data_size] uint8_t* pdata, uint32_t data_size, [in, size=64] uint8_t* sig, uint32_t partyid, int sequence);
+
+		public void register_keys([in, size=size1] const char* key1, int size1, [in, size=size2] const char* key2, int size2, [in, size=size3] const char* key3, int size3, int pnum);
+
+		public void parallelPC_sgx_threaded(int worker_thread_num);
+
+		public void matmul_sgx_threaded(int worker_thread_num);
+
+		public void aes_parallel_populate_thread_dispatcher(int worker_thread_num);
+
+		public void aes_parallel_sharesModuloOdd_thread_dispatcher(int worker_thread_num);
+
+		public void aes_parallel_sharesOfBits_thread_dispatcher(int worker_thread_num);
+
+		public void deduceZeroThreadDispatcher(int thread_id);
+
+		public void aes_parallel_populate_flat_vector_thread_dispatcher(int thread_id);
+
+		public void aes_parallel_sharesOfBits_primary_thread_dispatcher(int worker_thread_num);
+
+		public void peek_inside_enclave(int worker_thread_num);
+
+		public void sgx_sleep(int secs);
+
+		public void set_party_number(int pnum);
+
+	};
+
+
+	untrusted {
+		void ocall_print_string_out([in, string] const char *str);
+		
+		void OCALL_AramisNet_Constructor([in, size=hostlen] char* host, int hostlen, int portno, int ukey, int host_p_num);
+
+		void OCALL_AramisNet_Constructor_server(int portno, int ukey);
+
+		void OCALL_AramisNet_Destructor(int ukey);
+
+		bool OCALL_AramisNet_listenNow(int ukey);
+
+		bool OCALL_AramisNet_connectNow(int ukey);
+
+		bool OCALL_AramisNet_sendMsg(int size, int conn, int ukey, [in, size=size] const void* data);
+
+		bool OCALL_AramisNet_receiveMsg([in, out, size=size] void* buff, int size, int conn, int ukey);
+
+		void OCALL_get_input_sgx_instream([in, out, size=8] uint64_t* get_in);
+
+		void touch_time();
+
+		void leave_time();
+
+		void leave_time_get_val([in, out, size=8] uint64_t* val);
+
+		void ocall_parallelPC_spawn_threads(int thread_num);
+
+		void ocall_matmul_spawn_threads(int thread_num);
+
+		void ocall_parallelPC_join_threads();
+
+		void ocall_matmul_join_threads();
+
+		void ocall_join_threads();
+
+		void ocall_populate_aes_spawn_threads(int thread_num);
+
+		void ocall_sharesModuloOdd_aes_spawn_threads(int thread_num);
+
+		void ocall_sharesOfBits_aes_spawn_threads(int thread_num);
+
+		void ocall_deduce_zero_spawn_threads(int thread_num);
+
+		void ocall_populate_flat_vector_aes_spawn_threads(int thread_num);
+
+		void ocall_sharesOfBits_primary_aes_spawn_threads(int thread_num);
+
+		void ocall_join_threads_half();
+
+		void ocall_create_testing_threads(int thread_num);
+
+		void ocall_join_testing_threads();
+
+		void ocall_sgx_sleep(int secs);
+
+		void tread_cross_bridge(int size, [in, out, size=size] uint64_t* vec);
+
+		void ocall_abort_sgx(int error_code);
+	};
+
+};
