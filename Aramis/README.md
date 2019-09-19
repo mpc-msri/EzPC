@@ -38,5 +38,11 @@ If you have registered you own keys with Intel, then you can follow these steps 
 * Overwrite the files `party0/Enclave/Enclave_private.pem`, `party1/Enclave/Enclave_private.pem` and `party2/Enclave/Enclave_private.pem` with you self-signed private key that you created for registering with Intel. (Previous section of README, point 1).
 * Go to file `service-provider/IAS_web_service/IAS_web_service.cpp` in the funtion `send_to_ias_sig_rl()` and update the values `subscription_key_p` and `subscription_key_s` with your primary and secondary subscription keys.
 
+# External Code
+This project contains/relies on some components of the following external code.
+* https://github.com/ReneNyffenegger/cpp-base64 for utility cpp functions.
+* https://github.com/IBM/sgx-trust-management/ for basic attestation framework.
+* A very early fork of https://github.com/snwagh/securenn-public.
+
 For bugs, issues or clarifications, contact at mayankrathee.japan@gmail.com.
 
