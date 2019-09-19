@@ -17,6 +17,7 @@ In particular, this repository contains the code for the following components:
 - Athos
 - EzPC
 - Porthos
+- Aramis
 
 Each one of the above is independent and usable in their own right and more information can be found in the readme of each of the components. But together these combine to make CrypTFlow a powerful system for end-to-end secure inference of deep neural networks written in TensorFlow.
 
