@@ -286,3 +286,7 @@ void ClearMemSecret4(int32_t s1,
 void ClearMemPublic2(int32_t s1, 
 		int32_t s2, 
 		vector< vector< int32_t > >& arr);
+
+void StartComputation();
+
+void EndComputation();

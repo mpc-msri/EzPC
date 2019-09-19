@@ -299,7 +299,7 @@ int SGX_CDECL main(int argc, char *argv[])
     edger8r_pointer_attributes(party_num);
     
     //RUN ARAMIS PROTOCOL
-    main_securenn(global_eid, party_num);
+    main_aramis(global_eid, party_num);
 
     /* Destroy the enclave */
     sgx_destroy_enclave(global_eid);

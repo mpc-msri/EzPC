@@ -152,6 +152,6 @@ void sgx_main(int pnum, const char *fmt, ...)
 	party_num = pnum;
 	struct cmd_pack* pack;
 	struct cmd_pack* packsh;
-	main_securenn(pnum);
+	main_aramis(pnum);
 }
 

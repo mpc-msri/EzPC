@@ -105,7 +105,7 @@ enclave {
 
 		void ocall_print_string([in, string] const char *str);
 
-		public void main_securenn(int pnum);
+		public void main_aramis(int pnum);
 
 		public sgx_status_t ECALL_get_RSA_cipher_size([in, out, size=4] uint32_t* rsasize, int partyid, int sequence);
 		

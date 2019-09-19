@@ -693,7 +693,7 @@ void ClearMemPublic(int32_t x){
 
 
 
-void main_securenn(int pnum)
+void main_aramis(int pnum)
 {
 touch_time();
 parseInputs(pnum);

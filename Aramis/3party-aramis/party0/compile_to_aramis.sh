@@ -20,6 +20,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-cp -r * ../party1/.
-cp -r * ../party2/.
-
+python compile_porthos_to_aramis.py
+mv compiled_aramis_file.cpp src/main.cpp
+./update-all.sh

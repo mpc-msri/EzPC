@@ -850,9 +850,9 @@ void ClearMemPublic2(int32_t s1, int32_t s2, vector< vector< int32_t > >& arr){
 }
 
 void StartComputation(){
-	print_string("Reached start of computation. Syncronizing across parties...");
+	print_string("[ARAMIS STATUS]: Aramis initilization completed. Bootstrapping main protocol now...");
 	synchronize(2000000);
-	print_string("Syncronized");
+	print_string("[ARAMIS STATUS]: Starting main protocol...");
 	touch_time();
 }
 

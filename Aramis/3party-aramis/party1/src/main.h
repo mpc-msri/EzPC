@@ -28,7 +28,7 @@ SOFTWARE.
 #include "sgx_trts.h"
 #include "../Enclave/Enclave_t.h"
 
-#ifdef CCS_RESNET
-void main_securenn(int pnum);
+#ifdef INC_NN
+void main_aramis(int pnum);
 #endif
 

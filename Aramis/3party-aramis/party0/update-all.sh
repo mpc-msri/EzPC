@@ -21,5 +21,6 @@
 # SOFTWARE.
 
 cp -r * ../party1/.
+rm ../party1/*.sh
 cp -r * ../party2/.
-
+rm ../party2/*.sh
