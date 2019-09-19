@@ -1,4 +1,4 @@
-# CrypTFlow: an end-to-end system for secure TensorFlow inference.
+# CrypTFlow: An End-to-end System for Secure TensorFlow Inference.
 #### Nishant Kumar, Mayank Rathee, Nishanth Chandran, Divya Gupta, Aseem Rastogi, Rahul Sharma
 
 Paper link: [eprint](https://eprint.iacr.org/2019/1049), [arXiv](https://arxiv.org/abs/1909.07814).
