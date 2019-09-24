@@ -7,6 +7,8 @@ Project webpage: https://aka.ms/ezpc.
 
 [![Build Status](https://travis-ci.org/mayank0403/EzPC.svg?branch=master)](https://github.com/mpc-msri/EzPC)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/mpc-msri/EzPC/issues)
+[![HitCount](http://hits.dwyl.io/mpc-msri/EzPC.svg)](http://hits.dwyl.io/mpc-msri/EzPC)
 
 ## Introduction
 CrypTFlow consists of 3 components:
