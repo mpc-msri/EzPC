@@ -5,6 +5,8 @@ Paper link: [eprint](https://eprint.iacr.org/2019/1049), [arXiv](https://arxiv.o
 
 Project webpage: https://aka.ms/ezpc.
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 ## Introduction
 CrypTFlow consists of 3 components:
 - Athos: an end-to-end compiler from TensorFlow to a variety of semi-honest MPC protocols. Athos leverages EzPC as a low-level intermediate language.
