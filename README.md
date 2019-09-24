@@ -5,7 +5,9 @@ Paper link: [eprint](https://eprint.iacr.org/2019/1049), [arXiv](https://arxiv.o
 
 Project webpage: https://aka.ms/ezpc.
 
-# Porthos [![Build Status](https://travis-ci.org/mayank0403/EzPC.svg?branch=master)](https://github.com/mpc-msri/EzPC)
+# Porthos 
+
+[![Build Status](https://travis-ci.org/mayank0403/EzPC.svg?branch=master)](https://github.com/mpc-msri/EzPC)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
