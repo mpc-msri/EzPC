@@ -8,12 +8,15 @@ Project webpage: https://aka.ms/ezpc.
 [![Build Status](https://travis-ci.org/mayank0403/EzPC.svg?branch=master)](https://github.com/mpc-msri/EzPC)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/mpc-msri/EzPC/issues)
+
 [![HitCount](http://hits.dwyl.io/mpc-msri/EzPC.svg)](http://hits.dwyl.io/mpc-msri/EzPC)
 ![GitHub contributors](https://img.shields.io/github/contributors/mpc-msri/EzPC)
 ![GitHub All Releases](https://img.shields.io/github/downloads/mpc-msri/EzPC/total)
+
 ![GitHub repo size](https://img.shields.io/github/repo-size/mpc-msri/EzPC)
 ![GitHub language count](https://img.shields.io/github/languages/count/mpc-msri/EzPC)
 ![GitHub search hit counter](https://img.shields.io/github/search/mpc-msri/EzPC/ezpc)
+
 ![GitHub search hit counter](https://img.shields.io/github/search/mpc-msri/EzPC/cryptflow)
 
 ## Introduction
