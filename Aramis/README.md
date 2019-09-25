@@ -63,5 +63,4 @@ This project contains/relies on some components of the following external code.
 * https://github.com/IBM/sgx-trust-management/ for basic attestation framework.
 * A very early fork of https://github.com/snwagh/securenn-public.
 
-For bugs, issues or clarifications, contact at mayankrathee.japan@gmail.com.
 
