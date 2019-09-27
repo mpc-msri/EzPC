@@ -15,9 +15,13 @@ Project webpage: https://aka.ms/ezpc.
 
 ![GitHub repo size](https://img.shields.io/github/repo-size/mpc-msri/EzPC)
 ![GitHub language count](https://img.shields.io/github/languages/count/mpc-msri/EzPC)
-![GitHub search hit counter](https://img.shields.io/github/search/mpc-msri/EzPC/ezpc)
+![Maintenance](https://img.shields.io/maintenance/yes/2019)
 
+
+![GitHub search hit counter](https://img.shields.io/github/search/mpc-msri/EzPC/ezpc)
 ![GitHub search hit counter](https://img.shields.io/github/search/mpc-msri/EzPC/cryptflow)
+![GitHub issues](https://img.shields.io/github/issues/mpc-msri/EzPC)
+
 
 ## Introduction
 CrypTFlow consists of 3 components:
@@ -37,4 +41,8 @@ Each one of the above is independent and usable in their own right and more info
 
 For setup instructions, please refer to each of the components' readme. We plan to release a docker version of the system as well which will make the system easier to setup.
 
+## Wiki
+Wiki section of this repository provides coding practices and examples to get started with EzPC.
+
+## Issues/Bugs
 For bugs and support, please create an issue on the issues page.
