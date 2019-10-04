@@ -95,15 +95,15 @@ class IRBuilderCSF(ASTVisitor):
 		r = node.value
 		p = self.get_expnt(abs(r))
 		k = IR.DataType.getInt(np.ldexp(r, p))
-		comment = IR.Comment('Float to int : ' + str(r) + ' to ' + str(k))
 		expr = None
+		prog = IR.Prog([IR.Comment('Float to int : {0} to {1}, isSecret = {2}.'.format(str(r), str(k), node.isSecret))])
 		if not(node.isSecret):
 			expr = IR.Int(k)
 		else:
 			expr = self.getTempVar()
 			self.decls[expr.idf] = [node.type]
-		prog = IRUtil.prog_merge(IR.Prog([IR.Decl(expr.idf, node.type)]), prog)
-		return (IR.Prog([comment]), expr)
+			prog = IRUtil.prog_merge(IR.Prog([IR.Decl(expr.idf, node.type)]), prog)
+		return (prog, expr)
 
 	def visitId(self, node:AST.ID, args=None):
 		idf = node.name

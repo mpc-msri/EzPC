@@ -147,6 +147,15 @@ def void CreateIdentity44(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, in
 }
 
 (**************************)
+def void CreateCopy2211(int32_pl s1, int32_pl s2, int32_pl inps1, int32_pl inps2, int64_al[inps1][inps2] inArr, int32_pl perDimSize, int32_pl[perDimSize] beginIdx, int32_pl[perDimSize] sizeIdx, int64_al[s1][s2] outArr){
+	for i=[0:s1]{
+		for j=[0:s2]{
+			outArr[i][j] = inArr[beginIdx[0]+i][beginIdx[1]+j];
+		};
+	};
+}
+
+(**************************)
 def void Concat2T444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl axis, int64_al[s1][s2][s3][s4] outp){
 	for i1=[0:s1]{
 		for i2=[0:s2]{
@@ -189,6 +198,29 @@ def void Concat2T444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_p
 							};
 						};
 					};
+				};
+			};
+		};
+	};
+}
+
+def void Concat2T222(int32_pl s1, int32_pl s2, int32_pl inp1s1, int32_pl inp1s2, int64_al[inp1s1][inp1s2] inp1, int32_pl inp2s1, int32_pl inp2s2, int64_al[inp2s1][inp2s2] inp2, int32_pl axis, int64_al[s1][s2] outp){
+	for i1=[0:s1]{
+		for i2=[0:s2]{
+			if (axis==0){
+				if (i1 < inp1s1){
+					outp[i1][i2] = inp1[i1][i2];
+				}
+				else{
+					outp[i1][i2] = inp2[i1-inp1s1][i2];
+				};
+			}
+			else{
+				if (i2 < inp1s2){
+					outp[i1][i2] = inp1[i1][i2];
+				}
+				else{
+					outp[i1][i2] = inp2[i1][i2-inp1s2];
 				};
 			};
 		};
@@ -350,5 +382,9 @@ def void Squeeze24(int32_pl s1, int32_pl s2, int32_pl dim1, int32_pl dim2, int32
 
 (**************************)
 def void ClearMemPublic(int32_pl x){
+	return;
+}
+
+def void ClearMemPublic1(int32_pl s, int32_pl[s] x){
 	return;
 }

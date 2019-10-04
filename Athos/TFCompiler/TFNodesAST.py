@@ -121,7 +121,7 @@ class TFNodesAST:
 		inputsRef = curNode.getInputsRef()
 		assert(len(inputsRef) == 2)
 		return (None, AST.BOp(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]),
-							TFNodesAST.getOperatorsIdx('*'),
+							TFNodesAST.getOperatorsIdx('.*'),
 							AST.ID(dictNodeNameToOutVarStr[inputsRef[1]])
 							))
 
