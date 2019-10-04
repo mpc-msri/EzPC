@@ -58,37 +58,37 @@ share* signedgtbl(share* x, share* y){
 share* ux = x;
 
 share* uy = y;
-/* Temporary variable for sub-expression on source location: (5,28-5,33) */
+/* Temporary variable for sub-expression on source location: (25,28-25,33) */
 int32_t __tac_var1 = ( (int32_t)1 <<  (int32_t)31);
-/* Temporary variable for sub-expression on source location: (5,28-5,33) */
+/* Temporary variable for sub-expression on source location: (25,28-25,33) */
 share* __tac_var2 = put_cons32_gate(ycirc, __tac_var1);
 
 share* signBitX = ycirc->PutANDGate(x, __tac_var2);
-/* Temporary variable for sub-expression on source location: (6,28-6,33) */
+/* Temporary variable for sub-expression on source location: (26,28-26,33) */
 int32_t __tac_var3 = __tac_var1;
-/* Temporary variable for sub-expression on source location: (6,28-6,33) */
+/* Temporary variable for sub-expression on source location: (26,28-26,33) */
 share* __tac_var4 = __tac_var2;
 
 share* signBitY = ycirc->PutANDGate(y, __tac_var2);
-/* Temporary variable for sub-expression on source location: (7,10-7,29) */
+/* Temporary variable for sub-expression on source location: (27,10-27,29) */
 share* __tac_var5 = ycirc->PutXORGate(signBitX, signBitY);
-/* Temporary variable for sub-expression on source location: (7,33-7,35) */
+/* Temporary variable for sub-expression on source location: (27,33-27,35) */
 share* __tac_var6 = put_cons32_gate(ycirc,  (uint32_t)0);
-/* Temporary variable for sub-expression on source location: (7,9-7,35) */
+/* Temporary variable for sub-expression on source location: (27,9-27,35) */
 share* __tac_var7 = ycirc->PutGTGate(__tac_var5, __tac_var6);
-/* Temporary variable for sub-expression on source location: (7,52-7,54) */
+/* Temporary variable for sub-expression on source location: (27,52-27,54) */
 share* __tac_var8 = __tac_var6;
-/* Temporary variable for sub-expression on source location: (7,41-7,54) */
+/* Temporary variable for sub-expression on source location: (27,41-27,54) */
 share* __tac_var9 = ycirc->PutGTGate(signBitX, __tac_var6);
-/* Temporary variable for sub-expression on source location: (7,58-7,63) */
+/* Temporary variable for sub-expression on source location: (27,58-27,63) */
 share* __tac_var10 = put_cons1_gate(ycirc, 0);
-/* Temporary variable for sub-expression on source location: (7,66-7,70) */
+/* Temporary variable for sub-expression on source location: (27,66-27,70) */
 share* __tac_var11 = put_cons1_gate(ycirc, 1);
-/* Temporary variable for sub-expression on source location: (7,40-7,70) */
+/* Temporary variable for sub-expression on source location: (27,40-27,70) */
 share* __tac_var12 = ycirc->PutMUXGate(__tac_var10, __tac_var11, __tac_var9);
-/* Temporary variable for sub-expression on source location: (7,75-7,82) */
+/* Temporary variable for sub-expression on source location: (27,75-27,82) */
 share* __tac_var13 = ycirc->PutGTGate(ux, uy);
-/* Temporary variable for sub-expression on source location: (7,8-7,83) */
+/* Temporary variable for sub-expression on source location: (27,8-27,83) */
 share* __tac_var14 = ycirc->PutMUXGate(__tac_var12, __tac_var13, __tac_var7);
 return __tac_var14;
 }
@@ -96,101 +96,101 @@ return __tac_var14;
 share* signedarshiftbl(share* x, uint32_t y){
 
 share* ux = x;
-/* Temporary variable for sub-expression on source location: (15,28-15,33) */
+/* Temporary variable for sub-expression on source location: (35,28-35,33) */
 int32_t __tac_var15 = ( (int32_t)1 <<  (int32_t)31);
-/* Temporary variable for sub-expression on source location: (15,28-15,33) */
+/* Temporary variable for sub-expression on source location: (35,28-35,33) */
 share* __tac_var16 = put_cons32_gate(ycirc, __tac_var15);
 
 share* signBitX = ycirc->PutANDGate(x, __tac_var16);
-/* Temporary variable for sub-expression on source location: (16,21-16,23) */
+/* Temporary variable for sub-expression on source location: (36,21-36,23) */
 share* __tac_var17 = put_cons32_gate(ycirc,  (uint32_t)0);
-/* Temporary variable for sub-expression on source location: (16,10-16,23) */
+/* Temporary variable for sub-expression on source location: (36,10-36,23) */
 share* __tac_var18 = ycirc->PutGTGate(signBitX, __tac_var17);
-/* Temporary variable for sub-expression on source location: (16,28-16,30) */
+/* Temporary variable for sub-expression on source location: (36,28-36,30) */
 share* __tac_var19 = __tac_var17;
-/* Temporary variable for sub-expression on source location: (16,35-16,37) */
+/* Temporary variable for sub-expression on source location: (36,35-36,37) */
 share* __tac_var20 = __tac_var17;
-/* Temporary variable for sub-expression on source location: (16,35-16,42) */
+/* Temporary variable for sub-expression on source location: (36,35-36,42) */
 share* __tac_var21 = ycirc->PutSUBGate(__tac_var17, ux);
-/* Temporary variable for sub-expression on source location: (16,34-16,48) */
+/* Temporary variable for sub-expression on source location: (36,34-36,48) */
 share* __tac_var22 = arithmetic_right_shift(ycirc, __tac_var21, y);
-/* Temporary variable for sub-expression on source location: (16,28-16,49) */
+/* Temporary variable for sub-expression on source location: (36,28-36,49) */
 share* __tac_var23 = ycirc->PutSUBGate(__tac_var17, __tac_var22);
-/* Temporary variable for sub-expression on source location: (16,54-16,61) */
+/* Temporary variable for sub-expression on source location: (36,54-36,61) */
 share* __tac_var24 = arithmetic_right_shift(ycirc, ux, y);
-/* Temporary variable for sub-expression on source location: (16,9-16,62) */
+/* Temporary variable for sub-expression on source location: (36,9-36,62) */
 share* __tac_var25 = ycirc->PutMUXGate(__tac_var23, __tac_var24, __tac_var18);
 return __tac_var25;
 }
 
 share* unsignedltbl(share* x, share* y){
-/* Temporary variable for sub-expression on source location: (20,9-20,14) */
+/* Temporary variable for sub-expression on source location: (40,9-40,14) */
 share* __tac_var26 = ycirc->PutGTGate(y, x);
 return __tac_var26;
 }
 
 share* signedltbl(share* x, share* y){
-/* Temporary variable for sub-expression on source location: (23,9-23,14) */
+/* Temporary variable for sub-expression on source location: (43,9-43,14) */
 share* __tac_var27 = signedgtbl(y, x);
 return __tac_var27;
 }
 
 share* unsignedleqbl(share* x, share* y){
-/* Temporary variable for sub-expression on source location: (27,10-27,15) */
+/* Temporary variable for sub-expression on source location: (47,10-47,15) */
 share* __tac_var28 = ycirc->PutGTGate(x, y);
-/* Temporary variable for sub-expression on source location: (27,8-27,16) */
+/* Temporary variable for sub-expression on source location: (47,8-47,16) */
 share* __tac_var29 = ((BooleanCircuit *) ycirc)->PutINVGate(__tac_var28);
 return __tac_var29;
 }
 
 share* signedleqbl(share* x, share* y){
-/* Temporary variable for sub-expression on source location: (30,10-30,15) */
+/* Temporary variable for sub-expression on source location: (50,10-50,15) */
 share* __tac_var30 = signedgtbl(x, y);
-/* Temporary variable for sub-expression on source location: (30,8-30,16) */
+/* Temporary variable for sub-expression on source location: (50,8-50,16) */
 share* __tac_var31 = ((BooleanCircuit *) ycirc)->PutINVGate(__tac_var30);
 return __tac_var31;
 }
 
 share* unsignedgeqbl(share* x, share* y){
-/* Temporary variable for sub-expression on source location: (34,10-34,15) */
+/* Temporary variable for sub-expression on source location: (54,10-54,15) */
 share* __tac_var32 = ycirc->PutGTGate(y, x);
-/* Temporary variable for sub-expression on source location: (34,8-34,16) */
+/* Temporary variable for sub-expression on source location: (54,8-54,16) */
 share* __tac_var33 = ((BooleanCircuit *) ycirc)->PutINVGate(__tac_var32);
 return __tac_var33;
 }
 
 share* signedgeqbl(share* x, share* y){
-/* Temporary variable for sub-expression on source location: (37,10-37,15) */
+/* Temporary variable for sub-expression on source location: (57,10-57,15) */
 share* __tac_var34 = signedgtbl(y, x);
-/* Temporary variable for sub-expression on source location: (37,8-37,16) */
+/* Temporary variable for sub-expression on source location: (57,8-57,16) */
 share* __tac_var35 = ((BooleanCircuit *) ycirc)->PutINVGate(__tac_var34);
 return __tac_var35;
 }
 
 share* unsignedequalsbl(share* x, share* y){
-/* Temporary variable for sub-expression on source location: (41,11-41,16) */
+/* Temporary variable for sub-expression on source location: (61,11-61,16) */
 share* __tac_var36 = unsignedltbl(x, y);
-/* Temporary variable for sub-expression on source location: (41,9-41,17) */
+/* Temporary variable for sub-expression on source location: (61,9-61,17) */
 share* __tac_var37 = ((BooleanCircuit *) ycirc)->PutINVGate(__tac_var36);
-/* Temporary variable for sub-expression on source location: (41,25-41,30) */
+/* Temporary variable for sub-expression on source location: (61,25-61,30) */
 share* __tac_var38 = unsignedltbl(y, x);
-/* Temporary variable for sub-expression on source location: (41,23-41,31) */
+/* Temporary variable for sub-expression on source location: (61,23-61,31) */
 share* __tac_var39 = ((BooleanCircuit *) ycirc)->PutINVGate(__tac_var38);
-/* Temporary variable for sub-expression on source location: (41,8-41,32) */
+/* Temporary variable for sub-expression on source location: (61,8-61,32) */
 share* __tac_var40 = ycirc->PutANDGate(__tac_var37, __tac_var39);
 return __tac_var40;
 }
 
 share* signedequalsbl(share* x, share* y){
-/* Temporary variable for sub-expression on source location: (44,11-44,16) */
+/* Temporary variable for sub-expression on source location: (64,11-64,16) */
 share* __tac_var41 = signedltbl(x, y);
-/* Temporary variable for sub-expression on source location: (44,9-44,17) */
+/* Temporary variable for sub-expression on source location: (64,9-64,17) */
 share* __tac_var42 = ((BooleanCircuit *) ycirc)->PutINVGate(__tac_var41);
-/* Temporary variable for sub-expression on source location: (44,25-44,30) */
+/* Temporary variable for sub-expression on source location: (64,25-64,30) */
 share* __tac_var43 = signedltbl(y, x);
-/* Temporary variable for sub-expression on source location: (44,23-44,31) */
+/* Temporary variable for sub-expression on source location: (64,23-64,31) */
 share* __tac_var44 = ((BooleanCircuit *) ycirc)->PutINVGate(__tac_var43);
-/* Temporary variable for sub-expression on source location: (44,8-44,32) */
+/* Temporary variable for sub-expression on source location: (64,8-64,32) */
 share* __tac_var45 = ycirc->PutANDGate(__tac_var42, __tac_var44);
 return __tac_var45;
 }
@@ -206,33 +206,33 @@ for (uint32_t iter =  (int32_t)0; iter <  (int32_t)32; iter++){
 
 uint32_t i = ( (int32_t)31 - iter);
 divisor = left_shift(ycirc, divisor,  (uint32_t)1);
-/* Temporary variable for sub-expression on source location: (61,32-61,39) */
+/* Temporary variable for sub-expression on source location: (81,32-81,39) */
 uint32_t __tac_var46 = ( (uint32_t)1 << i);
-/* Temporary variable for sub-expression on source location: (61,32-61,39) */
+/* Temporary variable for sub-expression on source location: (81,32-81,39) */
 share* __tac_var47 = put_cons32_gate(ycirc, __tac_var46);
-/* Temporary variable for sub-expression on source location: (61,27-61,40) */
+/* Temporary variable for sub-expression on source location: (81,27-81,40) */
 share* __tac_var48 = ycirc->PutANDGate(x, __tac_var47);
-/* Temporary variable for sub-expression on source location: (61,26-61,47) */
+/* Temporary variable for sub-expression on source location: (81,26-81,47) */
 share* __tac_var49 = logical_right_shift(ycirc, __tac_var48, i);
 divisor = ycirc->PutADDGate(divisor, __tac_var49);
 cond = unsignedgeqbl(divisor, y);
-/* Temporary variable for sub-expression on source location: (63,22-63,36) */
+/* Temporary variable for sub-expression on source location: (83,22-83,36) */
 share* __tac_var50 = ycirc->PutSUBGate(divisor, y);
 divisor = ycirc->PutMUXGate(__tac_var50, divisor, cond);
 q = left_shift(ycirc, q,  (uint32_t)1);
-/* Temporary variable for sub-expression on source location: (65,19-65,21) */
+/* Temporary variable for sub-expression on source location: (85,19-85,21) */
 share* __tac_var51 = put_cons32_gate(ycirc,  (uint32_t)1);
-/* Temporary variable for sub-expression on source location: (65,15-65,21) */
+/* Temporary variable for sub-expression on source location: (85,15-85,21) */
 share* __tac_var52 = ycirc->PutADDGate(q, __tac_var51);
 q = ycirc->PutMUXGate(__tac_var52, q, cond);
 }
-/* Temporary variable for sub-expression on source location: (68,9-68,34) */
+/* Temporary variable for sub-expression on source location: (88,9-88,34) */
 share* __tac_var53 = getQuotient ? q : divisor;
 return __tac_var53;
 }
 
 share* unsigneddivbl(share* x, share* y){
-/* Temporary variable for sub-expression on source location: (71,8-71,32) */
+/* Temporary variable for sub-expression on source location: (91,8-91,32) */
 share* __tac_var54 = longDivision(x, y, 1);
 return __tac_var54;
 }
@@ -242,29 +242,29 @@ share* unsigneddival(share* x, share* y){
 share* bx = ycirc->PutA2YGate(x);
 
 share* by = ycirc->PutA2YGate(y);
-/* Temporary variable for sub-expression on source location: (76,8-76,13) */
+/* Temporary variable for sub-expression on source location: (96,8-96,13) */
 share* __tac_var55 = unsigneddivbl(bx, by);
 return __tac_var55;
 }
 
 share* signeddivbl(share* x, share* y){
-/* Temporary variable for sub-expression on source location: (79,23-79,24) */
+/* Temporary variable for sub-expression on source location: (99,23-99,24) */
 share* __tac_var56 = put_cons32_gate(ycirc,  (int32_t)0);
 
 share* isXNeg = signedltbl(x, __tac_var56);
-/* Temporary variable for sub-expression on source location: (80,23-80,24) */
+/* Temporary variable for sub-expression on source location: (100,23-100,24) */
 share* __tac_var57 = __tac_var56;
 
 share* isYNeg = signedltbl(y, __tac_var56);
-/* Temporary variable for sub-expression on source location: (81,26-81,27) */
+/* Temporary variable for sub-expression on source location: (101,26-101,27) */
 share* __tac_var58 = __tac_var56;
-/* Temporary variable for sub-expression on source location: (81,26-81,31) */
+/* Temporary variable for sub-expression on source location: (101,26-101,31) */
 share* __tac_var59 = ycirc->PutSUBGate(__tac_var56, x);
 
 share* ux = ycirc->PutMUXGate(__tac_var59, x, isXNeg);
-/* Temporary variable for sub-expression on source location: (82,26-82,27) */
+/* Temporary variable for sub-expression on source location: (102,26-102,27) */
 share* __tac_var60 = __tac_var56;
-/* Temporary variable for sub-expression on source location: (82,26-82,31) */
+/* Temporary variable for sub-expression on source location: (102,26-102,31) */
 share* __tac_var61 = ycirc->PutSUBGate(__tac_var56, y);
 
 share* uy = ycirc->PutMUXGate(__tac_var61, y, isYNeg);
@@ -272,11 +272,11 @@ share* uy = ycirc->PutMUXGate(__tac_var61, y, isYNeg);
 share* ures = unsigneddivbl(ux, uy);
 
 share* isResNeg = ycirc->PutXORGate(isXNeg, isYNeg);
-/* Temporary variable for sub-expression on source location: (85,21-85,23) */
+/* Temporary variable for sub-expression on source location: (105,21-105,23) */
 share* __tac_var62 = put_cons32_gate(ycirc,  (uint32_t)0);
-/* Temporary variable for sub-expression on source location: (85,21-85,30) */
+/* Temporary variable for sub-expression on source location: (105,21-105,30) */
 share* __tac_var63 = ycirc->PutSUBGate(__tac_var62, ures);
-/* Temporary variable for sub-expression on source location: (85,9-85,38) */
+/* Temporary variable for sub-expression on source location: (105,9-105,38) */
 share* __tac_var64 = ycirc->PutMUXGate(__tac_var63, ures, isResNeg);
 return __tac_var64;
 }
@@ -286,13 +286,13 @@ share* signeddival(share* x, share* y){
 share* bx = ycirc->PutA2YGate(x);
 
 share* by = ycirc->PutA2YGate(y);
-/* Temporary variable for sub-expression on source location: (90,8-90,13) */
+/* Temporary variable for sub-expression on source location: (110,8-110,13) */
 share* __tac_var65 = signeddivbl(bx, by);
 return __tac_var65;
 }
 
 share* unsignedmodbl(share* x, share* y){
-/* Temporary variable for sub-expression on source location: (98,8-98,33) */
+/* Temporary variable for sub-expression on source location: (118,8-118,33) */
 share* __tac_var66 = longDivision(x, y, 0);
 return __tac_var66;
 }
@@ -302,39 +302,39 @@ share* unsignedmodal(share* x, share* y){
 share* bx = ycirc->PutA2YGate(x);
 
 share* by = ycirc->PutA2YGate(y);
-/* Temporary variable for sub-expression on source location: (103,8-103,13) */
+/* Temporary variable for sub-expression on source location: (123,8-123,13) */
 share* __tac_var67 = unsignedmodbl(bx, by);
 return __tac_var67;
 }
 
 share* signedmodbl(share* x, share* y){
-/* Temporary variable for sub-expression on source location: (106,23-106,24) */
+/* Temporary variable for sub-expression on source location: (126,23-126,24) */
 share* __tac_var68 = put_cons32_gate(ycirc,  (int32_t)0);
 
 share* isXNeg = signedltbl(x, __tac_var68);
-/* Temporary variable for sub-expression on source location: (107,23-107,24) */
+/* Temporary variable for sub-expression on source location: (127,23-127,24) */
 share* __tac_var69 = __tac_var68;
 
 share* isYNeg = signedltbl(y, __tac_var68);
-/* Temporary variable for sub-expression on source location: (108,26-108,27) */
+/* Temporary variable for sub-expression on source location: (128,26-128,27) */
 share* __tac_var70 = __tac_var68;
-/* Temporary variable for sub-expression on source location: (108,26-108,31) */
+/* Temporary variable for sub-expression on source location: (128,26-128,31) */
 share* __tac_var71 = ycirc->PutSUBGate(__tac_var68, x);
 
 share* ux = ycirc->PutMUXGate(__tac_var71, x, isXNeg);
-/* Temporary variable for sub-expression on source location: (109,26-109,27) */
+/* Temporary variable for sub-expression on source location: (129,26-129,27) */
 share* __tac_var72 = __tac_var68;
-/* Temporary variable for sub-expression on source location: (109,26-109,31) */
+/* Temporary variable for sub-expression on source location: (129,26-129,31) */
 share* __tac_var73 = ycirc->PutSUBGate(__tac_var68, y);
 
 share* uy = ycirc->PutMUXGate(__tac_var73, y, isYNeg);
 
 share* urem = unsignedmodbl(ux, uy);
-/* Temporary variable for sub-expression on source location: (111,19-111,21) */
+/* Temporary variable for sub-expression on source location: (131,19-131,21) */
 share* __tac_var74 = put_cons32_gate(ycirc,  (uint32_t)0);
-/* Temporary variable for sub-expression on source location: (111,19-111,28) */
+/* Temporary variable for sub-expression on source location: (131,19-131,28) */
 share* __tac_var75 = ycirc->PutSUBGate(__tac_var74, urem);
-/* Temporary variable for sub-expression on source location: (111,9-111,36) */
+/* Temporary variable for sub-expression on source location: (131,9-131,36) */
 share* __tac_var76 = ycirc->PutMUXGate(__tac_var75, urem, isXNeg);
 return __tac_var76;
 }
@@ -344,15 +344,15 @@ share* signedmodal(share* x, share* y){
 share* bx = ycirc->PutA2YGate(x);
 
 share* by = ycirc->PutA2YGate(y);
-/* Temporary variable for sub-expression on source location: (116,8-116,13) */
+/* Temporary variable for sub-expression on source location: (136,8-136,13) */
 share* __tac_var77 = signedmodbl(bx, by);
 return __tac_var77;
 }
 
 share* hello(share* a){
-/* Temporary variable for sub-expression on source location: (127,10-127,12) */
+/* Temporary variable for sub-expression on source location: (167,10-167,12) */
 share* __tac_var78 = put_cons32_gate(acirc,  (uint32_t)5);
-/* Temporary variable for sub-expression on source location: (127,8-127,12) */
+/* Temporary variable for sub-expression on source location: (167,8-167,12) */
 share* __tac_var79 = acirc->PutADDGate(a, __tac_var78);
 return __tac_var79;
 }
