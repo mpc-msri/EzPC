@@ -23,7 +23,6 @@ SOFTWARE.
 */
 
 #pragma once
-#include "TedKrovetzAesNiWrapperC.h"
 #include <cstring>
 #include <iostream>
 #include <fstream>

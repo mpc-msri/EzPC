@@ -16,8 +16,6 @@
 #include <iostream>
 #include <chrono>
 #include <stdlib.h>
-#include "Config.h"
-#include "../util/TedKrovetzAesNiWrapperC.h"
 #include <wmmintrin.h>
 #include <emmintrin.h>
 #include <smmintrin.h>

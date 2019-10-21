@@ -9,7 +9,7 @@ HEADER_FILES       = $(wildcard src/*.h)
 
 FLAGS := -w -std=c++14 -pthread -msse4.1 -maes -msse2 -mpclmul -fpermissive -fpic #-fopenmp
 LIBS := -lcrypto -lssl
-OBJ_INCLUDES := -I 'lib_eigen/' -I 'util/' -I 'src/'
+OBJ_INCLUDES := -I 'lib_eigen/' -I 'src/'
 UTIL_INCLUDES := $($(OBJ_INCLUDES), -L./)
 
 

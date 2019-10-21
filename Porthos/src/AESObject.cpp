@@ -23,7 +23,6 @@ SOFTWARE.
 */
 
 #pragma once
-#include "TedKrovetzAesNiWrapperC.h"
 #include <cstring>
 #include <iostream>
 #include <fstream>
@@ -42,7 +41,17 @@ AESObject::AESObject(string filename)
 	char common_aes_key[len+1];
 	memset(common_aes_key, '\0', len+1);
 	strcpy(common_aes_key, str.c_str());
-	AES_set_encrypt_key((unsigned char*)common_aes_key, 256, &aes_key);
+	
+	/* OpenSSL related  */
+	
+	inbuf_ssl = (unsigned char*)malloc(RANDOM_COMPUTE*16);
+	outbuf_ssl = (unsigned char*)malloc(RANDOM_COMPUTE*16);	
+	key_ssl = (unsigned char*)malloc(16);
+	iv_ssl = (unsigned char*)malloc(16);
+	memcpy(key_ssl, common_aes_key, 16);
+	unsigned char iv[] = "1234567887654321";
+	memcpy(iv_ssl, iv, 16);
+	ctx_ssl = EVP_CIPHER_CTX_new();
 }
 
 AESObject::~AESObject()
@@ -51,6 +60,21 @@ AESObject::~AESObject()
 	if (preComputedKeys!=NULL) delete[] preComputedKeys;
 	if (tempKeyArray!=NULL) delete[] tempKeyArray;
 #endif
+}
+
+void AESObject::SSL_AES_ecb_encrypt_chunk_in_out(block *in, block *out, unsigned nblks)
+{
+	EVP_EncryptInit_ex(ctx_ssl, EVP_aes_128_ecb(), NULL, key_ssl, iv_ssl);
+	int outlen = 0;
+	memcpy(inbuf_ssl, in, nblks*16);
+	if(!EVP_EncryptUpdate(ctx_ssl, outbuf_ssl, &outlen, inbuf_ssl, nblks*16)){
+		exit(0);
+	}
+	//EncryptFinal is used when input size isn't a multiple of block size
+	//if(!EVP_EncryptFinal_ex(ctx, outbuf+outlen, &templen)){
+		//exit(0);
+	//}
+	memcpy(out, outbuf_ssl, nblks*16);
 }
 
 #ifdef PRECOMPUTEAES
@@ -63,7 +87,7 @@ void AESObject::PreComputeKeysFunc(porthosLongUnsignedInt startKeyNum,
 		porthosLongUnsignedInt curKeyNum = startKeyNum + i;
 		tempKeyArray[curKeyNum] = _mm_set1_epi32(curKeyNum);
 	}
-	AES_ecb_encrypt_chunk_in_out(tempKeyArray+startKeyNum, preComputedKeys+startKeyNum, numKeys, &aes_key);
+	SSL_AES_ecb_encrypt_chunk_in_out(tempKeyArray+startKeyNum, preComputedKeys+startKeyNum, numKeys);
 }
 
 void AESObject::PreComputeKeys(porthosLongUnsignedInt numKeysToPrecompute,
@@ -99,7 +123,7 @@ __m128i AESObject::newRandomNumber()
 	{
 		for (int i = 0; i < RANDOM_COMPUTE; i++)
 			tempSecComp[i] = _mm_set1_epi32(rCounter+i);//not exactly counter mode - (rcounter+i,rcouter+i,rcounter+i,rcounter+i)
-		AES_ecb_encrypt_chunk_in_out(tempSecComp, pseudoRandomString, RANDOM_COMPUTE, &aes_key);
+		SSL_AES_ecb_encrypt_chunk_in_out(tempSecComp, pseudoRandomString, RANDOM_COMPUTE);
 	}
 	return pseudoRandomString[rCounter%RANDOM_COMPUTE];
 

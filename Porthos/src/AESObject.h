@@ -16,8 +16,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 */
@@ -28,8 +27,10 @@ SOFTWARE.
 #pragma once
 #include <algorithm>
 #include "globals.h"
+#include <openssl/evp.h>
+#include <openssl/aes.h>
 
-
+typedef __m128i block;
 //NOTE: This class isn't thread safe.
 class AESObject
 {
@@ -38,7 +39,6 @@ private:
 	__m128i pseudoRandomString[RANDOM_COMPUTE];
 	__m128i tempSecComp[RANDOM_COMPUTE];
 	unsigned long rCounter = -1;
-	AES_KEY_TED aes_key;
 
 	//Extraction variables
 	__m128i randomBitNumber {0};
@@ -47,6 +47,14 @@ private:
 	uint8_t random8BitCounter = 0; 
 	__m128i random64BitNumber {0};
 	bool fetch64New = true;
+
+	unsigned char* inbuf_ssl;
+	unsigned char* outbuf_ssl;
+	unsigned char* key_ssl;
+	unsigned char* iv_ssl;
+	
+	EVP_CIPHER_CTX* ctx_ssl;
+	
 
 	//Private extraction functions
 	__m128i newRandomNumber();
@@ -72,6 +80,8 @@ public:
 	void PreComputeKeys(porthosLongUnsignedInt numKeysToPrecompute, 
 			int32_t numThreads);
 #endif
+	
+	void SSL_AES_ecb_encrypt_chunk_in_out(block *in, block *out, unsigned nblks);
 	
 	//Randomness functions
 	porthosSecretType get64Bits();

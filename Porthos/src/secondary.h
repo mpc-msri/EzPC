@@ -28,7 +28,6 @@ SOFTWARE.
 #pragma once
 #include "basicSockets.h"
 #include <sstream>
-#include "../util/TedKrovetzAesNiWrapperC.h"
 #include "tools.h"
 #include "globals.h"
 #include <thread>
