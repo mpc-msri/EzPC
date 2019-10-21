@@ -18,7 +18,6 @@ This folder contains code for Porthos - a semi-honest 3 party secure computation
 Note that the first command makes use of input generated from Athos. Please refer to the Athos readme on how to do the same. 
 
 # External Code
-- `util/` directory contains code taken from SCAPI project.
 - `basicSockets` files contain code writen by Roi Inbar. We have modified this code for crypTFlow.
 - `tools.cpp` contains some code written by Anner Ben-Efraim and Satyanarayana. This code is majorly modified for crypTFlow.
 
