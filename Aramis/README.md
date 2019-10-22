@@ -62,5 +62,6 @@ This project contains/relies on some components of the following external code.
 * https://github.com/ReneNyffenegger/cpp-base64 for utility cpp functions.
 * https://github.com/IBM/sgx-trust-management/ for basic attestation framework.
 * A very early fork of https://github.com/snwagh/securenn-public.
-
-
+* `util/` directory contains code taken from SCAPI project.
+* `basicSockets` files contain code writen by Roi Inbar. We have modified this code for crypTFlow.
+* `tools.cpp` contains some code written by Anner Ben-Efraim and Satyanarayana. This code is majorly modified for crypTFlow.
