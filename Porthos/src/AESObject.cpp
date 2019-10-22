@@ -49,6 +49,10 @@ AESObject::AESObject(string filename)
 	key_ssl = (unsigned char*)malloc(16);
 	iv_ssl = (unsigned char*)malloc(16);
 	memcpy(key_ssl, common_aes_key, 16);
+	/* IVs are public values. IVs just ensure that the same key can be used again and again, but encrypts
+	 * a message m to different ciphers each time. 
+	 * In this code, we never encrypt the same message more than once (we use a counter and encrypt that value), 
+	 * so we are fine with a fixed IV.*/
 	unsigned char iv[] = "1234567887654321";
 	memcpy(iv_ssl, iv, 16);
 	ctx_ssl = EVP_CIPHER_CTX_new();
@@ -70,10 +74,9 @@ void AESObject::SSL_AES_ecb_encrypt_chunk_in_out(block *in, block *out, unsigned
 	if(!EVP_EncryptUpdate(ctx_ssl, outbuf_ssl, &outlen, inbuf_ssl, nblks*16)){
 		exit(0);
 	}
-	//EncryptFinal is used when input size isn't a multiple of block size
-	//if(!EVP_EncryptFinal_ex(ctx, outbuf+outlen, &templen)){
-		//exit(0);
-	//}
+	//EncryptFinal is used when input size isn't a multiple of block size.
+	//So, we don't use it because we always call AES on input of size multiple
+	//of block size.
 	memcpy(out, outbuf_ssl, nblks*16);
 }
 
