@@ -18,9 +18,12 @@ This folder contains code for Porthos - a semi-honest 3 party secure computation
 Note that the first command makes use of input generated from Athos. Please refer to the Athos readme on how to do the same. 
 
 # External Code
-- `util/` directory contains code taken from SCAPI project.
 - `basicSockets` files contain code writen by Roi Inbar. We have modified this code for crypTFlow.
 - `tools.cpp` contains some code written by Anner Ben-Efraim and Satyanarayana. This code is majorly modified for crypTFlow.
+
+# Dependencies
+- Eigen library: Used in CrypTFlow for faster matrix multiplication. Can be installed by running `./setup-eigen.sh` as mentioned in **Running the protocol** section of this README.
+- OpenSSL: Used in CrypTFlow for AES PRG calls, utilizing AES_NI. To see if your CPU supports AES-NI instruction set, run: `cpuid | grep -i aes`. You will see the AES NI supported `true` or `false` flag for each core in your CPU. This was already installed if you ran the instructions mentioned in the **Setup** section of this README (`sudo apt-get install libssl-dev`).
 
 # Notes
 - If porthosSecretType != uint64_t, porthosSecretType multiplication function won't work.
