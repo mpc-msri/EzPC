@@ -1,0 +1,1567 @@
+graph 1 763.9 13.736
+node 0 437.95 13.264 2.2222 0.94444 "X[12] <= 4.68\nmse = 13325773152.99\nsamples = 10431\nvalue = 207835.46" filled, rounded box black #f6d3b9
+node 1 329.95 11.819 2.1111 0.94444 "X[1] <= 0.5\nmse = 8118100577.92\nsamples = 7731\nvalue = 169385.95" filled, rounded box black #f8ddca
+node 2 193.1 10.375 2.1111 0.94444 "X[12] <= 3.11\nmse = 7963428066.88\nsamples = 4853\nvalue = 204807.23" filled, rounded box black #f6d4bb
+node 3 97.299 8.9306 2.1111 0.94444 "X[5] <= -118.31\nmse = 6421348093.96\nsamples = 2275\nvalue = 173569.97" filled, rounded box black #f8dcc8
+node 4 53.59 7.4861 2.1111 0.94444 "X[6] <= 37.91\nmse = 9023015182.85\nsamples = 1042\nvalue = 193799.16" filled, rounded box black #f7d7bf
+node 5 27.062 6.0417 2.1111 0.94444 "X[5] <= -122.31\nmse = 9149335886.81\nsamples = 865\nvalue = 207755.83" filled, rounded box black #f6d3b9
+node 6 13.132 4.5972 2.1111 0.94444 "X[6] <= 37.8\nmse = 9496479875.13\nsamples = 94\nvalue = 286351.03" filled, rounded box black #f1bd97
+node 7 6.8264 3.1528 2.1111 0.94444 "X[12] <= 2.66\nmse = 8368300163.34\nsamples = 84\nvalue = 275623.54" filled, rounded box black #f2c09c
+node 8 3.3264 1.7083 2.1111 0.94444 "X[8] <= 358.0\nmse = 7637608988.14\nsamples = 45\nvalue = 243697.42" filled, rounded box black #f4c9aa
+node 9 1.0069 0.36806 2.0139 0.73611 "mse = 2500000000.0\nsamples = 3\nvalue = 400000.0" filled, rounded box black #eb9d65
+node 10 3.3264 0.36806 2.1111 0.73611 "mse = 6507113299.06\nsamples = 42\nvalue = 235132.89" filled, rounded box black #f4cbad
+node 11 6.8264 1.7083 2.1111 0.94444 "X[6] <= 37.75\nmse = 6255589479.99\nsamples = 39\nvalue = 317289.85" filled, rounded box black #f0b489
+node 12 5.6458 0.36806 2.0139 0.73611 "mse = 4181293032.1\nsamples = 18\nvalue = 271327.59" filled, rounded box black #f2c19d
+node 13 7.9653 0.36806 2.1111 0.73611 "mse = 4244589485.37\nsamples = 21\nvalue = 361720.03" filled, rounded box black #eda876
+node 14 13.132 3.1528 2.1111 0.94444 "X[11] <= 385.0\nmse = 9221919228.64\nsamples = 10\nvalue = 383613.6" filled, rounded box black #eca26c
+node 15 12.035 1.7083 1.7778 0.94444 "X[10] <= 537.0\nmse = 0.19\nsamples = 2\nvalue = 500000.75" filled, rounded box black #e58139
+node 16 10.118 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 500000.0" filled, rounded box black #e58139
+node 17 12.049 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 500001.0" filled, rounded box black #e58139
+node 18 14.229 1.7083 2.1111 0.94444 "X[9] <= 1080.0\nmse = 5858335137.27\nsamples = 8\nvalue = 341291.0" filled, rounded box black #eead7f
+node 19 14.201 0.36806 2.1111 0.73611 "mse = 1901660246.91\nsamples = 6\nvalue = 310655.56" filled, rounded box black #f0b68c
+node 20 16.521 0.36806 2.0139 0.73611 "mse = 434743350.25\nsamples = 2\nvalue = 479150.5" filled, rounded box black #e68742
+node 21 27.062 4.5972 2.0139 0.94444 "X[5] <= -120.41\nmse = 8256884443.3\nsamples = 771\nvalue = 198122.82" filled, rounded box black #f6d5be
+node 22 24.715 3.1528 2.1111 0.94444 "X[4] <= 0.5\nmse = 4857618293.94\nsamples = 396\nvalue = 167508.75" filled, rounded box black #f8decb
+node 23 21.201 1.7083 2.1111 0.94444 "X[6] <= 37.85\nmse = 3797603211.26\nsamples = 339\nvalue = 157829.0" filled, rounded box black #f9e1cf
+node 24 18.84 0.36806 2.1111 0.73611 "mse = 3225777646.46\nsamples = 301\nvalue = 151845.66" filled, rounded box black #f9e2d2
+node 25 21.201 0.36806 2.1111 0.73611 "mse = 5725971334.02\nsamples = 38\nvalue = 211457.41" filled, rounded box black #f6d2b8
+node 26 24.715 1.7083 2.1111 0.94444 "X[5] <= -120.66\nmse = 7295582427.01\nsamples = 57\nvalue = 224736.27" filled, rounded box black #f5ceb2
+node 27 23.562 0.36806 2.1111 0.73611 "mse = 5442085009.22\nsamples = 47\nvalue = 246236.38" filled, rounded box black #f4c8a8
+node 28 25.882 0.36806 2.0139 0.73611 "mse = 964224081.63\nsamples = 10\nvalue = 106485.71" filled, rounded box black #fcefe6
+node 29 29.41 3.1528 2.1111 0.94444 "X[10] <= 780.5\nmse = 9805301356.05\nsamples = 375\nvalue = 230056.9" filled, rounded box black #f5ccb0
+node 30 29.41 1.7083 2.2222 0.94444 "X[5] <= -118.35\nmse = 10031168659.07\nsamples = 66\nvalue = 284064.95" filled, rounded box black #f1bd98
+node 31 28.201 0.36806 2.1111 0.73611 "mse = 6409466043.12\nsamples = 48\nvalue = 305497.61" filled, rounded box black #f0b78e
+node 32 30.618 0.36806 2.2222 0.73611 "mse = 15118336210.94\nsamples = 18\nvalue = 229143.75" filled, rounded box black #f5cdb0
+node 33 33.035 1.7083 2.1111 0.94444 "X[12] <= 2.21\nmse = 8914109799.52\nsamples = 309\nvalue = 217466.07" filled, rounded box black #f5d0b5
+node 34 33.035 0.36806 2.1111 0.73611 "mse = 4939975277.55\nsamples = 88\nvalue = 177897.14" filled, rounded box black #f8dbc6
+node 35 35.396 0.36806 2.1111 0.73611 "mse = 9628294450.69\nsamples = 221\nvalue = 233338.99" filled, rounded box black #f4ccae
+node 36 53.59 6.0417 2.1111 0.94444 "X[6] <= 39.11\nmse = 2223337931.48\nsamples = 177\nvalue = 122044.24" filled, rounded box black #fbebdf
+node 37 49.757 4.5972 2.1111 0.94444 "X[6] <= 38.14\nmse = 2335008420.45\nsamples = 103\nvalue = 142839.74" filled, rounded box black #fae5d6
+node 38 43.382 3.1528 2.1111 0.94444 "X[5] <= -122.17\nmse = 1923117622.18\nsamples = 51\nvalue = 121058.23" filled, rounded box black #fbebdf
+node 39 40.076 1.7083 2.1111 0.94444 "X[5] <= -122.46\nmse = 1348247374.36\nsamples = 39\nvalue = 106801.64" filled, rounded box black #fcefe6
+node 40 37.757 0.36806 2.1111 0.73611 "mse = 1675208888.89\nsamples = 3\nvalue = 235433.33" filled, rounded box black #f4cbad
+node 41 40.076 0.36806 2.0139 0.73611 "mse = 431234910.82\nsamples = 36\nvalue = 100148.28" filled, rounded box black #fcf1e9
+node 42 43.382 1.7083 1.9028 0.94444 "X[11] <= 328.5\nmse = 848254228.4\nsamples = 12\nvalue = 169372.22" filled, rounded box black #f8ddca
+node 43 42.285 0.36806 1.9028 0.73611 "mse = 50308888.89\nsamples = 3\nvalue = 218033.33" filled, rounded box black #f5d0b5
+node 44 44.438 0.36806 1.9028 0.73611 "mse = 439546400.0\nsamples = 9\nvalue = 159640.0" filled, rounded box black #f9e0ce
+node 45 49.757 3.1528 2.1111 0.94444 "X[6] <= 38.24\nmse = 1771439831.34\nsamples = 52\nvalue = 165187.01" filled, rounded box black #f8dfcc
+node 46 48.604 1.7083 2.0139 0.94444 "X[8] <= 1795.5\nmse = 336955802.47\nsamples = 4\nvalue = 222144.44" filled, rounded box black #f5cfb3
+node 47 46.646 0.36806 2.0139 0.73611 "mse = 138099591.84\nsamples = 3\nvalue = 230242.86" filled, rounded box black #f5ccaf
+node 48 48.743 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 193800.0" filled, rounded box black #f7d7bf
+node 49 50.924 1.7083 2.1111 0.94444 "X[5] <= -122.88\nmse = 1475096615.48\nsamples = 48\nvalue = 157648.53" filled, rounded box black #f9e1cf
+node 50 50.785 0.36806 1.9028 0.73611 "mse = 288336875.0\nsamples = 11\nvalue = 132425.0" filled, rounded box black #fae8da
+node 51 53.049 0.36806 2.1111 0.73611 "mse = 1584257022.93\nsamples = 37\nvalue = 165409.62" filled, rounded box black #f8dfcc
+node 52 57.812 4.5972 2.0139 0.94444 "X[5] <= -124.08\nmse = 647961047.85\nsamples = 74\nvalue = 93335.4" filled, rounded box black #fcf3ec
+node 53 57.812 3.1528 2.0139 0.94444 "X[6] <= 41.88\nmse = 239352908.59\nsamples = 36\nvalue = 82715.79" filled, rounded box black #fdf6f0
+node 54 55.785 1.7083 2.0139 0.94444 "X[12] <= 2.2\nmse = 160298765.43\nsamples = 35\nvalue = 80511.11" filled, rounded box black #fdf6f1
+node 55 55.257 0.36806 1.8056 0.73611 "mse = 83627325.7\nsamples = 19\nvalue = 74390.32" filled, rounded box black #fef8f4
+node 56 57.424 0.36806 2.0139 0.73611 "mse = 145084990.55\nsamples = 16\nvalue = 88760.87" filled, rounded box black #fdf4ee
+node 57 57.882 1.7083 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 122400.0" filled, rounded box black #fbebdf
+node 58 61.118 3.1528 2.0139 0.94444 "X[12] <= 2.78\nmse = 832236042.73\nsamples = 38\nvalue = 104144.64" filled, rounded box black #fcf0e7
+node 59 61.118 1.7083 2.0139 0.94444 "X[7] <= 12.5\nmse = 733626405.66\nsamples = 33\nvalue = 99236.73" filled, rounded box black #fcf1e9
+node 60 59.59 0.36806 1.8056 0.73611 "mse = 27562500.0\nsamples = 2\nvalue = 144750.0" filled, rounded box black #f9e4d5
+node 61 61.701 0.36806 1.9028 0.73611 "mse = 595891032.1\nsamples = 31\nvalue = 95191.11" filled, rounded box black #fcf2eb
+node 62 63.854 1.7083 1.9028 0.94444 "X[8] <= 1799.0\nmse = 173600000.0\nsamples = 5\nvalue = 138500.0" filled, rounded box black #fae6d8
+node 63 63.854 0.36806 1.9028 0.73611 "mse = 64222222.22\nsamples = 2\nvalue = 125933.33" filled, rounded box black #fbeadd
+node 64 65.965 0.36806 1.8056 0.73611 "mse = 48361875.0\nsamples = 3\nvalue = 147925.0" filled, rounded box black #f9e3d4
+node 65 97.299 7.4861 2.0139 0.94444 "X[6] <= 34.05\nmse = 3522774724.9\nsamples = 1233\nvalue = 156137.2" filled, rounded box black #f9e1d0
+node 66 89.757 6.0417 2.0139 0.94444 "X[5] <= -118.22\nmse = 3328460678.6\nsamples = 992\nvalue = 148805.02" filled, rounded box black #f9e3d3
+node 67 76.715 4.5972 2.1111 0.94444 "X[6] <= 33.86\nmse = 2735838276.28\nsamples = 270\nvalue = 124391.38" filled, rounded box black #fbeade
+node 68 73.299 3.1528 2.1111 0.94444 "X[10] <= 1079.5\nmse = 3002101403.59\nsamples = 29\nvalue = 207089.13" filled, rounded box black #f6d3ba
+node 69 70.118 1.7083 2.1111 0.94444 "X[8] <= 91.0\nmse = 3663456923.08\nsamples = 9\nvalue = 258200.0" filled, rounded box black #f3c5a3
+node 70 67.965 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 350000.0" filled, rounded box black #eeab7b
+node 71 70.118 0.36806 2.1111 0.73611 "mse = 2518728099.17\nsamples = 8\nvalue = 241509.09" filled, rounded box black #f4c9ab
+node 72 73.299 1.7083 2.1111 0.94444 "X[6] <= 33.76\nmse = 1307069752.07\nsamples = 20\nvalue = 186954.55" filled, rounded box black #f7d8c2
+node 73 72.438 0.36806 2.0139 0.73611 "mse = 424353724.49\nsamples = 9\nvalue = 220764.29" filled, rounded box black #f5cfb4
+node 74 74.701 0.36806 2.0139 0.73611 "mse = 494579279.78\nsamples = 11\nvalue = 162042.11" filled, rounded box black #f8dfcd
+node 75 76.715 3.1528 2.1111 0.94444 "X[12] <= 0.52\nmse = 1783822581.17\nsamples = 241\nvalue = 114459.01" filled, rounded box black #fbede2
+node 76 76.146 1.7083 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 500001.0" filled, rounded box black #e58139
+node 77 78.299 1.7083 2.1111 0.94444 "X[11] <= 55.5\nmse = 1008814301.09\nsamples = 240\nvalue = 112435.17" filled, rounded box black #fbede3
+node 78 76.91 0.36806 1.9028 0.73611 "mse = 312500000.0\nsamples = 2\nvalue = 337500.0" filled, rounded box black #eeae80
+node 79 79.118 0.36806 2.0139 0.73611 "mse = 609132710.52\nsamples = 238\nvalue = 110648.94" filled, rounded box black #fbeee4
+node 80 89.757 4.5972 2.0139 0.94444 "X[5] <= -117.15\nmse = 3240646712.1\nsamples = 722\nvalue = 158106.49" filled, rounded box black #f9e1cf
+node 81 87.396 3.1528 2.1111 0.94444 "X[6] <= 33.08\nmse = 3693869166.97\nsamples = 487\nvalue = 173827.18" filled, rounded box black #f8dcc8
+node 82 83.799 1.7083 2.1111 0.94444 "X[5] <= -117.24\nmse = 5035612604.99\nsamples = 63\nvalue = 230670.53" filled, rounded box black #f5ccaf
+node 83 81.438 0.36806 2.1111 0.73611 "mse = 3796011190.93\nsamples = 15\nvalue = 291952.17" filled, rounded box black #f1bb94
+node 84 83.799 0.36806 2.1111 0.73611 "mse = 3848718858.02\nsamples = 48\nvalue = 211094.44" filled, rounded box black #f6d2b8
+node 85 87.396 1.7083 2.1111 0.94444 "X[10] <= 139.0\nmse = 2958973048.95\nsamples = 424\nvalue = 165544.79" filled, rounded box black #f8decc
+node 86 86.215 0.36806 2.2222 0.73611 "mse = 15225094000.24\nsamples = 3\nvalue = 382500.4" filled, rounded box black #eca26d
+node 87 88.632 0.36806 2.1111 0.73611 "mse = 2497615932.98\nsamples = 421\nvalue = 163868.16" filled, rounded box black #f8dfcd
+node 88 92.021 3.1528 2.0139 0.94444 "X[6] <= 32.75\nmse = 900171179.12\nsamples = 235\nvalue = 127121.37" filled, rounded box black #fbe9dd
+node 89 92.021 1.7083 2.0139 0.94444 "X[12] <= 2.11\nmse = 773117451.73\nsamples = 151\nvalue = 118655.23" filled, rounded box black #fbece0
+node 90 90.951 0.36806 2.0139 0.73611 "mse = 510452030.97\nsamples = 68\nvalue = 105353.21" filled, rounded box black #fcefe6
+node 91 93.215 0.36806 2.0139 0.73611 "mse = 720597236.09\nsamples = 83\nvalue = 129808.46" filled, rounded box black #fae8dc
+node 92 95.312 1.7083 1.9028 0.94444 "X[12] <= 0.92\nmse = 785822910.2\nsamples = 84\nvalue = 141574.29" filled, rounded box black #fae5d6
+node 93 95.312 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 275000.0" filled, rounded box black #f2c09c
+node 94 97.354 0.36806 1.9028 0.73611 "mse = 535466324.3\nsamples = 83\nvalue = 139640.58" filled, rounded box black #fae6d7
+node 95 106.02 6.0417 2.1111 0.94444 "X[5] <= -118.24\nmse = 3134536840.92\nsamples = 241\nvalue = 187633.16" filled, rounded box black #f7d8c2
+node 96 106.02 4.5972 2.1111 0.94444 "X[12] <= 1.21\nmse = 2592339093.43\nsamples = 112\nvalue = 209923.53" filled, rounded box black #f6d2b8
+node 97 104.49 3.1528 2.1111 0.94444 "X[5] <= -118.24\nmse = 5789023950.62\nsamples = 7\nvalue = 262977.78" filled, rounded box black #f3c3a1
+node 98 101.44 1.7083 2.1111 0.94444 "X[10] <= 2156.5\nmse = 2430555555.56\nsamples = 5\nvalue = 308333.33" filled, rounded box black #f0b78d
+node 99 99.396 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 3\nvalue = 275000.0" filled, rounded box black #f2c09c
+node 100 101.44 0.36806 1.9028 0.73611 "mse = 625000000.0\nsamples = 2\nvalue = 375000.0" filled, rounded box black #eca470
+node 101 104.49 1.7083 2.0139 0.94444 "X[12] <= 0.86\nmse = 163202222.22\nsamples = 2\nvalue = 172266.67" filled, rounded box black #f8ddc9
+node 102 103.48 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 181300.0" filled, rounded box black #f7dac5
+node 103 105.41 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 154200.0" filled, rounded box black #f9e2d1
+node 104 108.47 3.1528 2.0139 0.94444 "X[11] <= 2265.0\nmse = 2247500203.7\nsamples = 105\nvalue = 206957.76" filled, rounded box black #f6d3ba
+node 105 108.47 1.7083 2.1111 0.94444 "X[11] <= 2015.0\nmse = 2072811302.69\nsamples = 102\nvalue = 205112.74" filled, rounded box black #f6d3bb
+node 106 107.56 0.36806 2.1111 0.73611 "mse = 1968326283.28\nsamples = 101\nvalue = 205978.85" filled, rounded box black #f6d3ba
+node 107 109.66 0.36806 1.5694 0.73611 "mse = 0.0\nsamples = 1\nvalue = 70000.0" filled, rounded box black #fef9f6
+node 108 111.7 1.7083 2.0139 0.94444 "X[11] <= 2835.5\nmse = 3726171875.0\nsamples = 3\nvalue = 279375.0" filled, rounded box black #f2bf9a
+node 109 111.7 0.36806 2.0139 0.73611 "mse = 355555555.56\nsamples = 2\nvalue = 313333.33" filled, rounded box black #f0b58b
+node 110 113.8 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 177500.0" filled, rounded box black #f8dbc7
+node 111 112.8 4.5972 2.1111 0.94444 "X[8] <= 276.0\nmse = 2785158805.97\nsamples = 129\nvalue = 167896.89" filled, rounded box black #f8decb
+node 112 112.8 3.1528 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 500001.0" filled, rounded box black #e58139
+node 113 116.97 3.1528 2.0139 0.94444 "X[5] <= -118.15\nmse = 1641275005.2\nsamples = 128\nvalue = 164401.06" filled, rounded box black #f8dfcc
+node 114 116.97 1.7083 2.0139 0.94444 "X[6] <= 34.09\nmse = 852498320.84\nsamples = 67\nvalue = 148657.84" filled, rounded box black #f9e3d3
+node 115 115.9 0.36806 2.0139 0.73611 "mse = 290392825.44\nsamples = 33\nvalue = 132842.31" filled, rounded box black #fae8da
+node 116 118.1 0.36806 1.9028 0.73611 "mse = 906409764.0\nsamples = 34\nvalue = 165106.0" filled, rounded box black #f8dfcc
+node 117 120.31 1.7083 2.0139 0.94444 "X[7] <= 40.5\nmse = 1935276756.7\nsamples = 61\nvalue = 182648.88" filled, rounded box black #f7dac4
+node 118 120.31 0.36806 2.0139 0.73611 "mse = 770955555.56\nsamples = 55\nvalue = 176811.11" filled, rounded box black #f8dbc7
+node 119 122.69 0.36806 2.2222 0.73611 "mse = 10450614228.69\nsamples = 6\nvalue = 250200.14" filled, rounded box black #f3c7a7
+node 120 193.1 8.9306 2.1111 0.94444 "X[5] <= -118.31\nmse = 7708468040.91\nsamples = 2578\nvalue = 232233.01" filled, rounded box black #f4ccaf
+node 121 177.23 7.4861 2.1111 0.94444 "X[6] <= 37.93\nmse = 8898305988.77\nsamples = 1426\nvalue = 255948.71" filled, rounded box black #f3c5a4
+node 122 151.48 6.0417 2.1111 0.94444 "X[5] <= -122.33\nmse = 8822759214.17\nsamples = 1214\nvalue = 267901.71" filled, rounded box black #f2c29f
+node 123 136.83 4.5972 2.1111 0.94444 "X[6] <= 37.77\nmse = 7832430726.08\nsamples = 221\nvalue = 330016.55" filled, rounded box black #efb184
+node 124 130.67 3.1528 2.1111 0.94444 "X[6] <= 37.6\nmse = 5135660935.03\nsamples = 170\nvalue = 303435.42" filled, rounded box black #f0b88f
+node 125 127.26 1.7083 2.1111 0.94444 "X[9] <= 1591.5\nmse = 6466299696.29\nsamples = 16\nvalue = 384479.29" filled, rounded box black #eca16c
+node 126 125.1 0.36806 2.1111 0.73611 "mse = 5211238004.54\nsamples = 15\nvalue = 367976.19" filled, rounded box black #eda673
+node 127 127.26 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 500001.0" filled, rounded box black #e58139
+node 128 130.67 1.7083 2.1111 0.94444 "X[6] <= 37.75\nmse = 4252369200.56\nsamples = 154\nvalue = 295087.56" filled, rounded box black #f1ba93
+node 129 129.41 0.36806 2.1111 0.73611 "mse = 2158249188.97\nsamples = 91\nvalue = 266564.75" filled, rounded box black #f2c2a0
+node 130 131.73 0.36806 2.0139 0.73611 "mse = 4367048506.6\nsamples = 63\nvalue = 337264.9" filled, rounded box black #eeae80
+node 131 136.83 3.1528 2.1111 0.94444 "X[7] <= 16.5\nmse = 7220716018.55\nsamples = 51\nvalue = 412321.98" filled, rounded box black #ea9a60
+node 132 135.67 1.7083 2.0139 0.94444 "X[12] <= 3.93\nmse = 5595040000.0\nsamples = 2\nvalue = 192300.0" filled, rounded box black #f7d7c0
+node 133 133.83 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 117500.0" filled, rounded box black #fbece1
+node 134 135.76 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 267100.0" filled, rounded box black #f2c29f
+node 135 137.99 1.7083 2.1111 0.94444 "X[6] <= 37.78\nmse = 4727798733.11\nsamples = 49\nvalue = 423462.33" filled, rounded box black #e9965b
+node 136 137.91 0.36806 2.1111 0.73611 "mse = 2327635275.75\nsamples = 18\nvalue = 372961.29" filled, rounded box black #eca571
+node 137 140.27 0.36806 2.1111 0.73611 "mse = 3567045272.99\nsamples = 31\nvalue = 456077.58" filled, rounded box black #e88d4c
+node 138 151.48 4.5972 2.1111 0.94444 "X[6] <= 34.16\nmse = 8030019964.83\nsamples = 993\nvalue = 254577.39" filled, rounded box black #f3c6a5
+node 139 149.12 3.1528 2.1111 0.94444 "X[5] <= -118.37\nmse = 11281530572.8\nsamples = 243\nvalue = 319590.5" filled, rounded box black #efb388
+node 140 144.99 1.7083 2.1111 0.94444 "X[6] <= 34.15\nmse = 8028354426.42\nsamples = 149\nvalue = 363724.31" filled, rounded box black #eda775
+node 141 142.63 0.36806 2.1111 0.73611 "mse = 7664797970.93\nsamples = 118\nvalue = 379911.82" filled, rounded box black #eca36e
+node 142 144.99 0.36806 2.1111 0.73611 "mse = 5088174448.29\nsamples = 31\nvalue = 306274.51" filled, rounded box black #f0b78e
+node 143 149.12 1.7083 2.1111 0.94444 "X[6] <= 34.06\nmse = 8782401229.19\nsamples = 94\nvalue = 252668.65" filled, rounded box black #f3c6a6
+node 144 147.35 0.36806 2.1111 0.73611 "mse = 3459807325.75\nsamples = 73\nvalue = 215935.29" filled, rounded box black #f5d0b6
+node 145 149.72 0.36806 2.1111 0.73611 "mse = 6159379640.24\nsamples = 21\nvalue = 381235.41" filled, rounded box black #eca26d
+node 146 152.66 3.1528 2.1111 0.94444 "X[4] <= 0.5\nmse = 5195687114.63\nsamples = 750\nvalue = 233719.01" filled, rounded box black #f4cbae
+node 147 152.66 1.7083 2.1111 0.94444 "X[12] <= 4.58\nmse = 4594633526.59\nsamples = 604\nvalue = 225245.26" filled, rounded box black #f5ceb2
+node 148 152.08 0.36806 2.1111 0.73611 "mse = 4284654310.73\nsamples = 569\nvalue = 222193.16" filled, rounded box black #f5cfb3
+node 149 154.44 0.36806 2.1111 0.73611 "mse = 7017105068.07\nsamples = 35\nvalue = 276396.33" filled, rounded box black #f2bf9b
+node 150 156.76 1.7083 2.1111 0.94444 "X[6] <= 36.48\nmse = 6164720536.49\nsamples = 146\nvalue = 267438.19" filled, rounded box black #f2c29f
+node 151 156.76 0.36806 2.0139 0.73611 "mse = 5076566962.9\nsamples = 83\nvalue = 244674.65" filled, rounded box black #f4c8a9
+node 152 159.08 0.36806 2.1111 0.73611 "mse = 5916189263.34\nsamples = 63\nvalue = 300088.93" filled, rounded box black #f1b991
+node 153 177.23 6.0417 2.1111 0.94444 "X[6] <= 38.8\nmse = 3550652285.91\nsamples = 212\nvalue = 185583.18" filled, rounded box black #f7d9c3
+node 154 174.06 4.5972 2.1111 0.94444 "X[5] <= -122.38\nmse = 3083764656.58\nsamples = 189\nvalue = 195081.47" filled, rounded box black #f7d6bf
+node 155 167.15 3.1528 2.1111 0.94444 "X[6] <= 38.1\nmse = 2458467568.75\nsamples = 105\nvalue = 224532.5" filled, rounded box black #f5ceb2
+node 156 163.6 1.7083 2.1111 0.94444 "X[7] <= 16.5\nmse = 2453254988.89\nsamples = 17\nvalue = 276196.67" filled, rounded box black #f2c09b
+node 157 161.34 0.36806 1.9028 0.73611 "mse = 15308888.89\nsamples = 2\nvalue = 184733.33" filled, rounded box black #f7d9c3
+node 158 163.6 0.36806 2.1111 0.73611 "mse = 1691355006.86\nsamples = 15\nvalue = 286359.26" filled, rounded box black #f1bd97
+node 159 167.15 1.7083 2.1111 0.94444 "X[12] <= 4.13\nmse = 1701558438.46\nsamples = 88\nvalue = 212610.0" filled, rounded box black #f6d1b7
+node 160 165.97 0.36806 2.1111 0.73611 "mse = 1234834820.94\nsamples = 66\nvalue = 203648.48" filled, rounded box black #f6d4bb
+node 161 168.33 0.36806 2.1111 0.73611 "mse = 2116543995.84\nsamples = 22\nvalue = 241229.03" filled, rounded box black #f4c9ab
+node 162 174.06 3.1528 2.1111 0.94444 "X[12] <= 4.15\nmse = 1377758531.75\nsamples = 84\nvalue = 157683.33" filled, rounded box black #f9e1cf
+node 163 172.91 1.7083 2.0139 0.94444 "X[5] <= -122.03\nmse = 762370143.21\nsamples = 57\nvalue = 144368.89" filled, rounded box black #fae4d5
+node 164 170.65 0.36806 2.0139 0.73611 "mse = 579882662.22\nsamples = 53\nvalue = 140578.31" filled, rounded box black #fae5d7
+node 165 172.91 0.36806 2.0139 0.73611 "mse = 735692653.06\nsamples = 4\nvalue = 189314.29" filled, rounded box black #f7d8c1
+node 166 175.23 1.7083 2.1111 0.94444 "X[10] <= 2179.0\nmse = 1365078233.02\nsamples = 27\nvalue = 190969.44" filled, rounded box black #f7d7c1
+node 167 175.23 0.36806 2.1111 0.73611 "mse = 1264280902.37\nsamples = 21\nvalue = 201542.31" filled, rounded box black #f6d4bc
+node 168 177.49 0.36806 1.9028 0.73611 "mse = 580839600.0\nsamples = 6\nvalue = 163480.0" filled, rounded box black #f8dfcd
+node 169 180.84 4.5972 2.1111 0.94444 "X[12] <= 3.17\nmse = 1788252207.02\nsamples = 23\nvalue = 119326.83" filled, rounded box black #fbebe0
+node 170 180.84 3.1528 2.0139 0.94444 "X[9] <= 364.0\nmse = 7333916875.0\nsamples = 3\nvalue = 191675.0" filled, rounded box black #f7d7c0
+node 171 179.91 1.7083 1.9028 0.94444 "X[6] <= 41.42\nmse = 107122500.0\nsamples = 2\nvalue = 106350.0" filled, rounded box black #fcefe6
+node 172 179.48 0.36806 1.5694 0.73611 "mse = 0.0\nsamples = 1\nvalue = 96000.0" filled, rounded box black #fcf2ea
+node 173 181.35 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 116700.0" filled, rounded box black #fbece1
+node 174 181.95 1.7083 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 277000.0" filled, rounded box black #f2bf9b
+node 175 184.91 3.1528 2.0139 0.94444 "X[7] <= 45.5\nmse = 561680511.32\nsamples = 20\nvalue = 111505.41" filled, rounded box black #fbeee4
+node 176 184.91 1.7083 2.0139 0.94444 "X[6] <= 40.75\nmse = 276317594.12\nsamples = 18\nvalue = 117542.42" filled, rounded box black #fbece1
+node 177 183.45 0.36806 2.0139 0.73611 "mse = 265962533.08\nsamples = 14\nvalue = 123591.3" filled, rounded box black #fbeade
+node 178 185.62 0.36806 1.8056 0.73611 "mse = 22424100.0\nsamples = 4\nvalue = 103630.0" filled, rounded box black #fcf0e7
+node 179 187.56 1.7083 1.9028 0.94444 "X[9] <= 291.0\nmse = 134670000.0\nsamples = 2\nvalue = 61700.0" filled, rounded box black #fefcfa
+node 180 187.56 0.36806 1.5694 0.73611 "mse = 0.0\nsamples = 1\nvalue = 55000.0" filled, rounded box black #fffdfc
+node 181 189.38 0.36806 1.5694 0.73611 "mse = 0.0\nsamples = 1\nvalue = 81800.0" filled, rounded box black #fdf6f1
+node 182 209.02 7.4861 2.1111 0.94444 "X[5] <= -117.17\nmse = 4664114623.62\nsamples = 1152\nvalue = 202774.8" filled, rounded box black #f6d4bc
+node 183 209.02 6.0417 2.1111 0.94444 "X[4] <= 0.5\nmse = 4909937495.65\nsamples = 966\nvalue = 209793.75" filled, rounded box black #f6d2b8
+node 184 204.38 4.5972 2.1111 0.94444 "X[6] <= 33.68\nmse = 3529357694.79\nsamples = 831\nvalue = 200280.27" filled, rounded box black #f6d5bd
+node 185 197.37 3.1528 2.2222 0.94444 "X[7] <= 31.5\nmse = 11893996427.14\nsamples = 88\nvalue = 250068.11" filled, rounded box black #f3c7a7
+node 186 193.84 1.7083 2.0139 0.94444 "X[5] <= -117.69\nmse = 4911925604.5\nsamples = 72\nvalue = 211481.45" filled, rounded box black #f6d2b8
+node 187 191.48 0.36806 2.1111 0.73611 "mse = 6143530410.48\nsamples = 39\nvalue = 236108.79" filled, rounded box black #f4cbad
+node 188 193.84 0.36806 2.1111 0.73611 "mse = 1061032593.75\nsamples = 33\nvalue = 176387.5" filled, rounded box black #f8dbc7
+node 189 197.37 1.7083 2.2222 0.94444 "X[6] <= 33.64\nmse = 10792439082.46\nsamples = 16\nvalue = 399784.32" filled, rounded box black #eb9d65
+node 190 196.2 0.36806 2.1111 0.73611 "mse = 8486020584.24\nsamples = 12\nvalue = 430020.4" filled, rounded box black #e99558
+node 191 198.52 0.36806 2.0139 0.73611 "mse = 1733702400.0\nsamples = 4\nvalue = 278840.0" filled, rounded box black #f2bf9a
+node 192 204.38 3.1528 2.1111 0.94444 "X[6] <= 34.09\nmse = 2371719137.67\nsamples = 743\nvalue = 195088.72" filled, rounded box black #f7d6bf
+node 193 203.2 1.7083 2.1111 0.94444 "X[8] <= 1920.5\nmse = 1758172439.42\nsamples = 602\nvalue = 188272.34" filled, rounded box black #f7d8c2
+node 194 200.84 0.36806 2.1111 0.73611 "mse = 1680087629.15\nsamples = 292\nvalue = 176624.84" filled, rounded box black #f8dbc7
+node 195 203.2 0.36806 2.1111 0.73611 "mse = 1564928980.35\nsamples = 310\nvalue = 199919.83" filled, rounded box black #f6d5bd
+node 196 205.56 1.7083 2.1111 0.94444 "X[5] <= -118.06\nmse = 3985512419.68\nsamples = 141\nvalue = 225891.04" filled, rounded box black #f5ceb1
+node 197 205.56 0.36806 2.1111 0.73611 "mse = 4007154980.62\nsamples = 110\nvalue = 241324.54" filled, rounded box black #f4c9ab
+node 198 207.88 0.36806 2.0139 0.73611 "mse = 485364131.61\nsamples = 31\nvalue = 174551.02" filled, rounded box black #f8dcc8
+node 199 213.7 4.5972 2.1111 0.94444 "X[9] <= 444.5\nmse = 9327121197.94\nsamples = 135\nvalue = 264180.58" filled, rounded box black #f3c3a1
+node 200 213.7 3.1528 2.1111 0.94444 "X[6] <= 32.82\nmse = 6190405229.29\nsamples = 48\nvalue = 224354.35" filled, rounded box black #f5ceb2
+node 201 212.52 1.7083 2.1111 0.94444 "X[5] <= -117.21\nmse = 7062070462.02\nsamples = 16\nvalue = 274067.89" filled, rounded box black #f2c09c
+node 202 210.2 0.36806 2.1111 0.73611 "mse = 3023777148.44\nsamples = 10\nvalue = 311768.75" filled, rounded box black #f0b68c
+node 203 212.56 0.36806 2.1111 0.73611 "mse = 8024469366.74\nsamples = 6\nvalue = 223800.08" filled, rounded box black #f5ceb2
+node 204 214.88 1.7083 2.1111 0.94444 "X[5] <= -118.26\nmse = 3734453001.94\nsamples = 32\nvalue = 198090.58" filled, rounded box black #f6d5be
+node 205 214.83 0.36806 1.9028 0.73611 "mse = 619365600.0\nsamples = 3\nvalue = 291020.0" filled, rounded box black #f1bb95
+node 206 217.09 0.36806 2.1111 0.73611 "mse = 3065665582.75\nsamples = 29\nvalue = 188410.44" filled, rounded box black #f7d8c2
+node 207 220.53 3.1528 2.1111 0.94444 "X[5] <= -117.26\nmse = 9698348767.06\nsamples = 87\nvalue = 286428.33" filled, rounded box black #f1bd97
+node 208 220.53 1.7083 2.1111 0.94444 "X[10] <= 1359.0\nmse = 9172320150.82\nsamples = 57\nvalue = 312255.96" filled, rounded box black #f0b58b
+node 209 219.45 0.36806 2.1111 0.73611 "mse = 9648967617.63\nsamples = 31\nvalue = 359171.59" filled, rounded box black #eda877
+node 210 221.81 0.36806 2.1111 0.73611 "mse = 4815312851.55\nsamples = 26\nvalue = 268881.13" filled, rounded box black #f2c29f
+node 211 223.97 1.7083 2.1111 0.94444 "X[6] <= 32.71\nmse = 5610327452.68\nsamples = 30\nvalue = 225162.79" filled, rounded box black #f5ceb2
+node 212 223.97 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 452800.0" filled, rounded box black #e88e4e
+node 213 226.12 0.36806 2.1111 0.73611 "mse = 3232956085.66\nsamples = 29\nvalue = 214058.54" filled, rounded box black #f5d1b7
+node 214 235.98 6.0417 2.1111 0.94444 "X[12] <= 4.23\nmse = 1841159604.25\nsamples = 186\nvalue = 166656.95" filled, rounded box black #f8decb
+node 215 235.98 4.5972 2.1111 0.94444 "X[6] <= 32.81\nmse = 1088367386.89\nsamples = 136\nvalue = 154588.32" filled, rounded box black #f9e2d1
+node 216 233.94 3.1528 2.1111 0.94444 "X[7] <= 37.5\nmse = 1061940284.14\nsamples = 91\nvalue = 145825.85" filled, rounded box black #f9e4d5
+node 217 230.8 1.7083 2.0139 0.94444 "X[12] <= 3.74\nmse = 962246258.11\nsamples = 84\nvalue = 142783.09" filled, rounded box black #fae5d6
+node 218 228.48 0.36806 2.1111 0.73611 "mse = 1066904440.24\nsamples = 45\nvalue = 133592.75" filled, rounded box black #fae7da
+node 219 230.8 0.36806 2.0139 0.73611 "mse = 677900405.44\nsamples = 39\nvalue = 152247.76" filled, rounded box black #f9e2d2
+node 220 233.94 1.7083 2.0139 0.94444 "X[7] <= 39.0\nmse = 764818842.98\nsamples = 7\nvalue = 183445.45" filled, rounded box black #f7d9c4
+node 221 232.9 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 216500.0" filled, rounded box black #f5d0b6
+node 222 234.94 0.36806 1.9028 0.73611 "mse = 488252500.0\nsamples = 6\nvalue = 171050.0" filled, rounded box black #f8ddc9
+node 223 238.24 3.1528 2.0139 0.94444 "X[5] <= -116.85\nmse = 608284744.93\nsamples = 45\nvalue = 173813.43" filled, rounded box black #f8dcc8
+node 224 238.24 1.7083 1.9028 0.94444 "X[6] <= 32.95\nmse = 511569469.3\nsamples = 43\nvalue = 170861.29" filled, rounded box black #f8ddca
+node 225 237.15 0.36806 2.0139 0.73611 "mse = 496321975.01\nsamples = 27\nvalue = 165443.9" filled, rounded box black #f8dfcc
+node 226 239.41 0.36806 2.0139 0.73611 "mse = 372170929.71\nsamples = 16\nvalue = 181438.1" filled, rounded box black #f7dac5
+node 227 241.51 1.7083 1.9028 0.94444 "X[9] <= 610.5\nmse = 359445600.0\nsamples = 2\nvalue = 210420.0" filled, rounded box black #f6d2b8
+node 228 241.51 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 225900.0" filled, rounded box black #f5ceb1
+node 229 243.44 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 187200.0" filled, rounded box black #f7d8c2
+node 230 248.47 4.5972 2.1111 0.94444 "X[7] <= 6.5\nmse = 2428554534.37\nsamples = 50\nvalue = 198541.98" filled, rounded box black #f6d5bd
+node 231 248.47 3.1528 2.1111 0.94444 "X[5] <= -117.11\nmse = 5525922222.22\nsamples = 6\nvalue = 263866.67" filled, rounded box black #f3c3a1
+node 232 247.3 1.7083 2.0139 0.94444 "X[12] <= 4.57\nmse = 785975555.56\nsamples = 3\nvalue = 174233.33" filled, rounded box black #f8dcc8
+node 233 245.44 0.36806 1.8056 0.73611 "mse = 92160000.0\nsamples = 2\nvalue = 155200.0" filled, rounded box black #f9e1d0
+node 234 247.44 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 212300.0" filled, rounded box black #f6d1b7
+node 235 249.62 1.7083 2.1111 0.94444 "X[12] <= 4.55\nmse = 1870294722.22\nsamples = 3\nvalue = 308683.33" filled, rounded box black #f0b68d
+node 236 249.48 0.36806 1.9028 0.73611 "mse = 494678400.0\nsamples = 2\nvalue = 325760.0" filled, rounded box black #efb286
+node 237 251.52 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 223300.0" filled, rounded box black #f5ceb3
+node 238 254.69 3.1528 2.1111 0.94444 "X[7] <= 45.0\nmse = 1441292359.18\nsamples = 44\nvalue = 190376.39" filled, rounded box black #f7d8c1
+node 239 254.69 1.7083 2.1111 0.94444 "X[6] <= 32.7\nmse = 1126950573.41\nsamples = 42\nvalue = 186456.52" filled, rounded box black #f7d9c3
+node 240 253.62 0.36806 2.0139 0.73611 "mse = 235352040.82\nsamples = 7\nvalue = 154871.43" filled, rounded box black #f9e1d1
+node 241 255.94 0.36806 2.1111 0.73611 "mse = 1035324714.05\nsamples = 35\nvalue = 194496.36" filled, rounded box black #f7d6bf
+node 242 258.09 1.7083 2.0139 0.94444 "X[10] <= 680.5\nmse = 189475555.56\nsamples = 2\nvalue = 280533.33" filled, rounded box black #f2be99
+node 243 258.09 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 300000.0" filled, rounded box black #f1b991
+node 244 260.02 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 270800.0" filled, rounded box black #f2c19e
+node 245 329.95 10.375 2.1111 0.94444 "X[12] <= 3.0\nmse = 2675333200.82\nsamples = 2878\nvalue = 109521.85" filled, rounded box black #fceee5
+node 246 309.15 8.9306 2.1111 0.94444 "X[12] <= 2.33\nmse = 1477060844.06\nsamples = 1687\nvalue = 90828.32" filled, rounded box black #fdf3ed
+node 247 278.83 7.4861 2.1111 0.94444 "X[9] <= 8.5\nmse = 1202158504.16\nsamples = 979\nvalue = 80758.2" filled, rounded box black #fdf6f1
+node 248 268.69 6.0417 2.2222 0.94444 "X[8] <= 36.5\nmse = 17515527343.75\nsamples = 5\nvalue = 269062.5" filled, rounded box black #f2c29e
+node 249 262.81 4.5972 2.1111 0.94444 "X[8] <= 21.0\nmse = 8803645833.33\nsamples = 4\nvalue = 208750.0" filled, rounded box black #f6d2b9
+node 250 260.81 3.1528 1.6806 0.73611 "mse = 0.0\nsamples = 2\nvalue = 275000.0" filled, rounded box black #f2c09c
+node 251 262.81 3.1528 1.8056 0.94444 "X[5] <= -119.3\nmse = 76562500.0\nsamples = 2\nvalue = 76250.0" filled, rounded box black #fdf7f3
+node 252 260.99 1.7083 1.5694 0.73611 "mse = 0.0\nsamples = 1\nvalue = 85000.0" filled, rounded box black #fdf5ef
+node 253 262.81 1.7083 1.5694 0.73611 "mse = 0.0\nsamples = 1\nvalue = 67500.0" filled, rounded box black #fefaf7
+node 254 268.69 4.5972 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 450000.0" filled, rounded box black #e88f4f
+node 255 278.83 6.0417 2.0139 0.94444 "X[6] <= 37.0\nmse = 934351017.76\nsamples = 974\nvalue = 79787.56" filled, rounded box black #fdf6f2
+node 256 274.26 4.5972 2.0139 0.94444 "X[6] <= 34.19\nmse = 752580635.03\nsamples = 495\nvalue = 72611.95" filled, rounded box black #fef8f5
+node 257 268.17 3.1528 2.0139 0.94444 "X[5] <= -116.29\nmse = 965706989.63\nsamples = 187\nvalue = 89963.88" filled, rounded box black #fdf4ed
+node 258 264.85 1.7083 2.0139 0.94444 "X[5] <= -117.85\nmse = 933689711.47\nsamples = 140\nvalue = 97464.22" filled, rounded box black #fcf2ea
+node 259 262.12 0.36806 2.0139 0.73611 "mse = 493453469.39\nsamples = 5\nvalue = 175471.43" filled, rounded box black #f8dcc8
+node 260 264.33 0.36806 1.9028 0.73611 "mse = 752181184.0\nsamples = 135\nvalue = 95037.33" filled, rounded box black #fcf2eb
+node 261 268.17 1.7083 2.0139 0.94444 "X[11] <= 315.0\nmse = 207268153.26\nsamples = 47\nvalue = 63992.54" filled, rounded box black #fefbf9
+node 262 266.53 0.36806 2.0139 0.73611 "mse = 272218333.33\nsamples = 27\nvalue = 59466.67" filled, rounded box black #fefcfa
+node 263 268.7 0.36806 1.8056 0.73611 "mse = 80430884.5\nsamples = 20\nvalue = 69248.39" filled, rounded box black #fef9f6
+node 264 274.26 3.1528 2.0139 0.94444 "X[8] <= 2626.0\nmse = 314279797.49\nsamples = 308\nvalue = 61780.58" filled, rounded box black #fefbf9
+node 265 273.13 1.7083 1.9028 0.94444 "X[10] <= 107.0\nmse = 275358852.0\nsamples = 251\nvalue = 59595.15" filled, rounded box black #fefcfa
+node 266 270.87 0.36806 2.0139 0.73611 "mse = 1101500000.0\nsamples = 3\nvalue = 101000.0" filled, rounded box black #fcf1e8
+node 267 273.13 0.36806 2.0139 0.73611 "mse = 242249651.95\nsamples = 248\nvalue = 59060.2" filled, rounded box black #fefcfb
+node 268 275.4 1.7083 2.0139 0.94444 "X[12] <= 1.94\nmse = 371164296.47\nsamples = 57\nvalue = 71627.59" filled, rounded box black #fef9f5
+node 269 275.4 0.36806 2.0139 0.73611 "mse = 224745767.01\nsamples = 32\nvalue = 64382.35" filled, rounded box black #fefbf8
+node 270 277.66 0.36806 2.0139 0.73611 "mse = 398873541.67\nsamples = 25\nvalue = 81891.67" filled, rounded box black #fdf6f1
+node 271 283.41 4.5972 2.1111 0.94444 "X[6] <= 39.35\nmse = 1013282325.51\nsamples = 479\nvalue = 87000.26" filled, rounded box black #fdf4ee
+node 272 283.41 3.1528 2.1111 0.94444 "X[12] <= 1.94\nmse = 1084688082.79\nsamples = 355\nvalue = 92394.92" filled, rounded box black #fdf3ec
+node 273 282.24 1.7083 1.9028 0.94444 "X[6] <= 39.16\nmse = 985708253.8\nsamples = 205\nvalue = 86119.45" filled, rounded box black #fdf5ef
+node 274 279.92 0.36806 2.0139 0.73611 "mse = 817176745.21\nsamples = 198\nvalue = 83886.39" filled, rounded box black #fdf5f0
+node 275 282.24 0.36806 2.1111 0.73611 "mse = 2014730769.23\nsamples = 7\nvalue = 140400.0" filled, rounded box black #fae6d7
+node 276 284.56 1.7083 2.1111 0.94444 "X[10] <= 1260.5\nmse = 1092925333.65\nsamples = 150\nvalue = 100926.45" filled, rounded box black #fcf1e8
+node 277 284.56 0.36806 2.0139 0.73611 "mse = 1414784991.2\nsamples = 94\nvalue = 107778.62" filled, rounded box black #fcefe5
+node 278 286.83 0.36806 2.0139 0.73611 "mse = 436690655.76\nsamples = 56\nvalue = 90683.51" filled, rounded box black #fdf3ed
+node 279 290.05 3.1528 2.0139 0.94444 "X[9] <= 107.0\nmse = 500317397.17\nsamples = 124\nvalue = 71826.11" filled, rounded box black #fef9f5
+node 280 290.05 1.7083 2.1111 0.94444 "X[5] <= -122.01\nmse = 3479263950.62\nsamples = 5\nvalue = 110677.78" filled, rounded box black #fbeee4
+node 281 289.03 0.36806 1.9028 0.73611 "mse = 79878055.56\nsamples = 3\nvalue = 69483.33" filled, rounded box black #fef9f6
+node 282 291.19 0.36806 1.9028 0.73611 "mse = 96142222.22\nsamples = 2\nvalue = 193066.67" filled, rounded box black #f7d7c0
+node 283 293.4 1.7083 2.0139 0.94444 "X[7] <= 17.5\nmse = 288844076.95\nsamples = 119\nvalue = 70023.71" filled, rounded box black #fef9f6
+node 284 293.4 0.36806 2.0139 0.73611 "mse = 425450943.75\nsamples = 27\nvalue = 85582.5" filled, rounded box black #fdf5ef
+node 285 295.66 0.36806 2.0139 0.73611 "mse = 174153264.04\nsamples = 92\nvalue = 65982.47" filled, rounded box black #fefaf8
+node 286 309.15 7.4861 2.1111 0.94444 "X[9] <= 7.5\nmse = 1521016940.15\nsamples = 708\nvalue = 104942.77" filled, rounded box black #fcefe7
+node 287 307.94 6.0417 2.2222 0.94444 "X[8] <= 29.0\nmse = 32851743750.25\nsamples = 2\nvalue = 318750.5" filled, rounded box black #efb489
+node 288 306.08 4.5972 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 137500.0" filled, rounded box black #fae6d8
+node 289 308.01 4.5972 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 500001.0" filled, rounded box black #e58139
+node 290 310.35 6.0417 2.1111 0.94444 "X[6] <= 34.85\nmse = 1382174877.22\nsamples = 706\nvalue = 104557.88" filled, rounded box black #fcf0e7
+node 291 310.23 4.5972 2.1111 0.94444 "X[5] <= -117.67\nmse = 1396798928.93\nsamples = 183\nvalue = 117852.73" filled, rounded box black #fbece1
+node 292 303.55 3.1528 2.1111 0.94444 "X[12] <= 2.58\nmse = 1918439555.15\nsamples = 43\nvalue = 157756.45" filled, rounded box black #f9e1cf
+node 293 300.08 1.7083 2.0139 0.94444 "X[5] <= -118.1\nmse = 829470591.72\nsamples = 18\nvalue = 134569.23" filled, rounded box black #fae7da
+node 294 297.87 0.36806 1.9028 0.73611 "mse = 11468163.27\nsamples = 4\nvalue = 99142.86" filled, rounded box black #fcf1e9
+node 295 300.08 0.36806 2.0139 0.73611 "mse = 498111135.73\nsamples = 14\nvalue = 147621.05" filled, rounded box black #f9e3d4
+node 296 303.55 1.7083 2.1111 0.94444 "X[5] <= -117.81\nmse = 2036176936.73\nsamples = 25\nvalue = 174502.78" filled, rounded box black #f8dcc8
+node 297 302.4 0.36806 2.1111 0.73611 "mse = 1269829433.11\nsamples = 15\nvalue = 195976.19" filled, rounded box black #f7d6bf
+node 298 304.72 0.36806 2.0139 0.73611 "mse = 1559742400.0\nsamples = 10\nvalue = 144440.0" filled, rounded box black #fae4d5
+node 299 310.23 3.1528 2.0139 0.94444 "X[5] <= -116.29\nmse = 646559246.62\nsamples = 140\nvalue = 106237.56" filled, rounded box black #fcefe6
+node 300 309.1 1.7083 2.0139 0.94444 "X[6] <= 33.9\nmse = 588033472.58\nsamples = 124\nvalue = 109841.05" filled, rounded box black #fceee4
+node 301 306.92 0.36806 1.9028 0.73611 "mse = 755262871.9\nsamples = 28\nvalue = 129040.91" filled, rounded box black #fae9dc
+node 302 309.13 0.36806 2.0139 0.73611 "mse = 393059463.31\nsamples = 96\nvalue = 104054.79" filled, rounded box black #fcf0e7
+node 303 311.37 1.7083 2.0139 0.94444 "X[12] <= 2.9\nmse = 136630812.85\nsamples = 16\nvalue = 76469.57" filled, rounded box black #fdf7f3
+node 304 311.34 0.36806 1.9028 0.73611 "mse = 81150351.24\nsamples = 15\nvalue = 74831.82" filled, rounded box black #fef8f4
+node 305 313.38 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 112500.0" filled, rounded box black #fbede3
+node 306 318.65 4.5972 2.1111 0.94444 "X[6] <= 37.09\nmse = 1300096065.72\nsamples = 523\nvalue = 100184.57" filled, rounded box black #fcf1e9
+node 307 318.65 3.1528 2.0139 0.94444 "X[5] <= -120.81\nmse = 508661284.02\nsamples = 159\nvalue = 79669.23" filled, rounded box black #fdf6f2
+node 308 317.55 1.7083 1.9028 0.94444 "X[5] <= -121.47\nmse = 704954375.0\nsamples = 7\nvalue = 146175.0" filled, rounded box black #f9e4d4
+node 309 315.38 0.36806 1.8056 0.73611 "mse = 60840000.0\nsamples = 2\nvalue = 185800.0" filled, rounded box black #f7d9c3
+node 310 317.55 0.36806 2.0139 0.73611 "mse = 221818888.89\nsamples = 5\nvalue = 132966.67" filled, rounded box black #fae8da
+node 311 319.76 1.7083 2.0139 0.94444 "X[6] <= 37.02\nmse = 357558944.95\nsamples = 152\nvalue = 77557.94" filled, rounded box black #fdf7f3
+node 312 319.76 0.36806 1.9028 0.73611 "mse = 339291619.5\nsamples = 150\nvalue = 78608.23" filled, rounded box black #fdf7f2
+node 313 321.87 0.36806 1.8056 0.73611 "mse = 16820000.0\nsamples = 2\nvalue = 49200.0" filled, rounded box black #ffffff
+node 314 325.26 3.1528 2.1111 0.94444 "X[6] <= 39.28\nmse = 1381605842.71\nsamples = 364\nvalue = 109444.97" filled, rounded box black #fceee5
+node 315 325.26 1.7083 2.1111 0.94444 "X[7] <= 27.5\nmse = 1469962581.89\nsamples = 285\nvalue = 115284.7" filled, rounded box black #fbede2
+node 316 324.08 0.36806 2.1111 0.73611 "mse = 1396696746.39\nsamples = 160\nvalue = 124347.64" filled, rounded box black #fbeade
+node 317 326.44 0.36806 2.1111 0.73611 "mse = 1321980761.16\nsamples = 125\nvalue = 103599.49" filled, rounded box black #fcf0e7
+node 318 328.76 1.7083 2.0139 0.94444 "X[8] <= 3423.0\nmse = 495837864.96\nsamples = 79\nvalue = 88375.2" filled, rounded box black #fdf4ee
+node 319 328.76 0.36806 2.0139 0.73611 "mse = 347076528.26\nsamples = 66\nvalue = 83111.76" filled, rounded box black #fdf6f0
+node 320 331.02 0.36806 2.0139 0.73611 "mse = 487844045.37\nsamples = 13\nvalue = 111717.39" filled, rounded box black #fbeee4
+node 321 350.73 8.9306 2.1111 0.94444 "X[12] <= 4.13\nmse = 3171484985.17\nsamples = 1191\nvalue = 136619.36" filled, rounded box black #fae7d9
+node 322 350.73 7.4861 2.1111 0.94444 "X[6] <= 34.21\nmse = 2807467500.73\nsamples = 921\nvalue = 128921.72" filled, rounded box black #fae9dc
+node 323 344.34 6.0417 2.1111 0.94444 "X[5] <= -118.01\nmse = 4813562969.95\nsamples = 265\nvalue = 149754.51" filled, rounded box black #f9e3d3
+node 324 338.69 4.5972 2.0139 0.94444 "X[6] <= 34.09\nmse = 5292657200.0\nsamples = 32\nvalue = 256180.0" filled, rounded box black #f3c5a4
+node 325 335.49 3.1528 2.0139 0.94444 "X[7] <= 35.5\nmse = 124575802.47\nsamples = 5\nvalue = 176644.44" filled, rounded box black #f8dbc7
+node 326 333.45 1.7083 1.9028 0.94444 "X[12] <= 3.52\nmse = 48382040.82\nsamples = 4\nvalue = 181628.57" filled, rounded box black #f7dac5
+node 327 333.12 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 191800.0" filled, rounded box black #f7d7c0
+node 328 335.06 0.36806 1.6944 0.73611 "mse = 9798400.0\nsamples = 3\nvalue = 177560.0" filled, rounded box black #f8dbc7
+node 329 335.49 1.7083 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 159200.0" filled, rounded box black #f9e0cf
+node 330 338.69 3.1528 2.1111 0.94444 "X[7] <= 21.5\nmse = 4733683355.15\nsamples = 27\nvalue = 273639.02" filled, rounded box black #f2c09c
+node 331 337.42 1.7083 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 476700.0" filled, rounded box black #e68843
+node 332 339.58 1.7083 2.1111 0.94444 "X[12] <= 3.58\nmse = 3795410343.75\nsamples = 26\nvalue = 268562.5" filled, rounded box black #f2c29f
+node 333 337.22 0.36806 2.1111 0.73611 "mse = 2198741835.94\nsamples = 11\nvalue = 235293.75" filled, rounded box black #f4cbad
+node 334 339.58 0.36806 2.1111 0.73611 "mse = 3630067430.56\nsamples = 15\nvalue = 290741.67" filled, rounded box black #f1bb95
+node 335 344.34 4.5972 2.1111 0.94444 "X[8] <= 47.5\nmse = 2961176420.69\nsamples = 233\nvalue = 135014.14" filled, rounded box black #fae7d9
+node 336 343.27 3.1528 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 500001.0" filled, rounded box black #e58139
+node 337 345.42 3.1528 2.1111 0.94444 "X[5] <= -117.53\nmse = 1860305764.88\nsamples = 232\nvalue = 131955.59" filled, rounded box black #fae8db
+node 338 344.22 1.7083 2.1111 0.94444 "X[7] <= 48.0\nmse = 1059706594.08\nsamples = 86\nvalue = 152295.38" filled, rounded box black #f9e2d2
+node 339 341.9 0.36806 2.0139 0.73611 "mse = 775871828.38\nsamples = 84\nvalue = 150170.87" filled, rounded box black #f9e3d3
+node 340 344.22 0.36806 2.1111 0.73611 "mse = 4795468888.89\nsamples = 2\nvalue = 242233.33" filled, rounded box black #f4c9aa
+node 341 346.63 1.7083 2.1111 0.94444 "X[12] <= 3.01\nmse = 1946405676.17\nsamples = 146\nvalue = 120358.33" filled, rounded box black #fbebe0
+node 342 346.63 0.36806 2.2222 0.73611 "mse = 17640568888.89\nsamples = 3\nvalue = 234833.33" filled, rounded box black #f4cbad
+node 343 349.05 0.36806 2.1111 0.73611 "mse = 1158490400.33\nsamples = 143\nvalue = 117264.41" filled, rounded box black #fbece1
+node 344 357.13 6.0417 2.1111 0.94444 "X[5] <= -120.16\nmse = 1754885719.31\nsamples = 656\nvalue = 120535.55" filled, rounded box black #fbebe0
+node 345 357.13 4.5972 2.1111 0.94444 "X[6] <= 39.38\nmse = 1948294996.53\nsamples = 432\nvalue = 131417.02" filled, rounded box black #fae8db
+node 346 355.95 3.1528 2.1111 0.94444 "X[6] <= 37.11\nmse = 1966296867.92\nsamples = 389\nvalue = 135113.64" filled, rounded box black #fae7d9
+node 347 353.56 1.7083 2.1111 0.94444 "X[10] <= 1699.5\nmse = 6127826390.53\nsamples = 8\nvalue = 206023.08" filled, rounded box black #f6d3ba
+node 348 351.41 0.36806 2.1111 0.73611 "mse = 2562237777.78\nsamples = 7\nvalue = 162033.33" filled, rounded box black #f8dfcd
+node 349 353.56 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 305000.0" filled, rounded box black #f0b88f
+node 350 355.95 1.7083 2.1111 0.94444 "X[12] <= 3.41\nmse = 1758158495.26\nsamples = 381\nvalue = 133527.02" filled, rounded box black #fae7da
+node 351 355.72 0.36806 2.1111 0.73611 "mse = 1276754749.94\nsamples = 154\nvalue = 121475.78" filled, rounded box black #fbebdf
+node 352 358.08 0.36806 2.1111 0.73611 "mse = 1911209667.69\nsamples = 227\nvalue = 141033.8" filled, rounded box black #fae5d7
+node 353 358.28 3.1528 2.0139 0.94444 "X[10] <= 92.0\nmse = 695599640.82\nsamples = 43\nvalue = 100048.57" filled, rounded box black #fcf1e9
+node 354 358.28 1.7083 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 200000.0" filled, rounded box black #f6d5bd
+node 355 360.4 1.7083 2.0139 0.94444 "X[7] <= 15.5\nmse = 558795652.17\nsamples = 42\nvalue = 98600.0" filled, rounded box black #fcf1e9
+node 356 360.4 0.36806 2.0139 0.73611 "mse = 422210815.97\nsamples = 16\nvalue = 115245.83" filled, rounded box black #fbede2
+node 357 362.66 0.36806 2.0139 0.73611 "mse = 405047950.62\nsamples = 26\nvalue = 89722.22" filled, rounded box black #fdf4ed
+node 358 368.02 4.5972 2.0139 0.94444 "X[6] <= 34.83\nmse = 765312593.74\nsamples = 224\nvalue = 100296.64" filled, rounded box black #fcf1e9
+node 359 368.02 3.1528 2.0139 0.94444 "X[12] <= 3.44\nmse = 613750803.85\nsamples = 44\nvalue = 121198.39" filled, rounded box black #fbebdf
+node 360 366.88 1.7083 2.0139 0.94444 "X[6] <= 34.32\nmse = 317412440.83\nsamples = 17\nvalue = 108342.31" filled, rounded box black #fceee5
+node 361 364.77 0.36806 1.6944 0.73611 "mse = 3240000.0\nsamples = 2\nvalue = 135400.0" filled, rounded box black #fae7d9
+node 362 366.88 0.36806 2.0139 0.73611 "mse = 217219938.02\nsamples = 15\nvalue = 103422.73" filled, rounded box black #fcf0e7
+node 363 369.15 1.7083 2.0139 0.94444 "X[8] <= 4900.0\nmse = 622194722.22\nsamples = 27\nvalue = 130483.33" filled, rounded box black #fae8db
+node 364 369.15 0.36806 2.0139 0.73611 "mse = 514838585.86\nsamples = 24\nvalue = 126966.67" filled, rounded box black #fbe9dd
+node 365 371.41 0.36806 2.0139 0.73611 "mse = 170675555.56\nsamples = 3\nvalue = 169166.67" filled, rounded box black #f8ddca
+node 366 374.81 3.1528 2.0139 0.94444 "X[6] <= 37.1\nmse = 686049104.74\nsamples = 180\nvalue = 95903.73" filled, rounded box black #fcf2ea
+node 367 374.81 1.7083 2.0139 0.94444 "X[7] <= 30.5\nmse = 513901277.05\nsamples = 153\nvalue = 91421.18" filled, rounded box black #fdf3ec
+node 368 373.67 0.36806 2.0139 0.73611 "mse = 501162228.01\nsamples = 112\nvalue = 95833.51" filled, rounded box black #fcf2eb
+node 369 375.94 0.36806 2.0139 0.73611 "mse = 320419990.23\nsamples = 41\nvalue = 78253.12" filled, rounded box black #fdf7f2
+node 370 378.2 1.7083 1.9028 0.94444 "X[9] <= 890.0\nmse = 838793600.0\nsamples = 27\nvalue = 124480.0" filled, rounded box black #fbeade
+node 371 378.2 0.36806 2.0139 0.73611 "mse = 450211862.88\nsamples = 25\nvalue = 119960.53" filled, rounded box black #fbebe0
+node 372 380.41 0.36806 1.9028 0.73611 "mse = 460102500.0\nsamples = 2\nvalue = 210350.0" filled, rounded box black #f6d2b8
+node 373 390.49 7.4861 2.1111 0.94444 "X[7] <= 37.5\nmse = 3514935615.99\nsamples = 270\nvalue = 163374.28" filled, rounded box black #f8dfcd
+node 374 390.49 6.0417 2.1111 0.94444 "X[6] <= 33.84\nmse = 3010076288.87\nsamples = 255\nvalue = 159123.46" filled, rounded box black #f9e0cf
+node 375 387.7 4.5972 2.2222 0.94444 "X[7] <= 6.5\nmse = 15564690227.92\nsamples = 8\nvalue = 231608.5" filled, rounded box black #f4ccaf
+node 376 385.6 3.1528 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 500001.0" filled, rounded box black #e58139
+node 377 387.7 3.1528 2.0139 0.94444 "X[7] <= 18.5\nmse = 1389340100.0\nsamples = 7\nvalue = 177930.0" filled, rounded box black #f8dbc6
+node 378 384.72 1.7083 2.0139 0.94444 "X[10] <= 2245.5\nmse = 712342343.75\nsamples = 5\nvalue = 192237.5" filled, rounded box black #f7d7c0
+node 379 382.62 0.36806 2.0139 0.73611 "mse = 105882040.82\nsamples = 4\nvalue = 182828.57" filled, rounded box black #f7dac4
+node 380 384.72 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 258100.0" filled, rounded box black #f3c5a3
+node 381 387.7 1.7083 1.6944 0.94444 "X[11] <= 572.0\nmse = 3240000.0\nsamples = 2\nvalue = 120700.0" filled, rounded box black #fbebe0
+node 382 386.65 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 118900.0" filled, rounded box black #fbece0
+node 383 388.58 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 122500.0" filled, rounded box black #fbebdf
+node 384 394.17 4.5972 2.1111 0.94444 "X[5] <= -121.0\nmse = 2436362078.71\nsamples = 247\nvalue = 156810.11" filled, rounded box black #f9e1d0
+node 385 394.17 3.1528 2.0139 0.94444 "X[6] <= 37.75\nmse = 2595555371.9\nsamples = 106\nvalue = 172709.09" filled, rounded box black #f8dcc9
+node 386 392.99 1.7083 2.1111 0.94444 "X[11] <= 496.5\nmse = 3229841052.63\nsamples = 12\nvalue = 238900.0" filled, rounded box black #f4caac
+node 387 390.67 0.36806 2.0139 0.73611 "mse = 2809629375.0\nsamples = 6\nvalue = 282675.0" filled, rounded box black #f2be98
+node 388 392.99 0.36806 2.1111 0.73611 "mse = 1128258677.69\nsamples = 6\nvalue = 207063.64" filled, rounded box black #f6d3ba
+node 389 395.35 1.7083 2.1111 0.94444 "X[5] <= -121.23\nmse = 1802883733.33\nsamples = 94\nvalue = 163393.33" filled, rounded box black #f8dfcd
+node 390 395.35 0.36806 2.1111 0.73611 "mse = 1665817166.44\nsamples = 77\nvalue = 153583.81" filled, rounded box black #f9e2d1
+node 391 397.67 0.36806 2.0139 0.73611 "mse = 767045288.89\nsamples = 17\nvalue = 197726.67" filled, rounded box black #f6d5be
+node 392 401.05 3.1528 2.1111 0.94444 "X[6] <= 34.17\nmse = 2028940993.43\nsamples = 141\nvalue = 145781.08" filled, rounded box black #f9e4d5
+node 393 401.05 1.7083 2.1111 0.94444 "X[5] <= -117.75\nmse = 2591886176.75\nsamples = 58\nvalue = 165445.65" filled, rounded box black #f8dfcc
+node 394 399.94 0.36806 2.0139 0.73611 "mse = 3022518900.0\nsamples = 12\nvalue = 239090.0" filled, rounded box black #f4caac
+node 395 402.2 0.36806 2.0139 0.73611 "mse = 547261820.99\nsamples = 46\nvalue = 144988.89" filled, rounded box black #f9e4d5
+node 396 404.52 1.7083 2.1111 0.94444 "X[6] <= 37.34\nmse = 1163219671.01\nsamples = 83\nvalue = 131864.62" filled, rounded box black #fae8db
+node 397 404.52 0.36806 2.1111 0.73611 "mse = 1164013072.56\nsamples = 56\nvalue = 121038.1" filled, rounded box black #fbebdf
+node 398 406.84 0.36806 2.0139 0.73611 "mse = 556869224.95\nsamples = 27\nvalue = 151634.78" filled, rounded box black #f9e2d2
+node 399 410.41 6.0417 2.1111 0.94444 "X[6] <= 37.94\nmse = 6662052899.31\nsamples = 15\nvalue = 232095.83" filled, rounded box black #f4ccaf
+node 400 410.41 4.5972 2.0139 0.94444 "X[9] <= 285.0\nmse = 4398920000.0\nsamples = 9\nvalue = 268850.0" filled, rounded box black #f2c29f
+node 401 409.23 3.1528 2.2222 0.94444 "X[6] <= 34.14\nmse = 12460808888.89\nsamples = 3\nvalue = 358866.67" filled, rounded box black #eda877
+node 402 407.2 1.7083 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 214800.0" filled, rounded box black #f5d1b6
+node 403 409.3 1.7083 2.0139 0.94444 "X[11] <= 144.0\nmse = 3124810000.0\nsamples = 2\nvalue = 430900.0" filled, rounded box black #e99457
+node 404 408.94 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 375000.0" filled, rounded box black #eca470
+node 405 410.87 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 486800.0" filled, rounded box black #e6853f
+node 406 411.6 3.1528 2.0139 0.94444 "X[8] <= 1927.5\nmse = 237040236.69\nsamples = 6\nvalue = 248076.92" filled, rounded box black #f4c7a8
+node 407 411.53 1.7083 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 272600.0" filled, rounded box black #f2c19d
+node 408 413.53 1.7083 1.8056 0.94444 "X[11] <= 634.0\nmse = 73613600.0\nsamples = 5\nvalue = 240720.0" filled, rounded box black #f4c9ab
+node 409 412.87 0.36806 1.8056 0.73611 "mse = 11215000.0\nsamples = 4\nvalue = 236700.0" filled, rounded box black #f4cbad
+node 410 414.87 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 256800.0" filled, rounded box black #f3c5a4
+node 411 414.02 4.5972 2.1111 0.94444 "X[8] <= 943.0\nmse = 3083106093.75\nsamples = 6\nvalue = 158587.5" filled, rounded box black #f9e0cf
+node 412 414.02 3.1528 1.5694 0.73611 "mse = 0.0\nsamples = 1\nvalue = 68300.0" filled, rounded box black #fefaf7
+node 413 416.87 3.1528 2.0139 0.94444 "X[10] <= 952.5\nmse = 487771388.89\nsamples = 5\nvalue = 188683.33" filled, rounded box black #f7d8c2
+node 414 416.87 1.7083 1.8056 0.94444 "X[7] <= 47.0\nmse = 96802400.0\nsamples = 4\nvalue = 179660.0" filled, rounded box black #f7dbc6
+node 415 416.87 0.36806 1.8056 0.73611 "mse = 3042222.22\nsamples = 2\nvalue = 186933.33" filled, rounded box black #f7d9c3
+node 416 418.92 0.36806 1.8056 0.73611 "mse = 39062500.0\nsamples = 2\nvalue = 168750.0" filled, rounded box black #f8deca
+node 417 418.87 1.7083 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 233800.0" filled, rounded box black #f4cbae
+node 418 545.92 11.819 2.2222 0.94444 "X[12] <= 6.4\nmse = 12239556754.08\nsamples = 2700\nvalue = 314966.87" filled, rounded box black #f0b58a
+node 419 545.92 10.375 2.1111 0.94444 "X[1] <= 0.5\nmse = 8592136295.62\nsamples = 1823\nvalue = 273946.45" filled, rounded box black #f2c09c
+node 420 525.05 8.9306 2.1111 0.94444 "X[7] <= 37.5\nmse = 7889907235.68\nsamples = 1487\nvalue = 290434.13" filled, rounded box black #f1bc95
+node 421 475.55 7.4861 2.1111 0.94444 "X[12] <= 5.59\nmse = 6391761604.94\nsamples = 1219\nvalue = 275873.32" filled, rounded box black #f2c09b
+node 422 448.08 6.0417 2.1111 0.94444 "X[5] <= -118.1\nmse = 5927712401.28\nsamples = 779\nvalue = 260132.43" filled, rounded box black #f3c4a2
+node 423 434.01 4.5972 2.1111 0.94444 "X[6] <= 34.18\nmse = 5811730469.57\nsamples = 495\nvalue = 276410.76" filled, rounded box black #f2bf9b
+node 424 427.01 3.1528 2.1111 0.94444 "X[5] <= -118.37\nmse = 9541617251.02\nsamples = 110\nvalue = 313548.46" filled, rounded box black #f0b58b
+node 425 423.49 1.7083 2.1111 0.94444 "X[6] <= 34.16\nmse = 7120705754.05\nsamples = 43\nvalue = 386805.7" filled, rounded box black #eca16b
+node 426 421.13 0.36806 2.1111 0.73611 "mse = 6134448802.04\nsamples = 34\nvalue = 407617.22" filled, rounded box black #ea9b62
+node 427 423.49 0.36806 2.1111 0.73611 "mse = 1759495714.29\nsamples = 9\nvalue = 299100.0" filled, rounded box black #f1b991
+node 428 427.01 1.7083 2.1111 0.94444 "X[6] <= 33.78\nmse = 5161702407.74\nsamples = 67\nvalue = 264486.27" filled, rounded box black #f3c3a0
+node 429 425.85 0.36806 2.1111 0.73611 "mse = 4172623066.89\nsamples = 5\nvalue = 408733.67" filled, rounded box black #ea9b61
+node 430 428.17 0.36806 2.0139 0.73611 "mse = 3209522184.0\nsamples = 62\nvalue = 251504.0" filled, rounded box black #f3c6a6
+node 431 434.01 3.1528 2.1111 0.94444 "X[5] <= -119.05\nmse = 4242041244.66\nsamples = 385\nvalue = 265816.62" filled, rounded box black #f3c2a0
+node 432 432.85 1.7083 2.0139 0.94444 "X[6] <= 37.91\nmse = 4593525035.7\nsamples = 307\nvalue = 273332.24" filled, rounded box black #f2c09d
+node 433 430.49 0.36806 2.1111 0.73611 "mse = 4324910379.82\nsamples = 256\nvalue = 280812.69" filled, rounded box black #f2be99
+node 434 432.85 0.36806 2.1111 0.73611 "mse = 4273898000.27\nsamples = 51\nvalue = 236277.91" filled, rounded box black #f4cbad
+node 435 435.17 1.7083 2.1111 0.94444 "X[8] <= 1767.0\nmse = 1651595898.84\nsamples = 78\nvalue = 235276.98" filled, rounded box black #f4cbad
+node 436 435.17 0.36806 2.0139 0.73611 "mse = 727637583.67\nsamples = 22\nvalue = 208631.43" filled, rounded box black #f6d2b9
+node 437 437.49 0.36806 2.1111 0.73611 "mse = 1628865624.92\nsamples = 56\nvalue = 245525.27" filled, rounded box black #f4c8a9
+node 438 448.08 4.5972 2.0139 0.94444 "X[9] <= 445.5\nmse = 4836805853.0\nsamples = 284\nvalue = 231364.67" filled, rounded box black #f4ccaf
+node 439 445.31 3.1528 2.1111 0.94444 "X[12] <= 5.08\nmse = 2576116231.74\nsamples = 145\nvalue = 207686.18" filled, rounded box black #f6d3b9
+node 440 442.08 1.7083 2.0139 0.94444 "X[6] <= 33.19\nmse = 857446915.69\nsamples = 64\nvalue = 188228.7" filled, rounded box black #f7d8c2
+node 441 439.81 0.36806 2.0139 0.73611 "mse = 167331313.13\nsamples = 17\nvalue = 166766.67" filled, rounded box black #f8decb
+node 442 442.08 0.36806 2.0139 0.73611 "mse = 875204931.59\nsamples = 47\nvalue = 196865.85" filled, rounded box black #f6d6be
+node 443 445.31 1.7083 2.1111 0.94444 "X[7] <= 36.5\nmse = 3460758082.86\nsamples = 81\nvalue = 224767.18" filled, rounded box black #f5ceb2
+node 444 444.4 0.36806 2.1111 0.73611 "mse = 3016256530.18\nsamples = 80\nvalue = 222870.77" filled, rounded box black #f5ceb3
+node 445 446.55 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 471300.0" filled, rounded box black #e78946
+node 446 449.72 3.1528 2.1111 0.94444 "X[10] <= 1186.5\nmse = 6041229181.02\nsamples = 139\nvalue = 258084.44" filled, rounded box black #f3c5a3
+node 447 449.72 1.7083 2.1111 0.94444 "X[5] <= -117.93\nmse = 9915730242.44\nsamples = 12\nvalue = 397353.29" filled, rounded box black #eb9e66
+node 448 448.59 0.36806 1.9028 0.73611 "mse = 488910000.0\nsamples = 3\nvalue = 247200.0" filled, rounded box black #f4c8a8
+node 449 450.85 0.36806 2.1111 0.73611 "mse = 3744522281.91\nsamples = 9\nvalue = 443554.31" filled, rounded box black #e89152
+node 450 453.22 1.7083 2.1111 0.94444 "X[12] <= 4.95\nmse = 3934349383.83\nsamples = 127\nvalue = 246305.49" filled, rounded box black #f4c8a8
+node 451 453.22 0.36806 2.1111 0.73611 "mse = 1919752728.93\nsamples = 40\nvalue = 217859.68" filled, rounded box black #f5d0b5
+node 452 455.58 0.36806 2.1111 0.73611 "mse = 4311037483.56\nsamples = 87\nvalue = 258993.55" filled, rounded box black #f3c4a3
+node 453 475.55 6.0417 2.1111 0.94444 "X[4] <= 0.5\nmse = 5954801837.85\nsamples = 440\nvalue = 304746.61" filled, rounded box black #f0b88f
+node 454 470.92 4.5972 2.1111 0.94444 "X[7] <= 27.5\nmse = 5158896447.28\nsamples = 380\nvalue = 297329.35" filled, rounded box black #f1ba92
+node 455 463.84 3.1528 2.0139 0.94444 "X[9] <= 752.0\nmse = 4406237120.8\nsamples = 270\nvalue = 288414.61" filled, rounded box black #f1bc96
+node 456 460.3 1.7083 2.1111 0.94444 "X[8] <= 465.5\nmse = 3870618273.62\nsamples = 202\nvalue = 280241.82" filled, rounded box black #f2be9a
+node 457 457.94 0.36806 2.1111 0.73611 "mse = 2686799166.67\nsamples = 4\nvalue = 178350.0" filled, rounded box black #f8dbc6
+node 458 460.3 0.36806 2.1111 0.73611 "mse = 3692801990.17\nsamples = 198\nvalue = 282170.37" filled, rounded box black #f2be99
+node 459 463.84 1.7083 2.0139 0.94444 "X[10] <= 2355.0\nmse = 5208971511.7\nsamples = 68\nvalue = 312633.07" filled, rounded box black #f0b58b
+node 460 462.66 0.36806 2.1111 0.73611 "mse = 5590412957.47\nsamples = 16\nvalue = 380392.38" filled, rounded box black #eca26e
+node 461 465.02 0.36806 2.1111 0.73611 "mse = 3200702737.62\nsamples = 52\nvalue = 291407.27" filled, rounded box black #f1bb95
+node 462 470.92 3.1528 2.1111 0.94444 "X[12] <= 6.12\nmse = 6336412391.52\nsamples = 110\nvalue = 319336.02" filled, rounded box black #efb388
+node 463 469.74 1.7083 2.1111 0.94444 "X[10] <= 528.0\nmse = 5435974186.07\nsamples = 78\nvalue = 301876.39" filled, rounded box black #f0b890
+node 464 467.38 0.36806 2.1111 0.73611 "mse = 4011847335.64\nsamples = 9\nvalue = 352117.65" filled, rounded box black #eeaa7a
+node 465 469.74 0.36806 2.1111 0.73611 "mse = 5205677074.46\nsamples = 69\nvalue = 294111.84" filled, rounded box black #f1bb93
+node 466 472.1 1.7083 2.1111 0.94444 "X[12] <= 6.38\nmse = 5778266687.54\nsamples = 32\nvalue = 365531.29" filled, rounded box black #eda774
+node 467 472.1 0.36806 2.1111 0.73611 "mse = 4896720666.16\nsamples = 30\nvalue = 375570.5" filled, rounded box black #eca470
+node 468 474.42 0.36806 2.0139 0.73611 "mse = 2171560000.0\nsamples = 2\nvalue = 255100.0" filled, rounded box black #f3c5a5
+node 469 480.1 4.5972 2.1111 0.94444 "X[7] <= 31.5\nmse = 8446818541.43\nsamples = 60\nvalue = 353158.2" filled, rounded box black #edaa79
+node 470 480.1 3.1528 2.1111 0.94444 "X[6] <= 37.26\nmse = 7422837091.11\nsamples = 45\nvalue = 325518.93" filled, rounded box black #efb286
+node 471 478.92 1.7083 2.1111 0.94444 "X[6] <= 32.84\nmse = 6413002510.83\nsamples = 42\nvalue = 317100.06" filled, rounded box black #f0b489
+node 472 476.69 0.36806 2.0139 0.73611 "mse = 599644722.22\nsamples = 5\nvalue = 219283.33" filled, rounded box black #f5cfb4
+node 473 479.01 0.36806 2.1111 0.73611 "mse = 5932211029.54\nsamples = 37\nvalue = 327047.53" filled, rounded box black #efb185
+node 474 481.28 1.7083 2.1111 0.94444 "X[9] <= 1018.5\nmse = 3964854550.25\nsamples = 3\nvalue = 462325.5" filled, rounded box black #e78c4a
+node 475 481.22 0.36806 1.8056 0.73611 "mse = 3557333.56\nsamples = 2\nvalue = 498667.33" filled, rounded box black #e5813a
+node 476 483.22 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 353300.0" filled, rounded box black #edaa79
+node 477 486.09 3.1528 2.1111 0.94444 "X[7] <= 34.5\nmse = 2880111787.36\nsamples = 15\nvalue = 432621.12" filled, rounded box black #e99457
+node 478 486.09 1.7083 2.0139 0.94444 "X[9] <= 552.0\nmse = 992044563.87\nsamples = 8\nvalue = 477973.36" filled, rounded box black #e68743
+node 479 485.15 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 5\nvalue = 500001.0" filled, rounded box black #e58139
+node 480 487.19 0.36806 1.9028 0.73611 "mse = 393016875.0\nsamples = 3\nvalue = 439425.0" filled, rounded box black #e89254
+node 481 489.34 1.7083 2.1111 0.94444 "X[9] <= 609.5\nmse = 1264677869.82\nsamples = 7\nvalue = 394246.15" filled, rounded box black #eb9f67
+node 482 489.34 0.36806 1.9028 0.73611 "mse = 641082400.0\nsamples = 5\nvalue = 409460.0" filled, rounded box black #ea9a61
+node 483 491.44 0.36806 1.7778 0.73611 "mse = 2222.22\nsamples = 2\nvalue = 343533.33" filled, rounded box black #eead7e
+node 484 525.05 7.4861 2.1111 0.94444 "X[12] <= 5.58\nmse = 9397379061.33\nsamples = 268\nvalue = 355645.52" filled, rounded box black #eda978
+node 485 519.97 6.0417 2.0139 0.94444 "X[9] <= 466.5\nmse = 9314025168.2\nsamples = 183\nvalue = 334427.78" filled, rounded box black #efaf82
+node 486 506.62 4.5972 2.1111 0.94444 "X[10] <= 771.0\nmse = 8126719496.23\nsamples = 132\nvalue = 311103.48" filled, rounded box black #f0b68c
+node 487 499.53 3.1528 2.1111 0.94444 "X[8] <= 1273.0\nmse = 9101453361.58\nsamples = 63\nvalue = 343497.97" filled, rounded box black #eead7e
+node 488 495.99 1.7083 2.1111 0.94444 "X[6] <= 33.89\nmse = 5767222923.76\nsamples = 18\nvalue = 272460.75" filled, rounded box black #f2c19d
+node 489 493.63 0.36806 2.1111 0.73611 "mse = 1648400600.25\nsamples = 2\nvalue = 459400.5" filled, rounded box black #e78c4b
+node 490 495.99 0.36806 2.1111 0.73611 "mse = 3189081553.25\nsamples = 16\nvalue = 258080.77" filled, rounded box black #f3c5a3
+node 491 499.53 1.7083 2.0139 0.94444 "X[11] <= 302.0\nmse = 7427552736.7\nsamples = 45\nvalue = 374098.62" filled, rounded box black #eca470
+node 492 498.35 0.36806 2.1111 0.73611 "mse = 7445193437.24\nsamples = 34\nvalue = 351341.41" filled, rounded box black #eeab7a
+node 493 500.72 0.36806 2.1111 0.73611 "mse = 3095392501.58\nsamples = 11\nvalue = 429195.0" filled, rounded box black #e99558
+node 494 506.62 3.1528 2.1111 0.94444 "X[6] <= 34.1\nmse = 5722407522.71\nsamples = 69\nvalue = 284204.49" filled, rounded box black #f1bd98
+node 495 505.44 1.7083 2.1111 0.94444 "X[5] <= -118.37\nmse = 2997127121.91\nsamples = 22\nvalue = 235569.44" filled, rounded box black #f4cbad
+node 496 503.08 0.36806 2.1111 0.73611 "mse = 7232035555.56\nsamples = 2\nvalue = 349733.33" filled, rounded box black #eeab7b
+node 497 505.44 0.36806 2.1111 0.73611 "mse = 1319567493.11\nsamples = 20\nvalue = 225190.91" filled, rounded box black #f5ceb2
+node 498 507.8 1.7083 2.1111 0.94444 "X[6] <= 37.78\nmse = 5362158971.23\nsamples = 47\nvalue = 307242.14" filled, rounded box black #f0b78e
+node 499 507.8 0.36806 2.1111 0.73611 "mse = 4584630392.69\nsamples = 35\nvalue = 325545.81" filled, rounded box black #efb286
+node 500 510.16 0.36806 2.1111 0.73611 "mse = 2862547335.64\nsamples = 12\nvalue = 243717.65" filled, rounded box black #f4c9aa
+node 501 519.97 4.5972 2.1111 0.94444 "X[10] <= 1042.5\nmse = 8168913158.27\nsamples = 51\nvalue = 384759.17" filled, rounded box black #eca16c
+node 502 517.94 3.1528 2.0139 0.94444 "X[9] <= 548.44\nmse = 4870225835.5\nsamples = 17\nvalue = 444482.21" filled, rounded box black #e89151
+node 503 514.8 1.7083 2.1111 0.94444 "X[6] <= 34.03\nmse = 4719042038.88\nsamples = 11\nvalue = 404789.58" filled, rounded box black #ea9c63
+node 504 512.48 0.36806 2.0139 0.73611 "mse = 430394218.86\nsamples = 5\nvalue = 460625.12" filled, rounded box black #e78c4a
+node 505 514.8 0.36806 2.1111 0.73611 "mse = 3921724363.72\nsamples = 6\nvalue = 364181.91" filled, rounded box black #eda775
+node 506 517.94 1.7083 1.9028 0.94444 "X[9] <= 565.5\nmse = 35395093.03\nsamples = 6\nvalue = 498350.79" filled, rounded box black #e5813a
+node 507 516.95 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 476900.0" filled, rounded box black #e68743
+node 508 518.94 0.36806 1.7778 0.73611 "mse = 0.13\nsamples = 5\nvalue = 500000.85" filled, rounded box black #e58139
+node 509 522.2 3.1528 2.1111 0.94444 "X[11] <= 698.0\nmse = 7015704196.99\nsamples = 34\nvalue = 352971.1" filled, rounded box black #edaa7a
+node 510 522.2 1.7083 2.1111 0.94444 "X[10] <= 1474.5\nmse = 5667464826.39\nsamples = 29\nvalue = 340162.55" filled, rounded box black #eeae7f
+node 511 521.13 0.36806 2.1111 0.73611 "mse = 4981918734.69\nsamples = 23\nvalue = 354663.89" filled, rounded box black #edaa79
+node 512 523.49 0.36806 2.1111 0.73611 "mse = 2414448888.89\nsamples = 6\nvalue = 264433.33" filled, rounded box black #f3c3a0
+node 513 525.65 1.7083 2.1111 0.94444 "X[10] <= 2191.5\nmse = 3776713861.25\nsamples = 5\nvalue = 472517.5" filled, rounded box black #e78945
+node 514 525.65 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 4\nvalue = 500001.0" filled, rounded box black #e58139
+node 515 527.58 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 335100.0" filled, rounded box black #efaf81
+node 516 530.15 6.0417 2.1111 0.94444 "X[9] <= 87.0\nmse = 6646404606.94\nsamples = 85\nvalue = 400158.25" filled, rounded box black #eb9d65
+node 517 530.15 4.5972 2.1111 0.94444 "X[7] <= 46.5\nmse = 6701388888.89\nsamples = 3\nvalue = 179166.67" filled, rounded box black #f8dbc6
+node 518 528.73 3.1528 2.0139 0.94444 "X[8] <= 178.0\nmse = 1914062500.0\nsamples = 2\nvalue = 231250.0" filled, rounded box black #f5ccaf
+node 519 527.9 1.7083 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 187500.0" filled, rounded box black #f7d8c2
+node 520 529.83 1.7083 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 275000.0" filled, rounded box black #f2c09c
+node 521 530.77 3.1528 1.5694 0.73611 "mse = 0.0\nsamples = 1\nvalue = 75000.0" filled, rounded box black #fef8f4
+node 522 533.56 4.5972 2.1111 0.94444 "X[7] <= 51.0\nmse = 5576287933.03\nsamples = 82\nvalue = 404893.79" filled, rounded box black #ea9c63
+node 523 533.56 3.1528 2.1111 0.94444 "X[7] <= 46.5\nmse = 5106397248.11\nsamples = 59\nvalue = 387836.74" filled, rounded box black #eba06a
+node 524 532.09 1.7083 2.1111 0.94444 "X[6] <= 37.47\nmse = 4315221299.43\nsamples = 46\nvalue = 408573.83" filled, rounded box black #ea9b61
+node 525 529.73 0.36806 2.1111 0.73611 "mse = 4349178794.03\nsamples = 31\nvalue = 426513.67" filled, rounded box black #e99659
+node 526 532.09 0.36806 2.1111 0.73611 "mse = 2033480399.31\nsamples = 15\nvalue = 369704.17" filled, rounded box black #eda572
+node 527 534.41 1.7083 2.0139 0.94444 "X[12] <= 5.99\nmse = 2230155584.0\nsamples = 13\nvalue = 324796.0" filled, rounded box black #efb286
+node 528 534.41 0.36806 2.0139 0.73611 "mse = 746434969.14\nsamples = 8\nvalue = 310705.56" filled, rounded box black #f0b68c
+node 529 536.73 0.36806 2.1111 0.73611 "mse = 4222104897.96\nsamples = 5\nvalue = 361028.57" filled, rounded box black #eda876
+node 530 539.81 3.1528 2.1111 0.94444 "X[6] <= 34.11\nmse = 4088430824.18\nsamples = 23\nvalue = 449067.15" filled, rounded box black #e88f4f
+node 531 539.81 1.7083 1.8056 0.94444 "X[5] <= -118.42\nmse = 5268862.69\nsamples = 5\nvalue = 498675.75" filled, rounded box black #e5813a
+node 532 538.88 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 494700.0" filled, rounded box black #e5823b
+node 533 540.81 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 4\nvalue = 500001.0" filled, rounded box black #e58139
+node 534 542.97 1.7083 2.1111 0.94444 "X[5] <= -122.3\nmse = 4343153164.45\nsamples = 18\nvalue = 436264.94" filled, rounded box black #e99355
+node 535 542.97 0.36806 2.1111 0.73611 "mse = 2657769177.36\nsamples = 9\nvalue = 476061.83" filled, rounded box black #e68844
+node 536 545.33 0.36806 2.1111 0.73611 "mse = 1447433136.09\nsamples = 9\nvalue = 381161.54" filled, rounded box black #eca26d
+node 537 566.8 8.9306 2.1111 0.94444 "X[7] <= 32.5\nmse = 5035235754.29\nsamples = 336\nvalue = 199843.52" filled, rounded box black #f6d5bd
+node 538 566.8 7.4861 2.1111 0.94444 "X[12] <= 5.68\nmse = 3411151881.95\nsamples = 288\nvalue = 189517.14" filled, rounded box black #f7d8c1
+node 539 558.8 6.0417 2.0139 0.94444 "X[6] <= 33.84\nmse = 2681118759.7\nsamples = 220\nvalue = 178206.71" filled, rounded box black #f8dbc6
+node 540 552.31 4.5972 2.1111 0.94444 "X[5] <= -117.54\nmse = 3744665306.12\nsamples = 6\nvalue = 253542.86" filled, rounded box black #f3c6a5
+node 541 550.22 3.1528 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 339300.0" filled, rounded box black #eeae80
+node 542 552.31 3.1528 2.0139 0.94444 "X[11] <= 564.5\nmse = 1124130400.0\nsamples = 5\nvalue = 219240.0" filled, rounded box black #f5cfb4
+node 543 549.42 1.7083 1.9028 0.94444 "X[10] <= 1516.5\nmse = 66282222.22\nsamples = 3\nvalue = 203966.67" filled, rounded box black #f6d4bb
+node 544 547.48 0.36806 1.6944 0.73611 "mse = 8122500.0\nsamples = 2\nvalue = 198450.0" filled, rounded box black #f6d5bd
+node 545 549.42 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 215000.0" filled, rounded box black #f5d1b6
+node 546 552.31 1.7083 2.0139 0.94444 "X[9] <= 1907.5\nmse = 1836122500.0\nsamples = 2\nvalue = 242150.0" filled, rounded box black #f4c9aa
+node 547 551.35 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 285000.0" filled, rounded box black #f1bd97
+node 548 553.28 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 199300.0" filled, rounded box black #f6d5bd
+node 549 558.8 4.5972 2.1111 0.94444 "X[11] <= 43.0\nmse = 2538257871.94\nsamples = 214\nvalue = 176637.2" filled, rounded box black #f8dbc7
+node 550 557.15 3.1528 2.0139 0.94444 "X[7] <= 22.0\nmse = 3154296875.0\nsamples = 3\nvalue = 278125.0" filled, rounded box black #f2bf9a
+node 551 555.1 1.7083 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 375000.0" filled, rounded box black #eca470
+node 552 557.15 1.7083 1.9028 0.94444 "X[8] <= 219.5\nmse = 34722222.22\nsamples = 2\nvalue = 245833.33" filled, rounded box black #f4c8a9
+node 553 555.22 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 250000.0" filled, rounded box black #f3c7a7
+node 554 557.15 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 237500.0" filled, rounded box black #f4caac
+node 555 560.45 3.1528 2.1111 0.94444 "X[8] <= 2175.5\nmse = 2405246959.65\nsamples = 211\nvalue = 175414.46" filled, rounded box black #f8dcc8
+node 556 560.45 1.7083 2.1111 0.94444 "X[7] <= 27.5\nmse = 1677388750.48\nsamples = 61\nvalue = 155678.43" filled, rounded box black #f9e1d0
+node 557 559.3 0.36806 2.1111 0.73611 "mse = 1270509972.23\nsamples = 54\nvalue = 149450.55" filled, rounded box black #f9e3d3
+node 558 561.66 0.36806 2.1111 0.73611 "mse = 2068043636.36\nsamples = 7\nvalue = 207200.0" filled, rounded box black #f6d3ba
+node 559 563.81 1.7083 2.1111 0.94444 "X[8] <= 2193.5\nmse = 2478690473.35\nsamples = 150\nvalue = 184166.96" filled, rounded box black #f7d9c4
+node 560 563.81 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 294000.0" filled, rounded box black #f1bb93
+node 561 565.97 0.36806 2.1111 0.73611 "mse = 2349914696.19\nsamples = 149\nvalue = 182715.42" filled, rounded box black #f7dac4
+node 562 574.78 6.0417 2.1111 0.94444 "X[5] <= -121.13\nmse = 4055299078.44\nsamples = 68\nvalue = 224155.36" filled, rounded box black #f5ceb2
+node 563 574.78 4.5972 2.1111 0.94444 "X[6] <= 37.68\nmse = 3589124530.32\nsamples = 33\nvalue = 248017.24" filled, rounded box black #f4c7a8
+node 564 573.16 3.1528 2.1111 0.94444 "X[5] <= -121.78\nmse = 4127980987.65\nsamples = 6\nvalue = 345688.89" filled, rounded box black #eeac7d
+node 565 570.05 1.7083 1.6944 0.94444 "X[5] <= -121.84\nmse = 2102500.0\nsamples = 2\nvalue = 246450.0" filled, rounded box black #f4c8a8
+node 566 568.12 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 247900.0" filled, rounded box black #f4c7a8
+node 567 570.05 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 245000.0" filled, rounded box black #f4c8a9
+node 568 573.16 1.7083 2.1111 0.94444 "X[7] <= 21.5\nmse = 1689039591.84\nsamples = 4\nvalue = 374042.86" filled, rounded box black #eca470
+node 569 572.09 0.36806 1.9028 0.73611 "mse = 573377600.0\nsamples = 3\nvalue = 351420.0" filled, rounded box black #eeab7a
+node 570 574.13 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 430600.0" filled, rounded box black #e99457
+node 571 577.37 3.1528 2.1111 0.94444 "X[10] <= 1490.5\nmse = 1416119291.96\nsamples = 27\nvalue = 230077.55" filled, rounded box black #f5ccb0
+node 572 577.37 1.7083 2.1111 0.94444 "X[7] <= 10.5\nmse = 1084518429.51\nsamples = 22\nvalue = 238624.39" filled, rounded box black #f4caac
+node 573 576.23 0.36806 2.0139 0.73611 "mse = 441251093.75\nsamples = 4\nvalue = 199312.5" filled, rounded box black #f6d5bd
+node 574 578.49 0.36806 2.0139 0.73611 "mse = 774989752.07\nsamples = 18\nvalue = 248154.55" filled, rounded box black #f4c7a8
+node 575 580.76 1.7083 1.9028 0.94444 "X[11] <= 633.0\nmse = 822536875.0\nsamples = 5\nvalue = 186275.0" filled, rounded box black #f7d9c3
+node 576 580.76 0.36806 2.0139 0.73611 "mse = 130298367.35\nsamples = 4\nvalue = 176214.29" filled, rounded box black #f8dbc7
+node 577 582.85 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 256700.0" filled, rounded box black #f3c5a4
+node 578 581.09 4.5972 2.1111 0.94444 "X[9] <= 134.5\nmse = 3287570809.33\nsamples = 35\nvalue = 198525.93" filled, rounded box black #f6d5bd
+node 579 581.09 3.1528 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 345500.0" filled, rounded box black #eeac7d
+node 580 585.88 3.1528 2.1111 0.94444 "X[8] <= 3222.5\nmse = 2551238890.53\nsamples = 34\nvalue = 192873.08" filled, rounded box black #f7d7c0
+node 581 585.88 1.7083 2.1111 0.94444 "X[7] <= 6.5\nmse = 1607213792.47\nsamples = 21\nvalue = 174778.79" filled, rounded box black #f8dcc8
+node 582 584.8 0.36806 1.6944 0.73611 "mse = 5880000.0\nsamples = 2\nvalue = 111500.0" filled, rounded box black #fbeee4
+node 583 586.95 0.36806 2.1111 0.73611 "mse = 1199603400.71\nsamples = 19\nvalue = 183506.9" filled, rounded box black #f7d9c4
+node 584 589.31 1.7083 2.1111 0.94444 "X[6] <= 35.03\nmse = 2634562105.26\nsamples = 13\nvalue = 224300.0" filled, rounded box black #f5ceb2
+node 585 589.31 0.36806 2.1111 0.73611 "mse = 1643023822.22\nsamples = 10\nvalue = 240086.67" filled, rounded box black #f4caab
+node 586 591.63 0.36806 2.0139 0.73611 "mse = 1913620000.0\nsamples = 3\nvalue = 165100.0" filled, rounded box black #f8dfcc
+node 587 600.7 7.4861 2.2222 0.94444 "X[6] <= 34.19\nmse = 10102566070.59\nsamples = 48\nvalue = 255120.0" filled, rounded box black #f3c5a5
+node 588 600.7 6.0417 2.1111 0.94444 "X[5] <= -117.99\nmse = 9574960959.89\nsamples = 23\nvalue = 325917.95" filled, rounded box black #efb285
+node 589 597.26 4.5972 2.1111 0.94444 "X[6] <= 34.1\nmse = 4276923801.78\nsamples = 15\nvalue = 379134.62" filled, rounded box black #eca36e
+node 590 593.84 3.1528 2.0139 0.94444 "X[5] <= -118.03\nmse = 357335555.56\nsamples = 2\nvalue = 260433.33" filled, rounded box black #f3c4a2
+node 591 591.91 1.7083 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 273800.0" filled, rounded box black #f2c09c
+node 592 593.84 1.7083 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 233700.0" filled, rounded box black #f4cbae
+node 593 597.26 3.1528 2.1111 0.94444 "X[6] <= 34.14\nmse = 2710632741.02\nsamples = 13\nvalue = 394617.39" filled, rounded box black #eb9e67
+node 594 595.99 1.7083 2.1111 0.94444 "X[5] <= -118.02\nmse = 1055102148.44\nsamples = 8\nvalue = 420268.75" filled, rounded box black #ea975c
+node 595 593.84 0.36806 1.9028 0.73611 "mse = 97264132.23\nsamples = 5\nvalue = 439063.64" filled, rounded box black #e99254
+node 596 595.99 0.36806 1.9028 0.73611 "mse = 675481600.0\nsamples = 3\nvalue = 378920.0" filled, rounded box black #eca36e
+node 597 598.35 1.7083 2.1111 0.94444 "X[9] <= 554.0\nmse = 1553046938.78\nsamples = 5\nvalue = 335985.71" filled, rounded box black #eeaf81
+node 598 598.2 0.36806 2.0139 0.73611 "mse = 735981388.89\nsamples = 4\nvalue = 348383.33" filled, rounded box black #eeab7c
+node 599 600.3 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 261600.0" filled, rounded box black #f3c4a2
+node 600 603.95 4.5972 2.1111 0.94444 "X[6] <= 34.09\nmse = 3178953609.47\nsamples = 8\nvalue = 219484.62" filled, rounded box black #f5cfb4
+node 601 603.95 3.1528 2.0139 0.94444 "X[5] <= -117.41\nmse = 568432653.06\nsamples = 3\nvalue = 172485.71" filled, rounded box black #f8ddc9
+node 602 602.41 1.7083 1.6944 0.94444 "X[11] <= 297.5\nmse = 6480000.0\nsamples = 2\nvalue = 162800.0" filled, rounded box black #f8dfcd
+node 603 602.23 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 161000.0" filled, rounded box black #f9e0ce
+node 604 604.16 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 166400.0" filled, rounded box black #f8decc
+node 605 604.35 1.7083 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 230600.0" filled, rounded box black #f5ccaf
+node 606 606.81 3.1528 2.0139 0.94444 "X[10] <= 951.0\nmse = 640961388.89\nsamples = 5\nvalue = 274316.67" filled, rounded box black #f2c09c
+node 607 606.81 1.7083 1.9028 0.94444 "X[7] <= 34.0\nmse = 772840000.0\nsamples = 2\nvalue = 247200.0" filled, rounded box black #f4c8a8
+node 608 606.09 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 219400.0" filled, rounded box black #f5cfb4
+node 609 608.02 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 275000.0" filled, rounded box black #f2c09c
+node 610 609.88 1.7083 1.8056 0.94444 "X[7] <= 34.0\nmse = 23536875.0\nsamples = 3\nvalue = 287875.0" filled, rounded box black #f1bc96
+node 611 609.95 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 283400.0" filled, rounded box black #f1be98
+node 612 611.9 0.36806 1.6944 0.73611 "mse = 7022500.0\nsamples = 2\nvalue = 292350.0" filled, rounded box black #f1bb94
+node 613 610.17 6.0417 2.1111 0.94444 "X[5] <= -122.17\nmse = 2697360415.88\nsamples = 25\nvalue = 195095.65" filled, rounded box black #f7d6bf
+node 614 610.17 4.5972 2.0139 0.94444 "X[7] <= 35.5\nmse = 226135555.56\nsamples = 2\nvalue = 326066.67" filled, rounded box black #efb285
+node 615 609.22 3.1528 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 336700.0" filled, rounded box black #eeaf81
+node 616 611.15 3.1528 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 304800.0" filled, rounded box black #f0b88f
+node 617 613.65 4.5972 2.1111 0.94444 "X[7] <= 45.5\nmse = 1589528015.14\nsamples = 23\nvalue = 185958.14" filled, rounded box black #f7d9c3
+node 618 613.65 3.1528 2.1111 0.94444 "X[11] <= 27.0\nmse = 1366431288.89\nsamples = 17\nvalue = 170406.67" filled, rounded box black #f8ddca
+node 619 611.83 1.7083 1.5694 0.73611 "mse = 0.0\nsamples = 1\nvalue = 67500.0" filled, rounded box black #fefaf7
+node 620 613.92 1.7083 2.1111 0.94444 "X[6] <= 35.5\nmse = 1035792818.07\nsamples = 16\nvalue = 173955.17" filled, rounded box black #f8dcc8
+node 621 613.84 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 234000.0" filled, rounded box black #f4cbae
+node 622 615.88 0.36806 1.9028 0.73611 "mse = 825670315.5\nsamples = 15\nvalue = 169507.41" filled, rounded box black #f8ddca
+node 623 616.08 3.1528 2.0139 0.94444 "X[12] <= 4.9\nmse = 258305562.13\nsamples = 6\nvalue = 221846.15" filled, rounded box black #f5cfb3
+node 624 616.08 1.7083 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 191900.0" filled, rounded box black #f7d7c0
+node 625 618.12 1.7083 1.9028 0.94444 "X[7] <= 50.0\nmse = 112575371.9\nsamples = 5\nvalue = 227290.91" filled, rounded box black #f5cdb1
+node 626 617.94 0.36806 1.6944 0.73611 "mse = 2167500.0\nsamples = 2\nvalue = 239350.0" filled, rounded box black #f4caab
+node 627 619.99 0.36806 1.9028 0.73611 "mse = 45082857.14\nsamples = 3\nvalue = 220400.0" filled, rounded box black #f5cfb4
+node 628 671.7 10.375 2.1111 0.94444 "X[12] <= 7.72\nmse = 8798620761.66\nsamples = 877\nvalue = 402275.04" filled, rounded box black #eb9c64
+node 629 671.7 8.9306 2.1111 0.94444 "X[7] <= 27.5\nmse = 7219530672.93\nsamples = 480\nvalue = 356891.81" filled, rounded box black #eda978
+node 630 665.37 7.4861 2.0139 0.94444 "X[1] <= 0.5\nmse = 4602345838.0\nsamples = 310\nvalue = 325540.58" filled, rounded box black #efb286
+node 631 647.7 6.0417 2.1111 0.94444 "X[5] <= -117.17\nmse = 4241313605.55\nsamples = 259\nvalue = 335719.43" filled, rounded box black #eeaf81
+node 632 634.3 4.5972 2.0139 0.94444 "X[4] <= 0.5\nmse = 4084284762.7\nsamples = 241\nvalue = 340989.65" filled, rounded box black #eead7f
+node 633 627.63 3.1528 2.1111 0.94444 "X[12] <= 6.96\nmse = 3470876348.59\nsamples = 214\nvalue = 333667.89" filled, rounded box black #efaf82
+node 634 624.19 1.7083 2.1111 0.94444 "X[6] <= 33.47\nmse = 3281622833.75\nsamples = 110\nvalue = 317925.03" filled, rounded box black #f0b489
+node 635 622.03 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 500001.0" filled, rounded box black #e58139
+node 636 624.19 0.36806 2.1111 0.73611 "mse = 3105810532.12\nsamples = 109\nvalue = 316860.26" filled, rounded box black #f0b489
+node 637 627.63 1.7083 2.1111 0.94444 "X[5] <= -117.4\nmse = 3147637895.07\nsamples = 104\nvalue = 349882.1" filled, rounded box black #eeab7b
+node 638 626.55 0.36806 2.1111 0.73611 "mse = 2909320230.54\nsamples = 103\nvalue = 348062.47" filled, rounded box black #eeab7c
+node 639 628.7 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 500001.0" filled, rounded box black #e58139
+node 640 634.3 3.1528 2.1111 0.94444 "X[7] <= 14.5\nmse = 5259128474.83\nsamples = 27\nvalue = 396146.87" filled, rounded box black #eb9e67
+node 641 633.12 1.7083 2.1111 0.94444 "X[12] <= 6.5\nmse = 2434392393.96\nsamples = 11\nvalue = 346994.79" filled, rounded box black #eeac7c
+node 642 630.8 0.36806 2.0139 0.73611 "mse = 487741224.49\nsamples = 3\nvalue = 309285.71" filled, rounded box black #f0b68d
+node 643 633.12 0.36806 2.1111 0.73611 "mse = 2256587598.69\nsamples = 8\nvalue = 368991.75" filled, rounded box black #eda673
+node 644 635.48 1.7083 2.1111 0.94444 "X[9] <= 494.5\nmse = 4267711761.75\nsamples = 16\nvalue = 432065.69" filled, rounded box black #e99457
+node 645 635.48 0.36806 2.1111 0.73611 "mse = 3663581966.81\nsamples = 9\nvalue = 384725.17" filled, rounded box black #eca16c
+node 646 637.84 0.36806 2.1111 0.73611 "mse = 1218031612.49\nsamples = 7\nvalue = 472643.29" filled, rounded box black #e78945
+node 647 647.7 4.5972 2.1111 0.94444 "X[5] <= -117.08\nmse = 1082871224.73\nsamples = 18\nvalue = 265934.48" filled, rounded box black #f2c2a0
+node 648 644.92 3.1528 1.9028 0.94444 "X[11] <= 342.5\nmse = 463697600.0\nsamples = 4\nvalue = 235280.0" filled, rounded box black #f4cbad
+node 649 641.92 1.7083 1.9028 0.94444 "X[6] <= 32.93\nmse = 53388888.89\nsamples = 2\nvalue = 250533.33" filled, rounded box black #f3c7a7
+node 650 639.99 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 255700.0" filled, rounded box black #f3c5a4
+node 651 641.92 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 240200.0" filled, rounded box black #f4caab
+node 652 644.92 1.7083 1.9028 0.94444 "X[11] <= 459.0\nmse = 206670000.0\nsamples = 2\nvalue = 212400.0" filled, rounded box black #f6d1b7
+node 653 643.85 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 220700.0" filled, rounded box black #f5cfb4
+node 654 645.78 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 187500.0" filled, rounded box black #f7d8c2
+node 655 648.74 3.1528 2.0139 0.94444 "X[12] <= 6.61\nmse = 653870581.72\nsamples = 14\nvalue = 282068.42" filled, rounded box black #f2be99
+node 656 648.74 1.7083 1.9028 0.94444 "X[5] <= -116.97\nmse = 291970000.0\nsamples = 6\nvalue = 258450.0" filled, rounded box black #f3c5a3
+node 657 647.83 0.36806 1.9028 0.73611 "mse = 47733469.39\nsamples = 5\nvalue = 252471.43" filled, rounded box black #f3c6a6
+node 658 649.87 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 300300.0" filled, rounded box black #f1b991
+node 659 651.8 1.7083 1.9028 0.94444 "X[8] <= 1103.0\nmse = 216326115.7\nsamples = 8\nvalue = 299245.45" filled, rounded box black #f1b991
+node 660 651.8 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 328200.0" filled, rounded box black #efb184
+node 661 653.84 0.36806 1.9028 0.73611 "mse = 145738500.0\nsamples = 7\nvalue = 296350.0" filled, rounded box black #f1ba92
+node 662 665.37 6.0417 2.1111 0.94444 "X[5] <= -121.35\nmse = 3060621448.06\nsamples = 51\nvalue = 271644.87" filled, rounded box black #f2c19d
+node 663 661.51 4.5972 2.0139 0.94444 "X[10] <= 775.5\nmse = 1459943162.9\nsamples = 18\nvalue = 301944.83" filled, rounded box black #f0b890
+node 664 659.41 3.1528 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 223900.0" filled, rounded box black #f5ceb2
+node 665 661.51 3.1528 2.0139 0.94444 "X[12] <= 6.81\nmse = 844497884.62\nsamples = 17\nvalue = 310950.0" filled, rounded box black #f0b68c
+node 666 658.15 1.7083 2.0139 0.94444 "X[12] <= 6.71\nmse = 383160710.06\nsamples = 8\nvalue = 291392.31" filled, rounded box black #f1bb95
+node 667 655.99 0.36806 1.9028 0.73611 "mse = 42861224.49\nsamples = 5\nvalue = 308285.71" filled, rounded box black #f0b78d
+node 668 658.15 0.36806 1.9028 0.73611 "mse = 58781388.89\nsamples = 3\nvalue = 271683.33" filled, rounded box black #f2c19d
+node 669 661.51 1.7083 2.0139 0.94444 "X[11] <= 316.0\nmse = 540828402.37\nsamples = 9\nvalue = 330507.69" filled, rounded box black #efb083
+node 670 660.35 0.36806 2.0139 0.73611 "mse = 181166666.67\nsamples = 3\nvalue = 347700.0" filled, rounded box black #eeac7c
+node 671 662.62 0.36806 2.0139 0.73611 "mse = 378602040.82\nsamples = 6\nvalue = 315771.43" filled, rounded box black #f0b48a
+node 672 668.03 4.5972 2.1111 0.94444 "X[6] <= 34.56\nmse = 3143024748.02\nsamples = 33\nvalue = 253712.24" filled, rounded box black #f3c6a5
+node 673 668.03 3.1528 2.1111 0.94444 "X[6] <= 34.03\nmse = 1931039021.85\nsamples = 19\nvalue = 280703.23" filled, rounded box black #f2be99
+node 674 666.87 1.7083 2.1111 0.94444 "X[9] <= 1944.0\nmse = 1533600236.69\nsamples = 10\nvalue = 242623.08" filled, rounded box black #f4c9aa
+node 675 664.88 0.36806 2.0139 0.73611 "mse = 775212222.22\nsamples = 9\nvalue = 234366.67" filled, rounded box black #f4cbae
+node 676 666.98 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 341700.0" filled, rounded box black #eead7f
+node 677 669.19 1.7083 2.0139 0.94444 "X[7] <= 21.0\nmse = 414407191.36\nsamples = 9\nvalue = 308205.56" filled, rounded box black #f0b78d
+node 678 669.08 0.36806 2.0139 0.73611 "mse = 221741835.94\nsamples = 8\nvalue = 302993.75" filled, rounded box black #f0b890
+node 679 671.17 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 349900.0" filled, rounded box black #eeab7b
+node 680 674.09 3.1528 2.1111 0.94444 "X[5] <= -119.86\nmse = 1814866450.62\nsamples = 14\nvalue = 207227.78" filled, rounded box black #f6d3ba
+node 681 674.09 1.7083 2.0139 0.94444 "X[11] <= 328.0\nmse = 457376666.67\nsamples = 6\nvalue = 256600.0" filled, rounded box black #f3c5a4
+node 682 673.1 0.36806 1.6806 0.73611 "mse = 122500.0\nsamples = 2\nvalue = 229650.0" filled, rounded box black #f5cdb0
+node 683 675.15 0.36806 1.9028 0.73611 "mse = 141276875.0\nsamples = 4\nvalue = 270075.0" filled, rounded box black #f2c19e
+node 684 677.35 1.7083 2.0139 0.94444 "X[12] <= 7.36\nmse = 665399097.22\nsamples = 8\nvalue = 182541.67" filled, rounded box black #f7dac4
+node 685 677.35 0.36806 2.0139 0.73611 "mse = 265670617.28\nsamples = 6\nvalue = 171422.22" filled, rounded box black #f8ddc9
+node 686 679.56 0.36806 1.9028 0.73611 "mse = 380880000.0\nsamples = 2\nvalue = 215900.0" filled, rounded box black #f5d0b6
+node 687 678.03 7.4861 2.0139 0.94444 "X[11] <= 7.5\nmse = 7028153061.6\nsamples = 170\nvalue = 412463.85" filled, rounded box black #ea995f
+node 688 678.03 6.0417 1.5694 0.73611 "mse = 0.0\nsamples = 1\nvalue = 67500.0" filled, rounded box black #fefaf7
+node 689 689.45 6.0417 2.1111 0.94444 "X[6] <= 37.65\nmse = 6207517726.46\nsamples = 169\nvalue = 414972.68" filled, rounded box black #ea995e
+node 690 689.45 4.5972 2.1111 0.94444 "X[5] <= -118.4\nmse = 5769165684.89\nsamples = 133\nvalue = 424840.82" filled, rounded box black #e9965a
+node 691 687.7 3.1528 2.1111 0.94444 "X[7] <= 34.5\nmse = 4223550980.29\nsamples = 60\nvalue = 450667.55" filled, rounded box black #e88f4f
+node 692 684.19 1.7083 2.1111 0.94444 "X[12] <= 6.81\nmse = 4680921794.75\nsamples = 26\nvalue = 402400.19" filled, rounded box black #eb9c64
+node 693 681.83 0.36806 2.1111 0.73611 "mse = 2750919506.17\nsamples = 13\nvalue = 356522.22" filled, rounded box black #eda978
+node 694 684.19 0.36806 2.1111 0.73611 "mse = 2626273796.35\nsamples = 13\nvalue = 445863.53" filled, rounded box black #e89051
+node 695 687.7 1.7083 2.1111 0.94444 "X[11] <= 299.5\nmse = 1618886516.58\nsamples = 34\nvalue = 480432.42" filled, rounded box black #e68642
+node 696 686.55 0.36806 2.1111 0.73611 "mse = 3200286128.97\nsamples = 10\nvalue = 454665.18" filled, rounded box black #e88e4d
+node 697 688.87 0.36806 2.0139 0.73611 "mse = 627413938.25\nsamples = 24\nvalue = 490619.47" filled, rounded box black #e6843d
+node 698 692.35 3.1528 2.1111 0.94444 "X[6] <= 33.85\nmse = 6040668597.69\nsamples = 73\nvalue = 403610.37" filled, rounded box black #eb9c63
+node 699 692.35 1.7083 2.0139 0.94444 "X[5] <= -117.23\nmse = 4727335703.1\nsamples = 31\nvalue = 434606.2" filled, rounded box black #e99356
+node 700 691.19 0.36806 2.1111 0.73611 "mse = 3221817087.41\nsamples = 28\nvalue = 445515.23" filled, rounded box black #e89051
+node 701 693.51 0.36806 2.0139 0.73611 "mse = 4588426875.0\nsamples = 3\nvalue = 306425.0" filled, rounded box black #f0b78e
+node 702 695.83 1.7083 2.1111 0.94444 "X[5] <= -117.62\nmse = 5752390323.65\nsamples = 42\nvalue = 380016.54" filled, rounded box black #eca36e
+node 703 695.83 0.36806 2.1111 0.73611 "mse = 4814956889.46\nsamples = 40\nvalue = 387354.81" filled, rounded box black #eba06a
+node 704 698.09 0.36806 1.9028 0.73611 "mse = 94302222.22\nsamples = 2\nvalue = 223466.67" filled, rounded box black #f5ceb2
+node 705 700.45 4.5972 2.1111 0.94444 "X[5] <= -122.36\nmse = 6178944160.14\nsamples = 36\nvalue = 379611.83" filled, rounded box black #eca36e
+node 706 700.45 3.1528 2.1111 0.94444 "X[11] <= 99.5\nmse = 2746927529.65\nsamples = 10\nvalue = 466659.41" filled, rounded box black #e78a48
+node 707 699.37 1.7083 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 316700.0" filled, rounded box black #f0b48a
+node 708 701.52 1.7083 2.1111 0.94444 "X[11] <= 336.5\nmse = 1425278359.61\nsamples = 9\nvalue = 476031.88" filled, rounded box black #e68844
+node 709 700.35 0.36806 2.1111 0.73611 "mse = 2040326666.67\nsamples = 3\nvalue = 430100.0" filled, rounded box black #e99558
+node 710 702.67 0.36806 2.0139 0.73611 "mse = 684128852.25\nsamples = 6\nvalue = 486631.54" filled, rounded box black #e6853f
+node 711 705.73 3.1528 2.0139 0.94444 "X[6] <= 37.8\nmse = 3355784413.2\nsamples = 26\nvalue = 345197.67" filled, rounded box black #eeac7d
+node 712 705.73 1.7083 1.8056 0.94444 "X[7] <= 37.0\nmse = 39496000.0\nsamples = 3\nvalue = 245600.0" filled, rounded box black #f4c8a9
+node 713 704.78 0.36806 1.6944 0.73611 "mse = 8702500.0\nsamples = 2\nvalue = 252950.0" filled, rounded box black #f3c6a6
+node 714 706.73 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 240700.0" filled, rounded box black #f4c9ab
+node 715 708.88 1.7083 2.1111 0.94444 "X[12] <= 6.82\nmse = 2315174993.07\nsamples = 23\nvalue = 358302.63" filled, rounded box black #eda977
+node 716 708.88 0.36806 2.1111 0.73611 "mse = 3793373469.39\nsamples = 5\nvalue = 304971.43" filled, rounded box black #f0b88f
+node 717 711.24 0.36806 2.1111 0.73611 "mse = 1194123121.75\nsamples = 18\nvalue = 370345.16" filled, rounded box black #eca572
+node 718 710.7 8.9306 2.1111 0.94444 "X[11] <= 27.5\nmse = 5109048043.41\nsamples = 397\nvalue = 457952.86" filled, rounded box black #e78d4b
+node 719 710.7 7.4861 2.0139 0.94444 "X[7] <= 28.5\nmse = 9661400400.0\nsamples = 7\nvalue = 186260.0" filled, rounded box black #f7d9c3
+node 720 709.55 6.0417 2.1111 0.94444 "X[5] <= -121.48\nmse = 2743055555.56\nsamples = 3\nvalue = 329166.67" filled, rounded box black #efb184
+node 721 707.65 4.5972 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 400000.0" filled, rounded box black #eb9d65
+node 722 709.69 4.5972 1.9028 0.94444 "X[5] <= -120.12\nmse = 351562500.0\nsamples = 2\nvalue = 293750.0" filled, rounded box black #f1bb94
+node 723 708.78 3.1528 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 312500.0" filled, rounded box black #f0b58b
+node 724 710.72 3.1528 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 275000.0" filled, rounded box black #f2c09c
+node 725 711.87 6.0417 2.0139 0.94444 "X[6] <= 35.62\nmse = 122946938.78\nsamples = 4\nvalue = 125014.29" filled, rounded box black #fbeade
+node 726 711.8 4.5972 1.6806 0.73611 "mse = 0.0\nsamples = 2\nvalue = 112500.0" filled, rounded box black #fbede3
+node 727 713.74 4.5972 1.6944 0.94444 "X[9] <= 18.5\nmse = 9610000.0\nsamples = 2\nvalue = 134400.0" filled, rounded box black #fae7da
+node 728 713.62 3.1528 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 137500.0" filled, rounded box black #fae6d8
+node 729 715.55 3.1528 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 131300.0" filled, rounded box black #fae8db
+node 730 729.78 7.4861 2.1111 0.94444 "X[12] <= 8.8\nmse = 3817364773.62\nsamples = 390\nvalue = 462363.46" filled, rounded box black #e78c4a
+node 731 729.78 6.0417 2.1111 0.94444 "X[7] <= 28.5\nmse = 4953966581.64\nsamples = 180\nvalue = 433220.73" filled, rounded box black #e99456
+node 732 725.53 4.5972 2.1111 0.94444 "X[1] <= 0.5\nmse = 4522779393.26\nsamples = 107\nvalue = 396486.13" filled, rounded box black #eb9e66
+node 733 719.23 3.1528 2.1111 0.94444 "X[5] <= -118.08\nmse = 3471790168.66\nsamples = 95\nvalue = 406110.99" filled, rounded box black #ea9b62
+node 734 715.88 1.7083 2.1111 0.94444 "X[6] <= 34.14\nmse = 3218107299.16\nsamples = 55\nvalue = 424423.5" filled, rounded box black #e9965a
+node 735 713.56 0.36806 2.0139 0.73611 "mse = 880060715.73\nsamples = 11\nvalue = 488788.38" filled, rounded box black #e6843e
+node 736 715.88 0.36806 2.1111 0.73611 "mse = 2589141641.48\nsamples = 44\nvalue = 409711.53" filled, rounded box black #ea9a61
+node 737 719.23 1.7083 2.1111 0.94444 "X[12] <= 7.76\nmse = 2713290114.54\nsamples = 40\nvalue = 380709.76" filled, rounded box black #eca26d
+node 738 718.03 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 500001.0" filled, rounded box black #e58139
+node 739 720.19 0.36806 2.1111 0.73611 "mse = 2313574882.27\nsamples = 39\nvalue = 376733.38" filled, rounded box black #eca36f
+node 740 725.53 3.1528 2.1111 0.94444 "X[12] <= 8.2\nmse = 5461209960.94\nsamples = 12\nvalue = 307456.25" filled, rounded box black #f0b78e
+node 741 724.35 1.7083 2.1111 0.94444 "X[11] <= 130.5\nmse = 2456715802.47\nsamples = 7\nvalue = 350244.44" filled, rounded box black #eeab7b
+node 742 722.34 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 244200.0" filled, rounded box black #f4c8a9
+node 743 724.44 0.36806 2.0139 0.73611 "mse = 1182417500.0\nsamples = 6\nvalue = 363500.0" filled, rounded box black #eda775
+node 744 726.72 1.7083 2.1111 0.94444 "X[7] <= 12.5\nmse = 3943733877.55\nsamples = 5\nvalue = 252442.86" filled, rounded box black #f3c6a6
+node 745 726.65 0.36806 1.9028 0.73611 "mse = 303911875.0\nsamples = 3\nvalue = 199325.0" filled, rounded box black #f6d5bd
+node 746 728.8 0.36806 1.9028 0.73611 "mse = 18808888.89\nsamples = 2\nvalue = 323266.67" filled, rounded box black #efb287
+node 747 733.85 4.5972 2.1111 0.94444 "X[6] <= 37.85\nmse = 1472682399.16\nsamples = 73\nvalue = 481034.02" filled, rounded box black #e68641
+node 748 733.85 3.1528 2.1111 0.94444 "X[10] <= 698.5\nmse = 1011775471.85\nsamples = 62\nvalue = 486409.65" filled, rounded box black #e6853f
+node 749 732.72 1.7083 1.9028 0.94444 "X[6] <= 33.13\nmse = 56209928.09\nsamples = 18\nvalue = 498040.9" filled, rounded box black #e5823a
+node 750 730.84 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 459600.0" filled, rounded box black #e78c4b
+node 751 732.84 0.36806 1.8056 0.73611 "mse = 5435854.52\nsamples = 17\nvalue = 499366.45" filled, rounded box black #e58139
+node 752 734.98 1.7083 2.1111 0.94444 "X[11] <= 232.0\nmse = 1293769894.22\nsamples = 44\nvalue = 482154.32" filled, rounded box black #e68641
+node 753 734.84 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 281900.0" filled, rounded box black #f2be99
+node 754 736.94 0.36806 2.0139 0.73611 "mse = 808546370.04\nsamples = 43\nvalue = 484626.59" filled, rounded box black #e68540
+node 755 740.12 3.1528 2.1111 0.94444 "X[5] <= -122.22\nmse = 3079320592.07\nsamples = 11\nvalue = 438028.93" filled, rounded box black #e99254
+node 756 740.12 1.7083 2.1111 0.94444 "X[12] <= 7.94\nmse = 2828274361.25\nsamples = 5\nvalue = 476217.5" filled, rounded box black #e68843
+node 757 739.2 0.36806 2.0139 0.73611 "mse = 4525238978.0\nsamples = 2\nvalue = 452434.0" filled, rounded box black #e88e4e
+node 758 741.3 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 3\nvalue = 500001.0" filled, rounded box black #e58139
+node 759 743.4 1.7083 2.1111 0.94444 "X[8] <= 2716.5\nmse = 1353498593.75\nsamples = 6\nvalue = 409387.5" filled, rounded box black #ea9a61
+node 760 743.4 0.36806 2.0139 0.73611 "mse = 758006666.67\nsamples = 3\nvalue = 374200.0" filled, rounded box black #eca470
+node 761 745.6 0.36806 1.9028 0.73611 "mse = 522160000.0\nsamples = 3\nvalue = 430500.0" filled, rounded box black #e99458
+node 762 753.35 6.0417 2.1111 0.94444 "X[1] <= 0.5\nmse = 1378686180.58\nsamples = 210\nvalue = 488287.97" filled, rounded box black #e6843e
+node 763 753.35 4.5972 2.0139 0.94444 "X[5] <= -117.12\nmse = 596072802.84\nsamples = 199\nvalue = 492727.97" filled, rounded box black #e5833c
+node 764 752.26 3.1528 2.0139 0.94444 "X[7] <= 19.5\nmse = 555867201.65\nsamples = 197\nvalue = 493241.14" filled, rounded box black #e5833c
+node 765 750.08 1.7083 2.0139 0.94444 "X[10] <= 904.5\nmse = 931877313.73\nsamples = 48\nvalue = 482793.15" filled, rounded box black #e68641
+node 766 747.81 0.36806 2.0139 0.73611 "mse = 1457506267.3\nsamples = 23\nvalue = 468124.78" filled, rounded box black #e78a47
+node 767 750.08 0.36806 2.0139 0.73611 "mse = 135148201.34\nsamples = 25\nvalue = 495414.77" filled, rounded box black #e5823b
+node 768 752.34 1.7083 1.9028 0.94444 "X[8] <= 911.0\nmse = 372192599.6\nsamples = 149\nvalue = 496907.11" filled, rounded box black #e5823a
+node 769 752.4 0.36806 2.1111 0.73611 "mse = 2589165925.89\nsamples = 10\nvalue = 480364.0" filled, rounded box black #e68642
+node 770 754.66 0.36806 1.9028 0.73611 "mse = 143508313.9\nsamples = 139\nvalue = 498411.02" filled, rounded box black #e5813a
+node 771 754.47 3.1528 1.9028 0.94444 "X[12] <= 9.44\nmse = 501760000.0\nsamples = 2\nvalue = 413700.0" filled, rounded box black #ea995f
+node 772 754.38 1.7083 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 436100.0" filled, rounded box black #e99355
+node 773 756.31 1.7083 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 391300.0" filled, rounded box black #eb9f69
+node 774 758.41 4.5972 2.0139 0.94444 "X[6] <= 37.96\nmse = 8759540929.9\nsamples = 11\nvalue = 402262.81" filled, rounded box black #eb9c64
+node 775 758.41 3.1528 2.1111 0.94444 "X[12] <= 9.0\nmse = 5817570194.11\nsamples = 10\nvalue = 425157.5" filled, rounded box black #e9965a
+node 776 758.41 1.7083 2.0139 0.94444 "X[7] <= 17.0\nmse = 7796890000.0\nsamples = 2\nvalue = 302200.0" filled, rounded box black #f0b890
+node 777 756.74 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 213900.0" filled, rounded box black #f6d1b7
+node 778 758.67 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 390500.0" filled, rounded box black #eba069
+node 779 760.73 1.7083 2.1111 0.94444 "X[6] <= 35.51\nmse = 2547966125.24\nsamples = 8\nvalue = 445650.42" filled, rounded box black #e89051
+node 780 760.69 0.36806 1.6806 0.73611 "mse = 0.0\nsamples = 2\nvalue = 500001.0" filled, rounded box black #e58139
+node 781 762.84 0.36806 2.1111 0.73611 "mse = 2084405540.91\nsamples = 6\nvalue = 427533.56" filled, rounded box black #e99559
+node 782 760.56 3.1528 1.6806 0.73611 "mse = 0.0\nsamples = 1\nvalue = 242000.0" filled, rounded box black #f4c9aa
+edge 0 1 4 436.84 13.235 426.17 13.096 342.21 11.994 331.15 11.849 solid black
+edge 0 418 4 439.06 13.235 449.71 13.096 533.4 11.998 544.67 11.85 solid black
+edge 1 2 4 328.89 11.795 316.92 11.671 207.02 10.533 194.3 10.401 solid black
+edge 1 245 4 329.95 11.346 329.95 11.233 329.95 11.111 329.95 10.993 solid black
+edge 2 3 4 192.04 10.345 182.33 10.202 108.8 9.1145 98.496 8.9621 solid black
+edge 2 120 4 193.1 9.9012 193.1 9.7886 193.1 9.6664 193.1 9.5482 solid black
+edge 3 4 4 96.24 8.8823 90.293 8.6896 61.09 7.7431 54.79 7.5389 solid black
+edge 3 65 4 97.299 8.4567 97.299 8.3441 97.299 8.222 97.299 8.1038 solid black
+edge 4 5 4 52.534 7.4158 48.319 7.1907 32.718 6.3576 28.259 6.1195 solid black
+edge 4 36 4 53.59 7.0123 53.59 6.8997 53.59 6.7775 53.59 6.6593 solid black
+edge 5 6 4 26.004 5.9201 23.459 5.6613 17.01 5.0055 14.329 4.7329 solid black
+edge 5 21 4 27.062 5.5678 27.062 5.4552 27.062 5.3331 27.062 5.2149 solid black
+edge 6 7 4 12.073 4.3454 10.953 4.0937 9.1888 3.6974 8.0199 3.4348 solid black
+edge 6 14 4 13.132 4.1234 13.132 4.0108 13.132 3.8886 13.132 3.7704 solid black
+edge 7 8 4 5.7668 2.71 5.371 2.5498 4.9191 2.3669 4.5126 2.2024 solid black
+edge 7 11 4 6.8264 2.6789 6.8264 2.5664 6.8264 2.4442 6.8264 2.326 solid black
+edge 8 9 4 2.5152 1.2354 2.2693 1.0963 2.0004 0.94412 1.7586 0.80731 solid black
+edge 8 10 4 3.3264 1.2354 3.3264 1.121 3.3264 0.99789 3.3264 0.88169 solid black
+edge 11 12 4 6.4135 1.2354 6.2992 1.1083 6.1751 0.97041 6.0607 0.84323 solid black
+edge 11 13 4 7.2247 1.2354 7.3339 1.1096 7.4523 0.97317 7.5617 0.84705 solid black
+edge 14 15 4 12.776 2.6789 12.681 2.5565 12.577 2.4226 12.478 2.2949 solid black
+edge 14 18 4 13.488 2.6789 13.583 2.5565 13.687 2.4226 13.786 2.2949 solid black
+edge 15 16 4 11.364 1.2354 11.168 1.1007 10.953 0.95382 10.758 0.82046 solid black
+edge 15 17 4 12.04 1.2354 12.041 1.121 12.042 0.99789 12.043 0.88169 solid black
+edge 18 19 4 14.219 1.2354 14.217 1.121 14.214 0.99789 14.212 0.88169 solid black
+edge 18 20 4 15.031 1.2354 15.274 1.0963 15.539 0.94412 15.778 0.80731 solid black
+edge 21 22 4 26.3 4.1234 26.076 3.9878 25.828 3.8384 25.597 3.6988 solid black
+edge 21 29 4 27.825 4.1234 28.049 3.9878 28.297 3.8384 28.528 3.6988 solid black
+edge 22 23 4 23.656 2.7119 23.257 2.5509 22.8 2.3668 22.39 2.2013 solid black
+edge 22 26 4 24.715 2.6789 24.715 2.5664 24.715 2.4442 24.715 2.326 solid black
+edge 23 24 4 20.376 1.2354 20.125 1.0963 19.852 0.94412 19.605 0.80731 solid black
+edge 23 25 4 21.201 1.2354 21.201 1.121 21.201 0.99789 21.201 0.88169 solid black
+edge 26 27 4 24.312 1.2354 24.202 1.1096 24.082 0.97317 23.971 0.84705 solid black
+edge 26 28 4 25.123 1.2354 25.236 1.1083 25.359 0.97041 25.472 0.84323 solid black
+edge 29 30 4 29.41 2.6789 29.41 2.5664 29.41 2.4442 29.41 2.326 solid black
+edge 29 33 4 30.468 2.7253 30.9 2.5566 31.401 2.3607 31.845 2.187 solid black
+edge 30 31 4 28.987 1.2354 28.87 1.1083 28.743 0.97041 28.626 0.84323 solid black
+edge 30 32 4 29.832 1.2354 29.949 1.1083 30.076 0.97041 30.193 0.84323 solid black
+edge 33 34 4 33.035 1.2354 33.035 1.121 33.035 0.99789 33.035 0.88169 solid black
+edge 33 35 4 33.861 1.2354 34.111 1.0963 34.385 0.94412 34.631 0.80731 solid black
+edge 36 37 4 52.533 5.6369 52.042 5.4557 51.458 5.2396 50.951 5.0526 solid black
+edge 36 52 4 54.65 5.6721 55.266 5.4655 56.042 5.2052 56.671 4.9941 solid black
+edge 37 38 4 48.701 4.3486 47.566 4.0963 45.765 3.6962 44.578 3.4325 solid black
+edge 37 45 4 49.757 4.1234 49.757 4.0108 49.757 3.8886 49.757 3.7704 solid black
+edge 38 39 4 42.322 2.6848 41.986 2.5406 41.611 2.3801 41.266 2.2322 solid black
+edge 38 42 4 43.382 2.6789 43.382 2.5664 43.382 2.4442 43.382 2.326 solid black
+edge 39 40 4 39.265 1.2354 39.019 1.0963 38.75 0.94412 38.509 0.80731 solid black
+edge 39 41 4 40.076 1.2354 40.076 1.121 40.076 0.99789 40.076 0.88169 solid black
+edge 42 43 4 42.998 1.2354 42.893 1.1096 42.779 0.97317 42.674 0.84705 solid black
+edge 42 44 4 43.751 1.2354 43.851 1.1109 43.96 0.97593 44.06 0.85087 solid black
+edge 45 46 4 49.383 2.6789 49.283 2.5565 49.174 2.4226 49.07 2.2949 solid black
+edge 45 49 4 50.136 2.6789 50.237 2.5565 50.347 2.4226 50.452 2.2949 solid black
+edge 46 47 4 47.919 1.2354 47.718 1.1007 47.499 0.95382 47.3 0.82046 solid black
+edge 46 48 4 48.653 1.2354 48.665 1.1198 48.678 0.99515 48.691 0.87781 solid black
+edge 49 50 4 50.875 1.2354 50.863 1.1198 50.85 0.99515 50.837 0.87781 solid black
+edge 49 51 4 51.667 1.2354 51.889 1.0982 52.132 0.94827 52.351 0.81292 solid black
+edge 52 53 4 57.812 4.1234 57.812 4.0108 57.812 3.8886 57.812 3.7704 solid black
+edge 52 58 4 58.822 4.1506 59.187 3.9941 59.602 3.8163 59.978 3.6554 solid black
+edge 53 54 4 57.154 2.6789 56.966 2.5478 56.76 2.4037 56.566 2.2679 solid black
+edge 53 57 4 57.835 2.6789 57.842 2.5308 57.85 2.366 57.858 2.2155 solid black
+edge 54 55 4 55.6 1.2354 55.553 1.1172 55.501 0.98967 55.453 0.87009 solid black
+edge 54 56 4 56.358 1.2354 56.523 1.1033 56.703 0.95936 56.867 0.82802 solid black
+edge 58 59 4 61.118 2.6789 61.118 2.5664 61.118 2.4442 61.118 2.326 solid black
+edge 58 62 4 62.006 2.6789 62.273 2.5409 62.567 2.3885 62.841 2.2466 solid black
+edge 59 60 4 60.584 1.2354 60.431 1.1045 60.266 0.96213 60.114 0.83181 solid black
+edge 59 61 4 61.322 1.2354 61.375 1.1172 61.431 0.98967 61.484 0.87009 solid black
+edge 62 63 4 63.854 1.2354 63.854 1.121 63.854 0.99789 63.854 0.88169 solid black
+edge 62 64 4 64.593 1.2354 64.813 1.0982 65.054 0.94827 65.272 0.81292 solid black
+edge 65 66 4 96.289 7.2826 94.891 7.0201 92.373 6.5469 90.905 6.2712 solid black
+edge 65 95 4 98.308 7.3083 99.925 7.0456 103.09 6.5312 104.82 6.2502 solid black
+edge 66 67 4 88.75 5.9184 86.381 5.661 80.464 5.0183 77.915 4.7414 solid black
+edge 66 80 4 89.757 5.5678 89.757 5.4552 89.757 5.3331 89.757 5.2149 solid black
+edge 67 68 4 75.658 4.1448 75.288 3.9914 74.87 3.8182 74.49 3.6606 solid black
+edge 67 75 4 76.715 4.1234 76.715 4.0108 76.715 3.8886 76.715 3.7704 solid black
+edge 68 69 4 72.266 2.6789 71.951 2.5384 71.602 2.383 71.278 2.239 solid black
+edge 68 72 4 73.299 2.6789 73.299 2.5664 73.299 2.4442 73.299 2.326 solid black
+edge 69 70 4 69.365 1.2354 69.14 1.0982 68.894 0.94827 68.672 0.81292 solid black
+edge 69 71 4 70.118 1.2354 70.118 1.121 70.118 0.99789 70.118 0.88169 solid black
+edge 72 73 4 72.997 1.2354 72.917 1.1134 72.831 0.98143 72.75 0.85854 solid black
+edge 72 74 4 73.789 1.2354 73.928 1.1058 74.078 0.96489 74.217 0.83561 solid black
+edge 75 76 4 76.53 2.6789 76.47 2.5277 76.402 2.3592 76.34 2.2062 solid black
+edge 75 77 4 77.229 2.6789 77.372 2.5515 77.528 2.4118 77.676 2.2795 solid black
+edge 77 78 4 77.813 1.2354 77.676 1.1058 77.527 0.96489 77.39 0.83561 solid black
+edge 77 79 4 78.585 1.2354 78.661 1.1134 78.744 0.98143 78.82 0.85854 solid black
+edge 80 81 4 88.99 4.1234 88.764 3.9878 88.515 3.8384 88.283 3.6988 solid black
+edge 80 88 4 90.492 4.1234 90.707 3.9891 90.943 3.8412 91.164 3.7026 solid black
+edge 81 82 4 86.336 2.7215 85.913 2.5551 85.425 2.3627 84.99 2.1915 solid black
+edge 81 85 4 87.396 2.6789 87.396 2.5664 87.396 2.4442 87.396 2.326 solid black
+edge 82 83 4 82.973 1.2354 82.723 1.0963 82.449 0.94412 82.203 0.80731 solid black
+edge 82 84 4 83.799 1.2354 83.799 1.121 83.799 0.99789 83.799 0.88169 solid black
+edge 85 86 4 86.983 1.2354 86.869 1.1083 86.745 0.97041 86.63 0.84323 solid black
+edge 85 87 4 87.828 1.2354 87.948 1.1083 88.078 0.97041 88.198 0.84323 solid black
+edge 88 89 4 92.021 2.6789 92.021 2.5664 92.021 2.4442 92.021 2.326 solid black
+edge 88 92 4 93.031 2.7042 93.411 2.5405 93.845 2.3538 94.232 2.1874 solid black
+edge 89 90 4 91.647 1.2354 91.545 1.1109 91.435 0.97593 91.333 0.85087 solid black
+edge 89 91 4 92.439 1.2354 92.554 1.1083 92.68 0.97041 92.795 0.84323 solid black
+edge 92 93 4 95.312 1.2354 95.312 1.121 95.312 0.99789 95.312 0.88169 solid black
+edge 92 94 4 96.027 1.2354 96.238 1.0994 96.469 0.95105 96.678 0.81669 solid black
+edge 95 96 4 106.02 5.5678 106.02 5.4552 106.02 5.3331 106.02 5.2149 solid black
+edge 95 111 4 107.08 5.8064 108.31 5.55 110.32 5.1286 111.6 4.8607 solid black
+edge 96 97 4 105.52 4.1234 105.39 3.996 105.24 3.8563 105.09 3.7239 solid black
+edge 96 104 4 106.81 4.1234 107.05 3.9878 107.31 3.8384 107.55 3.6988 solid black
+edge 97 98 4 103.5 2.6789 103.2 2.5391 102.87 2.3844 102.56 2.2409 solid black
+edge 97 101 4 104.49 2.6789 104.49 2.5664 104.49 2.4442 104.49 2.326 solid black
+edge 98 99 4 100.72 1.2354 100.51 1.0994 100.28 0.95105 100.07 0.81669 solid black
+edge 98 100 4 101.44 1.2354 101.44 1.121 101.44 0.99789 101.44 0.88169 solid black
+edge 101 102 4 104.14 1.2354 104.04 1.1109 103.94 0.97593 103.84 0.85087 solid black
+edge 101 103 4 104.81 1.2354 104.9 1.1122 104.99 0.97868 105.08 0.8547 solid black
+edge 104 105 4 108.47 2.6789 108.47 2.5664 108.47 2.4442 108.47 2.326 solid black
+edge 104 108 4 109.48 2.6965 109.82 2.5454 110.21 2.3753 110.56 2.2202 solid black
+edge 105 106 4 108.15 1.2354 108.06 1.1122 107.97 0.97868 107.89 0.8547 solid black
+edge 105 107 4 108.88 1.2354 109 1.1083 109.12 0.97041 109.24 0.84323 solid black
+edge 108 109 4 111.7 1.2354 111.7 1.121 111.7 0.99789 111.7 0.88169 solid black
+edge 108 110 4 112.43 1.2354 112.65 1.0994 112.89 0.95105 113.1 0.81669 solid black
+edge 111 112 4 112.8 4.1234 112.8 3.9767 112.8 3.8138 112.8 3.6646 solid black
+edge 111 113 4 113.86 4.224 114.46 4.0197 115.21 3.7638 115.82 3.5549 solid black
+edge 113 114 4 116.97 2.6789 116.97 2.5664 116.97 2.4442 116.97 2.326 solid black
+edge 113 117 4 117.97 2.7119 118.35 2.5524 118.78 2.37 119.17 2.2057 solid black
+edge 114 115 4 116.59 1.2354 116.49 1.1109 116.38 0.97593 116.28 0.85087 solid black
+edge 114 116 4 117.36 1.2354 117.47 1.1096 117.59 0.97317 117.7 0.84705 solid black
+edge 117 118 4 120.31 1.2354 120.31 1.121 120.31 0.99789 120.31 0.88169 solid black
+edge 117 119 4 121.14 1.2354 121.39 1.0963 121.67 0.94412 121.92 0.80731 solid black
+edge 120 121 4 192.04 8.8221 189.2 8.5684 181.42 7.874 178.43 7.6068 solid black
+edge 120 182 4 194.16 8.8226 197.01 8.5693 204.82 7.8736 207.83 7.6064 solid black
+edge 121 122 4 176.17 7.414 172.05 7.1871 157.05 6.3618 152.68 6.1216 solid black
+edge 121 153 4 177.23 7.0123 177.23 6.8997 177.23 6.7775 177.23 6.6593 solid black
+edge 122 123 4 150.42 5.9253 147.76 5.6684 140.83 4.998 138.03 4.7271 solid black
+edge 122 138 4 151.48 5.5678 151.48 5.4552 151.48 5.3331 151.48 5.2149 solid black
+edge 123 124 4 135.77 4.3398 134.69 4.0906 133.01 3.7039 131.88 3.4433 solid black
+edge 123 131 4 136.83 4.1234 136.83 4.0108 136.83 3.8886 136.83 3.7704 solid black
+edge 124 125 4 129.62 2.7003 129.25 2.547 128.83 2.3737 128.45 2.2162 solid black
+edge 124 128 4 130.67 2.6789 130.67 2.5664 130.67 2.4442 130.67 2.326 solid black
+edge 125 126 4 126.5 1.2354 126.28 1.0982 126.03 0.94827 125.81 0.81292 solid black
+edge 125 127 4 127.26 1.2354 127.26 1.121 127.26 0.99789 127.26 0.88169 solid black
+edge 128 129 4 130.23 1.2354 130.11 1.1083 129.98 0.97041 129.85 0.84323 solid black
+edge 128 130 4 131.04 1.2354 131.14 1.1109 131.25 0.97593 131.35 0.85087 solid black
+edge 131 132 4 136.45 2.6789 136.35 2.5565 136.24 2.4226 136.14 2.2949 solid black
+edge 131 135 4 137.21 2.6789 137.31 2.5565 137.42 2.4226 137.52 2.2949 solid black
+edge 132 133 4 135.03 1.2354 134.84 1.1007 134.63 0.95382 134.44 0.82046 solid black
+edge 132 134 4 135.7 1.2354 135.71 1.121 135.72 0.99789 135.73 0.88169 solid black
+edge 135 136 4 137.96 1.2354 137.96 1.121 137.95 0.99789 137.94 0.88169 solid black
+edge 135 137 4 138.79 1.2354 139.03 1.0963 139.3 0.94412 139.53 0.80731 solid black
+edge 138 139 4 150.71 4.1234 150.49 3.9878 150.24 3.8384 150 3.6988 solid black
+edge 138 146 4 151.86 4.1234 151.96 4.0009 152.08 3.8671 152.18 3.7394 solid black
+edge 139 140 4 148.06 2.7759 147.49 2.5789 146.78 2.3347 146.18 2.131 solid black
+edge 139 143 4 149.12 2.6789 149.12 2.5664 149.12 2.4442 149.12 2.326 solid black
+edge 140 141 4 144.17 1.2354 143.92 1.0963 143.64 0.94412 143.4 0.80731 solid black
+edge 140 142 4 144.99 1.2354 144.99 1.121 144.99 0.99789 144.99 0.88169 solid black
+edge 143 144 4 148.5 1.2354 148.32 1.102 148.13 0.95659 147.95 0.82424 solid black
+edge 143 145 4 149.33 1.2354 149.38 1.116 149.44 0.98692 149.49 0.86623 solid black
+edge 146 147 4 152.66 2.6789 152.66 2.5664 152.66 2.4442 152.66 2.326 solid black
+edge 146 150 4 153.72 2.7722 154.29 2.5767 154.98 2.3356 155.57 2.1338 solid black
+edge 147 148 4 152.46 1.2354 152.4 1.1172 152.35 0.98967 152.29 0.87009 solid black
+edge 147 149 4 153.28 1.2354 153.46 1.102 153.66 0.95659 153.84 0.82424 solid black
+edge 150 151 4 156.76 1.2354 156.76 1.121 156.76 0.99789 156.76 0.88169 solid black
+edge 150 152 4 157.57 1.2354 157.81 1.0963 158.08 0.94412 158.32 0.80731 solid black
+edge 153 154 4 176.2 5.5678 175.89 5.4279 175.54 5.2733 175.22 5.1298 solid black
+edge 153 169 4 178.29 5.6123 178.71 5.4451 179.21 5.2514 179.65 5.0793 solid black
+edge 154 155 4 173 4.3666 171.75 4.1091 169.65 3.6805 168.34 3.4113 solid black
+edge 154 162 4 174.06 4.1234 174.06 4.0108 174.06 3.8886 174.06 3.7704 solid black
+edge 155 156 4 166.09 2.7158 165.68 2.5532 165.21 2.3665 164.8 2.1992 solid black
+edge 155 159 4 167.15 2.6789 167.15 2.5664 167.15 2.4442 167.15 2.326 solid black
+edge 156 157 4 162.81 1.2354 162.57 1.0963 162.31 0.94412 162.07 0.80731 solid black
+edge 156 158 4 163.6 1.2354 163.6 1.121 163.6 0.99789 163.6 0.88169 solid black
+edge 159 160 4 166.73 1.2354 166.62 1.1083 166.49 0.97041 166.38 0.84323 solid black
+edge 159 161 4 167.56 1.2354 167.67 1.1083 167.8 0.97041 167.91 0.84323 solid black
+edge 162 163 4 173.69 2.6789 173.59 2.5565 173.48 2.4226 173.38 2.2949 solid black
+edge 162 166 4 174.44 2.6789 174.54 2.5565 174.65 2.4226 174.76 2.2949 solid black
+edge 163 164 4 172.12 1.2354 171.88 1.0963 171.62 0.94412 171.38 0.80731 solid black
+edge 163 165 4 172.91 1.2354 172.91 1.121 172.91 0.99789 172.91 0.88169 solid black
+edge 166 167 4 175.23 1.2354 175.23 1.121 175.23 0.99789 175.23 0.88169 solid black
+edge 166 168 4 176.02 1.2354 176.26 1.0963 176.52 0.94412 176.76 0.80731 solid black
+edge 169 170 4 180.84 4.1234 180.84 4.0108 180.84 3.8886 180.84 3.7704 solid black
+edge 169 175 4 181.9 4.2148 182.47 4.0152 183.18 3.7683 183.77 3.5643 solid black
+edge 170 171 4 180.54 2.6789 180.46 2.5589 180.37 2.428 180.29 2.3027 solid black
+edge 170 174 4 181.2 2.6789 181.32 2.5216 181.46 2.3456 181.59 2.1878 solid black
+edge 171 172 4 179.76 1.2354 179.72 1.1185 179.68 0.99241 179.64 0.87395 solid black
+edge 171 173 4 180.41 1.2354 180.56 1.1058 180.71 0.96489 180.85 0.83561 solid black
+edge 175 176 4 184.91 2.6789 184.91 2.5664 184.91 2.4442 184.91 2.326 solid black
+edge 175 179 4 185.77 2.6789 186.03 2.5415 186.31 2.3899 186.58 2.2485 solid black
+edge 176 177 4 184.4 1.2354 184.26 1.1058 184.1 0.96489 183.96 0.83561 solid black
+edge 176 178 4 185.16 1.2354 185.22 1.1147 185.29 0.98418 185.36 0.86239 solid black
+edge 179 180 4 187.56 1.2354 187.56 1.121 187.56 0.99789 187.56 0.88169 solid black
+edge 179 181 4 188.2 1.2354 188.38 1.102 188.59 0.95659 188.77 0.82424 solid black
+edge 182 183 4 209.02 7.0123 209.02 6.8997 209.02 6.7775 209.02 6.6593 solid black
+edge 182 214 4 210.08 7.4167 214.34 7.1926 230.27 6.3558 234.78 6.1186 solid black
+edge 183 184 4 207.96 5.7045 207.25 5.4874 206.31 5.2008 205.58 4.9755 solid black
+edge 183 199 4 210.08 5.7081 210.8 5.4895 211.76 5.1994 212.51 4.9725 solid black
+edge 184 185 4 203.32 4.3697 202.06 4.1151 199.96 3.6903 198.62 3.4196 solid black
+edge 184 192 4 204.38 4.1234 204.38 4.0108 204.38 3.8886 204.38 3.7704 solid black
+edge 185 186 4 196.26 2.6926 195.85 2.5294 195.39 2.3446 194.98 2.1804 solid black
+edge 185 189 4 197.37 2.6789 197.37 2.5664 197.37 2.4442 197.37 2.326 solid black
+edge 186 187 4 193.01 1.2354 192.76 1.0963 192.49 0.94412 192.24 0.80731 solid black
+edge 186 188 4 193.84 1.2354 193.84 1.121 193.84 0.99789 193.84 0.88169 solid black
+edge 189 190 4 196.96 1.2354 196.85 1.1083 196.72 0.97041 196.61 0.84323 solid black
+edge 189 191 4 197.77 1.2354 197.88 1.1096 198 0.97317 198.11 0.84705 solid black
+edge 192 193 4 204 2.6789 203.9 2.5565 203.79 2.4226 203.68 2.2949 solid black
+edge 192 196 4 204.77 2.6789 204.87 2.5565 204.98 2.4226 205.09 2.2949 solid black
+edge 193 194 4 202.38 1.2354 202.13 1.0963 201.85 0.94412 201.61 0.80731 solid black
+edge 193 195 4 203.2 1.2354 203.2 1.121 203.2 0.99789 203.2 0.88169 solid black
+edge 196 197 4 205.56 1.2354 205.56 1.121 205.56 0.99789 205.56 0.88169 solid black
+edge 196 198 4 206.37 1.2354 206.62 1.0963 206.89 0.94412 207.13 0.80731 solid black
+edge 199 200 4 213.7 4.1234 213.7 4.0108 213.7 3.8886 213.7 3.7704 solid black
+edge 199 207 4 214.76 4.3643 216 4.1077 218.04 3.6834 219.34 3.4148 solid black
+edge 200 201 4 213.32 2.6789 213.22 2.5565 213.1 2.4226 213 2.2949 solid black
+edge 200 204 4 214.08 2.6789 214.19 2.5565 214.3 2.4226 214.4 2.2949 solid black
+edge 201 202 4 211.71 1.2354 211.46 1.0963 211.19 0.94412 210.95 0.80731 solid black
+edge 201 203 4 212.54 1.2354 212.54 1.121 212.54 0.99789 212.55 0.88169 solid black
+edge 204 205 4 214.86 1.2354 214.86 1.121 214.85 0.99789 214.85 0.88169 solid black
+edge 204 206 4 215.65 1.2354 215.89 1.0976 216.14 0.94691 216.37 0.81108 solid black
+edge 207 208 4 220.53 2.6789 220.53 2.5664 220.53 2.4442 220.53 2.326 solid black
+edge 207 211 4 221.59 2.7023 221.97 2.5474 222.39 2.3722 222.78 2.2131 solid black
+edge 208 209 4 220.16 1.2354 220.05 1.1096 219.94 0.97317 219.84 0.84705 solid black
+edge 208 210 4 220.98 1.2354 221.11 1.1071 221.24 0.96765 221.37 0.83942 solid black
+edge 211 212 4 223.97 1.2354 223.97 1.121 223.97 0.99789 223.97 0.88169 solid black
+edge 211 213 4 224.72 1.2354 224.94 1.0982 225.19 0.94827 225.41 0.81292 solid black
+edge 214 215 4 235.98 5.5678 235.98 5.4552 235.98 5.3331 235.98 5.2149 solid black
+edge 214 230 4 237.04 5.9076 239.35 5.6453 244.84 5.0229 247.27 4.7469 solid black
+edge 215 216 4 235.32 4.1234 235.12 3.9903 234.91 3.8439 234.72 3.7065 solid black
+edge 215 223 4 236.71 4.1234 236.93 3.9891 237.17 3.8412 237.39 3.7026 solid black
+edge 216 217 4 232.92 2.6789 232.6 2.537 232.26 2.3798 231.93 2.2346 solid black
+edge 216 220 4 233.94 2.6789 233.94 2.5664 233.94 2.4442 233.94 2.326 solid black
+edge 217 218 4 229.99 1.2354 229.74 1.0963 229.47 0.94412 229.23 0.80731 solid black
+edge 217 219 4 230.8 1.2354 230.8 1.121 230.8 0.99789 230.8 0.88169 solid black
+edge 220 221 4 233.57 1.2354 233.47 1.1109 233.37 0.97593 233.27 0.85087 solid black
+edge 220 222 4 234.29 1.2354 234.38 1.1109 234.48 0.97593 234.58 0.85087 solid black
+edge 223 224 4 238.24 2.6789 238.24 2.5664 238.24 2.4442 238.24 2.326 solid black
+edge 223 227 4 239.25 2.7003 239.62 2.5397 240.04 2.3573 240.42 2.1939 solid black
+edge 224 225 4 237.86 1.2354 237.75 1.1096 237.64 0.97317 237.53 0.84705 solid black
+edge 224 226 4 238.65 1.2354 238.76 1.1083 238.89 0.97041 239 0.84323 solid black
+edge 227 228 4 241.51 1.2354 241.51 1.121 241.51 0.99789 241.51 0.88169 solid black
+edge 227 229 4 242.18 1.2354 242.38 1.1007 242.6 0.95382 242.79 0.82046 solid black
+edge 230 231 4 248.47 4.1234 248.47 4.0108 248.47 3.8886 248.47 3.7704 solid black
+edge 230 238 4 249.52 4.3422 250.62 4.0917 252.34 3.7006 253.49 3.4391 solid black
+edge 231 232 4 248.09 2.6789 247.99 2.5565 247.88 2.4226 247.77 2.2949 solid black
+edge 231 235 4 248.84 2.6789 248.94 2.5565 249.05 2.4226 249.15 2.2949 solid black
+edge 232 233 4 246.65 1.2354 246.46 1.1007 246.25 0.95382 246.06 0.82046 solid black
+edge 232 234 4 247.35 1.2354 247.36 1.1198 247.37 0.99515 247.39 0.87781 solid black
+edge 235 236 4 249.57 1.2354 249.56 1.1198 249.54 0.99515 249.53 0.87781 solid black
+edge 235 237 4 250.28 1.2354 250.48 1.1007 250.69 0.95382 250.89 0.82046 solid black
+edge 238 239 4 254.69 2.6789 254.69 2.5664 254.69 2.4442 254.69 2.326 solid black
+edge 238 242 4 255.75 2.6984 256.13 2.5393 256.56 2.3591 256.95 2.1972 solid black
+edge 239 240 4 254.31 1.2354 254.21 1.1109 254.1 0.97593 254 0.85087 solid black
+edge 239 241 4 255.12 1.2354 255.25 1.1083 255.38 0.97041 255.5 0.84323 solid black
+edge 242 243 4 258.09 1.2354 258.09 1.121 258.09 0.99789 258.09 0.88169 solid black
+edge 242 244 4 258.77 1.2354 258.96 1.1007 259.18 0.95382 259.38 0.82046 solid black
+edge 245 246 4 328.89 10.289 325.38 10.05 314.06 9.2794 310.34 9.0261 solid black
+edge 245 321 4 331.01 10.289 334.53 10.049 345.82 9.2792 349.53 9.026 solid black
+edge 246 247 4 308.09 8.8673 303.45 8.6507 284.93 7.7853 280.02 7.556 solid black
+edge 246 286 4 309.15 8.4567 309.15 8.3441 309.15 8.222 309.15 8.1038 solid black
+edge 247 248 4 277.77 7.3246 275.89 7.0615 271.96 6.5125 269.94 6.2307 solid black
+edge 247 255 4 278.83 7.0123 278.83 6.8997 278.83 6.7775 278.83 6.6593 solid black
+edge 248 249 4 267.58 5.7596 266.56 5.514 265.05 5.1513 264.01 4.8995 solid black
+edge 248 254 4 268.69 5.5678 268.69 5.4212 268.69 5.2583 268.69 5.1091 solid black
+edge 249 250 4 262.16 4.1234 261.93 3.9569 261.66 3.7694 261.43 3.6049 solid black
+edge 249 251 4 262.81 4.1234 262.81 4.0108 262.81 3.8886 262.81 3.7704 solid black
+edge 251 252 4 262.22 2.6789 262.01 2.514 261.77 2.3284 261.56 2.1649 solid black
+edge 251 253 4 262.81 2.6789 262.81 2.5323 262.81 2.3694 262.81 2.2202 solid black
+edge 255 256 4 277.82 5.7151 277.1 5.4938 276.15 5.1967 275.4 4.9664 solid black
+edge 255 271 4 279.84 5.7151 280.54 5.498 281.48 5.208 282.22 4.9796 solid black
+edge 256 257 4 273.25 4.3478 272.17 4.0962 270.46 3.698 269.32 3.4346 solid black
+edge 256 264 4 274.26 4.1234 274.26 4.0108 274.26 3.8886 274.26 3.7704 solid black
+edge 257 258 4 267.16 2.7081 266.8 2.5508 266.38 2.3718 266 2.2099 solid black
+edge 257 261 4 268.17 2.6789 268.17 2.5664 268.17 2.4442 268.17 2.326 solid black
+edge 258 259 4 263.9 1.2354 263.6 1.0931 263.28 0.93713 262.99 0.79792 solid black
+edge 258 260 4 264.67 1.2354 264.62 1.1172 264.57 0.98967 264.52 0.87009 solid black
+edge 261 262 4 267.6 1.2354 267.44 1.1033 267.26 0.95936 267.09 0.82802 solid black
+edge 261 263 4 268.36 1.2354 268.41 1.1172 268.46 0.98967 268.51 0.87009 solid black
+edge 264 265 4 273.89 2.6789 273.79 2.5565 273.69 2.4226 273.59 2.2949 solid black
+edge 264 268 4 274.63 2.6789 274.73 2.5565 274.83 2.4226 274.94 2.2949 solid black
+edge 265 266 4 272.34 1.2354 272.1 1.0963 271.84 0.94412 271.6 0.80731 solid black
+edge 265 267 4 273.13 1.2354 273.13 1.121 273.13 0.99789 273.13 0.88169 solid black
+edge 268 269 4 275.4 1.2354 275.4 1.121 275.4 0.99789 275.4 0.88169 solid black
+edge 268 270 4 276.19 1.2354 276.43 1.0963 276.69 0.94412 276.93 0.80731 solid black
+edge 271 272 4 283.41 4.1234 283.41 4.0108 283.41 3.8886 283.41 3.7704 solid black
+edge 271 279 4 284.47 4.3581 285.68 4.0996 287.66 3.6772 288.9 3.411 solid black
+edge 272 273 4 283.03 2.6789 282.93 2.5565 282.82 2.4226 282.71 2.2949 solid black
+edge 272 276 4 283.78 2.6789 283.88 2.5565 283.99 2.4226 284.1 2.2949 solid black
+edge 273 274 4 281.43 1.2354 281.19 1.0963 280.92 0.94412 280.68 0.80731 solid black
+edge 273 275 4 282.24 1.2354 282.24 1.121 282.24 0.99789 282.24 0.88169 solid black
+edge 276 277 4 284.56 1.2354 284.56 1.121 284.56 0.99789 284.56 0.88169 solid black
+edge 276 278 4 285.35 1.2354 285.59 1.0963 285.86 0.94412 286.09 0.80731 solid black
+edge 279 280 4 290.05 2.6789 290.05 2.5664 290.05 2.4442 290.05 2.326 solid black
+edge 279 283 4 291.06 2.7119 291.43 2.5524 291.87 2.37 292.25 2.2057 solid black
+edge 280 281 4 289.69 1.2354 289.6 1.1109 289.49 0.97593 289.4 0.85087 solid black
+edge 280 282 4 290.45 1.2354 290.56 1.1096 290.67 0.97317 290.78 0.84705 solid black
+edge 283 284 4 293.4 1.2354 293.4 1.121 293.4 0.99789 293.4 0.88169 solid black
+edge 283 285 4 294.19 1.2354 294.43 1.0963 294.69 0.94412 294.93 0.80731 solid black
+edge 286 287 4 308.75 7.0123 308.65 6.8886 308.53 6.7533 308.42 6.6244 solid black
+edge 286 290 4 309.54 7.0123 309.64 6.8886 309.76 6.7533 309.87 6.6244 solid black
+edge 287 288 4 307.33 5.5678 307.12 5.4029 306.87 5.2173 306.66 5.0538 solid black
+edge 287 289 4 307.96 5.5678 307.97 5.4197 307.98 5.2549 307.98 5.1044 solid black
+edge 290 291 4 310.31 5.5678 310.3 5.4552 310.29 5.3331 310.28 5.2149 solid black
+edge 290 306 4 311.41 5.8469 312.96 5.5827 315.83 5.0927 317.45 4.8157 solid black
+edge 291 292 7 309.17 4.1847 309.1 4.1633 309.03 4.1431 308.97 4.125 307.54 3.7426 305.85 3.4722 304.75 3.3181 solid black
+edge 291 299 4 310.23 4.1234 310.23 4.0108 310.23 3.8886 310.23 3.7704 solid black
+edge 292 293 4 302.49 2.7081 302.09 2.5435 301.63 2.3553 301.22 2.1876 solid black
+edge 292 296 4 303.55 2.6789 303.55 2.5664 303.55 2.4442 303.55 2.326 solid black
+edge 293 294 4 299.3 1.2354 299.07 1.0976 298.82 0.94691 298.59 0.81108 solid black
+edge 293 295 4 300.08 1.2354 300.08 1.121 300.08 0.99789 300.08 0.88169 solid black
+edge 296 297 4 303.15 1.2354 303.03 1.1096 302.92 0.97317 302.8 0.84705 solid black
+edge 296 298 4 303.96 1.2354 304.07 1.1083 304.19 0.97041 304.31 0.84323 solid black
+edge 299 300 4 309.86 2.6789 309.77 2.5565 309.66 2.4226 309.56 2.2949 solid black
+edge 299 303 4 310.6 2.6789 310.7 2.5565 310.8 2.4226 310.91 2.2949 solid black
+edge 300 301 4 308.34 1.2354 308.11 1.0982 307.86 0.94827 307.64 0.81292 solid black
+edge 300 302 4 309.11 1.2354 309.12 1.121 309.12 0.99789 309.12 0.88169 solid black
+edge 303 304 4 311.36 1.2354 311.36 1.121 311.35 0.99789 311.35 0.88169 solid black
+edge 303 305 4 312.07 1.2354 312.28 1.0994 312.51 0.95105 312.71 0.81669 solid black
+edge 306 307 4 318.65 4.1234 318.65 4.0108 318.65 3.8886 318.65 3.7704 solid black
+edge 306 314 4 319.7 4.3565 320.89 4.1019 322.82 3.6895 324.06 3.4233 solid black
+edge 307 308 4 318.29 2.6789 318.19 2.5565 318.09 2.4226 317.99 2.2949 solid black
+edge 307 311 4 319.01 2.6789 319.1 2.5565 319.21 2.4226 319.31 2.2949 solid black
+edge 308 309 4 316.79 1.2354 316.56 1.0982 316.32 0.94827 316.09 0.81292 solid black
+edge 308 310 4 317.55 1.2354 317.55 1.121 317.55 0.99789 317.55 0.88169 solid black
+edge 311 312 4 319.76 1.2354 319.76 1.121 319.76 0.99789 319.76 0.88169 solid black
+edge 311 313 4 320.5 1.2354 320.72 1.0982 320.96 0.94827 321.17 0.81292 solid black
+edge 314 315 4 325.26 2.6789 325.26 2.5664 325.26 2.4442 325.26 2.326 solid black
+edge 314 318 4 326.32 2.71 326.73 2.5439 327.2 2.3534 327.62 2.1843 solid black
+edge 315 316 4 324.84 1.2354 324.73 1.1083 324.61 0.97041 324.49 0.84323 solid black
+edge 315 317 4 325.67 1.2354 325.78 1.1083 325.91 0.97041 326.02 0.84323 solid black
+edge 318 319 4 328.76 1.2354 328.76 1.121 328.76 0.99789 328.76 0.88169 solid black
+edge 318 320 4 329.55 1.2354 329.79 1.0963 330.05 0.94412 330.29 0.80731 solid black
+edge 321 322 4 350.73 8.4567 350.73 8.3441 350.73 8.222 350.73 8.1038 solid black
+edge 321 373 4 351.79 8.879 357.37 8.68 383.38 7.7534 389.29 7.5427 solid black
+edge 322 323 4 349.67 7.2375 348.53 6.9852 346.73 6.5851 345.54 6.3214 solid black
+edge 322 344 4 351.79 7.2383 352.93 6.9858 354.74 6.5845 355.93 6.3205 solid black
+edge 323 324 4 343.28 5.763 342.3 5.5171 340.85 5.1518 339.84 4.8988 solid black
+edge 323 335 4 344.34 5.5678 344.34 5.4552 344.34 5.3331 344.34 5.2149 solid black
+edge 324 325 4 337.68 4.1351 337.34 3.9877 336.97 3.8229 336.63 3.6717 solid black
+edge 324 330 4 338.69 4.1234 338.69 4.0108 338.69 3.8886 338.69 3.7704 solid black
+edge 325 326 4 334.83 2.6789 334.64 2.5459 334.43 2.3995 334.23 2.262 solid black
+edge 325 329 4 335.49 2.6789 335.49 2.5323 335.49 2.3694 335.49 2.2202 solid black
+edge 326 327 4 333.33 1.2354 333.31 1.1198 333.27 0.99515 333.24 0.87781 solid black
+edge 326 328 4 334.01 1.2354 334.18 1.1033 334.35 0.95936 334.51 0.82802 solid black
+edge 330 331 4 338.28 2.6789 338.14 2.5201 337.98 2.3421 337.83 2.1832 solid black
+edge 330 332 4 338.98 2.6789 339.05 2.5589 339.13 2.428 339.21 2.3027 solid black
+edge 332 333 4 338.75 1.2354 338.5 1.0963 338.23 0.94412 337.98 0.80731 solid black
+edge 332 334 4 339.58 1.2354 339.58 1.121 339.58 0.99789 339.58 0.88169 solid black
+edge 335 336 4 343.99 4.1234 343.87 3.9661 343.74 3.79 343.62 3.6322 solid black
+edge 335 337 4 344.69 4.1234 344.78 4.0021 344.89 3.8698 344.98 3.7432 solid black
+edge 337 338 4 345.03 2.6789 344.93 2.5552 344.81 2.4199 344.7 2.2911 solid black
+edge 337 341 4 345.82 2.6789 345.92 2.5552 346.04 2.4199 346.15 2.2911 solid black
+edge 338 339 4 343.4 1.2354 343.16 1.0963 342.89 0.94412 342.65 0.80731 solid black
+edge 338 340 4 344.22 1.2354 344.22 1.121 344.22 0.99789 344.22 0.88169 solid black
+edge 341 342 4 346.63 1.2354 346.63 1.121 346.63 0.99789 346.63 0.88169 solid black
+edge 341 343 4 347.48 1.2354 347.73 1.0963 348.01 0.94412 348.27 0.80731 solid black
+edge 344 345 4 357.13 5.5678 357.13 5.4552 357.13 5.3331 357.13 5.2149 solid black
+edge 344 358 4 358.19 5.89 360.24 5.6231 364.74 5.0373 366.87 4.761 solid black
+edge 345 346 4 356.75 4.1234 356.65 4.0009 356.54 3.8671 356.43 3.7394 solid black
+edge 345 353 4 357.51 4.1234 357.61 4.0009 357.71 3.8671 357.82 3.7394 solid black
+edge 346 347 4 355.18 2.6789 354.95 2.5434 354.7 2.394 354.46 2.2543 solid black
+edge 346 350 4 355.95 2.6789 355.95 2.5664 355.95 2.4442 355.95 2.326 solid black
+edge 347 348 4 352.81 1.2354 352.58 1.0982 352.34 0.94827 352.12 0.81292 solid black
+edge 347 349 4 353.56 1.2354 353.56 1.121 353.56 0.99789 353.56 0.88169 solid black
+edge 350 351 4 355.87 1.2354 355.85 1.1198 355.83 0.99515 355.8 0.87781 solid black
+edge 350 352 4 356.69 1.2354 356.92 1.0982 357.16 0.94827 357.38 0.81292 solid black
+edge 353 354 4 358.28 2.6789 358.28 2.5323 358.28 2.3694 358.28 2.2202 solid black
+edge 353 355 4 358.97 2.6789 359.17 2.5459 359.39 2.3995 359.59 2.262 solid black
+edge 355 356 4 360.4 1.2354 360.4 1.121 360.4 0.99789 360.4 0.88169 solid black
+edge 355 357 4 361.19 1.2354 361.43 1.0963 361.69 0.94412 361.93 0.80731 solid black
+edge 358 359 4 368.02 4.1234 368.02 4.0108 368.02 3.8886 368.02 3.7704 solid black
+edge 358 366 4 369.03 4.3728 370.27 4.1143 372.37 3.6772 373.66 3.4062 solid black
+edge 359 360 4 367.65 2.6789 367.55 2.5565 367.45 2.4226 367.34 2.2949 solid black
+edge 359 363 4 368.39 2.6789 368.48 2.5565 368.59 2.4226 368.69 2.2949 solid black
+edge 360 361 4 366.14 1.2354 365.92 1.0982 365.68 0.94827 365.46 0.81292 solid black
+edge 360 362 4 366.88 1.2354 366.88 1.121 366.88 0.99789 366.88 0.88169 solid black
+edge 363 364 4 369.15 1.2354 369.15 1.121 369.15 0.99789 369.15 0.88169 solid black
+edge 363 365 4 369.94 1.2354 370.18 1.0963 370.44 0.94412 370.68 0.80731 solid black
+edge 366 367 4 374.81 2.6789 374.81 2.5664 374.81 2.4442 374.81 2.326 solid black
+edge 366 370 4 375.82 2.7177 376.23 2.5469 376.7 2.3494 377.12 2.1755 solid black
+edge 367 368 4 374.41 1.2354 374.31 1.1096 374.19 0.97317 374.08 0.84705 solid black
+edge 367 369 4 375.21 1.2354 375.31 1.1096 375.43 0.97317 375.54 0.84705 solid black
+edge 370 371 4 378.2 1.2354 378.2 1.121 378.2 0.99789 378.2 0.88169 solid black
+edge 370 372 4 378.97 1.2354 379.21 1.0976 379.46 0.94691 379.69 0.81108 solid black
+edge 373 374 4 390.49 7.0123 390.49 6.8997 390.49 6.7775 390.49 6.6593 solid black
+edge 373 399 4 391.55 7.3971 394.95 7.155 405.61 6.3969 409.21 6.141 solid black
+edge 374 375 4 389.59 5.5678 389.31 5.4298 389.01 5.2774 388.73 5.1355 solid black
+edge 374 384 4 391.55 5.6199 392 5.4481 392.52 5.2472 392.98 5.0702 solid black
+edge 375 376 4 387.02 4.1234 386.77 3.9554 386.49 3.766 386.25 3.6003 solid black
+edge 375 377 4 387.7 4.1234 387.7 4.0108 387.7 3.8886 387.7 3.7704 solid black
+edge 377 378 4 386.73 2.6789 386.44 2.5397 386.11 2.3857 385.81 2.2428 solid black
+edge 377 381 4 387.7 2.6789 387.7 2.5664 387.7 2.4442 387.7 2.326 solid black
+edge 378 379 4 383.98 1.2354 383.76 1.0994 383.53 0.95105 383.31 0.81669 solid black
+edge 378 380 4 384.72 1.2354 384.72 1.121 384.72 0.99789 384.72 0.88169 solid black
+edge 381 382 4 387.33 1.2354 387.23 1.1109 387.12 0.97593 387.02 0.85087 solid black
+edge 381 383 4 388.01 1.2354 388.09 1.1134 388.18 0.98143 388.26 0.85854 solid black
+edge 384 385 4 394.17 4.1234 394.17 4.0108 394.17 3.8886 394.17 3.7704 solid black
+edge 384 392 4 395.23 4.3651 396.48 4.1082 398.54 3.6827 399.85 3.4139 solid black
+edge 385 386 4 393.79 2.6789 393.69 2.5565 393.58 2.4226 393.47 2.2949 solid black
+edge 385 389 4 394.56 2.6789 394.66 2.5565 394.77 2.4226 394.88 2.2949 solid black
+edge 386 387 4 392.18 1.2354 391.94 1.0963 391.67 0.94412 391.43 0.80731 solid black
+edge 386 388 4 392.99 1.2354 392.99 1.121 392.99 0.99789 392.99 0.88169 solid black
+edge 389 390 4 395.35 1.2354 395.35 1.121 395.35 0.99789 395.35 0.88169 solid black
+edge 389 391 4 396.17 1.2354 396.41 1.0963 396.68 0.94412 396.92 0.80731 solid black
+edge 392 393 4 401.05 2.6789 401.05 2.5664 401.05 2.4442 401.05 2.326 solid black
+edge 392 396 4 402.1 2.7081 402.49 2.5501 402.93 2.3702 403.33 2.2078 solid black
+edge 393 394 4 400.66 1.2354 400.55 1.1096 400.44 0.97317 400.33 0.84705 solid black
+edge 393 395 4 401.45 1.2354 401.56 1.1096 401.68 0.97317 401.79 0.84705 solid black
+edge 396 397 4 404.52 1.2354 404.52 1.121 404.52 0.99789 404.52 0.88169 solid black
+edge 396 398 4 405.33 1.2354 405.58 1.0963 405.85 0.94412 406.09 0.80731 solid black
+edge 399 400 4 410.41 5.5678 410.41 5.4552 410.41 5.3331 410.41 5.2149 solid black
+edge 399 411 4 411.47 5.6123 411.9 5.4451 412.39 5.2514 412.83 5.0793 solid black
+edge 400 401 4 410.03 4.1234 409.92 4.0009 409.81 3.8671 409.71 3.7394 solid black
+edge 400 406 4 410.8 4.1234 410.9 3.9997 411.02 3.8644 411.12 3.7355 solid black
+edge 401 402 4 408.57 2.6789 408.33 2.5124 408.06 2.325 407.83 2.1604 solid black
+edge 401 403 4 409.25 2.6789 409.26 2.5664 409.26 2.4442 409.27 2.326 solid black
+edge 403 404 4 409.17 1.2354 409.14 1.1185 409.11 0.99241 409.07 0.87395 solid black
+edge 403 405 4 409.85 1.2354 410 1.1045 410.17 0.96213 410.33 0.83181 solid black
+edge 406 407 4 411.58 2.6789 411.57 2.5308 411.57 2.366 411.56 2.2155 solid black
+edge 406 408 4 412.23 2.6789 412.41 2.5478 412.61 2.4037 412.79 2.2679 solid black
+edge 408 409 4 413.3 1.2354 413.24 1.116 413.18 0.98692 413.11 0.86623 solid black
+edge 408 410 4 414 1.2354 414.13 1.1071 414.27 0.96765 414.4 0.83942 solid black
+edge 411 412 4 414.02 4.1234 414.02 3.9767 414.02 3.8138 414.02 3.6646 solid black
+edge 411 413 4 414.95 4.1234 415.22 3.9847 415.53 3.8316 415.82 3.6892 solid black
+edge 413 414 4 416.87 2.6789 416.87 2.5664 416.87 2.4442 416.87 2.326 solid black
+edge 413 417 4 417.52 2.6789 417.75 2.5124 418.02 2.325 418.25 2.1604 solid black
+edge 414 415 4 416.87 1.2354 416.87 1.121 416.87 0.99789 416.87 0.88169 solid black
+edge 414 416 4 417.59 1.2354 417.8 1.0994 418.03 0.95105 418.24 0.81669 solid black
+edge 418 419 4 545.92 11.346 545.92 11.233 545.92 11.111 545.92 10.993 solid black
+edge 418 628 4 547.03 11.793 558.69 11.662 658.39 10.539 670.5 10.402 solid black
+edge 419 420 4 544.87 10.289 541.34 10.05 529.97 9.2786 526.25 9.0257 solid black
+edge 419 537 4 546.98 10.289 550.51 10.05 561.87 9.2786 565.6 9.0257 solid black
+edge 420 421 4 523.99 8.8864 517.55 8.702 483.58 7.73 476.75 7.5343 solid black
+edge 420 484 4 525.05 8.4567 525.05 8.3441 525.05 8.222 525.05 8.1038 solid black
+edge 421 422 4 474.49 7.4178 470.17 7.195 453.86 6.3538 449.28 6.1176 solid black
+edge 421 453 4 475.55 7.0123 475.55 6.8997 475.55 6.7775 475.55 6.6593 solid black
+edge 422 423 4 447.02 5.9213 444.45 5.6631 437.92 5.0047 435.21 4.7321 solid black
+edge 422 438 4 448.08 5.5678 448.08 5.4552 448.08 5.3331 448.08 5.2149 solid black
+edge 423 424 4 432.95 4.3689 431.67 4.1108 429.54 3.6785 428.2 3.4086 solid black
+edge 423 431 4 434.01 4.1234 434.01 4.0108 434.01 3.8886 434.01 3.7704 solid black
+edge 424 425 4 425.95 2.7119 425.55 2.5509 425.09 2.3668 424.68 2.2013 solid black
+edge 424 428 4 427.01 2.6789 427.01 2.5664 427.01 2.4442 427.01 2.326 solid black
+edge 425 426 4 422.67 1.2354 422.42 1.0963 422.14 0.94412 421.9 0.80731 solid black
+edge 425 427 4 423.49 1.2354 423.49 1.121 423.49 0.99789 423.49 0.88169 solid black
+edge 428 429 4 426.6 1.2354 426.49 1.1096 426.37 0.97317 426.26 0.84705 solid black
+edge 428 430 4 427.41 1.2354 427.53 1.1083 427.65 0.97041 427.76 0.84323 solid black
+edge 431 432 4 433.63 2.6789 433.53 2.5565 433.42 2.4226 433.32 2.2949 solid black
+edge 431 435 4 434.39 2.6789 434.49 2.5565 434.6 2.4226 434.7 2.2949 solid black
+edge 432 433 4 432.03 1.2354 431.78 1.0963 431.5 0.94412 431.26 0.80731 solid black
+edge 432 434 4 432.85 1.2354 432.85 1.121 432.85 0.99789 432.85 0.88169 solid black
+edge 435 436 4 435.17 1.2354 435.17 1.121 435.17 0.99789 435.17 0.88169 solid black
+edge 435 437 4 435.98 1.2354 436.23 1.0963 436.5 0.94412 436.74 0.80731 solid black
+edge 438 439 4 447.18 4.1234 446.91 3.9854 446.61 3.8329 446.34 3.6911 solid black
+edge 438 446 4 448.61 4.1234 448.76 3.9947 448.92 3.8535 449.08 3.7201 solid black
+edge 439 440 4 444.26 2.6789 443.93 2.5328 443.56 2.3705 443.22 2.2217 solid black
+edge 439 443 4 445.31 2.6789 445.31 2.5664 445.31 2.4442 445.31 2.326 solid black
+edge 440 441 4 441.28 1.2354 441.04 1.0963 440.78 0.94412 440.55 0.80731 solid black
+edge 440 442 4 442.08 1.2354 442.08 1.121 442.08 0.99789 442.08 0.88169 solid black
+edge 443 444 4 444.99 1.2354 444.91 1.1122 444.81 0.97868 444.73 0.8547 solid black
+edge 443 445 4 445.74 1.2354 445.86 1.1083 445.99 0.97041 446.11 0.84323 solid black
+edge 446 447 4 449.72 2.6789 449.72 2.5664 449.72 2.4442 449.72 2.326 solid black
+edge 446 450 4 450.77 2.71 451.17 2.5498 451.62 2.3669 452.03 2.2024 solid black
+edge 447 448 4 449.32 1.2354 449.21 1.1096 449.1 0.97317 448.99 0.84705 solid black
+edge 447 449 4 450.11 1.2354 450.22 1.1096 450.34 0.97317 450.45 0.84705 solid black
+edge 450 451 4 453.22 1.2354 453.22 1.121 453.22 0.99789 453.22 0.88169 solid black
+edge 450 452 4 454.04 1.2354 454.29 1.0963 454.57 0.94412 454.81 0.80731 solid black
+edge 453 454 4 474.49 5.7028 473.78 5.4859 472.85 5.2004 472.11 4.9758 solid black
+edge 453 469 4 476.61 5.6992 477.29 5.485 478.19 5.2049 478.91 4.9826 solid black
+edge 454 455 4 469.87 4.372 468.56 4.1105 466.34 3.6669 464.99 3.3969 solid black
+edge 454 462 4 470.92 4.1234 470.92 4.0108 470.92 3.8886 470.92 3.7704 solid black
+edge 455 456 4 462.83 2.7348 462.41 2.5681 461.93 2.3735 461.49 2.1998 solid black
+edge 455 459 4 463.84 2.6789 463.84 2.5664 463.84 2.4442 463.84 2.326 solid black
+edge 456 457 4 459.47 1.2354 459.22 1.0963 458.95 0.94412 458.7 0.80731 solid black
+edge 456 458 4 460.3 1.2354 460.3 1.121 460.3 0.99789 460.3 0.88169 solid black
+edge 459 460 4 463.43 1.2354 463.31 1.1083 463.19 0.97041 463.07 0.84323 solid black
+edge 459 461 4 464.25 1.2354 464.37 1.1083 464.49 0.97041 464.61 0.84323 solid black
+edge 462 463 4 470.54 2.6789 470.44 2.5565 470.33 2.4226 470.22 2.2949 solid black
+edge 462 466 4 471.31 2.6789 471.41 2.5565 471.52 2.4226 471.63 2.2949 solid black
+edge 463 464 4 468.92 1.2354 468.67 1.0963 468.39 0.94412 468.15 0.80731 solid black
+edge 463 465 4 469.74 1.2354 469.74 1.121 469.74 0.99789 469.74 0.88169 solid black
+edge 466 467 4 472.1 1.2354 472.1 1.121 472.1 0.99789 472.1 0.88169 solid black
+edge 466 468 4 472.92 1.2354 473.16 1.0963 473.43 0.94412 473.67 0.80731 solid black
+edge 469 470 4 480.1 4.1234 480.1 4.0108 480.1 3.8886 480.1 3.7704 solid black
+edge 469 477 4 481.16 4.3333 482.21 4.0858 483.81 3.7073 484.9 3.449 solid black
+edge 470 471 4 479.72 2.6789 479.62 2.5565 479.51 2.4226 479.4 2.2949 solid black
+edge 470 474 4 480.49 2.6789 480.59 2.5565 480.7 2.4226 480.81 2.2949 solid black
+edge 471 472 4 478.14 1.2354 477.91 1.0976 477.65 0.94691 477.42 0.81108 solid black
+edge 471 473 4 478.95 1.2354 478.96 1.121 478.97 0.99789 478.98 0.88169 solid black
+edge 474 475 4 481.26 1.2354 481.25 1.121 481.25 0.99789 481.24 0.88169 solid black
+edge 474 476 4 481.96 1.2354 482.16 1.1007 482.37 0.95382 482.57 0.82046 solid black
+edge 477 478 4 486.09 2.6789 486.09 2.5664 486.09 2.4442 486.09 2.326 solid black
+edge 477 481 4 487.15 2.6789 487.47 2.5384 487.82 2.383 488.15 2.239 solid black
+edge 478 479 4 485.76 1.2354 485.67 1.1122 485.58 0.97868 485.49 0.8547 solid black
+edge 478 480 4 486.47 1.2354 486.58 1.1096 486.69 0.97317 486.8 0.84705 solid black
+edge 481 482 4 489.34 1.2354 489.34 1.121 489.34 0.99789 489.34 0.88169 solid black
+edge 481 483 4 490.07 1.2354 490.29 1.0994 490.53 0.95105 490.74 0.81669 solid black
+edge 484 485 4 523.99 7.177 523.15 6.9426 521.97 6.6155 521.11 6.375 solid black
+edge 484 516 4 526.1 7.1787 526.93 6.9483 528.09 6.6275 528.95 6.3877 solid black
+edge 485 486 4 518.96 5.9207 516.54 5.6641 510.42 5.0146 507.82 4.7385 solid black
+edge 485 501 4 519.97 5.5678 519.97 5.4552 519.97 5.3331 519.97 5.2149 solid black
+edge 486 487 4 505.56 4.372 504.27 4.1132 502.08 3.6761 500.73 3.4054 solid black
+edge 486 494 4 506.62 4.1234 506.62 4.0108 506.62 3.8886 506.62 3.7704 solid black
+edge 487 488 4 498.48 2.7158 498.07 2.5532 497.6 2.3665 497.19 2.1992 solid black
+edge 487 491 4 499.53 2.6789 499.53 2.5664 499.53 2.4442 499.53 2.326 solid black
+edge 488 489 4 495.17 1.2354 494.92 1.0963 494.64 0.94412 494.4 0.80731 solid black
+edge 488 490 4 495.99 1.2354 495.99 1.121 495.99 0.99789 495.99 0.88169 solid black
+edge 491 492 4 499.12 1.2354 499.01 1.1083 498.88 0.97041 498.77 0.84323 solid black
+edge 491 493 4 499.95 1.2354 500.06 1.1083 500.19 0.97041 500.3 0.84323 solid black
+edge 494 495 4 506.23 2.6789 506.13 2.5565 506.02 2.4226 505.91 2.2949 solid black
+edge 494 498 4 507 2.6789 507.1 2.5565 507.21 2.4226 507.32 2.2949 solid black
+edge 495 496 4 504.61 1.2354 504.36 1.0963 504.09 0.94412 503.84 0.80731 solid black
+edge 495 497 4 505.44 1.2354 505.44 1.121 505.44 0.99789 505.44 0.88169 solid black
+edge 498 499 4 507.8 1.2354 507.8 1.121 507.8 0.99789 507.8 0.88169 solid black
+edge 498 500 4 508.62 1.2354 508.87 1.0963 509.15 0.94412 509.39 0.80731 solid black
+edge 501 502 4 519.31 4.1234 519.12 3.9922 518.91 3.8481 518.72 3.7124 solid black
+edge 501 509 4 520.69 4.1234 520.9 3.9891 521.14 3.8412 521.36 3.7026 solid black
+edge 502 503 4 516.93 2.6828 516.61 2.5415 516.27 2.3846 515.94 2.2394 solid black
+edge 502 506 4 517.94 2.6789 517.94 2.5664 517.94 2.4442 517.94 2.326 solid black
+edge 503 504 4 513.99 1.2354 513.74 1.0963 513.47 0.94412 513.23 0.80731 solid black
+edge 503 505 4 514.8 1.2354 514.8 1.121 514.8 0.99789 514.8 0.88169 solid black
+edge 506 507 4 517.59 1.2354 517.5 1.1109 517.4 0.97593 517.3 0.85087 solid black
+edge 506 508 4 518.29 1.2354 518.38 1.1109 518.48 0.97593 518.58 0.85087 solid black
+edge 509 510 4 522.2 2.6789 522.2 2.5664 522.2 2.4442 522.2 2.326 solid black
+edge 509 513 4 523.26 2.7042 523.64 2.5486 524.07 2.3721 524.45 2.2121 solid black
+edge 510 511 4 521.83 1.2354 521.73 1.1109 521.62 0.97593 521.51 0.85087 solid black
+edge 510 512 4 522.65 1.2354 522.78 1.1071 522.92 0.96765 523.04 0.83942 solid black
+edge 513 514 4 525.65 1.2354 525.65 1.121 525.65 0.99789 525.65 0.88169 solid black
+edge 513 515 4 526.32 1.2354 526.52 1.1007 526.74 0.95382 526.93 0.82046 solid black
+edge 516 517 4 530.15 5.5678 530.15 5.4552 530.15 5.3331 530.15 5.2149 solid black
+edge 516 522 4 531.2 5.5892 531.57 5.4359 531.99 5.2626 532.37 5.105 solid black
+edge 517 518 4 529.69 4.1234 529.56 3.9972 529.42 3.859 529.29 3.7278 solid black
+edge 517 521 4 530.35 4.1234 530.42 3.9722 530.49 3.8036 530.56 3.6507 solid black
+edge 518 519 4 528.46 2.6789 528.37 2.5247 528.27 2.3524 528.18 2.197 solid black
+edge 518 520 4 529.09 2.6789 529.21 2.5216 529.34 2.3456 529.47 2.1878 solid black
+edge 522 523 4 533.56 4.1234 533.56 4.0108 533.56 3.8886 533.56 3.7704 solid black
+edge 522 530 4 534.62 4.3438 535.73 4.0929 537.46 3.6994 538.62 3.4374 solid black
+edge 523 524 4 533.08 2.6789 532.95 2.5528 532.81 2.4145 532.67 2.2833 solid black
+edge 523 527 4 533.84 2.6789 533.91 2.5602 533.99 2.4307 534.06 2.3066 solid black
+edge 524 525 4 531.26 1.2354 531.01 1.0963 530.74 0.94412 530.49 0.80731 solid black
+edge 524 526 4 532.09 1.2354 532.09 1.121 532.09 0.99789 532.09 0.88169 solid black
+edge 527 528 4 534.41 1.2354 534.41 1.121 534.41 0.99789 534.41 0.88169 solid black
+edge 527 529 4 535.22 1.2354 535.47 1.0963 535.74 0.94412 535.98 0.80731 solid black
+edge 530 531 4 539.81 2.6789 539.81 2.5664 539.81 2.4442 539.81 2.326 solid black
+edge 530 534 4 540.84 2.6789 541.15 2.5391 541.49 2.3844 541.81 2.2409 solid black
+edge 531 532 4 539.49 1.2354 539.4 1.1122 539.31 0.97868 539.22 0.8547 solid black
+edge 531 533 4 540.16 1.2354 540.26 1.1109 540.36 0.97593 540.46 0.85087 solid black
+edge 534 535 4 542.97 1.2354 542.97 1.121 542.97 0.99789 542.97 0.88169 solid black
+edge 534 536 4 543.79 1.2354 544.04 1.0963 544.32 0.94412 544.56 0.80731 solid black
+edge 537 538 4 566.8 8.4567 566.8 8.3441 566.8 8.222 566.8 8.1038 solid black
+edge 537 587 4 567.86 8.8725 572.85 8.664 594.05 7.7781 599.45 7.5524 solid black
+edge 538 539 4 565.74 7.2848 564.24 7.0188 561.5 6.5334 559.95 6.2589 solid black
+edge 538 562 4 567.85 7.2848 569.34 7.0217 572.03 6.544 573.59 6.268 solid black
+edge 539 540 4 557.79 5.8072 556.63 5.5545 554.74 5.1407 553.51 4.8721 solid black
+edge 539 549 4 558.8 5.5678 558.8 5.4552 558.8 5.3331 558.8 5.2149 solid black
+edge 540 541 4 551.63 4.1234 551.38 3.9554 551.1 3.766 550.86 3.6003 solid black
+edge 540 542 4 552.31 4.1234 552.31 4.0108 552.31 3.8886 552.31 3.7704 solid black
+edge 542 543 4 551.37 2.6789 551.09 2.5403 550.78 2.3871 550.49 2.2447 solid black
+edge 542 546 4 552.31 2.6789 552.31 2.5664 552.31 2.4442 552.31 2.326 solid black
+edge 543 544 4 548.74 1.2354 548.54 1.1007 548.33 0.95382 548.13 0.82046 solid black
+edge 543 545 4 549.42 1.2354 549.42 1.121 549.42 0.99789 549.42 0.88169 solid black
+edge 546 547 4 551.98 1.2354 551.89 1.1122 551.79 0.97868 551.7 0.8547 solid black
+edge 546 548 4 552.65 1.2354 552.74 1.1122 552.84 0.97868 552.93 0.8547 solid black
+edge 549 550 4 558.26 4.1234 558.11 3.9947 557.95 3.8535 557.79 3.7201 solid black
+edge 549 555 4 559.34 4.1234 559.49 3.9947 559.65 3.8535 559.81 3.7201 solid black
+edge 550 551 4 556.48 2.6789 556.24 2.5109 555.97 2.3215 555.73 2.1559 solid black
+edge 550 552 4 557.15 2.6789 557.15 2.5664 557.15 2.4442 557.15 2.326 solid black
+edge 552 553 4 556.47 1.2354 556.27 1.1007 556.06 0.95382 555.86 0.82046 solid black
+edge 552 554 4 557.15 1.2354 557.15 1.121 557.15 0.99789 557.15 0.88169 solid black
+edge 555 556 4 560.45 2.6789 560.45 2.5664 560.45 2.4442 560.45 2.326 solid black
+edge 555 559 4 561.51 2.6926 561.86 2.5438 562.26 2.377 562.62 2.2243 solid black
+edge 556 557 4 560.05 1.2354 559.94 1.1096 559.82 0.97317 559.71 0.84705 solid black
+edge 556 558 4 560.87 1.2354 560.99 1.1083 561.12 0.97041 561.24 0.84323 solid black
+edge 559 560 4 563.81 1.2354 563.81 1.121 563.81 0.99789 563.81 0.88169 solid black
+edge 559 561 4 564.57 1.2354 564.79 1.0982 565.04 0.94827 565.26 0.81292 solid black
+edge 562 563 4 574.78 5.5678 574.78 5.4552 574.78 5.3331 574.78 5.2149 solid black
+edge 562 578 4 575.84 5.7899 576.96 5.5382 578.73 5.1419 579.9 4.8793 solid black
+edge 563 564 4 574.26 4.1234 574.11 3.996 573.95 3.8563 573.8 3.7239 solid black
+edge 563 571 4 575.62 4.1234 575.87 3.9866 576.15 3.8357 576.4 3.6949 solid black
+edge 564 565 4 572.15 2.6789 571.79 2.5149 571.38 2.3305 571.03 2.1676 solid black
+edge 564 568 4 573.16 2.6789 573.16 2.5664 573.16 2.4442 573.16 2.326 solid black
+edge 565 566 4 569.37 1.2354 569.18 1.1007 568.96 0.95382 568.76 0.82046 solid black
+edge 565 567 4 570.05 1.2354 570.05 1.121 570.05 0.99789 570.05 0.88169 solid black
+edge 568 569 4 572.79 1.2354 572.68 1.1109 572.57 0.97593 572.47 0.85087 solid black
+edge 568 570 4 573.5 1.2354 573.59 1.1122 573.69 0.97868 573.78 0.8547 solid black
+edge 571 572 4 577.37 2.6789 577.37 2.5664 577.37 2.4442 577.37 2.326 solid black
+edge 571 575 4 578.43 2.6965 578.82 2.5309 579.27 2.3427 579.67 2.1761 solid black
+edge 572 573 4 576.97 1.2354 576.86 1.1096 576.74 0.97317 576.63 0.84705 solid black
+edge 572 574 4 577.76 1.2354 577.87 1.1096 577.99 0.97317 578.09 0.84705 solid black
+edge 575 576 4 580.76 1.2354 580.76 1.121 580.76 0.99789 580.76 0.88169 solid black
+edge 575 577 4 581.49 1.2354 581.71 1.0994 581.94 0.95105 582.16 0.81669 solid black
+edge 578 579 4 581.09 4.1234 581.09 3.9767 581.09 3.8138 581.09 3.6646 solid black
+edge 578 580 4 582.15 4.2707 582.9 4.0489 583.91 3.751 584.69 3.5205 solid black
+edge 580 581 4 585.88 2.6789 585.88 2.5664 585.88 2.4442 585.88 2.326 solid black
+edge 580 584 4 586.94 2.7023 587.31 2.5474 587.74 2.3722 588.12 2.2131 solid black
+edge 581 582 4 585.5 1.2354 585.4 1.1096 585.29 0.97317 585.18 0.84705 solid black
+edge 581 583 4 586.26 1.2354 586.36 1.1109 586.47 0.97593 586.57 0.85087 solid black
+edge 584 585 4 589.31 1.2354 589.31 1.121 589.31 0.99789 589.31 0.88169 solid black
+edge 584 586 4 590.12 1.2354 590.37 1.0963 590.64 0.94412 590.88 0.80731 solid black
+edge 587 588 4 600.7 7.0123 600.7 6.8997 600.7 6.7775 600.7 6.6593 solid black
+edge 587 613 4 601.82 7.3055 603.61 7.037 607.13 6.5107 608.98 6.2345 solid black
+edge 588 589 4 599.64 5.5931 599.27 5.4375 598.84 5.261 598.45 5.101 solid black
+edge 588 600 4 601.76 5.5678 602.08 5.4273 602.44 5.2719 602.77 5.1279 solid black
+edge 589 590 4 596.2 4.1448 595.81 3.9849 595.38 3.8035 594.98 3.6406 solid black
+edge 589 593 4 597.26 4.1234 597.26 4.0108 597.26 3.8886 597.26 3.7704 solid black
+edge 590 591 4 593.21 2.6789 592.99 2.5124 592.73 2.325 592.51 2.1604 solid black
+edge 590 592 4 593.84 2.6789 593.84 2.5323 593.84 2.3694 593.84 2.2202 solid black
+edge 593 594 4 596.85 2.6789 596.74 2.5552 596.62 2.4199 596.5 2.2911 solid black
+edge 593 597 4 597.61 2.6789 597.71 2.5565 597.81 2.4226 597.91 2.2949 solid black
+edge 594 595 4 595.24 1.2354 595.02 1.0982 594.77 0.94827 594.55 0.81292 solid black
+edge 594 596 4 595.99 1.2354 595.99 1.121 595.99 0.99789 595.99 0.88169 solid black
+edge 597 598 4 598.3 1.2354 598.29 1.1198 598.27 0.99515 598.26 0.87781 solid black
+edge 597 599 4 599.03 1.2354 599.23 1.1007 599.45 0.95382 599.65 0.82046 solid black
+edge 600 601 4 603.95 4.1234 603.95 4.0108 603.95 3.8886 603.95 3.7704 solid black
+edge 600 606 4 604.88 4.1234 605.16 3.9847 605.47 3.8316 605.76 3.6892 solid black
+edge 601 602 4 603.45 2.6789 603.31 2.5515 603.16 2.4118 603.02 2.2795 solid black
+edge 601 605 4 604.08 2.6789 604.12 2.5292 604.17 2.3626 604.22 2.2109 solid black
+edge 602 603 4 602.35 1.2354 602.33 1.1198 602.31 0.99515 602.3 0.87781 solid black
+edge 602 604 4 603.02 1.2354 603.2 1.102 603.39 0.95659 603.57 0.82424 solid black
+edge 606 607 4 606.81 2.6789 606.81 2.5664 606.81 2.4442 606.81 2.326 solid black
+edge 606 610 4 607.81 2.6789 608.14 2.5249 608.52 2.3529 608.85 2.1978 solid black
+edge 607 608 4 606.56 1.2354 606.49 1.1147 606.42 0.98418 606.35 0.86239 solid black
+edge 607 609 4 607.24 1.2354 607.35 1.1083 607.48 0.97041 607.6 0.84323 solid black
+edge 610 611 4 609.91 1.2354 609.91 1.121 609.92 0.99789 609.92 0.88169 solid black
+edge 610 612 4 610.59 1.2354 610.79 1.0994 611.02 0.95105 611.23 0.81669 solid black
+edge 613 614 4 610.17 5.5678 610.17 5.4552 610.17 5.3331 610.17 5.2149 solid black
+edge 613 617 4 611.23 5.597 611.62 5.439 612.06 5.2591 612.46 5.0967 solid black
+edge 614 615 4 609.86 4.1234 609.76 3.9676 609.64 3.7934 609.53 3.6368 solid black
+edge 614 616 4 610.49 4.1234 610.6 3.9676 610.72 3.7934 610.82 3.6368 solid black
+edge 617 618 4 613.65 4.1234 613.65 4.0108 613.65 3.8886 613.65 3.7704 solid black
+edge 617 623 4 614.43 4.1234 614.67 3.9878 614.92 3.8384 615.16 3.6988 solid black
+edge 618 619 4 613.06 2.6789 612.84 2.514 612.6 2.3284 612.39 2.1649 solid black
+edge 618 620 4 613.74 2.6789 613.76 2.5651 613.78 2.4415 613.81 2.3221 solid black
+edge 620 621 4 613.89 1.2354 613.89 1.121 613.88 0.99789 613.87 0.88169 solid black
+edge 620 622 4 614.61 1.2354 614.81 1.1007 615.03 0.95382 615.23 0.82046 solid black
+edge 623 624 4 616.08 2.6789 616.08 2.5323 616.08 2.3694 616.08 2.2202 solid black
+edge 623 625 4 616.74 2.6789 616.93 2.5459 617.14 2.3995 617.34 2.262 solid black
+edge 625 626 4 618.05 1.2354 618.04 1.1198 618.02 0.99515 618.01 0.87781 solid black
+edge 625 627 4 618.77 1.2354 618.97 1.1007 619.18 0.95382 619.37 0.82046 solid black
+edge 628 629 4 671.7 9.9012 671.7 9.7886 671.7 9.6664 671.7 9.5482 solid black
+edge 628 718 4 672.76 10.323 678.27 10.122 703.66 9.2003 709.5 8.9881 solid black
+edge 629 630 4 670.64 8.6803 669.5 8.4248 667.69 8.0187 666.51 7.7558 solid black
+edge 629 687 4 672.76 8.6803 673.9 8.4248 675.72 8.0187 676.89 7.7558 solid black
+edge 630 631 4 664.35 7.391 661.3 7.1461 652.19 6.4157 648.9 6.1519 solid black
+edge 630 662 4 665.37 7.0123 665.37 6.8997 665.37 6.7775 665.37 6.6593 solid black
+edge 631 632 4 646.64 5.916 644.17 5.6544 638.01 5.0038 635.45 4.7327 solid black
+edge 631 647 4 647.7 5.5678 647.7 5.4552 647.7 5.3331 647.7 5.2149 solid black
+edge 632 633 4 633.29 4.3689 632.09 4.1144 630.1 3.6906 628.82 3.4201 solid black
+edge 632 640 4 634.3 4.1234 634.3 4.0108 634.3 3.8886 634.3 3.7704 solid black
+edge 633 634 4 626.58 2.7042 626.2 2.5486 625.77 2.3721 625.38 2.2121 solid black
+edge 633 637 4 627.63 2.6789 627.63 2.5664 627.63 2.4442 627.63 2.326 solid black
+edge 634 635 4 623.43 1.2354 623.21 1.0982 622.96 0.94827 622.74 0.81292 solid black
+edge 634 636 4 624.19 1.2354 624.19 1.121 624.19 0.99789 624.19 0.88169 solid black
+edge 637 638 4 627.25 1.2354 627.15 1.1096 627.04 0.97317 626.93 0.84705 solid black
+edge 637 639 4 628.01 1.2354 628.11 1.1109 628.22 0.97593 628.32 0.85087 solid black
+edge 640 641 4 633.92 2.6789 633.81 2.5565 633.7 2.4226 633.6 2.2949 solid black
+edge 640 644 4 634.68 2.6789 634.78 2.5565 634.9 2.4226 635 2.2949 solid black
+edge 641 642 4 632.31 1.2354 632.06 1.0963 631.79 0.94412 631.55 0.80731 solid black
+edge 641 643 4 633.12 1.2354 633.12 1.121 633.12 0.99789 633.12 0.88169 solid black
+edge 644 645 4 635.48 1.2354 635.48 1.121 635.48 0.99789 635.48 0.88169 solid black
+edge 644 646 4 636.3 1.2354 636.56 1.0963 636.83 0.94412 637.08 0.80731 solid black
+edge 647 648 4 646.8 4.1234 646.53 3.9854 646.23 3.8329 645.95 3.6911 solid black
+edge 647 655 4 648.04 4.1234 648.13 4.0021 648.23 3.8698 648.32 3.7432 solid black
+edge 648 649 4 643.97 2.6887 643.66 2.5441 643.32 2.383 643.01 2.2343 solid black
+edge 648 652 4 644.92 2.6789 644.92 2.5664 644.92 2.4442 644.92 2.326 solid black
+edge 649 650 4 641.25 1.2354 641.05 1.1007 640.83 0.95382 640.64 0.82046 solid black
+edge 649 651 4 641.92 1.2354 641.92 1.121 641.92 0.99789 641.92 0.88169 solid black
+edge 652 653 4 644.55 1.2354 644.45 1.1109 644.34 0.97593 644.24 0.85087 solid black
+edge 652 654 4 645.22 1.2354 645.3 1.1134 645.39 0.98143 645.47 0.85854 solid black
+edge 655 656 4 648.74 2.6789 648.74 2.5664 648.74 2.4442 648.74 2.326 solid black
+edge 655 659 4 649.74 2.6789 650.05 2.5341 650.39 2.3734 650.71 2.2256 solid black
+edge 656 657 4 648.42 1.2354 648.34 1.1122 648.24 0.97868 648.16 0.8547 solid black
+edge 656 658 4 649.14 1.2354 649.24 1.1096 649.36 0.97317 649.47 0.84705 solid black
+edge 659 660 4 651.8 1.2354 651.8 1.121 651.8 0.99789 651.8 0.88169 solid black
+edge 659 661 4 652.51 1.2354 652.72 1.0994 652.96 0.95105 653.16 0.81669 solid black
+edge 662 663 4 664.31 5.6388 663.79 5.45 663.17 5.223 662.65 5.0303 solid black
+edge 662 672 4 666.23 5.5678 666.49 5.4304 666.78 5.2787 667.04 5.1374 solid black
+edge 663 664 4 660.83 4.1234 660.58 3.9554 660.3 3.766 660.05 3.6003 solid black
+edge 663 665 4 661.51 4.1234 661.51 4.0108 661.51 3.8886 661.51 3.7704 solid black
+edge 665 666 4 660.5 2.7138 660.12 2.5527 659.68 2.3683 659.29 2.2024 solid black
+edge 665 669 4 661.51 2.6789 661.51 2.5664 661.51 2.4442 661.51 2.326 solid black
+edge 666 667 4 657.39 1.2354 657.17 1.0982 656.92 0.94827 656.7 0.81292 solid black
+edge 666 668 4 658.15 1.2354 658.15 1.121 658.15 0.99789 658.15 0.88169 solid black
+edge 669 670 4 661.1 1.2354 660.99 1.1096 660.87 0.97317 660.76 0.84705 solid black
+edge 669 671 4 661.9 1.2354 662 1.1096 662.12 0.97317 662.22 0.84705 solid black
+edge 672 673 4 668.03 4.1234 668.03 4.0108 668.03 3.8886 668.03 3.7704 solid black
+edge 672 680 4 669.09 4.3358 670.15 4.0874 671.79 3.7056 672.89 3.4464 solid black
+edge 673 674 4 667.66 2.6789 667.56 2.5565 667.44 2.4226 667.34 2.2949 solid black
+edge 673 677 4 668.41 2.6789 668.51 2.5565 668.62 2.4226 668.72 2.2949 solid black
+edge 674 675 4 666.17 1.2354 665.97 1.0994 665.74 0.95105 665.54 0.81669 solid black
+edge 674 676 4 666.91 1.2354 666.92 1.1198 666.93 0.99515 666.94 0.87781 solid black
+edge 677 678 4 669.15 1.2354 669.14 1.1198 669.13 0.99515 669.12 0.87781 solid black
+edge 677 679 4 669.88 1.2354 670.09 1.0994 670.31 0.95105 670.52 0.81669 solid black
+edge 680 681 4 674.09 2.6789 674.09 2.5664 674.09 2.4442 674.09 2.326 solid black
+edge 680 684 4 675.15 2.6789 675.49 2.5314 675.87 2.3673 676.21 2.2173 solid black
+edge 681 682 4 673.75 1.2354 673.65 1.1109 673.55 0.97593 673.46 0.85087 solid black
+edge 681 683 4 674.46 1.2354 674.56 1.1109 674.67 0.97593 674.77 0.85087 solid black
+edge 684 685 4 677.35 1.2354 677.35 1.121 677.35 0.99789 677.35 0.88169 solid black
+edge 684 686 4 678.13 1.2354 678.36 1.0976 678.61 0.94691 678.84 0.81108 solid black
+edge 687 688 4 678.03 7.0123 678.03 6.8656 678.03 6.7027 678.03 6.5535 solid black
+edge 687 689 4 679.04 7.3471 681.15 7.086 686 6.4841 688.26 6.2039 solid black
+edge 689 690 4 689.45 5.5678 689.45 5.4552 689.45 5.3331 689.45 5.2149 solid black
+edge 689 705 4 690.51 5.8913 692.57 5.6263 697.09 5.0438 699.25 4.7653 solid black
+edge 690 691 4 688.88 4.1234 688.72 3.9947 688.55 3.8535 688.39 3.7201 solid black
+edge 690 698 4 690.39 4.1234 690.68 3.9847 690.99 3.8316 691.28 3.6892 solid black
+edge 691 692 4 686.64 2.7119 686.24 2.5509 685.79 2.3668 685.38 2.2013 solid black
+edge 691 695 4 687.7 2.6789 687.7 2.5664 687.7 2.4442 687.7 2.326 solid black
+edge 692 693 4 683.36 1.2354 683.11 1.0963 682.84 0.94412 682.59 0.80731 solid black
+edge 692 694 4 684.19 1.2354 684.19 1.121 684.19 0.99789 684.19 0.88169 solid black
+edge 695 696 4 687.3 1.2354 687.19 1.1096 687.07 0.97317 686.96 0.84705 solid black
+edge 695 697 4 688.11 1.2354 688.22 1.1083 688.34 0.97041 688.46 0.84323 solid black
+edge 698 699 4 692.35 2.6789 692.35 2.5664 692.35 2.4442 692.35 2.326 solid black
+edge 698 702 4 693.41 2.7081 693.8 2.5501 694.24 2.3702 694.64 2.2078 solid black
+edge 699 700 4 691.95 1.2354 691.83 1.1083 691.71 0.97041 691.6 0.84323 solid black
+edge 699 701 4 692.76 1.2354 692.87 1.1096 692.99 0.97317 693.1 0.84705 solid black
+edge 702 703 4 695.83 1.2354 695.83 1.121 695.83 0.99789 695.83 0.88169 solid black
+edge 702 704 4 696.62 1.2354 696.86 1.0963 697.12 0.94412 697.36 0.80731 solid black
+edge 705 706 4 700.45 4.1234 700.45 4.0108 700.45 3.8886 700.45 3.7704 solid black
+edge 705 711 4 701.51 4.2984 702.4 4.0597 703.67 3.7198 704.58 3.4749 solid black
+edge 706 707 4 700.1 2.6789 699.98 2.5216 699.84 2.3456 699.72 2.1878 solid black
+edge 706 708 4 700.8 2.6789 700.89 2.5577 700.99 2.4253 701.09 2.2988 solid black
+edge 708 709 4 701.11 1.2354 701 1.1083 700.88 0.97041 700.76 0.84323 solid black
+edge 708 710 4 701.92 1.2354 702.03 1.1096 702.15 0.97317 702.27 0.84705 solid black
+edge 711 712 4 705.73 2.6789 705.73 2.5664 705.73 2.4442 705.73 2.326 solid black
+edge 711 715 4 706.74 2.6848 707.06 2.5426 707.41 2.3847 707.73 2.2385 solid black
+edge 712 713 4 705.4 1.2354 705.31 1.1122 705.21 0.97868 705.12 0.8547 solid black
+edge 712 714 4 706.08 1.2354 706.17 1.1109 706.28 0.97593 706.37 0.85087 solid black
+edge 715 716 4 708.88 1.2354 708.88 1.121 708.88 0.99789 708.88 0.88169 solid black
+edge 715 717 4 709.71 1.2354 709.96 1.0963 710.23 0.94412 710.48 0.80731 solid black
+edge 718 719 4 710.7 8.4567 710.7 8.3441 710.7 8.222 710.7 8.1038 solid black
+edge 718 730 4 711.76 8.838 715.06 8.5934 725.1 7.8475 728.58 7.5892 solid black
+edge 719 720 4 710.33 7.0123 710.23 6.8898 710.12 6.756 710.01 6.6283 solid black
+edge 719 725 4 711.08 7.0123 711.18 6.8898 711.29 6.756 711.4 6.6283 solid black
+edge 720 721 4 708.93 5.5678 708.71 5.4013 708.46 5.2139 708.23 5.0493 solid black
+edge 720 722 4 709.59 5.5678 709.6 5.4552 709.62 5.3331 709.63 5.2149 solid black
+edge 722 723 4 709.39 4.1234 709.3 3.9691 709.19 3.7968 709.09 3.6414 solid black
+edge 722 724 4 710.02 4.1234 710.13 3.9676 710.26 3.7934 710.37 3.6368 solid black
+edge 725 726 4 711.85 5.5678 711.84 5.4197 711.83 5.2549 711.82 5.1044 solid black
+edge 725 727 4 712.48 5.5678 712.65 5.4379 712.84 5.2953 713.02 5.1607 solid black
+edge 727 728 4 713.7 4.1234 713.69 3.9752 713.67 3.8104 713.66 3.66 solid black
+edge 727 729 4 714.33 4.1234 714.54 3.9584 714.78 3.7729 714.98 3.6094 solid black
+edge 730 731 4 729.78 7.0123 729.78 6.8997 729.78 6.7775 729.78 6.6593 solid black
+edge 730 762 4 730.84 7.4086 734.71 7.1761 748.07 6.3731 752.16 6.1275 solid black
+edge 731 732 4 728.73 5.6758 728.12 5.473 727.35 5.2176 726.72 5.0078 solid black
+edge 731 747 4 730.84 5.6593 731.4 5.4649 732.09 5.2259 732.66 5.0252 solid black
+edge 732 733 4 724.48 4.3454 723.36 4.0937 721.59 3.6974 720.42 3.4348 solid black
+edge 732 740 4 725.53 4.1234 725.53 4.0108 725.53 3.8886 725.53 3.7704 solid black
+edge 733 734 4 718.17 2.6906 717.82 2.5426 717.43 2.3771 717.07 2.2252 solid black
+edge 733 737 4 719.23 2.6789 719.23 2.5664 719.23 2.4442 719.23 2.326 solid black
+edge 734 735 4 715.07 1.2354 714.82 1.0963 714.56 0.94412 714.31 0.80731 solid black
+edge 734 736 4 715.88 1.2354 715.88 1.121 715.88 0.99789 715.88 0.88169 solid black
+edge 737 738 4 718.81 1.2354 718.7 1.1083 718.57 0.97041 718.45 0.84323 solid black
+edge 737 739 4 719.56 1.2354 719.65 1.1122 719.75 0.97868 719.84 0.8547 solid black
+edge 740 741 4 725.15 2.6789 725.05 2.5565 724.94 2.4226 724.83 2.2949 solid black
+edge 740 744 4 725.92 2.6789 726.02 2.5565 726.13 2.4226 726.24 2.2949 solid black
+edge 741 742 4 723.65 1.2354 723.44 1.0994 723.21 0.95105 723.01 0.81669 solid black
+edge 741 743 4 724.38 1.2354 724.39 1.121 724.4 0.99789 724.41 0.88169 solid black
+edge 744 745 4 726.69 1.2354 726.68 1.121 726.68 0.99789 726.67 0.88169 solid black
+edge 744 746 4 727.44 1.2354 727.66 1.0994 727.9 0.95105 728.11 0.81669 solid black
+edge 747 748 4 733.85 4.1234 733.85 4.0108 733.85 3.8886 733.85 3.7704 solid black
+edge 747 755 4 734.91 4.3438 736.02 4.0929 737.76 3.6994 738.92 3.4374 solid black
+edge 748 749 4 733.48 2.6789 733.39 2.5565 733.28 2.4226 733.18 2.2949 solid black
+edge 748 752 4 734.22 2.6789 734.32 2.5565 734.42 2.4226 734.52 2.2949 solid black
+edge 749 750 4 732.06 1.2354 731.87 1.1007 731.66 0.95382 731.47 0.82046 solid black
+edge 749 751 4 732.76 1.2354 732.77 1.1198 732.78 0.99515 732.79 0.87781 solid black
+edge 752 753 4 734.93 1.2354 734.92 1.1198 734.91 0.99515 734.89 0.87781 solid black
+edge 752 754 4 735.66 1.2354 735.87 1.1007 736.08 0.95382 736.28 0.82046 solid black
+edge 755 756 4 740.12 2.6789 740.12 2.5664 740.12 2.4442 740.12 2.326 solid black
+edge 755 759 4 741.18 2.6809 741.51 2.5382 741.87 2.3801 742.21 2.234 solid black
+edge 756 757 4 739.8 1.2354 739.71 1.1122 739.62 0.97868 739.53 0.8547 solid black
+edge 756 758 4 740.53 1.2354 740.65 1.1083 740.77 0.97041 740.88 0.84323 solid black
+edge 759 760 4 743.4 1.2354 743.4 1.121 743.4 0.99789 743.4 0.88169 solid black
+edge 759 761 4 744.17 1.2354 744.4 1.0976 744.65 0.94691 744.88 0.81108 solid black
+edge 762 763 4 753.35 5.5678 753.35 5.4552 753.35 5.3331 753.35 5.2149 solid black
+edge 762 774 4 754.41 5.7308 755.25 5.4971 756.41 5.1719 757.26 4.9321 solid black
+edge 763 764 4 753 4.1234 752.9 4.0009 752.8 3.8671 752.7 3.7394 solid black
+edge 763 771 4 753.71 4.1234 753.81 4.0009 753.92 3.8671 754.02 3.7394 solid black
+edge 764 765 4 751.55 2.6789 751.34 2.5446 751.11 2.3967 750.9 2.2582 solid black
+edge 764 768 4 752.28 2.6789 752.29 2.5664 752.3 2.4442 752.3 2.326 solid black
+edge 765 766 4 749.28 1.2354 749.04 1.0963 748.78 0.94412 748.55 0.80731 solid black
+edge 765 767 4 750.08 1.2354 750.08 1.121 750.08 0.99789 750.08 0.88169 solid black
+edge 768 769 4 752.36 1.2354 752.36 1.121 752.37 0.99789 752.37 0.88169 solid black
+edge 768 770 4 753.15 1.2354 753.4 1.0963 753.67 0.94412 753.91 0.80731 solid black
+edge 771 772 4 754.44 2.6789 754.43 2.5308 754.42 2.366 754.41 2.2155 solid black
+edge 771 773 4 755.07 2.6789 755.28 2.514 755.52 2.3284 755.74 2.1649 solid black
+edge 774 775 4 758.41 4.1234 758.41 4.0108 758.41 3.8886 758.41 3.7704 solid black
+edge 774 782 4 759.11 4.1234 759.36 3.9554 759.65 3.766 759.9 3.6003 solid black
+edge 775 776 4 758.41 2.6789 758.41 2.5664 758.41 2.4442 758.41 2.326 solid black
+edge 775 779 4 759.16 2.6789 759.38 2.5446 759.62 2.3967 759.85 2.2582 solid black
+edge 776 777 4 757.83 1.2354 757.66 1.1033 757.48 0.95936 757.31 0.82802 solid black
+edge 776 778 4 758.5 1.2354 758.53 1.1198 758.55 0.99515 758.57 0.87781 solid black
+edge 779 780 4 760.71 1.2354 760.71 1.121 760.71 0.99789 760.7 0.88169 solid black
+edge 779 781 4 761.47 1.2354 761.69 1.0982 761.93 0.94827 762.15 0.81292 solid black
+stop
