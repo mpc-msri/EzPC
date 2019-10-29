@@ -25,12 +25,13 @@ echo "================================================================"
 echo "ocaml version switching"
 echo "================================================================"
 opam switch 4.06.1
-eval \(opam config env\)
+eval "opam config env"
 echo "SWITCHED"
 
 # make EzPC again
 cd ../EzPC/
 make
+chmod +x ezpc.sh
 cd ..
 
 cd EzPC/seclud_random_forest
@@ -38,8 +39,8 @@ cd EzPC/seclud_random_forest
 echo "================================================================"
 echo "Copying query files to correct directories"
 echo "================================================================"
-cp ../../../query.txt ../../../../ABY_latest/ABY/build/bin/decision_tree_query.txt
-cp ../../../rf_stats.txt decision_tree_stat.txt
+cp ../../../decision_tree_query.txt ../../../../ABY-latest/ABY/build/bin/.
+cp ../../../decision_tree_stat.txt .
 
 echo "================================================================"
 echo "Compiling to ABY"

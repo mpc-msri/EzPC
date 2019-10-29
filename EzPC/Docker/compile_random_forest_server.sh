@@ -25,12 +25,13 @@ echo "================================================================"
 echo "ocaml version switching"
 echo "================================================================"
 opam switch 4.06.1
-eval \(opam config env\)
+eval "opam config env"
 echo "SWITCHED"
 
 # make EzPC again
 cd ../EzPC/
 make
+chmod +x ezpc.sh
 cd ..
 
 cd EzPC/seclud_random_forest
@@ -38,7 +39,7 @@ cd EzPC/seclud_random_forest
 echo "================================================================"
 echo "Copying model files to correct directories"
 echo "================================================================"
-cp ../../../model.pickle pickle_model.pickle
+cp ../../../pickle_model.pickle .
 
 #python convert_pickle_to_graphviz.py $1
 python convert_pickle_to_graphviz.py pickle_model.pickle
@@ -52,7 +53,7 @@ pwd
 echo "================================================================"
 echo "Copying preprocessed model to correct directory"
 echo "================================================================"
-cp ezpc_parsed_tree.txt ../../../../ABY_latest/ABY/build/bin/ezpc_parsed_tree.txt
+cp ezpc_parsed_tree.txt ../../../../ABY-latest/ABY/build/bin/ezpc_parsed_tree.txt
 
 echo "================================================================"
 echo "Copying generated files to latest ABY examples directory"
