@@ -33,6 +33,13 @@ RUN apt-get install -y libssl-dev
 RUN apt-get install -y vim
 RUN apt-get install -y libglib2.0-dev
 RUN apt-get install -y ocaml
+RUN apt-get install -y python
+RUN pip install numpy
+RUN pip install scipy
+RUN pip install pandas
+RUN pip install scikit-learn
+RUN pip install ipython
+
 #Get opam
 RUN apt-get install -y opam
 
@@ -66,10 +73,11 @@ WORKDIR /ezpc-workdir
 RUN git clone https://github.com/mpc-msri/EzPC
 
 WORKDIR /ezpc-workdir/ABY-latest/ABY
-RUN cd src/examples/docker-test && cp -r ../../../../../EzPC/EzPC/ABY_example/* .
+RUN cd src/examples/docker-test && cp -r ../../../../../EzPC/EzPC/EzPC/ABY_example/* .
 
-WORKDIR /ezpc-workdir/EzPC
-RUN git checkout -b docker_specific_branch c8b45fd28fb41c46d3054f4fbe7c1b0dddb87ccd
+WORKDIR /ezpc-workdir/EzPC/EzPC
+RUN git checkout random_forest
+#RUN git checkout -b docker_specific_branch c8b45fd28fb41c46d3054f4fbe7c1b0dddb87ccd
 
 #EzPC specific ocaml packages
 RUN opam init
