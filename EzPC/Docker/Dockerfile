@@ -33,12 +33,14 @@ RUN apt-get install -y libssl-dev
 RUN apt-get install -y vim
 RUN apt-get install -y libglib2.0-dev
 RUN apt-get install -y ocaml
-RUN apt-get install -y python
-RUN pip install numpy
-RUN pip install scipy
-RUN pip install pandas
-RUN pip install scikit-learn
-RUN pip install ipython
+RUN apt-get install -y python3
+RUN apt-get update
+RUN apt-get install -y python3-pip
+RUN pip3 install numpy
+RUN pip3 install scipy
+RUN pip3 install pandas
+RUN pip3 install scikit-learn
+RUN pip3 install ipython
 
 #Get opam
 RUN apt-get install -y opam
