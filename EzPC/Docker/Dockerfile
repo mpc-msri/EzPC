@@ -63,6 +63,15 @@ RUN ["bash", "install-after-cmake-check.sh"]
 #To stick to a commit that works in ABY
 WORKDIR /ezpc-workdir/ABY-latest/ABY
 RUN git checkout -b docker_specific_branch 8aa003c2e145c6d43b6ec73ef75618be43951b1d
+RUN cd extern/ENCRYPTO_utils/ && git checkout 11cd5efa9be6d506c967d6e6835fa239e47c7207
+WORKDIR /ezpc-workdir/ABY-latest
+RUN ["bash", "install-after-cmake-check.sh"]
+WORKDIR /ezpc-workdir/ABY-latest/ABY
+RUN cd extern/OTExtension/ && git checkout e4bcb68f9e7eb8753bc6a6ab1c2e3b70ad40e54f
+WORKDIR /ezpc-workdir/ABY-latest
+RUN ["bash", "install-after-cmake-check.sh"]
+WORKDIR /ezpc-workdir/ABY-latest/ABY
+
 #29th April 2019 commit
 #RUN git checkout -b docker_specific_branch d4ca22996967ba076b6ca378e231d72f9c35cf51
 #Add docker-test dir and copy ezpc.h and other files
@@ -71,12 +80,12 @@ RUN cd src/examples/ && mkdir docker-test && echo "add_subdirectory(docker-test)
 #Pull EzPC source from GitHub.
 WORKDIR /ezpc-workdir
 RUN git clone https://github.com/mpc-msri/EzPC
+RUN cd EzPC && git checkout random_forest
 
 WORKDIR /ezpc-workdir/ABY-latest/ABY
 RUN cd src/examples/docker-test && cp -r ../../../../../EzPC/EzPC/EzPC/ABY_example/* .
 
 WORKDIR /ezpc-workdir/EzPC/EzPC
-RUN git checkout random_forest
 #RUN git checkout -b docker_specific_branch c8b45fd28fb41c46d3054f4fbe7c1b0dddb87ccd
 
 #EzPC specific ocaml packages

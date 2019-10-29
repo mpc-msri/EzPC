@@ -46,6 +46,8 @@ echo "Compiling to ABY"
 echo "================================================================"
 pwd
 python correct_ezpc_code_params.py
+cd .. && ./ezpc.sh seclud_random_forest/random_forest_main.ezpc --bitlen 64 && cd seclud_random_forest
+
 
 echo "================================================================"
 echo "Copying generated files to latest ABY examples directory"
