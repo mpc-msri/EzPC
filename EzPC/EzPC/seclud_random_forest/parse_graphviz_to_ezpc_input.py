@@ -188,5 +188,5 @@ output_file = open("ezpc_parsed_tree.txt", 'a')
 for i in range(len(ezpc_features)):
     output_file.write(str(ezpc_features[i]) + "\n")
 for i in range(len(ezpc_threshold)):
-    output_file.write(str(math.floor(scaling_factor*ezpc_threshold[i])) + "\n")
+    output_file.write(str(int(math.floor(scaling_factor*ezpc_threshold[i]))) + "\n")
 

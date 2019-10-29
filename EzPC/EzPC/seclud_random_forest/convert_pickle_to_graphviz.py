@@ -4,6 +4,7 @@ from sklearn.ensemble import RandomForestRegressor
 import pickle
 from sklearn.tree import export_graphviz
 from subprocess import call
+import matplotlib.pyplot as plt
 import sys
 
 name = sys.argv[1]

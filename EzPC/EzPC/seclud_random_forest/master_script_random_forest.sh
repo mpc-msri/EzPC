@@ -8,7 +8,7 @@ params=$(cat decision_tree_stat.txt)
 #Now we have EzPC input in ezpc_parsed_tree.txt
 #Now go to EzPC code and put in the right values
 #of depth and no. of trees in RF.
-python correct_ezpc_code_params.py
+python3 correct_ezpc_code_params.py
 
 cd .. && ./ezpc.sh seclud_random_forest/random_forest_main.ezpc --bitlen 64 && cd seclud_random_forest
 
