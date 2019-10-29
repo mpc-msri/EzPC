@@ -41,6 +41,8 @@ RUN pip3 install scipy
 RUN pip3 install pandas
 RUN pip3 install scikit-learn
 RUN pip3 install ipython
+RUN pip3 install matplotlib
+RUN apt-get install -y graphviz
 
 #Get opam
 RUN apt-get install -y opam
