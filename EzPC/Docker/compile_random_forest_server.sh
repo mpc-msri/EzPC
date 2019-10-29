@@ -42,7 +42,7 @@ echo "================================================================"
 cp ../../../pickle_model.pickle .
 
 #python convert_pickle_to_graphviz.py $1
-python convert_pickle_to_graphviz.py pickle_model.pickle
+python3 convert_pickle_to_graphviz.py pickle_model.pickle
 
 echo "================================================================"
 echo "Compiling to ABY"
