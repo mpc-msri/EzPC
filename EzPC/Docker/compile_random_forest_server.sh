@@ -62,16 +62,18 @@ echo "================================================================"
 
 cp ../../../pickle_model.pickle .
 
+# To make sure that client does not read stale stats
+rm decision_tree_stat.txt
+
 #python convert_pickle_to_graphviz.py $1
 python3 convert_pickle_to_graphviz.py pickle_model.pickle
 
 echo "================================================================"
 echo "Compiling to ABY"
 echo "================================================================"
+
 pwd
 ./master_script_random_forest.sh
-# To make sure that client does not read stale stats
-rm decision_tree_stat.txt
 
 echo "================================================================"
 echo "Copying preprocessed model to correct directory"
@@ -107,3 +109,4 @@ echo "Running HTTP server on Server machine to communicate tree depth and #trees
 echo "================================================================"
 python3 transfer_data_to_client.py $1
 rm transfer_data_to_client.py
+rm EzPC/seclud_random_forest/decision_tree_stat.txt
