@@ -110,3 +110,6 @@ echo "================================================================"
 python3 transfer_data_to_client.py $1
 rm transfer_data_to_client.py
 rm EzPC/seclud_random_forest/decision_tree_stat.txt
+
+(true || rm port_server_s.txt)
+echo $1 > port_server_s.txt

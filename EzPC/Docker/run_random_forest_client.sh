@@ -20,6 +20,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+ip=$(cat ../address_server_c.txt)
+port=$(cat ../port_server_c.txt)
+
 cd ../../../ABY-latest/ABY/build/bin/
 rm -r client
 mkdir client
@@ -27,6 +30,6 @@ cp random_forest* client/.
 cd client
 pwd
 
-./random_forest -r 1 < ../decision_tree_query.txt
+./random_forest -r 1 -a $ip -p $port < ../decision_tree_query.txt
 
 cd ../../../../../EzPC/EzPC

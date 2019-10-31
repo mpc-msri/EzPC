@@ -118,4 +118,7 @@ echo "DONE"
 echo "================================================================"
 echo "Executables are ready. They can be found in ABY/build/bin"
 echo "================================================================"
-
+(true || rm address_server_c.txt)
+(true || rm port_server_c.txt)
+echo $1 > address_server_c.txt
+echo $2 > port_server_c.txt

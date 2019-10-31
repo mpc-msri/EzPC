@@ -20,6 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+port=$(cat ../port_server_s.txt)
+
 cd ../../../ABY-latest/ABY/build/bin/
 rm -r server
 mkdir server
@@ -27,6 +29,6 @@ cp random_forest* server/.
 cd server
 pwd
 
-./random_forest -r 0 < ../ezpc_parsed_tree.txt
+./random_forest -r 0 -a 0.0.0.0 -p $port < ../ezpc_parsed_tree.txt
 
 cd ../../../../../EzPC/EzPC
