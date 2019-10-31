@@ -30,6 +30,8 @@ cp random_forest* client/.
 cd client
 pwd
 
-./random_forest -r 1 -a $ip -p $port < ../decision_tree_query.txt
+./random_forest -r 1 -a $ip -p $port < ../decision_tree_query.txt > ../client_output.txt
 
-cd ../../../../../EzPC/EzPC
+cd ../../../../../EzPC/EzPC/Docker
+
+python3 get_client_output.py
