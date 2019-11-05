@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# exit if a command fails
+set -e
+
 if [ $# -eq 0 ]
 then
 	echo "ERROR. 1 arg expected. Usage is <script>.sh server_pickle_file_path"
