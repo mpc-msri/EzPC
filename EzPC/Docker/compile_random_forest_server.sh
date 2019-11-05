@@ -20,6 +20,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# get the latest version
+git pull
+
 # Switch ocaml version
 echo "================================================================"
 echo "ocaml version switching"
@@ -112,3 +115,6 @@ rm transfer_data_to_client.py
 
 (true || rm port_server_s.txt)
 echo $1 > port_server_s.txt
+
+echo "\n[STATUS] Success!"
+

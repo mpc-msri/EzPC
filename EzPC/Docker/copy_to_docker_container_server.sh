@@ -18,3 +18,5 @@ echo Extracted container ID is: $id
 echo $1
 sudo docker cp $1 $id:/ezpc-workdir/EzPC/.
 
+echo "\n[STATUS] Success!"
+

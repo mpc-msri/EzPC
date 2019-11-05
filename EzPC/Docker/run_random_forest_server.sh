@@ -32,3 +32,6 @@ pwd
 ./random_forest -r 0 -a 0.0.0.0 -p $port < ../ezpc_parsed_tree.txt
 
 cd ../../../../../EzPC/EzPC
+
+echo "\n[STATUS] Success!"
+

@@ -35,3 +35,5 @@ pwd
 cd ../../../../../EzPC/EzPC/Docker
 
 python3 get_client_output.py
+
+echo "\n[STATUS] Success!"

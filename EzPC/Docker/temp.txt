@@ -1,1 +1,0 @@
-CONTAINER ID IMAGE COMMAND CREATED STATUS PORTS NAMES 05db5a6ec31b seclud_image "/bin/bash" 11 minutes ago Up 11 minutes cocky_curran
