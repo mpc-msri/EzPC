@@ -2,7 +2,7 @@
 This folder contains code for Athos - an end-to-end compiler from TensorFlow to a variety of secure computation protocols.
 
 # Requirements/Setup 
-Below we list some of the packages required to get Athos up and running. We only mention the packages on which the system has been tested thus far. This will be updated in due time with more information on requirements. 
+Below we list some of the packages required to get Athos up and running. This is a non-exhaustive list and we only mention the packages on which the system has been tested thus far. This will be updated in due time with more information on requirements. 
 - axel: download manager used to download pre-trained models `sudo apt-get install axel`.
 - python3.6
 - TensorFlow 1.11
