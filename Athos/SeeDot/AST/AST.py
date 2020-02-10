@@ -326,3 +326,14 @@ class FusedBatchNorm(ASTNode):
 		self.expr = expr
 		self.multExpr = multExpr
 		self.addExpr = addExpr
+
+class Conv2DBackpropInput(ASTNode):
+	def __init__(self, expr1:ID, expr2:ID, options=None):
+		if assertInputTypes:
+			assert isinstance(expr1, ASTNode)
+			assert isinstance(expr2, ASTNode)
+			if options: assert isinstance(options, dict)
+		super().__init__()
+		self.expr1 = expr1
+		self.expr2 = expr2
+		self.options = options
