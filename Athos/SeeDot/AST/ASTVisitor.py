@@ -87,6 +87,10 @@ class ASTVisitor:
 		self.visit(node.multExpr, args)
 		self.visit(node.addExpr, args)
 
+	def visitConv2DBackpropInput(self, node:AST.Conv2DBackpropInput, args=None):
+		self.visit(node.expr1, args)
+		self.visit(node.expr2, args)
+
 	def visit(self, node, args=None):
 		if node is None:
 			return
@@ -124,6 +128,8 @@ class ASTVisitor:
 			return self.visitInput(node, args)
 		elif isinstance(node, AST.FusedBatchNorm):
 			return self.visitFusedBatchNorm(node, args)
+		elif isinstance(node, AST.Conv2DBackpropInput):
+			return self.visitConv2DBackpropInput(node, args)
 		elif node:
 			raise Exception('Node instance not matched.')
 		else:

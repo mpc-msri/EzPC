@@ -48,9 +48,6 @@ class TFNodesAST:
 		Pack = auto()
 		Concat = auto()
 		ExpandDims = auto()
-		MaxPoolGrad = auto()
-		Conv2DBackpropInput = auto()
-		Conv2DBackpropFilter = auto()
 		AvgPool = auto()
 		Pad = auto()
 		Squeeze = auto()
@@ -576,3 +573,14 @@ class TFNodesAST:
 	# 								TFNodesAST.UninterpFuncCallNames.Pack.name, 
 	# 								 list(map(lambda x : AST.ID(dictNodeNameToOutVarStr[x]), inputsRef)) + [AST.Int(axis)] )
 	# 	return (None, retAST)
+
+	def Conv2DBackpropInput(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
+		inputsRef = curNode.getInputsRef()
+		assert(len(inputsRef)==3) #output_shape, filter, input
+		
+		# TODO : fill in options
+		options = {}  	
+		return (None, AST.Conv2DBackpropInput(
+								AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]), 
+								AST.ID(dictNodeNameToOutVarStr[inputsRef[1]]), 
+								options))
