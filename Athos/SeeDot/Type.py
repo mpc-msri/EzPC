@@ -359,3 +359,29 @@ class InferType(ASTVisitor):
 		node.type = exprType
 		return node.type
 
+	# def visitConv2DBackpropInput(self, node:AST.Conv2DBackpropInput, args=None):
+	# 	node.expr1.gamma = dict(node.gamma)
+	# 	eType = self.visit(node.expr1)
+
+	# 	node.expr2.gamma = dict(node.gamma)
+	# 	fType = self.visit(node.expr2)
+
+	# 	assert isTensor(eType) and isTensor(fType)
+	# 	assert eType.dim == 4 and fType.dim == 4
+		
+	# 	[N, H, W, CI] = eType.shape
+	# 	[FH, FW, CI1, CO] = fType.shape
+
+	# 	assert(FH == node.options[AST.PaddingKeysDict.FH])
+	# 	assert(FW == node.options[AST.PaddingKeysDict.FW])
+	# 	assert(H == node.options[AST.PaddingKeysDict.inputImgH])
+	# 	assert(W == node.options[AST.PaddingKeysDict.inputImgW])		
+	# 	assert(CI1 == CI)
+
+	# 	strideH = options[AST.PaddingKeysDict.strideH]
+	# 	strideW = options[AST.PaddingKeysDict.strideW]
+
+	# 	paddingUsedStr = options[AST.PaddingKeysDict.paddingUsedStr]
+
+	# 	if (strideH == 1):
+			

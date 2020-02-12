@@ -74,6 +74,11 @@ class PaddingKeysDict:
 	zPadWRight = "zPadWRight"
 	strideH = "strideH"
 	strideW = "strideW"
+	inputImgH = "inputImgH"
+	inputImgW = "inputImgW"
+	outputImgH = "outputImgH"
+	outputImgW = "outputImgW"
+	paddingUsedStr = "paddingUsedStr"
 
 # If this is marked true, each astNode checks the types of its inputs to confirm it satisfies the assumption
 # Turn this off to get speedup in compilation
