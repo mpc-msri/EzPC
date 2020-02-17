@@ -236,10 +236,33 @@ class InferType(ASTVisitor):
 
 	def visitBopConv(self, node:AST.BOp, eType:Type, fType:Type, args=None):
 		assert isTensor(eType) and isTensor(fType)
-		assert eType.dim == 4 and fType.dim == 4
+		convDim = 2
+		if node.options[PaddingKeysDict.ConvDim]:
+			convDim = node.options[PaddingKeysDict.ConvDim]
+
+		if convDim==2:
+			assert eType.dim == 4 and fType.dim == 4
+		elif convDim==3:
+			assert eType.dim == 5 and fType.dim == 5
+		else:
+			assert(False)
 		
-		[N, H, W, CI] = eType.shape
-		[FH, FW, CI1, CO] = fType.shape
+		N = D = H = W = CI = FD = FH = FW = CI1 = CO = -1
+		newD = -1
+		if (convDim == 2):
+			[N, H, W, CI] = eType.shape
+			[FH, FW, CI1, CO] = fType.shape
+		elif (convDim == 3):
+			[N, D, H, W, CI] = eType.shape
+			[FD, FH, FW, CI1, CO] = fType.shape
+			assert(FD == node.options[AST.PaddingKeysDict.FD])
+			zPadDLeft = node.options[AST.PaddingKeysDict.zPadDLeft]
+			zPadDRight = node.options[AST.PaddingKeysDict.zPadDRight]
+			strideD = node.options[AST.PaddingKeysDict.strideD]
+
+			newD = ((D + zPadDLeft + zPadDRight - FD)//strideD) + 1
+		else:
+			assert(False)
 		assert(FH == node.options[AST.PaddingKeysDict.FH])
 		assert(FW == node.options[AST.PaddingKeysDict.FW])
 		assert(CI1 == CI)
@@ -253,7 +276,10 @@ class InferType(ASTVisitor):
 		newH = ((H + zPadHLeft + zPadHRight - FH)//strideH) + 1
 		newW = ((W + zPadWLeft + zPadWRight - FW)//strideW) + 1
 
-		shape = [N, newH, newW, CO]
+		if convDim == 2:
+			shape = [N, newH, newW, CO]
+		elif convDim == 3:
+			shape = [N, newD, newH, newW, CO]
 		node.type = Tensor(shape)
 		return node.type
 

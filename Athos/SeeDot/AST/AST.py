@@ -66,14 +66,26 @@ class Operators(Enum):
 		return Operators[enumStr]
 
 class PaddingKeysDict:
+	ConvDim = 2 #2D or 3D convolution, default to 2D ##TODO: Add 1D conv when required
 	FH = "FH"
 	FW = "FW"
+	FD = "FD"
 	zPadHLeft = "zPadHLeft"
 	zPadHRight = "zPadHRight"
 	zPadWLeft = "zPadWLeft"
 	zPadWRight = "zPadWRight"
+	zPadDLeft = "zPadDLeft"
+	zPadDRight = "zPadDRight"
 	strideH = "strideH"
 	strideW = "strideW"
+	strideD = "strideD"
+	inputImgH = "inputImgH"	
+	inputImgW = "inputImgW"
+	inputImgD = "inputImgD"
+	outputImgH = "outputImgH"
+	outputImgW = "outputImgW"
+	outputImgD = "outputImgD"
+	paddingUsedStr = "paddingUsedStr"
 
 # If this is marked true, each astNode checks the types of its inputs to confirm it satisfies the assumption
 # Turn this off to get speedup in compilation
@@ -219,6 +231,14 @@ class BOp(ASTNode):
 				assert (PaddingKeysDict.zPadWRight in options)
 				assert (PaddingKeysDict.strideH in options)
 				assert (PaddingKeysDict.strideW in options)
+				if PaddingKeysDict.ConvDim in options:
+					assert(options[PaddingKeysDict.ConvDim]==2 or options[PaddingKeysDict.ConvDim]==3) #1D conv is not supported right now
+					if options[PaddingKeysDict.ConvDim]==3:
+						#3D conv - assert over the depth dimension
+						assert (PaddingKeysDict.FD in options)
+						assert (PaddingKeysDict.zPadDLeft in options)
+						assert (PaddingKeysDict.zPadDRight in options)
+						assert (PaddingKeysDict.strideD in options)
 		super().__init__()
 		self.expr1 = expr1
 		self.op = op
