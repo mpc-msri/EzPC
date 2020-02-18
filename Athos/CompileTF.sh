@@ -181,4 +181,9 @@ elif [ "$compilationTargetLower" == "porthos" ]; then
 	# cd "$porthosFullDirPath"
 	# make -j
 	echo -e "All compilation done."
+	if hash clang-format 2> /dev/null; then
+		clang-format -style=LLVM $fullDirPath/$finalCodeOutputFileName > tmp_clang
+		mv tmp_clang $fullDirPath/$finalCodeOutputFileName
+	fi
 fi
+
