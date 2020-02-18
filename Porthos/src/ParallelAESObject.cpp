@@ -43,7 +43,7 @@ void swapSmallTypes(smallType *a,
     *b = temp;
 }
 
-ParallelAESObject::precompute()
+void ParallelAESObject::precompute()
 {
 	//TODO (Mayank): Fix hardcoded 1 values.
 	for (size_t i = 0; i < PC_CALLS_MAX*SHUFFLE_MAX*NO_CORES; ++i)

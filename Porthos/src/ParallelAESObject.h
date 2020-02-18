@@ -42,7 +42,7 @@ public:
 	//Constructor
 	ParallelAESObject(string filename){};
 	
-	precompute();
+	void precompute();
 
 	//Other randomness functions
 	smallType randNonZeroModPrime(int t, 
