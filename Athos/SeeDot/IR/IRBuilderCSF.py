@@ -546,23 +546,42 @@ class IRBuilderCSF(ASTVisitor):
 		(prog1, expr1) = self.visit(node.expr1)
 		(prog2, expr2) = self.visit(node.expr2)
 		
-		[N , H , W , CI] = node.expr1.type.shape
-		[FH, FW, CI, CO] = node.expr2.type.shape
+		convDim = 2
+		if (AST.PaddingKeysDict.ConvDim in node.options):
+			convDim = node.options[AST.PaddingKeysDict.ConvDim]
+
+		if convDim == 2:
+			[N, H, W, CI] = node.expr1.type.shape
+			[FH, FW, CI, CO] = node.expr2.type.shape
+		elif convDim == 3:
+			[N, D, H, W, CI] = node.expr1.type.shape
+			[FD, FH, FW, CI, CO] = node.expr2.type.shape
+		else:
+			assert(False)
 
 		returnExpr = self.getTempVar()
-		comment = IR.Comment(expr1.idf + ' # ' + expr2.idf)
+		comment = IR.Comment(expr1.idf + ' # ' + expr2.idf + ', convDim = ' + str(convDim))
 		funcCallArgsDict = OrderedDict()
 		funcCallArgsDict[IR.Int(N, 32)] = "N"
+		if convDim == 3:
+			funcCallArgsDict[IR.Int(D, 32)] = "D"	
 		funcCallArgsDict[IR.Int(H, 32)] = "H"
 		funcCallArgsDict[IR.Int(W, 32)] = "W"
 		funcCallArgsDict[IR.Int(CI, 32)] = "CI"
+		if convDim == 3:
+			funcCallArgsDict[IR.Int(FD, 32)] = "FD"
 		funcCallArgsDict[IR.Int(FH, 32)] = "FH"
 		funcCallArgsDict[IR.Int(FW, 32)] = "FW"
 		funcCallArgsDict[IR.Int(CO, 32)] = "CO"
+		if convDim == 3:
+			funcCallArgsDict[IR.Int(node.options[AST.PaddingKeysDict.zPadDLeft], 32)] = "zPadDLeft"
+			funcCallArgsDict[IR.Int(node.options[AST.PaddingKeysDict.zPadDRight], 32)] = "zPadDRight"
 		funcCallArgsDict[IR.Int(node.options[AST.PaddingKeysDict.zPadHLeft], 32)] = "zPadHLeft"
 		funcCallArgsDict[IR.Int(node.options[AST.PaddingKeysDict.zPadHRight], 32)] = "zPadHRight"
 		funcCallArgsDict[IR.Int(node.options[AST.PaddingKeysDict.zPadWLeft], 32)] = "zPadWLeft"
 		funcCallArgsDict[IR.Int(node.options[AST.PaddingKeysDict.zPadWRight], 32)] = "zPadWRight"
+		if convDim == 3:
+			funcCallArgsDict[IR.Int(node.options[AST.PaddingKeysDict.strideD], 32)] = "strideD"	
 		funcCallArgsDict[IR.Int(node.options[AST.PaddingKeysDict.strideH], 32)] = "strideH"
 		funcCallArgsDict[IR.Int(node.options[AST.PaddingKeysDict.strideW], 32)] = "strideW"
 
@@ -571,7 +590,11 @@ class IRBuilderCSF(ASTVisitor):
 		funcCallArgsDict[IR.Int(Util.Config.consSF, 32)] = "consSF"
 		funcCallArgsDict[returnExpr] = "output"
 
-		funcCall = IR.FuncCall("Conv2DCSF", funcCallArgsDict)
+		if convDim == 2:
+			funcCallName = "Conv2DCSF"
+		else:
+			funcCallName = "Conv3DCSF"
+		funcCall = IR.FuncCall(funcCallName, funcCallArgsDict)
 
 		progConv = IR.Prog([comment, funcCall])
 		returnProg = IRUtil.prog_merge(prog1, prog2, progConv)

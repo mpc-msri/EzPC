@@ -357,7 +357,8 @@ class TFNodesAST:
 		options[AST.PaddingKeysDict.zPadWLeft] = zPadWLeft
 		options[AST.PaddingKeysDict.zPadWRight] = zPadWRight
 		options[AST.PaddingKeysDict.strideH] = strideH
-		options[AST.PaddingKeysDict.strideW] = strideW	  	
+		options[AST.PaddingKeysDict.strideW] = strideW
+		options[AST.PaddingKeysDict.ConvDim] = 2
 		return (None, AST.BOp(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]), 
 								TFNodesAST.getOperatorsIdx('#'),
 								AST.ID(dictNodeNameToOutVarStr[inputsRef[1]]), 
@@ -404,7 +405,8 @@ class TFNodesAST:
 		options[AST.PaddingKeysDict.zPadWRight] = zPadWRight
 		options[AST.PaddingKeysDict.strideD] = strideD
 		options[AST.PaddingKeysDict.strideH] = strideH
-		options[AST.PaddingKeysDict.strideW] = strideW	  	
+		options[AST.PaddingKeysDict.strideW] = strideW
+		options[AST.PaddingKeysDict.ConvDim] = 3
 		return (None, AST.BOp(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]), 
 								TFNodesAST.getOperatorsIdx('#'),
 								AST.ID(dictNodeNameToOutVarStr[inputsRef[1]]), 

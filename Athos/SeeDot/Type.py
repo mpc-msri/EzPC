@@ -237,8 +237,10 @@ class InferType(ASTVisitor):
 	def visitBopConv(self, node:AST.BOp, eType:Type, fType:Type, args=None):
 		assert isTensor(eType) and isTensor(fType)
 		convDim = 2
-		if node.options[PaddingKeysDict.ConvDim]:
-			convDim = node.options[PaddingKeysDict.ConvDim]
+		if AST.PaddingKeysDict.ConvDim in node.options:
+			convDim = node.options[AST.PaddingKeysDict.ConvDim]
+
+		print(node.options)
 
 		if convDim==2:
 			assert eType.dim == 4 and fType.dim == 4
