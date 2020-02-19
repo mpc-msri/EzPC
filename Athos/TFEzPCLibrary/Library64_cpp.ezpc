@@ -89,6 +89,19 @@ def void Relu4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int64_al[s1][
 	};
 }
 
+def void Relu5(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int64_al[s1][s2][s3][s4][s5] inArr, int64_al[s1][s2][s3][s4][s5] outArr){
+        for i1=[0:s1]{
+                for i2=[0:s2]{
+                        for i3=[0:s3]{
+                                for i4=[0:s4]{
+                                        for i5=[0:s5]{
+                                                outArr[i1][i2][i3][i4][i5] = (inArr[i1][i2][i3][i4][i5] > 0L ? inArr[i1][i2][i3][i4][i5] : 0L);
+                                        };
+                                };
+                        };
+                };
+        };
+}
 
 (**************************)
 def void ElemWiseMul2(int32_pl s1, int32_pl s2, int64_al[s1][s2] arr1, int64_al[s1][s2] arr2, int64_al[s1][s2] outArr, int64_pl shrout){
