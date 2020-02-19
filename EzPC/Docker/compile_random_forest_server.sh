@@ -41,22 +41,24 @@ cd EzPC/seclud_random_forest
 rm pickle_model.pickle
 
 # Check the number of input arguments to this script
-# 1st argument is port no. of server
-# 2nd argument, if exists, is pickle file path. If not exist, default path of ../../../pickle_model.pickle is taken
+# 1st argument is the task type: cla for classification and reg for regression
+# 2nd argument is the number of features in the dataset
+# 3st argument is port no. of server
+# 4nd argument, if exists, is pickle file path. If not exist, default path of ../../../pickle_model.pickle is taken
 
 if [ $# -eq 0 ]
 then
-	echo "ERROR. 2 args expected. Usage is <script>.sh Server_Port [Pickle File Absolute Path]"
+	echo "ERROR. 4 args expected. Usage is <script>.sh cla/reg [#features] Server_Port [Pickle File Absolute Path]"
 	exit 1
 
-elif [ $# -eq 1 ]
+elif [ $# -eq 3 ]
 then
 	echo "Taking pickle file from /ezpc-workdir/EzPC/pickle_model.pickle"
 
-elif [ $# -eq 2 ]
+elif [ $# -eq 4 ]
 then
 	echo "Taking pickle file from the 2nd argument value supplied"
-	cp $2 ../../../pickle_model.pickle
+	cp $4 ../../../pickle_model.pickle
 fi
 
 echo "================================================================"
@@ -67,16 +69,17 @@ cp ../../../pickle_model.pickle .
 
 # To make sure that client does not read stale stats
 rm decision_tree_stat.txt
+rm decision_tree_stat1.txt
 
 #python convert_pickle_to_graphviz.py $1
-python3 convert_pickle_to_graphviz.py pickle_model.pickle
+python3 convert_pickle_to_graphviz.py pickle_model.pickle $1 $2
 
 echo "================================================================"
 echo "Compiling to ABY"
 echo "================================================================"
 
 pwd
-./master_script_random_forest.sh
+./master_script_random_forest.sh $1 $2
 
 echo "================================================================"
 echo "Copying preprocessed model to correct directory"
@@ -110,11 +113,11 @@ cp Docker/transfer_data_to_client.py .
 echo "================================================================"
 echo "Running HTTP server on Server machine to communicate tree depth and #trees to client"
 echo "================================================================"
-python3 transfer_data_to_client.py $1
+python3 transfer_data_to_client.py $3
 rm transfer_data_to_client.py
 
 (true || rm port_server_s.txt)
-echo $1 > port_server_s.txt
+echo $3 > port_server_s.txt
 
 echo "\n[STATUS] Success!"
 
