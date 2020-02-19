@@ -1,11 +1,33 @@
+'''
+
+Authors: Shubham Ugare.
+
+Copyright:
+Copyright (c) 2018 Microsoft Research
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+'''
 
 import AST.AST as AST
 from onnx import mapping
-
 from onnx import TensorProto
 from numbers import Number
 
-
+DEBUG = False
 
 class OnnxNode(object):
   """
@@ -71,7 +93,6 @@ def translate_onnx(key, val):
   return __onnx_attr_translator.get(key, lambda x: x)(val)
 
 def onnx2seedot(dtype):
-  print("lol", dtype, _onnx_dtype(dtype), TENSOR_TYPE_TO_SEEDOT_TYPE[_onnx_dtype(dtype)])
   return TENSOR_TYPE_TO_SEEDOT_TYPE[_onnx_dtype(dtype)] 	
 
 def _onnx_dtype(dtype):
@@ -110,7 +131,8 @@ class ONNXNodesAST:
 	# value_info: dictionary of name -> (type, dimension tuple)
 	def Cast(node, value_info):
 		node = OnnxNode(node) 
-		print(node)
+		if(DEBUG):
+			print(node)
 		inputsRef = node.inputs
 		assert(len(inputsRef) == 1)
 		destType = node.attrs['to']
@@ -123,26 +145,29 @@ class ONNXNodesAST:
 
 	def Relu(node, value_info):
 		node = OnnxNode(node) 
-		print(node)
+		if(DEBUG):
+			print(node)
 		inputsRef = node.inputs
 		assert(len(inputsRef)==1)
 		return AST.Func(getOperatorsIdx('relu'), AST.ID(inputsRef[0]))
 
 	def Add(node, value_info):
 		node = OnnxNode(node) 
-		print(node)
+		if(DEBUG):
+			print(node)
 		inputsRef = node.inputs
 		assert(len(inputsRef) == 2)
-		return AST.BOp(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]),
-							ONNXNodesAST.getOperatorsIdx('+'),
-							AST.ID(dictNodeNameToOutVarStr[inputsRef[1]])
+		return AST.BOp(AST.ID(inputsRef[0]),
+							getOperatorsIdx('+'),
+							AST.ID(inputsRef[1])
 							)
 
 	# currently supports only 2D convolution	
 	# TODO: 3D conv
 	def Conv(node, value_info):
 		node = OnnxNode(node) 
-		print(node)
+		if(DEBUG):
+			print(node)
 		inputsRef = node.inputs
 		assert(len(inputsRef)==2)
 		
@@ -152,7 +177,7 @@ class ONNXNodesAST:
 		strideW = stridesUsed[1]
 
 		inputShape = value_info[inputsRef[0]][1]
-		print(inputShape)
+		# print(inputShape)
 		imgH = inputShape[2]
 		imgW = inputShape[3]
 
@@ -179,31 +204,61 @@ class ONNXNodesAST:
 								AST.ID(inputsRef[1]), 
 								options)
 
+	def Reshape(node, value_info):
+		node = OnnxNode(node) 
+		if(DEBUG):
+			print(node)
+		inputsRef = node.inputs
+		assert(len(inputsRef)==2)
+		print("OOO", list(value_info[node.outputs[0]][1]))
+		return AST.Reshape(AST.ID(inputsRef[0]), list(value_info[node.outputs[0]][1]), 0)
+
 	def BatchNormalization(node, value_info):
 		node = OnnxNode(node) 
-		print(node)
+		if(DEBUG):
+			print(node)
 		inputsRef = node.inputs
 		# Are running mean and var used for something?
 		assert(len(inputsRef)==5)
 		return AST.FusedBatchNorm(AST.ID(inputsRef[0]),
 										 AST.ID(inputsRef[1]),
 										 AST.ID(inputsRef[2]),
-										)
-	
+										)	
+
 	def MaxPool(node, value_info):
 		return ONNXNodesAST.helper_processPool(node, value_info, 'MAXPOOL')
 
 	def AvgPool(node, value_info):
 		return ONNXNodesAST.helper_processPool(node, value_info, 'AVGPOOL')
 
-	def helper_processPool(node, value_info, typeOfPool):
+	def GlobalAveragePool(node, value_info):
 		node = OnnxNode(node) 
-		print(node)
+		if(DEBUG):
+			print(node)
 		inputsRef = node.inputs
 		assert(len(inputsRef)==1)
-		
-		options = {}
-		
+
+		return AST.Pool(AST.Pool.PoolType.AvgPool,
+							  AST.ID(inputsRef[0]),
+							  {
+							  	AST.PaddingKeysDict.FH: value_info[inputsRef[0]][1][0],
+							  	AST.PaddingKeysDict.FW: value_info[inputsRef[0]][1][1],
+							  	AST.PaddingKeysDict.zPadHLeft: 0,
+							  	AST.PaddingKeysDict.zPadHRight: 0,
+							  	AST.PaddingKeysDict.zPadWLeft: 0,
+							  	AST.PaddingKeysDict.zPadWRight: 0,
+							  	AST.PaddingKeysDict.strideH: 1,
+							  	AST.PaddingKeysDict.strideW: 1
+							  }
+							)	
+
+	def helper_processPool(node, value_info, typeOfPool):
+		node = OnnxNode(node) 
+		if(DEBUG):
+			print(node)
+		inputsRef = node.inputs
+		assert(len(inputsRef)==1)
+				
 		stridesUsed = node.attrs['strides']
 		strideH = stridesUsed[0]
 		strideW = stridesUsed[1]
