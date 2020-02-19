@@ -72,7 +72,7 @@ rm decision_tree_stat.txt
 rm decision_tree_stat1.txt
 
 #python convert_pickle_to_graphviz.py $1
-python3 convert_pickle_to_graphviz.py pickle_model.pickle $1 $2
+python3 convert_pickle_to_graphviz.py pickle_model.pickle $1
 
 echo "================================================================"
 echo "Compiling to ABY"
