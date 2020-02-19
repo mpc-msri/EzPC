@@ -1,7 +1,7 @@
 (* Random Forest implementation for inference on California Housing Dataset -- Regression *)
 
 (* These values come from a python program that I used to train the Random Forest. Accuracy on testing set (20% of full dataset) = 83.04 *)	
-int32 noOfFeatures = 13;
+int32 noOfFeatures = 
 (* This depth is the depth in python code + 1 *)
 int32 maxDepth =  
 int32 maxDepthInt = 

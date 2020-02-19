@@ -15,12 +15,14 @@ param_fl.close()
 
 no_of_trees = int(new_params[0])
 depth = int(new_params[1])
+no_of_features = int(new_params[2])
 no_of_nodes = pow(2, depth) - 1
 # print("New params are: ")
 # print(no_of_trees)
 # print(depth)
 # print(no_of_nodes)
 
+lines[3] = lines[3][:-1] + str(no_of_features) + ';\n'
 lines[5] = lines[5][:-1] + str(depth) + ';\n'
 lines[6] = lines[6][:-1] + str(depth) + ';\n'
 lines[7] = lines[7][:-1] + str(no_of_trees) + ';\n'

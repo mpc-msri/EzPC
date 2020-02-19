@@ -120,6 +120,7 @@ def dump_complete_tree(root):
 import sys
 
 input_file = open(sys.argv[1], 'r')
+task = sys.argv[2]
 lines = input_file.readlines()
 lines = lines[1:]
 
@@ -150,7 +151,10 @@ for i in range(len(lines)):
         # print(threshold_val)
     else:
         #This is a leaf
-        start_location_val = curline.find("value =")
+        if(task == 'reg'):
+            start_location_val = curline.find("value =")
+        else:
+            start_location_val = curline.find("class =")
         end_location_val = curline.find("\" filled")
         output_val = float(curline[start_location_val+7:end_location_val])
         features.append(-1)
@@ -172,8 +176,11 @@ dump_complete_tree(root)
 
 # print(ezpc_features)
 # print(ezpc_threshold)
-# print(ezpc_depth)
-# print(max_depth)
+#print("EzPC depth: ", ezpc_depth)
+print("Max depth: ", max_depth)
+fla = open("decision_tree_stat.txt", 'a')
+fla.write(str(max_depth)+'\n')
+fla.close()
 
 scale_file = open("scaling_factor.txt", 'r')
 temp = scale_file.readlines()
