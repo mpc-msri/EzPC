@@ -624,6 +624,9 @@ class IRBuilderCSF(ASTVisitor):
 		[pad_h_tr_left, pad_h_tr_right] = AST.Operators.findLeftRightPaddingFromTotalPadding(pad_h_tr_total)
 		[pad_w_tr_left, pad_w_tr_right] = AST.Operators.findLeftRightPaddingFromTotalPadding(pad_w_tr_total)
 
+		assert(AST.Operators.findConvOutputImgSize(h_prime_tilde, pad_h_tr_total, FH, stride_h_tr) == H)
+		assert(AST.Operators.findConvOutputImgSize(w_prime_tilde, pad_w_tr_total, FW, stride_w_tr) == W)
+
 		convDim = 2
 		returnExpr = self.getTempVar()
 		comment = IR.Comment(expr1.idf + ' #T ' + expr2.idf + ', convDim = ' + str(convDim))
@@ -635,12 +638,14 @@ class IRBuilderCSF(ASTVisitor):
 		funcCallArgsDict[IR.Int(FH, 32)] = "FH"
 		funcCallArgsDict[IR.Int(FW, 32)] = "FW"
 		funcCallArgsDict[IR.Int(CI, 32)] = "CI"
+		funcCallArgsDict[IR.Int(H, 32)] = "H"
+		funcCallArgsDict[IR.Int(W, 32)] = "W"
 		funcCallArgsDict[IR.Int(pad_h_tr_left, 32)] = "pad_h_tr_left"
 		funcCallArgsDict[IR.Int(pad_h_tr_right, 32)] = "pad_h_tr_right"
 		funcCallArgsDict[IR.Int(pad_w_tr_left, 32)] = "pad_w_tr_left"
 		funcCallArgsDict[IR.Int(pad_w_tr_right, 32)] = "pad_w_tr_right"
-		funcCallArgsDict[IR.Int(stride_h_tr, 32)] = "stride_h_tr"
-		funcCallArgsDict[IR.Int(stride_w_tr, 32)] = "stride_w_tr"		
+		funcCallArgsDict[IR.Int(strideH, 32)] = "strideH"
+		funcCallArgsDict[IR.Int(strideW, 32)] = "strideW"
 
 		funcCallArgsDict[expr1] = "input"
 		funcCallArgsDict[expr2] = "filter"

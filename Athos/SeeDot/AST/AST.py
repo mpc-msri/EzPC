@@ -74,20 +74,18 @@ class Operators(Enum):
 		#	f = filter size
 		#	p_total = conv input padding total
 		#	stride = conv input stride
-		if (stride == 1):
-			p_total_tr = 2*f - p_total - 2
-			stride_tr = stride
-			i_prime_tilde = i_prime
-		else:
-			p_total_tr = 2*f - p_total - 2 + ((i + p_total - f)%stride)
-			stride_tr = 1
-			i_prime_tilde = i_prime + (i_prime-1)*(stride-1)
+		p_total_tr = 2*f - p_total - 2 + ((i + p_total - f)%stride)
+		stride_tr = 1
+		i_prime_tilde = i_prime + (i_prime-1)*(stride-1)
 		return [p_total_tr, stride_tr, i_prime_tilde]
 
 	def findLeftRightPaddingFromTotalPadding(totalPadding):
 		leftPadding = totalPadding // 2
 		rightPadding = totalPadding - leftPadding
 		return [leftPadding, rightPadding]
+
+	def findConvOutputImgSize(imgSize, totalPadding, filterSize, stride):
+		return ((imgSize + totalPadding - filterSize) // stride) + 1
 
 class PaddingKeysDict:
 	ConvDim = 2 #2D or 3D convolution, default to 2D ##TODO: Add 1D conv when required
