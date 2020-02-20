@@ -96,8 +96,4 @@ class MtdAST(ASTVisitor):
 		self.visit(node.multExpr, mtd)
 		self.visit(node.addExpr, mtd)
 
-	def visitConv2DBackpropInput(self, node:AST.Conv2DBackpropInput, mtd:dict):
-		node.metadata.update(mtd)
-		self.visit(node.expr1, mtd)
-		self.visit(node.expr2, mtd)
 		

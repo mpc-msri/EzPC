@@ -645,3 +645,53 @@ class TFNodesAST:
 	# 								TFNodesAST.UninterpFuncCallNames.Pack.name, 
 	# 								 list(map(lambda x : AST.ID(dictNodeNameToOutVarStr[x]), inputsRef)) + [AST.Int(axis)] )
 	# 	return (None, retAST)
+
+	def Conv2DBackpropInput(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
+		inputsRef = curNode.getInputsRef()
+		assert(len(inputsRef)==3) #output_shape, filter, input
+		
+		stridesUsed = curNode.getAttrMapRef()["\"strides\""].getList().getILi()
+		assert(stridesUsed[0]==1 and stridesUsed[3]==1)
+		strideH = stridesUsed[1]
+		strideW = stridesUsed[2]
+		
+		filterShape = extraNodeInfoDict[inputsRef[1]][0]
+		FH = filterShape[0]
+		FW = filterShape[1]
+
+		inputShape = extraNodeInfoDict[inputsRef[2]][0]
+		inputH = inputShape[1]
+		inputW = inputShape[2]
+
+		outputShape = extraNodeInfoDict[curNode.getName()][0]
+		outputH = outputShape[1]
+		outputW = outputShape[2]
+
+		paddingUsedStr = curNode.getAttrMapRef()["\"padding\""].getS()
+
+		# Important: Using outputH and outputW in the below is not an error! 
+		#			 For convTranspose, the parameters passed in the node are of the conv of which this convTranspose is an inverse.
+		#			 Which is why the call to helper_findPadding makes sense. 
+		#			 The zPads below are of the conv of which this convTranspose is an inverse.
+		[zPadHLeft, zPadHRight, zPadWLeft, zPadWRight] = TFNodesAST.helper_findPadding(outputH, outputW, 
+																						FH, FW, 
+																						strideH, strideW, 
+																						paddingUsedStr
+																						)
+
+		options = {}
+		options[AST.PaddingKeysDict.FH] = FH
+		options[AST.PaddingKeysDict.FW] = FW
+		options[AST.PaddingKeysDict.zPadHLeft] = zPadHLeft
+		options[AST.PaddingKeysDict.zPadHRight] = zPadHRight
+		options[AST.PaddingKeysDict.zPadWLeft] = zPadWLeft
+		options[AST.PaddingKeysDict.zPadWRight] = zPadWRight
+		options[AST.PaddingKeysDict.strideH] = strideH
+		options[AST.PaddingKeysDict.strideW] = strideW
+		options[AST.PaddingKeysDict.ConvDim] = 2
+		options[AST.PaddingKeysDict.outputImgH] = outputH
+		options[AST.PaddingKeysDict.outputImgW] = outputW
+		return (None, AST.BOp(AST.ID(dictNodeNameToOutVarStr[inputsRef[2]]), 
+								TFNodesAST.getOperatorsIdx('#T'),
+								AST.ID(dictNodeNameToOutVarStr[inputsRef[1]]), 
+								options))

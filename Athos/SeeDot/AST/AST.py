@@ -29,6 +29,7 @@ OperatorsSymbolDict = {
 		"SUB": '-',
 		"MUL": '*',
 		"CONV": '#',
+		"CONVTRANSPOSE": "#T", #ConvTranspose
 		"RELU": 'relu',
 		"Equal": '==',
 		"ElemWiseMul":'.*',
@@ -46,6 +47,7 @@ class Operators(Enum):
 	SUB = auto()
 	MUL = auto()
 	CONV = auto()
+	CONVTRANSPOSE = auto()
 	RELU = auto()
 	Equal = auto()
 	ElemWiseMul = auto()
@@ -65,8 +67,31 @@ class Operators(Enum):
 		assert(enumStr is not None)
 		return Operators[enumStr]
 
+	def findConvTransposePadding(i, i_prime, f, p_total, stride):
+		# The parameters have the following semantics:
+		#	i = conv input img size
+		#	i_prime = convTranspose input img Size
+		#	f = filter size
+		#	p_total = conv input padding total
+		#	stride = conv input stride
+		if (stride == 1):
+			p_total_tr = 2*f - p_total - 2
+			stride_tr = stride
+			i_prime_tilde = i_prime
+		else:
+			p_total_tr = 2*f - p_total - 2 + ((i + p_total - f)%stride)
+			stride_tr = 1
+			i_prime_tilde = i_prime + (i_prime-1)*(stride-1)
+		return [p_total_tr, stride_tr, i_prime_tilde]
+
+	def findLeftRightPaddingFromTotalPadding(totalPadding):
+		leftPadding = totalPadding // 2
+		rightPadding = totalPadding - leftPadding
+		return [leftPadding, rightPadding]
+
 class PaddingKeysDict:
 	ConvDim = 2 #2D or 3D convolution, default to 2D ##TODO: Add 1D conv when required
+				#Also used for convTranpose
 	FH = "FH"
 	FW = "FW"
 	FD = "FD"
@@ -216,13 +241,16 @@ class UOp(ASTNode):
 class BOp(ASTNode):
 	# Options is used to convey extra info if the operator needs so
 	# For example, it will be useful for convolution to convey strides etc.
+
+	# IMPORTANT NOTE: The options parameter coming for ConvTranspose is for the conv of which it is an inverse
+
 	def __init__(self, expr1: ASTNode, op: Operators, expr2: ASTNode, options=None):
 		if assertInputTypes:
 			assert isinstance(expr1, ASTNode)
 			assert isinstance(op, Operators)
 			assert isinstance(expr2, ASTNode)
 			if options: assert isinstance(options, dict)
-			if op == Operators.CONV:
+			if op == Operators.CONV or op == Operators.CONVTRANSPOSE:
 				assert (PaddingKeysDict.FH in options)
 				assert (PaddingKeysDict.FW in options)
 				assert (PaddingKeysDict.zPadHLeft in options)
@@ -239,6 +267,11 @@ class BOp(ASTNode):
 						assert (PaddingKeysDict.zPadDLeft in options)
 						assert (PaddingKeysDict.zPadDRight in options)
 						assert (PaddingKeysDict.strideD in options)
+			if op == Operators.CONVTRANSPOSE:
+				# In addition if this op is convTranspose, then 
+				#	the output size should also be specified
+				assert(PaddingKeysDict.outputImgH in options)
+				assert(PaddingKeysDict.outputImgW in options)
 		super().__init__()
 		self.expr1 = expr1
 		self.op = op
@@ -347,13 +380,3 @@ class FusedBatchNorm(ASTNode):
 		self.multExpr = multExpr
 		self.addExpr = addExpr
 
-class Conv2DBackpropInput(ASTNode):
-	def __init__(self, expr1:ID, expr2:ID, options=None):
-		if assertInputTypes:
-			assert isinstance(expr1, ASTNode)
-			assert isinstance(expr2, ASTNode)
-			if options: assert isinstance(options, dict)
-		super().__init__()
-		self.expr1 = expr1
-		self.expr2 = expr2
-		self.options = options

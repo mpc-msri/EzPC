@@ -172,6 +172,8 @@ class InferType(ASTVisitor):
 			return self.visitBopMul(node, eType, fType)
 		elif node.op == AST.Operators.CONV:
 			return self.visitBopConv(node, eType, fType)
+		elif node.op == AST.Operators.CONVTRANSPOSE:
+			return self.visitBopConvTranspose(node, eType, fType)
 		else:
 			assert False
 
@@ -240,8 +242,6 @@ class InferType(ASTVisitor):
 		if AST.PaddingKeysDict.ConvDim in node.options:
 			convDim = node.options[AST.PaddingKeysDict.ConvDim]
 
-		print(node.options)
-
 		if convDim==2:
 			assert eType.dim == 4 and fType.dim == 4
 		elif convDim==3:
@@ -282,6 +282,28 @@ class InferType(ASTVisitor):
 			shape = [N, newH, newW, CO]
 		elif convDim == 3:
 			shape = [N, newD, newH, newW, CO]
+		node.type = Tensor(shape)
+		return node.type
+
+	def visitBopConvTranspose(self, node:AST.BOp, eType:Type, fType:Type, args=None):
+		assert isTensor(eType) and isTensor(fType)
+		
+		[N, HP, WP, CO1] = eType.shape
+		[FH, FW, CI, CO] = fType.shape
+		assert(CO1 == CO)
+		outputImgH = node.options[AST.PaddingKeysDict.outputImgH]
+		outputImgW = node.options[AST.PaddingKeysDict.outputImgW]
+
+		shape = [N, outputImgH, outputImgW, CI]
+
+		# Logic explanation:
+		#	ConvTranpose can be thought of as the inverse of some convolution for which it is doing the upsampling.
+		#	For calculation of padding in the convTranspose operation, the output image size is required.
+		#	This is why TF also mandates the operator to be specified with output size.
+		#	This conv transpose operation can be thought of as conv between output
+		#		of size shape = [N, outputImgH, outputImgW, CI], and filter of size [FH, FW, CI, CO].
+		#		Hence, the input for this convTranspose would be [N, HP, WP, CO]
+
 		node.type = Tensor(shape)
 		return node.type
 
