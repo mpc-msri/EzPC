@@ -38,6 +38,7 @@ chmod +x ezpc.sh
 cd ..
 
 cd EzPC/seclud_random_forest
+rm decision_tree_stat*.txt
 rm decision_tree_query.txt
 rm ../../../decision_tree_query.txt
 rm ../../../decision_tree_stat.txt
