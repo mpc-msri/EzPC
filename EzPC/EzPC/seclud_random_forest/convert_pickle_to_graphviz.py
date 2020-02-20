@@ -22,7 +22,7 @@ else:
     no_of_estim = model_loaded.n_estimators
     from sklearn.ensemble import RandomForestRegressor
 
-print("The specified task is (tree/forest): ", ml_type)
+print("The specified task is (tree/forest):", ml_type)
 print("This is the number of estimators: ", no_of_estim)
 
 if(task == 'reg'):
