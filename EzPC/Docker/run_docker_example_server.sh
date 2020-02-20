@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-cd ../../ABY-latest/ABY/build/bin/
+cd ../../../ABY-latest/ABY/build/bin/
 rm -r server
 mkdir server
 cp docker_binop_example* server/.
