@@ -23,6 +23,8 @@
 # get the latest version
 git pull
 
+./turn_on_benchmarking.sh
+
 # Switch ocaml version
 echo "================================================================"
 echo "ocaml version switching"
