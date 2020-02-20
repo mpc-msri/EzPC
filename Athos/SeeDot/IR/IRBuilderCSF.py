@@ -349,8 +349,9 @@ class IRBuilderCSF(ASTVisitor):
 		op = node.op
 		if (op in [AST.Operators.ADD, AST.Operators.SUB, AST.Operators.Equal, AST.Operators.Max]): return self.visitBopAddOrSubLike(node)
 		elif (op in [AST.Operators.ElemWiseMul, AST.Operators.ElemWiseDiv]): return self.visitBopElemWiseOp(node)
-		elif  op == AST.Operators.MUL: return self.visitBopMul(node)
-		elif  op == AST.Operators.CONV: return self.visitBopConv(node)
+		elif op == AST.Operators.MUL: return self.visitBopMul(node)
+		elif op == AST.Operators.CONV: return self.visitBopConv(node)
+		elif op == AST.Operators.CONVTRANSPOSE: return self.visitBopConvTranspose(node)
 		else: assert False
 
 	def visitBopAddOrSubLike(self, node:AST.BOp, args=None):
@@ -594,6 +595,62 @@ class IRBuilderCSF(ASTVisitor):
 			funcCallName = "Conv2DCSF"
 		else:
 			funcCallName = "Conv3DCSF"
+		funcCall = IR.FuncCall(funcCallName, funcCallArgsDict)
+
+		progConv = IR.Prog([comment, funcCall])
+		returnProg = IRUtil.prog_merge(prog1, prog2, progConv)
+		
+		self.decls[returnExpr.idf] = [node.type]
+		returnProg = IRUtil.prog_merge(IR.Prog([IR.Decl(returnExpr.idf, node.type)]), returnProg)
+		return (returnProg, returnExpr)
+
+	def visitBopConvTranspose(self, node:AST.BOp, args=None):
+		(prog1, expr1) = self.visit(node.expr1)
+		(prog2, expr2) = self.visit(node.expr2)
+		
+		[N, H_prime, W_prime, CO1] = node.expr1.type.shape
+		[FH, FW, CI, CO] = node.expr2.type.shape
+		assert(CO1 == CO)
+		
+		H = node.options[AST.PaddingKeysDict.outputImgH] #outputH
+		W = node.options[AST.PaddingKeysDict.outputImgW] #outputW
+		pad_h_total = node.options[AST.PaddingKeysDict.zPadHLeft] + node.options[AST.PaddingKeysDict.zPadHRight]
+		pad_w_total = node.options[AST.PaddingKeysDict.zPadWLeft] + node.options[AST.PaddingKeysDict.zPadWRight]
+		strideH = node.options[AST.PaddingKeysDict.strideH]
+		strideW = node.options[AST.PaddingKeysDict.strideW]
+		[pad_h_tr_total, stride_h_tr, h_prime_tilde] = AST.Operators.findConvTransposePadding(H, H_prime, FH, pad_h_total, strideH)
+		[pad_w_tr_total, stride_w_tr, w_prime_tilde] = AST.Operators.findConvTransposePadding(W, W_prime, FW, pad_w_total, strideW)
+
+		[pad_h_tr_left, pad_h_tr_right] = AST.Operators.findLeftRightPaddingFromTotalPadding(pad_h_tr_total)
+		[pad_w_tr_left, pad_w_tr_right] = AST.Operators.findLeftRightPaddingFromTotalPadding(pad_w_tr_total)
+
+		convDim = 2
+		returnExpr = self.getTempVar()
+		comment = IR.Comment(expr1.idf + ' #T ' + expr2.idf + ', convDim = ' + str(convDim))
+		funcCallArgsDict = OrderedDict()
+		funcCallArgsDict[IR.Int(N, 32)] = "N"
+		funcCallArgsDict[IR.Int(H_prime, 32)] = "H_prime"
+		funcCallArgsDict[IR.Int(W_prime, 32)] = "W_prime"
+		funcCallArgsDict[IR.Int(CO, 32)] = "CO"
+		funcCallArgsDict[IR.Int(FH, 32)] = "FH"
+		funcCallArgsDict[IR.Int(FW, 32)] = "FW"
+		funcCallArgsDict[IR.Int(CI, 32)] = "CI"
+		funcCallArgsDict[IR.Int(pad_h_tr_left, 32)] = "pad_h_tr_left"
+		funcCallArgsDict[IR.Int(pad_h_tr_right, 32)] = "pad_h_tr_right"
+		funcCallArgsDict[IR.Int(pad_w_tr_left, 32)] = "pad_w_tr_left"
+		funcCallArgsDict[IR.Int(pad_w_tr_right, 32)] = "pad_w_tr_right"
+		funcCallArgsDict[IR.Int(stride_h_tr, 32)] = "stride_h_tr"
+		funcCallArgsDict[IR.Int(stride_w_tr, 32)] = "stride_w_tr"		
+
+		funcCallArgsDict[expr1] = "input"
+		funcCallArgsDict[expr2] = "filter"
+		funcCallArgsDict[IR.Int(Util.Config.consSF, 32)] = "consSF"
+		funcCallArgsDict[returnExpr] = "output"
+
+		if convDim == 2:
+			funcCallName = "ConvTranspose2DCSF"
+		else:
+			funcCallName = "ConvTranspose3DCSF"
 		funcCall = IR.FuncCall(funcCallName, funcCallArgsDict)
 
 		progConv = IR.Prog([comment, funcCall])

@@ -132,9 +132,4 @@ class PrintAST(ASTVisitor):
 		self.visit(node.multExpr)
 		self.visit(node.addExpr)
 
-	def visitConv2DBackpropInput(self, node:AST.Conv2DBackpropInput, args=None):
-		node.expr1.depth = node.expr2.depth = node.depth + 1
-		print(indent * node.depth, "Conv2DBackpropInput", end=' ')
-		self.visit(node.expr1)
-		self.visit(node.expr2)
 
