@@ -46,9 +46,9 @@ rm pickle_model.pickle
 # 3st argument is port no. of server
 # 4nd argument, if exists, is pickle file path. If not exist, default path of ../../../pickle_model.pickle is taken
 
-if [ $# -eq 0 ]
+if [ $# -lt 3 ]
 then
-	echo "ERROR. 4 args expected. Usage is <script>.sh cla/reg [#features] Server_Port [Pickle File Absolute Path]"
+	echo "ERROR. 4 args expected. Usage is <script>.sh cla/reg #features Server_Port [Pickle File Absolute Path]"
 	exit 1
 
 elif [ $# -eq 3 ]
