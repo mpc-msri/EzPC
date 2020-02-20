@@ -116,7 +116,7 @@ Sample compilation of ezpc program to cpp
 - Run the generated `a.out` file in `obliv-c/test/oblivc/ezpc` with -r 0 and -r 1 parameters to run client and server respectively. (`./a.out -r 0` and `./a.out -r 1`)
 
 # Express Installation/Running with Docker (easier)
-
+*** NOTE: The Dockerfile in our master branch is outdated. To use our latest Dockerfile, refer to https://github.com/mpc-msri/EzPC/issues/15. 
 EzPC is shipped with a Dockerfile which can be used to generate Docker image for the project. This Dockerfile will yeild a Docker image with EzPC project set up by default and all dependencies including ABY will be automatically installed.<br />
 Follow the following instructions to set up the Docker image:<br />
 - Install Docker on your system (works with all major OS).
