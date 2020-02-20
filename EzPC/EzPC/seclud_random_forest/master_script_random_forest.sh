@@ -3,7 +3,11 @@
 #First take graphviz output and convert to EzPC input and also pad
 #to make all the decision trees complete binary trees
 params=$(cat decision_tree_stat.txt)
-./parse_random_forest_model_to_ezpc.sh $params
+./parse_random_forest_model_to_ezpc.sh $params $1
+
+python3 find_tree_depth.py $2
+
+cp decision_tree_stat1.txt decision_tree_stat.txt
 
 #Now we have EzPC input in ezpc_parsed_tree.txt
 #Now go to EzPC code and put in the right values
