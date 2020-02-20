@@ -43,22 +43,23 @@ rm pickle_model.pickle
 # Check the number of input arguments to this script
 # 1st argument is the task type: cla for classification and reg for regression
 # 2nd argument is the number of features in the dataset
-# 3st argument is port no. of server
-# 4nd argument, if exists, is pickle file path. If not exist, default path of ../../../pickle_model.pickle is taken
+# 3rd argument is the model type: tree for decision tree and forest for random forest
+# 4th argument is port no. of server
+# 5th argument, if exists, is pickle file path. If not exist, default path of ../../../pickle_model.pickle is taken
 
-if [ $# -lt 3 ]
+if [ $# -lt 4 ]
 then
 	echo "ERROR. 4 args expected. Usage is <script>.sh cla/reg #features Server_Port [Pickle File Absolute Path]"
 	exit 1
 
-elif [ $# -eq 3 ]
+elif [ $# -eq 4 ]
 then
 	echo "Taking pickle file from /ezpc-workdir/EzPC/pickle_model.pickle"
 
-elif [ $# -eq 4 ]
+elif [ $# -eq 5 ]
 then
-	echo "Taking pickle file from the 2nd argument value supplied"
-	cp $4 ../../../pickle_model.pickle
+	echo "Taking pickle file from the 5th argument value supplied"
+	cp $5 ../../../pickle_model.pickle
 fi
 
 echo "================================================================"
@@ -72,7 +73,7 @@ rm decision_tree_stat.txt
 rm decision_tree_stat1.txt
 
 #python convert_pickle_to_graphviz.py $1
-python3 convert_pickle_to_graphviz.py pickle_model.pickle $1
+python3 convert_pickle_to_graphviz.py pickle_model.pickle $1 $3
 
 echo "================================================================"
 echo "Compiling to ABY"
@@ -113,11 +114,11 @@ cp Docker/transfer_data_to_client.py .
 echo "================================================================"
 echo "Running HTTP server on Server machine to communicate tree depth and #trees to client"
 echo "================================================================"
-python3 transfer_data_to_client.py $3
+python3 transfer_data_to_client.py $4
 rm transfer_data_to_client.py
 
 (true || rm port_server_s.txt)
-echo $3 > port_server_s.txt
+echo $4 > port_server_s.txt
 
 echo "\n[STATUS] Success!"
 
