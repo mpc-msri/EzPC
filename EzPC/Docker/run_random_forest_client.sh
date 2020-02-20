@@ -23,8 +23,6 @@
 ip=$(cat ../address_server_c.txt)
 port=$(cat ../port_server_c.txt)
 
-./turn_on_benchmarking.sh
-
 cd ../../../ABY-latest/ABY/build/bin/
 rm -r client
 mkdir client
