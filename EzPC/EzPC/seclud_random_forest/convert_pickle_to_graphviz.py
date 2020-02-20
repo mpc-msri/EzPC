@@ -10,12 +10,16 @@ import sys
 
 name = sys.argv[1]
 task = sys.argv[2]
+ml_type = sys.argv[3]
 
 print("Loading pickle model...")
 model_loaded = pickle.load(open(name, 'rb'))
 print("Pickle model loaded")
 
-no_of_estim = model_loaded.n_estimators
+if(ml_type == 'tree'):
+    no_of_estim = 1
+else:
+    no_of_estim = model_loaded.n_estimators
 print("This is the number of estimators: ", no_of_estim)
 
 if(task == 'reg'):
@@ -31,7 +35,10 @@ fl.write(str(no_of_estim) + '\n')
 fl.close()
 print("Exporting model via graphviz...")
 for i in range(no_of_estim):
-    estimator = model_loaded.estimators_[i]
+    if(ml_type == 'tree'):
+        estimator = model_loaded
+    else:
+        estimator = model_loaded.estimators_[i]
     # Export as dot file
     if(task == 'cla'):
         export_graphviz(estimator, out_file='tree.dot',
