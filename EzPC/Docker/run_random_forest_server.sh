@@ -22,6 +22,8 @@
 
 port=$(cat ../port_server_s.txt)
 
+./turn_on_benchmarking.sh
+
 cd ../../../ABY-latest/ABY/build/bin/
 rm -r server
 mkdir server
