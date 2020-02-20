@@ -49,7 +49,7 @@ rm pickle_model.pickle
 
 if [ $# -lt 4 ]
 then
-	echo "ERROR. 4 args expected. Usage is <script>.sh cla/reg #features Server_Port [Pickle File Absolute Path]"
+	echo "ERROR. 4/5 args expected. Usage is <script>.sh cla/reg #features tree/forest Server_Port [Pickle File Absolute Path]"
 	exit 1
 
 elif [ $# -eq 4 ]
