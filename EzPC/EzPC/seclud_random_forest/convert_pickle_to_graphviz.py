@@ -1,8 +1,6 @@
 
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.tree import DecisionTreeClassifier
 import pickle
 from sklearn.tree import export_graphviz
 from subprocess import call
@@ -19,8 +17,12 @@ print("Pickle model loaded")
 
 if(ml_type == 'tree'):
     no_of_estim = 1
+    from sklearn.tree import DecisionTreeClassifier
 else:
     no_of_estim = model_loaded.n_estimators
+    from sklearn.ensemble import RandomForestRegressor
+
+print("The specified task is (tree/forest): ", ml_type)
 print("This is the number of estimators: ", no_of_estim)
 
 if(task == 'reg'):
