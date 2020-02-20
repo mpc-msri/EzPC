@@ -2,6 +2,7 @@
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.tree import DecisionTreeClassifier
 import pickle
 from sklearn.tree import export_graphviz
 from subprocess import call
