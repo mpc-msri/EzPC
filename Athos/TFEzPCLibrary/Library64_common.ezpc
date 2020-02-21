@@ -538,11 +538,11 @@ def void ConvTranspose2DReshapeInput(int32_pl N, int32_pl HPrime, int32_pl WPrim
 	int32_pl linIdxFilterMult = 0;
 	for n=[0:N]{
 		int32_pl leftTopCornerH = 0 - zPadTrHLeft;
-		int32_pl HPrimeTilde = HPrime + (HPrime-1)*(strideH-1);
+		int32_pl HPrimeTilde = HPrime + ((HPrime-1)*(strideH-1));
 		int32_pl extremeRightBottomCornerH = HPrimeTilde - 1 + zPadTrHRight;
 		while((leftTopCornerH + FH - 1) <= extremeRightBottomCornerH){
 			int32_pl leftTopCornerW = 0 - zPadTrWLeft;
-			int32_pl WPrimeTilde = WPrime + (WPrime-1)*(strideW-1);
+			int32_pl WPrimeTilde = WPrime + ((WPrime-1)*(strideW-1));
 			int32_pl extremeRightBottomCornerW = WPrimeTilde - 1 + zPadTrWRight;
 			while((leftTopCornerW + FW - 1) <= extremeRightBottomCornerW){
 
@@ -572,10 +572,10 @@ def void ConvTranspose2DReshapeInput(int32_pl N, int32_pl HPrime, int32_pl WPrim
 				};
 
 				linIdxFilterMult = linIdxFilterMult + 1;
-				leftTopCornerW = leftTopCornerW + strideW;
+				leftTopCornerW = leftTopCornerW + 1; (* Imp Note: The actual stride is always 1 *)
 			};
 
-			leftTopCornerH = leftTopCornerH + strideH;
+			leftTopCornerH = leftTopCornerH + 1; (* Imp Note: The actual stride is always 1 *)
 		};
 	};
 }
