@@ -288,13 +288,28 @@ class InferType(ASTVisitor):
 	def visitBopConvTranspose(self, node:AST.BOp, eType:Type, fType:Type, args=None):
 		assert isTensor(eType) and isTensor(fType)
 		
-		[N, HP, WP, CO1] = eType.shape
-		[FH, FW, CI, CO] = fType.shape
+		convDim = 2
+		if AST.PaddingKeysDict.ConvDim in node.options:
+			convDim = node.options[AST.PaddingKeysDict.ConvDim]
+
+		if convDim==2:
+			[N, HP, WP, CO1] = eType.shape
+			[FH, FW, CI, CO] = fType.shape
+		elif convDim==3:
+			[N, DP, HP, WP, CO1] = eType.shape
+			[FD, FH, FW, CI, CO] = fType.shape
+		else:
+			assert(False)
 		assert(CO1 == CO)
+		if convDim==3:
+			outputImgD = node.options[AST.PaddingKeysDict.outputImgD]
 		outputImgH = node.options[AST.PaddingKeysDict.outputImgH]
 		outputImgW = node.options[AST.PaddingKeysDict.outputImgW]
 
-		shape = [N, outputImgH, outputImgW, CI]
+		if convDim==2:
+			shape = [N, outputImgH, outputImgW, CI]
+		else:
+			shape = [N, outputImgD, outputImgH, outputImgW, CI]
 
 		# Logic explanation:
 		#	ConvTranpose can be thought of as the inverse of some convolution for which it is doing the upsampling.

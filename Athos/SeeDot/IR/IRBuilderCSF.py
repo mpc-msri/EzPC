@@ -607,9 +607,19 @@ class IRBuilderCSF(ASTVisitor):
 	def visitBopConvTranspose(self, node:AST.BOp, args=None):
 		(prog1, expr1) = self.visit(node.expr1)
 		(prog2, expr2) = self.visit(node.expr2)
-		
-		[N, H_prime, W_prime, CO1] = node.expr1.type.shape
-		[FH, FW, CI, CO] = node.expr2.type.shape
+
+		convDim = 2
+		if (AST.PaddingKeysDict.ConvDim in node.options):
+			convDim = node.options[AST.PaddingKeysDict.ConvDim]
+
+		if convDim==2:
+			[N, H_prime, W_prime, CO1] = node.expr1.type.shape
+			[FH, FW, CI, CO] = node.expr2.type.shape
+		elif convDim==3:
+			[N, D_prime, H_prime, W_prime, CO1] = node.expr1.type.shape
+			[FD, FH, FW, CI, CO] = node.expr2.type.shape
+		else:
+			assert(False)
 		assert(CO1 == CO)
 		
 		H = node.options[AST.PaddingKeysDict.outputImgH] #outputH
@@ -627,23 +637,41 @@ class IRBuilderCSF(ASTVisitor):
 		assert(AST.Operators.findConvOutputImgSize(h_prime_tilde, pad_h_tr_total, FH, stride_h_tr) == H)
 		assert(AST.Operators.findConvOutputImgSize(w_prime_tilde, pad_w_tr_total, FW, stride_w_tr) == W)
 
-		convDim = 2
+		if convDim == 3:
+			D = node.options[AST.PaddingKeysDict.outputImgD] #outputD
+			pad_d_total = node.options[AST.PaddingKeysDict.zPadDLeft] + node.options[AST.PaddingKeysDict.zPadDRight]
+			strideD = node.options[AST.PaddingKeysDict.strideD]
+			[pad_d_tr_total, stride_d_tr, d_prime_tilde] = AST.Operators.findConvTransposePadding(D, D_prime, FD, pad_d_total, strideD)
+			[pad_d_tr_left, pad_d_tr_right] = AST.Operators.findLeftRightPaddingFromTotalPadding(pad_d_tr_total)
+			assert(AST.Operators.findConvOutputImgSize(d_prime_tilde, pad_d_tr_total, FD, stride_d_tr) == D)
+
 		returnExpr = self.getTempVar()
 		comment = IR.Comment(expr1.idf + ' #T ' + expr2.idf + ', convDim = ' + str(convDim))
 		funcCallArgsDict = OrderedDict()
 		funcCallArgsDict[IR.Int(N, 32)] = "N"
+		if convDim==3:
+			funcCallArgsDict[IR.Int(D_prime, 32)] = "D_prime"
 		funcCallArgsDict[IR.Int(H_prime, 32)] = "H_prime"
 		funcCallArgsDict[IR.Int(W_prime, 32)] = "W_prime"
 		funcCallArgsDict[IR.Int(CO, 32)] = "CO"
+		if convDim==3:
+			funcCallArgsDict[IR.Int(FD, 32)] = "FD"
 		funcCallArgsDict[IR.Int(FH, 32)] = "FH"
 		funcCallArgsDict[IR.Int(FW, 32)] = "FW"
 		funcCallArgsDict[IR.Int(CI, 32)] = "CI"
+		if convDim==3:
+			funcCallArgsDict[IR.Int(D, 32)] = "D"
 		funcCallArgsDict[IR.Int(H, 32)] = "H"
 		funcCallArgsDict[IR.Int(W, 32)] = "W"
+		if convDim==3:
+			funcCallArgsDict[IR.Int(pad_d_tr_left, 32)] = "pad_d_tr_left"
+			funcCallArgsDict[IR.Int(pad_d_tr_right, 32)] = "pad_d_tr_right"
 		funcCallArgsDict[IR.Int(pad_h_tr_left, 32)] = "pad_h_tr_left"
 		funcCallArgsDict[IR.Int(pad_h_tr_right, 32)] = "pad_h_tr_right"
 		funcCallArgsDict[IR.Int(pad_w_tr_left, 32)] = "pad_w_tr_left"
 		funcCallArgsDict[IR.Int(pad_w_tr_right, 32)] = "pad_w_tr_right"
+		if convDim==3:
+			funcCallArgsDict[IR.Int(strideD, 32)] = "strideD"
 		funcCallArgsDict[IR.Int(strideH, 32)] = "strideH"
 		funcCallArgsDict[IR.Int(strideW, 32)] = "strideW"
 

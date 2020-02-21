@@ -270,6 +270,8 @@ class BOp(ASTNode):
 				#	the output size should also be specified
 				assert(PaddingKeysDict.outputImgH in options)
 				assert(PaddingKeysDict.outputImgW in options)
+				if (PaddingKeysDict.ConvDim in options) and (options[PaddingKeysDict.ConvDim]==3):
+					assert(PaddingKeysDict.outputImgD in options)
 		super().__init__()
 		self.expr1 = expr1
 		self.op = op
