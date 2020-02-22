@@ -37,6 +37,12 @@ from AST.MtdAST import MtdAST
 
 DEBUG = False
 
+class OnnxInputNode(object):
+	def __init__(self, name, data_type, dims):
+		self.name = name
+		self.data_type = data_type
+		self.dims = dims
+
 def proto_val_to_dimension_tuple(proto_val):
 	return tuple([dim.dim_value for dim in proto_val.type.tensor_type.shape.dim])
 
@@ -51,11 +57,16 @@ def main():
 	model = onnx.load(filePath)
 	graph_def = model.graph
 
+
 	# Before shape inference (model.graph.value_info) should have shapes of all the variables and constants 
 	model.graph.value_info.append(make_tensor_value_info(model.graph.input[0].name, TensorProto.FLOAT, proto_val_to_dimension_tuple(model.graph.input[0])))
+	nodes = [OnnxInputNode(model.graph.input[0].name, TensorProto.FLOAT, list(proto_val_to_dimension_tuple(model.graph.input[0])))]
 	model.graph.value_info.append(make_tensor_value_info(model.graph.output[0].name, TensorProto.FLOAT, proto_val_to_dimension_tuple(model.graph.output[0])))
 	for init_vals in model.graph.initializer:
+		nodes.append(OnnxInputNode(init_vals.name, TensorProto.FLOAT, init_vals.dims))
 		model.graph.value_info.append(make_tensor_value_info(init_vals.name, TensorProto.FLOAT, tuple(init_vals.dims)))
+
+	nodes += [node for node in graph_def.node]	
 
 	if(DEBUG):	
 		print("Shape inference *****************")
@@ -76,22 +87,25 @@ def main():
 	# Iterate through the ONNX graph nodes and translate them to SeeDot AST nodes	
 	program = None
 	innerMostLetASTNode = None
+	dictNodeNameToOutVarStr = {}
+	outVarCt = 0
 	outVarPrefix = "J"
 	mtdAST = MtdAST()
 
-	for node in graph_def.node:
+	for node in nodes:
 		if(DEBUG):
 			print("Node information")
 			print(node)	
-		func = getattr(ONNXNodesAST, node.op_type) 
-		curAst = func(node, value_info)
+		op_type = node.op_type if hasattr(node, 'op_type') else 'Input'	
+		func = getattr(ONNXNodesAST, op_type) 
+		curAst = func(node, value_info, dictNodeNameToOutVarStr)
 
-		mtdForCurAST = {AST.ASTNode.mtdKeyTFOpName : node.op_type,
+		mtdForCurAST = {AST.ASTNode.mtdKeyTFOpName : op_type,
 							AST.ASTNode.mtdKeyTFNodeName : node.name}
 
 		if (curAst is None):
-			continue
-		curOutVarStr = outVarPrefix + str(node.output)
+			continue	
+		curOutVarStr = outVarPrefix + str(outVarCt)
 		curOutVarAstNode = AST.ID(curOutVarStr)
 		if program:
 			assert(type(innerMostLetASTNode) is AST.Let)
@@ -106,7 +120,9 @@ def main():
 			mtdAST.visit(innerMostLetASTNode, mtdForCurAST)
 			innerMostLetASTNode.depth = 0
 			program = innerMostLetASTNode
-
+		dictNodeNameToOutVarStr[node.name] = curOutVarStr
+		outVarCt += 1
+	
 	PrintAST().visit(program)
 
 if __name__ == "__main__":
