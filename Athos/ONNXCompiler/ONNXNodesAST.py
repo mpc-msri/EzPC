@@ -129,7 +129,13 @@ def getOperatorsIdx(token):
 class ONNXNodesAST:
 
 	# value_info: dictionary of name -> (type, dimension tuple)
-	def Cast(node, value_info):
+	def Input(node, value_info, dictNodeNameToOutVarStr):
+		if(DEBUG):
+			print(node)
+		return AST.Input(node.dims, onnx2seedot(node.data_type))
+
+
+	def Cast(node, value_info, dictNodeNameToOutVarStr):
 		node = OnnxNode(node) 
 		if(DEBUG):
 			print(node)
@@ -143,28 +149,28 @@ class ONNXNodesAST:
 											AST.ID(destType)
 											])
 
-	def Relu(node, value_info):
+	def Relu(node, value_info, dictNodeNameToOutVarStr):
 		node = OnnxNode(node) 
 		if(DEBUG):
 			print(node)
 		inputsRef = node.inputs
 		assert(len(inputsRef)==1)
-		return AST.Func(getOperatorsIdx('relu'), AST.ID(inputsRef[0]))
+		return AST.Func(getOperatorsIdx('relu'), AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]))
 
-	def Add(node, value_info):
+	def Add(node, value_info, dictNodeNameToOutVarStr):
 		node = OnnxNode(node) 
 		if(DEBUG):
 			print(node)
 		inputsRef = node.inputs
 		assert(len(inputsRef) == 2)
-		return AST.BOp(AST.ID(inputsRef[0]),
+		return AST.BOp(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]),
 							getOperatorsIdx('+'),
-							AST.ID(inputsRef[1])
+							AST.ID(dictNodeNameToOutVarStr[inputsRef[1]])
 							)
 
 	# currently supports only 2D convolution	
 	# TODO: 3D conv
-	def Conv(node, value_info):
+	def Conv(node, value_info, dictNodeNameToOutVarStr):
 		node = OnnxNode(node) 
 		if(DEBUG):
 			print(node)
@@ -199,39 +205,39 @@ class ONNXNodesAST:
 		options[AST.PaddingKeysDict.zPadWRight] = zPadWRight
 		options[AST.PaddingKeysDict.strideH] = strideH
 		options[AST.PaddingKeysDict.strideW] = strideW	  	
-		return AST.BOp(AST.ID(inputsRef[0]), 
+		return AST.BOp(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]), 
 								getOperatorsIdx('#'),
-								AST.ID(inputsRef[1]), 
+								AST.ID(dictNodeNameToOutVarStr[inputsRef[1]]), 
 								options)
 
-	def Reshape(node, value_info):
+	def Reshape(node, value_info, dictNodeNameToOutVarStr):
 		node = OnnxNode(node) 
 		if(DEBUG):
 			print(node)
 		inputsRef = node.inputs
 		assert(len(inputsRef)==2)
 		print("OOO", list(value_info[node.outputs[0]][1]))
-		return AST.Reshape(AST.ID(inputsRef[0]), list(value_info[node.outputs[0]][1]), 0)
+		return AST.Reshape(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]), list(value_info[node.outputs[0]][1]), 0)
 
-	def BatchNormalization(node, value_info):
+	def BatchNormalization(node, value_info, dictNodeNameToOutVarStr):
 		node = OnnxNode(node) 
 		if(DEBUG):
 			print(node)
 		inputsRef = node.inputs
 		# Are running mean and var used for something?
 		assert(len(inputsRef)==5)
-		return AST.FusedBatchNorm(AST.ID(inputsRef[0]),
-										 AST.ID(inputsRef[1]),
-										 AST.ID(inputsRef[2]),
+		return AST.FusedBatchNorm(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]),
+										 AST.ID(dictNodeNameToOutVarStr[inputsRef[1]]),
+										 AST.ID(dictNodeNameToOutVarStr[inputsRef[2]]),
 										)	
 
-	def MaxPool(node, value_info):
+	def MaxPool(node, value_info, dictNodeNameToOutVarStr):
 		return ONNXNodesAST.helper_processPool(node, value_info, 'MAXPOOL')
 
 	def AvgPool(node, value_info):
 		return ONNXNodesAST.helper_processPool(node, value_info, 'AVGPOOL')
 
-	def GlobalAveragePool(node, value_info):
+	def GlobalAveragePool(node, value_info, dictNodeNameToOutVarStr):
 		node = OnnxNode(node) 
 		if(DEBUG):
 			print(node)
@@ -239,7 +245,7 @@ class ONNXNodesAST:
 		assert(len(inputsRef)==1)
 
 		return AST.Pool(AST.Pool.PoolType.AvgPool,
-							  AST.ID(inputsRef[0]),
+							  AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]),
 							  {
 							  	AST.PaddingKeysDict.FH: value_info[inputsRef[0]][1][0],
 							  	AST.PaddingKeysDict.FW: value_info[inputsRef[0]][1][1],
@@ -283,7 +289,7 @@ class ONNXNodesAST:
 			print("Unknown type of pooling layer.", file=sys.stderr)
 			assert(False)
 		return AST.Pool(poolType,
-							  AST.ID(inputsRef[0]),
+							  AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]),
 							  {
 							  	AST.PaddingKeysDict.FH: kSizeH,
 							  	AST.PaddingKeysDict.FW: kSizeW,
