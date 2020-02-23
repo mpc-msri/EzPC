@@ -25,7 +25,7 @@ SOFTWARE.
 
 import os, sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'SeeDot')) #Add SeeDot directory to path
-
+import _pickle as pickle
 import onnx
 import onnx.shape_inference
 import AST.AST as AST
@@ -47,6 +47,7 @@ def proto_val_to_dimension_tuple(proto_val):
 	return tuple([dim.dim_value for dim in proto_val.type.tensor_type.shape.dim])
 
 def main():
+	sys.setrecursionlimit(10000)
 	# First read the ONNX file
 	if (len(sys.argv) < 2):
 		print("TF python file unspecified.", file=sys.stderr)
@@ -63,7 +64,7 @@ def main():
 	nodes = [OnnxInputNode(model.graph.input[0].name, TensorProto.FLOAT, list(proto_val_to_dimension_tuple(model.graph.input[0])))]
 	model.graph.value_info.append(make_tensor_value_info(model.graph.output[0].name, TensorProto.FLOAT, proto_val_to_dimension_tuple(model.graph.output[0])))
 	for init_vals in model.graph.initializer:
-		nodes.append(OnnxInputNode(init_vals.name, TensorProto.FLOAT, init_vals.dims))
+		nodes.append(OnnxInputNode(init_vals.name, TensorProto.FLOAT, list(init_vals.dims)))
 		model.graph.value_info.append(make_tensor_value_info(init_vals.name, TensorProto.FLOAT, tuple(init_vals.dims)))
 
 	nodes += [node for node in graph_def.node]	
@@ -116,14 +117,18 @@ def main():
 			innerMostLetASTNode = newNode
 		else:
 			print(curAst)
-			innerMostLetASTNode = AST.Let(AST.ID(curOutVarStr), curAst, curOutVarAstNode)
+			innerMostLetASTNode = AST.Let(curOutVarAstNode, curAst, curOutVarAstNode)
 			mtdAST.visit(innerMostLetASTNode, mtdForCurAST)
 			innerMostLetASTNode.depth = 0
 			program = innerMostLetASTNode
+		with open('astOutput.pkl', 'wb') as f:
+			pickle.dump(program, f)	
 		dictNodeNameToOutVarStr[node.name] = curOutVarStr
 		outVarCt += 1
 	
 	PrintAST().visit(program)
+	with open('astOutput.pkl', 'wb') as f:
+		pickle.dump(program, f)
 
 if __name__ == "__main__":
 	main()	

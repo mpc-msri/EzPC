@@ -194,7 +194,7 @@ class ONNXNodesAST:
 		assert(value_info[node.inputs[1]][1][2:] == tuple(node.attrs['kernel_shape']))
 
 		# verify this order
-		[zPadHLeft, zPadHRight, zPadWLeft, zPadWRight] = paddingUsedStr = node.attrs['pads']
+		[zPadHLeft, zPadHRight, zPadWLeft, zPadWRight] = node.attrs['pads']
 
 		options = {}
 		options[AST.PaddingKeysDict.FH] = FH
@@ -204,7 +204,10 @@ class ONNXNodesAST:
 		options[AST.PaddingKeysDict.zPadWLeft] = zPadWLeft
 		options[AST.PaddingKeysDict.zPadWRight] = zPadWRight
 		options[AST.PaddingKeysDict.strideH] = strideH
-		options[AST.PaddingKeysDict.strideW] = strideW	  	
+		options[AST.PaddingKeysDict.strideW] = strideW	
+
+		# print(node.attrs)
+		# print(options)
 		return AST.BOp(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]), 
 								getOperatorsIdx('#'),
 								AST.ID(dictNodeNameToOutVarStr[inputsRef[1]]), 
