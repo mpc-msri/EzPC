@@ -69,6 +69,10 @@ def main():
 
 	nodes += [node for node in graph_def.node]	
 
+	# set names to graph nodes if not present
+	for node in graph_def.node: 
+		node.name = node.output[0]
+
 	if(DEBUG):	
 		print("Shape inference *****************")
 		print(model.graph.value_info)
@@ -122,7 +126,7 @@ def main():
 			innerMostLetASTNode.depth = 0
 			program = innerMostLetASTNode
 		with open('astOutput.pkl', 'wb') as f:
-			pickle.dump(program, f)	
+			pickle.dump(program, f)		
 		dictNodeNameToOutVarStr[node.name] = curOutVarStr
 		outVarCt += 1
 	
