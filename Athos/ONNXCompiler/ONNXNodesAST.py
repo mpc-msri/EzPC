@@ -167,51 +167,22 @@ class ONNXNodesAST:
 							getOperatorsIdx('+'),
 							AST.ID(dictNodeNameToOutVarStr[inputsRef[1]])
 							)
-
-	# currently supports only 2D convolution	
-	# TODO: 3D conv
-	def Conv(node, value_info, dictNodeNameToOutVarStr):
-		node = OnnxNode(node) 
+	def Gemm(node, value_info, dictNodeNameToOutVarStr):
+		node = OnnxNode(node)
 		if(DEBUG):
 			print(node)
 		inputsRef = node.inputs
-		assert(len(inputsRef)==2)
-		
-		stridesUsed = node.attrs['strides']
-		assert(len(stridesUsed)==2)
-		strideH = stridesUsed[0]
-		strideW = stridesUsed[1]
+		assert(len(inputsRef) == 3)
+		input1AST = AST.ID(dictNodeNameToOutVarStr[inputsRef[0]])
+		input2AST = AST.ID(dictNodeNameToOutVarStr[inputsRef[1]])
 
-		inputShape = value_info[inputsRef[0]][1]
-		# print(inputShape)
-		imgH = inputShape[2]
-		imgW = inputShape[3]
+		if(node.attrs['transA']): input1AST = AST.Transp(input1AST)
+		if(node.attrs['transB']): input2AST = AST.Transp(input2AST)
 
-		filterShape = value_info[inputsRef[1]][1]
-		FH = filterShape[2]
-		FW = filterShape[3]
+		# W*x + b
+		return AST.BOp(AST.BOp(input1AST, getOperatorsIdx('*'), input2AST), getOperatorsIdx('+'), AST.ID(dictNodeNameToOutVarStr[inputsRef[2]]))
 
-		assert(value_info[node.inputs[1]][1][2:] == tuple(node.attrs['kernel_shape']))
 
-		# verify this order
-		[zPadHLeft, zPadHRight, zPadWLeft, zPadWRight] = node.attrs['pads']
-
-		options = {}
-		options[AST.PaddingKeysDict.FH] = FH
-		options[AST.PaddingKeysDict.FW] = FW
-		options[AST.PaddingKeysDict.zPadHLeft] = zPadHLeft
-		options[AST.PaddingKeysDict.zPadHRight] = zPadHRight
-		options[AST.PaddingKeysDict.zPadWLeft] = zPadWLeft
-		options[AST.PaddingKeysDict.zPadWRight] = zPadWRight
-		options[AST.PaddingKeysDict.strideH] = strideH
-		options[AST.PaddingKeysDict.strideW] = strideW	
-
-		# print(node.attrs)
-		# print(options)
-		return AST.BOp(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]), 
-								getOperatorsIdx('#'),
-								AST.ID(dictNodeNameToOutVarStr[inputsRef[1]]), 
-								options)
 
 	def Reshape(node, value_info, dictNodeNameToOutVarStr):
 		node = OnnxNode(node) 
@@ -219,8 +190,106 @@ class ONNXNodesAST:
 			print(node)
 		inputsRef = node.inputs
 		assert(len(inputsRef)==2)
-		print("OOO", list(value_info[node.outputs[0]][1]))
-		return AST.Reshape(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]), list(value_info[node.outputs[0]][1]), 0)
+		return AST.Reshape(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]), list(value_info[node.outputs[0]][1]), None)
+		
+
+	# currently supports only 2D convolution	
+	# TODO: 3D conv
+	def Conv(node, value_info, dictNodeNameToOutVarStr):
+		node = OnnxNode(node) 
+		if(DEBUG):
+			print(node)
+
+		inputsRef = node.inputs
+		inputShape = value_info[inputsRef[0]][1]
+		# since two dimensions represent N: Number of batches and CI: Input channel
+		spatial_size = len(inputShape)-2
+
+		if spatial_size == 2:
+			return ONNXNodesAST.conv2d(node, value_info, dictNodeNameToOutVarStr)
+		elif spatial_size == 3:
+			return ONNXNodesAST.conv3d(node, value_info, dictNodeNameToOutVarStr)	
+
+
+	def conv2d(node, value_info, dictNodeNameToOutVarStr):
+		inputsRef = node.inputs
+		inputShape = value_info[inputsRef[0]][1]
+		filterShape = value_info[inputsRef[1]][1]
+
+		stridesUsed = node.attrs['strides']
+
+		assert(len(inputsRef)==2)
+		assert(len(stridesUsed)==2)
+		assert(value_info[node.inputs[1]][1][2:] == tuple(node.attrs['kernel_shape']))
+		# verify this order
+		[zPadHLeft, zPadHRight, zPadWLeft, zPadWRight] = node.attrs['pads']
+
+		options = {}
+		options[AST.PaddingKeysDict.FH] = filterShape[2]
+		options[AST.PaddingKeysDict.FW] = filterShape[3]
+		options[AST.PaddingKeysDict.zPadHLeft] = zPadHLeft
+		options[AST.PaddingKeysDict.zPadHRight] = zPadHRight
+		options[AST.PaddingKeysDict.zPadWLeft] = zPadWLeft
+		options[AST.PaddingKeysDict.zPadWRight] = zPadWRight
+		options[AST.PaddingKeysDict.strideH] = stridesUsed[0]
+		options[AST.PaddingKeysDict.strideW] = stridesUsed[1]
+
+		print(inputShape, filterShape)
+		assert (inputShape[1] == filterShape[1])
+		# For Input:
+		# [N, CI, H, W] is the Onnx order it should be changed to 
+		# [N, H, W, CI] order 
+
+		reshapedInput = AST.Reshape(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]), [inputShape[0], inputShape[2], inputShape[3], inputShape[1]], [1, 3, 4, 2])
+
+		# For filter:
+		# [CO, CI1, FH, FW] is the Onnx order it should be changed to 
+		# [FH, FW, CI1, CO] order
+
+		reshapedFilter = AST.Reshape(AST.ID(dictNodeNameToOutVarStr[inputsRef[1]]), [filterShape[2], filterShape[3], filterShape[1], filterShape[0]], [3, 4, 2, 1])
+
+		return AST.BOp(reshapedInput, getOperatorsIdx('#'), reshapedFilter, options)
+
+	def conv3d(node, value_info, dictNodeNameToOutVarStr):
+		inputsRef = node.inputs
+		inputShape = value_info[inputsRef[0]][1]
+		filterShape = value_info[inputsRef[1]][1]
+		stridesUsed = node.attrs['strides']
+
+		assert(len(inputsRef)==2)
+		assert(len(stridesUsed)==3)
+		assert(value_info[node.inputs[1]][1][2:] == tuple(node.attrs['kernel_shape']))
+		# verify this order
+		[zPadDLeft, zPadDRight, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight] = node.attrs['pads']
+
+		options = {}
+		options[AST.PaddingKeysDict.FD] = filterShape[2]
+		options[AST.PaddingKeysDict.FH] = filterShape[3]
+		options[AST.PaddingKeysDict.FW] = filterShape[4]
+		options[AST.PaddingKeysDict.zPadDLeft] = zPadDLeft
+		options[AST.PaddingKeysDict.zPadDRight] = zPadDRight
+		options[AST.PaddingKeysDict.zPadHLeft] = zPadHLeft
+		options[AST.PaddingKeysDict.zPadHRight] = zPadHRight
+		options[AST.PaddingKeysDict.zPadWLeft] = zPadWLeft
+		options[AST.PaddingKeysDict.zPadWRight] = zPadWRight
+		options[AST.PaddingKeysDict.strideD] = stridesUsed[0]
+		options[AST.PaddingKeysDict.strideH] = stridesUsed[1]
+		options[AST.PaddingKeysDict.strideW] = stridesUsed[2]
+
+		assert (inputShape[1] == filterShape[1])
+		# For Input:
+		# [N, CI, D, H, W] is the Onnx order it should be changed to 
+		# [N, D, H, W, CI] order 
+
+		reshapedInput = AST.Reshape(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]), [inputShape[0], inputShape[2], inputShape[3], inputShape[4], inputShape[1]], [1, 3, 4, 5, 2])
+
+		# For filter:
+		# [CO, CI1, FD, FH, FW] is the Onnx order it should be changed to 
+		# [FD, FH, FW, CI1, CO] order
+
+		reshapedFilter = AST.Reshape(AST.ID(dictNodeNameToOutVarStr[inputsRef[1]]), [filterShape[2], filterShape[3], filterShape[4], filterShape[1], filterShape[0]], [3, 4, 5, 2, 1])
+
+		return AST.BOp(reshapedInput, getOperatorsIdx('#'), reshapedFilter, options)
 
 	def BatchNormalization(node, value_info, dictNodeNameToOutVarStr):
 		node = OnnxNode(node) 
@@ -235,10 +304,10 @@ class ONNXNodesAST:
 										)	
 
 	def MaxPool(node, value_info, dictNodeNameToOutVarStr):
-		return ONNXNodesAST.helper_processPool(node, value_info, 'MAXPOOL')
+		return ONNXNodesAST.helper_processPool(node, value_info, dictNodeNameToOutVarStr, 'MAXPOOL')
 
 	def AvgPool(node, value_info):
-		return ONNXNodesAST.helper_processPool(node, value_info, 'AVGPOOL')
+		return ONNXNodesAST.helper_processPool(node, value_info, dictNodeNameToOutVarStr, 'AVGPOOL')
 
 	def GlobalAveragePool(node, value_info, dictNodeNameToOutVarStr):
 		node = OnnxNode(node) 
@@ -261,7 +330,7 @@ class ONNXNodesAST:
 							  }
 							)	
 
-	def helper_processPool(node, value_info, typeOfPool):
+	def helper_processPool(node, value_info, dictNodeNameToOutVarStr, typeOfPool):
 		node = OnnxNode(node) 
 		if(DEBUG):
 			print(node)
