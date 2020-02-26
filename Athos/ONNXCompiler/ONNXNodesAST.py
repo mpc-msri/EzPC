@@ -132,7 +132,7 @@ class ONNXNodesAST:
 	def Input(node, value_info, dictNodeNameToOutVarStr):
 		if(DEBUG):
 			print(node)
-		return AST.Input(node.dims, onnx2seedot(node.data_type))
+		return AST.Input(list(node.dims), onnx2seedot(node.data_type))
 
 
 	def Cast(node, value_info, dictNodeNameToOutVarStr):
@@ -234,7 +234,7 @@ class ONNXNodesAST:
 		options[AST.PaddingKeysDict.strideH] = stridesUsed[0]
 		options[AST.PaddingKeysDict.strideW] = stridesUsed[1]
 
-		print(inputShape, filterShape)
+		# print(inputShape, filterShape)
 		assert (inputShape[1] == filterShape[1])
 		# For Input:
 		# [N, CI, H, W] is the Onnx order it should be changed to 
@@ -347,7 +347,7 @@ class ONNXNodesAST:
 		kSizeW = kSizeUsed[1]
 		
 		inputShape = value_info[inputsRef[0]][1]
-		print(inputShape)
+		# print(inputShape)
 		imgH = inputShape[2]
 		imgW = inputShape[3]
 
