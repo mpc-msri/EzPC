@@ -90,9 +90,6 @@ def main():
 
 	(program, innermost_let_ast_node, out_var_count) = process_input_variables(program, innermost_let_ast_node, node_name_to_out_var_dict, out_var_count, mtdAST, graph_def, value_info)
 
-	innermost_let_ast_node = reshape_input_data(innermost_let_ast_node, node_name_to_out_var_dict, out_var_count, mtdAST, graph_def, value_info)
-	out_var_count += 1
-
 	process_onnx_nodes(innermost_let_ast_node, node_name_to_out_var_dict, out_var_count, mtdAST, graph_def, value_info)
 
 	PrintAST().visit(program)	
@@ -101,6 +98,27 @@ def main():
 		pickle.dump(program, f)
 
 def process_input_variables(program, innermost_let_ast_node, node_name_to_out_var_dict, out_var_count, mtdAST, graph_def, value_info):
+	node = graph_def.input[0]
+	curAst = ONNXNodesAST.Input(node, value_info, node_name_to_out_var_dict)
+	mtdForCurAST = {AST.ASTNode.mtdKeyTFOpName : 'Input',
+						AST.ASTNode.mtdKeyTFNodeName : node.name}
+	cur_out_var_ast_node = AST.ID(node.name)	
+
+	if program:
+		assert(type(innermost_let_ast_node) is AST.Let)
+		newNode = AST.Let(cur_out_var_ast_node, curAst, cur_out_var_ast_node)
+		mtdAST.visit(newNode, mtdForCurAST)
+		# Updating the innermost Let AST node and the expression for previous Let Node 
+		innermost_let_ast_node.expr = newNode
+		innermost_let_ast_node = newNode
+	else:
+		innermost_let_ast_node = AST.Let(cur_out_var_ast_node, curAst, cur_out_var_ast_node)
+		mtdAST.visit(innermost_let_ast_node, mtdForCurAST)
+		innermost_let_ast_node.depth = 0
+		program = innermost_let_ast_node
+
+	node_name_to_out_var_dict[node.name] = node.name
+
 	for node in graph_def.initializer:
 		if(DEBUG):
 			print("Node information")
@@ -112,8 +130,7 @@ def process_input_variables(program, innermost_let_ast_node, node_name_to_out_va
 		if (curAst is None):
 			continue		
 	
-		cur_out_var_str = out_var_prefix + str(out_var_count)
-		cur_out_var_ast_node = AST.ID(cur_out_var_str)	
+		cur_out_var_ast_node = AST.ID(node.name)	
 
 		if program:
 			assert(type(innermost_let_ast_node) is AST.Let)
@@ -128,28 +145,8 @@ def process_input_variables(program, innermost_let_ast_node, node_name_to_out_va
 			innermost_let_ast_node.depth = 0
 			program = innermost_let_ast_node
 	
-		node_name_to_out_var_dict[node.name] = cur_out_var_str
-		out_var_count += 1
+		node_name_to_out_var_dict[node.name] = node.name
 	return (program, innermost_let_ast_node, out_var_count)	
-
-def reshape_input_data(innermost_let_ast_node, node_name_to_out_var_dict, out_var_count, mtdAST, graph_def, value_info):
-	cur_out_var_str = out_var_prefix + str(out_var_count)
-	cur_out_var_ast_node = AST.ID(cur_out_var_str)	
-	# print input shape here
-	input_name = graph_def.input[0].name 
-	old_shape = list(value_info[input_name][1])
-	(new_shape, order) = get_seedot_shape_order(old_shape)
-	reshapeNode = AST.Reshape(AST.ID(input_name), new_shape, order)
-	new_node = AST.Let(cur_out_var_ast_node, reshapeNode, cur_out_var_ast_node)
-	mtdForCurAST = {AST.ASTNode.mtdKeyTFOpName : 'Reshape',
-					AST.ASTNode.mtdKeyTFNodeName : 'input_reshape_node'}
-	mtdAST.visit(new_node, mtdForCurAST)	
-	innermost_let_ast_node.expr = new_node		
-	innermost_let_ast_node = new_node
-
-	node_name_to_out_var_dict[input_name] = cur_out_var_str
-	out_var_count += 1
-	return innermost_let_ast_node
 
 def process_onnx_nodes(innermost_let_ast_node, node_name_to_out_var_dict, out_var_count, mtdAST, graph_def, value_info):	
 	for node in graph_def.node:
@@ -157,27 +154,16 @@ def process_onnx_nodes(innermost_let_ast_node, node_name_to_out_var_dict, out_va
 			print("Node information")
 			print(node)	
 
-		func = getattr(ONNXNodesAST, node.op_type) 
-		curAst = func(node, value_info, node_name_to_out_var_dict)
+		
 
 		mtdForCurAST = {AST.ASTNode.mtdKeyTFOpName : node.op_type,
 							AST.ASTNode.mtdKeyTFNodeName : node.name}
 
-		if (curAst is None):
-			continue		
-		
-		cur_out_var_str = out_var_prefix + str(out_var_count)
-		cur_out_var_ast_node = AST.ID(cur_out_var_str)	
+		func = getattr(ONNXNodesAST, node.op_type) 
+		(innermost_let_ast_node, out_var_count) = func(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST)					
+
 
 		assert(type(innermost_let_ast_node) is AST.Let)
-		newNode = AST.Let(cur_out_var_ast_node, curAst, cur_out_var_ast_node)
-		mtdAST.visit(newNode, mtdForCurAST)
-		# Updating the innermost Let AST node and the expression for previous Let Node 
-		innermost_let_ast_node.expr = newNode
-		innermost_let_ast_node = newNode
-
-		node_name_to_out_var_dict[node.name] = cur_out_var_str
-		out_var_count += 1
 
 def get_seedot_shape_order(old_shape):
 	if(len(old_shape) == 4):
