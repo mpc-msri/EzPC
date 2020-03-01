@@ -180,11 +180,12 @@ class Transp(ASTNode):
 
 # expr : ASTNode, shape : list of int, order : int : optional
 class Reshape(ASTNode):
-	def __init__(self, expr: ASTNode, shape: list, order: int):
+	def __init__(self, expr: ASTNode, shape: list, order: list):
 		if assertInputTypes:
 			assert isinstance(expr, ASTNode)
 			for elem in shape: assert isinstance(elem, int)
-			assert isinstance(order, (int,type(None)))
+			if order:
+				for elem in order: assert isinstance(elem, int)
 		super().__init__()
 		self.expr = expr
 		self.shape = shape
