@@ -484,8 +484,8 @@ class ONNXNodesAST:
 		seedot_output_ast = AST.Pool(AST.Pool.PoolType.AvgPool,
 							  AST.ID(reshaped_input_name),
 							  {
-							  	AST.PaddingKeysDict.FH: value_info[inputsRef[0]][1][0],
-							  	AST.PaddingKeysDict.FW: value_info[inputsRef[0]][1][1],
+							  	AST.PaddingKeysDict.FH: value_info[inputsRef[0]][1][2],
+							  	AST.PaddingKeysDict.FW: value_info[inputsRef[0]][1][3],
 							  	AST.PaddingKeysDict.zPadHLeft: 0,
 							  	AST.PaddingKeysDict.zPadHRight: 0,
 							  	AST.PaddingKeysDict.zPadWLeft: 0,
