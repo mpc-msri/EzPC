@@ -181,7 +181,7 @@ class IRBuilderCSF(ASTVisitor):
 		prog_2 = IRUtil.prog_merge(prog_1, prog_for)
 		
 		self.decls[expr_2.idf] = [typ_2]
-		prog = IRUtil.prog_merge(IR.Prog([IR.Decl(expr_2.idf, typ_2)]), prog)
+		prog_2 = IRUtil.prog_merge(IR.Prog([IR.Decl(expr_2.idf, typ_2)]), prog_2)
 		return (prog_2, expr_2)
 
 	def visitReshape(self, node:AST.Reshape, args=None):
@@ -227,16 +227,19 @@ class IRBuilderCSF(ASTVisitor):
 			cmd5 = [IRUtil.incCmd(curr_iter), IR.If(IRUtil.eq(curr_iter, curr_size), [IRUtil.initVarToZero(curr_iter)] + cmd5)]
 		
 		# Outer loop
+		# The iterators are selected based on the selection order specified by the user
 		loopShape = []
 		loopIters = []
-		if node.order:
+
+		if(node.order):
 			for order in node.order:
 				order = order - 1
 				loopShape.append(typ_2.shape[order])
 				loopIters.append(iters_2[order])
 		else:
 			loopShape = typ_2.shape
-			loopIters = iters_2
+			loopIters = iters_2	
+		
 
 		loop2 = IRUtil.loop(loopShape, loopIters, [IR.Assn(IRUtil.addIndex(expr_2, iters_2), IRUtil.addIndex(expr_1, iters_1))] + cmd5)
 
