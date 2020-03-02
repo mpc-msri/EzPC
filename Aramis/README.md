@@ -29,7 +29,7 @@ This directory contains code for Aramis - a novel technique that uses hardware w
 * After this, you can follow the instructions as mentioned in the previous section of this README. (Running Aramis section).
 
 # Included Examples
-Aramis already has the following example compiled NNs in `party0/src/example_neural_nets/` directory. To run these examples, copy the code of the respective example file (cpp file) to `party0/src/main.cpp` and overwrite it. Also, go to `party0/src/network_config.h` file and change the preprocessor flag to the network that you want to run. Finally, run `./update_all` to update code of the other 2 parties as well.
+Aramis already has the following example compiled NNs in `party0/src/example_neural_nets/` directory. To run these examples, copy the code of the respective example file (cpp file) to `party0/src/main.cpp` and overwrite it. Now in `party0/src/main.cpp` change the header from `#include "res_net_mem_opti.h"` to `#include "main.h"`. Also, in the same file, change `start_m()` to `StartComputation()` and `end_m()` to `EndComputation()`. Also, go to `party0/src/network_config.h` file and change the preprocessor flag to the network that you want to run. Finally, run `./update_all` to update code of the other 2 parties as well.
 * ResNet50 and other ResNet variants.
 * DenseNet121.
 * SqueezeNet for ImageNet data.
