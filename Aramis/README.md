@@ -18,7 +18,7 @@ This directory contains code for Aramis - a novel technique that uses hardware w
 # Running Aramis
 (Ubuntu):
 * Open up 4 terminal sessions for party0, party1, party2 and service provider and enter their respective directories on each terminal window.
-* Run `make clean && make` in each window and this should compile Aramis.
+* Run `make clean && make CC=gcc-4.9 CXX=g++-5` in each window and this should compile Aramis.
 * Now, to run, in the window for party0, run `./aramis < <Path to input image file>`, on windows for party1 and party2, run `./aramis` and on the service-provider window, run `./truce-server`.
 * Note that you will need an input image file to run a NN. For this, refer to Athos and Porthos documentation on how to generate input image file. Use the path of that image file in the previous step.
 
