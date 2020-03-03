@@ -152,7 +152,11 @@ def get_onnx_order(onnx_shape):
 def get_reshaped_input_ast(input_name, value_info, node_name_to_out_var_dict):
 	onnx_input_shape = list(value_info[input_name][1])
 	(seedot_input_shape, seedot_input_order) = get_seedot_shape_order(onnx_input_shape)
-	return AST.Reshape(AST.ID(node_name_to_out_var_dict[input_name]), seedot_input_shape, seedot_input_order)	
+	return AST.Reshape(AST.ID(node_name_to_out_var_dict[input_name]), seedot_input_shape, seedot_input_order)
+
+def get_reshaped_bias_ast(bias_name, value_info, node_name_to_out_var_dict):
+	# TODO: handle 2D case
+	return AST.Reshape(AST.ID(node_name_to_out_var_dict[bias_name]), [1, 1, 1, 1, value_info[bias_name][1][0]], None)		
 
 def get_reshaped_filter_ast(filter_name, value_info, node_name_to_out_var_dict):
 	onnx_filter_shape = list(value_info[filter_name][1])
@@ -190,19 +194,26 @@ class ONNXNodesAST:
 		return AST.Input(dims, onnx2seedot(data_type))
 
 
-	def Cast(node, value_info, node_name_to_out_var_dict):
+	def Cast(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST):
 		node = OnnxNode(node) 
 		if(DEBUG):
 			print(node)
 		inputsRef = node.inputs
 		assert(len(inputsRef) == 1)
-		destType = node.attrs['to']
-		return AST.UninterpFuncCall(value_info[node.outputs[0]][1],
-											'Cast', 
-											[AST.ID(inputsRef[0]), 
-											AST.ID(inputsRef[0]),
-											AST.ID(destType)
-											])
+		# destType = node.attrs['to']
+
+		# seedot_output_ast = AST.UninterpFuncCall(value_info[node.outputs[0]][1],
+		# 									'Cast', 
+		# 									[AST.ID(inputsRef[0]), 
+		# 									AST.ID(destType),
+		# 									AST.ID(destType)
+		# 									])
+		# output_name = get_new_var_name(out_var_count)
+		# innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, seedot_output_ast, output_name, mtdAST)
+		# out_var_count += 1
+		node_name_to_out_var_dict[node.name] = inputsRef[0]
+
+		return (innermost_let_ast_node, out_var_count)
 
 	def Relu(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST):
 		node = OnnxNode(node) 
@@ -344,8 +355,6 @@ class ONNXNodesAST:
 		return (innermost_let_ast_node, out_var_count)
 		
 
-	# currently supports only 2D convolution	
-	# TODO: 3D conv
 	def Conv(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST):
 		node = OnnxNode(node) 
 		if(DEBUG):
@@ -357,8 +366,8 @@ class ONNXNodesAST:
 		spatial_size = len(inputShape)-2
 		if spatial_size == 2:
 			(innermost_let_ast_node, out_var_count, output_name) = ONNXNodesAST.conv2d(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST)
-		# elif spatial_size == 3:
-		# 	innermost_let_ast_node = ONNXNodesAST.conv3d(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST)	
+		elif spatial_size == 3:
+			(innermost_let_ast_node, out_var_count, output_name) = ONNXNodesAST.conv3d(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST)
 
 		reshaped_output_name = get_new_var_name(out_var_count)
 		onnx_output_ast = get_reshaped_output_ast(node.name,value_info, output_name)
@@ -422,13 +431,13 @@ class ONNXNodesAST:
 
 		return (innermost_let_ast_node, out_var_count, output_name)
 
-	def conv3d(node, value_info, node_name_to_out_var_dict):
+	def conv3d(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST):
 		inputsRef = node.inputs
 		inputShape = value_info[inputsRef[0]][1]
 		filterShape = value_info[inputsRef[1]][1]
 		stridesUsed = node.attrs['strides']
 
-		assert(len(inputsRef)==2)
+		assert(len(inputsRef)==2 or len(inputsRef)==3)
 		assert(len(stridesUsed)==3)
 		assert(value_info[node.inputs[1]][1][2:] == tuple(node.attrs['kernel_shape']))
 		# verify this order
@@ -447,21 +456,43 @@ class ONNXNodesAST:
 		options[AST.PaddingKeysDict.strideD] = stridesUsed[0]
 		options[AST.PaddingKeysDict.strideH] = stridesUsed[1]
 		options[AST.PaddingKeysDict.strideW] = stridesUsed[2]
+		options[AST.PaddingKeysDict.ConvDim] = 3
 
 		assert (inputShape[1] == filterShape[1])
 		# For Input:
 		# [N, CI, D, H, W] is the Onnx order it should be changed to 
 		# [N, D, H, W, CI] order 
-
-		reshapedInput = AST.Reshape(AST.ID(node_name_to_out_var_dict[inputsRef[0]]), [inputShape[0], inputShape[2], inputShape[3], inputShape[4], inputShape[1]], [1, 3, 4, 5, 2])
+		reshaped_input_name = get_new_var_name(out_var_count)
+		reshaped_input = get_reshaped_input_ast(inputsRef[0], value_info, node_name_to_out_var_dict)
+		innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, reshaped_input, reshaped_input_name, mtdAST)
+		out_var_count += 1
 
 		# For filter:
 		# [CO, CI1, FD, FH, FW] is the Onnx order it should be changed to 
 		# [FD, FH, FW, CI1, CO] order
+		reshaped_filter_name = get_new_var_name(out_var_count)
+		reshaped_filter = get_reshaped_filter_ast(inputsRef[1], value_info, node_name_to_out_var_dict)
+		innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, reshaped_filter, reshaped_filter_name, mtdAST)
+		out_var_count += 1
 
-		reshapedFilter = AST.Reshape(AST.ID(node_name_to_out_var_dict[inputsRef[1]]), [filterShape[2], filterShape[3], filterShape[4], filterShape[1], filterShape[0]], [3, 4, 5, 2, 1])
+		seedot_output_ast =  AST.BOp(AST.ID(reshaped_input_name), getOperatorsIdx('#'), AST.ID(reshaped_filter_name), options)
+		output_name = get_new_var_name(out_var_count)
+		innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, seedot_output_ast, output_name, mtdAST)
+		out_var_count += 1
 
-		return AST.BOp(reshapedInput, getOperatorsIdx('#'), reshapedFilter, options)
+		# If there is bias to be added then reshape and add it 
+		if (len(inputsRef) == 3):
+			reshaped_bias_name = get_new_var_name(out_var_count)
+			reshaped_bias = get_reshaped_bias_ast(inputsRef[2], value_info, node_name_to_out_var_dict)
+			innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, reshaped_bias, reshaped_bias_name, mtdAST)
+			out_var_count += 1	
+
+			seedot_output_ast =  AST.BOp(AST.ID(output_name), getOperatorsIdx('+'), AST.ID(reshaped_bias_name), options)
+			output_name = get_new_var_name(out_var_count)
+			innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, seedot_output_ast, output_name, mtdAST)
+			out_var_count += 1
+
+		return (innermost_let_ast_node, out_var_count, output_name)
 
 	def MaxPool(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST):
 		return ONNXNodesAST.helper_processPool(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST, 'MAXPOOL')
@@ -567,3 +598,97 @@ class ONNXNodesAST:
 		node_name_to_out_var_dict[node.name] = reshaped_output_name
 		
 		return (innermost_let_ast_node, out_var_count)
+
+	def ConvTranspose(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST):
+		node = OnnxNode(node) 
+		if(DEBUG):
+			print(node)
+
+		inputsRef = node.inputs
+		# since two dimensions represent N: Number of batches and CI: Input channel
+		inputShape = value_info[inputsRef[0]][1]
+		spatial_size = len(inputShape)-2
+		if spatial_size == 2:
+			(innermost_let_ast_node, out_var_count, output_name) = ONNXNodesAST.conv2dtranspose(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST)
+		elif spatial_size == 3:
+			(innermost_let_ast_node, out_var_count, output_name) = ONNXNodesAST.conv3dtranspose(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST)	
+
+		reshaped_output_name = get_new_var_name(out_var_count)
+		onnx_output_ast = get_reshaped_output_ast(node.name,value_info, output_name)
+		innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, onnx_output_ast, reshaped_output_name, mtdAST)
+		out_var_count += 1
+		node_name_to_out_var_dict[node.name] = reshaped_output_name
+
+		return (innermost_let_ast_node, out_var_count)
+
+	def conv3dtranspose(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST):
+		inputsRef = node.inputs
+		inputShape = value_info[inputsRef[0]][1]
+		filterShape = value_info[inputsRef[1]][1]
+		biasShape = value_info[inputsRef[2]][1]
+		stridesUsed = node.attrs['strides']
+		outputShape = value_info[node.name][1]
+
+		# sometimes there is a bias to be added as well		
+		assert(len(inputsRef)==2 or len(inputsRef)==3)
+		assert(len(stridesUsed)==3)
+		assert(value_info[node.inputs[1]][1][2:] == tuple(node.attrs['kernel_shape']))
+		# verify this order
+		[zPadDLeft, zPadDRight, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight] = node.attrs['pads']
+
+		options = {}
+		options[AST.PaddingKeysDict.FD] = filterShape[2]
+		options[AST.PaddingKeysDict.FH] = filterShape[3]
+		options[AST.PaddingKeysDict.FW] = filterShape[4]
+		options[AST.PaddingKeysDict.zPadDLeft] = zPadDLeft
+		options[AST.PaddingKeysDict.zPadDRight] = zPadDRight
+		options[AST.PaddingKeysDict.zPadHLeft] = zPadHLeft
+		options[AST.PaddingKeysDict.zPadHRight] = zPadHRight
+		options[AST.PaddingKeysDict.zPadWLeft] = zPadWLeft
+		options[AST.PaddingKeysDict.zPadWRight] = zPadWRight
+		options[AST.PaddingKeysDict.strideD] = stridesUsed[0]
+		options[AST.PaddingKeysDict.strideH] = stridesUsed[1]
+		options[AST.PaddingKeysDict.strideW] = stridesUsed[2]
+		options[AST.PaddingKeysDict.ConvDim] = 3		
+		options[AST.PaddingKeysDict.outputImgD] = outputShape[2]
+		options[AST.PaddingKeysDict.outputImgH] = outputShape[3]
+		options[AST.PaddingKeysDict.outputImgW] = outputShape[4]
+
+		assert (inputShape[1] == filterShape[0])
+		# For Input:
+		# [N, CI, D, H, W] is the Onnx order it should be changed to 
+		# [N, D, H, W, CI] order 
+
+		reshaped_input_name = get_new_var_name(out_var_count)
+		reshaped_input = get_reshaped_input_ast(inputsRef[0], value_info, node_name_to_out_var_dict)
+		innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, reshaped_input, reshaped_input_name, mtdAST)
+		out_var_count += 1
+		# For filter:
+		# [CI, CO, FD, FH, FW] is the Onnx order it should be changed to 
+		# [FD, FH, FW, CI1, CO] order
+		reshaped_filter_name = get_new_var_name(out_var_count)
+		reshaped_filter = get_reshaped_filter_ast(inputsRef[1], value_info, node_name_to_out_var_dict)
+		innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, reshaped_filter, reshaped_filter_name, mtdAST)
+		out_var_count += 1
+
+		seedot_output_ast =  AST.BOp(AST.ID(reshaped_input_name), getOperatorsIdx('#T'), AST.ID(reshaped_filter_name), options)
+		output_name = get_new_var_name(out_var_count)
+		innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, seedot_output_ast, output_name, mtdAST)
+		out_var_count += 1
+
+		# If there is bias to be added then reshape and add it 
+		if (len(inputsRef) == 3):
+			reshaped_bias_name = get_new_var_name(out_var_count)
+			reshaped_bias = get_reshaped_bias_ast(inputsRef[2], value_info, node_name_to_out_var_dict)
+			innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, reshaped_bias, reshaped_bias_name, mtdAST)
+			out_var_count += 1	
+
+			seedot_output_ast =  AST.BOp(AST.ID(output_name), getOperatorsIdx('+'), AST.ID(reshaped_bias_name), options)
+			output_name = get_new_var_name(out_var_count)
+			innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, seedot_output_ast, output_name, mtdAST)
+			out_var_count += 1
+
+
+
+		return (innermost_let_ast_node, out_var_count, output_name)
+		
