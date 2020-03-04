@@ -35,6 +35,10 @@ from onnx import TensorProto
 from AST.PrintAST import PrintAST 
 from AST.MtdAST import MtdAST
 import math
+from onnx import numpy_helper
+
+import numpy as np
+np.set_printoptions(threshold=np.inf)
 
 DEBUG = False
 out_var_prefix = "J"
@@ -58,10 +62,19 @@ def main():
 	# Before shape inference (model.graph.value_info) should have shapes of all the variables and constants 
 	model.graph.value_info.append(make_tensor_value_info(model.graph.input[0].name, TensorProto.FLOAT, proto_val_to_dimension_tuple(model.graph.input[0])))
 	model.graph.value_info.append(make_tensor_value_info(model.graph.output[0].name, TensorProto.FLOAT, proto_val_to_dimension_tuple(model.graph.output[0])))
+	
+	chunk = ''
+
 	for init_vals in model.graph.initializer:
 		# TODO: Remove float_data. Change this to appropriate data type. 
 		model_name_to_val_dict[init_vals.name] = init_vals.float_data
 		model.graph.value_info.append(make_tensor_value_info(init_vals.name, TensorProto.FLOAT, tuple(init_vals.dims)))	
+		chunk += init_vals.name + ' = ' + str(numpy_helper.to_array(init_vals)) + '\n'
+
+	f = open('input_values', 'w') 
+	f.write(chunk)
+	f.close()
+
 
 	preprocess_batch_normalization(graph_def, model_name_to_val_dict)
 
