@@ -621,6 +621,70 @@ class ONNXNodesAST:
 
 		return (innermost_let_ast_node, out_var_count)
 
+		def conv2dtranspose(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST):
+		inputsRef = node.inputs
+		inputShape = value_info[inputsRef[0]][1]
+		filterShape = value_info[inputsRef[1]][1]
+		biasShape = value_info[inputsRef[2]][1]
+		stridesUsed = node.attrs['strides']
+		outputShape = value_info[node.name][1]
+
+		# sometimes there is a bias to be added as well		
+		assert(len(inputsRef)==2 or len(inputsRef)==3)
+		assert(len(stridesUsed)==2)
+		assert(value_info[node.inputs[1]][1][2:] == tuple(node.attrs['kernel_shape']))
+		# verify this order
+		[zPadHLeft, zPadHRight, zPadWLeft, zPadWRight] = node.attrs['pads']
+
+		options = {}
+		options[AST.PaddingKeysDict.FH] = filterShape[2]
+		options[AST.PaddingKeysDict.FW] = filterShape[3]
+		options[AST.PaddingKeysDict.zPadHLeft] = zPadHLeft
+		options[AST.PaddingKeysDict.zPadHRight] = zPadHRight
+		options[AST.PaddingKeysDict.zPadWLeft] = zPadWLeft
+		options[AST.PaddingKeysDict.zPadWRight] = zPadWRight
+		options[AST.PaddingKeysDict.strideH] = stridesUsed[0]
+		options[AST.PaddingKeysDict.strideW] = stridesUsed[1]
+		options[AST.PaddingKeysDict.ConvDim] = 2		
+		options[AST.PaddingKeysDict.outputImgD] = outputShape[2]
+		options[AST.PaddingKeysDict.outputImgH] = outputShape[3]
+
+		assert (inputShape[1] == filterShape[0])
+		# For Input:
+		# [N, CI, H, W] is the Onnx order it should be changed to 
+		# [N, H, W, CI] order 
+
+		reshaped_input_name = get_new_var_name(out_var_count)
+		reshaped_input = get_reshaped_input_ast(inputsRef[0], value_info, node_name_to_out_var_dict)
+		innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, reshaped_input, reshaped_input_name, mtdAST)
+		out_var_count += 1
+		# For filter:
+		# [CI, CO, FH, FW] is the Onnx order it should be changed to 
+		# [FH, FW, CI1, CO] order
+		reshaped_filter_name = get_new_var_name(out_var_count)
+		reshaped_filter = get_reshaped_filter_ast(inputsRef[1], value_info, node_name_to_out_var_dict)
+		innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, reshaped_filter, reshaped_filter_name, mtdAST)
+		out_var_count += 1
+
+		seedot_output_ast =  AST.BOp(AST.ID(reshaped_input_name), getOperatorsIdx('#T'), AST.ID(reshaped_filter_name), options)
+		output_name = get_new_var_name(out_var_count)
+		innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, seedot_output_ast, output_name, mtdAST)
+		out_var_count += 1
+
+		# If there is bias to be added then reshape and add it 
+		if (len(inputsRef) == 3):
+			reshaped_bias_name = get_new_var_name(out_var_count)
+			reshaped_bias = get_reshaped_bias_ast(inputsRef[2], value_info, node_name_to_out_var_dict)
+			innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, reshaped_bias, reshaped_bias_name, mtdAST)
+			out_var_count += 1	
+
+			seedot_output_ast =  AST.BOp(AST.ID(output_name), getOperatorsIdx('+'), AST.ID(reshaped_bias_name), options)
+			output_name = get_new_var_name(out_var_count)
+			innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, seedot_output_ast, output_name, mtdAST)
+			out_var_count += 1
+
+		return (innermost_let_ast_node, out_var_count, output_name)	
+
 	def conv3dtranspose(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST):
 		inputsRef = node.inputs
 		inputShape = value_info[inputsRef[0]][1]
