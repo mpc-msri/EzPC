@@ -4,3 +4,5 @@ debug/
 *.cpp
 *.h
 *.npy
+*.ezpc
+*.h
