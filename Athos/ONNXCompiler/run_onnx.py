@@ -71,7 +71,7 @@ def main():
 		model.graph.value_info.append(make_tensor_value_info(init_vals.name, TensorProto.FLOAT, tuple(init_vals.dims)))	
 		chunk += init_vals.name + ' = ' + str(numpy_helper.to_array(init_vals)) + '\n'
 
-	f = open('input_values', 'w') 
+	f = open('input_values.h', 'w') 
 	f.write(chunk)
 	f.close()
 

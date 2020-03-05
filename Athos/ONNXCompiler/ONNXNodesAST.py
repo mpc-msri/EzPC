@@ -621,7 +621,7 @@ class ONNXNodesAST:
 
 		return (innermost_let_ast_node, out_var_count)
 
-		def conv2dtranspose(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST):
+	def conv2dtranspose(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST):
 		inputsRef = node.inputs
 		inputShape = value_info[inputsRef[0]][1]
 		filterShape = value_info[inputsRef[1]][1]
