@@ -25,6 +25,7 @@
 # 2) Compile the SeeDot AST to ezpc
 # 3) Convert the ezpc code to cpp and then run it on the given dataset
 
+EzPCDir="../../EzPC"
 BITLEN="64"
 SCALINGFACTOR="12"
 COMPILATIONTARGET="CPP"
@@ -32,7 +33,13 @@ ezpcOutputFullFileName="prostate.ezpc"
 compilationTargetLower=$(echo "$COMPILATIONTARGET" | awk '{print tolower($0)}')
 compilationTargetHigher=$(echo "$COMPILATIONTARGET" | awk '{print toupper($0)}')
 
-python3 run_onnx.py models/prostate.onnx 
+# python3 run_onnx.py models/prostate.onnx 
 python3 ../SeeDot/SeeDot.py -p astOutput.pkl --astFile astOutput.pkl --outputFileName "$ezpcOutputFullFileName" 
 
-../../EzPC/EzPC/ezpc.sh "$ezpcOutputFullFileName" --bitlen "$BITLEN" --codegen "$compilationTargetHigher" --disable-tac
+cat "../TFEzPCLibrary/Library${BITLEN}_cpp.ezpc" "../TFEzPCLibrary/Library${BITLEN}_common.ezpc" "$ezpcOutputFullFileName" > temp
+mv temp "$ezpcOutputFullFileName"
+
+cp "$ezpcOutputFullFileName" "$EzPCDir/EzPC"
+cd "$EzPCDir/EzPC"
+eval `opam config env`
+./ezpc.sh "$ezpcOutputFullFileName" --bitlen "$BITLEN" --codegen "$compilationTargetHigher" --disable-tac

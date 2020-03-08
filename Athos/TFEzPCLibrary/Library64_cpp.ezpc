@@ -287,6 +287,23 @@ def void FusedBatchNorm4411(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, 
 	};
 }
 
+def void FusedBatchNorm5511(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int64_al[s1][s2][s3][s4][s5] inArr, int64_al[s5] multArr, int64_al[s5] biasArr, int32_pl consSF, int64_al[s1][s2][s3][s4][s5] outputArr){
+	for i1=[0:s1]{
+		for i2=[0:s2]{
+			for i3=[0:s3]{
+				for i4=[0:s4]{
+						for i5=[0:s5]{
+						int64_al t1 = (inArr[i1][i2][i3][i4][i5] *_al multArr[i5]);
+						int64_al t2 = (t1 >> consSF);
+						outputArr[i1][i2][i3][i4][i5] = t2 + biasArr[i5];
+					};
+				};
+			};
+		};
+	};
+}
+
+
 (**************************)
 def void ReduceMean24(int32_pl outS1, int32_pl outS2, 
 					  int32_pl inS1, int32_pl inS2, int32_pl inS3, int32_pl inS4, 

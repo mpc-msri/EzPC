@@ -65,6 +65,20 @@ def void MatAdd4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int64_al[s1
 	};
 }
 
+def void MatAdd5(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int64_al[s1][s2][s3][s4][s5] A, int64_al[s1][s2][s3][s4][s5] B, int64_al[s1][s2][s3][s4][s5] outArr){
+	for i1=[0:s1]{
+		for i2=[0:s2]{
+			for i3=[0:s3]{
+				for i4=[0:s4]{
+					for i5=[0:s5]{
+						outArr[i1][i2][i3][i4][i5] = A[i1][i2][i3][i4][i5] + B[i1][i2][i3][i4][i5];
+					};
+				};
+			};
+		};
+	};
+}
+
 (**************************)
 def void CreateTensor1(int32_pl s1, int64_pl val, int64_pl[s1] arr){
 	for i1=[0:s1]{
