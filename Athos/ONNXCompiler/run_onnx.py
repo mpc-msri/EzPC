@@ -24,7 +24,13 @@ SOFTWARE.
 '''
 
 import os, sys
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'SeeDot')) #Add SeeDot directory to path
+
+#Add SeeDot directory to path
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'SeeDot')) 
+
+# For this warning: https://stackoverflow.com/questions/47068709/your-cpu-supports-instructions-that-this-tensorflow-binary-was-not-compiled-to-u
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' 
+
 import _pickle as pickle
 import onnx
 import onnx.shape_inference
@@ -35,13 +41,16 @@ from onnx import TensorProto
 from AST.PrintAST import PrintAST 
 from AST.MtdAST import MtdAST
 import math
+import numpy
 from onnx import numpy_helper
+import tensorflow as tf 
 
 import numpy as np
 np.set_printoptions(threshold=np.inf)
 
 DEBUG = False
 out_var_prefix = "J"
+scaling_factor = 24
 
 def proto_val_to_dimension_tuple(proto_val):
 	return tuple([dim.dim_value for dim in proto_val.type.tensor_type.shape.dim])
@@ -52,7 +61,9 @@ def main():
 	if (len(sys.argv) < 2):
 		print("TF python file unspecified.", file=sys.stderr)
 		exit(1)
-	file_path = sys.argv[1]
+	file_name = sys.argv[1]
+	file_path = 'models/' + file_name
+	model_name = file_name[:-5] # name without the '.onnx' extension
 
 	# load the model and extract the graph		
 	model = onnx.load(file_path)
@@ -64,18 +75,34 @@ def main():
 	model.graph.value_info.append(make_tensor_value_info(model.graph.output[0].name, TensorProto.FLOAT, proto_val_to_dimension_tuple(model.graph.output[0])))
 	
 	chunk = ''
+	cnt = 0
+
+	dummy_input = tf.random.uniform([1,1,64,256,256], 0, 1)
+	init_op = tf.initialize_all_variables()
+	with tf.Session() as sess:
+	    sess.run(init_op) #execute init_op
+	    #print the random values that we sample
+	    dummy_input_array = sess.run(dummy_input)
+	    for val in numpy.nditer(numpy_helper.to_array(dummy_input_array)):
+	    	val = int(val*(2**24))
+			chunk += str(val) + '\n'
+			cnt += 1 
+
 
 	for init_vals in model.graph.initializer:
 		# TODO: Remove float_data. Change this to appropriate data type. 
 		model_name_to_val_dict[init_vals.name] = init_vals.float_data
 		model.graph.value_info.append(make_tensor_value_info(init_vals.name, TensorProto.FLOAT, tuple(init_vals.dims)))	
-		chunk += init_vals.name + ' = ' + str(numpy_helper.to_array(init_vals)) + '\n'
-
-	f = open('input_values.h', 'w') 
+		for val in numpy.nditer(numpy_helper.to_array(init_vals)):
+			val = int(val*(2**24))
+			chunk += str(val) + '\n'
+			cnt += 1
+	
+	f = open(model_name + '_input.h', 'w') 
 	f.write(chunk)
 	f.close()
 
-
+	print('Total ' + cnt + ' integers were written in ' + model_name + '_input.h')
 	preprocess_batch_normalization(graph_def, model_name_to_val_dict)
 
 	if(DEBUG):	
@@ -107,7 +134,7 @@ def main():
 
 	PrintAST().visit(program)	
 
-	with open('astOutput.pkl', 'wb') as f:
+	with open(model_name + '.pkl', 'wb') as f:
 		pickle.dump(program, f)
 
 def process_input_variables(program, innermost_let_ast_node, node_name_to_out_var_dict, out_var_count, mtdAST, graph_def, value_info):
