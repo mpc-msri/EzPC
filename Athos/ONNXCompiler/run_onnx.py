@@ -64,6 +64,18 @@ def main():
 	model.graph.value_info.append(make_tensor_value_info(model.graph.output[0].name, TensorProto.FLOAT, proto_val_to_dimension_tuple(model.graph.output[0])))
 	
 	chunk = ''
+	cnt = 0
+
+	dummy_input = tf.random.uniform([1,1,64,256,256], 0, 1)
+	init_op = tf.global_variables_initializer()
+	with tf.Session() as sess:
+	    sess.run(init_op) #execute init_op
+	    #print the random values that we sample
+	    dummy_input_array = sess.run(dummy_input)
+	    for val in numpy.nditer(dummy_input_array):
+    		val = int(val*(2**24))
+    		chunk += str(val) + '\n'
+    		cnt += 1
 
 	for init_vals in model.graph.initializer:
 		# TODO: Remove float_data. Change this to appropriate data type. 
@@ -75,7 +87,7 @@ def main():
 	f.write(chunk)
 	f.close()
 
-
+	print('Total ' + str(cnt) + ' integers were written in ' + model_name + '_input.h')
 	preprocess_batch_normalization(graph_def, model_name_to_val_dict)
 
 	if(DEBUG):	
