@@ -78,16 +78,15 @@ def main():
 	cnt = 0
 
 	dummy_input = tf.random.uniform([1,1,64,256,256], 0, 1)
-	init_op = tf.initialize_all_variables()
+	init_op = tf.global_variables_initializer()
 	with tf.Session() as sess:
 	    sess.run(init_op) #execute init_op
 	    #print the random values that we sample
 	    dummy_input_array = sess.run(dummy_input)
-	    for val in numpy.nditer(numpy_helper.to_array(dummy_input_array)):
-	    	val = int(val*(2**24))
-			chunk += str(val) + '\n'
-			cnt += 1 
-
+	    for val in numpy.nditer(dummy_input_array):
+    		val = int(val*(2**24))
+    		chunk += str(val) + '\n'
+    		cnt += 1
 
 	for init_vals in model.graph.initializer:
 		# TODO: Remove float_data. Change this to appropriate data type. 
@@ -102,7 +101,7 @@ def main():
 	f.write(chunk)
 	f.close()
 
-	print('Total ' + cnt + ' integers were written in ' + model_name + '_input.h')
+	print('Total ' + str(cnt) + ' integers were written in ' + model_name + '_input.h')
 	preprocess_batch_normalization(graph_def, model_name_to_val_dict)
 
 	if(DEBUG):	
