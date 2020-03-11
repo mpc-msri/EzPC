@@ -42,6 +42,9 @@ class ASTVisitor:
 	def visitTransp(self, node:AST.Transp, args=None):
 		self.visit(node.expr, args)
 
+	def visitTranspose(self, node:AST.Transpose, args=None):
+		self.visit(node.expr, args)
+
 	def visitReshape(self, node:AST.Reshape, args=None):
 		self.visit(node.expr, args)
 	
@@ -100,6 +103,8 @@ class ASTVisitor:
 			return self.visitDecl(node, args)
 		elif isinstance(node, AST.Transp):
 			return self.visitTransp(node, args)
+		elif isinstance(node, AST.Transpose):
+			return self.visitTranspose(node, args)
 		elif isinstance(node, AST.Reshape):
 			return self.visitReshape(node, args)
 		elif isinstance(node, AST.Pool):

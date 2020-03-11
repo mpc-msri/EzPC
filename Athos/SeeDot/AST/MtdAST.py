@@ -42,6 +42,10 @@ class MtdAST(ASTVisitor):
 		node.metadata.update(mtd)
 		self.visit(node.expr, mtd)
 
+	def visitTranspose(self, node:AST.Transpose, mtd:dict):
+		node.metadata.update(mtd)
+		self.visit(node.expr, mtd)
+
 	def visitReshape(self, node:AST.Reshape, mtd:dict):
 		node.metadata.update(mtd)
 		self.visit(node.expr, mtd)

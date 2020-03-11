@@ -320,6 +320,19 @@ class Tensor:
                 assert(False)
             self.__valArr = numpy.fromstring(bytes(self.__tensorBytes), dtype).tolist()
         return self.__valArr
+ 
+    def getDType(self):
+        if self.__dtype == DataTypeEnum.DT_FLOAT:
+            dtype = numpy.dtype('<f4')
+        elif self.__dtype == DataTypeEnum.DT_BOOL:
+            dtype = numpy.dtype('bool')
+        elif self.__dtype == DataTypeEnum.DT_INT32:
+            dtype = numpy.dtype('int32')
+        elif self.__dtype == DataTypeEnum.DT_INT64:
+            dtype = numpy.dtype('int64')
+        else:
+            assert(False)
+        return dtype
 
 class MultiValue:
     def __init__(self):
@@ -497,6 +510,12 @@ class Node:
     def getAttrMapRef(self):
         return self.__attr
 
+    def getAttrVal(self, attrName):
+        qName = '"' + attrName + '"'
+        if not qName in self.__attr:
+            return None
+        return self.__attr[qName]
+
     def readAttrFromFilePointer(self, fileP, cnt):
         line = fileP.readline()
         cnt += 1
@@ -576,6 +595,9 @@ class Graph:
         self.__Nodes = {} # Map of (op, Node)
         self.__NodesLi = [] # Sequential list of nodes in the order in which its specified in graph_def.
 
+    def getAllNodes(self):
+        return self.__Nodes
+
     def getAllNodesRef(self):
         return self.__NodesLi
 
@@ -593,7 +615,7 @@ class Graph:
                 curNode = Node()
                 (noPaseError, cnt) = curNode.readFromFilePointer(fileP, cnt)
                 if (noPaseError):
-                    self.__Nodes[curNode.getOp()] = curNode
+                    self.__Nodes[curNode.getName()] = curNode
                     self.__NodesLi.append(curNode)
                 else:
                     print("Error parsing graph dump for node at line =", cnt, file=sys.stderr)

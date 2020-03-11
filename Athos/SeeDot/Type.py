@@ -27,7 +27,6 @@ from functools import reduce
 
 import AST.AST as AST
 from AST.ASTVisitor import ASTVisitor
-
 class Type:
 	pass
 
@@ -99,6 +98,20 @@ class InferType(ASTVisitor):
 		[m, n] = exprType.shape
 		node.type = Tensor([n, m])
 
+		return node.type
+
+	def visitTranspose(self, node:AST.Transpose, args=None):
+		node.expr.gamma = dict(node.gamma)
+		exprType = self.visit(node.expr)
+
+		assert isTensor(exprType)
+
+		perm = node.perm
+		shape = exprType.shape
+		new_shape = []
+		for i in perm:
+			new_shape.append(shape[i])
+		node.type = Tensor(new_shape)
 		return node.type
 
 	def visitReshape(self, node:AST.Reshape, args=None):
