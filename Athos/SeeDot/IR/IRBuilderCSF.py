@@ -184,6 +184,38 @@ class IRBuilderCSF(ASTVisitor):
 		prog_2 = IRUtil.prog_merge(IR.Prog([IR.Decl(expr_2.idf, typ_2)]), prog_2)
 		return (prog_2, expr_2)
 
+	def visitTranspose(self, node:AST.Transpose, args=None):
+		(inp_prog, inp_arr) = self.visit(node.expr)
+		inp_type = node.expr.type
+		out_type = node.type
+		inp_iters = self.getTempIterators(inp_type.dim)
+		out_iters = []
+		perm = node.perm
+		for i in perm:
+			out_iters.append(inp_iters[i])
+		out_arr = self.getTempVar()
+		out_arr_expr = IRUtil.addIndex(out_arr, out_iters)
+		inp_arr_expr = IRUtil.addIndex(inp_arr, inp_iters)
+		assign_expr = IR.Assn(out_arr_expr, inp_arr_expr)
+		loop = IRUtil.loop(inp_type.shape, inp_iters, [assign_expr])
+		# Finalize
+		comment1 = IR.Comment(str(node.metadata))
+		comment2 = IR.Comment("transpose(" + inp_arr.idf + ", [" + ', '.join(str(e) for e in inp_type.shape) + "] --> [" + ', '.join(str(e) for e in out_type.shape) + "])")
+		transpose_prog = IR.Prog([comment1, comment2] + loop)
+		final_prog = IRUtil.prog_merge(inp_prog, transpose_prog)
+
+		# Update context
+		self.decls[out_arr.idf] = [out_type]
+
+		# Update declarations
+		self.decls.update(dict((var.idf, [Type.Int(), 'public']) for var in inp_iters))
+
+		for var in inp_iters:
+			final_prog = IRUtil.prog_merge(IR.Prog([IR.Decl(var.idf, Type.Int(), isSecret="public")]), final_prog)
+		final_prog = IRUtil.prog_merge(IR.Prog([IR.Decl(out_arr.idf, out_type)]), final_prog)
+
+		return (final_prog, out_arr)
+
 	def visitReshape(self, node:AST.Reshape, args=None):
 		(prog_1, expr_1) = self.visit(node.expr)
 
@@ -350,12 +382,71 @@ class IRBuilderCSF(ASTVisitor):
 
 	def visitBOp(self, node:AST.BOp, args=None):
 		op = node.op
-		if (op in [AST.Operators.ADD, AST.Operators.SUB, AST.Operators.Equal, AST.Operators.Max]): return self.visitBopAddOrSubLike(node)
+		if (op in [AST.Operators.ADD, AST.Operators.SUB]): return self.visitBopAddOrSub(node)
+		elif (op in [AST.Operators.Equal, AST.Operators.Max]): return self.visitBopAddOrSubLike(node)
 		elif (op in [AST.Operators.ElemWiseMul, AST.Operators.ElemWiseDiv]): return self.visitBopElemWiseOp(node)
 		elif op == AST.Operators.MUL: return self.visitBopMul(node)
 		elif op == AST.Operators.CONV: return self.visitBopConv(node)
 		elif op == AST.Operators.CONVTRANSPOSE: return self.visitBopConvTranspose(node)
 		else: assert False
+
+	def visitBopAddOrSub(self, node:AST.BOp, args=None):
+		(prog_1, expr_1) = self.visit(node.expr1)
+		(prog_2, expr_2) = self.visit(node.expr2)
+
+		# op_ir, typ_3
+		op = node.op
+		if   (op == AST.Operators.ADD):
+			(op_ir, op_fn) = (IR.Op.Op['+'], operator.add)
+			funcName = "MatAdd"
+		elif (op == AST.Operators.SUB):
+			(op_ir, op_fn) = (IR.Op.Op['-'], operator.sub)
+			funcName = "MatSub"
+		else:
+			assert False
+
+		typ_3 = node.type
+
+		# e : Int
+		if Type.isInt(typ_3):
+			prog_3 = IRUtil.prog_merge(prog_1, prog_2)
+			expr_3 = IR.IntBop(expr_1, op_ir, expr_2)
+		# e : Tensor() -- float, or Tensor(..)
+		else:
+			## TODO : Hack for techfest
+			if (node.type.dim != node.expr1.type.dim):
+				# This needs broadcast of expr1
+				assert False # For now this shouldn't occur
+			if (node.type.dim != node.expr2.type.dim):
+				# This needs broadcast of expr2
+				funcName += 'BroadCast'
+
+			# decl fresh vars
+			expr_3 = self.getTempVar()
+
+			cmd0 = IR.Comment(expr_1.idf + ' ' + op_ir.name + ' ' + expr_2.idf)
+			outputShape = typ_3.shape
+			argsDict = OrderedDict()
+			inp1_shape = node.expr1.type.shape
+			inp2_shape = node.expr2.type.shape
+			for ii,curDimSize in enumerate(inp1_shape):
+				argsDict[IR.Int(curDimSize, 32)] = "size_" + str(ii)
+			for ii,curDimSize in enumerate(inp2_shape):
+				argsDict[IR.Int(curDimSize, 32)] = "size_" + str(ii)
+			for ii,curDimSize in enumerate(outputShape):
+				argsDict[IR.Int(curDimSize, 32)] = "size_" + str(ii)
+			argsDict[expr_1] = "A"
+			argsDict[expr_2] = "B"
+			argsDict[expr_3] = "C"
+			funcCall = IR.FuncCall(funcName + self.varNameDelim + str(len(outputShape)),
+									argsDict
+									)
+			comment = IR.Comment(str(node.metadata))
+			prog_3 = IRUtil.prog_merge(prog_1, prog_2, IR.Prog([comment, cmd0, funcCall]))
+			self.decls[expr_3.idf] = [typ_3]
+			prog_3 = IRUtil.prog_merge(IR.Prog([IR.Decl(expr_3.idf, node.type)]), prog_3)
+
+		return (prog_3, expr_3)
 
 	def visitBopAddOrSubLike(self, node:AST.BOp, args=None):
 		(prog_1, expr_1) = self.visit(node.expr1)
@@ -435,6 +526,13 @@ class IRBuilderCSF(ASTVisitor):
 		cmd0 = IR.Comment(expr_1.idf + ' ' + op_ir.name + ' ' + expr_2.idf)
 		outputShape = typ_3.shape
 		argsDict = OrderedDict()
+		inp1_shape = node.expr1.type.shape
+		inp2_shape = node.expr2.type.shape
+		print("Input shapes = ", inp1_shape, inp2_shape)
+		for ii,curDimSize in enumerate(inp1_shape):
+			argsDict[IR.Int(curDimSize, 32)] = "size_" + str(ii)
+		for ii,curDimSize in enumerate(inp2_shape):
+			argsDict[IR.Int(curDimSize, 32)] = "size_" + str(ii)
 		for ii,curDimSize in enumerate(outputShape):
 			argsDict[IR.Int(curDimSize, 32)] = "size_" + str(ii)
 		argsDict[expr_1] = "A"

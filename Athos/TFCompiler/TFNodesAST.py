@@ -124,6 +124,13 @@ class TFNodesAST:
 							TFNodesAST.getOperatorsIdx('+'),
 							AST.ID(dictNodeNameToOutVarStr[inputsRef[1]])
 							))
+	def AddV2(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
+		inputsRef = curNode.getInputsRef()
+		assert(len(inputsRef) == 2)
+		return (None, AST.BOp(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]),
+							TFNodesAST.getOperatorsIdx('+'),
+							AST.ID(dictNodeNameToOutVarStr[inputsRef[1]])
+							))
 
 	def Mul(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
@@ -755,3 +762,15 @@ class TFNodesAST:
 								TFNodesAST.getOperatorsIdx('#T'),
 								AST.ID(dictNodeNameToOutVarStr[inputsRef[1]]), 
 								options))
+
+	def Transpose(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
+		inputsRef = curNode.getInputsRef()
+		assert(len(inputsRef) == 2)
+		permNodeName = inputsRef[1]
+		# We need to fetch the tensor value of the perm Node
+		permNode = graph.__getitem__(permNodeName)
+		permTensor = permNode.getAttrVal("value").getTensor()
+		permList = permTensor.getContentAsValArr()
+		assert(permTensor.getDType().kind == "i")
+		assert(permTensor.getShapeRef().getRank() == 1)
+		return (None, AST.Transpose(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]), permList))

@@ -51,6 +51,12 @@ class PrintAST(ASTVisitor):
 		self.visit(node.expr)
 		print("^T", end=' ')
 
+	def visitTranspose(self, node:AST.Transpose, args=None):
+		node.expr.depth = node.depth + 1
+		print(indent * node.depth, end=' ')
+		self.visit(node.expr)
+		print("^Transpose", end=' ')
+
 	def visitReshape(self, node:AST.Reshape, args=None):
 		node.expr.depth = node.depth + 1
 		print(indent * node.depth, "reshape", end=' ')
