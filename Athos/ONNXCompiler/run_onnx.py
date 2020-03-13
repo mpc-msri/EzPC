@@ -77,7 +77,7 @@ def main():
 	chunk = ''
 	cnt = 0
 
-	dummy_input = tf.random.uniform([1,1,64,256,256], 0, 1)
+	dummy_input = tf.random.uniform([1,3,224,224], 0, 1)
 	init_op = tf.global_variables_initializer()
 	with tf.Session() as sess:
 	    sess.run(init_op) #execute init_op

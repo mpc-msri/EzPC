@@ -25,17 +25,20 @@
 # 2) Compile the SeeDot AST to ezpc
 # 3) Convert the ezpc code to cpp and then run it on the given dataset
 
+modelName=$1
+
 EzPCDir="../../EzPC"
 ONNX_dir="../../Athos/ONNXCompiler"
 BITLEN="64"
 SCALINGFACTOR="24"
 COMPILATIONTARGET="CPP"
-ezpcOutputFullFileName="prostate.ezpc"
+ezpcOutputFullFileName=${modelName}'.ezpc'
 compilationTargetLower=$(echo "$COMPILATIONTARGET" | awk '{print tolower($0)}')
 compilationTargetHigher=$(echo "$COMPILATIONTARGET" | awk '{print toupper($0)}')
-finalCodeOutputFileName="prostate0.cpp"
-inputFileName="prostate_input.h"
-seedotASTName="prostate.pkl"
+finalCodeOutputFileName=${modelName}'0.cpp'
+inputFileName=${modelName}'_input.h'
+seedotASTName=${modelName}'.pkl'
+
 
 if [ -f "$inputFileName" ] && [ -f "$seedotASTName" ]; then
     echo "$inputFileName and $seedotASTName already exist, skipping run_onnx"
@@ -43,7 +46,7 @@ if [ -f "$inputFileName" ] && [ -f "$seedotASTName" ]; then
     ls
 else 
     echo "Starting run_onnx"
-    python3 "run_onnx.py" "prostate.onnx" 
+    python3 "run_onnx.py" ${modelName}'.onnx' 
     echo "Finished run_onnx"
 fi
 
@@ -60,8 +63,8 @@ eval `opam config env`
 if [ "$compilationTargetLower" == "cpp" ]; then
 	# cd "$fullDirPath"
 	mv "$finalCodeOutputFileName" "$ONNX_dir"
-	rm "$EzPCDir/EzPC/prostate*"
+	rm '$EzPCDir/EzPC/'${modelName}'*'
 	cd "$ONNX_dir"
-	g++ -O3 "$finalCodeOutputFileName" -o "prostate.out"
+	g++ -O3 "$finalCodeOutputFileName" -o ${modelName}'.out'
 	echo -e "All compilation done."
 fi
