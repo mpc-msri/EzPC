@@ -25,16 +25,33 @@
 # 2) Compile the SeeDot AST to ezpc
 # 3) Convert the ezpc code to cpp and then run it on the given dataset
 
+modelName=$1
+
 EzPCDir="../../EzPC"
 BITLEN="64"
 SCALINGFACTOR="12"
 COMPILATIONTARGET="CPP"
-ezpcOutputFullFileName="prostate.ezpc"
+ezpcOutputFullFileName=${modelName}'.ezpc'
 compilationTargetLower=$(echo "$COMPILATIONTARGET" | awk '{print tolower($0)}')
 compilationTargetHigher=$(echo "$COMPILATIONTARGET" | awk '{print toupper($0)}')
 
-# python3 run_onnx.py models/prostate.onnx 
 python3 ../SeeDot/SeeDot.py -p astOutput.pkl --astFile astOutput.pkl --outputFileName "$ezpcOutputFullFileName" 
+finalCodeOutputFileName=${modelName}'0.cpp'
+inputFileName=${modelName}'_input.h'
+seedotASTName=${modelName}'.pkl'
+
+
+if [ -f "$inputFileName" ] && [ -f "$seedotASTName" ]; then
+    echo "$inputFileName and $seedotASTName already exist, skipping run_onnx"
+    cp '$inputFileName' 'models/$inputFileName'
+    ls
+else 
+    echo "Starting run_onnx"
+    python3 "run_onnx.py" ${modelName}'.onnx' 
+    echo "Finished run_onnx"
+fi
+
+python3 ../SeeDot/SeeDot.py -p $seedotASTName --astFile $seedotASTName --outputFileName "$ezpcOutputFullFileName" --consSF ${SCALINGFACTOR}
 
 cat "../TFEzPCLibrary/Library${BITLEN}_cpp.ezpc" "../TFEzPCLibrary/Library${BITLEN}_common.ezpc" "$ezpcOutputFullFileName" > temp
 mv temp "$ezpcOutputFullFileName"
@@ -43,3 +60,12 @@ cp "$ezpcOutputFullFileName" "$EzPCDir/EzPC"
 cd "$EzPCDir/EzPC"
 eval `opam config env`
 ./ezpc.sh "$ezpcOutputFullFileName" --bitlen "$BITLEN" --codegen "$compilationTargetHigher" --disable-tac
+
+if [ "$compilationTargetLower" == "cpp" ]; then
+	# cd "$fullDirPath"
+	mv "$finalCodeOutputFileName" "$ONNX_dir"
+	rm '$EzPCDir/EzPC/'${modelName}'*'
+	cd "$ONNX_dir"
+	g++ -O3 "$finalCodeOutputFileName" -o ${modelName}'.out'
+	echo -e "All compilation done."
+fi
