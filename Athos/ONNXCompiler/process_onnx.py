@@ -61,22 +61,19 @@ def main():
 	model.graph.value_info.append(make_tensor_value_info(model.graph.input[0].name, TensorProto.FLOAT, common.proto_val_to_dimension_tuple(model.graph.input[0])))
 	model.graph.value_info.append(make_tensor_value_info(model.graph.output[0].name, TensorProto.FLOAT, common.proto_val_to_dimension_tuple(model.graph.output[0])))
 	
-	chunk = ''
-	cnt = 0
-	
-	input_array = numpy.load(model_name+'_input.npy')	
-	for val in numpy.nditer(input_array):
-		val = int(val*(2**24))
-		chunk += str(val) + '\n'
-		cnt += 1
+	input_array = numpy.load(model_name+'_input.npy')
+	(chunk, cnt) = common.numpy_float_array_to_fixed_point_val_str(input_array, scaling_factor)
 
 	for init_vals in model.graph.initializer:
 		# TODO: Remove float_data. Change this to appropriate data type. 
 		model_name_to_val_dict[init_vals.name] = init_vals.float_data
 		model.graph.value_info.append(make_tensor_value_info(init_vals.name, TensorProto.FLOAT, tuple(init_vals.dims)))	
 		chunk += init_vals.name + ' = ' + str(numpy_helper.to_array(init_vals)) + '\n'
+		(chunk_1, cnt_1) = common.numpy_float_array_to_fixed_point_val_str(numpy_helper.to_array(init_vals), scaling_factor)
+		chunk += chunk_1
+		cnt += cnt_1
 
-	f = open('input_values.h', 'w') 
+	f = open(model_name + '_input.h', 'w') 
 	f.write(chunk)
 	f.close()
 
