@@ -43,7 +43,7 @@ from AST.MtdAST import MtdAST
 import math
 import numpy
 from onnx import numpy_helper
-import tensorflow as tf 
+import common
 
 import numpy as np
 np.set_printoptions(threshold=np.inf)
@@ -51,9 +51,6 @@ np.set_printoptions(threshold=np.inf)
 DEBUG = False
 out_var_prefix = "J"
 scaling_factor = 24
-
-def proto_val_to_dimension_tuple(proto_val):
-	return tuple([dim.dim_value for dim in proto_val.type.tensor_type.shape.dim])
 
 def main():
 	sys.setrecursionlimit(10000)
@@ -71,22 +68,17 @@ def main():
 
 	model_name_to_val_dict = {}
 	# Before shape inference (model.graph.value_info) should have shapes of all the variables and constants 
-	model.graph.value_info.append(make_tensor_value_info(model.graph.input[0].name, TensorProto.FLOAT, proto_val_to_dimension_tuple(model.graph.input[0])))
-	model.graph.value_info.append(make_tensor_value_info(model.graph.output[0].name, TensorProto.FLOAT, proto_val_to_dimension_tuple(model.graph.output[0])))
+	model.graph.value_info.append(make_tensor_value_info(model.graph.input[0].name, TensorProto.FLOAT, common.proto_val_to_dimension_tuple(model.graph.input[0])))
+	model.graph.value_info.append(make_tensor_value_info(model.graph.output[0].name, TensorProto.FLOAT, common.proto_val_to_dimension_tuple(model.graph.output[0])))
 	
 	chunk = ''
 	cnt = 0
-
-	dummy_input = tf.random.uniform([1,3,224,224], 0, 1)
-	init_op = tf.global_variables_initializer()
-	with tf.Session() as sess:
-	    sess.run(init_op) #execute init_op
-	    #print the random values that we sample
-	    dummy_input_array = sess.run(dummy_input)
-	    for val in numpy.nditer(dummy_input_array):
-    		val = int(val*(2**24))
-    		chunk += str(val) + '\n'
-    		cnt += 1
+	
+	input_array = numpy.load(model_name+'_input.npy')	
+	for val in numpy.nditer(input_array):
+		val = int(val*(2**24))
+		chunk += str(val) + '\n'
+		cnt += 1
 
 	for init_vals in model.graph.initializer:
 		# TODO: Remove float_data. Change this to appropriate data type. 
@@ -118,7 +110,7 @@ def main():
 	# value_info: dictionary of name -> (type, dimension tuple)
 	value_info = {}
 	for val in inferred_model.graph.value_info:
-		value_info[val.name] = (val.type.tensor_type.elem_type, proto_val_to_dimension_tuple(val))
+		value_info[val.name] = (val.type.tensor_type.elem_type, common.proto_val_to_dimension_tuple(val))
 
 	# Iterate through the ONNX graph nodes and translate them to SeeDot AST nodes	
 	program = None

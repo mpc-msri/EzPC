@@ -2,3 +2,4 @@ models/
 *.ezpc
 *.cpp
 *.h
+*.npy
