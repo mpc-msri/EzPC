@@ -28,6 +28,7 @@
 modelName=$1
 
 EzPCDir="../../EzPC"
+ONNX_dir="../../Athos/ONNXCompiler"	
 BITLEN="64"
 SCALINGFACTOR="12"
 COMPILATIONTARGET="CPP"
@@ -40,14 +41,25 @@ finalCodeOutputFileName=${modelName}'0.cpp'
 inputFileName=${modelName}'_input.h'
 seedotASTName=${modelName}'.pkl'
 
+# modelname_input.npy and modelname_output.npy
+onnxInputFileName=${modelName}'_input.npy'
+onnxOutputFileName=${modelName}'_output.npy'
+
+if [ -f "$onnxInputFileName" ] && [ -f "$onnxOutputFileName" ]; then
+    echo "$onnxInputFileName and $onnxOutputFileName already exist, skipping onnx run"
+else 
+    echo "Starting onnx run to gemerate input and output"
+    python3 "onnx_run.py" ${modelName}'.onnx' 
+    echo "Finished run_onnx"
+fi
+
 
 if [ -f "$inputFileName" ] && [ -f "$seedotASTName" ]; then
-    echo "$inputFileName and $seedotASTName already exist, skipping run_onnx"
+    echo "$inputFileName and $seedotASTName already exist, skipping process_onnx"
     cp '$inputFileName' 'models/$inputFileName'
-    ls
 else 
     echo "Starting run_onnx"
-    python3 "run_onnx.py" ${modelName}'.onnx' 
+    python3 "process_onnx.py" ${modelName}'.onnx' 
     echo "Finished run_onnx"
 fi
 
