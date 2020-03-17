@@ -21,6 +21,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 '''
+import os
+import _pickle as pickle
 
 # Target word length.
 
@@ -66,3 +68,14 @@ def copy_dict(dict_src:dict, diff={}):
 # z = [y1,y2,..] = [[x1,..], [x2,..], ..] --> [x1,.., x2,.., ..]
 def flatten(z:list): 
 	return [x for y in z for x in y]
+
+def write_debug_info(name_mapping):
+	if not os.path.exists('debug'):
+		os.makedirs('debug')	
+
+	with open('debug/seedot_ezpc_name_map.pkl', 'wb') as f:
+		pickle.dump(name_mapping, f)
+
+	with open('debug/seedot_ezpc_name_map.txt', 'w') as f:
+		for val in name_mapping:
+			f.write(val + '   ' + name_mapping[val] + '\n')		

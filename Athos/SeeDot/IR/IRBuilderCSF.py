@@ -40,12 +40,14 @@ class IRBuilderCSF(ASTVisitor):
 		# For tracking temp variables
 		self._var_cnt = 0
 		self._iter_cnt = 0
-
 		# Global variables
 		self.decls = {} #Mapping of (identifier name (string) -> list of [type, secret/public variable, bitlen of decl])
 						#	The 2nd arg can be either 'secret' or 'public'.
 						#	If public/secret unspecified, default to 'secret'.
 						#	The 3rd arg is used to specify the bitlen of the decl.
+		
+		# Name mapping from SeeDot names to new names is useful for debugging
+		self.name_mapping = {}
 
 	def getConsSF(self):
 		return Util.Config.consSF
@@ -848,6 +850,7 @@ class IRBuilderCSF(ASTVisitor):
 		(prog_1, expr_1) = self.visit(node.decl)
 		typ_1 = node.decl.type
 		idf = node.name.name
+		self.name_mapping[idf] = expr_1.idf	
 		(prog_2, expr_2) = self.visit(node.expr)
 		prog_2 = prog_2.subst(idf, expr_1)
 		expr_2 = expr_2.subst(idf, expr_1)

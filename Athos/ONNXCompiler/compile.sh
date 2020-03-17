@@ -48,7 +48,7 @@ if [ -f "$onnxInputFileName" ] && [ -f "$onnxOutputFileName" ]; then
 else 
     echo "Starting onnx run to gemerate input and output"
     python3 "onnx_run.py" ${modelName}'.onnx' 
-    echo "Finished run_onnx"
+    echo "Finished onnx run"
 fi
 
 
@@ -56,12 +56,14 @@ if [ -f "$inputFileName" ] && [ -f "$seedotASTName" ]; then
     echo "$inputFileName and $seedotASTName already exist, skipping process_onnx"
     cp '$inputFileName' 'models/$inputFileName'
 else 
-    echo "Starting run_onnx"
+    echo "Starting process_onnx"
     python3 "process_onnx.py" ${modelName}'.onnx' 
-    echo "Finished run_onnx"
+    echo "Finished process_onnx"
 fi
 
 python3 ../SeeDot/SeeDot.py -p $seedotASTName --astFile $seedotASTName --outputFileName "$ezpcOutputFullFileName" --consSF ${SCALINGFACTOR}
+
+python3 -c 'import common; common.merge_name_map()'
 
 cat "../TFEzPCLibrary/Library${BITLEN}_cpp.ezpc" "../TFEzPCLibrary/Library${BITLEN}_common.ezpc" "$ezpcOutputFullFileName" > temp
 mv temp "$ezpcOutputFullFileName"
