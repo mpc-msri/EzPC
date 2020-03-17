@@ -6,3 +6,7 @@
 *.ezpc
 *.cpp
 __pycache__/
+=======
+*__temp1.ezpc
+*__temp2.ezpc
+__pycache__/

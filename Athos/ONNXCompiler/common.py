@@ -23,6 +23,8 @@ SOFTWARE.
 
 '''
 import numpy
+import os
+import _pickle as pickle
 
 def proto_val_to_dimension_tuple(proto_val):
 	return tuple([dim.dim_value for dim in proto_val.type.tensor_type.shape.dim])
@@ -35,3 +37,22 @@ def numpy_float_array_to_fixed_point_val_str(input_array, scale):
 		chunk += str(val) + '\n'
 		cnt += 1
 	return (chunk, cnt)	
+
+def write_debug_info(node_name_to_out_var_dict):
+	if not os.path.exists('debug'):
+		os.makedirs('debug')	
+
+	with open('debug/onnx_seedot_name_map.pkl', 'wb') as f:
+		pickle.dump(node_name_to_out_var_dict, f)	
+
+	with open('debug/onnx_seedot_name_map.txt', 'w') as f:
+		for val in node_name_to_out_var_dict:
+			f.write(val + '   ' + node_name_to_out_var_dict[val] + '\n')	
+
+def merge_name_map():
+	onnx_seedot_name_map = pickle.load(open('debug/onnx_seedot_name_map.pkl', 'rb'))
+	seedot_ezpc_name_map = pickle.load(open('debug/seedot_ezpc_name_map.pkl', 'rb'))
+
+	with open('debug/onnx_ezpc_name_map.txt', 'w') as f:
+		for val in onnx_seedot_name_map:
+			f.write(val + '   ' + seedot_ezpc_name_map[onnx_seedot_name_map[val]])			

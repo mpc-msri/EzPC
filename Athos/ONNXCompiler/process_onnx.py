@@ -108,6 +108,8 @@ def main():
 	process_onnx_nodes(innermost_let_ast_node, node_name_to_out_var_dict, out_var_count, mtdAST, graph_def, value_info)
 
 	PrintAST().visit(program)	
+	
+	common.write_debug_info(node_name_to_out_var_dict)
 
 	with open('astOutput.pkl', 'wb') as f:
 		pickle.dump(program, f)

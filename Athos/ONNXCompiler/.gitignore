@@ -3,7 +3,6 @@ debug/
 *.ezpc
 *.cpp
 *.h
-*.npy
 *.ezpc
 *.h
 *.npy

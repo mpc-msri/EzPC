@@ -99,6 +99,8 @@ class Compiler:
 		compiler = IRBuilderCSF()
 		res = compiler.visit(ast)
 
+		Util.write_debug_info(compiler.name_mapping) 
+
 		# Insert a generic start_computation and end_computation function call after all input IR statements.
 		res = self.insertStartEndFunctionCalls(res);
 
