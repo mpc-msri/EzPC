@@ -42,6 +42,7 @@ class MainDriver:
 		parser.add_argument("--disableLivenessOpti", default=False, type=bool, help="Disable liveness optimization.")
 		parser.add_argument("--disableAllOpti", default=False, type=bool, help="Disable all optimizations.")
 		parser.add_argument("--outputFileName", help="Name of the output file with extension (Donot include folder path).")
+		parser.add_argument("--debugVar", help="Name of the onnx node to be debugged")
 		
 		self.args = parser.parse_args()
 
@@ -67,7 +68,8 @@ class MainDriver:
 					   self.args.outputFileName,
 					   self.args.disableRMO,
 					   self.args.disableLivenessOpti,
-					   self.args.disableAllOpti
+					   self.args.disableAllOpti,
+					   self.args.debugVar
 					   )
 		obj.run()
 
