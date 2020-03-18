@@ -26,6 +26,7 @@
 # 3) Convert the ezpc code to cpp and then run it on the given dataset
 
 modelName=$1
+debugOnnxNode=$2
 
 EzPCDir="../../EzPC"
 ONNX_dir="../../Athos/ONNXCompiler"	
@@ -43,27 +44,27 @@ seedotASTName=${modelName}'.pkl'
 onnxInputFileName=${modelName}'_input.npy'
 onnxOutputFileName=${modelName}'_output.npy'
 
-if [ -f "$onnxInputFileName" ] && [ -f "$onnxOutputFileName" ]; then
-    echo "$onnxInputFileName and $onnxOutputFileName already exist, skipping onnx run"
-else 
-    echo "Starting onnx run to gemerate input and output"
-    python3 "onnx_run.py" ${modelName}'.onnx' 
-    echo "Finished onnx run"
-fi
-
-
-if [ -f "$inputFileName" ] && [ -f "$seedotASTName" ]; then
+if [ -f "$inputFileName" ] && [ -f "$seedotASTName" ] && [ -z "$debugOnnxNode" ]; then
     echo "$inputFileName and $seedotASTName already exist, skipping process_onnx"
-    cp '$inputFileName' 'models/$inputFileName'
 else 
+	echo "Starting onnx run to gemerate input and output"
+	python3 "onnx_run.py" ${modelName}'.onnx' ${debugOnnxNode}
+	echo "Finished onnx run"
     echo "Starting process_onnx"
     python3 "process_onnx.py" ${modelName}'.onnx' 
     echo "Finished process_onnx"
 fi
 
-python3 ../SeeDot/SeeDot.py -p $seedotASTName --astFile $seedotASTName --outputFileName "$ezpcOutputFullFileName" --consSF ${SCALINGFACTOR}
+if [ -z "$debugOnnxNode" ]; then 
+	python3 ../SeeDot/SeeDot.py -p $seedotASTName --astFile $seedotASTName --outputFileName "$ezpcOutputFullFileName" --consSF ${SCALINGFACTOR}
+else 	
+	debugSeedotNode=$(python3 -c "import common; common.get_seedot_name_from_onnx_name(\"${debugOnnxNode}\")")
+	echo "${debugSeedotNode} is the corresponding SeeDot name"
+	python3 ../SeeDot/SeeDot.py -p $seedotASTName --astFile $seedotASTName --outputFileName "$ezpcOutputFullFileName" --consSF ${SCALINGFACTOR} --debugVar ${debugSeedotNode}	
+fi 
 
 python3 -c 'import common; common.merge_name_map()'
+
 
 cat "../TFEzPCLibrary/Library${BITLEN}_cpp.ezpc" "../TFEzPCLibrary/Library${BITLEN}_common.ezpc" "$ezpcOutputFullFileName" > temp
 mv temp "$ezpcOutputFullFileName"
@@ -79,6 +80,9 @@ if [ "$compilationTargetLower" == "cpp" ]; then
 	rm '$EzPCDir/EzPC/'${modelName}'*'
 	cd "$ONNX_dir"
 	g++ -O3 "$finalCodeOutputFileName" -o ${modelName}'.out'
+	rm "debug/cpp_output_raw.txt"
+	eval './'${modelName}'.out' < ${inputFileName} > "debug/cpp_output_raw.txt"
+	python3 -c "import common; common.parse_output(${SCALINGFACTOR})"
 	echo -e "All compilation done."
 fi
 

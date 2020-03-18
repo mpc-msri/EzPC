@@ -38,6 +38,12 @@ def numpy_float_array_to_fixed_point_val_str(input_array, scale):
 		cnt += 1
 	return (chunk, cnt)	
 
+def numpy_float_array_to_float_val_str(input_array):
+	chunk = ''
+	for val in numpy.nditer(input_array):
+		chunk += str(val) + '\n'
+	return chunk		
+
 def write_debug_info(node_name_to_out_var_dict):
 	if not os.path.exists('debug'):
 		os.makedirs('debug')	
@@ -55,4 +61,19 @@ def merge_name_map():
 
 	with open('debug/onnx_ezpc_name_map.txt', 'w') as f:
 		for val in onnx_seedot_name_map:
-			f.write(val + '   ' + seedot_ezpc_name_map[onnx_seedot_name_map[val]])			
+			f.write(val + '   ' + seedot_ezpc_name_map[onnx_seedot_name_map[val]])	
+
+def get_seedot_name_from_onnx_name(onnx_name):
+	onnx_seedot_name_map = pickle.load(open('debug/onnx_seedot_name_map.pkl', 'rb'))
+	print(onnx_seedot_name_map[onnx_name])
+
+def parse_output(scale):
+	f = open('debug/cpp_output_raw.txt', 'r')
+	g = open('debug/cpp_output.txt', 'w')
+	chunk = ''
+	for line in f:	
+		if line.rstrip().replace('-','0').isdigit():
+			val = float(line.rstrip())
+			val = val/(2**scale)
+			chunk += str(val) + '\n' 
+	g.write(chunk)		

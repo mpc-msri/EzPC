@@ -56,10 +56,14 @@ if (len(sys.argv) > 2):
 	sess = onnxruntime.InferenceSession(file_path + '_1') 
 	pred = sess.run([intermediate_layer_value_info.name], {'data': x})
 	np.save(model_name + '_debug', pred)
+	with open('debug/'+ model_name + '_onnx_debug.txt', 'w') as f:
+		f.write(common.numpy_float_array_to_float_val_str(pred))
 	print("Saving the onnx runtime intermediate output for " + intermediate_layer_value_info.name)
 	exit() 
 
 pred = sess.run(None, {'data': x})
 np.save(model_name + '_output', pred)
+with open('debug/'+ model_name + '_onnx_output.txt', 'w') as f:
+		f.write(common.numpy_float_array_to_float_val_str(pred))
 output_dims = common.proto_val_to_dimension_tuple(model.graph.output[0])
 print("Saving the onnx runtime output of dimension " + str(output_dims))

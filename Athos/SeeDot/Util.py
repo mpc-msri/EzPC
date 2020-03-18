@@ -52,6 +52,7 @@ class Config:
 	disableRMO = None
 	disableLivenessOpti = None
 	disableAllOpti = None
+	debugOnnx = None
 
 ###### Helper functions ######
 def loadASTFromFile():
