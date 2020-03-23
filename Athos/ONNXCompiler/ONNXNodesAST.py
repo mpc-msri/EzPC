@@ -130,24 +130,30 @@ def getOperatorsIdx(token):
 def get_seedot_shape_order(old_shape):
 	if(len(old_shape) == 4):
 		# Case when spatial dimension is 2
-		return ([old_shape[0], old_shape[2], old_shape[3], old_shape[1]], [1, 3, 4, 2])	
+		# inverse of [1, 3, 4, 2] is [1, 4, 2, 3]
+		return ([old_shape[0], old_shape[2], old_shape[3], old_shape[1]], [1, 4, 2, 3])	
 	else:
 		# Casr when spatial dimension is 3 	
-		return ([old_shape[0], old_shape[2], old_shape[3], old_shape[4], old_shape[1]], [1, 3, 4, 5, 2])
+		# inverse of [1, 3, 4, 5, 2] is [1, 5, 2, 3, 4]
+		return ([old_shape[0], old_shape[2], old_shape[3], old_shape[4], old_shape[1]], [1, 5, 2, 3, 4])
 
 def get_seedot_filter_shape_order(filter_shape):
 	if(len(filter_shape) == 4):
 		# Case when spatial dimension is 2
-		return ([filter_shape[2], filter_shape[3], filter_shape[1], filter_shape[0]], [3, 4, 2, 1])	
+		# inverse of [3, 4, 2, 1] is [4, 3, 1, 2]
+		return ([filter_shape[2], filter_shape[3], filter_shape[1], filter_shape[0]], [4, 3, 1, 2])	
 	else:
 		# Casr when spatial dimension is 3 	
-		return ([filter_shape[2], filter_shape[3], filter_shape[4], filter_shape[1], filter_shape[0]], [3, 4, 5, 2, 1])		
+		# inverse of [3, 4, 5, 2, 1] is [5, 4, 1, 2, 3]
+		return ([filter_shape[2], filter_shape[3], filter_shape[4], filter_shape[1], filter_shape[0]], [5, 4, 1, 2, 3])		
 
 def get_onnx_order(onnx_shape):
 	if(len(onnx_shape) == 4):
-		return [1, 4, 2, 3]
+		# inverse of [1, 4, 2, 3] is [1, 3, 4, 2]
+		return [1, 3, 4, 2]
 	else:
-		return [1, 5, 2, 3, 4]			
+		# inverse of [1, 5, 2, 3, 4] is [1, 3, 4, 5, 2]
+		return [1, 3, 4, 5, 2]			
 
 def get_reshaped_input_ast(input_name, value_info, node_name_to_out_var_dict):
 	onnx_input_shape = list(value_info[input_name][1])
@@ -302,6 +308,8 @@ class ONNXNodesAST:
 		innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, seedot_output_ast, output_name, mtdAST)
 		out_var_count += 1
 
+		node_name_to_out_var_dict[node.name] = output_name
+
 		return (innermost_let_ast_node, out_var_count)
 
 
@@ -399,6 +407,7 @@ class ONNXNodesAST:
 		options[AST.PaddingKeysDict.zPadWRight] = zPadWRight
 		options[AST.PaddingKeysDict.strideH] = stridesUsed[0]
 		options[AST.PaddingKeysDict.strideW] = stridesUsed[1]
+		options[AST.PaddingKeysDict.ConvDim] = 2
 
 		# print(inputShape, filterShape)
 		assert (inputShape[1] == filterShape[1])
@@ -410,9 +419,6 @@ class ONNXNodesAST:
 		innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, reshaped_input, reshaped_input_name, mtdAST)
 		out_var_count += 1
 
-		# reshapedInput = AST.ID(node_name_to_out_var_dict[inputsRef[0]])
-		# reshapedInput = AST.Reshape(AST.ID(node_name_to_out_var_dict[inputsRef[0]]), [inputShape[0], inputShape[2], inputShape[3], inputShape[1]], [1, 3, 4, 2])
-
 		# For filter:
 		# [CO, CI1, FH, FW] is the Onnx order it should be changed to 
 		# [FH, FW, CI1, CO] order
@@ -421,13 +427,10 @@ class ONNXNodesAST:
 		innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, reshaped_filter, reshaped_filter_name, mtdAST)
 		out_var_count += 1
 
-
 		seedot_output_ast =  AST.BOp(AST.ID(reshaped_input_name), getOperatorsIdx('#'), AST.ID(reshaped_filter_name), options)
 		output_name = get_new_var_name(out_var_count)
 		innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, seedot_output_ast, output_name, mtdAST)
 		out_var_count += 1
-
-		# reshapedFilter = AST.Reshape(AST.ID(node_name_to_out_var_dict[inputsRef[1]]), [filterShape[2], filterShape[3], filterShape[1], filterShape[0]], [3, 4, 2, 1])
 
 		return (innermost_let_ast_node, out_var_count, output_name)
 

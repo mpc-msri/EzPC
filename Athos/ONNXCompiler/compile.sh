@@ -81,7 +81,7 @@ if [ "$compilationTargetLower" == "cpp" ]; then
 	mv "$finalCodeOutputFileName" "$ONNX_dir"
 	rm '$EzPCDir/EzPC/'${modelName}'*'
 	cd "$ONNX_dir"
-	g++ -O3 "$finalCodeOutputFileName" -o ${modelName}'.out'
+	g++ -O3 -g "$finalCodeOutputFileName" -o ${modelName}'.out'
 	rm "debug/cpp_output_raw.txt"
 	eval './'${modelName}'.out' < ${inputFileName} > "debug/cpp_output_raw.txt"
 	python3 -c "import common; common.parse_output(${SCALINGFACTOR})"
