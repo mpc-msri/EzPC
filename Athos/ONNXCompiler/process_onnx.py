@@ -66,7 +66,6 @@ def main():
 	model = onnx.load(file_path)
 	graph_def = model.graph
 
-	model_name_to_val_dict = {}
 	# Before shape inference (model.graph.value_info) should have shapes of all the variables and constants 
 	model.graph.value_info.append(make_tensor_value_info(model.graph.input[0].name, TensorProto.FLOAT, common.proto_val_to_dimension_tuple(model.graph.input[0])))
 	model.graph.value_info.append(make_tensor_value_info(model.graph.output[0].name, TensorProto.FLOAT, common.proto_val_to_dimension_tuple(model.graph.output[0])))
@@ -74,9 +73,12 @@ def main():
 	input_array = numpy.load(model_name+'_input.npy')
 	(chunk, cnt) = common.numpy_float_array_to_fixed_point_val_str(input_array, scaling_factor)
 
+	# TODO: Remove float_data. Change this to appropriate data type. 
+	model_name_to_val_dict = { init_vals.name: init_vals.float_data for init_vals in model.graph.initializer}
+
+	preprocess_batch_normalization(graph_def, model_name_to_val_dict)
+
 	for init_vals in model.graph.initializer:
-		# TODO: Remove float_data. Change this to appropriate data type. 
-		model_name_to_val_dict[init_vals.name] = init_vals.float_data
 		model.graph.value_info.append(make_tensor_value_info(init_vals.name, TensorProto.FLOAT, tuple(init_vals.dims)))	
 		(chunk_1, cnt_1) = common.numpy_float_array_to_fixed_point_val_str(numpy_helper.to_array(init_vals), scaling_factor)
 		chunk += chunk_1
@@ -87,7 +89,6 @@ def main():
 	f.close()
 
 	print('Total ' + str(cnt) + ' integers were written in ' + model_name + '_input.h')
-	preprocess_batch_normalization(graph_def, model_name_to_val_dict)
 
 	if(DEBUG):	
 		print("Shape inference *****************")
@@ -179,8 +180,6 @@ def process_onnx_nodes(innermost_let_ast_node, node_name_to_out_var_dict, out_va
 		if(DEBUG):
 			print("Node information")
 			print(node)	
-
-		
 
 		mtdForCurAST = {AST.ASTNode.mtdKeyTFOpName : node.op_type,
 							AST.ASTNode.mtdKeyTFNodeName : node.name}
