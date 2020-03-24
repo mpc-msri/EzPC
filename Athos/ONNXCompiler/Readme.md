@@ -31,6 +31,10 @@ To log the values of specific variables, the script can be run in debug mode usi
 
 `model_name_onnx_output.txt` This file contains the value of output computed using onnx runtime. 
 
+`seedot_ast.txt` output of process_onnx.py is logged in this. It includes the seedot ast generated.
+
+`seedot_to_ezpc_output.txt` output of seedot compilation to ezpc is logged in this. 
+
 # Dependency
 Other than EzPC dependencies 
 `onnx` 
