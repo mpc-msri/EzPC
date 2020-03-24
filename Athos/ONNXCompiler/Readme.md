@@ -27,9 +27,9 @@ To log the values of specific variables, the script can be run in debug mode usi
 
 `cpp_output.txt` The above file is parsed and converted into a format where all fixed point integer values are converted to the easily readable floating format. As earlier in the case of `debug` mode the output contains the value of debug variable.
 
-`model_name_onnx_debug.txt` In the debug mode this file contains the value of selected onnx node computed using onnx runtime.
+`onnx_debug.txt` In the debug mode this file contains the value of selected onnx node computed using onnx runtime.
 
-`model_name_onnx_output.txt` This file contains the value of output computed using onnx runtime. 
+`onnx_output.txt` This file contains the value of output computed using onnx runtime. 
 
 `seedot_ast.txt` output of process_onnx.py is logged in this. It includes the seedot ast generated.
 
