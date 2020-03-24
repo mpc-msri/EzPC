@@ -160,9 +160,11 @@ def get_reshaped_input_ast(input_name, value_info, node_name_to_out_var_dict):
 	(seedot_input_shape, seedot_input_order) = get_seedot_shape_order(onnx_input_shape)
 	return AST.Reshape(AST.ID(node_name_to_out_var_dict[input_name]), seedot_input_shape, seedot_input_order)
 
-def get_reshaped_bias_ast(bias_name, value_info, node_name_to_out_var_dict):
-	# TODO: handle 2D case
-	return AST.Reshape(AST.ID(node_name_to_out_var_dict[bias_name]), [1, 1, 1, 1, value_info[bias_name][1][0]], None)		
+def get_reshaped_bias_ast(bias_name, value_info, node_name_to_out_var_dict, dim):
+	if(dim == 2):
+		return AST.Reshape(AST.ID(node_name_to_out_var_dict[bias_name]), [1, 1, 1, value_info[bias_name][1][0]], None)		
+	else:	
+		return AST.Reshape(AST.ID(node_name_to_out_var_dict[bias_name]), [1, 1, 1, 1, value_info[bias_name][1][0]], None)		
 
 def get_reshaped_filter_ast(filter_name, value_info, node_name_to_out_var_dict):
 	onnx_filter_shape = list(value_info[filter_name][1])
@@ -312,7 +314,6 @@ class ONNXNodesAST:
 
 		return (innermost_let_ast_node, out_var_count)
 
-
 	def BatchNormalization(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST):
 		node = OnnxNode(node) 
 		
@@ -361,7 +362,22 @@ class ONNXNodesAST:
 		node_name_to_out_var_dict[node.name] = output_name
 
 		return (innermost_let_ast_node, out_var_count)
-		
+	
+	def Flatten(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST):
+		node = OnnxNode(node) 
+		if(DEBUG):
+			print(node)
+
+		inputsRef = node.inputs
+		assert(len(inputsRef)==1)
+
+		seedot_output_ast = AST.Reshape(AST.ID(node_name_to_out_var_dict[inputsRef[0]]), list(value_info[node.outputs[0]][1]), None)
+		output_name = get_new_var_name(out_var_count)
+		innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, seedot_output_ast, output_name, mtdAST)
+		out_var_count += 1
+		node_name_to_out_var_dict[node.name] = output_name
+
+		return (innermost_let_ast_node, out_var_count)		
 
 	def Conv(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST):
 		node = OnnxNode(node) 
@@ -392,7 +408,7 @@ class ONNXNodesAST:
 
 		stridesUsed = node.attrs['strides']
 
-		assert(len(inputsRef)==2)
+		assert(len(inputsRef)==2 or len(inputsRef)==3)
 		assert(len(stridesUsed)==2)
 		assert(value_info[node.inputs[1]][1][2:] == tuple(node.attrs['kernel_shape']))
 		# verify this order
@@ -431,6 +447,18 @@ class ONNXNodesAST:
 		output_name = get_new_var_name(out_var_count)
 		innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, seedot_output_ast, output_name, mtdAST)
 		out_var_count += 1
+
+		# If there is bias to be added then reshape and add it 
+		if (len(inputsRef) == 3):
+			reshaped_bias_name = get_new_var_name(out_var_count)
+			reshaped_bias = get_reshaped_bias_ast(inputsRef[2], value_info, node_name_to_out_var_dict, 2)
+			innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, reshaped_bias, reshaped_bias_name, mtdAST)
+			out_var_count += 1	
+
+			seedot_output_ast =  AST.BOp(AST.ID(output_name), getOperatorsIdx('+'), AST.ID(reshaped_bias_name), options)
+			output_name = get_new_var_name(out_var_count)
+			innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, seedot_output_ast, output_name, mtdAST)
+			out_var_count += 1
 
 		return (innermost_let_ast_node, out_var_count, output_name)
 
@@ -486,7 +514,7 @@ class ONNXNodesAST:
 		# If there is bias to be added then reshape and add it 
 		if (len(inputsRef) == 3):
 			reshaped_bias_name = get_new_var_name(out_var_count)
-			reshaped_bias = get_reshaped_bias_ast(inputsRef[2], value_info, node_name_to_out_var_dict)
+			reshaped_bias = get_reshaped_bias_ast(inputsRef[2], value_info, node_name_to_out_var_dict, 3)
 			innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, reshaped_bias, reshaped_bias_name, mtdAST)
 			out_var_count += 1	
 
@@ -677,7 +705,7 @@ class ONNXNodesAST:
 		# If there is bias to be added then reshape and add it 
 		if (len(inputsRef) == 3):
 			reshaped_bias_name = get_new_var_name(out_var_count)
-			reshaped_bias = get_reshaped_bias_ast(inputsRef[2], value_info, node_name_to_out_var_dict)
+			reshaped_bias = get_reshaped_bias_ast(inputsRef[2], value_info, node_name_to_out_var_dict, 2)
 			innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, reshaped_bias, reshaped_bias_name, mtdAST)
 			out_var_count += 1	
 
@@ -746,7 +774,7 @@ class ONNXNodesAST:
 		# If there is bias to be added then reshape and add it 
 		if (len(inputsRef) == 3):
 			reshaped_bias_name = get_new_var_name(out_var_count)
-			reshaped_bias = get_reshaped_bias_ast(inputsRef[2], value_info, node_name_to_out_var_dict)
+			reshaped_bias = get_reshaped_bias_ast(inputsRef[2], value_info, node_name_to_out_var_dict, 3)
 			innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, reshaped_bias, reshaped_bias_name, mtdAST)
 			out_var_count += 1	
 
