@@ -314,6 +314,60 @@ class ONNXNodesAST:
 
 		return (innermost_let_ast_node, out_var_count)
 
+
+	def Concat(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST):
+		node = OnnxNode(node)
+		if(DEBUG):
+			print(node)
+		inputsRef = node.inputs
+		assert(len(inputsRef) == 2)
+		input1AST = AST.ID(node_name_to_out_var_dict[inputsRef[0]])
+		input2AST = AST.ID(node_name_to_out_var_dict[inputsRef[1]])
+
+		axis = node.attrs['axis']
+
+		seedot_output_ast = AST.UninterpFuncCall(list(value_info[node.outputs[0]][1]),
+									 'Concat2T', 
+									 [input1AST, input2AST, AST.Int(axis)],
+									outputDiffInpDims=1
+									) 
+
+		output_name = get_new_var_name(out_var_count)
+		innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, seedot_output_ast, output_name, mtdAST)
+		out_var_count += 1
+
+		node_name_to_out_var_dict[node.name] = output_name
+
+		return (innermost_let_ast_node, out_var_count)	
+
+	def Constant(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST):
+		node = OnnxNode(node)
+		if(DEBUG):
+			print(node)	
+		# TODO: Use AST.decl for defining a tensor. If used as a parameter for Reshape then we don't need it for now.
+		return (innermost_let_ast_node, out_var_count)	
+
+	def Transpose(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST):
+		node = OnnxNode(node) 
+		if(DEBUG):
+			print(node)
+
+		inputsRef = node.inputs
+		assert(len(inputsRef)==1)
+
+		seedot_output_ast = AST.Transpose(AST.ID(node_name_to_out_var_dict[inputsRef[0]]), node.attrs['perm'])
+		output_name = get_new_var_name(out_var_count)
+		innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, seedot_output_ast, output_name, mtdAST)
+		out_var_count += 1
+		node_name_to_out_var_dict[node.name] = output_name
+
+		return (innermost_let_ast_node, out_var_count)	
+
+	def Split(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST):
+		node = OnnxNode(node)
+		# TODO: Used in shufflenetv2. Currently, onnx shape inference does not support `split`  
+		return (innermost_let_ast_node, out_var_count)		
+
 	def BatchNormalization(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST):
 		node = OnnxNode(node) 
 		

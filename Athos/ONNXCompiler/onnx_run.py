@@ -48,20 +48,22 @@ print('Generated random input of dimension ' + str(input_dims))
 np.save(model_name + '_input', x)
 x = x.astype(numpy.float32)
 
+input_name = model.graph.input[0].name
+
 if (len(sys.argv) > 2):
 	intermediate_layer_value_info = helper.ValueInfoProto()
 	intermediate_layer_value_info.name = sys.argv[2]
 	model.graph.output.extend([intermediate_layer_value_info])
 	onnx.save(model, file_path + '_1')
 	sess = onnxruntime.InferenceSession(file_path + '_1') 
-	pred = sess.run([intermediate_layer_value_info.name], {'data': x})
+	pred = sess.run([intermediate_layer_value_info.name], {input_name: x})
 	np.save(model_name + '_debug', pred)
 	with open('debug/onnx_debug.txt', 'w') as f:
 		f.write(common.numpy_float_array_to_float_val_str(pred))
 	print("Saving the onnx runtime intermediate output for " + intermediate_layer_value_info.name)
 	exit() 
 
-pred = sess.run(None, {'data': x})
+pred = sess.run(None, {input_name: x})
 np.save(model_name + '_output', pred)
 with open('debug/onnx_output.txt', 'w') as f:
 		f.write(common.numpy_float_array_to_float_val_str(pred))
