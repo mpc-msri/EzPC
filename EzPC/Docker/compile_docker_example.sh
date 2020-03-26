@@ -43,7 +43,7 @@ then
 	echo "================================================================"
 	echo "Compiling docker binary ops example to ABY"
 	echo "================================================================"
-	../ezpc docker_bin_example.ezpc
+	../ezpc.sh docker_bin_example.ezpc
 
 	echo "================================================================"
 	echo "Copying generated files to latest ABY examples directory"
@@ -53,7 +53,7 @@ else
 	echo "================================================================"
 	echo "Compiling docker arithmetic ops example to ABY"
 	echo "================================================================"
-	../ezpc docker_arith_example.ezpc
+	../ezpc.sh docker_arith_example.ezpc
 
 	echo "================================================================"
 	echo "Copying generated files to latest ABY examples directory"
