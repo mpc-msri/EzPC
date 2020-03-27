@@ -52,6 +52,7 @@ onnxOutputFileName=${modelName}'_output.npy'
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
+mkdir -p debug
 
 if [ -f "$inputFileName" ] && [ -f "$seedotASTName" ] && [ -z "$debugOnnxNode" ]; then
     echo -e "${GREEN}$inputFileName and $seedotASTName already exist, skipping process_onnx${NC}"
@@ -104,7 +105,7 @@ if [ "$compilationTargetLower" == "cpp" ]; then
 	echo "compiling generated cpp code"
 	g++ -O3 -g -w "$finalCodeOutputFileName" -o ${modelName}'.out'
 	echo -e "${GREEN}compiling done ${NC}"
-	rm "debug/cpp_output_raw.txt"
+	rm -f "debug/cpp_output_raw.txt" || true
 	echo "running the final code"
 	eval './'${modelName}'.out' < ${inputFileName} > "debug/cpp_output_raw.txt"
 	python3 -c "import common; common.parse_output(${SCALINGFACTOR})"
