@@ -54,17 +54,23 @@ NC='\033[0m' # No Color
 
 mkdir -p debug
 
-if [ -f "$inputFileName" ] && [ -f "$seedotASTName" ] && [ -z "$debugOnnxNode" ]; then
-    echo -e "${GREEN}$inputFileName and $seedotASTName already exist, skipping process_onnx${NC}"
+# Generating input may take time, hence skip if already generated
+if [ -f "$inputFileName" ]; then 
+	echo -e "${GREEN}$inputFileName already exist, skipping process_onnx${NC}"
 else 
-	echo "Starting onnx run to gemerate input and output"
-	python3 "onnx_run.py" ${modelName}'.onnx' ${debugOnnxNode}
-	echo -e "${GREEN}Finished onnx run${NC}"
-    echo "Starting process_onnx"
-    echo "output of process_onnx and the resultant seedot ast are logged in debug/seedot_ast.txt"
-    python3 "process_onnx.py" ${modelName}'.onnx' > "debug/seedot_ast.txt"
-    echo -e "${GREEN}Finished process_onnx${NC}"
-fi
+	echo "Starting to gemerate random input"
+	python3 "create_input.py" ${modelName}'.onnx'
+	echo -e "${GREEN}Finished generating input${NC}"
+fi 	
+
+echo "Starting onnx run"
+python3 "onnx_run.py" ${modelName}'.onnx' ${debugOnnxNode}
+echo -e "${GREEN}Finished onnx run${NC}"
+
+echo "Starting process_onnx"
+echo "output of process_onnx and the resultant seedot ast are logged in debug/seedot_ast.txt"
+python3 "process_onnx.py" ${modelName}'.onnx' > "debug/seedot_ast.txt"
+echo -e "${GREEN}Finished process_onnx${NC}"
 
 echo "Starting seedot to ezpc compilation"
 echo "output is logged in debug/seedot_to_ezpc_output.txt"

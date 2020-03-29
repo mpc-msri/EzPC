@@ -34,7 +34,11 @@ from onnx.helper import make_tensor_value_info
 from onnx import TensorProto
 from AST.PrintAST import PrintAST 
 from AST.MtdAST import MtdAST
+<<<<<<< HEAD
 import math
+=======
+import numpy
+>>>>>>> restructuring of the code
 from onnx import numpy_helper
 import common
 
@@ -59,14 +63,6 @@ def main():
 	# Before shape inference (model.graph.value_info) should have shapes of all the variables and constants 
 	model.graph.value_info.append(make_tensor_value_info(model.graph.input[0].name, TensorProto.FLOAT, common.proto_val_to_dimension_tuple(model.graph.input[0])))
 	model.graph.value_info.append(make_tensor_value_info(model.graph.output[0].name, TensorProto.FLOAT, common.proto_val_to_dimension_tuple(model.graph.output[0])))
-	
-	input_array = numpy.load(model_name+'_input.npy')
-	(chunk, cnt) = common.numpy_float_array_to_fixed_point_val_str(input_array, scaling_factor)
-
-	# TODO: Remove float_data. Change this to appropriate data type. 
-	model_name_to_val_dict = { init_vals.name: init_vals.float_data for init_vals in model.graph.initializer}
-
-	preprocess_batch_normalization(graph_def, model_name_to_val_dict)
 
 	for init_vals in model.graph.initializer:
 		model.graph.value_info.append(make_tensor_value_info(init_vals.name, TensorProto.FLOAT, tuple(init_vals.dims)))	
@@ -178,48 +174,7 @@ def process_onnx_nodes(innermost_let_ast_node, node_name_to_out_var_dict, out_va
 		func = getattr(ONNXNodesAST, node.op_type) 
 		(innermost_let_ast_node, out_var_count) = func(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST)					
 
-
 		assert(type(innermost_let_ast_node) is AST.Let)
-
-def get_seedot_shape_order(old_shape):
-	if(len(old_shape) == 4):
-		# Case when spatial dimension is 2
-		return ([old_shape[0], old_shape[2], old_shape[3], old_shape[1]], [1, 3, 4, 2])	
-	else:
-		# Casr when spatial dimension is 3 	
-		return ([old_shape[0], old_shape[2], old_shape[3], old_shape[4], old_shape[1]], [1, 3, 4, 5, 2])
-
-def preprocess_batch_normalization(graph_def, model_name_to_val_dict):
-	# set names to graph nodes if not present
-	for node in graph_def.node: 
-		node.name = node.output[0]
-		# Update the batch normalization scale and B
-		# so that mean and var are not required
-		if(node.op_type == 'BatchNormalization'):
-			# scale
-			gamma = model_name_to_val_dict[node.input[1]]
-			# B
-			beta = model_name_to_val_dict[node.input[2]]
-			mean = model_name_to_val_dict[node.input[3]]
-			var = model_name_to_val_dict[node.input[4]]
-			for i in range(len(gamma)):
-				rsigma = 1/math.sqrt(var[i]+1e-5)
-				gamma[i] = gamma[i]*rsigma
-				beta[i] = beta[i]-gamma[i]*mean[i]	
-				mean[i] = 0
-				var[i] = 1-1e-5
-
-	# Just testing if the correct values are put			
-	model_name_to_val_dict2 = {}
-	for init_vals in graph_def.initializer:
-		# TODO: Remove float_data
-		model_name_to_val_dict2[init_vals.name] = init_vals.float_data		
-	for node in graph_def.node: 
-		node.name = node.output[0]
-		if(node.op_type == 'BatchNormalization'):
-			mean = model_name_to_val_dict[node.input[3]]
-			for val in mean:
-				assert(val == 0)
 
 if __name__ == "__main__":
 	main()				

@@ -23,7 +23,6 @@ SOFTWARE.
 
 '''
 
-import numpy.random
 import numpy as np
 import onnxruntime
 import common
@@ -35,18 +34,15 @@ from onnx import helper
 if (len(sys.argv) < 2):
 	print("TF python file unspecified.", file=sys.stderr)
 	exit(1)
+
 file_name = sys.argv[1]
 file_path = 'models/' + file_name
 model_name = file_name[:-5] # name without the '.onnx' extension
 model = onnx.load(file_path)
 sess = onnxruntime.InferenceSession(file_path) 
 
-# Generating input
-input_dims = common.proto_val_to_dimension_tuple(model.graph.input[0])
-x = numpy.random.random(input_dims)
-print('Generated random input of dimension ' + str(input_dims))
-np.save(model_name + '_input', x)
-x = x.astype(numpy.float32)
+x = np.load(model_name + '_input.npy')
+x = x.astype(np.float32)
 
 input_name = model.graph.input[0].name
 
