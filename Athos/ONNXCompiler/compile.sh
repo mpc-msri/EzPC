@@ -59,12 +59,14 @@ if [ -f "$inputFileName" ]; then
 	echo -e "${GREEN}$inputFileName already exist, skipping process_onnx${NC}"
 else 
 	echo "Starting to gemerate random input"
-	python3 "create_input.py" ${modelName}'.onnx'
+	python3 "create_input.py" ${modelName}'.onnx' 
 	echo -e "${GREEN}Finished generating input${NC}"
 fi 	
 
 echo "Starting onnx run"
-python3 "onnx_run.py" ${modelName}'.onnx' ${debugOnnxNode}
+# can use either 'onnx_run_tf' or 'onnx_run'
+# onnx_run is faster but may not support all operations
+python3 "onnx_run.py" ${modelName}'.onnx' ${debugOnnxNode} > "debug/log_onnx_run.txt"
 echo -e "${GREEN}Finished onnx run${NC}"
 
 echo "Starting process_onnx"
