@@ -63,7 +63,8 @@ fi
 
 echo "Starting onnx run"
 # can use either 'onnx_run_tf' or 'onnx_run'
-# onnx_run is faster but may not support all operations
+# onnx_run is faster and has lesser dependencies 
+# but may not support all operations
 python3 "onnx_run.py" ${modelName}'.onnx' ${debugOnnxNode} > "debug/log_onnx_run.txt"
 echo -e "${GREEN}Finished onnx run${NC}"
 

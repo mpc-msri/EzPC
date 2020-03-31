@@ -187,7 +187,7 @@ def update_program_with_new_node(innermost_let_ast_node, new_node, new_node_name
 	innermost_let_ast_node.expr = new_let_node
 	innermost_let_ast_node = new_let_node
 
-	# node_name_to_out_var_dict[node.name] = new_node_name
+	# node_name_to_out_var_dict[node.outputs[0]] = new_node_name
 	return innermost_let_ast_node
 
 class ONNXNodesAST:
@@ -195,7 +195,7 @@ class ONNXNodesAST:
 	# value_info: dictionary of name -> (type, dimension tuple)
 	def Input(node, value_info, node_name_to_out_var_dict):
 		if(DEBUG):
-			print(node.name)
+			print(node.outputs[0])
 		# There are two types of inputs
 		dims = list(node.dims if hasattr(node, 'dims') else ([val.dim_value for val in  node.type.tensor_type.shape.dim]))	
 		data_type = node.data_type if hasattr (node, 'data_type') else node.type.tensor_type.elem_type
@@ -219,7 +219,7 @@ class ONNXNodesAST:
 		# output_name = get_new_var_name(out_var_count)
 		# innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, seedot_output_ast, output_name, mtdAST)
 		# out_var_count += 1
-		node_name_to_out_var_dict[node.name] = inputsRef[0]
+		node_name_to_out_var_dict[node.outputs[0]] = inputsRef[0]
 
 		return (innermost_let_ast_node, out_var_count)
 
@@ -241,13 +241,13 @@ class ONNXNodesAST:
 		out_var_count += 1
 
 		reshaped_output_name = get_new_var_name(out_var_count)
-		onnx_output_ast = get_reshaped_output_ast(node.name, value_info, output_name)
+		onnx_output_ast = get_reshaped_output_ast(node.outputs[0], value_info, output_name)
 		innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, onnx_output_ast, reshaped_output_name, mtdAST)	
 		out_var_count += 1
-		node_name_to_out_var_dict[node.name] = reshaped_output_name
+		node_name_to_out_var_dict[node.outputs[0]] = reshaped_output_name
 
 		if(DEBUG):
-			print(node.name)
+			print(node.outputs[0])
 			print(onnx_input_shape, '->', seedot_input_shape, '->', onnx_output_shape)
 
 		return (innermost_let_ast_node, out_var_count)	
@@ -280,13 +280,13 @@ class ONNXNodesAST:
 
 		
 		reshaped_output_name = get_new_var_name(out_var_count)
-		onnx_output_ast = get_reshaped_output_ast(node.name, value_info, output_name)
+		onnx_output_ast = get_reshaped_output_ast(node.outputs[0], value_info, output_name)
 		innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, onnx_output_ast, reshaped_output_name, mtdAST)
 		out_var_count += 1
-		node_name_to_out_var_dict[node.name] = reshaped_output_name
+		node_name_to_out_var_dict[node.outputs[0]] = reshaped_output_name
 
 		if(DEBUG):
-			print(node.name)
+			print(node.outputs[0])
 			print(onnx_input_shape, onnx_input_shape1, '->', seedot_input_shape, seedot_input_shape1, '->', onnx_output_shape)
 
 		return (innermost_let_ast_node, out_var_count)
@@ -310,7 +310,7 @@ class ONNXNodesAST:
 		innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, seedot_output_ast, output_name, mtdAST)
 		out_var_count += 1
 
-		node_name_to_out_var_dict[node.name] = output_name
+		node_name_to_out_var_dict[node.outputs[0]] = output_name
 
 		return (innermost_let_ast_node, out_var_count)
 
@@ -336,7 +336,7 @@ class ONNXNodesAST:
 		innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, seedot_output_ast, output_name, mtdAST)
 		out_var_count += 1
 
-		node_name_to_out_var_dict[node.name] = output_name
+		node_name_to_out_var_dict[node.outputs[0]] = output_name
 
 		return (innermost_let_ast_node, out_var_count)	
 
@@ -359,7 +359,7 @@ class ONNXNodesAST:
 		output_name = get_new_var_name(out_var_count)
 		innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, seedot_output_ast, output_name, mtdAST)
 		out_var_count += 1
-		node_name_to_out_var_dict[node.name] = output_name
+		node_name_to_out_var_dict[node.outputs[0]] = output_name
 
 		return (innermost_let_ast_node, out_var_count)	
 
@@ -389,13 +389,13 @@ class ONNXNodesAST:
 		out_var_count += 1
 
 		reshaped_output_name = get_new_var_name(out_var_count)
-		onnx_output_ast = get_reshaped_output_ast(node.name, value_info, output_name)
+		onnx_output_ast = get_reshaped_output_ast(node.outputs[0], value_info, output_name)
 		innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, onnx_output_ast, reshaped_output_name, mtdAST)	
 		out_var_count += 1
-		node_name_to_out_var_dict[node.name] = reshaped_output_name
+		node_name_to_out_var_dict[node.outputs[0]] = reshaped_output_name
 		
 		if(DEBUG):
-			print(node.name)
+			print(node.outputs[0])
 			print(onnx_input_shape, '->', seedot_input_shape, '->', onnx_output_shape)
 
 		return (innermost_let_ast_node, out_var_count) 	
@@ -413,7 +413,7 @@ class ONNXNodesAST:
 		output_name = get_new_var_name(out_var_count)
 		innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, seedot_output_ast, output_name, mtdAST)
 		out_var_count += 1
-		node_name_to_out_var_dict[node.name] = output_name
+		node_name_to_out_var_dict[node.outputs[0]] = output_name
 
 		return (innermost_let_ast_node, out_var_count)
 	
@@ -429,7 +429,7 @@ class ONNXNodesAST:
 		output_name = get_new_var_name(out_var_count)
 		innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, seedot_output_ast, output_name, mtdAST)
 		out_var_count += 1
-		node_name_to_out_var_dict[node.name] = output_name
+		node_name_to_out_var_dict[node.outputs[0]] = output_name
 
 		return (innermost_let_ast_node, out_var_count)		
 
@@ -448,10 +448,10 @@ class ONNXNodesAST:
 			(innermost_let_ast_node, out_var_count, output_name) = ONNXNodesAST.conv3d(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST)
 
 		reshaped_output_name = get_new_var_name(out_var_count)
-		onnx_output_ast = get_reshaped_output_ast(node.name,value_info, output_name)
+		onnx_output_ast = get_reshaped_output_ast(node.outputs[0],value_info, output_name)
 		innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, onnx_output_ast, reshaped_output_name, mtdAST)
 		out_var_count += 1
-		node_name_to_out_var_dict[node.name] = reshaped_output_name
+		node_name_to_out_var_dict[node.outputs[0]] = reshaped_output_name
 
 		return (innermost_let_ast_node, out_var_count)
 
@@ -615,10 +615,10 @@ class ONNXNodesAST:
 		out_var_count += 1
 
 		reshaped_output_name = get_new_var_name(out_var_count)
-		onnx_output_ast = get_reshaped_output_ast(node.name, value_info, output_name)
+		onnx_output_ast = get_reshaped_output_ast(node.outputs[0], value_info, output_name)
 		innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, onnx_output_ast, reshaped_output_name, mtdAST)	
 		out_var_count += 1
-		node_name_to_out_var_dict[node.name] = reshaped_output_name
+		node_name_to_out_var_dict[node.outputs[0]] = reshaped_output_name
 		
 		return (innermost_let_ast_node, out_var_count)
 
@@ -677,10 +677,10 @@ class ONNXNodesAST:
 
 
 		reshaped_output_name = get_new_var_name(out_var_count)
-		onnx_output_ast = get_reshaped_output_ast(node.name, value_info, output_name)
+		onnx_output_ast = get_reshaped_output_ast(node.outputs[0], value_info, output_name)
 		innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, onnx_output_ast, reshaped_output_name, mtdAST)	
 		out_var_count += 1
-		node_name_to_out_var_dict[node.name] = reshaped_output_name
+		node_name_to_out_var_dict[node.outputs[0]] = reshaped_output_name
 		
 		return (innermost_let_ast_node, out_var_count)
 
@@ -699,10 +699,10 @@ class ONNXNodesAST:
 			(innermost_let_ast_node, out_var_count, output_name) = ONNXNodesAST.conv3dtranspose(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST)	
 
 		reshaped_output_name = get_new_var_name(out_var_count)
-		onnx_output_ast = get_reshaped_output_ast(node.name,value_info, output_name)
+		onnx_output_ast = get_reshaped_output_ast(node.outputs[0],value_info, output_name)
 		innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, onnx_output_ast, reshaped_output_name, mtdAST)
 		out_var_count += 1
-		node_name_to_out_var_dict[node.name] = reshaped_output_name
+		node_name_to_out_var_dict[node.outputs[0]] = reshaped_output_name
 
 		return (innermost_let_ast_node, out_var_count)
 
@@ -712,7 +712,7 @@ class ONNXNodesAST:
 		filterShape = value_info[inputsRef[1]][1]
 		biasShape = value_info[inputsRef[2]][1]
 		stridesUsed = node.attrs['strides']
-		outputShape = value_info[node.name][1]
+		outputShape = value_info[node.outputs[0]][1]
 
 		# sometimes there is a bias to be added as well		
 		assert(len(inputsRef)==2 or len(inputsRef)==3)
@@ -776,7 +776,7 @@ class ONNXNodesAST:
 		filterShape = value_info[inputsRef[1]][1]
 		biasShape = value_info[inputsRef[2]][1]
 		stridesUsed = node.attrs['strides']
-		outputShape = value_info[node.name][1]
+		outputShape = value_info[node.outputs[0]][1]
 
 		# sometimes there is a bias to be added as well		
 		assert(len(inputsRef)==2 or len(inputsRef)==3)
