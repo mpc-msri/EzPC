@@ -40,5 +40,7 @@ Other than EzPC dependencies
 `onnx` 
 `onnxruntime`
 
+# Testing
+python3 -m unittest 
 
 
