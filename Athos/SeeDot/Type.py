@@ -306,23 +306,23 @@ class InferType(ASTVisitor):
 			convDim = node.options[AST.PaddingKeysDict.ConvDim]
 
 		if convDim==2:
-			[N, HP, WP, CO1] = eType.shape
-			[FH, FW, CI, CO] = fType.shape
+			[N, HP, WP, CI1] = eType.shape
+			[FH, FW, CO, CI] = fType.shape
 		elif convDim==3:
-			[N, DP, HP, WP, CO1] = eType.shape
-			[FD, FH, FW, CI, CO] = fType.shape
+			[N, DP, HP, WP, CI1] = eType.shape
+			[FD, FH, FW, CO, CI] = fType.shape
 		else:
 			assert(False)
-		assert(CO1 == CO)
+		assert(CI1 == CI)
 		if convDim==3:
 			outputImgD = node.options[AST.PaddingKeysDict.outputImgD]
 		outputImgH = node.options[AST.PaddingKeysDict.outputImgH]
 		outputImgW = node.options[AST.PaddingKeysDict.outputImgW]
 
 		if convDim==2:
-			shape = [N, outputImgH, outputImgW, CI]
+			shape = [N, outputImgH, outputImgW, CO]
 		else:
-			shape = [N, outputImgD, outputImgH, outputImgW, CI]
+			shape = [N, outputImgD, outputImgH, outputImgW, CO]
 
 		# Logic explanation:
 		#	ConvTranpose can be thought of as the inverse of some convolution for which it is doing the upsampling.
