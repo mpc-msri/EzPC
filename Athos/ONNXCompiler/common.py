@@ -53,7 +53,8 @@ def write_debug_info(node_name_to_out_var_dict):
 
 	with open('debug/onnx_seedot_name_map.txt', 'w') as f:
 		for val in node_name_to_out_var_dict:
-			f.write(val + '   ' + node_name_to_out_var_dict[val] + '\n')	
+			f.write(val + '   ' + node_name_to_out_var_dict[val] + '\n')
+
 
 def merge_name_map():
 	onnx_seedot_name_map = pickle.load(open('debug/onnx_seedot_name_map.pkl', 'rb'))
@@ -75,5 +76,14 @@ def parse_output(scale):
 		if line.rstrip().replace('-','0').isdigit():
 			val = float(line.rstrip())
 			val = val/(2**scale)
-			chunk += str(val) + '\n' 
-	g.write(chunk)		
+			chunk += str(val) + '\n'
+	g.write(chunk)
+	g.close()
+
+def extract_txt_to_numpy_array(file):
+	f = open(file, 'r')
+	op = [float(line.rstrip()) for line in f]
+	f.close()
+	return numpy.array(op, dtype=numpy.float32)
+		
+
