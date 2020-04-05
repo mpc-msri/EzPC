@@ -41,7 +41,6 @@ from onnx import TensorProto
 from AST.PrintAST import PrintAST 
 from AST.MtdAST import MtdAST
 import numpy
-from onnx import numpy_helper
 import common
 
 import numpy as np
@@ -65,9 +64,12 @@ def main():
 	model = onnx.load(file_path)
 	graph_def = model.graph
 
+	print(model.graph.value_info)
 	# Before shape inference (model.graph.value_info) should have shapes of all the variables and constants 
 	model.graph.value_info.append(make_tensor_value_info(model.graph.input[0].name, TensorProto.FLOAT, common.proto_val_to_dimension_tuple(model.graph.input[0])))
 	model.graph.value_info.append(make_tensor_value_info(model.graph.output[0].name, TensorProto.FLOAT, common.proto_val_to_dimension_tuple(model.graph.output[0])))
+
+	print(model.graph.value_info)
 
 	for init_vals in model.graph.initializer:
 		model.graph.value_info.append(make_tensor_value_info(init_vals.name, TensorProto.FLOAT, tuple(init_vals.dims)))	
@@ -103,7 +105,7 @@ def main():
 	
 	common.write_debug_info(node_name_to_out_var_dict)
 
-	with open(model_name + '.pkl', 'wb') as f:
+	with open('debug/'+model_name+'/' +model_name + '.pkl', 'wb') as f:
 		pickle.dump(program, f)
 
 def process_input_variables(program, innermost_let_ast_node, node_name_to_out_var_dict, out_var_count, mtdAST, graph_def, value_info):

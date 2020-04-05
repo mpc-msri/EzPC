@@ -33,6 +33,7 @@ debugOnnxNode=$2
 
 EzPCDir="../../EzPC"
 ONNX_dir="../../Athos/ONNXCompiler"	
+data_dir="debug/"${modelName} 
 BITLEN="64"
 SCALINGFACTOR="24"
 COMPILATIONTARGET="CPP"
@@ -51,9 +52,10 @@ GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
 mkdir -p debug
+mkdir -p ${data_dir}
 
 # Generating input may take time, hence skip if already generated
-if [ -f "$inputFileName" ]; then 
+if [ -f  ${data_dir}"/"${inputFileName} ]; then 
 	echo -e "${GREEN}$inputFileName already exist, skipping process_onnx${NC}"
 else 
 	echo "Starting to gemerate random input"
@@ -77,18 +79,18 @@ echo "Starting seedot to ezpc compilation"
 echo "output is logged in debug/seedot_to_ezpc_output.txt"
 
 if [ -z "$debugOnnxNode" ]; then 
-	python3 ../SeeDot/SeeDot.py -p $seedotASTName --astFile $seedotASTName --outputFileName "$ezpcOutputFullFileName" --consSF ${SCALINGFACTOR} > "debug/seedot_to_ezpc_output.txt"
+	python3 ../SeeDot/SeeDot.py -p $seedotASTName --astFile ${data_dir}"/"$seedotASTName --outputFileName ${data_dir}"/"${ezpcOutputFullFileName} --consSF ${SCALINGFACTOR} > "debug/seedot_to_ezpc_output.txt"
 else 	
 	debugSeedotNode=$(python3 -c "import common; common.get_seedot_name_from_onnx_name(\"${debugOnnxNode}\")")
 	echo "${debugSeedotNode} is the corresponding SeeDot name"
-	python3 ../SeeDot/SeeDot.py -p $seedotASTName --astFile $seedotASTName --outputFileName "$ezpcOutputFullFileName" --consSF ${SCALINGFACTOR} --debugVar ${debugSeedotNode} > "debug/seedot_to_ezpc_output.txt"
+	python3 ../SeeDot/SeeDot.py -p $seedotASTName --astFile ${data_dir}"/"$seedotASTName --outputFileName ${data_dir}"/"${ezpcOutputFullFileName} --consSF ${SCALINGFACTOR} --debugVar ${debugSeedotNode} > "debug/seedot_to_ezpc_output.txt"
 fi 
 echo -e "${GREEN}Finished seedot to ezpc compilation${NC}"
 
 python3 -c 'import common; common.merge_name_map()'
 
 
-cat "../TFEzPCLibrary/Library${BITLEN}_cpp.ezpc" "../TFEzPCLibrary/Library${BITLEN}_common.ezpc" "$ezpcOutputFullFileName" > temp
+cat "../TFEzPCLibrary/Library${BITLEN}_cpp.ezpc" "../TFEzPCLibrary/Library${BITLEN}_common.ezpc" ${data_dir}"/"${ezpcOutputFullFileName} > temp
 mv temp "$ezpcOutputFullFileName"
 
 cp "$ezpcOutputFullFileName" "$EzPCDir/EzPC"
@@ -109,12 +111,13 @@ done
 
 if [ "$compilationTargetLower" == "cpp" ]; then
 	cd "$ONNX_dir"
+	mv "$finalCodeOutputFileName" "$data_dir"
 	echo "compiling generated cpp code"
-	g++ -O3 -g -w "$finalCodeOutputFileName" -o ${modelName}'.out'
+	g++ -O3 -g -w ${data_dir}"/"${finalCodeOutputFileName} -o ${data_dir}"/"${modelName}".out"
 	echo -e "${GREEN}compiling done ${NC}"
 	rm -f "debug/cpp_output_raw.txt" || true
-	echo "running the final code"
-	eval './'${modelName}'.out' < ${inputFileName} > "debug/cpp_output_raw.txt"
+	echo "running the final code"	
+	eval './'${data_dir}'/'${modelName}'.out' < ${data_dir}'/'${inputFileName} > "debug/cpp_output_raw.txt"
 	python3 -c "import common; common.parse_output(${SCALINGFACTOR})"
 	echo -e "${GREEN}All operations done. ${NC}"
 fi

@@ -49,7 +49,7 @@ def main():
 	input_dims = common.proto_val_to_dimension_tuple(model.graph.input[0])
 	input_array = numpy.random.random(input_dims)
 	print('Generated random input of dimension ' + str(input_dims))
-	np.save(model_name + '_input', input_array)
+	np.save('debug/' + model_name + '/' + model_name + '_input', input_array)
 
 	(chunk, cnt) = common.numpy_float_array_to_fixed_point_val_str(input_array, scaling_factor)
 
@@ -63,7 +63,7 @@ def main():
 		chunk += chunk_1
 		cnt += cnt_1
 
-	f = open(model_name + '_input.h', 'w') 
+	f = open('debug/' + model_name + '/' + model_name + '_input.h', 'w') 
 	f.write(chunk)
 	f.close()
 
