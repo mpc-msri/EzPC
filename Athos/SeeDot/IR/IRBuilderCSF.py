@@ -716,14 +716,14 @@ class IRBuilderCSF(ASTVisitor):
 			convDim = node.options[AST.PaddingKeysDict.ConvDim]
 
 		if convDim==2:
-			[N, H_prime, W_prime, CO1] = node.expr1.type.shape
-			[FH, FW, CI, CO] = node.expr2.type.shape
+			[N, H_prime, W_prime, CI1] = node.expr1.type.shape
+			[FH, FW, CO, CI] = node.expr2.type.shape
 		elif convDim==3:
-			[N, D_prime, H_prime, W_prime, CO1] = node.expr1.type.shape
-			[FD, FH, FW, CI, CO] = node.expr2.type.shape
+			[N, D_prime, H_prime, W_prime, CI1] = node.expr1.type.shape
+			[FD, FH, FW, CO, CI] = node.expr2.type.shape
 		else:
 			assert(False)
-		assert(CO1 == CO)
+		assert(CI1 == CI)
 		
 		H = node.options[AST.PaddingKeysDict.outputImgH] #outputH
 		W = node.options[AST.PaddingKeysDict.outputImgW] #outputW
@@ -756,12 +756,12 @@ class IRBuilderCSF(ASTVisitor):
 			funcCallArgsDict[IR.Int(D_prime, 32)] = "D_prime"
 		funcCallArgsDict[IR.Int(H_prime, 32)] = "H_prime"
 		funcCallArgsDict[IR.Int(W_prime, 32)] = "W_prime"
-		funcCallArgsDict[IR.Int(CO, 32)] = "CO"
+		funcCallArgsDict[IR.Int(CI, 32)] = "CI"
 		if convDim==3:
 			funcCallArgsDict[IR.Int(FD, 32)] = "FD"
 		funcCallArgsDict[IR.Int(FH, 32)] = "FH"
 		funcCallArgsDict[IR.Int(FW, 32)] = "FW"
-		funcCallArgsDict[IR.Int(CI, 32)] = "CI"
+		funcCallArgsDict[IR.Int(CO, 32)] = "CO"
 		if convDim==3:
 			funcCallArgsDict[IR.Int(D, 32)] = "D"
 		funcCallArgsDict[IR.Int(H, 32)] = "H"
