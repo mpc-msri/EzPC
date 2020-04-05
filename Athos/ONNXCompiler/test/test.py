@@ -30,6 +30,8 @@ from onnx import TensorProto
 import numpy as np
 import subprocess
 import common
+from datetime import date
+import time
 
 class TestNode(unittest.TestCase):
 
@@ -43,6 +45,8 @@ class TestNode(unittest.TestCase):
 			return output.astype(np.float32).reshape(cnt).tolist()
 
 	def check_result(self, graph, name):
+		current_milli_time = lambda: str(int(round(time.time() * 1000)))
+		name = name + "_" + current_milli_time()
 		model = onnx.helper.make_model(graph, producer_name='onnx-compiler-test')
 		onnx.save(model, 'models/' + name + '.onnx')
 
@@ -79,8 +83,6 @@ class TestNode(unittest.TestCase):
 
 		self.check_result(graph, name)
 
-		
-
 	def test_conv2d(self):
 		name = "conv2d"
 		state_in = helper.make_tensor_value_info('state_in',
@@ -102,7 +104,22 @@ class TestNode(unittest.TestCase):
 		        [state_out],
 		        [weight]
 		    )
+		self.check_result(graph, name)
 
+	def test_relu(self):
+		name = "relu"
+		state_in = helper.make_tensor_value_info('state_in',
+		                                             TensorProto.FLOAT, [1, 3, 10, 10])
+		state_out  = helper.make_tensor_value_info('state_out',
+		                                               TensorProto.FLOAT, [1, 3, 10, 10])
+		node_def = helper.make_node("Relu", ['state_in'], ['state_out'])
+		graph = helper.make_graph(
+		        [node_def],
+		        name,
+		        [state_in],
+		        [state_out],
+		        []
+		    )
 		self.check_result(graph, name)
 
 if __name__ == '__main__':
