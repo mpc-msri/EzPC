@@ -23,46 +23,87 @@ SOFTWARE.
 '''
 
 
-# start with testing convTranspose
+import onnx
 from onnx import helper
 import unittest
 from onnx import TensorProto
 import numpy as np
+import subprocess
+import common
 
 class TestNode(unittest.TestCase):
 
 	def _get_rnd_float32(self, low=-1.0, high=1.0, shape=None):
 		output = np.random.uniform(low, high, shape)
+		cnt = 1
+		for val in shape: cnt*=val
 		if shape == None:
 			return np.float32(output)
 		else:
-			return output.astype(np.float32)
+			return output.astype(np.float32).reshape(cnt).tolist()
+
+	def check_result(self, graph, name):
+		model = onnx.helper.make_model(graph, producer_name='onnx-compiler-test')
+		onnx.save(model, 'models/' + name + '.onnx')
+
+		bashCommand = './compile.sh ' + name
+		process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+		output, error = process.communicate()
+
+		res_onnx = common.extract_txt_to_numpy_array('debug/onnx_output.txt')	
+		res_cpp = common.extract_txt_to_numpy_array('debug/cpp_output.txt')
+
+		np.testing.assert_almost_equal(res_cpp, res_onnx, decimal=4)		
 
 	def test_conv_transpose(self):
-		state_out  = helper.make_tensor_value_info('state_out',
-		                                               TensorProto.FLOAT, [1])
+		name = "conv_transpose"
 		state_in = helper.make_tensor_value_info('state_in',
-		                                             TensorProto.FLOAT, [1])
-		node_def = helper.make_node("ConvTranspose", ["X", "weights"], ["Y"],
-		                                pads=[1, 1])
-		X_shape = [1, 5, 4]
-		X_val = self._get_rnd_float32(shape=X_shape)
-		weight_shape = [5, 3, 2]
-		weights_val = self._get_rnd_float32(shape=weight_shape)
-		
-		X = helper.make_tensor('X', TensorProto.FLOAT, (), (X_val, ))
-		weights = helper.make_tensor('weights', TensorProto.FLOAT, (), (weights_val, ))
+		                                             TensorProto.FLOAT, [1, 3, 10, 10])
+		state_out  = helper.make_tensor_value_info('state_out',
+		                                               TensorProto.FLOAT, [1, 5, 10, 10])
+		node_def = helper.make_node("ConvTranspose", ['state_in', 'weight'], ['state_out'],
+		                                pads=[1, 1, 1, 1], strides=[1, 1], kernel_shape=[3, 3])
+
+		weight_shape = [3, 5, 3, 3]
+		weight_val = self._get_rnd_float32(shape=weight_shape)
+
+		weight = helper.make_tensor('weight', TensorProto.FLOAT, weight_shape, weight_val)
 
 		graph = helper.make_graph(
-		        [state_in, state_out, node_def],
-		        "convTranspose",
+		        [node_def],
+		        name,
 		        [state_in],
 		        [state_out],
-		        [X, weights]
+		        [weight]
 		    )
 
-		model = onnx.helper.make_model(graph, producer_name='backend-test')
-		onnx.save(model, '../models/test.onnx')
+		self.check_result(graph, name)
+
+		
+
+	def test_conv2d(self):
+		name = "conv2d"
+		state_in = helper.make_tensor_value_info('state_in',
+		                                             TensorProto.FLOAT, [1, 3, 10, 10])
+		state_out  = helper.make_tensor_value_info('state_out',
+		                                               TensorProto.FLOAT, [1, 5, 10, 10])
+		node_def = helper.make_node("Conv", ['state_in', 'weight'], ['state_out'],
+		                                pads=[1, 1, 1, 1], strides=[1, 1], kernel_shape=[3, 3])
+
+		weight_shape = [5, 3, 3, 3]
+		weight_val = self._get_rnd_float32(shape=weight_shape)
+
+		weight = helper.make_tensor('weight', TensorProto.FLOAT, weight_shape, weight_val)
+
+		graph = helper.make_graph(
+		        [node_def],
+		        name,
+		        [state_in],
+		        [state_out],
+		        [weight]
+		    )
+
+		self.check_result(graph, name)
 
 if __name__ == '__main__':
 	unittest.main()
