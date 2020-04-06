@@ -715,15 +715,15 @@ def void ConvTranspose2DCSF(int32_pl N, int32_pl HPrime, int32_pl WPrime, int32_
 (**************************)
 (* Generic implementation of ConvTranpose3D *)
 
-def void ConvTranspose3DReshapeFilter(int32_pl FD, int32_pl FH, int32_pl FW, int32_pl CI, int32_pl CO, int64_al[FD][FH][FW][CI][CO] inputArr, int64_al[CI][FD*FH*FW*CO] outputArr)
+def void ConvTranspose3DReshapeFilter(int32_pl FD, int32_pl FH, int32_pl FW, int32_pl CO, int32_pl CI, int64_al[FD][FH][FW][CO][CI] inputArr, int64_al[CO][FD*FH*FW*CI] outputArr)
 {
-	for ci=[0:CI]{
+	for co=[0:CO]{
 		for fd=[0:FD]{
 			for fh=[0:FH]{
 				for fw=[0:FW]{
-					for co=[0:CO]{
-						int32_pl linIdx = (fd*FH*FW*CO) + (fh*FW*CO) + (fw*CO) + co;
-						outputArr[ci][linIdx] = inputArr[fd][fh][fw][ci][co];
+					for ci=[0:CI]{
+						int32_pl linIdx = (fd*FH*FW*CI) + (fh*FW*CI) + (fw*CI) + ci;
+						outputArr[co][linIdx] = inputArr[FD-1-fd][FH-1-fh][FW-1-fw][co][ci];
 					};
 				};
 			};
@@ -731,22 +731,7 @@ def void ConvTranspose3DReshapeFilter(int32_pl FD, int32_pl FH, int32_pl FW, int
 	};
 }
 
-def void ConvTranspose3DReshapeMatMulOP(int32_pl N, int32_pl D, int32_pl H, int32_pl W, int32_pl CI, int64_al[CI][N*D*H*W] inputArr, int64_al[N][D][H][W][CI] outputArr)
-{
-	for ci=[0:CI]{
-		for n=[0:N]{
-			for d=[0:D]{
-				for h=[0:H]{
-					for w=[0:W]{
-						outputArr[n][d][h][w][ci] = inputArr[ci][(n*D*H*W) + (d*H*W) + (h*W) + w];
-					};
-				};
-			};
-		};
-	};
-}
-
-def void ConvTranspose3DReshapeInput(int32_pl N, int32_pl DPrime, int32_pl HPrime, int32_pl WPrime, int32_pl CO, int32_pl FD, int32_pl FH, int32_pl FW, int32_pl zPadTrDLeft, int32_pl zPadTrDRight, int32_pl zPadTrHLeft, int32_pl zPadTrHRight, int32_pl zPadTrWLeft, int32_pl zPadTrWRight, int32_pl strideD, int32_pl strideH, int32_pl strideW, int32_pl RRows, int32_pl RCols, int64_al[N][DPrime][HPrime][WPrime][CO] inputArr, int64_al[RRows][RCols] outputArr){
+def void ConvTranspose3DReshapeInput(int32_pl N, int32_pl DPrime, int32_pl HPrime, int32_pl WPrime, int32_pl CI, int32_pl FD, int32_pl FH, int32_pl FW, int32_pl zPadTrDLeft, int32_pl zPadTrDRight, int32_pl zPadTrHLeft, int32_pl zPadTrHRight, int32_pl zPadTrWLeft, int32_pl zPadTrWRight, int32_pl strideD, int32_pl strideH, int32_pl strideW, int32_pl RRows, int32_pl RCols, int64_al[N][DPrime][HPrime][WPrime][CI] inputArr, int64_al[RRows][RCols] outputArr){
 	int32_pl linIdxFilterMult = 0;
 	for n=[0:N]{
 		int32_pl leftTopCornerD = 0 - zPadTrDLeft;
@@ -769,7 +754,7 @@ def void ConvTranspose3DReshapeInput(int32_pl N, int32_pl DPrime, int32_pl HPrim
 								int32_pl curPosH = leftTopCornerH + fh;
 								int32_pl curPosW = leftTopCornerW + fw;
 								int64_al val = 0L;
-								for co=[0:CO]{
+								for ci=[0:CI]{
 									if (((curPosD < 0) || (curPosD >= DPrimeTilde)) || ((curPosH < 0) || (curPosH >= HPrimeTilde)) || ((curPosW < 0) || (curPosW >= WPrimeTilde))) {
 										val = 0L;
 									}
@@ -779,13 +764,13 @@ def void ConvTranspose3DReshapeInput(int32_pl N, int32_pl DPrime, int32_pl HPrim
 											int32_pl idxInputD = curPosD / strideD;
 											int32_pl idxInputH = curPosH / strideH;
 											int32_pl idxInputW = curPosW / strideW;
-											val = inputArr[n][idxInputD][idxInputH][idxInputW][co];
+											val = inputArr[n][idxInputD][idxInputH][idxInputW][ci];
 										}
 										else{
 											val = 0L; (* This represents fractional stride. *)
 										};
 									};
-									outputArr[(fd*FH*FW*CO) + (fh*FW*CO) + (fw*CO) + co][linIdxFilterMult] = val;
+									outputArr[(fd*FH*FW*CI) + (fh*FW*CI) + (fw*CI) + ci][linIdxFilterMult] = val;
 								};
 							};
 						};
@@ -803,35 +788,35 @@ def void ConvTranspose3DReshapeInput(int32_pl N, int32_pl DPrime, int32_pl HPrim
 	};
 }
 
-(* int64_al[N][DPrime][HPrime][WPrime][CO] inputArr,
-   int64_al[FD][FH][FW][CI][CO] filter,
-   int64_al[N][D][H][W][CI] outputArr
+(* int64_al[N][DPrime][HPrime][WPrime][CI] inputArr,
+   int64_al[FD][FH][FW][CO][CI] filter,
+   int64_al[N][D][H][W][CO] outputArr
 *)
-def void ConvTranspose3DCSF(int32_pl N, int32_pl DPrime, int32_pl HPrime, int32_pl WPrime, int32_pl CO, 
-				   int32_pl FD, int32_pl FH, int32_pl FW, int32_pl CI, 
+def void ConvTranspose3DCSF(int32_pl N, int32_pl DPrime, int32_pl HPrime, int32_pl WPrime, int32_pl CI, 
+				   int32_pl FD, int32_pl FH, int32_pl FW, int32_pl CO, 
 				   int32_pl D, int32_pl H, int32_pl W,
 				   int32_pl zPadTrDLeft, int32_pl zPadTrDRight, int32_pl zPadTrHLeft, int32_pl zPadTrHRight, int32_pl zPadTrWLeft, int32_pl zPadTrWRight, 
 				   int32_pl strideD, int32_pl strideH, int32_pl strideW,
-				   int64_al[N][DPrime][HPrime][WPrime][CO] inputArr, 
-				   int64_al[FD][FH][FW][CI][CO] filterArr, 
+				   int64_al[N][DPrime][HPrime][WPrime][CI] inputArr, 
+				   int64_al[FD][FH][FW][CO][CI] filterArr, 
 				   int32_pl consSF,
-				   int64_al[N][D][H][W][CI] outArr)
+				   int64_al[N][D][H][W][CO] outArr)
 {
-	int32_pl reshapedFilterRows = CI;
-	int32_pl reshapedFilterCols = FD*FH*FW*CO;
-	int32_pl reshapedIPRows = FD*FH*FW*CO;
+	int32_pl reshapedFilterRows = CO;
+	int32_pl reshapedFilterCols = FD*FH*FW*CI;
+	int32_pl reshapedIPRows = FD*FH*FW*CI;
 	int32_pl reshapedIPCols = N * D * H * W;
 
 	int64_al[reshapedFilterRows][reshapedFilterCols] filterReshaped;
 	int64_al[reshapedIPRows][reshapedIPCols] inputReshaped;
 	int64_al[reshapedFilterRows][reshapedIPCols] matmulOP;
 
-	ConvTranspose3DReshapeFilter(FD, FH, FW, CI, CO, filterArr, filterReshaped);
-	ConvTranspose3DReshapeInput(N, DPrime, HPrime, WPrime, CO, FD, FH, FW, zPadTrDLeft, zPadTrDRight, zPadTrHLeft, zPadTrHRight, zPadTrWLeft, zPadTrWRight, strideD, strideH, strideW, reshapedIPRows, reshapedIPCols, inputArr, inputReshaped);
+	ConvTranspose3DReshapeFilter(FD, FH, FW, CO, CI, filterArr, filterReshaped);
+	ConvTranspose3DReshapeInput(N, DPrime, HPrime, WPrime, CI, FD, FH, FW, zPadTrDLeft, zPadTrDRight, zPadTrHLeft, zPadTrHRight, zPadTrWLeft, zPadTrWRight, strideD, strideH, strideW, reshapedIPRows, reshapedIPCols, inputArr, inputReshaped);
 
 	MatMulCSF2D(reshapedFilterRows, reshapedFilterCols, reshapedIPCols, filterReshaped, inputReshaped, matmulOP, consSF);
 
-	ConvTranspose3DReshapeMatMulOP(N, D, H, W, CI, matmulOP, outArr);
+	Conv3DReshapeMatMulOP(N, D, H, W, CO, matmulOP, outArr);
 }
 
 (**************************)
