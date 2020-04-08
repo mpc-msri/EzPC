@@ -405,24 +405,10 @@ def void Conv2DCSF(int32_pl N, int32_pl H, int32_pl W, int32_pl CI,
 				   int32_pl consSF,
 				   int64_al[N][((H-FH+(zPadHLeft+zPadHRight))/strideH)+1][((W-FW+(zPadWLeft+zPadWRight))/strideW)+1][CO] outArr)
 {
-	
-	int32_pl reshapedFilterRows = CO;
-	int32_pl reshapedFilterCols = FH*FW*CI;
-	int32_pl reshapedIPRows = FH*FW*CI;
-	int32_pl newH = (((H + (zPadHLeft+zPadHRight) - FH)/strideH) + 1);
-	int32_pl newW = (((W + (zPadWLeft+zPadWRight) - FW)/strideW) + 1);
-	int32_pl reshapedIPCols = N * newH * newW;
+	int32_pl outH = ((H-FH+(zPadHLeft+zPadHRight))/strideH)+1;
+	int32_pl outW = ((W-FW+(zPadWLeft+zPadWRight))/strideW)+1;
 
-	int64_al[reshapedFilterRows][reshapedFilterCols] filterReshaped;
-	int64_al[reshapedIPRows][reshapedIPCols] inputReshaped;
-	int64_al[reshapedFilterRows][reshapedIPCols] matmulOP;
-
-	Conv2DReshapeFilter(FH, FW, CI, CO, filterArr, filterReshaped);
-	Conv2DReshapeInput(N, H, W, CI, FH, FW, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideH, strideW, reshapedIPRows, reshapedIPCols, inputArr, inputReshaped);
-
-	MatMulCSF2D(reshapedFilterRows, reshapedFilterCols, reshapedIPCols, filterReshaped, inputReshaped, matmulOP, consSF);
-
-	Conv2DReshapeMatMulOP(N, newH, newW, CO, matmulOP, outArr);
+	Conv2D(N, H, W, CI, FH, FW, CO, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideH, strideW, outH, outW, inputArr, filterArr, consSF, outArr);
 }
 
 (**************************)
@@ -514,25 +500,12 @@ def void Conv3DCSF(int32_pl N, int32_pl D, int32_pl H, int32_pl W, int32_pl CI,
 				   int64_al[FD][FH][FW][CI][CO] filterArr, 
 				   int32_pl consSF,
 				   int64_al[N][((D-FD+(zPadDLeft+zPadDRight))/strideD)+1][((H-FH+(zPadHLeft+zPadHRight))/strideH)+1][((W-FW+(zPadWLeft+zPadWRight))/strideW)+1][CO] outArr)
-{
-	int32_pl reshapedFilterRows = CO;
-	int32_pl reshapedFilterCols = FD*FH*FW*CI;
-	int32_pl reshapedIPRows = FD*FH*FW*CI;
-	int32_pl newD = (((D + (zPadDLeft+zPadDRight) - FD)/strideD) + 1);
-	int32_pl newH = (((H + (zPadHLeft+zPadHRight) - FH)/strideH) + 1);
-	int32_pl newW = (((W + (zPadWLeft+zPadWRight) - FW)/strideW) + 1);
-	int32_pl reshapedIPCols = N * newD * newH * newW;
+{	
+	int32_pl outD = ((D-FD+(zPadDLeft+zPadDRight))/strideD)+1;
+	int32_pl outH = ((H-FH+(zPadHLeft+zPadHRight))/strideH)+1;
+	int32_pl outW = ((W-FW+(zPadWLeft+zPadWRight))/strideW)+1;
 
-	int64_al[reshapedFilterRows][reshapedFilterCols] filterReshaped;
-	int64_al[reshapedIPRows][reshapedIPCols] inputReshaped;
-	int64_al[reshapedFilterRows][reshapedIPCols] matmulOP;
-
-	Conv3DReshapeFilter(FD, FH, FW, CI, CO, filterArr, filterReshaped);
-	Conv3DReshapeInput(N, D, H, W, CI, FD, FH, FW, zPadDLeft, zPadDRight, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideD, strideH, strideW, reshapedIPRows, reshapedIPCols, inputArr, inputReshaped);
-
-	MatMulCSF2D(reshapedFilterRows, reshapedFilterCols, reshapedIPCols, filterReshaped, inputReshaped, matmulOP, consSF);
-
-	Conv3DReshapeMatMulOP(N, newD, newH, newW, CO, matmulOP, outArr);
+	Conv3D(N, D, H, W, CI, FD, FH, FW, CO, zPadDLeft, zPadDRight, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideD, strideH, strideW, outD, outH, outW, inputArr, filterArr, consSF, outArr);
 }
 
 (**************************)
