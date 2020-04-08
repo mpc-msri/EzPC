@@ -86,6 +86,30 @@ class TestNode(unittest.TestCase):
 		    )
 		self.check_result(graph, name)
 
+
+	def test_conv3d(self):
+		name = "conv3d"
+		state_in = helper.make_tensor_value_info('state_in',
+		                                             TensorProto.FLOAT, [1, 32, 64, 256, 256])
+		state_out  = helper.make_tensor_value_info('state_out',
+		                                               TensorProto.FLOAT, [1, 32, 64, 256, 256])
+		node_def = helper.make_node("Conv", ['state_in', 'weight'], ['state_out'],
+		                                pads=[1, 1, 1, 1, 1, 1], strides=[1, 1, 1], kernel_shape=[3, 3, 3])
+
+		weight_shape = [32, 32, 3, 3, 3]
+		weight_val = self._get_rnd_float32(shape=weight_shape)
+
+		weight = helper.make_tensor('weight', TensorProto.FLOAT, weight_shape, weight_val)
+
+		graph = helper.make_graph(
+		        [node_def],
+		        name,
+		        [state_in],
+		        [state_out],
+		        [weight]
+		    )
+		self.check_result(graph, name)	
+
 	def test_conv_transpose(self):
 		name = "conv_transpose"
 		state_in = helper.make_tensor_value_info('state_in',
