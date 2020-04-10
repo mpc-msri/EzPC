@@ -93,7 +93,7 @@ python3 -c 'import common; common.merge_name_map()'
 cat "../TFEzPCLibrary/Library${BITLEN}_cpp.ezpc" "../TFEzPCLibrary/Library${BITLEN}_common.ezpc" ${data_dir}"/"${ezpcOutputFullFileName} > temp
 mv temp "$ezpcOutputFullFileName"
 
-cp "$ezpcOutputFullFileName" "$EzPCDir/EzPC"
+mv "$ezpcOutputFullFileName" "$EzPCDir/EzPC"
 cd "$EzPCDir/EzPC"
 eval `opam config env`
 
