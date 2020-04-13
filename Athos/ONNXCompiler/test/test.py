@@ -142,21 +142,24 @@ class TestNode(unittest.TestCase):
 		                                             TensorProto.FLOAT, [1, 3, 10, 10, 10])
 		state_out  = helper.make_tensor_value_info('state_out',
 		                                               TensorProto.FLOAT, [1, 5, 10, 10, 10])
-		node_def = helper.make_node("ConvTranspose", ['state_in', 'weight'], ['state_out'],
+		node_def = helper.make_node("ConvTranspose", ['state_in', 'weight', 'bias'], ['state_out'],
 										# check with pads which are not 1
 		                                pads=[1, 1, 1, 1, 1, 1], strides=[1, 1, 1], kernel_shape=[3, 3, 3])
 
 		weight_shape = [3, 5, 3, 3, 3]
 		weight_val = self._get_rnd_float32(shape=weight_shape)
+		bias_shape = [5]
+		bias_val = self._get_rnd_float32(shape=bias_value)
 
 		weight = helper.make_tensor('weight', TensorProto.FLOAT, weight_shape, weight_val)
+		bias = helper.make_tensor('bias', TensorProto.FLOAT, bias_shape, bias_val)
 
 		graph = helper.make_graph(
 		        [node_def],
 		        name,
 		        [state_in],
 		        [state_out],
-		        [weight]
+		        [weight, bias]
 		    )
 		self.check_result(graph, name)	
 
