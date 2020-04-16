@@ -32,6 +32,7 @@ import subprocess
 import common
 from datetime import date
 import time
+import hashlib
 
 class TestNode(unittest.TestCase):
 
@@ -50,16 +51,23 @@ class TestNode(unittest.TestCase):
 		model = onnx.helper.make_model(graph, producer_name='onnx-compiler-test')
 		onnx.save(model, 'models/' + name + '.onnx')
 
+		old_hash = hashlib.md5(open('debug/cpp_output.txt','rb').read()).hexdigest()
+
 		bashCommand = './compile.sh ' + name
 		process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
 		output, error = process.communicate()
 
 		# print(output)
 		# print(error)
+		new_hash = hashlib.md5(open('debug/cpp_output.txt','rb').read()).hexdigest()
+
+		self.assertNotEqual(old_hash, new_hash, 'the compilation did not terminate')	
 
 		res_onnx = common.extract_txt_to_numpy_array('debug/onnx_output.txt')	
 		res_cpp = common.extract_txt_to_numpy_array('debug/cpp_output.txt')
 
+
+		self.assertIsNone(error, 'error is non None')
 		np.testing.assert_almost_equal(res_cpp, res_onnx, decimal=4)		
 
 
@@ -90,13 +98,13 @@ class TestNode(unittest.TestCase):
 	def test_conv3d(self):
 		name = "conv3d"
 		state_in = helper.make_tensor_value_info('state_in',
-		                                             TensorProto.FLOAT, [1, 32, 64, 256, 256])
+		                                             TensorProto.FLOAT, [1, 3, 10, 10, 10])
 		state_out  = helper.make_tensor_value_info('state_out',
-		                                               TensorProto.FLOAT, [1, 32, 64, 256, 256])
+		                                               TensorProto.FLOAT, [1, 5, 10, 10, 10])
 		node_def = helper.make_node("Conv", ['state_in', 'weight'], ['state_out'],
 		                                pads=[1, 1, 1, 1, 1, 1], strides=[1, 1, 1], kernel_shape=[3, 3, 3])
 
-		weight_shape = [32, 32, 3, 3, 3]
+		weight_shape = [5, 3, 3, 3, 3]
 		weight_val = self._get_rnd_float32(shape=weight_shape)
 
 		weight = helper.make_tensor('weight', TensorProto.FLOAT, weight_shape, weight_val)
@@ -149,7 +157,7 @@ class TestNode(unittest.TestCase):
 		weight_shape = [3, 5, 3, 3, 3]
 		weight_val = self._get_rnd_float32(shape=weight_shape)
 		bias_shape = [5]
-		bias_val = self._get_rnd_float32(shape=bias_value)
+		bias_val = self._get_rnd_float32(shape=bias_shape)
 
 		weight = helper.make_tensor('weight', TensorProto.FLOAT, weight_shape, weight_val)
 		bias = helper.make_tensor('bias', TensorProto.FLOAT, bias_shape, bias_val)

@@ -710,7 +710,6 @@ class ONNXNodesAST:
 		inputsRef = node.inputs
 		inputShape = value_info[inputsRef[0]][1]
 		filterShape = value_info[inputsRef[1]][1]
-		biasShape = value_info[inputsRef[2]][1]
 		stridesUsed = node.attrs['strides']
 		outputShape = value_info[node.outputs[0]][1]
 
@@ -731,8 +730,8 @@ class ONNXNodesAST:
 		options[AST.PaddingKeysDict.strideH] = stridesUsed[0]
 		options[AST.PaddingKeysDict.strideW] = stridesUsed[1]
 		options[AST.PaddingKeysDict.ConvDim] = 2		
-		options[AST.PaddingKeysDict.outputImgD] = outputShape[2]
-		options[AST.PaddingKeysDict.outputImgH] = outputShape[3]
+		options[AST.PaddingKeysDict.outputImgH] = outputShape[2]
+		options[AST.PaddingKeysDict.outputImgW] = outputShape[3]
 
 		assert (inputShape[1] == filterShape[0])
 		# For Input:
@@ -758,6 +757,7 @@ class ONNXNodesAST:
 
 		# If there is bias to be added then reshape and add it 
 		if (len(inputsRef) == 3):
+			biasShape = value_info[inputsRef[2]][1]
 			reshaped_bias_name = get_new_var_name(out_var_count)
 			reshaped_bias = get_reshaped_bias_ast(inputsRef[2], value_info, node_name_to_out_var_dict, 2)
 			innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, reshaped_bias, reshaped_bias_name, mtdAST)
@@ -774,7 +774,6 @@ class ONNXNodesAST:
 		inputsRef = node.inputs
 		inputShape = value_info[inputsRef[0]][1]
 		filterShape = value_info[inputsRef[1]][1]
-		biasShape = value_info[inputsRef[2]][1]
 		stridesUsed = node.attrs['strides']
 		outputShape = value_info[node.outputs[0]][1]
 
@@ -827,6 +826,7 @@ class ONNXNodesAST:
 
 		# If there is bias to be added then reshape and add it 
 		if (len(inputsRef) == 3):
+			biasShape = value_info[inputsRef[2]][1]
 			reshaped_bias_name = get_new_var_name(out_var_count)
 			reshaped_bias = get_reshaped_bias_ast(inputsRef[2], value_info, node_name_to_out_var_dict, 3)
 			innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, reshaped_bias, reshaped_bias_name, mtdAST)
