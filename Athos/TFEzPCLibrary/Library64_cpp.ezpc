@@ -88,16 +88,16 @@ def void Conv3D(int32_pl N, int32_pl D, int32_pl H, int32_pl W, int32_pl CI,
 					for h=[0:outH]{
 						for w=[0:outW]{
 							int64_al val = 0L;
-							for fd=[d:d+FD]{
-								for fh=[h:h+FH]{
-										for fw=[w:w+FW]{
+							for fd=[d*strideD:d*strideD+FD]{
+								for fh=[h*strideH:h*strideH+FH]{
+										for fw=[w*strideW:w*strideW+FW]{
 											int32_pl curPosD = fd-zPadDLeft;
 											int32_pl curPosH = fh-zPadHLeft;
 											int32_pl curPosW = fw-zPadWLeft;
 											if( (curPosD >= 0) && (curPosH >= 0) && (curPosW >= 0) && (curPosD < D) && (curPosH < H) && (curPosW < W)){
-												int32_pl curFilterPosD = fd-d;
-												int32_pl curFilterPosH = fh-h;
-												int32_pl curFilterPosW = fw-w;
+												int32_pl curFilterPosD = fd-(d*strideD);
+												int32_pl curFilterPosH = fh-(h*strideH);
+												int32_pl curFilterPosW = fw-(w*strideW);
 												val = val +_al (inputArr[n][curPosD][curPosH][curPosW][ci]*filterArr[curFilterPosD][curFilterPosH][curFilterPosW][ci][co]);
 											};
 										};
@@ -111,6 +111,53 @@ def void Conv3D(int32_pl N, int32_pl D, int32_pl H, int32_pl W, int32_pl CI,
 		};
 	};					   
 }
+
+
+(**************************)
+def void ConvTranspose3D(int32_pl N, int32_pl D, int32_pl H, int32_pl W, int32_pl CI, 
+				   int32_pl FD, int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl zPadDLeft, int32_pl zPadDRight,int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
+				   int32_pl strideD, int32_pl strideH, int32_pl strideW,
+				   int32_pl outD, int32_pl outH, int32_pl outW, 
+				   int64_al[N][D][H][W][CI] inputArr, 
+				   int64_al[FD][FH][FW][CO][CI] filterArr, 
+				   int32_pl consSF,
+				   int64_al[N][outD][outH][outW][CO] outArr){
+
+	for n=[0:N]{
+		for co=[0:CO]{
+			for ci=[0:CI]{
+				for d=[0:outD]{
+					for h=[0:outH]{
+						for w=[0:outW]{
+							int64_al val = 0L;
+							for fd=[d:d+FD]{
+								for fh=[h:h+FH]{
+										for fw=[w:w+FW]{
+
+											int32_pl curPosD = (fd-zPadDLeft)/strideD;
+											int32_pl curPosH = (fh-zPadHLeft)/strideD;
+											int32_pl curPosW = (fw-zPadWLeft)/strideD;
+											
+											if( (curPosD >= 0) && (curPosH >= 0) && (curPosW >= 0) && (curPosD < D) && (curPosH < H) && (curPosW < W) && ((fd-zPadDLeft)%strideD == 0) && ((fh-zPadHLeft)%strideH == 0) && ((fw-zPadWLeft)%strideW == 0)){
+
+												int32_pl curFilterPosD = FD+d-fd-1;
+												int32_pl curFilterPosH = FH+h-fh-1;
+												int32_pl curFilterPosW = FW+w-fw-1;
+												val = val +_al (inputArr[n][curPosD][curPosH][curPosW][ci]*filterArr[curFilterPosD][curFilterPosH][curFilterPosW][co][ci]);
+											};
+										};
+									};
+								};	
+							outArr[n][d][h][w][co] = outArr[n][d][h][w][co] +_al (val >> consSF);		
+						};
+					};
+				};	
+			};
+		};
+	};			  
+}
+
 
 (**************************)
 def void ArgMax1(int32_pl outArrS1, int32_pl inArrS1, int32_pl inArrS2, int64_al[inArrS1][inArrS2] inArr, int32_pl dim, int64_al[outArrS1] outArr){
