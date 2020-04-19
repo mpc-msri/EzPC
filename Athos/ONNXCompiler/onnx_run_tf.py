@@ -34,6 +34,7 @@ import os, sys
 import onnx
 from onnx import helper
 from onnx_tf.backend import prepare
+from onnx import TensorProto
 
 def main():
 	# First read the ONNX file

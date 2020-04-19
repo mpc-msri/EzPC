@@ -41,6 +41,7 @@ ezpcOutputFullFileName=${modelName}'.ezpc'
 compilationTargetLower=$(echo "$COMPILATIONTARGET" | awk '{print tolower($0)}')
 compilationTargetHigher=$(echo "$COMPILATIONTARGET" | awk '{print toupper($0)}')
 finalCodeOutputFileName=${modelName}'0.cpp'
+finalCodeOutputFileName1=${modelName}'1.cpp'
 inputFileName=${modelName}'_input.h'
 seedotASTName=${modelName}'.pkl'
 
@@ -67,7 +68,7 @@ echo "Starting onnx run"
 # can use either 'onnx_run_tf' or 'onnx_run'
 # onnx_run is faster and has lesser dependencies 
 # but may not support all operations
-python3 "onnx_run.py" ${modelName}'.onnx' ${debugOnnxNode} > "debug/log_onnx_run.txt"
+python3 "onnx_run_tf.py" ${modelName}'.onnx' ${debugOnnxNode} > "debug/log_onnx_run.txt"
 echo -e "${GREEN}Finished onnx run${NC}"
 
 echo "Starting process_onnx"
@@ -112,8 +113,12 @@ done
 if [ "$compilationTargetLower" == "cpp" ]; then
 	cd "$ONNX_dir"
 	mv "$finalCodeOutputFileName" "$data_dir"
+
+	echo "Adding openmp threading instructions to the 3d convolutions"
+	python3 -c "import common; common.add_openmp_threading_to_convolution('${data_dir}"/"${finalCodeOutputFileName}')"
+
 	echo "compiling generated cpp code"
-	g++ -O3 -g -w ${data_dir}"/"${finalCodeOutputFileName} -o ${data_dir}"/"${modelName}".out"
+	g++ -O3 -g -w -fopenmp ${data_dir}"/"${finalCodeOutputFileName1} -o ${data_dir}"/"${modelName}".out"
 	echo -e "${GREEN}compiling done ${NC}"
 	rm -f "debug/cpp_output_raw.txt" || true
 	echo "running the final code"	
