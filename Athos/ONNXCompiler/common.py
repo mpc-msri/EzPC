@@ -25,6 +25,7 @@ SOFTWARE.
 import numpy
 import os
 import _pickle as pickle
+import re
 
 def proto_val_to_dimension_tuple(proto_val):
 	return tuple([dim.dim_value for dim in proto_val.type.tensor_type.shape.dim])
@@ -86,4 +87,13 @@ def extract_txt_to_numpy_array(file):
 	f.close()
 	return numpy.array(op, dtype=numpy.float32)
 		
+def add_openmp_threading_to_convolution(file):
+	with open(file, 'r+') as f:
+		newfilename = file[:-5]+'1.cpp'
+		g = open(newfilename, 'w')
+		content = f.read()
+		content1 =  re.sub('void Conv3D\(.*','\g<0> \n #pragma omp parallel for collapse(6) ', content)
+		content2 =  re.sub('void ConvTranspose3D\(.*','\g<0> \n #pragma omp parallel for collapse(6) ', content1)
+		g.write(content2)
+		g.close()
 
