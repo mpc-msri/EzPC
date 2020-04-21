@@ -83,10 +83,10 @@ def void Conv3D(int32_pl N, int32_pl D, int32_pl H, int32_pl W, int32_pl CI,
 
 	for n=[0:N]{
 		for co=[0:CO]{
-			for ci=[0:CI]{
-				for d=[0:outD]{
-					for h=[0:outH]{
-						for w=[0:outW]{
+			for d=[0:outD]{
+				for h=[0:outH]{
+					for w=[0:outW]{
+						for ci=[0:CI]{
 							int64_al val = 0L;
 							for fd=[d*strideD:d*strideD+FD]{
 								for fh=[h*strideH:h*strideH+FH]{
@@ -126,10 +126,10 @@ def void ConvTranspose3D(int32_pl N, int32_pl D, int32_pl H, int32_pl W, int32_p
 
 	for n=[0:N]{
 		for co=[0:CO]{
-			for ci=[0:CI]{
-				for d=[0:outD]{
-					for h=[0:outH]{
-						for w=[0:outW]{
+			for d=[0:outD]{
+				for h=[0:outH]{
+					for w=[0:outW]{
+						for ci=[0:CI]{
 							int64_al val = 0L;
 							for fd=[d:d+FD]{
 								for fh=[h:h+FH]{
