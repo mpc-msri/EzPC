@@ -92,8 +92,8 @@ def add_openmp_threading_to_convolution(file):
 		newfilename = file[:-5]+'1.cpp'
 		g = open(newfilename, 'w')
 		content = f.read()
-		content1 =  re.sub('void Conv3D\(.*','\g<0> \n #pragma omp parallel for collapse(6) ', content)
-		content2 =  re.sub('void ConvTranspose3D\(.*','\g<0> \n #pragma omp parallel for collapse(6) ', content1)
+		content1 =  re.sub('void Conv3D\(.*','\g<0> \n #pragma omp parallel for collapse(5) ', content)
+		content2 =  re.sub('void ConvTranspose3D\(.*','\g<0> \n #pragma omp parallel for collapse(5) ', content1)
 		g.write(content2)
 		g.close()
 

@@ -32,14 +32,13 @@ from onnx import helper
 import math
 from onnx import numpy_helper
 
-scaling_factor = 24
-
 def main():
-	if (len(sys.argv) < 2):
-		print("TF python file unspecified.", file=sys.stderr)
+	if (len(sys.argv) < 3):
+		print("Model file or scaling factor unspecified.", file=sys.stderr)
 		exit(1)
 	
 	file_name = sys.argv[1]
+	scaling_factor = int(sys.argv[2])
 	file_path = 'models/' + file_name
 	model_name = file_name[:-5] # name without the '.onnx' extension
 	model = onnx.load(file_path)

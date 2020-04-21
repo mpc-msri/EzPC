@@ -48,7 +48,6 @@ np.set_printoptions(threshold=np.inf)
 
 DEBUG = False
 out_var_prefix = "J"
-scaling_factor = 24
 
 def main():
 	sys.setrecursionlimit(10000)

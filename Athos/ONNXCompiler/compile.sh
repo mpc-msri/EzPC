@@ -60,7 +60,7 @@ if [ -f  ${data_dir}"/"${inputFileName} ]; then
 	echo -e "${GREEN}$inputFileName already exist, skipping process_onnx${NC}"
 else 
 	echo "Starting to gemerate random input"
-	python3 "create_input.py" ${modelName}'.onnx' 
+	python3 "create_input.py" ${modelName}'.onnx' $SCALINGFACTOR
 	echo -e "${GREEN}Finished generating input${NC}"
 fi 	
 
