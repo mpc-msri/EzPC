@@ -39,32 +39,43 @@ def void Conv2D(int32_pl N, int32_pl H, int32_pl W, int32_pl CI,
 				   int32_pl FH, int32_pl FW, int32_pl CO, 
 				   int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
 				   int32_pl strideH, int32_pl strideW,
-				   int32_pl outH, int32_pl outW, 
+				   int32_pl outH, int32_pl outW, int32_pl G,
 				   int64_al[N][H][W][CI] inputArr, 
-				   int64_al[FH][FW][CI][CO] filterArr, 
+				   int64_al[FH][FW][CI/G][CO] filterArr, 
 				   int32_pl consSF,
 				   int64_al[N][outH][outW][CO] outArr){
 
+	int32_pl GIS = CI/G;
+	int32_pl GOS = CO/G; 				   
+
 	for n=[0:N]{
-		for co=[0:CO]{
-			for ci=[0:CI]{
-				for h=[0:outH]{
-					for w=[0:outW]{
-						int64_al val = 0L;
-						for fh=[h:h+FH]{
+		for cog=[0:GOS]{
+			for cig=[0:GIS]{
+				for g=[0:G]{
+					for h=[0:outH]{
+						for w=[0:outW]{
+							
+							int64_al val = 0L;
+							int32_pl ci = GIS*g + cig;
+							int32_pl co = GOS*g + cog;
+
+							for fh=[h:h+FH]{
 								for fw=[w:w+FW]{
-									int32_pl curPosH = fh-zPadHLeft;
-									int32_pl curPosW = fw-zPadWLeft;
-									if( (curPosH >= 0) && (curPosW >= 0) && (curPosH < H) && (curPosW < W)){
-										int32_pl curFilterPosH = fh-h;
-										int32_pl curFilterPosW = fw-w;
-										val = val +_al (inputArr[n][curPosH][curPosW][ci]*filterArr[curFilterPosH][curFilterPosW][ci][co]);
+										int32_pl curPosH = fh-zPadHLeft;
+										int32_pl curPosW = fw-zPadWLeft;
+
+										if( (curPosH >= 0) && (curPosW >= 0) && (curPosH < H) && (curPosW < W)){
+											int32_pl curFilterPosH = fh-h;
+											int32_pl curFilterPosW = fw-w;
+											val = val +_al (inputArr[n][curPosH][curPosW][ci]*filterArr[curFilterPosH][curFilterPosW][(ci/G)][co]);
+										};	
 									};
 								};
-							};
-						outArr[n][h][w][co] = outArr[n][h][w][co] +_al (val >> consSF);		
+								
+								outArr[n][h][w][co] = outArr[n][h][w][co] +_al (val >> consSF);		
+							};	
+						};
 					};
-				};
 			};
 		};
 	};					   

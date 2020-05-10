@@ -328,6 +328,40 @@ def void Concat2T222(int32_pl s1, int32_pl s2, int32_pl inp1s1, int32_pl inp1s2,
 }
 
 (**************************)
+
+def void Split44(int32_pl O1, int32_pl O2, int32_pl O3, int32_pl O4, int32_pl I1, int32_pl I2, int32_pl I3, int32_pl I4, int64_al[I1][I2][I3][I4] inp, int32_pl axis, int32_pl curCount, int32_pl total, int64_al[O1][O2][O3][O4] out){
+
+for o1=[0:O1]{
+	for o2=[0:O2]{
+		for o3=[0:O3]{
+			for o4=[0:O4]{
+				
+				int32_pl i1 = o1;
+				int32_pl i2 = o2;
+				int32_pl i3 = o3;
+				int32_pl i4 = o4;
+
+				if(axis == 0){
+					i1 = (I1/total)*curCount+o1;
+				};
+				if(axis == 1){
+					i2 = (I2/total)*curCount+o2;
+				};
+				if(axis == 2){
+					i3 = (I3/total)*curCount+o3;
+				};
+				if(axis == 3){
+					i4 = (I4/total)*curCount+o4;
+				};
+
+				out[o1][o2][o3][o4] = inp[i1][i2][i3][i4];
+			};
+		};
+	};
+}	
+}
+
+(**************************)
 (* Generic implementation of Conv2DCSF *)
 
 def void Conv2DReshapeFilter(int32_pl FH, int32_pl FW, int32_pl CI, int32_pl CO, int64_al[FH][FW][CI][CO] inputArr, int64_al[CO][FH*FW*CI] outputArr){
@@ -399,7 +433,7 @@ def void Conv2DReshapeInput(int32_pl N, int32_pl H, int32_pl W, int32_pl CI, int
 def void Conv2DCSF(int32_pl N, int32_pl H, int32_pl W, int32_pl CI, 
 				   int32_pl FH, int32_pl FW, int32_pl CO, 
 				   int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
-				   int32_pl strideH, int32_pl strideW, 
+				   int32_pl strideH, int32_pl strideW, int32_pl G, 
 				   int64_al[N][H][W][CI] inputArr, 
 				   int64_al[FH][FW][CI][CO] filterArr, 
 				   int32_pl consSF,
@@ -408,7 +442,7 @@ def void Conv2DCSF(int32_pl N, int32_pl H, int32_pl W, int32_pl CI,
 	int32_pl outH = ((H-FH+(zPadHLeft+zPadHRight))/strideH)+1;
 	int32_pl outW = ((W-FW+(zPadWLeft+zPadWRight))/strideW)+1;
 
-	Conv2D(N, H, W, CI, FH, FW, CO, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideH, strideW, outH, outW, inputArr, filterArr, consSF, outArr);
+	Conv2D(N, H, W, CI, FH, FW, CO, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideH, strideW, outH, outW, G, inputArr, filterArr, consSF, outArr);
 }
 
 (* int64_al[N][H][W][CI] inputArr, 

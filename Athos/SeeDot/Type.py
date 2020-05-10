@@ -252,6 +252,7 @@ class InferType(ASTVisitor):
 	def visitBopConv(self, node:AST.BOp, eType:Type, fType:Type, args=None):
 		assert isTensor(eType) and isTensor(fType)
 		convDim = 2
+		group = 1
 		if AST.PaddingKeysDict.ConvDim in node.options:
 			convDim = node.options[AST.PaddingKeysDict.ConvDim]
 
@@ -267,6 +268,7 @@ class InferType(ASTVisitor):
 		if (convDim == 2):
 			[N, H, W, CI] = eType.shape
 			[FH, FW, CI1, CO] = fType.shape
+			group = node.options[AST.PaddingKeysDict.group]
 		elif (convDim == 3):
 			[N, D, H, W, CI] = eType.shape
 			[FD, FH, FW, CI1, CO] = fType.shape
@@ -280,7 +282,7 @@ class InferType(ASTVisitor):
 			assert(False)
 		assert(FH == node.options[AST.PaddingKeysDict.FH])
 		assert(FW == node.options[AST.PaddingKeysDict.FW])
-		assert(CI1 == CI)
+		assert(CI1*group == CI)
 		zPadHLeft = node.options[AST.PaddingKeysDict.zPadHLeft]
 		zPadHRight = node.options[AST.PaddingKeysDict.zPadHRight]
 		zPadWLeft = node.options[AST.PaddingKeysDict.zPadWLeft]

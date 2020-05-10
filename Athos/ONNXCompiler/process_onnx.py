@@ -164,6 +164,7 @@ def process_onnx_nodes(innermost_let_ast_node, node_name_to_out_var_dict, out_va
 			print("Node information")
 			print(node)	
 
+		print("Processing " + node.name + "\n")	
 		mtdForCurAST = {AST.ASTNode.mtdKeyTFOpName : node.op_type,
 							AST.ASTNode.mtdKeyTFNodeName : node.name}
 

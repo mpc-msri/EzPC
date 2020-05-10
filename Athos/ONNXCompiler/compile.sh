@@ -68,7 +68,7 @@ echo "Starting onnx run"
 # can use either 'onnx_run_tf' or 'onnx_run'
 # onnx_run is faster and has lesser dependencies 
 # but may not support all operations
-python3 "onnx_run_tf.py" ${modelName}'.onnx' ${debugOnnxNode} > "debug/log_onnx_run.txt"
+python3 "onnx_run.py" ${modelName}'.onnx' ${debugOnnxNode} > "debug/log_onnx_run.txt"
 echo -e "${GREEN}Finished onnx run${NC}"
 
 echo "Starting process_onnx"

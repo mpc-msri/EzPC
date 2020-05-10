@@ -46,6 +46,10 @@ def main():
 	
 	# Generating input
 	input_dims = common.proto_val_to_dimension_tuple(model.graph.input[0])
+	if(input_dims[0] == 0):
+		input_dims = list(input_dims) 
+		input_dims[0] = 1  # when batch size is not defined
+		input_dims = tuple(input_dims)
 	input_array = numpy.random.random(input_dims)
 	print('Generated random input of dimension ' + str(input_dims))
 	np.save('debug/' + model_name + '/' + model_name + '_input', input_array)

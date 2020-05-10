@@ -66,6 +66,8 @@ class TestNode(unittest.TestCase):
 		res_onnx = common.extract_txt_to_numpy_array('debug/onnx_output.txt')	
 		res_cpp = common.extract_txt_to_numpy_array('debug/cpp_output.txt')
 
+		np.save('res_onnx', res_onnx)
+		np.save('res_cpp', res_cpp)
 
 		self.assertIsNone(error, 'error is non None')
 		np.testing.assert_almost_equal(res_cpp, res_onnx, decimal=4)		
@@ -76,11 +78,11 @@ class TestNode(unittest.TestCase):
 		state_in = helper.make_tensor_value_info('state_in',
 		                                             TensorProto.FLOAT, [1, 3, 10, 10])
 		state_out  = helper.make_tensor_value_info('state_out',
-		                                               TensorProto.FLOAT, [1, 5, 10, 10])
+		                                               TensorProto.FLOAT, [1, 6, 10, 10])
 		node_def = helper.make_node("Conv", ['state_in', 'weight'], ['state_out'],
-		                                pads=[1, 1, 1, 1], strides=[1, 1], kernel_shape=[3, 3])
+		                                pads=[1, 1, 1, 1], strides=[1, 1], kernel_shape=[3, 3], group=3)
 
-		weight_shape = [5, 3, 3, 3]
+		weight_shape = [6, 1, 3, 3]
 		weight_val = self._get_rnd_float32(shape=weight_shape)
 
 		weight = helper.make_tensor('weight', TensorProto.FLOAT, weight_shape, weight_val)
@@ -97,15 +99,15 @@ class TestNode(unittest.TestCase):
 
 	def test_conv3d(self):
 		name = "conv3d"
-		state_in = helper.make_tensor_value_info('state_in',
-		                                             TensorProto.FLOAT, [1, 3, 10, 10, 10])
+		state_in = helper.make_tensor_value_info('state_in',TensorProto.FLOAT, [1, 2, 64, 256, 256])
 		state_out  = helper.make_tensor_value_info('state_out',
-		                                               TensorProto.FLOAT, [1, 5, 5, 5, 5])
+		                                               TensorProto.FLOAT, [1, 2, 64, 256, 256])
 		node_def = helper.make_node("Conv", ['state_in', 'weight'], ['state_out'],
-		                                pads=[1, 1, 1, 1, 1, 1], strides=[2, 2, 2], kernel_shape=[3, 3, 3])
+		                                pads=[1, 1, 1, 1, 1, 1], strides=[1, 1, 1], kernel_shape=[3, 3, 3])
 
-		weight_shape = [5, 3, 3, 3, 3]
+		weight_shape = [2, 2, 3, 3, 3]
 		weight_val = self._get_rnd_float32(shape=weight_shape)
+		np.save('weight', weight_val)
 
 		weight = helper.make_tensor('weight', TensorProto.FLOAT, weight_shape, weight_val)
 
@@ -186,6 +188,22 @@ class TestNode(unittest.TestCase):
 		        []
 		    )
 		self.check_result(graph, name)
+
+	def test_relu3d(self):
+		name = "relu3d"
+		state_in = helper.make_tensor_value_info('state_in',
+		                                             TensorProto.FLOAT, [1, 3, 7, 7, 7])
+		state_out  = helper.make_tensor_value_info('state_out',
+		                                               TensorProto.FLOAT, [1, 3, 7, 7, 7])
+		node_def = helper.make_node("Relu", ['state_in'], ['state_out'])
+		graph = helper.make_graph(
+		        [node_def],
+		        name,
+		        [state_in],
+		        [state_out],
+		        []
+		    )
+		self.check_result(graph, name)	
 
 if __name__ == '__main__':
 	unittest.main()

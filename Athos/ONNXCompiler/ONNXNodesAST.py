@@ -71,7 +71,7 @@ def __convert_onnx_attribute_proto(attr_proto):
   elif attr_proto.HasField('i'):
     return attr_proto.i
   elif attr_proto.HasField('s'):
-    return str(attr_proto.s, 'utf-8') if IS_PYTHON3 else attr_proto.s
+    return str(attr_proto.s, 'utf-8') 
   elif attr_proto.HasField('t'):
     return attr_proto.t  # this is a proto!
   elif attr_proto.HasField('g'):
@@ -223,6 +223,91 @@ class ONNXNodesAST:
 
 		return (innermost_let_ast_node, out_var_count)
 
+	def Squeeze(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST):
+		node = OnnxNode(node) 
+		if(DEBUG):
+			print(node)
+		inputsRef = node.inputs
+		assert(len(inputsRef) == 1)
+		node_name_to_out_var_dict[node.outputs[0]] = inputsRef[0]
+
+		return (innermost_let_ast_node, out_var_count)
+
+	def Unsqueeze(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST):
+		node = OnnxNode(node) 
+		if(DEBUG):
+			print(node)
+		inputsRef = node.inputs
+		assert(len(inputsRef) == 1)
+		node_name_to_out_var_dict[node.outputs[0]] = inputsRef[0]
+
+		return (innermost_let_ast_node, out_var_count)	
+
+	def Shape(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST):
+		node = OnnxNode(node) 
+		if(DEBUG):
+			print(node)
+		inputsRef = node.inputs
+		assert(len(inputsRef) == 1)
+		node_name_to_out_var_dict[node.outputs[0]] = inputsRef[0]
+
+		return (innermost_let_ast_node, out_var_count)	
+	
+	def Gather(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST):
+		node = OnnxNode(node) 
+		if(DEBUG):
+			print(node)
+		inputsRef = node.inputs
+		assert(len(inputsRef) == 2)
+		node_name_to_out_var_dict[node.outputs[0]] = inputsRef[0]
+
+		return (innermost_let_ast_node, out_var_count)	
+
+	def Slice(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST):
+		node = OnnxNode(node) 
+		if(DEBUG):
+			print(node)
+		inputsRef = node.inputs
+		assert(len(inputsRef) == 4)
+		node_name_to_out_var_dict[node.outputs[0]] = inputsRef[0]
+
+		return (innermost_let_ast_node, out_var_count)		
+
+	def ConstantOfShape(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST):
+		node = OnnxNode(node) 
+		if(DEBUG):
+			print(node)
+		inputsRef = node.inputs
+		assert(len(inputsRef) == 1)
+		node_name_to_out_var_dict[node.outputs[0]] = inputsRef[0]
+
+		return (innermost_let_ast_node, out_var_count)	
+
+	def Concat(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST):
+		node = OnnxNode(node)
+		if(DEBUG):
+			print(node)
+		inputsRef = node.inputs
+		N = len(inputsRef)
+
+		inputs = [AST.ID(node_name_to_out_var_dict[inputsRef[x]]) for x in range(0, len(inputsRef))]
+		axis = node.attrs['axis']
+
+		seedot_output_ast = AST.UninterpFuncCall(list(value_info[node.outputs[0]][1]),
+									 'Concat'+str(N) + 'T', 
+									 inputs + [AST.Int(axis, 32, False)],
+									outputDiffInpDims=1
+									) 
+
+		output_name = get_new_var_name(out_var_count)
+		innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, seedot_output_ast, output_name, mtdAST)
+		out_var_count += 1
+
+		node_name_to_out_var_dict[node.outputs[0]] = output_name
+
+		return (innermost_let_ast_node, out_var_count)		
+	
+
 	def Relu(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST):
 		node = OnnxNode(node) 
 
@@ -301,8 +386,8 @@ class ONNXNodesAST:
 		input1AST = AST.ID(node_name_to_out_var_dict[inputsRef[0]])
 		input2AST = AST.ID(node_name_to_out_var_dict[inputsRef[1]])
 
-		if(node.attrs['transA']): input1AST = AST.Transp(input1AST)
-		if(node.attrs['transB']): input2AST = AST.Transp(input2AST)
+		if('transA' in node.attrs and node.attrs['transA']): input1AST = AST.Transp(input1AST)
+		if('transB' in node.attrs and node.attrs['transB']): input2AST = AST.Transp(input2AST)
 
 		# W*x + b
 		seedot_output_ast = AST.BOp(AST.BOp(input1AST, getOperatorsIdx('*'), input2AST), getOperatorsIdx('+'), AST.ID(node_name_to_out_var_dict[inputsRef[2]]))
@@ -313,32 +398,6 @@ class ONNXNodesAST:
 		node_name_to_out_var_dict[node.outputs[0]] = output_name
 
 		return (innermost_let_ast_node, out_var_count)
-
-
-	def Concat(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST):
-		node = OnnxNode(node)
-		if(DEBUG):
-			print(node)
-		inputsRef = node.inputs
-		assert(len(inputsRef) == 2)
-		input1AST = AST.ID(node_name_to_out_var_dict[inputsRef[0]])
-		input2AST = AST.ID(node_name_to_out_var_dict[inputsRef[1]])
-
-		axis = node.attrs['axis']
-
-		seedot_output_ast = AST.UninterpFuncCall(list(value_info[node.outputs[0]][1]),
-									 'Concat2T', 
-									 [input1AST, input2AST, AST.Int(axis)],
-									outputDiffInpDims=1
-									) 
-
-		output_name = get_new_var_name(out_var_count)
-		innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, seedot_output_ast, output_name, mtdAST)
-		out_var_count += 1
-
-		node_name_to_out_var_dict[node.outputs[0]] = output_name
-
-		return (innermost_let_ast_node, out_var_count)	
 
 	def Constant(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST):
 		node = OnnxNode(node)
@@ -365,7 +424,19 @@ class ONNXNodesAST:
 
 	def Split(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST):
 		node = OnnxNode(node)
-		# TODO: Used in shufflenetv2. Currently, onnx shape inference does not support `split`  
+		# TODO: Used in shufflenetv2. Currently, onnx shape inference does not support `split`
+
+		inputsRef = node.inputs
+		output_count = len(node.outputs)
+
+		for cur_count in range(output_count):
+			seedot_output_ast = AST.UninterpFuncCall(list(value_info[node.outputs[cur_count]][1]), 'Split',
+				 [AST.ID(node_name_to_out_var_dict[inputsRef[0]]), AST.Int(node.attrs['axis'], 32, False), AST.Int(cur_count, 32, False), AST.Int(output_count, 32, False)])
+			output_name = get_new_var_name(out_var_count) 
+			innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, seedot_output_ast, output_name, mtdAST)
+			out_var_count += 1
+			node_name_to_out_var_dict[node.outputs[cur_count]] = output_name
+
 		return (innermost_let_ast_node, out_var_count)		
 
 	def BatchNormalization(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST):
@@ -465,8 +536,10 @@ class ONNXNodesAST:
 		assert(len(inputsRef)==2 or len(inputsRef)==3)
 		assert(len(stridesUsed)==2)
 		assert(value_info[node.inputs[1]][1][2:] == tuple(node.attrs['kernel_shape']))
-		# verify this order
-		[zPadHLeft, zPadHRight, zPadWLeft, zPadWRight] = node.attrs['pads']
+		
+		group = node.attrs['group'] if 'group' in node.attrs else 1
+		[zPadHLeft, zPadHRight, zPadWLeft, zPadWRight] = node.attrs['pads'] if 'pads' in node.attrs else [0,0,0,0]
+		# we assume VALID case when the padding is in string format
 
 		options = {}
 		options[AST.PaddingKeysDict.FH] = filterShape[2]
@@ -478,9 +551,10 @@ class ONNXNodesAST:
 		options[AST.PaddingKeysDict.strideH] = stridesUsed[0]
 		options[AST.PaddingKeysDict.strideW] = stridesUsed[1]
 		options[AST.PaddingKeysDict.ConvDim] = 2
+		options[AST.PaddingKeysDict.group] = group
 
 		# print(inputShape, filterShape)
-		assert (inputShape[1] == filterShape[1])
+		assert (inputShape[1] == filterShape[1]*group)
 		# For Input:
 		# [N, CI, H, W] is the Onnx order it should be changed to 
 		# [N, H, W, CI] order 
