@@ -58,18 +58,19 @@ def void Conv2D(int32_pl N, int32_pl H, int32_pl W, int32_pl CI,
 							int64_al val = 0L;
 							int32_pl ci = GIS*g + cig;
 							int32_pl co = GOS*g + cog;
+							int32_pl curPosH = strideH*h-zPadHLeft;
 
-							for fh=[h:h+FH]{
-								for fw=[w:w+FW]{
-										int32_pl curPosH = fh-zPadHLeft;
-										int32_pl curPosW = fw-zPadWLeft;
+							for fh=[0:FH]{
+								int32_pl curPosW = strideW*w-zPadWLeft;
 
+								for fw=[0:FW]{
 										if( (curPosH >= 0) && (curPosW >= 0) && (curPosH < H) && (curPosW < W)){
-											int32_pl curFilterPosH = fh-h;
-											int32_pl curFilterPosW = fw-w;
-											val = val +_al (inputArr[n][curPosH][curPosW][ci]*filterArr[curFilterPosH][curFilterPosW][(ci/G)][co]);
+											val = val +_al (inputArr[n][curPosH][curPosW][ci]*filterArr[fh][fw][(ci/G)][co]);
 										};	
+
+										curPosW = curPosW + 1;
 									};
+									curPosH = curPosH + 1;
 								};
 								
 								outArr[n][h][w][co] = outArr[n][h][w][co] +_al (val >> consSF);		
