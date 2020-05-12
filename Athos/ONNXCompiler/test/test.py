@@ -77,10 +77,11 @@ class TestNode(unittest.TestCase):
 		                                             TensorProto.FLOAT, [1, 3, 10, 10])
 		state_out  = helper.make_tensor_value_info('state_out',
 		                                               TensorProto.FLOAT, [1, 5, 10, 10])
-		node_def = helper.make_node("Conv", ['state_in', 'weight'], ['state_out'],
-		                                pads=[1, 1, 1, 1], strides=[1, 1], kernel_shape=[3, 3])
 
-		weight_shape = [5, 3, 3, 3]
+		node_def = helper.make_node("Conv", ['state_in', 'weight'], ['state_out'],
+		                                pads=[1, 1, 1, 1], strides=[2, 2], kernel_shape=[3, 3], group=3)
+
+		weight_shape = [5, 1, 3, 3]
 		weight_val = self._get_rnd_float32(shape=weight_shape)
 
 		weight = helper.make_tensor('weight', TensorProto.FLOAT, weight_shape, weight_val)

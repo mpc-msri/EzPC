@@ -330,20 +330,43 @@ def void Concat2T222(int32_pl s1, int32_pl s2, int32_pl inp1s1, int32_pl inp1s2,
 (**************************)
 (* Generic implementation of Conv2DCSF *)
 
-def void Conv2DReshapeFilter(int32_pl FH, int32_pl FW, int32_pl CI, int32_pl CO, int64_al[FH][FW][CI][CO] inputArr, int64_al[CO][FH*FW*CI] outputArr){
-	for co=[0:CO]{
+def void Conv2DReshapeFilter(int32_pl FH, int32_pl FW, int32_pl CI, int32_pl CO, int32_pl g, int32_pl G, int64_al[FH][FW][CI][CO] inputArr, int64_al[CO][FH*FW*CI] outputArr){
+	
+	int32_pl CIG = CI/G;
+	int32_pl COG = CO/G;
+	int32_pl startCO = g*COG;
+
+	for co=[0:COG]{
 		for fh=[0:FH]{
 			for fw=[0:FW]{
-				for ci=[0:CI]{
-					int32_pl linIdx = (fh*FW*CI) + (fw*CI) + ci;
-					outputArr[co][linIdx] = inputArr[fh][fw][ci][co];
+				for ci=[0:CIG]{
+					int32_pl linIdx = (fh*FW*CIG) + (fw*CIG) + ci;
+					outputArr[co][linIdx] = inputArr[fh][fw][ci][co+startCO];
 				};
 			};
 		};
 	};
 }
 
-def void Conv2DReshapeMatMulOP(int32_pl N, int32_pl finalH, int32_pl finalW, int32_pl CO, int64_al[CO][N*finalH*finalW] inputArr, int64_al[N][finalH][finalW][CO] outputArr){
+def void Conv2DReshapeMatMulOP(int32_pl N, int32_pl finalH, int32_pl finalW, int32_pl CO, int32_pl g, int32_pl G, int64_al[CO][N*finalH*finalW] inputArr, int64_al[N][finalH][finalW][CO] outputArr){
+	
+	int32_pl COG = CO/G;
+	int32_pl startCO = g*COG;
+	int32_pl endCO = (g+1)*COG;
+
+	for co=[0:COG]{
+		for n=[0:N]{
+			for h=[0:finalH]{
+				for w=[0:finalW]{
+					outputArr[n][h][w][co+startCO] = inputArr[co][(n*finalH*finalW) + (h*finalW) + w];
+				};
+			};
+		};
+	};
+}
+
+def void ConvTranspose2DReshapeMatMulOP(int32_pl N, int32_pl finalH, int32_pl finalW, int32_pl CO, int64_al[CO][N*finalH*finalW] inputArr, int64_al[N][finalH][finalW][CO] outputArr){
+
 	for co=[0:CO]{
 		for n=[0:N]{
 			for h=[0:finalH]{
@@ -355,8 +378,10 @@ def void Conv2DReshapeMatMulOP(int32_pl N, int32_pl finalH, int32_pl finalW, int
 	};
 }
 
-def void Conv2DReshapeInput(int32_pl N, int32_pl H, int32_pl W, int32_pl CI, int32_pl FH, int32_pl FW, int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, int32_pl strideH, int32_pl strideW, int32_pl RRows, int32_pl RCols, int64_al[N][H][W][CI] inputArr, int64_al[RRows][RCols] outputArr){
+def void Conv2DReshapeInput(int32_pl N, int32_pl H, int32_pl W, int32_pl CI, int32_pl FH, int32_pl FW, int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, int32_pl strideH, int32_pl strideW, int32_pl g, int32_pl G, int32_pl RRows, int32_pl RCols, int64_al[N][H][W][CI] inputArr, int64_al[RRows][RCols] outputArr){
 	int32_pl linIdxFilterMult = 0;
+	int32_pl CIG = CI/G;
+
 	for n=[0:N]{
 		int32_pl leftTopCornerH = 0 - zPadHLeft;
 		int32_pl extremeRightBottomCornerH = H - 1 + zPadHRight;
@@ -370,14 +395,17 @@ def void Conv2DReshapeInput(int32_pl N, int32_pl H, int32_pl W, int32_pl CI, int
 						int32_pl curPosH = leftTopCornerH + fh;
 						int32_pl curPosW = leftTopCornerW + fw;
 						int64_al val = 0L;
-						for ci=[0:CI]{
+
+						int32_pl startCI = g*CIG;
+
+						for ci=[0:CIG]{
 							if ((((curPosH < 0) || (curPosH >= H)) || ((curPosW < 0) || (curPosW >= W)))){
 								val = 0L;
 							}
 							else{
-								val = inputArr[n][curPosH][curPosW][ci];
+								val = inputArr[n][curPosH][curPosW][ci+startCI];
 							};
-							outputArr[(fh*FW*CI) + (fw*CI) + ci][linIdxFilterMult] = val;
+							outputArr[(fh*FW*CIG) + (fw*CIG) + ci][linIdxFilterMult] = val;
 						};
 					};
 				};
@@ -396,7 +424,7 @@ def void Conv2DReshapeInput(int32_pl N, int32_pl H, int32_pl W, int32_pl CI, int
    int64_al[N][((H-FH+zPadHLeft+zPadHRight)/strideH)+1][((W-FW+zPadWLeft+zPadWRight)/strideW)+1][CO] outArr 
 *)
 
-def void Conv2DCSF(int32_pl N, int32_pl H, int32_pl W, int32_pl CI, 
+def void Conv2DCSFO(int32_pl N, int32_pl H, int32_pl W, int32_pl CI, 
 				   int32_pl FH, int32_pl FW, int32_pl CO, 
 				   int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
 				   int32_pl strideH, int32_pl strideW, 
@@ -416,33 +444,37 @@ def void Conv2DCSF(int32_pl N, int32_pl H, int32_pl W, int32_pl CI,
    int64_al[N][((H-FH+zPadHLeft+zPadHRight)/strideH)+1][((W-FW+zPadWLeft+zPadWRight)/strideW)+1][CO] outArr 
 *)
 
-def void Conv2DCSFPrime(int32_pl N, int32_pl H, int32_pl W, int32_pl CI, 
+def void Conv2DCSF(int32_pl N, int32_pl H, int32_pl W, int32_pl CI, 
 				   int32_pl FH, int32_pl FW, int32_pl CO, 
 				   int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
-				   int32_pl strideH, int32_pl strideW, 
+				   int32_pl strideH, int32_pl strideW, int32_pl G,
 				   int64_al[N][H][W][CI] inputArr, 
 				   int64_al[FH][FW][CI][CO] filterArr, 
 				   int32_pl consSF,
 				   int64_al[N][((H-FH+(zPadHLeft+zPadHRight))/strideH)+1][((W-FW+(zPadWLeft+zPadWRight))/strideW)+1][CO] outArr)
 {
-	
-	int32_pl reshapedFilterRows = CO;
-	int32_pl reshapedFilterCols = FH*FW*CI;
-	int32_pl reshapedIPRows = FH*FW*CI;
-	int32_pl newH = (((H + (zPadHLeft+zPadHRight) - FH)/strideH) + 1);
-	int32_pl newW = (((W + (zPadWLeft+zPadWRight) - FW)/strideW) + 1);
-	int32_pl reshapedIPCols = N * newH * newW;
+	int32_pl CIG = CI/G;	
+	int32_pl reshapedFilterRows = CO/G;
+	int32_pl reshapedFilterCols = FH*FW*CIG;
+	int32_pl reshapedIPRows = FH*FW*CIG;
+	int32_pl outH = (((H + (zPadHLeft+zPadHRight) - FH)/strideH) + 1);
+	int32_pl outW = (((W + (zPadWLeft+zPadWRight) - FW)/strideW) + 1);
+	int32_pl reshapedIPCols = N * outH * outW;
 
-	int64_al[reshapedFilterRows][reshapedFilterCols] filterReshaped;
-	int64_al[reshapedIPRows][reshapedIPCols] inputReshaped;
-	int64_al[reshapedFilterRows][reshapedIPCols] matmulOP;
 
-	Conv2DReshapeFilter(FH, FW, CI, CO, filterArr, filterReshaped);
-	Conv2DReshapeInput(N, H, W, CI, FH, FW, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideH, strideW, reshapedIPRows, reshapedIPCols, inputArr, inputReshaped);
+	for g=[0:G]{
+		int64_al[reshapedIPRows][reshapedIPCols] inputReshaped;
+		int64_al[reshapedFilterRows][reshapedIPCols] matmulOP;
+		int64_al[reshapedFilterRows][reshapedFilterCols] filterReshaped;
 
-	MatMulCSF2D(reshapedFilterRows, reshapedFilterCols, reshapedIPCols, filterReshaped, inputReshaped, matmulOP, consSF);
+		Conv2DReshapeFilter(FH, FW, CI, CO, g, G, filterArr, filterReshaped);
+		Conv2DReshapeInput(N, H, W, CI, FH, FW, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideH, strideW, g, G, reshapedIPRows, reshapedIPCols, inputArr, inputReshaped);
 
-	Conv2DReshapeMatMulOP(N, newH, newW, CO, matmulOP, outArr);
+		MatMulCSF2D(reshapedFilterRows, reshapedFilterCols, reshapedIPCols, filterReshaped, inputReshaped, matmulOP, consSF);
+		
+		Conv2DReshapeMatMulOP(N, outH, outW, CO, g, G, matmulOP, outArr);
+	}
+
 }
 
 
@@ -750,7 +782,7 @@ def void ConvTranspose2DCSF(int32_pl N, int32_pl HPrime, int32_pl WPrime, int32_
 
 	MatMulCSF2D(reshapedFilterRows, reshapedFilterCols, reshapedIPCols, filterReshaped, inputReshaped, matmulOP, consSF);
 
-	Conv2DReshapeMatMulOP(N, H, W, CO, matmulOP, outArr);
+	ConvTranspose2DReshapeMatMulOP(N, H, W, CO, matmulOP, outArr);
 }
 
 (**************************)
