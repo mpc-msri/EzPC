@@ -363,10 +363,41 @@ class ONNXNodesAST:
 
 		return (innermost_let_ast_node, out_var_count)	
 
+	# Only supports split into equal parts
 	def Split(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST):
 		node = OnnxNode(node)
-		# TODO: Used in shufflenetv2. Currently, onnx shape inference does not support `split`  
+		inputsRef = node.inputs
+		output_count = len(node.outputs)
+
+		for cur_count in range(output_count):
+			seedot_output_ast = AST.UninterpFuncCall(list(value_info[node.outputs[cur_count]][1]), 'Split',
+				 [AST.ID(node_name_to_out_var_dict[inputsRef[0]]), AST.Int(node.attrs['axis'], 32, False), AST.Int(cur_count, 32, False), AST.Int(output_count, 32, False)])
+			output_name = get_new_var_name(out_var_count) 
+			innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, seedot_output_ast, output_name, mtdAST)
+			out_var_count += 1
+			node_name_to_out_var_dict[node.outputs[cur_count]] = output_name
+
 		return (innermost_let_ast_node, out_var_count)		
+
+	def ReduceMean(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST):
+		node = OnnxNode(node)
+		inputsRef = node.inputs
+
+		keepdims = node.attrs['keepdims']
+		axes = node.attrs['axes']	
+
+		# currently handling only this case
+		# currently support only 0 case
+		assert(keepdims == 0)
+		assert(len(axes) == 2)
+
+		seedot_output_ast = AST.UninterpFuncCall(value_info[node.outputs[0]][1], 'ReduceMeanO',
+				[AST.ID(node_name_to_out_var_dict[inputsRef[0]]), AST.Int(axes[0], 32, False), AST.Int(axes[1], 32, False)])
+		output_name = get_new_var_name(out_var_count) 
+		innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, seedot_output_ast, output_name, mtdAST)
+		out_var_count += 1
+		node_name_to_out_var_dict[node.outputs[0]] = output_name	
+		return (innermost_let_ast_node, out_var_count)			
 
 	def BatchNormalization(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST):
 		node = OnnxNode(node) 
@@ -442,6 +473,7 @@ class ONNXNodesAST:
 		# since two dimensions represent N: Number of batches and CI: Input channel
 		inputShape = value_info[inputsRef[0]][1]
 		spatial_size = len(inputShape)-2
+
 		if spatial_size == 2:
 			(innermost_let_ast_node, out_var_count, output_name) = ONNXNodesAST.conv2d(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST)
 		elif spatial_size == 3:

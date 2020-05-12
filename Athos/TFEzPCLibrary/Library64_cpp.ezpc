@@ -525,6 +525,29 @@ def void ReduceMean24(int32_pl outS1, int32_pl outS2,
 	};
 }
 
+(* This one is used for onnx compilation *)
+def void ReduceMeanO24(int32_pl outS1, int32_pl outS2, 
+					  int32_pl inS1, int32_pl inS2, int32_pl inS3, int32_pl inS4, 
+					  int64_al[inS1][inS2][inS3][inS4] inputArr,
+					  int32_pl axis1, int32_pl axis2,
+					  int64_al[outS1][outS2] outputArr
+					  )
+{
+	for i1=[0:outS1]{
+		for i2=[0:outS2]{
+			int64_al summ = 0L;
+			for i=[0:inS3]{
+				for j=[0:inS4]{
+					summ = summ + inputArr[i1][i2][i][j];
+				};
+			};
+			int64_pl numElem = inS3*inS4;
+			summ = summ / numElem;
+			outputArr[i1][i2] = summ;
+		};
+	};
+}
+
 (**************************)
 def void ClearMemSecret1(int32_pl s1, int64_al[s1] arr)
 {
