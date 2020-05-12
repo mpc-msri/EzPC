@@ -51,18 +51,19 @@ def main():
 		input_dims[0] = 1  # when batch size is not defined
 		input_dims = tuple(input_dims)
 	input_array = numpy.random.random(input_dims)
+	# input_array = numpy.ones(input_dims, dtype=float)	
 	print('Generated random input of dimension ' + str(input_dims))
 	np.save('debug/' + model_name + '/' + model_name + '_input', input_array)
 
 	(chunk, cnt) = common.numpy_float_array_to_fixed_point_val_str(input_array, scaling_factor)
 
-	# TODO: Remove float_data. Change this to appropriate data type. 
-	model_name_to_val_dict = { init_vals.name: init_vals.float_data for init_vals in model.graph.initializer}
+	model_name_to_val_dict = { init_vals.name: numpy_helper.to_array(init_vals).tolist() for init_vals in model.graph.initializer}
 
 	preprocess_batch_normalization(graph_def, model_name_to_val_dict)
 
 	for init_vals in model.graph.initializer:
-		(chunk_1, cnt_1) = common.numpy_float_array_to_fixed_point_val_str(numpy_helper.to_array(init_vals), scaling_factor)
+		(chunk_1, cnt_1) = common.numpy_float_array_to_fixed_point_val_str(
+			np.asarray(model_name_to_val_dict[init_vals.name], dtype=np.float32), scaling_factor)
 		chunk += chunk_1
 		cnt += cnt_1
 
