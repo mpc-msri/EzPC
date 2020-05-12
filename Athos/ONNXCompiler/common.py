@@ -86,6 +86,16 @@ def extract_txt_to_numpy_array(file):
 	op = [float(line.rstrip()) for line in f]
 	f.close()
 	return numpy.array(op, dtype=numpy.float32)
+
+def match_debug(decimal=4):
+	a = extract_txt_to_numpy_array('debug/onnx_debug.txt')
+	b = extract_txt_to_numpy_array('debug/cpp_output.txt')
+	numpy.testing.assert_almost_equal(a, b, decimal)	
+
+def match_output(decimal=4):
+	a = extract_txt_to_numpy_array('debug/onnx_output.txt')
+	b = extract_txt_to_numpy_array('debug/cpp_output.txt')
+	numpy.testing.assert_almost_equal(a, b, decimal)		
 		
 def add_openmp_threading_to_convolution(file):
 	with open(file, 'r+') as f:

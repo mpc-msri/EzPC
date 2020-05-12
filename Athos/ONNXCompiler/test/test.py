@@ -205,5 +205,56 @@ class TestNode(unittest.TestCase):
 		    )
 		self.check_result(graph, name)	
 
+	def test_reducemean(self):
+		name = "reducemean"
+		state_in = helper.make_tensor_value_info('state_in',
+		                                             TensorProto.FLOAT, [1, 1024, 7, 7])
+		state_out  = helper.make_tensor_value_info('state_out',
+		                                               TensorProto.FLOAT, [1, 1024])
+		node_def = helper.make_node("ReduceMean", ['state_in'], ['state_out'], axes=[2,3], keepdims=0)
+		graph = helper.make_graph(
+		        [node_def],
+		        name,
+		        [state_in],
+		        [state_out],
+		        []
+		    )
+		self.check_result(graph, name)
+
+	def test_batchnormalization(self):
+		name = "batchnormalization"
+		state_in = helper.make_tensor_value_info('state_in',
+		                                             TensorProto.FLOAT, [1, 24, 10, 10])
+		state_out  = helper.make_tensor_value_info('state_out',
+		                                               TensorProto.FLOAT, [1, 24, 10, 10])
+		node_def = helper.make_node("BatchNormalization", ['state_in', 'weight', 'bias','mean','var'], ['state_out'],
+		                                momentum=0.8999999761581421)
+
+		weight_shape = [24]
+		weight_val = self._get_rnd_float32(shape=weight_shape)
+		weight = helper.make_tensor('weight', TensorProto.FLOAT, weight_shape, weight_val)
+
+		bias_shape = [24]
+		bias_val = self._get_rnd_float32(shape=weight_shape)
+		bias = helper.make_tensor('bias', TensorProto.FLOAT, bias_shape, bias_val)
+
+		mean_shape = [24]
+		mean_val = self._get_rnd_float32(shape=weight_shape)
+		mean = helper.make_tensor('mean', TensorProto.FLOAT, mean_shape, mean_val)
+
+
+		var_shape = [24]
+		var_val = self._get_rnd_float32(shape=weight_shape, low=0, high=1)
+		var = helper.make_tensor('var', TensorProto.FLOAT, var_shape, var_val)
+
+		graph = helper.make_graph(
+		        [node_def],
+		        name,
+		        [state_in],
+		        [state_out],
+		        [weight, bias, mean, var]
+		    )
+		self.check_result(graph, name)	
+
 if __name__ == '__main__':
 	unittest.main()
