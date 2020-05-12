@@ -78,9 +78,9 @@ class TestNode(unittest.TestCase):
 		state_in = helper.make_tensor_value_info('state_in',
 		                                             TensorProto.FLOAT, [1, 3, 10, 10])
 		state_out  = helper.make_tensor_value_info('state_out',
-		                                               TensorProto.FLOAT, [1, 6, 10, 10])
+		                                               TensorProto.FLOAT, [1, 6, 5, 5])
 		node_def = helper.make_node("Conv", ['state_in', 'weight'], ['state_out'],
-		                                pads=[1, 1, 1, 1], strides=[1, 1], kernel_shape=[3, 3], group=3)
+		                                pads=[1, 1, 1, 1], strides=[2, 2], kernel_shape=[3, 3], group=3)
 
 		weight_shape = [6, 1, 3, 3]
 		weight_val = self._get_rnd_float32(shape=weight_shape)
