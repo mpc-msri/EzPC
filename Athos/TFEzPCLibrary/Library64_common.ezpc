@@ -330,7 +330,7 @@ def void Concat2T222(int32_pl s1, int32_pl s2, int32_pl inp1s1, int32_pl inp1s2,
 (**************************)
 (* Generic implementation of Conv2DCSF *)
 
-def void Conv2DReshapeFilter(int32_pl FH, int32_pl FW, int32_pl CI, int32_pl CO, int32_pl g, int32_pl G, int64_al[FH][FW][CI][CO] inputArr, int64_al[CO][FH*FW*CI] outputArr){
+def void Conv2DReshapeFilter(int32_pl FH, int32_pl FW, int32_pl CI, int32_pl CO, int32_pl g, int32_pl G, int64_al[FH][FW][CI/G][CO] inputArr, int64_al[CO/G][FH*FW*(CI/G)] outputArr){
 	
 	int32_pl CIG = CI/G;
 	int32_pl COG = CO/G;
@@ -348,11 +348,10 @@ def void Conv2DReshapeFilter(int32_pl FH, int32_pl FW, int32_pl CI, int32_pl CO,
 	};
 }
 
-def void Conv2DReshapeMatMulOP(int32_pl N, int32_pl finalH, int32_pl finalW, int32_pl CO, int32_pl g, int32_pl G, int64_al[CO][N*finalH*finalW] inputArr, int64_al[N][finalH][finalW][CO] outputArr){
+def void Conv2DReshapeMatMulOP(int32_pl N, int32_pl finalH, int32_pl finalW, int32_pl CO, int32_pl g, int32_pl G, int64_al[CO/G][N*finalH*finalW] inputArr, int64_al[N][finalH][finalW][CO] outputArr){
 	
 	int32_pl COG = CO/G;
 	int32_pl startCO = g*COG;
-	int32_pl endCO = (g+1)*COG;
 
 	for co=[0:COG]{
 		for n=[0:N]{
@@ -449,7 +448,7 @@ def void Conv2DCSF(int32_pl N, int32_pl H, int32_pl W, int32_pl CI,
 				   int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
 				   int32_pl strideH, int32_pl strideW, int32_pl G,
 				   int64_al[N][H][W][CI] inputArr, 
-				   int64_al[FH][FW][CI][CO] filterArr, 
+				   int64_al[FH][FW][CI/G][CO] filterArr, 
 				   int32_pl consSF,
 				   int64_al[N][((H-FH+(zPadHLeft+zPadHRight))/strideH)+1][((W-FW+(zPadWLeft+zPadWRight))/strideW)+1][CO] outArr)
 {
