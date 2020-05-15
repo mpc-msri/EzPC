@@ -60,8 +60,17 @@ if (len(sys.argv) > 2):
 	exit() 
 
 pred = sess.run(None, {input_name: x})
-np.save('debug/' + model_name + '/' + model_name + '_output', pred)
+print(pred)
+preds = [0, 0, 0]
+preds[0] = pred[1][0]['COVID-19']
+preds[1] = pred[1][0]['Normal']
+preds[2] = pred[1][0]['Pneumonia']
+print(pred[0])
+# np.save('debug/' + model_name + '/' + model_name + '_output', pred)
 with open('debug/onnx_output.txt', 'w') as f:
-		f.write(common.numpy_float_array_to_float_val_str(pred))
+                f.write(str(preds[0]) + "\n")
+                f.write(str(preds[1]) + "\n")
+                f.write(str(preds[2]) + "\n")
+		# f.write(common.numpy_float_array_to_float_val_str(pred))
 output_dims = common.proto_val_to_dimension_tuple(model.graph.output[0])
 print("Saving the onnx runtime output of dimension " + str(output_dims))
