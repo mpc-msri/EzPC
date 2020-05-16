@@ -704,6 +704,32 @@ def void Pad552(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5,
 		};
 	};
 }
+
+def void PadONNX441(int32_pl o1, int32_pl o2, int32_pl o3, int32_pl o4, int32_pl i1, int32_pl i2, int32_pl i3, int32_pl i4, int64_al[i1][i2][i3][i4] inpArr, int32_pl pads, int32_pl[pads] paddings, int64_al[o1][o2][o3][o4] outArr) {
+        int32_pl lbounds1 = paddings[0];
+        int32_pl rbounds1excl = o1 - paddings[4];
+        int32_pl lbounds2 = paddings[1];
+        int32_pl rbounds2excl = o2 - paddings[5];
+        int32_pl lbounds3 = paddings[2];
+        int32_pl rbounds3excl = o3 - paddings[6];
+        int32_pl lbounds4 = paddings[3];
+        int32_pl rbounds4excl = o4 - paddings[7];
+        for i=[0:o1]{
+                for j=[0:o2]{
+                        for k=[0:o3]{
+                                for l=[0:o4]{
+                                        if ((i >= lbounds1) && (i < rbounds1excl) && (j >= lbounds2) && (j < rbounds2excl) && (k >= lbounds3) && (k < rbounds3excl) && (l >= lbounds4) && (l < rbounds4excl)){
+                                                outArr[i][j][k][l] = inpArr[i-paddings[0]][j-paddings[1]][k-paddings[2]][l-paddings[3]];
+                                        }
+                                        else{
+                                                outArr[i][j][k][l] = 0L;
+                                        };
+                                };
+                        };
+                };
+        };
+}
+
 (**************************)
 (* Squeeze where the input is a 4D tensor, output is a 2D tensor and hence 2 dims are getting squeezed. *)
 def void Squeeze24(int32_pl s1, int32_pl s2, int32_pl dim1, int32_pl dim2, int32_pl ins1, int32_pl ins2, int32_pl ins3, int32_pl ins4, int64_al[ins1][ins2][ins3][ins4] inArr, int64_al[s1][s2] outArr){

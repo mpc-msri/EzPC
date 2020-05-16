@@ -283,6 +283,28 @@ class ONNXNodesAST:
 
 		return (innermost_let_ast_node, out_var_count)	
 
+	def Pad(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST):
+		node = OnnxNode(node)
+		if(DEBUG):
+			print(node)
+		inputsRef = node.inputs
+		# Skip constant_val input (last input)
+		inpLen = len(inputsRef) - 1
+		assert(inpLen == 2)
+		inputs = [AST.ID(node_name_to_out_var_dict[inputsRef[x]]) for x in range(0, inpLen)]
+		mode = node.attrs['mode']
+		assert(mode == 'constant')
+		seedot_output_ast = AST.UninterpFuncCall(list(value_info[node.outputs[0]][1]),
+							 'PadONNX', inputs)
+
+		output_name = get_new_var_name(out_var_count)
+		innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, seedot_output_ast, output_name, mtdAST)
+		out_var_count += 1
+
+		node_name_to_out_var_dict[node.outputs[0]] = output_name
+
+		return (innermost_let_ast_node, out_var_count)
+
 	def Concat(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST):
 		node = OnnxNode(node)
 		if(DEBUG):
@@ -294,10 +316,10 @@ class ONNXNodesAST:
 		axis = node.attrs['axis']
 
 		seedot_output_ast = AST.UninterpFuncCall(list(value_info[node.outputs[0]][1]),
-									 'Concat'+str(N) + 'T', 
+									 'Concat'+str(N) + 'T',
 									 inputs + [AST.Int(axis, 32, False)],
 									outputDiffInpDims=1
-									) 
+									)
 
 		output_name = get_new_var_name(out_var_count)
 		innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, seedot_output_ast, output_name, mtdAST)
@@ -305,8 +327,7 @@ class ONNXNodesAST:
 
 		node_name_to_out_var_dict[node.outputs[0]] = output_name
 
-		return (innermost_let_ast_node, out_var_count)		
-	
+		return (innermost_let_ast_node, out_var_count)	
 
 	def Relu(node, value_info, node_name_to_out_var_dict, innermost_let_ast_node, out_var_count, mtdAST):
 		node = OnnxNode(node) 
