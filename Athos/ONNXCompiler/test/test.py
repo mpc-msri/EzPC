@@ -24,7 +24,7 @@ SOFTWARE.
 
 
 import onnx
-from onnx import helper
+from onnx import helper, numpy_helper
 import unittest
 from onnx import TensorProto
 import numpy as np
@@ -187,6 +187,19 @@ class TestNode(unittest.TestCase):
 		        []
 		    )
 		self.check_result(graph, name)
+
+	def test_pad(self):
+		name = "pad"
+		state_in = helper.make_tensor_value_info('state_in', TensorProto.FLOAT, [1, 3, 10, 10])
+		pads  = helper.make_tensor_value_info('pads', TensorProto.INT64, [8])
+		pad_init = numpy_helper.from_array(np.array([0,0,1,1,0,0,1,1], dtype=int), name='pads')
+		const_val  = helper.make_tensor_value_info('const_val', TensorProto.FLOAT, [1])
+		const_val_init = numpy_helper.from_array(np.array([0.0], dtype=np.float32), name='const_val')
+		state_out  = helper.make_tensor_value_info('state_out', TensorProto.FLOAT, [1,3,12,12])
+		node_def = helper.make_node("Pad", ['state_in', 'pads', 'const_val'], ['state_out'], mode="constant")
+		graph = helper.make_graph([node_def],name,[state_in, pads, const_val],[state_out],initializer=[pad_init, const_val_init])
+		self.check_result(graph, name)
+
 
 	def test_relu3d(self):
 		name = "relu3d"
