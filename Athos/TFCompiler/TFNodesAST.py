@@ -603,6 +603,10 @@ class TFNodesAST:
 										 AST.ID(dictNodeNameToOutVarStr[inputsRef[2]]),
 										))
 
+	def FusedBatchNormV3(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
+		return FusedBatchNorm(graph, curNode, dictNodeNameToOutVarStr, extraNodeInfoDict)
+
+
 	def Squeeze(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		# TODO : Do this in somewhat better way
 		inputsRef = curNode.getInputsRef()
