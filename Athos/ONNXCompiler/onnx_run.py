@@ -62,10 +62,14 @@ if (len(sys.argv) > 2):
 pred = sess.run(None, {input_name: x})
 print(pred)
 preds = [0, 0, 0]
-preds[0] = pred[1][0]['COVID-19']
-preds[1] = pred[1][0]['Normal']
-preds[2] = pred[1][0]['Pneumonia']
-print(pred[0])
+preds[0] = pred[0][0][0]
+preds[1] = pred[0][0][1]
+preds[2] = pred[0][0][2]
+# preds[0] = pred[1][0]['COVID-19']
+# preds[1] = pred[1][0]['Normal']
+# preds[2] = pred[1][0]['Pneumonia']
+# print(pred[0])
+print(preds)
 # np.save('debug/' + model_name + '/' + model_name + '_output', pred)
 with open('debug/onnx_output.txt', 'w') as f:
                 f.write(str(preds[0]) + "\n")

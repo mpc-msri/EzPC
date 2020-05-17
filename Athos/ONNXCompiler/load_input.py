@@ -58,6 +58,8 @@ def main():
     for i in range(len(input_array_raw)):
         for j in range(len(input_array_raw[i])):
             for k in range(len(input_array_raw[i][j])):
+                # print(0, i, j, k)
+                # print(input_array_raw[i][j][k])
                 input_array[0][i][j][k] = input_array_raw[i][j][k]
     # input_array = numpy.ones(input_dims, dtype=float) 
     print('Generated random input of dimension ' + str(input_dims))

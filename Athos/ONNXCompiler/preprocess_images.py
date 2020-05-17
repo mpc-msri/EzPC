@@ -34,13 +34,14 @@ new_w =  int(w * (target_size/smaller_dim))
 resized_img = tf.cast(tf.image.resize_images(rgb_img, [new_h, new_w], method=tf.image.ResizeMethod.NEAREST_NEIGHBOR), tf.uint8)
 resized_img = tf.image.resize_image_with_crop_or_pad(resized_img, target_height=target_size, target_width=target_size)
 np_rgb_img = resized_img.eval(session=sess)
+# np_rgb_img = rgb_img.eval(session=sess)
 np_bgr_img = np_rgb_img[:,:,::-1]
 
 print(np_bgr_img.shape)
-np_bgr_img = np.transpose(np_bgr_img, (1, 2, 0))
-print(np_bgr_img.shape)
-np_bgr_img = np.transpose(np_bgr_img, (1, 2, 0))
-print(np_bgr_img.shape)
+# np_bgr_img = np.transpose(np_bgr_img, (1, 2, 0))
+# print(np_bgr_img.shape)
+# np_bgr_img = np.transpose(np_bgr_img, (1, 2, 0))
+# print(np_bgr_img.shape)
 np.save("debug/cov7/prep_input_covid_BGR.npy", np_bgr_img)
 
 #testing
