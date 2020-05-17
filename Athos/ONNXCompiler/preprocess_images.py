@@ -38,10 +38,10 @@ np_rgb_img = resized_img.eval(session=sess)
 np_bgr_img = np_rgb_img[:,:,::-1]
 
 print(np_bgr_img.shape)
-# np_bgr_img = np.transpose(np_bgr_img, (1, 2, 0))
-# print(np_bgr_img.shape)
-# np_bgr_img = np.transpose(np_bgr_img, (1, 2, 0))
-# print(np_bgr_img.shape)
+np_bgr_img = np.transpose(np_bgr_img, (1, 2, 0))
+print(np_bgr_img.shape)
+np_bgr_img = np.transpose(np_bgr_img, (1, 2, 0))
+print(np_bgr_img.shape)
 np.save("debug/cov7/prep_input_covid_BGR.npy", np_bgr_img)
 
 #testing
