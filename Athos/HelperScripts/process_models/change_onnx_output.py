@@ -46,6 +46,11 @@ def fix_shape(shape_list, batch_size):
                                         params with unkown dimension"""
     return shape_list
 
+def fix_inp_shape(inp, batch_size):
+  if inp.type.tensor_type.shape.dim[0].dim_param == 'None':
+    inp.type.tensor_type.shape.dim[0].dim_value = batch_size
+  return
+
 def get_np_type_from_onnxruntime(typ_str):
   np_types = {
               'tensor(float)' : np.float32,
@@ -72,6 +77,9 @@ model = onnx.load(model_name)
 inputs_to_remove = [ inp for i in model.graph.node 
                      if i.name in nodes_to_remove for inp in i.input ]
 new_inputs = [ i for i in model.graph.input if i.name not in inputs_to_remove ]
+
+# Fix batch size
+fix_inp_shape(new_inputs[0], batch_size)
 
 # 2. Remove their initializers
 new_initializers = [ init for init in model.graph.initializer
