@@ -196,7 +196,7 @@ void aggregateCommunication()
 	{
 		cout << "------------------------------------" << endl;
 		cout << "Total communication: " << (float)vec[0]/1000000 << "MB (sent) and " << (float)vec[1]/1000000 << "MB (recv)\n";
-		cout << "Total calls: " << vec[2] << " (sends) and " << vec[3] << " (recvs)" << endl;
+		cout << "Total #calls: " << vec[2] << " (sends) and " << vec[3] << " (recvs)" << endl;
 		cout << "------------------------------------" << endl;
 	}
 }

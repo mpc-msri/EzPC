@@ -207,7 +207,7 @@ void end_communication()
 	cout << "Communication for execution, P" << partyNum << ": " 
 		 << (float)commObject.getSent()/1000000 << "MB (sent) " 
 		 << (float)commObject.getRecv()/1000000 << "MB (recv)" << endl;
-	cout << "Rounds, P" << partyNum << ": " 
+	cout << "#Calls, P" << partyNum << ": " 
 		 << commObject.getRoundsSent() << "(sends) " 
 		 << commObject.getRoundsRecv() << "(recvs)" << endl; 
 	cout << "------------------------------------" << endl;	
