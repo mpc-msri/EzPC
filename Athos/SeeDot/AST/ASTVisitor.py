@@ -129,8 +129,6 @@ class ASTVisitor:
 			return self.visitInput(node, args)
 		elif isinstance(node, AST.FusedBatchNorm):
 			return self.visitFusedBatchNorm(node, args)
-		elif isinstance(node, AST.Conv2DBackpropInput):
-			return self.visitConv2DBackpropInput(node, args)
 		elif node:
 			raise Exception('Node instance not matched.')
 		else:

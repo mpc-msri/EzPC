@@ -82,11 +82,11 @@ echo "Starting seedot to ezpc compilation"
 echo "output is logged in debug/seedot_to_ezpc_output.txt"
 
 if [ -z "$debugOnnxNode" ]; then 
-	python3 ../SeeDot/SeeDot.py -p $seedotASTName --astFile ${data_dir}"/"$seedotASTName --outputFileName ${data_dir}"/"${ezpcOutputFullFileName} --consSF ${SCALINGFACTOR} > "debug/seedot_to_ezpc_output.txt"
+	python3 ../SeeDot/SeeDot.py -p $seedotASTName --astFile ${data_dir}"/"$seedotASTName --outputFileName ${data_dir}"/"${ezpcOutputFullFileName} --consSF ${SCALINGFACTOR} --bitlen "$BITLEN" > "debug/seedot_to_ezpc_output.txt"
 else 	
 	debugSeedotNode=$(python3 -c "import common; common.get_seedot_name_from_onnx_name(\"${debugOnnxNode}\")")
 	echo "${debugSeedotNode} is the corresponding SeeDot name"
-	python3 ../SeeDot/SeeDot.py -p $seedotASTName --astFile ${data_dir}"/"$seedotASTName --outputFileName ${data_dir}"/"${ezpcOutputFullFileName} --consSF ${SCALINGFACTOR} --debugVar ${debugSeedotNode} > "debug/seedot_to_ezpc_output.txt"
+	python3 ../SeeDot/SeeDot.py -p $seedotASTName --astFile ${data_dir}"/"$seedotASTName --outputFileName ${data_dir}"/"${ezpcOutputFullFileName} --consSF ${SCALINGFACTOR} --debugVar ${debugSeedotNode} --bitlen "$BITLEN" > "debug/seedot_to_ezpc_output.txt"
 fi 
 echo -e "${GREEN}Finished seedot to ezpc compilation${NC}"
 

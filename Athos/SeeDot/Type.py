@@ -278,6 +278,10 @@ class InferType(ASTVisitor):
 			newD = ((D + zPadDLeft + zPadDRight - FD)//strideD) + 1
 		else:
 			assert(False)
+
+		if AST.PaddingKeysDict.group in node.options:	
+				group = node.options[AST.PaddingKeysDict.group]
+
 		assert(FH == node.options[AST.PaddingKeysDict.FH])
 		assert(FW == node.options[AST.PaddingKeysDict.FW])
 		assert(CI1 == CI)
@@ -436,4 +440,3 @@ class InferType(ASTVisitor):
 
 		node.type = exprType
 		return node.type
-
