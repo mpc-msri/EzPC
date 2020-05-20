@@ -179,15 +179,6 @@ class Transp(ASTNode):
 		super().__init__()
 		self.expr = expr
 
-class Split(ASTNode):
-	def __init__(self, expr: ASTNode, axis: int, cur_count: int, output_count: int):
-		super().__init__()
-		self.expr = expr 
-		self.axis = axis
-		self.cur_count = cur_count
-		self.output_count = output_count
-
-
 # expr : ASTNode, perm : list of ints
 class Transpose(ASTNode):
 	def __init__(self, expr: ASTNode, perm: list):

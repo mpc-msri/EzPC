@@ -688,8 +688,11 @@ class IRBuilderCSF(ASTVisitor):
 			funcCallArgsDict[IR.Int(node.options[AST.PaddingKeysDict.strideD], 32)] = "strideD"	
 		funcCallArgsDict[IR.Int(node.options[AST.PaddingKeysDict.strideH], 32)] = "strideH"
 		funcCallArgsDict[IR.Int(node.options[AST.PaddingKeysDict.strideW], 32)] = "strideW"
-		if convDim == 2:
+		
+		isGroupConv = False
+		if AST.PaddingKeysDict.group in node.options.keys():		
 			funcCallArgsDict[IR.Int(node.options[AST.PaddingKeysDict.group], 32)] = "G"
+			isGroupConv = True
 
 		funcCallArgsDict[expr1] = "input"
 		funcCallArgsDict[expr2] = "filter"
@@ -700,6 +703,10 @@ class IRBuilderCSF(ASTVisitor):
 			funcCallName = "Conv2DCSF"
 		else:
 			funcCallName = "Conv3DCSF"
+
+		if isGroupConv:
+			funcCallName += "Group"	
+
 		funcCall = IR.FuncCall(funcCallName, funcCallArgsDict)
 
 		progConv = IR.Prog([comment, funcCall])

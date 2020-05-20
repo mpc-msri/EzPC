@@ -35,7 +35,9 @@ def void MatMulCSF2D(int32_pl i, int32_pl j, int32_pl k, int64_al[i][j] A, int64
 }
 
 (**************************)
-def void Conv2D(int32_pl N, int32_pl H, int32_pl W, int32_pl CI, 
+(* These loop implementations of convolution run faster with multithreading *)
+
+def void Conv2DLoop(int32_pl N, int32_pl H, int32_pl W, int32_pl CI, 
 				   int32_pl FH, int32_pl FW, int32_pl CO, 
 				   int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
 				   int32_pl strideH, int32_pl strideW,
@@ -83,7 +85,7 @@ def void Conv2D(int32_pl N, int32_pl H, int32_pl W, int32_pl CI,
 }
 
 (**************************)
-def void Conv3D(int32_pl N, int32_pl D, int32_pl H, int32_pl W, int32_pl CI, 
+def void Conv3DLoop(int32_pl N, int32_pl D, int32_pl H, int32_pl W, int32_pl CI, 
 				   int32_pl FD, int32_pl FH, int32_pl FW, int32_pl CO, 
 				   int32_pl zPadDLeft, int32_pl zPadDRight,int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
 				   int32_pl strideD, int32_pl strideH, int32_pl strideW,
@@ -126,7 +128,7 @@ def void Conv3D(int32_pl N, int32_pl D, int32_pl H, int32_pl W, int32_pl CI,
 
 
 (**************************)
-def void ConvTranspose3D(int32_pl N, int32_pl D, int32_pl H, int32_pl W, int32_pl CI, 
+def void ConvTranspose3DLoop(int32_pl N, int32_pl D, int32_pl H, int32_pl W, int32_pl CI, 
 				   int32_pl FD, int32_pl FH, int32_pl FW, int32_pl CO, 
 				   int32_pl zPadDLeft, int32_pl zPadDRight,int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
 				   int32_pl strideD, int32_pl strideH, int32_pl strideW,
