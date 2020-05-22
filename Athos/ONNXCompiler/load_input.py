@@ -43,6 +43,7 @@ def main():
     file_path = 'models/' + file_name
     model_name = file_name[:-5] # name without the '.onnx' extension
     model = onnx.load(file_path)
+    print("Model loaded")
     graph_def = model.graph
     
     # Generating input
@@ -65,7 +66,14 @@ def main():
     print('Generated random input of dimension ' + str(input_dims))
     np.save('debug/' + model_name + '/' + model_name + '_input', input_array)
 
-    (chunk, cnt) = common.numpy_float_array_to_fixed_point_val_str(input_array, scaling_factor)
+    (chunk_inp, cnt) = common.numpy_float_array_to_fixed_point_val_str(input_array, scaling_factor)
+    
+    #Save the input file for client
+    f = open('debug/' + model_name + '/' + model_name + '_input_client.clr', 'w') 
+    f.write(chunk_inp)
+    f.close()
+    chunk = ""
+    print("Input image written to file")
 
     model_name_to_val_dict = { init_vals.name: numpy_helper.to_array(init_vals).tolist() for init_vals in model.graph.initializer}
 
@@ -77,9 +85,10 @@ def main():
         chunk += chunk_1
         cnt += cnt_1
 
-    f = open('debug/' + model_name + '/' + model_name + '_input.h', 'w') 
+    f = open('debug/' + model_name + '/' + model_name + '_input_server.clr', 'w') 
     f.write(chunk)
     f.close()
+    print("Model weights written to file")
 
     print('Total ' + str(cnt) + ' integers were written in ' + model_name + '_input.h')
 
