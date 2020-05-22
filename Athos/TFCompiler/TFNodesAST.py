@@ -116,6 +116,13 @@ class TFNodesAST:
 							TFNodesAST.getOperatorsIdx('+'),
 							AST.ID(dictNodeNameToOutVarStr[inputsRef[1]])
 							))
+	def AddV2(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
+		inputsRef = curNode.getInputsRef()
+		assert(len(inputsRef) == 2)
+		return (None, AST.BOp(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]),
+							TFNodesAST.getOperatorsIdx('+'),
+							AST.ID(dictNodeNameToOutVarStr[inputsRef[1]])
+							))
 
 	def Mul(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
@@ -533,6 +540,12 @@ class TFNodesAST:
 										 AST.ID(dictNodeNameToOutVarStr[inputsRef[1]]),
 										 AST.ID(dictNodeNameToOutVarStr[inputsRef[2]]),
 										))
+	def FusedBatchNormV3(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
+		inputsRef = curNode.getInputsRef()
+		return (None, AST.FusedBatchNorm(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]),
+										 AST.ID(dictNodeNameToOutVarStr[inputsRef[1]]),
+										 AST.ID(dictNodeNameToOutVarStr[inputsRef[2]]),
+										))
 
 	def Squeeze(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		# TODO : Do this in somewhat better way
@@ -563,6 +576,9 @@ class TFNodesAST:
 		inputsRef = curNode.getInputsRef()
 		return (None, AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]))
 
+	def Softmax(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
+		inputsRef = curNode.getInputsRef()
+		return (None, AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]))
 	# def StridedSlice(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 	# 	inputsRef = curNode.getInputsRef()
 	# 	return (None, AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]))
