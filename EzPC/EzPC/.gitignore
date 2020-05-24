@@ -1,0 +1,6 @@
+_build/
+ezpc
+main.byte
+*.ezpc
+*.cpp
+!dot_product.ezpc

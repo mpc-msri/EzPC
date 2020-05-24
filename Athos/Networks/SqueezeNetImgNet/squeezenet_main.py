@@ -264,15 +264,12 @@ def main():
             # Outputting result
             print("\nclass: [%d] '%s'" % (sqz_class, classes[sqz_class]))
 
-            if options.saveImgAndWtData:
-                DumpTFMtData.dumpImgAndWeightsData(sess, imageData, all_weights, 'SqNetImgNet_img_input.inp', options.scalingFac, alreadyEvaluated=True)
             if options.savePreTrainedWeightsInt:
-                DumpTFMtData.dumpTrainedWeightsInt(sess, all_weights, 'SqNet_trained_weights_int.inp', options.scalingFac, 'w', alreadyEvaluated=True)
+                DumpTFMtData.dumpTrainedWeightsInt(sess, all_weights, 'SqNet_weights.inp', options.scalingFac, 'w', alreadyEvaluated=True)
             if options.savePreTrainedWeightsFloat:
-                DumpTFMtData.dumpTrainedWeightsFloat(sess, all_weights, 'SqNet_trained_weights_float.inp', 'w', alreadyEvaluated=True)
-            if options.saveImgAndWeightsSeparately:
-                DumpTFMtData.dumpTrainedWeightsInt(sess, all_weights, 'SqNet_trained_weights_int.inp', options.scalingFac, 'w', alreadyEvaluated=True)
-                DumpTFMtData.dumpImageDataInt(imageData, 'SqNet_image_data.inp', options.scalingFac, 'w')
+                DumpTFMtData.dumpTrainedWeightsFloat(sess, all_weights, 'SqNet_weights_float.inp', 'w', alreadyEvaluated=True)
+            if options.saveImgAndWtData:
+                DumpTFMtData.dumpImgAndWeightsDataSeparate(sess, imageData, all_weights, 'SqNet_img.inp', 'SqNet_weights.inp', options.scalingFac, alreadyEvaluated=True)
 
 if __name__ == '__main__':
     main()

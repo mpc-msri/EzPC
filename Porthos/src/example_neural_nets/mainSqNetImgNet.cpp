@@ -500,10 +500,10 @@ for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)3; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)3; i1++){
 for (uint32_t i2 =  (uint32_t)0; i2 <  (int32_t)3; i2++){
 for (uint32_t i3 =  (uint32_t)0; i3 <  (int32_t)64; i3++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp1;
 }
-tmp1[i0][i1][i2][i3] = (role == CLIENT) ? __tmp_in_tmp1 : 0;
+tmp1[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp1 : 0;
 }
 }
 }
@@ -513,10 +513,10 @@ auto tmp2 = make_vector<uint64_t>( (int32_t)64);
 /* Variable to read the clear value corresponding to the input variable tmp2 at (399,1-399,35) */
 uint64_t __tmp_in_tmp2;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)64; i0++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp2;
 }
-tmp2[i0] = (role == CLIENT) ? __tmp_in_tmp2 : 0;
+tmp2[i0] = (role == SERVER) ? __tmp_in_tmp2 : 0;
 }
 
 auto tmp3 = make_vector<uint64_t>( (int32_t)1,  (int32_t)1,  (int32_t)64,  (int32_t)16);
@@ -526,10 +526,10 @@ for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)1; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)1; i1++){
 for (uint32_t i2 =  (uint32_t)0; i2 <  (int32_t)64; i2++){
 for (uint32_t i3 =  (uint32_t)0; i3 <  (int32_t)16; i3++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp3;
 }
-tmp3[i0][i1][i2][i3] = (role == CLIENT) ? __tmp_in_tmp3 : 0;
+tmp3[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp3 : 0;
 }
 }
 }
@@ -539,10 +539,10 @@ auto tmp4 = make_vector<uint64_t>( (int32_t)16);
 /* Variable to read the clear value corresponding to the input variable tmp4 at (405,1-405,35) */
 uint64_t __tmp_in_tmp4;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)16; i0++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp4;
 }
-tmp4[i0] = (role == CLIENT) ? __tmp_in_tmp4 : 0;
+tmp4[i0] = (role == SERVER) ? __tmp_in_tmp4 : 0;
 }
 
 auto tmp5 = make_vector<uint64_t>( (int32_t)1,  (int32_t)1,  (int32_t)16,  (int32_t)64);
@@ -552,10 +552,10 @@ for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)1; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)1; i1++){
 for (uint32_t i2 =  (uint32_t)0; i2 <  (int32_t)16; i2++){
 for (uint32_t i3 =  (uint32_t)0; i3 <  (int32_t)64; i3++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp5;
 }
-tmp5[i0][i1][i2][i3] = (role == CLIENT) ? __tmp_in_tmp5 : 0;
+tmp5[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp5 : 0;
 }
 }
 }
@@ -565,10 +565,10 @@ auto tmp6 = make_vector<uint64_t>( (int32_t)64);
 /* Variable to read the clear value corresponding to the input variable tmp6 at (411,1-411,35) */
 uint64_t __tmp_in_tmp6;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)64; i0++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp6;
 }
-tmp6[i0] = (role == CLIENT) ? __tmp_in_tmp6 : 0;
+tmp6[i0] = (role == SERVER) ? __tmp_in_tmp6 : 0;
 }
 
 auto tmp7 = make_vector<uint64_t>( (int32_t)3,  (int32_t)3,  (int32_t)16,  (int32_t)64);
@@ -578,10 +578,10 @@ for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)3; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)3; i1++){
 for (uint32_t i2 =  (uint32_t)0; i2 <  (int32_t)16; i2++){
 for (uint32_t i3 =  (uint32_t)0; i3 <  (int32_t)64; i3++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp7;
 }
-tmp7[i0][i1][i2][i3] = (role == CLIENT) ? __tmp_in_tmp7 : 0;
+tmp7[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp7 : 0;
 }
 }
 }
@@ -591,10 +591,10 @@ auto tmp8 = make_vector<uint64_t>( (int32_t)64);
 /* Variable to read the clear value corresponding to the input variable tmp8 at (417,1-417,35) */
 uint64_t __tmp_in_tmp8;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)64; i0++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp8;
 }
-tmp8[i0] = (role == CLIENT) ? __tmp_in_tmp8 : 0;
+tmp8[i0] = (role == SERVER) ? __tmp_in_tmp8 : 0;
 }
 
 auto tmp9 = make_vector<uint64_t>( (int32_t)1,  (int32_t)1,  (int32_t)128,  (int32_t)16);
@@ -604,10 +604,10 @@ for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)1; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)1; i1++){
 for (uint32_t i2 =  (uint32_t)0; i2 <  (int32_t)128; i2++){
 for (uint32_t i3 =  (uint32_t)0; i3 <  (int32_t)16; i3++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp9;
 }
-tmp9[i0][i1][i2][i3] = (role == CLIENT) ? __tmp_in_tmp9 : 0;
+tmp9[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp9 : 0;
 }
 }
 }
@@ -617,10 +617,10 @@ auto tmp10 = make_vector<uint64_t>( (int32_t)16);
 /* Variable to read the clear value corresponding to the input variable tmp10 at (423,1-423,36) */
 uint64_t __tmp_in_tmp10;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)16; i0++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp10;
 }
-tmp10[i0] = (role == CLIENT) ? __tmp_in_tmp10 : 0;
+tmp10[i0] = (role == SERVER) ? __tmp_in_tmp10 : 0;
 }
 
 auto tmp11 = make_vector<uint64_t>( (int32_t)1,  (int32_t)1,  (int32_t)16,  (int32_t)64);
@@ -630,10 +630,10 @@ for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)1; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)1; i1++){
 for (uint32_t i2 =  (uint32_t)0; i2 <  (int32_t)16; i2++){
 for (uint32_t i3 =  (uint32_t)0; i3 <  (int32_t)64; i3++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp11;
 }
-tmp11[i0][i1][i2][i3] = (role == CLIENT) ? __tmp_in_tmp11 : 0;
+tmp11[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp11 : 0;
 }
 }
 }
@@ -643,10 +643,10 @@ auto tmp12 = make_vector<uint64_t>( (int32_t)64);
 /* Variable to read the clear value corresponding to the input variable tmp12 at (429,1-429,36) */
 uint64_t __tmp_in_tmp12;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)64; i0++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp12;
 }
-tmp12[i0] = (role == CLIENT) ? __tmp_in_tmp12 : 0;
+tmp12[i0] = (role == SERVER) ? __tmp_in_tmp12 : 0;
 }
 
 auto tmp13 = make_vector<uint64_t>( (int32_t)3,  (int32_t)3,  (int32_t)16,  (int32_t)64);
@@ -656,10 +656,10 @@ for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)3; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)3; i1++){
 for (uint32_t i2 =  (uint32_t)0; i2 <  (int32_t)16; i2++){
 for (uint32_t i3 =  (uint32_t)0; i3 <  (int32_t)64; i3++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp13;
 }
-tmp13[i0][i1][i2][i3] = (role == CLIENT) ? __tmp_in_tmp13 : 0;
+tmp13[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp13 : 0;
 }
 }
 }
@@ -669,10 +669,10 @@ auto tmp14 = make_vector<uint64_t>( (int32_t)64);
 /* Variable to read the clear value corresponding to the input variable tmp14 at (435,1-435,36) */
 uint64_t __tmp_in_tmp14;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)64; i0++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp14;
 }
-tmp14[i0] = (role == CLIENT) ? __tmp_in_tmp14 : 0;
+tmp14[i0] = (role == SERVER) ? __tmp_in_tmp14 : 0;
 }
 
 auto tmp15 = make_vector<uint64_t>( (int32_t)1,  (int32_t)1,  (int32_t)128,  (int32_t)32);
@@ -682,10 +682,10 @@ for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)1; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)1; i1++){
 for (uint32_t i2 =  (uint32_t)0; i2 <  (int32_t)128; i2++){
 for (uint32_t i3 =  (uint32_t)0; i3 <  (int32_t)32; i3++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp15;
 }
-tmp15[i0][i1][i2][i3] = (role == CLIENT) ? __tmp_in_tmp15 : 0;
+tmp15[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp15 : 0;
 }
 }
 }
@@ -695,10 +695,10 @@ auto tmp16 = make_vector<uint64_t>( (int32_t)32);
 /* Variable to read the clear value corresponding to the input variable tmp16 at (441,1-441,36) */
 uint64_t __tmp_in_tmp16;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)32; i0++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp16;
 }
-tmp16[i0] = (role == CLIENT) ? __tmp_in_tmp16 : 0;
+tmp16[i0] = (role == SERVER) ? __tmp_in_tmp16 : 0;
 }
 
 auto tmp17 = make_vector<uint64_t>( (int32_t)1,  (int32_t)1,  (int32_t)32,  (int32_t)128);
@@ -708,10 +708,10 @@ for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)1; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)1; i1++){
 for (uint32_t i2 =  (uint32_t)0; i2 <  (int32_t)32; i2++){
 for (uint32_t i3 =  (uint32_t)0; i3 <  (int32_t)128; i3++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp17;
 }
-tmp17[i0][i1][i2][i3] = (role == CLIENT) ? __tmp_in_tmp17 : 0;
+tmp17[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp17 : 0;
 }
 }
 }
@@ -721,10 +721,10 @@ auto tmp18 = make_vector<uint64_t>( (int32_t)128);
 /* Variable to read the clear value corresponding to the input variable tmp18 at (447,1-447,37) */
 uint64_t __tmp_in_tmp18;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)128; i0++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp18;
 }
-tmp18[i0] = (role == CLIENT) ? __tmp_in_tmp18 : 0;
+tmp18[i0] = (role == SERVER) ? __tmp_in_tmp18 : 0;
 }
 
 auto tmp19 = make_vector<uint64_t>( (int32_t)3,  (int32_t)3,  (int32_t)32,  (int32_t)128);
@@ -734,10 +734,10 @@ for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)3; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)3; i1++){
 for (uint32_t i2 =  (uint32_t)0; i2 <  (int32_t)32; i2++){
 for (uint32_t i3 =  (uint32_t)0; i3 <  (int32_t)128; i3++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp19;
 }
-tmp19[i0][i1][i2][i3] = (role == CLIENT) ? __tmp_in_tmp19 : 0;
+tmp19[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp19 : 0;
 }
 }
 }
@@ -747,10 +747,10 @@ auto tmp20 = make_vector<uint64_t>( (int32_t)128);
 /* Variable to read the clear value corresponding to the input variable tmp20 at (453,1-453,37) */
 uint64_t __tmp_in_tmp20;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)128; i0++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp20;
 }
-tmp20[i0] = (role == CLIENT) ? __tmp_in_tmp20 : 0;
+tmp20[i0] = (role == SERVER) ? __tmp_in_tmp20 : 0;
 }
 
 auto tmp21 = make_vector<uint64_t>( (int32_t)1,  (int32_t)1,  (int32_t)256,  (int32_t)32);
@@ -760,10 +760,10 @@ for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)1; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)1; i1++){
 for (uint32_t i2 =  (uint32_t)0; i2 <  (int32_t)256; i2++){
 for (uint32_t i3 =  (uint32_t)0; i3 <  (int32_t)32; i3++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp21;
 }
-tmp21[i0][i1][i2][i3] = (role == CLIENT) ? __tmp_in_tmp21 : 0;
+tmp21[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp21 : 0;
 }
 }
 }
@@ -773,10 +773,10 @@ auto tmp22 = make_vector<uint64_t>( (int32_t)32);
 /* Variable to read the clear value corresponding to the input variable tmp22 at (459,1-459,36) */
 uint64_t __tmp_in_tmp22;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)32; i0++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp22;
 }
-tmp22[i0] = (role == CLIENT) ? __tmp_in_tmp22 : 0;
+tmp22[i0] = (role == SERVER) ? __tmp_in_tmp22 : 0;
 }
 
 auto tmp23 = make_vector<uint64_t>( (int32_t)1,  (int32_t)1,  (int32_t)32,  (int32_t)128);
@@ -786,10 +786,10 @@ for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)1; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)1; i1++){
 for (uint32_t i2 =  (uint32_t)0; i2 <  (int32_t)32; i2++){
 for (uint32_t i3 =  (uint32_t)0; i3 <  (int32_t)128; i3++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp23;
 }
-tmp23[i0][i1][i2][i3] = (role == CLIENT) ? __tmp_in_tmp23 : 0;
+tmp23[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp23 : 0;
 }
 }
 }
@@ -799,10 +799,10 @@ auto tmp24 = make_vector<uint64_t>( (int32_t)128);
 /* Variable to read the clear value corresponding to the input variable tmp24 at (465,1-465,37) */
 uint64_t __tmp_in_tmp24;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)128; i0++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp24;
 }
-tmp24[i0] = (role == CLIENT) ? __tmp_in_tmp24 : 0;
+tmp24[i0] = (role == SERVER) ? __tmp_in_tmp24 : 0;
 }
 
 auto tmp25 = make_vector<uint64_t>( (int32_t)3,  (int32_t)3,  (int32_t)32,  (int32_t)128);
@@ -812,10 +812,10 @@ for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)3; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)3; i1++){
 for (uint32_t i2 =  (uint32_t)0; i2 <  (int32_t)32; i2++){
 for (uint32_t i3 =  (uint32_t)0; i3 <  (int32_t)128; i3++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp25;
 }
-tmp25[i0][i1][i2][i3] = (role == CLIENT) ? __tmp_in_tmp25 : 0;
+tmp25[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp25 : 0;
 }
 }
 }
@@ -825,10 +825,10 @@ auto tmp26 = make_vector<uint64_t>( (int32_t)128);
 /* Variable to read the clear value corresponding to the input variable tmp26 at (471,1-471,37) */
 uint64_t __tmp_in_tmp26;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)128; i0++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp26;
 }
-tmp26[i0] = (role == CLIENT) ? __tmp_in_tmp26 : 0;
+tmp26[i0] = (role == SERVER) ? __tmp_in_tmp26 : 0;
 }
 
 auto tmp27 = make_vector<uint64_t>( (int32_t)1,  (int32_t)1,  (int32_t)256,  (int32_t)48);
@@ -838,10 +838,10 @@ for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)1; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)1; i1++){
 for (uint32_t i2 =  (uint32_t)0; i2 <  (int32_t)256; i2++){
 for (uint32_t i3 =  (uint32_t)0; i3 <  (int32_t)48; i3++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp27;
 }
-tmp27[i0][i1][i2][i3] = (role == CLIENT) ? __tmp_in_tmp27 : 0;
+tmp27[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp27 : 0;
 }
 }
 }
@@ -851,10 +851,10 @@ auto tmp28 = make_vector<uint64_t>( (int32_t)48);
 /* Variable to read the clear value corresponding to the input variable tmp28 at (477,1-477,36) */
 uint64_t __tmp_in_tmp28;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)48; i0++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp28;
 }
-tmp28[i0] = (role == CLIENT) ? __tmp_in_tmp28 : 0;
+tmp28[i0] = (role == SERVER) ? __tmp_in_tmp28 : 0;
 }
 
 auto tmp29 = make_vector<uint64_t>( (int32_t)1,  (int32_t)1,  (int32_t)48,  (int32_t)192);
@@ -864,10 +864,10 @@ for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)1; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)1; i1++){
 for (uint32_t i2 =  (uint32_t)0; i2 <  (int32_t)48; i2++){
 for (uint32_t i3 =  (uint32_t)0; i3 <  (int32_t)192; i3++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp29;
 }
-tmp29[i0][i1][i2][i3] = (role == CLIENT) ? __tmp_in_tmp29 : 0;
+tmp29[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp29 : 0;
 }
 }
 }
@@ -877,10 +877,10 @@ auto tmp30 = make_vector<uint64_t>( (int32_t)192);
 /* Variable to read the clear value corresponding to the input variable tmp30 at (483,1-483,37) */
 uint64_t __tmp_in_tmp30;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)192; i0++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp30;
 }
-tmp30[i0] = (role == CLIENT) ? __tmp_in_tmp30 : 0;
+tmp30[i0] = (role == SERVER) ? __tmp_in_tmp30 : 0;
 }
 
 auto tmp31 = make_vector<uint64_t>( (int32_t)3,  (int32_t)3,  (int32_t)48,  (int32_t)192);
@@ -890,10 +890,10 @@ for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)3; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)3; i1++){
 for (uint32_t i2 =  (uint32_t)0; i2 <  (int32_t)48; i2++){
 for (uint32_t i3 =  (uint32_t)0; i3 <  (int32_t)192; i3++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp31;
 }
-tmp31[i0][i1][i2][i3] = (role == CLIENT) ? __tmp_in_tmp31 : 0;
+tmp31[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp31 : 0;
 }
 }
 }
@@ -903,10 +903,10 @@ auto tmp32 = make_vector<uint64_t>( (int32_t)192);
 /* Variable to read the clear value corresponding to the input variable tmp32 at (489,1-489,37) */
 uint64_t __tmp_in_tmp32;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)192; i0++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp32;
 }
-tmp32[i0] = (role == CLIENT) ? __tmp_in_tmp32 : 0;
+tmp32[i0] = (role == SERVER) ? __tmp_in_tmp32 : 0;
 }
 
 auto tmp33 = make_vector<uint64_t>( (int32_t)1,  (int32_t)1,  (int32_t)384,  (int32_t)48);
@@ -916,10 +916,10 @@ for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)1; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)1; i1++){
 for (uint32_t i2 =  (uint32_t)0; i2 <  (int32_t)384; i2++){
 for (uint32_t i3 =  (uint32_t)0; i3 <  (int32_t)48; i3++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp33;
 }
-tmp33[i0][i1][i2][i3] = (role == CLIENT) ? __tmp_in_tmp33 : 0;
+tmp33[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp33 : 0;
 }
 }
 }
@@ -929,10 +929,10 @@ auto tmp34 = make_vector<uint64_t>( (int32_t)48);
 /* Variable to read the clear value corresponding to the input variable tmp34 at (495,1-495,36) */
 uint64_t __tmp_in_tmp34;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)48; i0++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp34;
 }
-tmp34[i0] = (role == CLIENT) ? __tmp_in_tmp34 : 0;
+tmp34[i0] = (role == SERVER) ? __tmp_in_tmp34 : 0;
 }
 
 auto tmp35 = make_vector<uint64_t>( (int32_t)1,  (int32_t)1,  (int32_t)48,  (int32_t)192);
@@ -942,10 +942,10 @@ for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)1; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)1; i1++){
 for (uint32_t i2 =  (uint32_t)0; i2 <  (int32_t)48; i2++){
 for (uint32_t i3 =  (uint32_t)0; i3 <  (int32_t)192; i3++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp35;
 }
-tmp35[i0][i1][i2][i3] = (role == CLIENT) ? __tmp_in_tmp35 : 0;
+tmp35[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp35 : 0;
 }
 }
 }
@@ -955,10 +955,10 @@ auto tmp36 = make_vector<uint64_t>( (int32_t)192);
 /* Variable to read the clear value corresponding to the input variable tmp36 at (501,1-501,37) */
 uint64_t __tmp_in_tmp36;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)192; i0++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp36;
 }
-tmp36[i0] = (role == CLIENT) ? __tmp_in_tmp36 : 0;
+tmp36[i0] = (role == SERVER) ? __tmp_in_tmp36 : 0;
 }
 
 auto tmp37 = make_vector<uint64_t>( (int32_t)3,  (int32_t)3,  (int32_t)48,  (int32_t)192);
@@ -968,10 +968,10 @@ for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)3; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)3; i1++){
 for (uint32_t i2 =  (uint32_t)0; i2 <  (int32_t)48; i2++){
 for (uint32_t i3 =  (uint32_t)0; i3 <  (int32_t)192; i3++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp37;
 }
-tmp37[i0][i1][i2][i3] = (role == CLIENT) ? __tmp_in_tmp37 : 0;
+tmp37[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp37 : 0;
 }
 }
 }
@@ -981,10 +981,10 @@ auto tmp38 = make_vector<uint64_t>( (int32_t)192);
 /* Variable to read the clear value corresponding to the input variable tmp38 at (507,1-507,37) */
 uint64_t __tmp_in_tmp38;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)192; i0++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp38;
 }
-tmp38[i0] = (role == CLIENT) ? __tmp_in_tmp38 : 0;
+tmp38[i0] = (role == SERVER) ? __tmp_in_tmp38 : 0;
 }
 
 auto tmp39 = make_vector<uint64_t>( (int32_t)1,  (int32_t)1,  (int32_t)384,  (int32_t)64);
@@ -994,10 +994,10 @@ for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)1; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)1; i1++){
 for (uint32_t i2 =  (uint32_t)0; i2 <  (int32_t)384; i2++){
 for (uint32_t i3 =  (uint32_t)0; i3 <  (int32_t)64; i3++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp39;
 }
-tmp39[i0][i1][i2][i3] = (role == CLIENT) ? __tmp_in_tmp39 : 0;
+tmp39[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp39 : 0;
 }
 }
 }
@@ -1007,10 +1007,10 @@ auto tmp40 = make_vector<uint64_t>( (int32_t)64);
 /* Variable to read the clear value corresponding to the input variable tmp40 at (513,1-513,36) */
 uint64_t __tmp_in_tmp40;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)64; i0++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp40;
 }
-tmp40[i0] = (role == CLIENT) ? __tmp_in_tmp40 : 0;
+tmp40[i0] = (role == SERVER) ? __tmp_in_tmp40 : 0;
 }
 
 auto tmp41 = make_vector<uint64_t>( (int32_t)1,  (int32_t)1,  (int32_t)64,  (int32_t)256);
@@ -1020,10 +1020,10 @@ for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)1; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)1; i1++){
 for (uint32_t i2 =  (uint32_t)0; i2 <  (int32_t)64; i2++){
 for (uint32_t i3 =  (uint32_t)0; i3 <  (int32_t)256; i3++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp41;
 }
-tmp41[i0][i1][i2][i3] = (role == CLIENT) ? __tmp_in_tmp41 : 0;
+tmp41[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp41 : 0;
 }
 }
 }
@@ -1033,10 +1033,10 @@ auto tmp42 = make_vector<uint64_t>( (int32_t)256);
 /* Variable to read the clear value corresponding to the input variable tmp42 at (519,1-519,37) */
 uint64_t __tmp_in_tmp42;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)256; i0++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp42;
 }
-tmp42[i0] = (role == CLIENT) ? __tmp_in_tmp42 : 0;
+tmp42[i0] = (role == SERVER) ? __tmp_in_tmp42 : 0;
 }
 
 auto tmp43 = make_vector<uint64_t>( (int32_t)3,  (int32_t)3,  (int32_t)64,  (int32_t)256);
@@ -1046,10 +1046,10 @@ for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)3; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)3; i1++){
 for (uint32_t i2 =  (uint32_t)0; i2 <  (int32_t)64; i2++){
 for (uint32_t i3 =  (uint32_t)0; i3 <  (int32_t)256; i3++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp43;
 }
-tmp43[i0][i1][i2][i3] = (role == CLIENT) ? __tmp_in_tmp43 : 0;
+tmp43[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp43 : 0;
 }
 }
 }
@@ -1059,10 +1059,10 @@ auto tmp44 = make_vector<uint64_t>( (int32_t)256);
 /* Variable to read the clear value corresponding to the input variable tmp44 at (525,1-525,37) */
 uint64_t __tmp_in_tmp44;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)256; i0++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp44;
 }
-tmp44[i0] = (role == CLIENT) ? __tmp_in_tmp44 : 0;
+tmp44[i0] = (role == SERVER) ? __tmp_in_tmp44 : 0;
 }
 
 auto tmp45 = make_vector<uint64_t>( (int32_t)1,  (int32_t)1,  (int32_t)512,  (int32_t)64);
@@ -1072,10 +1072,10 @@ for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)1; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)1; i1++){
 for (uint32_t i2 =  (uint32_t)0; i2 <  (int32_t)512; i2++){
 for (uint32_t i3 =  (uint32_t)0; i3 <  (int32_t)64; i3++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp45;
 }
-tmp45[i0][i1][i2][i3] = (role == CLIENT) ? __tmp_in_tmp45 : 0;
+tmp45[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp45 : 0;
 }
 }
 }
@@ -1085,10 +1085,10 @@ auto tmp46 = make_vector<uint64_t>( (int32_t)64);
 /* Variable to read the clear value corresponding to the input variable tmp46 at (531,1-531,36) */
 uint64_t __tmp_in_tmp46;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)64; i0++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp46;
 }
-tmp46[i0] = (role == CLIENT) ? __tmp_in_tmp46 : 0;
+tmp46[i0] = (role == SERVER) ? __tmp_in_tmp46 : 0;
 }
 
 auto tmp47 = make_vector<uint64_t>( (int32_t)1,  (int32_t)1,  (int32_t)64,  (int32_t)256);
@@ -1098,10 +1098,10 @@ for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)1; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)1; i1++){
 for (uint32_t i2 =  (uint32_t)0; i2 <  (int32_t)64; i2++){
 for (uint32_t i3 =  (uint32_t)0; i3 <  (int32_t)256; i3++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp47;
 }
-tmp47[i0][i1][i2][i3] = (role == CLIENT) ? __tmp_in_tmp47 : 0;
+tmp47[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp47 : 0;
 }
 }
 }
@@ -1111,10 +1111,10 @@ auto tmp48 = make_vector<uint64_t>( (int32_t)256);
 /* Variable to read the clear value corresponding to the input variable tmp48 at (537,1-537,37) */
 uint64_t __tmp_in_tmp48;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)256; i0++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp48;
 }
-tmp48[i0] = (role == CLIENT) ? __tmp_in_tmp48 : 0;
+tmp48[i0] = (role == SERVER) ? __tmp_in_tmp48 : 0;
 }
 
 auto tmp49 = make_vector<uint64_t>( (int32_t)3,  (int32_t)3,  (int32_t)64,  (int32_t)256);
@@ -1124,10 +1124,10 @@ for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)3; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)3; i1++){
 for (uint32_t i2 =  (uint32_t)0; i2 <  (int32_t)64; i2++){
 for (uint32_t i3 =  (uint32_t)0; i3 <  (int32_t)256; i3++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp49;
 }
-tmp49[i0][i1][i2][i3] = (role == CLIENT) ? __tmp_in_tmp49 : 0;
+tmp49[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp49 : 0;
 }
 }
 }
@@ -1137,10 +1137,10 @@ auto tmp50 = make_vector<uint64_t>( (int32_t)256);
 /* Variable to read the clear value corresponding to the input variable tmp50 at (543,1-543,37) */
 uint64_t __tmp_in_tmp50;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)256; i0++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp50;
 }
-tmp50[i0] = (role == CLIENT) ? __tmp_in_tmp50 : 0;
+tmp50[i0] = (role == SERVER) ? __tmp_in_tmp50 : 0;
 }
 
 auto tmp51 = make_vector<uint64_t>( (int32_t)1,  (int32_t)1,  (int32_t)512,  (int32_t)1000);
@@ -1150,10 +1150,10 @@ for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)1; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)1; i1++){
 for (uint32_t i2 =  (uint32_t)0; i2 <  (int32_t)512; i2++){
 for (uint32_t i3 =  (uint32_t)0; i3 <  (int32_t)1000; i3++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp51;
 }
-tmp51[i0][i1][i2][i3] = (role == CLIENT) ? __tmp_in_tmp51 : 0;
+tmp51[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp51 : 0;
 }
 }
 }
@@ -1163,10 +1163,10 @@ auto tmp52 = make_vector<uint64_t>( (int32_t)1000);
 /* Variable to read the clear value corresponding to the input variable tmp52 at (549,1-549,38) */
 uint64_t __tmp_in_tmp52;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)1000; i0++){
-if ((role == CLIENT)) {
+if ((role == SERVER)) {
 cin >> __tmp_in_tmp52;
 }
-tmp52[i0] = (role == CLIENT) ? __tmp_in_tmp52 : 0;
+tmp52[i0] = (role == SERVER) ? __tmp_in_tmp52 : 0;
 }
 StartComputation();
 
@@ -1598,7 +1598,7 @@ ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1000, tmp291);
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)1; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)1; i1++){
 for (uint32_t i2 =  (uint32_t)0; i2 <  (int32_t)1; i2++){
-cout << (funcReconstruct2PCCons(tmp293[i0][i1][i2], 1)) << endl;
+cout << (funcReconstruct2PCCons(tmp293[i0][i1][i2], 2)) << endl;
 }
 }
 }

@@ -170,11 +170,11 @@ def infer(savePreTrainedWeightsInt, savePreTrainedWeightsFloat, scalingFac, runP
         trainVarsName.append(node.name)
     trainVars = list(map(lambda x : tf.get_default_graph().get_operation_by_name(x).outputs[0] , trainVarsName))
     if savePreTrainedWeightsInt:
-      DumpTFMtData.dumpTrainedWeights(sess, trainVars, 'ResNet_img_input_weights_int.inp', scalingFac, 'w')
-    if saveImgAndWtData:
-      DumpTFMtData.dumpImgAndWeightsData(sess, images[0], trainVars, 'ResNet_img_input.inp', scalingFac)
+      DumpTFMtData.dumpTrainedWeights(sess, trainVars, 'ResNet_weights.inp', scalingFac, 'w')
     if savePreTrainedWeightsFloat:
-      DumpTFMtData.dumpTrainedWeightsFloat(sess, trainVars, 'ResNet_img_input_weights_float.inp', 'w')
+      DumpTFMtData.dumpTrainedWeightsFloat(sess, trainVars, 'ResNet_weights_float.inp', 'w')
+    if saveImgAndWtData:
+      DumpTFMtData.dumpImgAndWeightsDataSeparate(sess, images[0], trainVars, 'ResNet_img.inp', 'ResNet_weights.inp', scalingFac)
 
     return predictions
 

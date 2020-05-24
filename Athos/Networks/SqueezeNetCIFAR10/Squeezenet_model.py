@@ -600,13 +600,14 @@ def main():
 				findAndSaveCorrectTestImg(pred, testing_features, testing_labels, './testPred/CorrectImg/', './testPred/IncorrectImg/', './testPred/TestInputs/', sess, sqn, scalingFac)
 
 			if (inp == 'savegraphAndDataBatch' or inp=='testSingleTestInpAndSaveData'):
-				outputFileName = 'SqNet_CIFAR_input.inp'
+				imgFileName = 'SqNet_CIFAR_img.inp'
+				weightsFileName = 'SqNet_CIFAR_weights.inp'
 				for ii,curFeature in enumerate(testing_features):
 					if ii == 0 :
-						DumpTFMtData.dumpImageDataInt(curFeature, outputFileName, scalingFac, 'w')
+						DumpTFMtData.dumpImageDataInt(curFeature, imgFileName, scalingFac, 'w')
 					else:
-						DumpTFMtData.dumpImageDataInt(curFeature, outputFileName, scalingFac, 'a')
-				DumpTFMtData.dumpTrainedWeightsInt(sess, sqn.all_weights, outputFileName, scalingFac, 'a')
+						DumpTFMtData.dumpImageDataInt(curFeature, imgFileName, scalingFac, 'a')
+				DumpTFMtData.dumpTrainedWeightsInt(sess, sqn.all_weights, weightsFileName, scalingFac, 'w')
 
 if __name__ == '__main__':
 	main()

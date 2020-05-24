@@ -278,11 +278,12 @@ class FuncCall(Cmd):
 		return self.__class__(self.name, argList_new)
 
 class Input(Cmd):
-	def __init__(self, expr:Expr, shape:list, dataType:str, isSecret = True): 
+	def __init__(self, expr:Expr, shape:list, dataType:str, isSecret=True, inputByParty=0): 
 		self.expr = expr
 		self.shape = shape
 		self.dataType = dataType
 		self.isSecret = isSecret
+		self.inputByParty = inputByParty
 
 	def subst(self, from_idf:str, to_e:Expr):
 		return self.__class__(self.expr.subst(from_idf, to_e), self.shape, self.dataType, self.isSecret)

@@ -106,10 +106,10 @@ with tf.Session() as sess:
     if node.op=="VariableV2":
       trainVarsName.append(node.name)
   trainVars = list(map(lambda x : tf.get_default_graph().get_operation_by_name(x).outputs[0] , trainVarsName))
-  if args.saveImgAndWtData:
-    DumpTFMtData.dumpImgAndWeightsData(sess, images[0], trainVars, 'DenseNet_img_input.inp', args.scalingFac)
   if args.savePreTrainedWeightsInt:
-    DumpTFMtData.dumpTrainedWeightsInt(sess, trainVars, 'DenseNet_img_input_weights_int.inp', args.scalingFac, 'w')
+    DumpTFMtData.dumpTrainedWeightsInt(sess, trainVars, 'DenseNet_weights.inp', args.scalingFac, 'w')
   if args.savePreTrainedWeightsFloat:
-    DumpTFMtData.dumpTrainedWeightsFloat(sess, trainVars, 'DenseNet_img_input_weights_float.inp', 'w')
+    DumpTFMtData.dumpTrainedWeightsFloat(sess, trainVars, 'DenseNet_weights_float.inp', 'w')
+  if args.saveImgAndWtData:
+    DumpTFMtData.dumpImgAndWeightsDataSeparate(sess, images[0], trainVars, 'DenseNet_img.inp', 'DenseNet_weights.inp', args.scalingFac)
 

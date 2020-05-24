@@ -176,7 +176,7 @@ def main(_):
       if node.op=="VariableV2":
         trainVarsName.append(node.name)
     trainVars = list(map(lambda x : tf.get_default_graph().get_operation_by_name(x).outputs[0] , trainVarsName))
-    DumpTFMtData.dumpImgAndWeightsData(sess, imagex[0], trainVars, 'LenetLarge_mnist_img_' + str(curImageNum) + '.inp', 15)
+    DumpTFMtData.dumpImgAndWeightsDataSeparate(sess, imagex[0], trainVars, 'LenetLarge_img_{0}.inp'.format(curImageNum), 'LenetLarge_weights_{0}.inp'.format(curImageNum), 15)
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()

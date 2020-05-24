@@ -300,15 +300,20 @@ class Reduce(ASTNode):
 # shape : list of int, dataType : ID
 # NOTE: Though datatype is being passed to this function, the output code eventually only has 
 #		int in the apt bitlen for which the whole compilation is done
+# Also, take note of the last parameter - "inputByParty". This can be used to set the party which
+#	which will do the input for this variable. Defaults to 0, which is interpretted as SERVER by the codegen.
 class Input(ASTNode):
-	def __init__(self, shape:list, dataType:str, isSecret=True): 
+	def __init__(self, shape:list, dataType:str, isSecret=True, inputByParty=0): 
 		if assertInputTypes:
 			for elem in shape: assert isinstance(elem, int)
 			assert isinstance(dataType, str)
+			assert isinstance(inputByParty, int)
+			assert(inputByParty==0 or inputByParty==1) #Right now EzPC supports input by two parties.
 		super().__init__()
 		self.shape = shape
 		self.dataType = dataType
 		self.isSecret = isSecret
+		self.inputByParty = inputByParty
 
 # Since some optimizations are possible around batchnorm, keep this as an interpreted node
 class FusedBatchNorm(ASTNode):

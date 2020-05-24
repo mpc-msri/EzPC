@@ -100,5 +100,5 @@ with tf.Session() as sess:
 		if node.op=="VariableV2":
 			trainVarsName.append(node.name)
 	trainVars = list(map(lambda x : tf.get_default_graph().get_operation_by_name(x).outputs[0] , trainVarsName))
-	DumpTFMtData.dumpImgAndWeightsData(sess, imagex[0], trainVars, 'LR_mnist_img_' + str(curImageNum) + '.inp', 15)
+	DumpTFMtData.dumpImgAndWeightsDataSeparate(sess, imagex[0], trainVars, 'LR_img_{0}.inp'.format(curImageNum), 'LR_weights_{0}.inp'.format(curImageNum), 15)
 

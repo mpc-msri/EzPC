@@ -99,7 +99,13 @@ class EzPC(CodegenBase):
 			assert False
 
 	def printInput(self, ir:IR.Input):
-		self.out.printf('input(CLIENT, ' + ir.expr.idf + ' , ', indent=True)
+		if (ir.inputByParty==0):
+			inputByPartyStr = "SERVER"
+		elif (ir.inputByParty==1):
+			inputByPartyStr = "CLIENT"
+		else:
+			assert(False) #For now the only supported values of party to input is 0 or 1
+		self.out.printf('input({0}, {1}, '.format(inputByPartyStr, ir.expr.idf), indent=True)
 		#assert(ir.dataType in ["DT_INT32"]) ####TODO: fix this
 		if Util.Config.wordLength == 32:
 			self.out.printf('int32_')
@@ -128,7 +134,7 @@ class EzPC(CodegenBase):
 		self.out.printf('\n')
 
 	def _out_suffix(self, expr:IR.Expr):
-		self.out.printf('output(SERVER, ' + expr.idf + ');\n', indent=True)
+		self.out.printf('output(CLIENT, ' + expr.idf + ');\n', indent=True)
 		self.out.decreaseIndent()
 		self.out.printf('}\n', indent=True)
 	

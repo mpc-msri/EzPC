@@ -137,3 +137,8 @@ def dumpImgAndWeightsData(sess, imgData, evalTensors, filename, scalingFac, alre
   dumpImageDataInt(imgData, filename, scalingFac, 'w')
   dumpTrainedWeightsInt(sess, evalTensors, filename, scalingFac, 'a', alreadyEvaluated=alreadyEvaluated)
 
+def dumpImgAndWeightsDataSeparate(sess, imgData, evalTensors, imgFileName, weightFileName, scalingFac, alreadyEvaluated=False):
+  print("Starting to dump data...")
+  dumpImageDataInt(imgData, imgFileName, scalingFac, 'w')
+  dumpTrainedWeightsInt(sess, evalTensors, weightFileName, scalingFac, 'w', alreadyEvaluated=alreadyEvaluated)
+

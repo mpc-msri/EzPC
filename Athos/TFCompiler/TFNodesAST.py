@@ -38,7 +38,7 @@ class TFNodesAST:
 		CreateCopy = auto()
 		CreateIdentity = auto()
 		CreateTensor = auto()
-		CopyTensor = auto() #TODO : hack right now, for assign node :: fix this after discussing with Aseem
+		CopyTensor = auto()
 		Const = auto()
 		Cast = auto()
 		TruncatedNormal = auto()
@@ -56,7 +56,6 @@ class TFNodesAST:
 		Squeeze = auto()
 
 	def getOperatorsIdx(token):
-		#TODO : remove usage of this
 		return AST.Operators.convSymbolToEnumValue(token)
 
 	def MatMul(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
@@ -78,12 +77,17 @@ class TFNodesAST:
 		return (None, AST.BOp(inp1AST, TFNodesAST.getOperatorsIdx('*'), inp2AST))
 
 	def Placeholder(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
-		#curNodeShapeLi = curNode.getAttrMapRef()["\"shape\""].getShape().getDimRef()
 		curNodeShapeLi = extraNodeInfoDict[curNode.getName()][0]
 		curNodeInputType = curNode.getAttrMapRef()["\"dtype\""].getDataType()
 		assert(curNodeInputType is not Graph.DataTypeEnum.DT_INVALID)
-		#TODO : There has to be some way to take range, understand the dimensions for SeeDot
-		return (None, AST.Input(curNodeShapeLi, curNodeInputType.name))
+		
+		# NOTE: There has to be some way for Athos to differentiate model from image, since in the compiled code
+		#	(in the scenario of secure inference), model is input by server and image by client.
+		#	We assume in the following that the PlaceHolder op node represents the image and 
+		#	all model parameters are represented using Variable op nodes.
+		#	Hence, in the call to AST.Input, we pass inputByParty=1.
+
+		return (None, AST.Input(curNodeShapeLi, curNodeInputType.name, isSecret=True, inputByParty=1))
 
 	def Equal(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
@@ -174,26 +178,13 @@ class TFNodesAST:
 		curNodeShapeLi = curNode.getAttrMapRef()["\"shape\""].getShape().getDimRef()[:]
 		curNodeInputType = curNode.getAttrMapRef()["\"dtype\""].getDataType()
 
-		#########TODO_TAB : for inference, have commented out decl and inserted input nodes.
-		# TODO : Right now in the current implementation, the dataType being passed to the node is being ignored by SeeDot.
-		#		 Fix this later.
-		# return (None, AST.Decl(curNodeShapeLi, curNodeInputType.name, None))
 		# NOTE : since this becomes an input node right now, i have also added to be prefixed at top in ProcessTFGraph::prefixAllPlaceHolderNodes()
-		return (None, AST.Input(curNodeShapeLi, curNodeInputType.name))
-
-	def Assign(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
-		inputsRef = curNode.getInputsRef()
-		assert(len(inputsRef) == 2)
-		curNodeShape = extraNodeInfoDict[curNode.getName()][0]
-
-		#########TODO_TAB : for inference, have commented the copyTensor function calls.
-		#### TODO : Hack -- fix this later after discussing with Aseem
-		# return (None, AST.UninterpFuncCall(curNodeShape,
-		# 									TFNodesAST.UninterpFuncCallNames.CopyTensor.name, 
-		# 									[AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]), 
-		# 									AST.ID(dictNodeNameToOutVarStr[inputsRef[1]])]))
-
-		return (None, None)
+		# NOTE: There has to be some way for Athos to differentiate model from image, since in the compiled code
+		#	(in the scenario of secure inference), model is input by server and image by client.
+		#	We assume in the following that the PlaceHolder op node represents the image and 
+		#	all model parameters are represented using Variable op nodes.
+		#	Hence, in the call to AST.Input, we pass inputByParty=0.
+		return (None, AST.Input(curNodeShapeLi, curNodeInputType.name, isSecret=True, inputByParty=0))
 	
 	def Const(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		assert(len(curNode.getInputsRef()) == 0)

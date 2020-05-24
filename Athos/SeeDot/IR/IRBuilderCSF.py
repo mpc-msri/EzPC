@@ -726,7 +726,7 @@ class IRBuilderCSF(ASTVisitor):
 		returnExpr = self.getTempVar()
 		returnExpr.inputVar = True
 		comment = IR.Comment(str(node.metadata))
-		return (IR.Prog([comment, IR.Input(returnExpr, node.shape, node.dataType, node.isSecret)]), returnExpr)
+		return (IR.Prog([comment, IR.Input(returnExpr, node.shape, node.dataType, node.isSecret, node.inputByParty)]), returnExpr)
 
 	def visitReduce(self, node:AST.Reduce, args=None):
 		(prog_1, expr1) = self.visit(node.expr)

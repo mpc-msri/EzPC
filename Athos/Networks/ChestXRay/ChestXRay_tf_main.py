@@ -90,9 +90,10 @@ with tf.Session() as sess:
     if node.op=="VariableV2":
       trainVarsName.append(node.name)
   trainVars = list(map(lambda x : tf.get_default_graph().get_operation_by_name(x).outputs[0] , trainVarsName))
-  if args.saveImgAndWtData:
-    DumpTFMtData.dumpImgAndWeightsData(sess, images[0], trainVars, 'ChestXRay_img_{0}_input.inp'.format(args.scalingFac), args.scalingFac)
   if args.savePreTrainedWeightsInt:
-    DumpTFMtData.dumpTrainedWeights(sess, trainVars, 'ChestXRay_img_input_weights_{0}_int.inp'.format(args.scalingFac), args.scalingFac, 'w')
+    DumpTFMtData.dumpTrainedWeights(sess, trainVars, 'ChestXRay_weights_{0}.inp'.format(args.scalingFac), args.scalingFac, 'w')
   if args.savePreTrainedWeightsFloat:
-    DumpTFMtData.dumpTrainedWeightsFloat(sess, trainVars, 'ChestXRay_img_input_weights_float.inp', 'w')
+    DumpTFMtData.dumpTrainedWeightsFloat(sess, trainVars, 'ChestXRay_weights_float.inp', 'w')
+  if args.saveImgAndWtData:
+    DumpTFMtData.dumpImgAndWeightsDataSeparate(sess, images[0], trainVars, 'ChestXRay_img_{0}.inp'.format(args.scalingFac), 'ChestXRay_weights_{0}.inp'.format(args.scalingFac), args.scalingFac)
+    

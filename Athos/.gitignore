@@ -3,6 +3,6 @@
 *.mtdata
 *.pkl
 *.out
-*__temp1.ezpc
-*__temp2.ezpc
+*.ezpc
+*.cpp
 __pycache__/
