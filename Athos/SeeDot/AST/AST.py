@@ -109,6 +109,7 @@ class PaddingKeysDict:
 	outputImgW = "outputImgW"
 	outputImgD = "outputImgD"
 	paddingUsedStr = "paddingUsedStr"
+	group = "group"
 
 # If this is marked true, each astNode checks the types of its inputs to confirm it satisfies the assumption
 # Turn this off to get speedup in compilation

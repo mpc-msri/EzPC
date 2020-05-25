@@ -1,8 +1,6 @@
 
 '''
-
 Authors: Shubham Ugare.
-
 Copyright:
 Copyright (c) 2018 Microsoft Research
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -20,11 +18,16 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
 '''
 
 import os, sys
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'SeeDot')) #Add SeeDot directory to path
+
+#Add SeeDot directory to path
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'SeeDot')) 
+
+# For this warning: https://stackoverflow.com/questions/47068709/your-cpu-supports-instructions-that-this-tensorflow-binary-was-not-compiled-to-u
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' 
+
 import _pickle as pickle
 import onnx
 import onnx.shape_inference
@@ -34,15 +37,7 @@ from onnx.helper import make_tensor_value_info
 from onnx import TensorProto
 from AST.PrintAST import PrintAST 
 from AST.MtdAST import MtdAST
-<<<<<<< HEAD
-import math
-=======
 import numpy
-<<<<<<< HEAD
->>>>>>> restructuring of the code
-from onnx import numpy_helper
-=======
->>>>>>> changing the compile script output location
 import common
 
 import numpy as np
@@ -57,7 +52,9 @@ def main():
 	if (len(sys.argv) < 2):
 		print("TF python file unspecified.", file=sys.stderr)
 		exit(1)
-	file_path = sys.argv[1]
+	file_name = sys.argv[1]
+	file_path = 'models/' + file_name
+	model_name = file_name[:-5] # name without the '.onnx' extension
 
 	# load the model and extract the graph		
 	model = onnx.load(file_path)
@@ -72,16 +69,6 @@ def main():
 
 	for init_vals in model.graph.initializer:
 		model.graph.value_info.append(make_tensor_value_info(init_vals.name, TensorProto.FLOAT, tuple(init_vals.dims)))	
-		chunk += init_vals.name + ' = ' + str(numpy_helper.to_array(init_vals)) + '\n'
-		(chunk_1, cnt_1) = common.numpy_float_array_to_fixed_point_val_str(numpy_helper.to_array(init_vals), scaling_factor)
-		chunk += chunk_1
-		cnt += cnt_1
-
-	f = open(model_name + '_input.h', 'w') 
-	f.write(chunk)
-	f.close()
-
-	print('Total ' + str(cnt) + ' integers were written in ' + model_name + '_input.h')
 
 	if(DEBUG):	
 		print("Shape inference *****************")
@@ -174,6 +161,7 @@ def process_onnx_nodes(innermost_let_ast_node, node_name_to_out_var_dict, out_va
 			print("Node information")
 			print(node)	
 
+		print("Processing " + node.name + "\n")	
 		mtdForCurAST = {AST.ASTNode.mtdKeyTFOpName : node.op_type,
 							AST.ASTNode.mtdKeyTFNodeName : node.name}
 
@@ -183,4 +171,4 @@ def process_onnx_nodes(innermost_let_ast_node, node_name_to_out_var_dict, out_va
 		assert(type(innermost_let_ast_node) is AST.Let)
 
 if __name__ == "__main__":
-	main()				
+	main()	

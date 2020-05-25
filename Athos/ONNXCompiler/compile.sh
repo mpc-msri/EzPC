@@ -35,13 +35,11 @@ EzPCDir="../../EzPC"
 ONNX_dir="../../Athos/ONNXCompiler"	
 data_dir="debug/"${modelName} 
 BITLEN="64"
-SCALINGFACTOR="12"
+SCALINGFACTOR="24"
 COMPILATIONTARGET="CPP"
 ezpcOutputFullFileName=${modelName}'.ezpc'
 compilationTargetLower=$(echo "$COMPILATIONTARGET" | awk '{print tolower($0)}')
 compilationTargetHigher=$(echo "$COMPILATIONTARGET" | awk '{print toupper($0)}')
-
-python3 ../SeeDot/SeeDot.py -p astOutput.pkl --astFile astOutput.pkl --outputFileName "$ezpcOutputFullFileName" 
 finalCodeOutputFileName=${modelName}'0.cpp'
 finalCodeOutputFileName1=${modelName}'1.cpp'
 inputFileName=${modelName}'_input.h'
@@ -70,7 +68,7 @@ echo "Starting onnx run"
 # can use either 'onnx_run_tf' or 'onnx_run'
 # onnx_run is faster and has lesser dependencies 
 # but may not support all operations
-python3 "onnx_run_tf.py" ${modelName}'.onnx' ${debugOnnxNode} > "debug/log_onnx_run.txt"
+python3 "onnx_run.py" ${modelName}'.onnx' ${debugOnnxNode} > "debug/log_onnx_run.txt"
 echo -e "${GREEN}Finished onnx run${NC}"
 
 echo "Starting process_onnx"

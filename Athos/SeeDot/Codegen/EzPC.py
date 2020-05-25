@@ -135,11 +135,10 @@ class EzPC(CodegenBase):
 		self.out.printf('\n')
 
 	def _out_suffix(self, expr:IR.Expr):
-		self.out.printf('output(CLIENT, ' + expr.idf + ');\n', indent=True)
 		if self.debugVar is None:
-			self.out.printf('output(SERVER, ' + expr.idf + ');\n', indent=True)
+			self.out.printf('output(CLIENT, ' + expr.idf + ');\n', indent=True)
 		else:
-			self.out.printf('output(SERVER, ' + self.debugVar + ');\n', indent=True)
+			self.out.printf('output(CLIENT, ' + self.debugVar + ');\n', indent=True)
 		self.out.decreaseIndent()
 		self.out.printf('}\n', indent=True)
 	

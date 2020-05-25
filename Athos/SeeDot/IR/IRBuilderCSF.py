@@ -656,10 +656,10 @@ class IRBuilderCSF(ASTVisitor):
 
 		if convDim == 2:
 			[N, H, W, CI] = node.expr1.type.shape
-			[FH, FW, CI, CO] = node.expr2.type.shape
+			[FH, FW, CI1, CO] = node.expr2.type.shape
 		elif convDim == 3:
 			[N, D, H, W, CI] = node.expr1.type.shape
-			[FD, FH, FW, CI, CO] = node.expr2.type.shape
+			[FD, FH, FW, CI1, CO] = node.expr2.type.shape
 		else:
 			assert(False)
 
@@ -688,7 +688,6 @@ class IRBuilderCSF(ASTVisitor):
 			funcCallArgsDict[IR.Int(node.options[AST.PaddingKeysDict.strideD], 32)] = "strideD"	
 		funcCallArgsDict[IR.Int(node.options[AST.PaddingKeysDict.strideH], 32)] = "strideH"
 		funcCallArgsDict[IR.Int(node.options[AST.PaddingKeysDict.strideW], 32)] = "strideW"
-
 		
 		isGroupConv = False
 		if AST.PaddingKeysDict.group in node.options.keys():		

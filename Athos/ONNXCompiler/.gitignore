@@ -1,6 +1,5 @@
 models/
 debug/
-*.ezpc
 *.cpp
 *.h
 *.ezpc

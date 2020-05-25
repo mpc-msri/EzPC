@@ -512,7 +512,7 @@ def void FusedBatchNorm5511(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, 
 def void ReduceMean24(int32_pl outS1, int32_pl outS2, 
 					  int32_pl inS1, int32_pl inS2, int32_pl inS3, int32_pl inS4, 
 					  int32_al[inS1][inS2][inS3][inS4] inputArr,
-					  int32_al[2] axes,
+					  int32_pl[2] axes,
 					  int32_al[outS1][outS2] outputArr
 					  )
 {
