@@ -411,7 +411,7 @@ class ONNXNodesAST:
 		assert(keepdims == 0)
 		assert(len(axes) == 2)
 
-		seedot_output_ast = AST.UninterpFuncCall(value_info[node.outputs[0]][1], 'ReduceMeanO',
+		seedot_output_ast = AST.UninterpFuncCall(value_info[node.outputs[0]][1], 'ReduceMeanONNX',
 				[AST.ID(node_name_to_out_var_dict[inputsRef[0]]), AST.Int(axes[0], 32, False), AST.Int(axes[1], 32, False)])
 		output_name = get_new_var_name(out_var_count) 
 		innermost_let_ast_node = update_program_with_new_node(innermost_let_ast_node, seedot_output_ast, output_name, mtdAST)
