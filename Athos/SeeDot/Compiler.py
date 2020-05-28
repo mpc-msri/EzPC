@@ -40,7 +40,7 @@ import Optimizations.LivenessOpti as LivenessOpti
 
 class Compiler:
 	def __init__(self, version, target, sfType, astFile, printASTBool, consSF, bitlen, outputFileName,
-				disableRMO, disableLivenessOpti, disableAllOpti):
+				disableRMO, disableLivenessOpti, disableAllOpti, debugVar):
 		assert(version == Util.Version.Fixed)
 		assert(target == Util.Target.EzPC)
 		assert(sfType == Util.SFType.Constant)
@@ -60,6 +60,7 @@ class Compiler:
 		Util.Config.disableRMO = disableRMO
 		Util.Config.disableLivenessOpti = disableLivenessOpti
 		Util.Config.disableAllOpti = disableAllOpti
+		Util.Config.debugVar = debugVar
 	
 	def insertStartEndFunctionCalls(self, res:(IR.Prog, IR.Expr)):
 		prog = res[0]
@@ -99,13 +100,17 @@ class Compiler:
 		compiler = IRBuilderCSF()
 		res = compiler.visit(ast)
 
+		Util.write_debug_info(compiler.name_mapping) 
+
 		# Insert a generic start_computation and end_computation function call after all input IR statements.
 		res = self.insertStartEndFunctionCalls(res);
 
 		writer = Writer(Util.Config.outputFileName)
 
+		debugVarEzPCName = compiler.name_mapping[Util.Config.debugVar] if (Util.Config.debugVar in compiler.name_mapping) else None  
+
 		if Util.forEzPC():
-			codegen = EzPCCodegen(writer, compiler.decls)
+			codegen = EzPCCodegen(writer, compiler.decls,  debugVarEzPCName)
 		else:
 			assert False
 

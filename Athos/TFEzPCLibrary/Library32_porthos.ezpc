@@ -36,6 +36,7 @@ extern void ArgMax3(int32_pl outs1, int32_pl outs2, int32_pl outs3,
 (**************************)
 extern void Relu2(int32_pl s1, int32_pl s2, int32_al[s1][s2] inArr, int32_al[s1][s2] outArr);
 extern void Relu4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_al[s1][s2][s3][s4] inArr, int32_al[s1][s2][s3][s4] outArr);
+extern void Relu5(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int32_al[s1][s2][s3][s4][s5] inArr, int32_al[s1][s2][s3][s4][s5] outArr);
 
 (**************************)
 extern void ElemWiseMul2(int32_pl s1, int32_pl s2, int32_al[s1][s2] arr1, int32_al[s1][s2] arr2, int32_al[s1][s2] outArr, int32_pl shrout);
@@ -75,6 +76,7 @@ extern void ClearMemSecret1(int32_pl s1, int32_al[s1] arr);
 extern void ClearMemSecret2(int32_pl s1, int32_pl s2, int32_al[s1][s2] arr);
 extern void ClearMemSecret3(int32_pl s1, int32_pl s2, int32_pl s3, int32_al[s1][s2][s3] arr);
 extern void ClearMemSecret4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_al[s1][s2][s3][s4] arr);
+extern void ClearMemSecret5(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int32_al[s1][s2][s3][s4][s5] arr)
 
 extern void ClearMemPublic2(int32_pl s1, int32_pl s2, int32_pl[s1][s2] arr);
 

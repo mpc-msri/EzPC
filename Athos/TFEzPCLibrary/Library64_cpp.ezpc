@@ -35,6 +35,145 @@ def void MatMulCSF2D(int32_pl i, int32_pl j, int32_pl k, int64_al[i][j] A, int64
 }
 
 (**************************)
+(* These loop implementations of convolution run faster with multithreading *)
+
+def void Conv2DLoop(int32_pl N, int32_pl H, int32_pl W, int32_pl CI, 
+				   int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
+				   int32_pl strideH, int32_pl strideW,
+				   int32_pl outH, int32_pl outW, int32_pl G,
+				   int64_al[N][H][W][CI] inputArr, 
+				   int64_al[FH][FW][CI/G][CO] filterArr, 
+				   int32_pl consSF,
+				   int64_al[N][outH][outW][CO] outArr){
+
+	int32_pl GIS = CI/G;
+	int32_pl GOS = CO/G; 				   
+
+	for n=[0:N]{
+		for cog=[0:GOS]{
+			for cig=[0:GIS]{
+				for g=[0:G]{
+					for h=[0:outH]{
+						for w=[0:outW]{
+							
+							int64_al val = 0L;
+							int32_pl ci = GIS*g + cig;
+							int32_pl co = GOS*g + cog;
+							int32_pl curPosH = strideH*h-zPadHLeft;
+
+							for fh=[0:FH]{
+								int32_pl curPosW = strideW*w-zPadWLeft;
+
+								for fw=[0:FW]{
+										if( (curPosH >= 0) && (curPosW >= 0) && (curPosH < H) && (curPosW < W)){
+											val = val +_al (inputArr[n][curPosH][curPosW][ci]*filterArr[fh][fw][(ci/G)][co]);
+										};	
+
+										curPosW = curPosW + 1;
+									};
+									curPosH = curPosH + 1;
+								};
+								
+								outArr[n][h][w][co] = outArr[n][h][w][co] +_al (val >> consSF);		
+							};	
+						};
+					};
+			};
+		};
+	};					   
+}
+
+(**************************)
+def void Conv3DLoop(int32_pl N, int32_pl D, int32_pl H, int32_pl W, int32_pl CI, 
+				   int32_pl FD, int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl zPadDLeft, int32_pl zPadDRight,int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
+				   int32_pl strideD, int32_pl strideH, int32_pl strideW,
+				   int32_pl outD, int32_pl outH, int32_pl outW, 
+				   int64_al[N][D][H][W][CI] inputArr, 
+				   int64_al[FD][FH][FW][CI][CO] filterArr, 
+				   int32_pl consSF,
+				   int64_al[N][outD][outH][outW][CO] outArr){
+
+	for n=[0:N]{
+		for co=[0:CO]{
+			for d=[0:outD]{
+				for h=[0:outH]{
+					for w=[0:outW]{
+						for ci=[0:CI]{
+							int64_al val = 0L;
+							for fd=[d*strideD:d*strideD+FD]{
+								for fh=[h*strideH:h*strideH+FH]{
+										for fw=[w*strideW:w*strideW+FW]{
+											int32_pl curPosD = fd-zPadDLeft;
+											int32_pl curPosH = fh-zPadHLeft;
+											int32_pl curPosW = fw-zPadWLeft;
+											if( (curPosD >= 0) && (curPosH >= 0) && (curPosW >= 0) && (curPosD < D) && (curPosH < H) && (curPosW < W)){
+												int32_pl curFilterPosD = fd-(d*strideD);
+												int32_pl curFilterPosH = fh-(h*strideH);
+												int32_pl curFilterPosW = fw-(w*strideW);
+												val = val +_al (inputArr[n][curPosD][curPosH][curPosW][ci]*filterArr[curFilterPosD][curFilterPosH][curFilterPosW][ci][co]);
+											};
+										};
+									};
+								};	
+							outArr[n][d][h][w][co] = outArr[n][d][h][w][co] +_al (val >> consSF);		
+						};
+					};
+				};	
+			};
+		};
+	};					   
+}
+
+
+(**************************)
+def void ConvTranspose3DLoop(int32_pl N, int32_pl D, int32_pl H, int32_pl W, int32_pl CI, 
+				   int32_pl FD, int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl zPadDLeft, int32_pl zPadDRight,int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
+				   int32_pl strideD, int32_pl strideH, int32_pl strideW,
+				   int32_pl outD, int32_pl outH, int32_pl outW, 
+				   int64_al[N][D][H][W][CI] inputArr, 
+				   int64_al[FD][FH][FW][CO][CI] filterArr, 
+				   int32_pl consSF,
+				   int64_al[N][outD][outH][outW][CO] outArr){
+
+	for n=[0:N]{
+		for co=[0:CO]{
+			for d=[0:outD]{
+				for h=[0:outH]{
+					for w=[0:outW]{
+						for ci=[0:CI]{
+							int64_al val = 0L;
+							for fd=[d:d+FD]{
+								for fh=[h:h+FH]{
+										for fw=[w:w+FW]{
+
+											int32_pl curPosD = (fd-zPadDLeft)/strideD;
+											int32_pl curPosH = (fh-zPadHLeft)/strideD;
+											int32_pl curPosW = (fw-zPadWLeft)/strideD;
+											
+											if( (curPosD >= 0) && (curPosH >= 0) && (curPosW >= 0) && (curPosD < D) && (curPosH < H) && (curPosW < W) && ((fd-zPadDLeft)%strideD == 0) && ((fh-zPadHLeft)%strideH == 0) && ((fw-zPadWLeft)%strideW == 0)){
+
+												int32_pl curFilterPosD = FD+d-fd-1;
+												int32_pl curFilterPosH = FH+h-fh-1;
+												int32_pl curFilterPosW = FW+w-fw-1;
+												val = val +_al (inputArr[n][curPosD][curPosH][curPosW][ci]*filterArr[curFilterPosD][curFilterPosH][curFilterPosW][co][ci]);
+											};
+										};
+									};
+								};	
+							outArr[n][d][h][w][co] = outArr[n][d][h][w][co] +_al (val >> consSF);		
+						};
+					};
+				};	
+			};
+		};
+	};			  
+}
+
+
+(**************************)
 def void ArgMax1(int32_pl outArrS1, int32_pl inArrS1, int32_pl inArrS2, int64_al[inArrS1][inArrS2] inArr, int32_pl dim, int64_al[outArrS1] outArr){
 	for od=[0:inArrS1]{
 		int64_al maxi = inArr[od][0];
@@ -89,37 +228,115 @@ def void Relu4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int64_al[s1][
 	};
 }
 
-
-(**************************)
-def void ElemWiseMul2(int32_pl s1, int32_pl s2, int64_al[s1][s2] arr1, int64_al[s1][s2] arr2, int64_al[s1][s2] outArr, int64_pl shrout){
-	for i1=[0:s1]{
-		for i2=[0:s2]{
-			outArr[i1][i2] = ((arr1[i1][i2] * arr2[i1][i2]) >> shrout);
-		};
-	};
-}
-
-def void ElemWiseMul4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int64_al[s1][s2][s3][s4] arr1, int64_al[s1][s2][s3][s4] arr2, int64_al[s1][s2][s3][s4] outArr, int64_pl shrout){
-	for i1=[0:s1]{
-		for i2=[0:s2]{
-			for i3=[0:s3]{
-				for i4=[0:s4]{
-					outArr[i1][i2][i3][i4] = ((arr1[i1][i2][i3][i4] * arr2[i1][i2][i3][i4]) >> shrout);
-				};
-			};
-		};
-	};
+def void Relu5(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int64_al[s1][s2][s3][s4][s5] inArr, int64_al[s1][s2][s3][s4][s5] outArr){
+        for i1=[0:s1]{
+                for i2=[0:s2]{
+                        for i3=[0:s3]{
+                                for i4=[0:s4]{
+                                        for i5=[0:s5]{
+                                                outArr[i1][i2][i3][i4][i5] = (inArr[i1][i2][i3][i4][i5] > 0L ? inArr[i1][i2][i3][i4][i5] : 0L);
+                                        };
+                                };
+                        };
+                };
+        };
 }
 
 (**************************)
-def void ElemWiseDiv2(int32_pl s1, int32_pl s2, int64_al[s1][s2] arr1, int64_al[s1][s2] arr2, int64_al[s1][s2] outArr, int64_pl shrout){
-	for i1=[0:s1]{
-		for i2=[0:s2]{
-			outArr[i1][i2] = ((arr1[i1][i2] / arr2[i1][i2]) << shrout);
-		};
-	};
+def void ElemWiseMul2(int32_pl a1, int32_pl a2, int32_pl b1, int32_pl b2, int32_pl s1, int32_pl s2, int64_al[a1][a2] A, int64_al[b1][b2] B, int64_al[s1][s2] outArr, int64_pl shrout){
+  int32_pl aIdx1 = 0;
+  int32_pl aIdx2 = 0;
+  int32_pl bIdx1 = 0;
+  int32_pl bIdx2 = 0;
+  for i1=[0:s1]{
+    aIdx1 = ((a1 == 1) ? 0 : i1);
+    bIdx1 = ((b1 == 1) ? 0 : i1);
+    for i2=[0:s2]{
+      aIdx2 = ((a2 == 1) ? 0 : i2);
+      bIdx2 = ((b2 == 1) ? 0 : i2);
+      outArr[i1][i2] = ((A[aIdx1][aIdx2] * B[bIdx1][bIdx2]) >> shrout);
+    };
+  };
 }
 
+def void ElemWiseMul4(int32_pl a1, int32_pl a2, int32_pl a3, int32_pl a4, int32_pl b1, int32_pl b2, int32_pl b3, int32_pl b4, int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int64_al[a1][a2][a3][a4] A, int64_al[b1][b2][b3][b4] B, int64_al[s1][s2][s3][s4] outArr, int64_pl shrout){
+  int32_pl aIdx1 = 0;
+  int32_pl aIdx2 = 0;
+  int32_pl aIdx3 = 0;
+  int32_pl aIdx4 = 0;
+  int32_pl bIdx1 = 0;
+  int32_pl bIdx2 = 0;
+  int32_pl bIdx3 = 0;
+  int32_pl bIdx4 = 0;
+  for i1=[0:s1]{
+    aIdx1 = ((a1 == 1) ? 0 : i1);
+    bIdx1 = ((b1 == 1) ? 0 : i1);
+    for i2=[0:s2]{
+      aIdx2 = ((a2 == 1) ? 0 : i2);
+      bIdx2 = ((b2 == 1) ? 0 : i2);
+      for i3=[0:s3]{
+        aIdx3 = ((a3 == 1) ? 0 : i3);
+        bIdx3 = ((b3 == 1) ? 0 : i3);
+        for i4=[0:s4]{
+          aIdx4 = ((a4 == 1) ? 0 : i4);
+          bIdx4 = ((b4 == 1) ? 0 : i4);
+          outArr[i1][i2][i3][i4] = ((A[aIdx1][aIdx2][aIdx3][aIdx4] * B[bIdx1][bIdx2][bIdx3][bIdx4]) >> shrout);
+        };
+      };
+    };
+  };
+}
+
+def void ElemWiseMul5(int32_pl a1, int32_pl a2, int32_pl a3, int32_pl a4, int32_pl a5, int32_pl b1, int32_pl b2, int32_pl b3, int32_pl b4, int32_pl b5, int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int64_al[a1][a2][a3][a4][a5] A, int64_al[b1][b2][b3][b4][b5] B, int64_al[s1][s2][s3][s4][s5] outArr, int64_pl shrout){
+  int32_pl aIdx1 = 0;
+  int32_pl aIdx2 = 0;
+  int32_pl aIdx3 = 0;
+  int32_pl aIdx4 = 0;
+  int32_pl aIdx5 = 0;
+  int32_pl bIdx1 = 0;
+  int32_pl bIdx2 = 0;
+  int32_pl bIdx3 = 0;
+  int32_pl bIdx4 = 0;
+  int32_pl bIdx5 = 0;
+  for i1=[0:s1]{
+    aIdx1 = ((a1 == 1) ? 0 : i1);
+    bIdx1 = ((b1 == 1) ? 0 : i1);
+    for i2=[0:s2]{
+      aIdx2 = ((a2 == 1) ? 0 : i2);
+      bIdx2 = ((b2 == 1) ? 0 : i2);
+      for i3=[0:s3]{
+        aIdx3 = ((a3 == 1) ? 0 : i3);
+        bIdx3 = ((b3 == 1) ? 0 : i3);
+        for i4=[0:s4]{
+          aIdx4 = ((a4 == 1) ? 0 : i4);
+          bIdx4 = ((b4 == 1) ? 0 : i4);
+          for i5=[0:s5]{
+            aIdx5 = ((a5 == 1) ? 0 : i5);
+            bIdx5 = ((b5 == 1) ? 0 : i5);
+            outArr[i1][i2][i3][i4][i5] = ((A[aIdx1][aIdx2][aIdx3][aIdx4][aIdx5] * B[bIdx1][bIdx2][bIdx3][bIdx4][bIdx5]) >> shrout);
+          };
+        };
+      };
+    };
+  };
+}
+
+(**************************)
+def void ElemWiseDiv2(int32_pl a1, int32_pl a2, int32_pl b1, int32_pl b2, int32_pl s1, int32_pl s2, int64_al[a1][a2] A, int64_al[b1][b2] B, int64_al[s1][s2] outArr, int64_pl shrout){
+  int32_pl aIdx1 = 0;
+  int32_pl aIdx2 = 0;
+  int32_pl bIdx1 = 0;
+  int32_pl bIdx2 = 0;
+  for i1=[0:s1]{
+    aIdx1 = ((a1 == 1) ? 0 : i1);
+    bIdx1 = ((b1 == 1) ? 0 : i1);
+    for i2=[0:s2]{
+      aIdx2 = ((a2 == 1) ? 0 : i2);
+      bIdx2 = ((b2 == 1) ? 0 : i2);
+      outArr[i1][i2] = ((A[aIdx1][aIdx2] / B[bIdx1][bIdx2]) >> shrout);
+    };
+  };
+}
 (**************************)
 def void Floor2(int32_pl s1, int32_pl s2, int64_al[s1][s2] inArr, int64_al[s1][s2] outArr, int64_pl curSF){
 	for i1=[0:s1]{
@@ -274,11 +491,28 @@ def void FusedBatchNorm4411(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, 
 	};
 }
 
+def void FusedBatchNorm5511(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int64_al[s1][s2][s3][s4][s5] inArr, int64_al[s5] multArr, int64_al[s5] biasArr, int32_pl consSF, int64_al[s1][s2][s3][s4][s5] outputArr){
+	for i1=[0:s1]{
+		for i2=[0:s2]{
+			for i3=[0:s3]{
+				for i4=[0:s4]{
+						for i5=[0:s5]{
+						int64_al t1 = (inArr[i1][i2][i3][i4][i5] *_al multArr[i5]);
+						int64_al t2 = (t1 >> consSF);
+						outputArr[i1][i2][i3][i4][i5] = t2 + biasArr[i5];
+					};
+				};
+			};
+		};
+	};
+}
+
+
 (**************************)
 def void ReduceMean24(int32_pl outS1, int32_pl outS2, 
 					  int32_pl inS1, int32_pl inS2, int32_pl inS3, int32_pl inS4, 
 					  int64_al[inS1][inS2][inS3][inS4] inputArr,
-					  int64_al[2] axes,
+					  int32_pl[2] axes,
 					  int64_al[outS1][outS2] outputArr
 					  )
 {
@@ -291,6 +525,29 @@ def void ReduceMean24(int32_pl outS1, int32_pl outS2,
 				};
 			};
 			int64_pl numElem = inS2*inS3;
+			summ = summ / numElem;
+			outputArr[i1][i2] = summ;
+		};
+	};
+}
+
+(* This one is used for onnx compilation *)
+def void ReduceMeanONNX24(int32_pl outS1, int32_pl outS2, 
+					  int32_pl inS1, int32_pl inS2, int32_pl inS3, int32_pl inS4, 
+					  int64_al[inS1][inS2][inS3][inS4] inputArr,
+					  int32_pl axis1, int32_pl axis2,
+					  int64_al[outS1][outS2] outputArr
+					  )
+{
+	for i1=[0:outS1]{
+		for i2=[0:outS2]{
+			int64_al summ = 0L;
+			for i=[0:inS3]{
+				for j=[0:inS4]{
+					summ = summ + inputArr[i1][i2][i][j];
+				};
+			};
+			int64_pl numElem = inS3*inS4;
 			summ = summ / numElem;
 			outputArr[i1][i2] = summ;
 		};
@@ -314,6 +571,11 @@ def void ClearMemSecret3(int32_pl s1, int32_pl s2, int32_pl s3, int64_al[s1][s2]
 }
 
 def void ClearMemSecret4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int64_al[s1][s2][s3][s4] arr)
+{
+	return;
+}
+
+def void ClearMemSecret5(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int64_al[s1][s2][s3][s4][s5] arr)
 {
 	return;
 }

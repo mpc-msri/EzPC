@@ -24,7 +24,7 @@ SOFTWARE.
 
 (**************************)
 (* TODO : the 2nd arg should be broadcasted *)
-def void MatAddBroadCast2(int32_pl s1, int32_pl s2, int32_al[s1][s2] A, int32_al[s2] B, int32_al[s1][s2] outArr){
+def void MatAddBroadCast2(int32_pl a1, int32_pl a2, int32_pl b1, int32_pl s1, int32_pl s2, int32_al[s1][s2] A, int32_al[s2] B, int32_al[s1][s2] outArr){
 	for i1=[0:s1]{
 		for i2=[0:s2]{
 			outArr[i1][i2] = A[i1][i2] + B[i2];
@@ -32,16 +32,24 @@ def void MatAddBroadCast2(int32_pl s1, int32_pl s2, int32_al[s1][s2] A, int32_al
 	};
 }
 
-def void MatAdd2(int32_pl s1, int32_pl s2, int32_al[s1][s2] A, int32_al[s1][s2] B, int32_al[s1][s2] outArr){
-	for i1=[0:s1]{
-		for i2=[0:s2]{
-			outArr[i1][i2] = A[i1][i2] + B[i1][i2];
-		};
-	};
+def void MatAdd2(int32_pl a1, int32_pl a2, int32_pl b1, int32_pl b2, int32_pl s1, int32_pl s2, int32_al[a1][a2] A, int32_al[b1][b2] B, int32_al[s1][s2] outArr){
+  int32_pl aIdx1 = 0;
+  int32_pl aIdx2 = 0;
+  int32_pl bIdx1 = 0;
+  int32_pl bIdx2 = 0;
+  for i1=[0:s1]{
+    aIdx1 = ((a1 == 1) ? 0 : i1);
+    bIdx1 = ((b1 == 1) ? 0 : i1);
+    for i2=[0:s2]{
+      aIdx2 = ((a2 == 1) ? 0 : i2);
+      bIdx2 = ((b2 == 1) ? 0 : i2);
+      outArr[i1][i2] = A[aIdx1][aIdx2] + B[bIdx1][bIdx2];
+    };
+  };
 }
 
 (* TODO : the 2nd arg should be broadcasted *)
-def void MatAddBroadCast4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_al[s1][s2][s3][s4] A, int32_al[s4] B, int32_al[s1][s2][s3][s4] outArr){
+def void MatAddBroadCast4(int32_pl a1, int32_pl a2, int32_pl a3, int32_pl a4, int32_pl b1, int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_al[s1][s2][s3][s4] A, int32_al[s4] B, int32_al[s1][s2][s3][s4] outArr){
 	for i1=[0:s1]{
 		for i2=[0:s2]{
 			for i3=[0:s3]{
@@ -53,16 +61,80 @@ def void MatAddBroadCast4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, in
 	};
 }
 
-def void MatAdd4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_al[s1][s2][s3][s4] A, int32_al[s1][s2][s3][s4] B, int32_al[s1][s2][s3][s4] outArr){
+def void MatAddBroadCast5(int32_pl a1, int32_pl a2, int32_pl a3, int32_pl a4, int32_pl a5, int32_pl b1, int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int32_al[s1][s2][s3][s4][s5] A, int32_al[s5] B, int32_al[s1][s2][s3][s4][s5] outArr){
 	for i1=[0:s1]{
 		for i2=[0:s2]{
 			for i3=[0:s3]{
 				for i4=[0:s4]{
-					outArr[i1][i2][i3][i4] = A[i1][i2][i3][i4] + B[i1][i2][i3][i4];
+					for i5=[0:s5]{
+						outArr[i1][i2][i3][i4][i5] = A[i1][i2][i3][i4][i5] + B[i5];
+					};
 				};
 			};
 		};
 	};
+}
+
+def void MatAdd4(int32_pl a1, int32_pl a2, int32_pl a3, int32_pl a4, int32_pl b1, int32_pl b2, int32_pl b3, int32_pl b4, int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_al[a1][a2][a3][a4] A, int32_al[b1][b2][b3][b4] B, int32_al[s1][s2][s3][s4] outArr){
+  int32_pl aIdx1 = 0;
+  int32_pl aIdx2 = 0;
+  int32_pl aIdx3 = 0;
+  int32_pl aIdx4 = 0;
+  int32_pl bIdx1 = 0;
+  int32_pl bIdx2 = 0;
+  int32_pl bIdx3 = 0;
+  int32_pl bIdx4 = 0;
+  for i1=[0:s1]{
+    aIdx1 = ((a1 == 1) ? 0 : i1);
+    bIdx1 = ((b1 == 1) ? 0 : i1);
+    for i2=[0:s2]{
+      aIdx2 = ((a2 == 1) ? 0 : i2);
+      bIdx2 = ((b2 == 1) ? 0 : i2);
+      for i3=[0:s3]{
+        aIdx3 = ((a3 == 1) ? 0 : i3);
+        bIdx3 = ((b3 == 1) ? 0 : i3);
+        for i4=[0:s4]{
+          aIdx4 = ((a4 == 1) ? 0 : i4);
+          bIdx4 = ((b4 == 1) ? 0 : i4);
+          outArr[i1][i2][i3][i4] = A[aIdx1][aIdx2][aIdx3][aIdx4] + B[bIdx1][bIdx2][bIdx3][bIdx4];
+        };
+      };
+    };
+  };
+}
+
+def void MatAdd5(int32_pl a1, int32_pl a2, int32_pl a3, int32_pl a4, int32_pl a5, int32_pl b1, int32_pl b2, int32_pl b3, int32_pl b4, int32_pl b5, int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int32_al[a1][a2][a3][a4][a5] A, int32_al[b1][b2][b3][b4][b5] B, int32_al[s1][s2][s3][s4][s5] outArr){
+  int32_pl aIdx1 = 0;
+  int32_pl aIdx2 = 0;
+  int32_pl aIdx3 = 0;
+  int32_pl aIdx4 = 0;
+  int32_pl aIdx5 = 0;
+  int32_pl bIdx1 = 0;
+  int32_pl bIdx2 = 0;
+  int32_pl bIdx3 = 0;
+  int32_pl bIdx4 = 0;
+  int32_pl bIdx5 = 0;
+  for i1=[0:s1]{
+    aIdx1 = ((a1 == 1) ? 0 : i1);
+    bIdx1 = ((b1 == 1) ? 0 : i1);
+    for i2=[0:s2]{
+      aIdx2 = ((a2 == 1) ? 0 : i2);
+      bIdx2 = ((b2 == 1) ? 0 : i2);
+      for i3=[0:s3]{
+        aIdx3 = ((a3 == 1) ? 0 : i3);
+        bIdx3 = ((b3 == 1) ? 0 : i3);
+        for i4=[0:s4]{
+          aIdx4 = ((a4 == 1) ? 0 : i4);
+          bIdx4 = ((b4 == 1) ? 0 : i4);
+          for i5=[0:s5]{
+            aIdx5 = ((a5 == 1) ? 0 : i5);
+            bIdx5 = ((b5 == 1) ? 0 : i5);
+            outArr[i1][i2][i3][i4][i5] = A[aIdx1][aIdx2][aIdx3][aIdx4][aIdx5] + B[bIdx1][bIdx2][bIdx3][bIdx4][bIdx5];
+          };
+        };
+      };
+    };
+  };
 }
 
 (**************************)
@@ -86,6 +158,20 @@ def void CreateTensor4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32
 			for i3=[0:s3]{
 				for i4=[0:s4]{
 					arr[i1][i2][i3][i4] = val;
+				};
+			};
+		};
+	};
+}
+
+def void CreateTensor5(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int32_pl val, int32_pl[s1][s2][s3][s4][s5] arr){
+	for i1=[0:s1]{
+		for i2=[0:s2]{
+			for i3=[0:s3]{
+				for i4=[0:s4]{
+					for i5=[0:s5]{
+						arr[i1][i2][i3][i4][i5] = val;
+					};
 				};
 			};
 		};
@@ -151,6 +237,20 @@ def void CreateCopy2211(int32_pl s1, int32_pl s2, int32_pl inps1, int32_pl inps2
 	for i=[0:s1]{
 		for j=[0:s2]{
 			outArr[i][j] = inArr[beginIdx[0]+i][beginIdx[1]+j];
+		};
+	};
+}
+
+def void CreateCopy5511(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int32_pl inps1, int32_pl inps2, int32_pl inps3, int32_pl inps4, int32_pl inps5, int32_al[inps1][inps2][inps3][inps4][inps5] inArr, int32_pl perDimSize, int32_pl[perDimSize] beginIdx, int32_pl[perDimSize] sizeIdx, int32_al[s1][s2][s3][s4][s5] outArr){
+	for i=[0:s1]{
+		for j=[0:s2]{
+			for k=[0:s3]{
+				for l=[0:s4]{
+					for m=[0:s5]{
+						outArr[i][j][k][l][m] = inArr[beginIdx[0]+i][beginIdx[1]+j][beginIdx[2]+k][beginIdx[3]+l][beginIdx[4]+m];
+					};
+				};
+			};
 		};
 	};
 }
@@ -228,7 +328,42 @@ def void Concat2T222(int32_pl s1, int32_pl s2, int32_pl inp1s1, int32_pl inp1s2,
 }
 
 (**************************)
+
+def void Split44(int32_pl O1, int32_pl O2, int32_pl O3, int32_pl O4, int32_pl I1, int32_pl I2, int32_pl I3, int32_pl I4, int32_al[I1][I2][I3][I4] inp, int32_pl axis, int32_pl curCount, int32_pl total, int32_al[O1][O2][O3][O4] out){
+
+for o1=[0:O1]{
+	for o2=[0:O2]{
+		for o3=[0:O3]{
+			for o4=[0:O4]{
+				
+				int32_pl i1 = o1;
+				int32_pl i2 = o2;
+				int32_pl i3 = o3;
+				int32_pl i4 = o4;
+
+				if(axis == 0){
+					i1 = (I1/total)*curCount+o1;
+				};
+				if(axis == 1){
+					i2 = (I2/total)*curCount+o2;
+				};
+				if(axis == 2){
+					i3 = (I3/total)*curCount+o3;
+				};
+				if(axis == 3){
+					i4 = (I4/total)*curCount+o4;
+				};
+
+				out[o1][o2][o3][o4] = inp[i1][i2][i3][i4];
+			};
+		};
+	};
+}	
+}
+
+(**************************)
 (* Generic implementation of Conv2DCSF *)
+
 
 def void Conv2DReshapeFilter(int32_pl FH, int32_pl FW, int32_pl CI, int32_pl CO, int32_al[FH][FW][CI][CO] inputArr, int32_al[CO][FH*FW*CI] outputArr){
 	for co=[0:CO]{
@@ -291,11 +426,6 @@ def void Conv2DReshapeInput(int32_pl N, int32_pl H, int32_pl W, int32_pl CI, int
 	};
 }
 
-(* int32_al[N][H][W][CI] inputArr, 
-   int32_al[FH][FW][CI][CO] filterArr, 
-   int32_al[N][((H-FH+zPadHLeft+zPadHRight)/strideH)+1][((W-FW+zPadWLeft+zPadWRight)/strideW)+1][CO] outArr 
-*)
-
 def void Conv2DCSF(int32_pl N, int32_pl H, int32_pl W, int32_pl CI, 
 				   int32_pl FH, int32_pl FW, int32_pl CO, 
 				   int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
@@ -323,6 +453,274 @@ def void Conv2DCSF(int32_pl N, int32_pl H, int32_pl W, int32_pl CI,
 	MatMulCSF2D(reshapedFilterRows, reshapedFilterCols, reshapedIPCols, filterReshaped, inputReshaped, matmulOP, consSF);
 
 	Conv2DReshapeMatMulOP(N, newH, newW, CO, matmulOP, outArr);
+}
+
+(* int32_al[N][H][W][CI] inputArr, 
+   int32_al[FH][FW][CI][CO] filterArr, 
+   int32_al[N][((H-FH+zPadHLeft+zPadHRight)/strideH)+1][((W-FW+zPadWLeft+zPadWRight)/strideW)+1][CO] outArr 
+*)
+
+def void Conv2DCSFLoop(int32_pl N, int32_pl H, int32_pl W, int32_pl CI, 
+				   int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
+				   int32_pl strideH, int32_pl strideW, int32_pl G, 
+				   int32_al[N][H][W][CI] inputArr, 
+				   int32_al[FH][FW][CI][CO] filterArr, 
+				   int32_pl consSF,
+				   int32_al[N][((H-FH+(zPadHLeft+zPadHRight))/strideH)+1][((W-FW+(zPadWLeft+zPadWRight))/strideW)+1][CO] outArr)
+{
+	int32_pl outH = ((H-FH+(zPadHLeft+zPadHRight))/strideH)+1;
+	int32_pl outW = ((W-FW+(zPadWLeft+zPadWRight))/strideW)+1;
+
+	Conv2DLoop(N, H, W, CI, FH, FW, CO, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideH, strideW, outH, outW, G, inputArr, filterArr, consSF, outArr);
+}
+
+(**************************)
+(* Generic implementation of Conv2D with Groups *)
+
+
+(* int32_al[N][H][W][CI] inputArr, 
+   int32_al[FH][FW][CI][CO] filterArr, 
+   int32_al[N][((H-FH+zPadHLeft+zPadHRight)/strideH)+1][((W-FW+zPadWLeft+zPadWRight)/strideW)+1][CO] outArr 
+*)
+def void Conv2DReshapeFilterGroup(int32_pl FH, int32_pl FW, int32_pl CI, int32_pl CO, int32_pl g, int32_pl G, int32_al[FH][FW][CI/G][CO] inputArr, int32_al[CO/G][FH*FW*(CI/G)] outputArr){
+	
+	int32_pl CIG = CI/G;
+	int32_pl COG = CO/G;
+	int32_pl startCO = g*COG;
+
+	for co=[0:COG]{
+		for fh=[0:FH]{
+			for fw=[0:FW]{
+				for ci=[0:CIG]{
+					int32_pl linIdx = (fh*FW*CIG) + (fw*CIG) + ci;
+					outputArr[co][linIdx] = inputArr[fh][fw][ci][co+startCO];
+				};
+			};
+		};
+	};
+}
+
+def void Conv2DReshapeMatMulOPGroup(int32_pl N, int32_pl finalH, int32_pl finalW, int32_pl CO, int32_pl g, int32_pl G, int32_al[CO/G][N*finalH*finalW] inputArr, int32_al[N][finalH][finalW][CO] outputArr){
+	
+	int32_pl COG = CO/G;
+	int32_pl startCO = g*COG;
+
+	for co=[0:COG]{
+		for n=[0:N]{
+			for h=[0:finalH]{
+				for w=[0:finalW]{
+					outputArr[n][h][w][co+startCO] = inputArr[co][(n*finalH*finalW) + (h*finalW) + w];
+				};
+			};
+		};
+	};
+}
+
+def void Conv2DReshapeInputGroup(int32_pl N, int32_pl H, int32_pl W, int32_pl CI, int32_pl FH, int32_pl FW, int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, int32_pl strideH, int32_pl strideW, int32_pl g, int32_pl G, int32_pl RRows, int32_pl RCols, int32_al[N][H][W][CI] inputArr, int32_al[RRows][RCols] outputArr){
+	int32_pl linIdxFilterMult = 0;
+	int32_pl CIG = CI/G;
+
+	for n=[0:N]{
+		int32_pl leftTopCornerH = 0 - zPadHLeft;
+		int32_pl extremeRightBottomCornerH = H - 1 + zPadHRight;
+		while((leftTopCornerH + FH - 1) <= extremeRightBottomCornerH){
+			int32_pl leftTopCornerW = 0 - zPadWLeft;
+			int32_pl extremeRightBottomCornerW = W - 1 + zPadWRight;
+			while((leftTopCornerW + FW - 1) <= extremeRightBottomCornerW){
+
+				for fh=[0:FH]{
+					for fw=[0:FW]{
+						int32_pl curPosH = leftTopCornerH + fh;
+						int32_pl curPosW = leftTopCornerW + fw;
+						int32_al val = 0;
+
+						int32_pl startCI = g*CIG;
+
+						for ci=[0:CIG]{
+							if ((((curPosH < 0) || (curPosH >= H)) || ((curPosW < 0) || (curPosW >= W)))){
+								val = 0;
+							}
+							else{
+								val = inputArr[n][curPosH][curPosW][ci+startCI];
+							};
+							outputArr[(fh*FW*CIG) + (fw*CIG) + ci][linIdxFilterMult] = val;
+						};
+					};
+				};
+
+				linIdxFilterMult = linIdxFilterMult + 1;
+				leftTopCornerW = leftTopCornerW + strideW;
+			};
+
+			leftTopCornerH = leftTopCornerH + strideH;
+		};
+	};
+}
+
+
+def void Conv2DCSFGroup(int32_pl N, int32_pl H, int32_pl W, int32_pl CI, 
+				   int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
+				   int32_pl strideH, int32_pl strideW, int32_pl G,
+				   int32_al[N][H][W][CI] inputArr, 
+				   int32_al[FH][FW][CI/G][CO] filterArr, 
+				   int32_pl consSF,
+				   int32_al[N][((H-FH+(zPadHLeft+zPadHRight))/strideH)+1][((W-FW+(zPadWLeft+zPadWRight))/strideW)+1][CO] outArr)
+{
+	int32_pl CIG = CI/G;	
+	int32_pl reshapedFilterRows = CO/G;
+	int32_pl reshapedFilterCols = FH*FW*CIG;
+	int32_pl reshapedIPRows = FH*FW*CIG;
+	int32_pl outH = (((H + (zPadHLeft+zPadHRight) - FH)/strideH) + 1);
+	int32_pl outW = (((W + (zPadWLeft+zPadWRight) - FW)/strideW) + 1);
+	int32_pl reshapedIPCols = N * outH * outW;
+
+
+	for g=[0:G]{
+		int32_al[reshapedIPRows][reshapedIPCols] inputReshaped;
+		int32_al[reshapedFilterRows][reshapedIPCols] matmulOP;
+		int32_al[reshapedFilterRows][reshapedFilterCols] filterReshaped;
+
+		Conv2DReshapeFilterGroup(FH, FW, CI, CO, g, G, filterArr, filterReshaped);
+		Conv2DReshapeInputGroup(N, H, W, CI, FH, FW, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideH, strideW, g, G, reshapedIPRows, reshapedIPCols, inputArr, inputReshaped);
+
+		MatMulCSF2D(reshapedFilterRows, reshapedFilterCols, reshapedIPCols, filterReshaped, inputReshaped, matmulOP, consSF);
+		
+		Conv2DReshapeMatMulOPGroup(N, outH, outW, CO, g, G, matmulOP, outArr);
+	}
+
+}
+
+(**************************)
+(* Generic implementation of Conv3DCSF *)
+
+def void Conv3DReshapeFilter(int32_pl FD, int32_pl FH, int32_pl FW, int32_pl CI, int32_pl CO, int32_al[FD][FH][FW][CI][CO] inputArr, int32_al[CO][FD*FH*FW*CI] outputArr){
+	for co=[0:CO]{
+		for fd=[0:FD]{
+			for fh=[0:FH]{
+				for fw=[0:FW]{
+					for ci=[0:CI]{
+						int32_pl linIdx = (fd*FH*FW*CI) + (fh*FW*CI) + (fw*CI) + ci;
+						outputArr[co][linIdx] = inputArr[fd][fh][fw][ci][co];
+					};
+				};
+			};
+		};
+	};
+}
+
+def void Conv3DReshapeMatMulOP(int32_pl N, int32_pl finalD, int32_pl finalH, int32_pl finalW, int32_pl CO, int32_al[CO][N*finalD*finalH*finalW] inputArr, int32_al[N][finalD][finalH][finalW][CO] outputArr){
+	for co=[0:CO]{
+		for n=[0:N]{
+			for d=[0:finalD]{
+				for h=[0:finalH]{
+					for w=[0:finalW]{
+						outputArr[n][d][h][w][co] = inputArr[co][(n*finalD*finalH*finalW) + (d*finalH*finalW) + (h*finalW) + w];
+					};
+				};
+			};
+		};
+	};
+}
+
+def void Conv3DReshapeInput(int32_pl N, int32_pl D, int32_pl H, int32_pl W, int32_pl CI, int32_pl FD, int32_pl FH, int32_pl FW, int32_pl zPadDLeft, int32_pl zPadDRight, int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, int32_pl strideD, int32_pl strideH, int32_pl strideW, int32_pl RRows, int32_pl RCols, int32_al[N][D][H][W][CI] inputArr, int32_al[RRows][RCols] outputArr){
+	int32_pl linIdxFilterMult = 0;
+	for n=[0:N]{
+		int32_pl leftTopCornerD = 0 - zPadDLeft;
+		int32_pl extremeRightBottomCornerD = D - 1 + zPadDRight;
+		while((leftTopCornerD + FD - 1) <= extremeRightBottomCornerD){
+			int32_pl leftTopCornerH = 0 - zPadHLeft;
+			int32_pl extremeRightBottomCornerH = H - 1 + zPadHRight;
+			while((leftTopCornerH + FH - 1) <= extremeRightBottomCornerH){
+				int32_pl leftTopCornerW = 0 - zPadWLeft;
+				int32_pl extremeRightBottomCornerW = W - 1 + zPadWRight;
+				while((leftTopCornerW + FW - 1) <= extremeRightBottomCornerW){
+
+					for fd=[0:FD]{
+						for fh=[0:FH]{
+							for fw=[0:FW]{
+								int32_pl curPosD = leftTopCornerD + fd;
+								int32_pl curPosH = leftTopCornerH + fh;
+								int32_pl curPosW = leftTopCornerW + fw;
+								int32_al val = 0;
+								for ci=[0:CI]{
+									if ((((curPosD < 0) || (curPosD >= D)) || ((curPosH < 0) || (curPosH >= H)) || ((curPosW < 0) || (curPosW >= W)))){
+										val = 0;
+									}
+									else{
+										val = inputArr[n][curPosD][curPosH][curPosW][ci];
+									};
+									outputArr[(fd*FH*FW*CI) + (fh*FW*CI) + (fw*CI) + ci][linIdxFilterMult] = val;
+								};
+							};
+						};
+					};
+
+					linIdxFilterMult = linIdxFilterMult + 1;
+					leftTopCornerW = leftTopCornerW + strideW;
+				};
+
+				leftTopCornerH = leftTopCornerH + strideH;
+			};
+
+			leftTopCornerD = leftTopCornerD + strideD;
+		};
+	};
+}
+
+(* int32_al[N][D][H][W][CI] inputArr, 
+   int32_al[FD][FH][FW][CI][CO] filterArr, 
+   int32_al[N][((D-FD+zPadDLeft+zPadDRight)/strideD)+1][((H-FH+zPadHLeft+zPadHRight)/strideH)+1][((W-FW+zPadWLeft+zPadWRight)/strideW)+1][CO] outArr 
+*)
+(* Loop implementation of convolution run faster with multithreadin *)
+def void Conv3DCSFLoop(int32_pl N, int32_pl D, int32_pl H, int32_pl W, int32_pl CI, 
+				   int32_pl FD, int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl zPadDLeft, int32_pl zPadDRight, int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
+				   int32_pl strideD, int32_pl strideH, int32_pl strideW, 
+				   int32_al[N][D][H][W][CI] inputArr, 
+				   int32_al[FD][FH][FW][CI][CO] filterArr, 
+				   int32_pl consSF,
+				   int32_al[N][((D-FD+(zPadDLeft+zPadDRight))/strideD)+1][((H-FH+(zPadHLeft+zPadHRight))/strideH)+1][((W-FW+(zPadWLeft+zPadWRight))/strideW)+1][CO] outArr)
+{	
+	int32_pl outD = ((D-FD+(zPadDLeft+zPadDRight))/strideD)+1;
+	int32_pl outH = ((H-FH+(zPadHLeft+zPadHRight))/strideH)+1;
+	int32_pl outW = ((W-FW+(zPadWLeft+zPadWRight))/strideW)+1;
+
+	Conv3DLoop(N, D, H, W, CI, FD, FH, FW, CO, zPadDLeft, zPadDRight, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideD, strideH, strideW, outD, outH, outW, inputArr, filterArr, consSF, outArr);
+}
+
+(* int32_al[N][D][H][W][CI] inputArr, 
+   int32_al[FD][FH][FW][CI][CO] filterArr, 
+   int32_al[N][((D-FD+zPadDLeft+zPadDRight)/strideD)+1][((H-FH+zPadHLeft+zPadHRight)/strideH)+1][((W-FW+zPadWLeft+zPadWRight)/strideW)+1][CO] outArr 
+*)
+def void Conv3DCSF(int32_pl N, int32_pl D, int32_pl H, int32_pl W, int32_pl CI, 
+				   int32_pl FD, int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl zPadDLeft, int32_pl zPadDRight, int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
+				   int32_pl strideD, int32_pl strideH, int32_pl strideW, 
+				   int32_al[N][D][H][W][CI] inputArr, 
+				   int32_al[FD][FH][FW][CI][CO] filterArr, 
+				   int32_pl consSF,
+				   int32_al[N][((D-FD+(zPadDLeft+zPadDRight))/strideD)+1][((H-FH+(zPadHLeft+zPadHRight))/strideH)+1][((W-FW+(zPadWLeft+zPadWRight))/strideW)+1][CO] outArr)
+{
+	int32_pl reshapedFilterRows = CO;
+	int32_pl reshapedFilterCols = FD*FH*FW*CI;
+	int32_pl reshapedIPRows = FD*FH*FW*CI;
+	int32_pl newD = (((D + (zPadDLeft+zPadDRight) - FD)/strideD) + 1);
+	int32_pl newH = (((H + (zPadHLeft+zPadHRight) - FH)/strideH) + 1);
+	int32_pl newW = (((W + (zPadWLeft+zPadWRight) - FW)/strideW) + 1);
+	int32_pl reshapedIPCols = N * newD * newH * newW;
+
+	int32_al[reshapedFilterRows][reshapedFilterCols] filterReshaped;
+	int32_al[reshapedIPRows][reshapedIPCols] inputReshaped;
+	int32_al[reshapedFilterRows][reshapedIPCols] matmulOP;
+
+	Conv3DReshapeFilter(FD, FH, FW, CI, CO, filterArr, filterReshaped);
+	Conv3DReshapeInput(N, D, H, W, CI, FD, FH, FW, zPadDLeft, zPadDRight, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideD, strideH, strideW, reshapedIPRows, reshapedIPCols, inputArr, inputReshaped);
+
+	MatMulCSF2D(reshapedFilterRows, reshapedFilterCols, reshapedIPCols, filterReshaped, inputReshaped, matmulOP, consSF);
+
+	Conv3DReshapeMatMulOP(N, newD, newH, newW, CO, matmulOP, outArr);
 }
 
 (**************************)
@@ -360,6 +758,60 @@ def void Pad442(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp
 	};
 }
 
+def void Pad552(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int32_pl inps1, int32_pl inps2, int32_pl inps3, int32_pl inps4, int32_pl inps5, int32_al[inps1][inps2][inps3][inps4][inps5] inpArr, int32_pl pads1, int32_pl pads2, int32_pl[pads1][pads2] paddings, int32_al[s1][s2][s3][s4][s5] outArr){
+	int32_pl lbounds1 = paddings[0][0];
+	int32_pl rbounds1excl = s1-paddings[0][1];
+	int32_pl lbounds2 = paddings[1][0];
+	int32_pl rbounds2excl = s2-paddings[1][1];
+	int32_pl lbounds3 = paddings[2][0];
+	int32_pl rbounds3excl = s3-paddings[2][1];
+	int32_pl lbounds4 = paddings[3][0];
+	int32_pl rbounds4excl = s4-paddings[3][1];
+	int32_pl lbounds5 = paddings[4][0];
+	int32_pl rbounds5excl = s5-paddings[4][1];
+	for i=[0:s1]{
+		for j=[0:s2]{
+			for k=[0:s3]{
+				for l=[0:s4]{
+					for m=[0:s5]{
+						if ((i >= lbounds1) && (i < rbounds1excl) && (j >= lbounds2) && (j < rbounds2excl) && (k >= lbounds3) && (k < rbounds3excl) && (l >= lbounds4) && (l < rbounds4excl) && (m >= lbounds5) && (m < rbounds5excl)){
+							outArr[i][j][k][l][m] = inpArr[i-paddings[0][0]][j-paddings[1][0]][k-paddings[2][0]][l-paddings[3][0]][m-paddings[4][0]];
+						}
+						else{
+							outArr[i][j][k][l][m] = 0;
+						};
+					};
+				};
+			};
+		};
+	};
+}
+
+def void PadONNX441(int32_pl o1, int32_pl o2, int32_pl o3, int32_pl o4, int32_pl i1, int32_pl i2, int32_pl i3, int32_pl i4, int32_al[i1][i2][i3][i4] inpArr, int32_pl pads, int32_pl[pads] paddings, int32_al[o1][o2][o3][o4] outArr) {
+        int32_pl lbounds1 = paddings[0];
+        int32_pl rbounds1excl = o1 - paddings[4];
+        int32_pl lbounds2 = paddings[1];
+        int32_pl rbounds2excl = o2 - paddings[5];
+        int32_pl lbounds3 = paddings[2];
+        int32_pl rbounds3excl = o3 - paddings[6];
+        int32_pl lbounds4 = paddings[3];
+        int32_pl rbounds4excl = o4 - paddings[7];
+        for i=[0:o1]{
+                for j=[0:o2]{
+                        for k=[0:o3]{
+                                for l=[0:o4]{
+                                        if ((i >= lbounds1) && (i < rbounds1excl) && (j >= lbounds2) && (j < rbounds2excl) && (k >= lbounds3) && (k < rbounds3excl) && (l >= lbounds4) && (l < rbounds4excl)){
+                                                outArr[i][j][k][l] = inpArr[i-paddings[0]][j-paddings[1]][k-paddings[2]][l-paddings[3]];
+                                        }
+                                        else{
+                                                outArr[i][j][k][l] = 0;
+                                        };
+                                };
+                        };
+                };
+        };
+}
+
 (**************************)
 (* Squeeze where the input is a 4D tensor, output is a 2D tensor and hence 2 dims are getting squeezed. *)
 def void Squeeze24(int32_pl s1, int32_pl s2, int32_pl dim1, int32_pl dim2, int32_pl ins1, int32_pl ins2, int32_pl ins3, int32_pl ins4, int32_al[ins1][ins2][ins3][ins4] inArr, int32_al[s1][s2] outArr){
@@ -381,10 +833,252 @@ def void Squeeze24(int32_pl s1, int32_pl s2, int32_pl dim1, int32_pl dim2, int32
 }
 
 (**************************)
+(* Generic implementation of ConvTranpose2D *)
+
+def void ConvTranspose2DReshapeMatMulOP(int32_pl N, int32_pl finalH, int32_pl finalW, int32_pl CO, int32_al[CO][N*finalH*finalW] inputArr, int32_al[N][finalH][finalW][CO] outputArr){
+
+	for co=[0:CO]{
+		for n=[0:N]{
+			for h=[0:finalH]{
+				for w=[0:finalW]{
+					outputArr[n][h][w][co] = inputArr[co][(n*finalH*finalW) + (h*finalW) + w];
+				};
+			};
+		};
+	};
+}
+
+
+def void ConvTranspose2DReshapeFilter(int32_pl FH, int32_pl FW, int32_pl CO, int32_pl CI, int32_al[FH][FW][CO][CI] inputArr, int32_al[CO][FH*FW*CI] outputArr)
+{
+	for co=[0:CO]{
+		for fh=[0:FH]{
+			for fw=[0:FW]{
+				for ci=[0:CI]{
+					int32_pl linIdx = (fh*FW*CI) + (fw*CI) + ci;
+					outputArr[co][linIdx] = inputArr[FH-1-fh][FW-1-fw][co][ci];
+				};
+			};
+		};
+	};
+}
+
+def void ConvTranspose2DReshapeInput(int32_pl N, int32_pl HPrime, int32_pl WPrime, int32_pl CI, int32_pl FH, int32_pl FW, int32_pl zPadTrHLeft, int32_pl zPadTrHRight, int32_pl zPadTrWLeft, int32_pl zPadTrWRight, int32_pl strideH, int32_pl strideW, int32_pl RRows, int32_pl RCols, int32_al[N][HPrime][WPrime][CI] inputArr, int32_al[RRows][RCols] outputArr){
+	int32_pl linIdxFilterMult = 0;
+	for n=[0:N]{
+		int32_pl leftTopCornerH = 0 - zPadTrHLeft;
+		int32_pl HPrimeTilde = HPrime + ((HPrime-1)*(strideH-1));
+		int32_pl extremeRightBottomCornerH = HPrimeTilde - 1 + zPadTrHRight;
+		while((leftTopCornerH + FH - 1) <= extremeRightBottomCornerH){
+			int32_pl leftTopCornerW = 0 - zPadTrWLeft;
+			int32_pl WPrimeTilde = WPrime + ((WPrime-1)*(strideW-1));
+			int32_pl extremeRightBottomCornerW = WPrimeTilde - 1 + zPadTrWRight;
+			while((leftTopCornerW + FW - 1) <= extremeRightBottomCornerW){
+
+				for fh=[0:FH]{
+					for fw=[0:FW]{
+						int32_pl curPosH = leftTopCornerH + fh;
+						int32_pl curPosW = leftTopCornerW + fw;
+						int32_al val = 0;
+						for ci=[0:CI]{
+							if ((((curPosH < 0) || (curPosH >= HPrimeTilde)) || ((curPosW < 0) || (curPosW >= WPrimeTilde)))){
+								val = 0;
+							}
+							else{
+								(* curPosH lies between 0 and HPrimeTilde *)
+								if (((curPosH % strideH) == 0) && ((curPosW % strideW) == 0)) {
+									int32_pl idxInputH = curPosH / strideH;
+									int32_pl idxInputW = curPosW / strideW;
+									val = inputArr[n][idxInputH][idxInputW][ci];
+								}
+								else{
+									val = 0; (* This represents fractional stride. *)
+								};
+							};
+							outputArr[(fh*FW*CI) + (fw*CI) + ci][linIdxFilterMult] = val;
+						};
+					};
+				};
+
+				linIdxFilterMult = linIdxFilterMult + 1;
+				leftTopCornerW = leftTopCornerW + 1; (* Imp Note: The actual stride is always 1 *)
+			};
+
+			leftTopCornerH = leftTopCornerH + 1; (* Imp Note: The actual stride is always 1 *)
+		};
+	};
+}
+
+(* int32_al[N][HPrime][WPrime][CI] inputArr,
+   int32_al[FH][FW][CO][CI] filter,
+   int32_al[N][H][W][CO] outputArr
+*)
+def void ConvTranspose2DCSF(int32_pl N, int32_pl HPrime, int32_pl WPrime, int32_pl CI, 
+				   int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl H, int32_pl W,
+				   int32_pl zPadTrHLeft, int32_pl zPadTrHRight, int32_pl zPadTrWLeft, int32_pl zPadTrWRight, 
+				   int32_pl strideH, int32_pl strideW,
+				   int32_al[N][HPrime][WPrime][CI] inputArr, 
+				   int32_al[FH][FW][CO][CI] filterArr, 
+				   int32_pl consSF,
+				   int32_al[N][H][W][CO] outArr)
+{
+	int32_pl reshapedFilterRows = CO;
+	int32_pl reshapedFilterCols = FH*FW*CI;
+	int32_pl reshapedIPRows = FH*FW*CI;
+	int32_pl reshapedIPCols = N * H * W;
+
+	int32_al[reshapedFilterRows][reshapedFilterCols] filterReshaped;
+	int32_al[reshapedIPRows][reshapedIPCols] inputReshaped;
+	int32_al[reshapedFilterRows][reshapedIPCols] matmulOP;
+
+	ConvTranspose2DReshapeFilter(FH, FW, CO, CI, filterArr, filterReshaped);
+	ConvTranspose2DReshapeInput(N, HPrime, WPrime, CI, FH, FW, zPadTrHLeft, zPadTrHRight, zPadTrWLeft, zPadTrWRight, strideH, strideW, reshapedIPRows, reshapedIPCols, inputArr, inputReshaped);
+
+	MatMulCSF2D(reshapedFilterRows, reshapedFilterCols, reshapedIPCols, filterReshaped, inputReshaped, matmulOP, consSF);
+
+	ConvTranspose2DReshapeMatMulOP(N, H, W, CO, matmulOP, outArr);
+}
+
+(**************************)
+(* Generic implementation of ConvTranpose3D *)
+
+def void ConvTranspose3DReshapeFilter(int32_pl FD, int32_pl FH, int32_pl FW, int32_pl CO, int32_pl CI, int32_al[FD][FH][FW][CO][CI] inputArr, int32_al[CO][FD*FH*FW*CI] outputArr)
+{
+	for co=[0:CO]{
+		for fd=[0:FD]{
+			for fh=[0:FH]{
+				for fw=[0:FW]{
+					for ci=[0:CI]{
+						int32_pl linIdx = (fd*FH*FW*CI) + (fh*FW*CI) + (fw*CI) + ci;
+						outputArr[co][linIdx] = inputArr[FD-1-fd][FH-1-fh][FW-1-fw][co][ci];
+					};
+				};
+			};
+		};
+	};
+}
+
+def void ConvTranspose3DReshapeInput(int32_pl N, int32_pl DPrime, int32_pl HPrime, int32_pl WPrime, int32_pl CI, int32_pl FD, int32_pl FH, int32_pl FW, int32_pl zPadTrDLeft, int32_pl zPadTrDRight, int32_pl zPadTrHLeft, int32_pl zPadTrHRight, int32_pl zPadTrWLeft, int32_pl zPadTrWRight, int32_pl strideD, int32_pl strideH, int32_pl strideW, int32_pl RRows, int32_pl RCols, int32_al[N][DPrime][HPrime][WPrime][CI] inputArr, int32_al[RRows][RCols] outputArr){
+	int32_pl linIdxFilterMult = 0;
+	for n=[0:N]{
+		int32_pl leftTopCornerD = 0 - zPadTrDLeft;
+		int32_pl DPrimeTilde = DPrime + ((DPrime-1)*(strideD-1));
+		int32_pl extremeRightBottomCornerD = DPrimeTilde - 1 + zPadTrDRight;
+		while((leftTopCornerD + FD - 1) <= extremeRightBottomCornerD){
+			int32_pl leftTopCornerH = 0 - zPadTrHLeft;
+			int32_pl HPrimeTilde = HPrime + ((HPrime-1)*(strideH-1));
+			int32_pl extremeRightBottomCornerH = HPrimeTilde - 1 + zPadTrHRight;
+			while((leftTopCornerH + FH - 1) <= extremeRightBottomCornerH){
+				int32_pl leftTopCornerW = 0 - zPadTrWLeft;
+				int32_pl WPrimeTilde = WPrime + ((WPrime-1)*(strideW-1));
+				int32_pl extremeRightBottomCornerW = WPrimeTilde - 1 + zPadTrWRight;
+				while((leftTopCornerW + FW - 1) <= extremeRightBottomCornerW){
+
+					for fd=[0:FD]{
+						for fh=[0:FH]{
+							for fw=[0:FW]{
+								int32_pl curPosD = leftTopCornerD + fd;
+								int32_pl curPosH = leftTopCornerH + fh;
+								int32_pl curPosW = leftTopCornerW + fw;
+								int32_al val = 0;
+								for ci=[0:CI]{
+									if (((curPosD < 0) || (curPosD >= DPrimeTilde)) || ((curPosH < 0) || (curPosH >= HPrimeTilde)) || ((curPosW < 0) || (curPosW >= WPrimeTilde))) {
+										val = 0;
+									}
+									else{
+										(* curPosH lies between 0 and HPrimeTilde *)
+										if (((curPosD % strideD) == 0) && ((curPosH % strideH) == 0) && ((curPosW % strideW) == 0)) {
+											int32_pl idxInputD = curPosD / strideD;
+											int32_pl idxInputH = curPosH / strideH;
+											int32_pl idxInputW = curPosW / strideW;
+											val = inputArr[n][idxInputD][idxInputH][idxInputW][ci];
+										}
+										else{
+											val = 0; (* This represents fractional stride. *)
+										};
+									};
+									outputArr[(fd*FH*FW*CI) + (fh*FW*CI) + (fw*CI) + ci][linIdxFilterMult] = val;
+								};
+							};
+						};
+					};
+
+					linIdxFilterMult = linIdxFilterMult + 1;
+					leftTopCornerW = leftTopCornerW + 1; (* Imp Note: The actual stride is always 1 *)
+				};
+
+				leftTopCornerH = leftTopCornerH + 1; (* Imp Note: The actual stride is always 1 *)
+			};
+
+			leftTopCornerD = leftTopCornerD + 1; (* Imp Note: The actual stride is always 1 *)
+		};
+	};
+}
+
+(* int32_al[N][DPrime][HPrime][WPrime][CI] inputArr,
+   int32_al[FD][FH][FW][CO][CI] filter,
+   int32_al[N][D][H][W][CO] outputArr
+*)
+def void ConvTranspose3DCSFLoop(int32_pl N, int32_pl DPrime, int32_pl HPrime, int32_pl WPrime, int32_pl CI, 
+				   int32_pl FD, int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl D, int32_pl H, int32_pl W,
+				   int32_pl zPadTrDLeft, int32_pl zPadTrDRight, int32_pl zPadTrHLeft, int32_pl zPadTrHRight, int32_pl zPadTrWLeft, int32_pl zPadTrWRight, 
+				   int32_pl strideD, int32_pl strideH, int32_pl strideW,
+				   int32_al[N][DPrime][HPrime][WPrime][CI] inputArr, 
+				   int32_al[FD][FH][FW][CO][CI] filterArr, 
+				   int32_pl consSF,
+				   int32_al[N][D][H][W][CO] outArr)
+{
+	ConvTranspose3DLoop(N, DPrime, HPrime, WPrime, CI, FD, FH, FW, CO, zPadTrDLeft, zPadTrDRight, zPadTrHLeft, zPadTrHRight, zPadTrWLeft, zPadTrWRight, strideD, strideH, strideW, D, H, W, inputArr, filterArr, consSF, outArr);
+}
+
+(* int32_al[N][DPrime][HPrime][WPrime][CI] inputArr,
+   int32_al[FD][FH][FW][CO][CI] filter,
+   int32_al[N][D][H][W][CO] outputArr
+*)
+def void ConvTranspose3DCSF(int32_pl N, int32_pl DPrime, int32_pl HPrime, int32_pl WPrime, int32_pl CI, 
+				   int32_pl FD, int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl D, int32_pl H, int32_pl W,
+				   int32_pl zPadTrDLeft, int32_pl zPadTrDRight, int32_pl zPadTrHLeft, int32_pl zPadTrHRight, int32_pl zPadTrWLeft, int32_pl zPadTrWRight, 
+				   int32_pl strideD, int32_pl strideH, int32_pl strideW,
+				   int32_al[N][DPrime][HPrime][WPrime][CI] inputArr, 
+				   int32_al[FD][FH][FW][CO][CI] filterArr, 
+				   int32_pl consSF,
+				   int32_al[N][D][H][W][CO] outArr)
+{
+	int32_pl reshapedFilterRows = CO;
+	int32_pl reshapedFilterCols = FD*FH*FW*CI;
+	int32_pl reshapedIPRows = FD*FH*FW*CI;
+	int32_pl reshapedIPCols = N * D * H * W;
+
+	int32_al[reshapedFilterRows][reshapedFilterCols] filterReshaped;
+	int32_al[reshapedIPRows][reshapedIPCols] inputReshaped;
+	int32_al[reshapedFilterRows][reshapedIPCols] matmulOP;
+
+	ConvTranspose3DReshapeFilter(FD, FH, FW, CO, CI, filterArr, filterReshaped);
+	ConvTranspose3DReshapeInput(N, DPrime, HPrime, WPrime, CI, FD, FH, FW, zPadTrDLeft, zPadTrDRight, zPadTrHLeft, zPadTrHRight, zPadTrWLeft, zPadTrWRight, strideD, strideH, strideW, reshapedIPRows, reshapedIPCols, inputArr, inputReshaped);
+
+	MatMulCSF2D(reshapedFilterRows, reshapedFilterCols, reshapedIPCols, filterReshaped, inputReshaped, matmulOP, consSF);
+
+	Conv3DReshapeMatMulOP(N, D, H, W, CO, matmulOP, outArr);
+}
+
+(**************************)
 def void ClearMemPublic(int32_pl x){
 	return;
 }
 
 def void ClearMemPublic1(int32_pl s, int32_pl[s] x){
+	return;
+}
+
+def void ClearMemPublic4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl[s1][s2][s3][s4] arr)
+{
+	return;
+}
+
+def void ClearMemPublic5(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int32_pl[s1][s2][s3][s4][s5] arr)
+{
 	return;
 }

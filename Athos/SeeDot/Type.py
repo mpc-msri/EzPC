@@ -27,7 +27,6 @@ from functools import reduce
 
 import AST.AST as AST
 from AST.ASTVisitor import ASTVisitor
-
 class Type:
 	pass
 
@@ -101,6 +100,20 @@ class InferType(ASTVisitor):
 
 		return node.type
 
+	def visitTranspose(self, node:AST.Transpose, args=None):
+		node.expr.gamma = dict(node.gamma)
+		exprType = self.visit(node.expr)
+
+		assert isTensor(exprType)
+
+		perm = node.perm
+		shape = exprType.shape
+		new_shape = []
+		for i in perm:
+			new_shape.append(shape[i])
+		node.type = Tensor(new_shape)
+		return node.type
+
 	def visitReshape(self, node:AST.Reshape, args=None):
 		node.expr.gamma = dict(node.gamma)
 		exprType = self.visit(node.expr)
@@ -172,6 +185,8 @@ class InferType(ASTVisitor):
 			return self.visitBopMul(node, eType, fType)
 		elif node.op == AST.Operators.CONV:
 			return self.visitBopConv(node, eType, fType)
+		elif node.op == AST.Operators.CONVTRANSPOSE:
+			return self.visitBopConvTranspose(node, eType, fType)
 		else:
 			assert False
 
@@ -236,13 +251,41 @@ class InferType(ASTVisitor):
 
 	def visitBopConv(self, node:AST.BOp, eType:Type, fType:Type, args=None):
 		assert isTensor(eType) and isTensor(fType)
-		assert eType.dim == 4 and fType.dim == 4
+		convDim = 2
+		group = 1
+		if AST.PaddingKeysDict.ConvDim in node.options:
+			convDim = node.options[AST.PaddingKeysDict.ConvDim]
+
+		if convDim==2:
+			assert eType.dim == 4 and fType.dim == 4
+		elif convDim==3:
+			assert eType.dim == 5 and fType.dim == 5
+		else:
+			assert(False)
 		
-		[N, H, W, CI] = eType.shape
-		[FH, FW, CI1, CO] = fType.shape
+		N = D = H = W = CI = FD = FH = FW = CI1 = CO = -1
+		newD = -1
+		if (convDim == 2):
+			[N, H, W, CI] = eType.shape
+			[FH, FW, CI1, CO] = fType.shape
+		elif (convDim == 3):
+			[N, D, H, W, CI] = eType.shape
+			[FD, FH, FW, CI1, CO] = fType.shape
+			assert(FD == node.options[AST.PaddingKeysDict.FD])
+			zPadDLeft = node.options[AST.PaddingKeysDict.zPadDLeft]
+			zPadDRight = node.options[AST.PaddingKeysDict.zPadDRight]
+			strideD = node.options[AST.PaddingKeysDict.strideD]
+
+			newD = ((D + zPadDLeft + zPadDRight - FD)//strideD) + 1
+		else:
+			assert(False)
+
+		if AST.PaddingKeysDict.group in node.options:	
+				group = node.options[AST.PaddingKeysDict.group]
+
 		assert(FH == node.options[AST.PaddingKeysDict.FH])
 		assert(FW == node.options[AST.PaddingKeysDict.FW])
-		assert(CI1 == CI)
+		assert(CI1*group == CI)
 		zPadHLeft = node.options[AST.PaddingKeysDict.zPadHLeft]
 		zPadHRight = node.options[AST.PaddingKeysDict.zPadHRight]
 		zPadWLeft = node.options[AST.PaddingKeysDict.zPadWLeft]
@@ -253,7 +296,47 @@ class InferType(ASTVisitor):
 		newH = ((H + zPadHLeft + zPadHRight - FH)//strideH) + 1
 		newW = ((W + zPadWLeft + zPadWRight - FW)//strideW) + 1
 
-		shape = [N, newH, newW, CO]
+		if convDim == 2:
+			shape = [N, newH, newW, CO]
+		elif convDim == 3:
+			shape = [N, newD, newH, newW, CO]
+		node.type = Tensor(shape)
+		return node.type
+
+	def visitBopConvTranspose(self, node:AST.BOp, eType:Type, fType:Type, args=None):
+		assert isTensor(eType) and isTensor(fType)
+		
+		convDim = 2
+		if AST.PaddingKeysDict.ConvDim in node.options:
+			convDim = node.options[AST.PaddingKeysDict.ConvDim]
+
+		if convDim==2:
+			[N, HP, WP, CI1] = eType.shape
+			[FH, FW, CO, CI] = fType.shape
+		elif convDim==3:
+			[N, DP, HP, WP, CI1] = eType.shape
+			[FD, FH, FW, CO, CI] = fType.shape
+		else:
+			assert(False)
+		assert(CI1 == CI)
+		if convDim==3:
+			outputImgD = node.options[AST.PaddingKeysDict.outputImgD]
+		outputImgH = node.options[AST.PaddingKeysDict.outputImgH]
+		outputImgW = node.options[AST.PaddingKeysDict.outputImgW]
+
+		if convDim==2:
+			shape = [N, outputImgH, outputImgW, CO]
+		else:
+			shape = [N, outputImgD, outputImgH, outputImgW, CO]
+
+		# Logic explanation:
+		#	ConvTranpose can be thought of as the inverse of some convolution for which it is doing the upsampling.
+		#	For calculation of padding in the convTranspose operation, the output image size is required.
+		#	This is why TF also mandates the operator to be specified with output size.
+		#	This conv transpose operation can be thought of as conv between output
+		#		of size shape = [N, outputImgH, outputImgW, CI], and filter of size [FH, FW, CI, CO].
+		#		Hence, the input for this convTranspose would be [N, HP, WP, CO]
+
 		node.type = Tensor(shape)
 		return node.type
 
@@ -358,4 +441,3 @@ class InferType(ASTVisitor):
 
 		node.type = exprType
 		return node.type
-

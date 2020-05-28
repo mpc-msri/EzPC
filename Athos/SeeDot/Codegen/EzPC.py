@@ -30,10 +30,11 @@ import IR.IRUtil as IRUtil
 from Codegen.CodegenBase import CodegenBase
 
 class EzPC(CodegenBase):
-	def __init__(self, writer, decls):
+	def __init__(self, writer, decls, debugVar):
 		self.out = writer
 		self.decls = decls
 		self.consSFUsed = Util.Config.consSF
+		self.debugVar = debugVar
 
 	def printAll(self, prog:IR.Prog, expr:IR.Expr):
 		self._out_prefix()
@@ -134,7 +135,10 @@ class EzPC(CodegenBase):
 		self.out.printf('\n')
 
 	def _out_suffix(self, expr:IR.Expr):
-		self.out.printf('output(CLIENT, ' + expr.idf + ');\n', indent=True)
+		if self.debugVar is None:
+			self.out.printf('output(CLIENT, ' + expr.idf + ');\n', indent=True)
+		else:
+			self.out.printf('output(CLIENT, ' + self.debugVar + ');\n', indent=True)
 		self.out.decreaseIndent()
 		self.out.printf('}\n', indent=True)
 	

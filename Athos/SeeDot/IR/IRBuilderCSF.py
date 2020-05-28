@@ -40,12 +40,14 @@ class IRBuilderCSF(ASTVisitor):
 		# For tracking temp variables
 		self._var_cnt = 0
 		self._iter_cnt = 0
-
 		# Global variables
 		self.decls = {} #Mapping of (identifier name (string) -> list of [type, secret/public variable, bitlen of decl])
 						#	The 2nd arg can be either 'secret' or 'public'.
 						#	If public/secret unspecified, default to 'secret'.
 						#	The 3rd arg is used to specify the bitlen of the decl.
+		
+		# Name mapping from SeeDot names to new names is useful for debugging
+		self.name_mapping = {}
 
 	def getConsSF(self):
 		return Util.Config.consSF
@@ -181,8 +183,40 @@ class IRBuilderCSF(ASTVisitor):
 		prog_2 = IRUtil.prog_merge(prog_1, prog_for)
 		
 		self.decls[expr_2.idf] = [typ_2]
-		prog = IRUtil.prog_merge(IR.Prog([IR.Decl(expr_2.idf, typ_2)]), prog)
+		prog_2 = IRUtil.prog_merge(IR.Prog([IR.Decl(expr_2.idf, typ_2)]), prog_2)
 		return (prog_2, expr_2)
+
+	def visitTranspose(self, node:AST.Transpose, args=None):
+		(inp_prog, inp_arr) = self.visit(node.expr)
+		inp_type = node.expr.type
+		out_type = node.type
+		inp_iters = self.getTempIterators(inp_type.dim)
+		out_iters = []
+		perm = node.perm
+		for i in perm:
+			out_iters.append(inp_iters[i])
+		out_arr = self.getTempVar()
+		out_arr_expr = IRUtil.addIndex(out_arr, out_iters)
+		inp_arr_expr = IRUtil.addIndex(inp_arr, inp_iters)
+		assign_expr = IR.Assn(out_arr_expr, inp_arr_expr)
+		loop = IRUtil.loop(inp_type.shape, inp_iters, [assign_expr])
+		# Finalize
+		comment1 = IR.Comment(str(node.metadata))
+		comment2 = IR.Comment("transpose(" + inp_arr.idf + ", [" + ', '.join(str(e) for e in inp_type.shape) + "] --> [" + ', '.join(str(e) for e in out_type.shape) + "])")
+		transpose_prog = IR.Prog([comment1, comment2] + loop)
+		final_prog = IRUtil.prog_merge(inp_prog, transpose_prog)
+
+		# Update context
+		self.decls[out_arr.idf] = [out_type]
+
+		# Update declarations
+		self.decls.update(dict((var.idf, [Type.Int(), 'public']) for var in inp_iters))
+
+		for var in inp_iters:
+			final_prog = IRUtil.prog_merge(IR.Prog([IR.Decl(var.idf, Type.Int(), isSecret="public")]), final_prog)
+		final_prog = IRUtil.prog_merge(IR.Prog([IR.Decl(out_arr.idf, out_type)]), final_prog)
+
+		return (final_prog, out_arr)
 
 	def visitReshape(self, node:AST.Reshape, args=None):
 		(prog_1, expr_1) = self.visit(node.expr)
@@ -227,16 +261,19 @@ class IRBuilderCSF(ASTVisitor):
 			cmd5 = [IRUtil.incCmd(curr_iter), IR.If(IRUtil.eq(curr_iter, curr_size), [IRUtil.initVarToZero(curr_iter)] + cmd5)]
 		
 		# Outer loop
+		# The iterators are selected based on the selection order specified by the user
 		loopShape = []
 		loopIters = []
-		if node.order:
+
+		if(node.order):
 			for order in node.order:
 				order = order - 1
 				loopShape.append(typ_2.shape[order])
 				loopIters.append(iters_2[order])
 		else:
 			loopShape = typ_2.shape
-			loopIters = iters_2
+			loopIters = iters_2	
+		
 
 		loop2 = IRUtil.loop(loopShape, loopIters, [IR.Assn(IRUtil.addIndex(expr_2, iters_2), IRUtil.addIndex(expr_1, iters_1))] + cmd5)
 
@@ -347,11 +384,71 @@ class IRBuilderCSF(ASTVisitor):
 
 	def visitBOp(self, node:AST.BOp, args=None):
 		op = node.op
-		if (op in [AST.Operators.ADD, AST.Operators.SUB, AST.Operators.Equal, AST.Operators.Max]): return self.visitBopAddOrSubLike(node)
+		if (op in [AST.Operators.ADD, AST.Operators.SUB]): return self.visitBopAddOrSub(node)
+		elif (op in [AST.Operators.Equal, AST.Operators.Max]): return self.visitBopAddOrSubLike(node)
 		elif (op in [AST.Operators.ElemWiseMul, AST.Operators.ElemWiseDiv]): return self.visitBopElemWiseOp(node)
-		elif  op == AST.Operators.MUL: return self.visitBopMul(node)
-		elif  op == AST.Operators.CONV: return self.visitBopConv(node)
+		elif op == AST.Operators.MUL: return self.visitBopMul(node)
+		elif op == AST.Operators.CONV: return self.visitBopConv(node)
+		elif op == AST.Operators.CONVTRANSPOSE: return self.visitBopConvTranspose(node)
 		else: assert False
+
+	def visitBopAddOrSub(self, node:AST.BOp, args=None):
+		(prog_1, expr_1) = self.visit(node.expr1)
+		(prog_2, expr_2) = self.visit(node.expr2)
+
+		# op_ir, typ_3
+		op = node.op
+		if   (op == AST.Operators.ADD):
+			(op_ir, op_fn) = (IR.Op.Op['+'], operator.add)
+			funcName = "MatAdd"
+		elif (op == AST.Operators.SUB):
+			(op_ir, op_fn) = (IR.Op.Op['-'], operator.sub)
+			funcName = "MatSub"
+		else:
+			assert False
+
+		typ_3 = node.type
+
+		# e : Int
+		if Type.isInt(typ_3):
+			prog_3 = IRUtil.prog_merge(prog_1, prog_2)
+			expr_3 = IR.IntBop(expr_1, op_ir, expr_2)
+		# e : Tensor() -- float, or Tensor(..)
+		else:
+			## TODO : Hack for techfest
+			if (node.type.dim != node.expr1.type.dim):
+				# This needs broadcast of expr1
+				assert False # For now this shouldn't occur
+			if (node.type.dim != node.expr2.type.dim):
+				# This needs broadcast of expr2
+				funcName += 'BroadCast'
+
+			# decl fresh vars
+			expr_3 = self.getTempVar()
+
+			cmd0 = IR.Comment(expr_1.idf + ' ' + op_ir.name + ' ' + expr_2.idf)
+			outputShape = typ_3.shape
+			argsDict = OrderedDict()
+			inp1_shape = node.expr1.type.shape
+			inp2_shape = node.expr2.type.shape
+			for ii,curDimSize in enumerate(inp1_shape):
+				argsDict[IR.Int(curDimSize, 32)] = "size_" + str(ii)
+			for ii,curDimSize in enumerate(inp2_shape):
+				argsDict[IR.Int(curDimSize, 32)] = "size_" + str(ii)
+			for ii,curDimSize in enumerate(outputShape):
+				argsDict[IR.Int(curDimSize, 32)] = "size_" + str(ii)
+			argsDict[expr_1] = "A"
+			argsDict[expr_2] = "B"
+			argsDict[expr_3] = "C"
+			funcCall = IR.FuncCall(funcName + self.varNameDelim + str(len(outputShape)),
+									argsDict
+									)
+			comment = IR.Comment(str(node.metadata))
+			prog_3 = IRUtil.prog_merge(prog_1, prog_2, IR.Prog([comment, cmd0, funcCall]))
+			self.decls[expr_3.idf] = [typ_3]
+			prog_3 = IRUtil.prog_merge(IR.Prog([IR.Decl(expr_3.idf, node.type)]), prog_3)
+
+		return (prog_3, expr_3)
 
 	def visitBopAddOrSubLike(self, node:AST.BOp, args=None):
 		(prog_1, expr_1) = self.visit(node.expr1)
@@ -431,6 +528,13 @@ class IRBuilderCSF(ASTVisitor):
 		cmd0 = IR.Comment(expr_1.idf + ' ' + op_ir.name + ' ' + expr_2.idf)
 		outputShape = typ_3.shape
 		argsDict = OrderedDict()
+		inp1_shape = node.expr1.type.shape
+		inp2_shape = node.expr2.type.shape
+		print("Input shapes = ", inp1_shape, inp2_shape)
+		for ii,curDimSize in enumerate(inp1_shape):
+			argsDict[IR.Int(curDimSize, 32)] = "size_" + str(ii)
+		for ii,curDimSize in enumerate(inp2_shape):
+			argsDict[IR.Int(curDimSize, 32)] = "size_" + str(ii)
 		for ii,curDimSize in enumerate(outputShape):
 			argsDict[IR.Int(curDimSize, 32)] = "size_" + str(ii)
 		argsDict[expr_1] = "A"
@@ -546,32 +650,153 @@ class IRBuilderCSF(ASTVisitor):
 		(prog1, expr1) = self.visit(node.expr1)
 		(prog2, expr2) = self.visit(node.expr2)
 		
-		[N , H , W , CI] = node.expr1.type.shape
-		[FH, FW, CI, CO] = node.expr2.type.shape
+		convDim = 2
+		if (AST.PaddingKeysDict.ConvDim in node.options):
+			convDim = node.options[AST.PaddingKeysDict.ConvDim]
+
+		if convDim == 2:
+			[N, H, W, CI] = node.expr1.type.shape
+			[FH, FW, CI1, CO] = node.expr2.type.shape
+		elif convDim == 3:
+			[N, D, H, W, CI] = node.expr1.type.shape
+			[FD, FH, FW, CI1, CO] = node.expr2.type.shape
+		else:
+			assert(False)
 
 		returnExpr = self.getTempVar()
-		comment = IR.Comment(expr1.idf + ' # ' + expr2.idf)
+		comment = IR.Comment(expr1.idf + ' # ' + expr2.idf + ', convDim = ' + str(convDim))
 		funcCallArgsDict = OrderedDict()
 		funcCallArgsDict[IR.Int(N, 32)] = "N"
+		if convDim == 3:
+			funcCallArgsDict[IR.Int(D, 32)] = "D"	
 		funcCallArgsDict[IR.Int(H, 32)] = "H"
 		funcCallArgsDict[IR.Int(W, 32)] = "W"
 		funcCallArgsDict[IR.Int(CI, 32)] = "CI"
+		if convDim == 3:
+			funcCallArgsDict[IR.Int(FD, 32)] = "FD"
 		funcCallArgsDict[IR.Int(FH, 32)] = "FH"
 		funcCallArgsDict[IR.Int(FW, 32)] = "FW"
 		funcCallArgsDict[IR.Int(CO, 32)] = "CO"
+		if convDim == 3:
+			funcCallArgsDict[IR.Int(node.options[AST.PaddingKeysDict.zPadDLeft], 32)] = "zPadDLeft"
+			funcCallArgsDict[IR.Int(node.options[AST.PaddingKeysDict.zPadDRight], 32)] = "zPadDRight"
 		funcCallArgsDict[IR.Int(node.options[AST.PaddingKeysDict.zPadHLeft], 32)] = "zPadHLeft"
 		funcCallArgsDict[IR.Int(node.options[AST.PaddingKeysDict.zPadHRight], 32)] = "zPadHRight"
 		funcCallArgsDict[IR.Int(node.options[AST.PaddingKeysDict.zPadWLeft], 32)] = "zPadWLeft"
 		funcCallArgsDict[IR.Int(node.options[AST.PaddingKeysDict.zPadWRight], 32)] = "zPadWRight"
+		if convDim == 3:
+			funcCallArgsDict[IR.Int(node.options[AST.PaddingKeysDict.strideD], 32)] = "strideD"	
 		funcCallArgsDict[IR.Int(node.options[AST.PaddingKeysDict.strideH], 32)] = "strideH"
 		funcCallArgsDict[IR.Int(node.options[AST.PaddingKeysDict.strideW], 32)] = "strideW"
+		
+		isGroupConv = False
+		if AST.PaddingKeysDict.group in node.options.keys():		
+			funcCallArgsDict[IR.Int(node.options[AST.PaddingKeysDict.group], 32)] = "G"
+			isGroupConv = True
 
 		funcCallArgsDict[expr1] = "input"
 		funcCallArgsDict[expr2] = "filter"
 		funcCallArgsDict[IR.Int(Util.Config.consSF, 32)] = "consSF"
 		funcCallArgsDict[returnExpr] = "output"
 
-		funcCall = IR.FuncCall("Conv2DCSF", funcCallArgsDict)
+		if convDim == 2:
+			funcCallName = "Conv2DCSF"
+		else:
+			funcCallName = "Conv3DCSF"
+
+		if isGroupConv:
+			funcCallName += "Group"	
+
+		funcCall = IR.FuncCall(funcCallName, funcCallArgsDict)
+
+		progConv = IR.Prog([comment, funcCall])
+		returnProg = IRUtil.prog_merge(prog1, prog2, progConv)
+		
+		self.decls[returnExpr.idf] = [node.type]
+		returnProg = IRUtil.prog_merge(IR.Prog([IR.Decl(returnExpr.idf, node.type)]), returnProg)
+		return (returnProg, returnExpr)
+
+	def visitBopConvTranspose(self, node:AST.BOp, args=None):
+		(prog1, expr1) = self.visit(node.expr1)
+		(prog2, expr2) = self.visit(node.expr2)
+
+		convDim = 2
+		if (AST.PaddingKeysDict.ConvDim in node.options):
+			convDim = node.options[AST.PaddingKeysDict.ConvDim]
+
+		if convDim==2:
+			[N, H_prime, W_prime, CI1] = node.expr1.type.shape
+			[FH, FW, CO, CI] = node.expr2.type.shape
+		elif convDim==3:
+			[N, D_prime, H_prime, W_prime, CI1] = node.expr1.type.shape
+			[FD, FH, FW, CO, CI] = node.expr2.type.shape
+		else:
+			assert(False)
+		assert(CI1 == CI)
+		
+		H = node.options[AST.PaddingKeysDict.outputImgH] #outputH
+		W = node.options[AST.PaddingKeysDict.outputImgW] #outputW
+		pad_h_total = node.options[AST.PaddingKeysDict.zPadHLeft] + node.options[AST.PaddingKeysDict.zPadHRight]
+		pad_w_total = node.options[AST.PaddingKeysDict.zPadWLeft] + node.options[AST.PaddingKeysDict.zPadWRight]
+		strideH = node.options[AST.PaddingKeysDict.strideH]
+		strideW = node.options[AST.PaddingKeysDict.strideW]
+		[pad_h_tr_total, stride_h_tr, h_prime_tilde] = AST.Operators.findConvTransposePadding(H, H_prime, FH, pad_h_total, strideH)
+		[pad_w_tr_total, stride_w_tr, w_prime_tilde] = AST.Operators.findConvTransposePadding(W, W_prime, FW, pad_w_total, strideW)
+
+		[pad_h_tr_left, pad_h_tr_right] = AST.Operators.findLeftRightPaddingFromTotalPadding(pad_h_tr_total)
+		[pad_w_tr_left, pad_w_tr_right] = AST.Operators.findLeftRightPaddingFromTotalPadding(pad_w_tr_total)
+
+		assert(AST.Operators.findConvOutputImgSize(h_prime_tilde, pad_h_tr_total, FH, stride_h_tr) == H)
+		assert(AST.Operators.findConvOutputImgSize(w_prime_tilde, pad_w_tr_total, FW, stride_w_tr) == W)
+
+		if convDim == 3:
+			D = node.options[AST.PaddingKeysDict.outputImgD] #outputD
+			pad_d_total = node.options[AST.PaddingKeysDict.zPadDLeft] + node.options[AST.PaddingKeysDict.zPadDRight]
+			strideD = node.options[AST.PaddingKeysDict.strideD]
+			[pad_d_tr_total, stride_d_tr, d_prime_tilde] = AST.Operators.findConvTransposePadding(D, D_prime, FD, pad_d_total, strideD)
+			[pad_d_tr_left, pad_d_tr_right] = AST.Operators.findLeftRightPaddingFromTotalPadding(pad_d_tr_total)
+			assert(AST.Operators.findConvOutputImgSize(d_prime_tilde, pad_d_tr_total, FD, stride_d_tr) == D)
+
+		returnExpr = self.getTempVar()
+		comment = IR.Comment(expr1.idf + ' #T ' + expr2.idf + ', convDim = ' + str(convDim))
+		funcCallArgsDict = OrderedDict()
+		funcCallArgsDict[IR.Int(N, 32)] = "N"
+		if convDim==3:
+			funcCallArgsDict[IR.Int(D_prime, 32)] = "D_prime"
+		funcCallArgsDict[IR.Int(H_prime, 32)] = "H_prime"
+		funcCallArgsDict[IR.Int(W_prime, 32)] = "W_prime"
+		funcCallArgsDict[IR.Int(CI, 32)] = "CI"
+		if convDim==3:
+			funcCallArgsDict[IR.Int(FD, 32)] = "FD"
+		funcCallArgsDict[IR.Int(FH, 32)] = "FH"
+		funcCallArgsDict[IR.Int(FW, 32)] = "FW"
+		funcCallArgsDict[IR.Int(CO, 32)] = "CO"
+		if convDim==3:
+			funcCallArgsDict[IR.Int(D, 32)] = "D"
+		funcCallArgsDict[IR.Int(H, 32)] = "H"
+		funcCallArgsDict[IR.Int(W, 32)] = "W"
+		if convDim==3:
+			funcCallArgsDict[IR.Int(pad_d_tr_left, 32)] = "pad_d_tr_left"
+			funcCallArgsDict[IR.Int(pad_d_tr_right, 32)] = "pad_d_tr_right"
+		funcCallArgsDict[IR.Int(pad_h_tr_left, 32)] = "pad_h_tr_left"
+		funcCallArgsDict[IR.Int(pad_h_tr_right, 32)] = "pad_h_tr_right"
+		funcCallArgsDict[IR.Int(pad_w_tr_left, 32)] = "pad_w_tr_left"
+		funcCallArgsDict[IR.Int(pad_w_tr_right, 32)] = "pad_w_tr_right"
+		if convDim==3:
+			funcCallArgsDict[IR.Int(strideD, 32)] = "strideD"
+		funcCallArgsDict[IR.Int(strideH, 32)] = "strideH"
+		funcCallArgsDict[IR.Int(strideW, 32)] = "strideW"
+
+		funcCallArgsDict[expr1] = "input"
+		funcCallArgsDict[expr2] = "filter"
+		funcCallArgsDict[IR.Int(Util.Config.consSF, 32)] = "consSF"
+		funcCallArgsDict[returnExpr] = "output"
+
+		if convDim == 2:
+			funcCallName = "ConvTranspose2DCSF"
+		else:
+			funcCallName = "ConvTranspose3DCSF"
+		funcCall = IR.FuncCall(funcCallName, funcCallArgsDict)
 
 		progConv = IR.Prog([comment, funcCall])
 		returnProg = IRUtil.prog_merge(prog1, prog2, progConv)
@@ -634,6 +859,7 @@ class IRBuilderCSF(ASTVisitor):
 		(prog_1, expr_1) = self.visit(node.decl)
 		typ_1 = node.decl.type
 		idf = node.name.name
+		self.name_mapping[idf] = expr_1.idf	
 		(prog_2, expr_2) = self.visit(node.expr)
 		prog_2 = prog_2.subst(idf, expr_1)
 		expr_2 = expr_2.subst(idf, expr_1)

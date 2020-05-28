@@ -1,0 +1,8 @@
+models/
+debug/
+*.cpp
+*.inp
+*.h
+*.ezpc
+*.h
+*.npy

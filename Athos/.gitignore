@@ -1,8 +1,11 @@
-*.inp
+*.inprm
 *.outp
 *.mtdata
 *.pkl
 *.out
 *.ezpc
 *.cpp
+SeeDot/debug/
+*__temp1.ezpc
+*__temp2.ezpc
 __pycache__/
