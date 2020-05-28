@@ -42,7 +42,7 @@ compilationTargetLower=$(echo "$COMPILATIONTARGET" | awk '{print tolower($0)}')
 compilationTargetHigher=$(echo "$COMPILATIONTARGET" | awk '{print toupper($0)}')
 finalCodeOutputFileName=${modelName}'0.cpp'
 finalCodeOutputFileName1=${modelName}'1.cpp'
-inputFileName=${modelName}'_input.h'
+inputFileName=${modelName}'_input.inp'
 seedotASTName=${modelName}'.pkl'
 
 # modelname_input.npy and modelname_output.npy
