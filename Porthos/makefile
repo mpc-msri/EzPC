@@ -7,7 +7,7 @@ OBJ_FILES    	  += $(patsubst src/%.cpp, src/%.o, $(SRC_CPP_FILES))
 OBJ_FILES    	  += $(patsubst util/%.cpp, util/%.o, $(OBJ_CPP_FILES))
 HEADER_FILES       = $(wildcard src/*.h)
 
-FLAGS := -w -std=c++14 -pthread -msse4.1 -maes -msse2 -mpclmul -fpermissive -fpic #-fopenmp
+FLAGS := -w -std=c++14 -pthread -msse4.1 -maes -msse2 -mpclmul -fpermissive -fpic -fopenmp
 LIBS := -lcrypto -lssl
 OBJ_INCLUDES := -I 'lib_eigen/' -I 'src/'
 UTIL_INCLUDES := $($(OBJ_INCLUDES), -L./)

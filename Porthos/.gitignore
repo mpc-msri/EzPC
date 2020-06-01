@@ -4,3 +4,4 @@ util/Miracl/
 *.log
 **/*.swp
 lib_eigen/
+**/build/

@@ -12,7 +12,13 @@
 //#include <stropts.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
+
+#ifdef __APPLE__
+#include <net/if.h>
+#else
 #include <linux/netdevice.h>
+#endif
+
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <unistd.h>

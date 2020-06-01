@@ -35,6 +35,16 @@ using namespace std::chrono;
 #define Sockwrite(sock, data, size) write(sock, data, size)
 #define Sockread(sock, buff, bufferSize) read(sock, buff, bufferSize)
 //#define socklen_t int
+
+#elif __APPLE__
+#include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
+#define Sockwrite(sock, data, size) write(sock, data, size)
+#define Sockread(sock, buff, bufferSize) read(sock, buff, bufferSize)
+//#define socklen_t int
+
 #elif _WIN32
 //#pragma comment (lib, "ws2_32.lib") //Winsock Library
 #pragma comment (lib, "Ws2_32.lib")
@@ -46,7 +56,6 @@ using namespace std::chrono;
 #define close closesocket
 #define Sockwrite(sock, data, size) send(sock, (char*)data, size, 0)
 #define Sockread(sock, buff, bufferSize) recv(sock, (char*)buff, bufferSize, 0)
-
 #endif
 
 /*GLOBAL VARIABLES - LIST OF IP ADDRESSES*/
