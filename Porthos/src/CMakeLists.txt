@@ -1,10 +1,13 @@
 cmake_minimum_required (VERSION 3.0)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 if(APPLE)
-    set(CMAKE_C_COMPILER "/usr/local/bin/gcc-9")
-    set(CMAKE_CXX_COMPILER "/usr/local/bin/g++-9")
+		set(CMAKE_C_COMPILER "/usr/local/bin/gcc-9")
+		set(CMAKE_CXX_COMPILER "/usr/local/bin/g++-9")
 endif()
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 project(Porthos)
 set(NAME "Porthos")
@@ -24,13 +27,16 @@ target_link_libraries(Porthos-Protocols
 	PUBLIC OpenMP::OpenMP_CXX
 	${OPENSSL_LIBRARIES})
 
-add_executable(Porthos3PC ${CMAKE_CURRENT_SOURCE_DIR}/example_neural_nets/mainResNet50.cpp)
-target_link_libraries(Porthos3PC Porthos-Protocols)
+macro (add_network _name)
+	add_executable(${_name} ${CMAKE_CURRENT_SOURCE_DIR}/example_neural_nets/main${_name}.cpp)
+  target_link_libraries(${_name} Porthos-Protocols) 
+endmacro()
 
 target_compile_options(Porthos-Protocols
 	PUBLIC "-pthread;-Wall;-march=native;-msse4.1;-maes;-mpclmul;-mrdseed;-fpermissive;-fpic;-std=c++17;-w;-O3")
 
-target_compile_options(Porthos3PC
-	PRIVATE "-pthread;-Wall;-march=native;-msse4.1;-maes;-mpclmul;-mrdseed;-fpermissive;-fpic;-std=c++17;-w;-O3")
+add_network(DenseNet121)
+add_network(ResNet50)
+add_network(SqNetImgNet)
 
 
