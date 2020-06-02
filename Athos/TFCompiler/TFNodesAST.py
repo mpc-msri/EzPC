@@ -538,6 +538,18 @@ class TFNodesAST:
 										 AST.ID(dictNodeNameToOutVarStr[inputsRef[2]]),
 										))
 
+	def Transpose(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
+		inputsRef = curNode.getInputsRef()
+		assert(len(inputsRef) == 2)
+		permNodeName = inputsRef[1]
+		# We need to fetch the tensor value of the perm Node
+		permNode = graph.__getitem__(permNodeName)
+		permTensor = permNode.getAttrVal("value").getTensor()
+		permList = permTensor.getContentAsValArr()
+		assert(permTensor.getDType().kind == "i")
+		assert(permTensor.getShapeRef().getRank() == 1)
+		return (None, AST.Transpose(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]), permList))
+
 	def Squeeze(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		# TODO : Do this in somewhat better way
 		inputsRef = curNode.getInputsRef()
