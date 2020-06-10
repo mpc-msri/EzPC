@@ -6,6 +6,7 @@ This folder contains code for Porthos - a semi-honest 3 party secure computation
 * sudo apt-get install libssl-dev
 * sudo apt-get install g++
 * sudo apt-get install make
+* sudo apt-get install cmake
 
 # Running the protocol
 - First setup Eigen library, used for fast matrix multiplication by Porthos, by running `./setup-eigen.sh`.
