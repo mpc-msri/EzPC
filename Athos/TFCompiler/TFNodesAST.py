@@ -280,13 +280,16 @@ class TFNodesAST:
 		assert(len(inputsRef) == 2)
 		return (None, AST.Reshape(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]), extraNodeInfoDict[curNode.getName()][0], None))
 
-	def helper_findPadding(imgH, imgW, FH, FW, strideH, strideW, paddingUsedStr):
-		zPadHLeft = zPadHRight = zPadWLeft = zPadWRight = -1
+	def helper_findPadding(imgH, imgW, FH, FW, strideH, strideW, paddingUsedStr, imgD = None, FD = None, strideD = None):
+		if imgD:
+			assert(FD)
+			assert(strideD)
+		zPadHLeft = zPadHRight = zPadWLeft = zPadWRight = zPadDLeft = zPadDRight = -1
 		if (paddingUsedStr == "\"SAME\""):
 			# Reference for following:
-			#	https://web.archive.org/web/20171223022012/https://www.tensorflow.org/api_guides/python/nn
-			totalPaddingH = totalPaddingW = 0
-			
+			#       https://web.archive.org/web/20171223022012/https://www.tensorflow.org/api_guides/python/nn
+			totalPaddingH = totalPaddingW = totalPaddingD = 0
+
 			if (imgH % strideH == 0):
 				totalPaddingH = max(FH - strideH, 0)
 			else:
@@ -297,17 +300,30 @@ class TFNodesAST:
 			else:
 				totalPaddingW = max(FW - (imgW % strideW), 0)
 
+			if imgD:
+				if (imgD % strideD == 0):
+					totalPaddingD = max(FD - strideD, 0)
+				else:
+					totalPaddingD = max(FD - (imgD % strideD), 0)
+
 			zPadHLeft = totalPaddingH // 2
 			zPadHRight = totalPaddingH - zPadHLeft
 
 			zPadWLeft = totalPaddingW // 2
-			zPadWRight = totalPaddingW - zPadWLeft		
-		elif (paddingUsedStr == "\"VALID\""):
-			zPadHLeft = zPadHRight = zPadWLeft = zPadWRight = 0
-		else:
-			zPadHLeft = zPadHRight = zPadWLeft = zPadWRight = -1
+			zPadWRight = totalPaddingW - zPadWLeft
 
-		return [zPadHLeft, zPadHRight, zPadWLeft, zPadWRight]
+			zPadDLeft = totalPaddingD // 2
+			zPadDRight = totalPaddingD - zPadDLeft
+
+		elif (paddingUsedStr == "\"VALID\""):
+			zPadHLeft = zPadHRight = zPadWLeft = zPadWRight = zPadDLeft = zPadDRight = 0
+		else:
+			zPadHLeft = zPadHRight = zPadWLeft = zPadWRight = zPadDLeft = zPadDRight = -1
+
+		if imgD:
+			return [zPadDLeft, zPadDRight, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight]
+		else:
+			return [zPadHLeft, zPadHRight, zPadWLeft, zPadWRight]
 
 	def Conv2D(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
@@ -346,6 +362,104 @@ class TFNodesAST:
 		return (None, AST.BOp(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]), 
 								TFNodesAST.getOperatorsIdx('#'),
 								AST.ID(dictNodeNameToOutVarStr[inputsRef[1]]), 
+								options))
+
+	def Conv3D(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
+		inputsRef = curNode.getInputsRef()
+		assert(len(inputsRef)==2)
+
+		stridesUsed = curNode.getAttrMapRef()["\"strides\""].getList().getILi()
+		assert(stridesUsed[0]==1 and stridesUsed[4]==1)
+		strideD = stridesUsed[1]
+		strideH = stridesUsed[2]
+		strideW = stridesUsed[3]
+
+		inputShape = extraNodeInfoDict[inputsRef[0]][0]
+		imgD = inputShape[1]
+		imgH = inputShape[2]
+		imgW = inputShape[3]
+
+		filterShape = extraNodeInfoDict[inputsRef[1]][0]
+		FD = filterShape[0]
+		FH = filterShape[1]
+		FW = filterShape[2]
+
+		paddingUsedStr = curNode.getAttrMapRef()["\"padding\""].getS()
+
+		[zPadDLeft, zPadDRight, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight] = TFNodesAST.helper_findPadding(imgH, imgW, FH, FW, strideH, strideW, paddingUsedStr, imgD, FD, strideD )
+
+		options = {}
+		options[AST.PaddingKeysDict.FD] = FD
+		options[AST.PaddingKeysDict.FH] = FH
+		options[AST.PaddingKeysDict.FW] = FW
+		options[AST.PaddingKeysDict.zPadDLeft] = zPadDLeft
+		options[AST.PaddingKeysDict.zPadDRight] = zPadDRight
+		options[AST.PaddingKeysDict.zPadHLeft] = zPadHLeft
+		options[AST.PaddingKeysDict.zPadHRight] = zPadHRight
+		options[AST.PaddingKeysDict.zPadWLeft] = zPadWLeft
+		options[AST.PaddingKeysDict.zPadWRight] = zPadWRight
+		options[AST.PaddingKeysDict.strideD] = strideD
+		options[AST.PaddingKeysDict.strideH] = strideH
+		options[AST.PaddingKeysDict.strideW] = strideW
+		options[AST.PaddingKeysDict.ConvDim] = 3
+		return (None, AST.BOp(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]),
+						TFNodesAST.getOperatorsIdx('#'),
+						AST.ID(dictNodeNameToOutVarStr[inputsRef[1]]),
+						options))
+
+	def Conv3DBackpropInputV2(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
+		inputsRef = curNode.getInputsRef()
+		assert(len(inputsRef)==3) #output_shape, filter, input
+
+		stridesUsed = curNode.getAttrMapRef()["\"strides\""].getList().getILi()
+		assert(stridesUsed[0]==1 and stridesUsed[4]==1)
+		strideD = stridesUsed[1]
+		strideH = stridesUsed[2]
+		strideW = stridesUsed[3]
+
+		filterShape = extraNodeInfoDict[inputsRef[1]][0]
+		FD = filterShape[0]
+		FH = filterShape[1]
+		FW = filterShape[2]
+
+		inputShape = extraNodeInfoDict[inputsRef[2]][0]
+		inputD = inputShape[1]
+		inputH = inputShape[2]
+		inputW = inputShape[3]
+
+		outputShape = extraNodeInfoDict[curNode.getName()][0]
+		outputD = outputShape[1]
+		outputH = outputShape[2]
+		outputW = outputShape[3]
+
+		paddingUsedStr = curNode.getAttrMapRef()["\"padding\""].getS()
+
+		# Important: Using outputH and outputW in the below is not an error!
+		#			For convTranspose, the parameters passed in the node are of the conv of which this convTranspose is an inverse.
+		#			Which is why the call to helper_findPadding makes sense.
+		#			The zPads below are of the conv of which this convTranspose is an inverse.
+		[zPadDLeft, zPadDRight, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight] = TFNodesAST.helper_findPadding(outputH, outputW, FH, FW, strideH, strideW, paddingUsedStr, imgD = outputD, FD = FD, strideD = strideD)
+
+		options = {}
+		options[AST.PaddingKeysDict.FD] = FD
+		options[AST.PaddingKeysDict.FH] = FH
+		options[AST.PaddingKeysDict.FW] = FW
+		options[AST.PaddingKeysDict.zPadDLeft] = zPadDLeft
+		options[AST.PaddingKeysDict.zPadDRight] = zPadDRight
+		options[AST.PaddingKeysDict.zPadHLeft] = zPadHLeft
+		options[AST.PaddingKeysDict.zPadHRight] = zPadHRight
+		options[AST.PaddingKeysDict.zPadWLeft] = zPadWLeft
+		options[AST.PaddingKeysDict.zPadWRight] = zPadWRight
+		options[AST.PaddingKeysDict.strideD] = strideD
+		options[AST.PaddingKeysDict.strideH] = strideH
+		options[AST.PaddingKeysDict.strideW] = strideW
+		options[AST.PaddingKeysDict.ConvDim] = 3
+		options[AST.PaddingKeysDict.outputImgD] = outputD
+		options[AST.PaddingKeysDict.outputImgH] = outputH
+		options[AST.PaddingKeysDict.outputImgW] = outputW
+		return (None, AST.BOp(AST.ID(dictNodeNameToOutVarStr[inputsRef[2]]),
+								TFNodesAST.getOperatorsIdx('#T'),
+								AST.ID(dictNodeNameToOutVarStr[inputsRef[1]]),
 								options))
 
 	def helper_processPool(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict, typeOfPool:str):
@@ -537,6 +651,18 @@ class TFNodesAST:
 										 AST.ID(dictNodeNameToOutVarStr[inputsRef[1]]),
 										 AST.ID(dictNodeNameToOutVarStr[inputsRef[2]]),
 										))
+
+	def Transpose(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
+		inputsRef = curNode.getInputsRef()
+		assert(len(inputsRef) == 2)
+		permNodeName = inputsRef[1]
+		# We need to fetch the tensor value of the perm Node
+		permNode = graph.__getitem__(permNodeName)
+		permTensor = permNode.getAttrVal("value").getTensor()
+		permList = permTensor.getContentAsValArr()
+		assert(permTensor.getDType().kind == "i")
+		assert(permTensor.getShapeRef().getRank() == 1)
+		return (None, AST.Transpose(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]), permList))
 
 	def Squeeze(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		# TODO : Do this in somewhat better way
