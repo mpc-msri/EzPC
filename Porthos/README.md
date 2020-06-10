@@ -6,15 +6,23 @@ This folder contains code for Porthos - a semi-honest 3 party secure computation
 * sudo apt-get install libssl-dev
 * sudo apt-get install g++
 * sudo apt-get install make
+* sudo apt-get install cmake
 
 # Running the protocol
 - First setup Eigen library, used for fast matrix multiplication by Porthos, by running `./setup-eigen.sh`.
-- Currently the codebase contains precompiled code for the following 3 neural networks: ResNet-50, DenseNet-121 and SqueezeNet for ImageNet, checked into the following folder: `./src/example_neural_nets`. Toggle the flag in `./src/example_neural_nets/network_config.h` to switch the network which runs. Note that if there is more than one network flag uncommented (meaning ON) or if there is already a main file in src, the compilation will error out saying multiple declarations of main function.
-- To compile use `make clean && make -j`.
-- To run for example the ResNet-50 code, use the following commands:
-`./party0.sh < ../Athos/Networks/ResNet/ResNet_img.inp`,
-`./party1.sh < ../Athos/Networks/ResNet/ResNet_weights.inp`, and
-`./party2.sh`.
+- Currently the codebase contains precompiled code for the following 3 neural networks: ResNet-50, DenseNet-121 and SqueezeNet for ImageNet, checked into the following folder: `./src/example_neural_nets`.
+- To compile, do the following (from Porthos root):
+```
+cd src/
+mkdir build
+cd build
+cmake ..
+make -j
+```
+- To run the MPC code for SqueezeNet, ResNet50 or DenseNet121, from Porthos root, use the following commands: (example shown for ResNet50)
+`./party0.sh ResNet50 < ../Athos/Networks/ResNet/ResNet_img.inp`,
+`./party1.sh ResNet50 < ../Athos/Networks/ResNet/ResNet_weights.inp`, and
+`./party2.sh ResNet50`.
 The above commands make use of fixed-point input files generated from Athos. Please refer to the `README.md` of Athos for instructions on how to generate the same. Also, note that in the scenario of secure inference, `party0.sh` represents the client, which inputs the image, `party1.sh` represents the server, which inputs the model and `party2.sh` represents the helper party which doesn't have any input. The output is learned by `party0`, which represents the client.
 
 # External Code
