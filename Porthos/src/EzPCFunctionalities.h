@@ -30,13 +30,13 @@ SOFTWARE.
 using namespace std;
 
 /***************** Functions for different layers in NN *********************/
-void MatMulCSF2D(int32_t i, 
+void MatMul2D(int32_t i, 
 		int32_t j, 
 		int32_t k, 
 		vector< vector<porthosSecretType> >& A, 
 		vector< vector<porthosSecretType> >& B, 
 		vector< vector<porthosSecretType> >& C, 
-		int32_t consSF);
+		bool modelIsA);
 
 void ArgMax1(int32_t outArrS1, 
 		int32_t inArrS1, 
@@ -58,14 +58,18 @@ void ArgMax3(int32_t outs1,
 void Relu2(int32_t s1, 
 		int32_t s2, 
 		vector< vector<porthosSecretType> >& inArr, 
-		vector< vector<porthosSecretType> >& outArr);
+		vector< vector<porthosSecretType> >& outArr,
+		int32_t sf,
+		bool doTruncation);
 
 void Relu4(int32_t s1, 
 		int32_t s2, 
 		int32_t s3, 
 		int32_t s4, 
 		vector< vector< vector< vector<porthosSecretType> > > >& inArr, 
-		vector< vector< vector< vector<porthosSecretType> > > >& outArr);
+		vector< vector< vector< vector<porthosSecretType> > > >& outArr,
+		int32_t sf,
+		bool doTruncation);
 
 void MaxPool(int32_t N, 
 		int32_t H, 
@@ -86,22 +90,6 @@ void MaxPool(int32_t N,
 		vector< vector< vector< vector<porthosSecretType> > > >& inArr, 
 		vector< vector< vector< vector<porthosSecretType> > > >& outArr);
 
-void ElemWiseMul2(int32_t s1, 
-		int32_t s2, 
-		vector< vector<porthosSecretType> >& arr1, 
-		vector< vector<porthosSecretType> >& arr2, 
-		vector< vector<porthosSecretType> >& outArr, 
-		int32_t shrout);
-
-void ElemWiseMul4(int32_t s1, 
-		int32_t s2, 
-		int32_t s3, 
-		int32_t s4, 
-		vector< vector< vector< vector<porthosSecretType> > > >& arr1, 
-		vector< vector< vector< vector<porthosSecretType> > > >& arr2, 
-		vector< vector< vector< vector<porthosSecretType> > > >& outArr, 
-		int32_t shrout);
-
 void AvgPool(int32_t N, 
 		int32_t H, 
 		int32_t W, 
@@ -121,22 +109,37 @@ void AvgPool(int32_t N,
 		vector< vector< vector< vector<porthosSecretType> > > >& inArr, 
 		vector< vector< vector< vector<porthosSecretType> > > >& outArr);
 
-void FusedBatchNorm4411(int32_t s1, 
-		int32_t s2, 
-		int32_t s3, 
-		int32_t s4, 
-		vector< vector< vector< vector<porthosSecretType> > > >& inArr, 
-		vector<porthosSecretType>& multArr, 
-		vector<porthosSecretType>& biasArr, 
-		int32_t consSF,
-		vector< vector< vector< vector<porthosSecretType> > > >& outputArr);
+void ElemWiseSecretVectorMult(int32_t size, vector<porthosSecretType>& arr1, vector<porthosSecretType>& arr2, vector<porthosSecretType>& outputArr);
+void ElemWiseVectorPublicDiv(int32_t size, vector<porthosSecretType>& arr1, int32_t divisor, vector<porthosSecretType>& outputArr);
 
-void ReduceMean24(int32_t outS1, 
-		int32_t outS2, 
-		int32_t inS1, int32_t inS2, int32_t inS3, int32_t inS4, 
-		vector< vector< vector< vector<porthosSecretType> > > >& inputArr,
-		vector<int32_t>& axes,
-		vector< vector<porthosSecretType> >& outputArr);
+
+void ScaleUp1(int32_t s1, vector<porthosSecretType>& arr, int32_t sf);
+void ScaleUp2(int32_t s1, int32_t s2, vector< vector<porthosSecretType> >& arr, int32_t sf);
+void ScaleUp3(int32_t s1, int32_t s2, int32_t s3, vector< vector< vector<porthosSecretType> > >& arr, int32_t sf);
+void ScaleUp4(int32_t s1, int32_t s2, int32_t s3, int32_t s4, vector< vector< vector< vector<porthosSecretType> > > >& arr, int32_t sf);
+
+void ScaleDown1(int32_t s1, vector<porthosSecretType>& arr, int32_t sf);
+void ScaleDown2(int32_t s1, int32_t s2, vector< vector<porthosSecretType> >& arr, int32_t sf);
+void ScaleDown3(int32_t s1, int32_t s2, int32_t s3, vector< vector< vector<porthosSecretType> > >& arr, int32_t sf);
+void ScaleDown4(int32_t s1, int32_t s2, int32_t s3, int32_t s4, vector< vector< vector< vector<porthosSecretType> > > >& arr, int32_t sf);
+
+void Conv2D(int32_t N, int32_t H, int32_t W, int32_t CI, 
+				int32_t FH, int32_t FW, int32_t CO, 
+				int32_t zPadHLeft, int32_t zPadHRight, 
+				int32_t zPadWLeft, int32_t zPadWRight, 
+				int32_t strideH, int32_t strideW, 
+				vector< vector< vector< vector<porthosSecretType> > > >& inputArr, 
+				vector< vector< vector< vector<porthosSecretType> > > >& filterArr, 
+				vector< vector< vector< vector<porthosSecretType> > > >& outArr);
+
+void Conv2DWrapper(int32_t N, int32_t H, int32_t W, int32_t CI, 
+				int32_t FH, int32_t FW, int32_t CO, 
+				int32_t zPadHLeft, int32_t zPadHRight, 
+				int32_t zPadWLeft, int32_t zPadWRight, 
+				int32_t strideH, int32_t strideW, 
+				vector< vector< vector< vector<porthosSecretType> > > >& inputArr, 
+				vector< vector< vector< vector<porthosSecretType> > > >& filterArr, 
+				vector< vector< vector< vector<porthosSecretType> > > >& outArr);
 
 void ClearMemSecret1(int32_t s1, vector< porthosSecretType >& arr);
 void ClearMemSecret2(int32_t s1, int32_t s2, vector< vector< porthosSecretType > >& arr);

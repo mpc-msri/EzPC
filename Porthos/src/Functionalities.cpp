@@ -268,7 +268,7 @@ void funcMatMulMPC(const vector<porthosSecretType> &a,
 		size_t transpose_a, 
 		size_t transpose_b, 
 		uint32_t consSF,
-		bool areInputsScaled)
+		bool doTruncation)
 {
 	log_print("funcMatMulMPC");
 #if (LOG_DEBUG)
@@ -414,10 +414,10 @@ void funcMatMulMPC(const vector<porthosSecretType> &a,
 
 		addVectors<porthosSecretType>(c, C, c, size);
 
-		assert(FLOAT_PRECISION == consSF && "Please correct FLOAT_PRECISION value to be equal to consSF");
-
-		if (areInputsScaled)
+		if (doTruncation){
+			assert(FLOAT_PRECISION == consSF && "Please correct FLOAT_PRECISION value to be equal to consSF");
 			funcTruncate2PC(c, consSF, size);
+		}
 	}
 }
 
@@ -426,7 +426,8 @@ void funcDotProductMPC(const vector<porthosSecretType> &a,
 		const vector<porthosSecretType> &b,
 		vector<porthosSecretType> &c, 
 		size_t size,
-		uint32_t consSF)
+		uint32_t consSF,
+		bool doTruncation)
 {
 	log_print("funcDotProductMPC");
 
@@ -521,10 +522,11 @@ void funcDotProductMPC(const vector<porthosSecretType> &a,
 			receiveVector<porthosSecretType>(C, PARTY_C, size);
 
 		addVectors<porthosSecretType>(c, C, c, size);
-		
-		assert(FLOAT_PRECISION == consSF && "Please correct FLOAT_PRECISION value to be equal to consSF");
-		
-		funcTruncate2PC(c, consSF, size);
+
+		if (doTruncation){
+			assert(FLOAT_PRECISION == consSF && "Please correct FLOAT_PRECISION value to be equal to consSF");
+			funcTruncate2PC(c, consSF, size);
+		}
 	}
 }
 

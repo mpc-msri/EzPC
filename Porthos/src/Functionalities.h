@@ -69,14 +69,15 @@ void funcMatMulMPC(const vector<porthosSecretType> &a,
 		size_t columns,
 		size_t transpose_a, 
 		size_t transpose_b,
-	        uint32_t consSF = FLOAT_PRECISION,	
-		bool areInputsScaled = true);
+		uint32_t consSF = FLOAT_PRECISION,	
+		bool doTruncation = true);
 
 void funcDotProductMPC(const vector<porthosSecretType> &a, 
 		const vector<porthosSecretType> &b, 
 		vector<porthosSecretType> &c, 
 		size_t size, 
-		uint32_t conSF = FLOAT_PRECISION);
+		uint32_t conSF = FLOAT_PRECISION,
+		bool doTruncation = true);
 
 void funcPrivateCompareMPC(const vector<smallType> &share_m, 
 		const vector<porthosSecretType> &r, 
