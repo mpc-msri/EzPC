@@ -155,7 +155,8 @@ type_:
 ret_typ_:
   | t = type_ { Ast.Typ t }
   | _ = TVOID { Ast.Void (astnd () $startpos $endpos) }
-
+  ;
+  
 binder:
   | typ = type_; var = ID { let v = { name = var; index = 0 } in (v, typ) }
   ;
