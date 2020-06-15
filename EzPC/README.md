@@ -133,5 +133,7 @@ Follow the following instructions to set up the Docker image:<br />
 - This will execute the example and you will get result on client and server.
 - In order to see the EzPC files which were used in this example, you can find them in EzPC/docker_test directory.
 - NOTE: Any changes that you make inside Docker container will be lost as soon as you `exit` the container. In order to save your changes before exiting, use `docker commit CONTAINER_ID ezpc_image`.<br /><br />
+- NOTE: If you face any issues, please refer to https://github.com/mpc-msri/EzPC/issues/59.
+
 ![alt-text](https://github.com/mayank0403/mayank0403.github.io/blob/master/images/EzPC-Docker-Structure%20(3)%20(1).jpg)
  
