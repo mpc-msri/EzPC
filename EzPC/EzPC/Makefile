@@ -1,7 +1,7 @@
 OCAMLC=ocamlc
 GEN_FOLDER=gen
 FCFILE=empty
-FLAGS=-cflags '-w -11@8 -g' -use-menhir -use-ocamlfind -package str -package stdint # -yaccflags -v,--unused-tokens,--explain,--list-errors
+FLAGS=-cflags '-w -11@8 -g' -use-menhir -use-ocamlfind -package str -package stdint  # -yaccflags -v,--unused-tokens,--explain,--list-errors
 
 all: clean main.byte
 default: main

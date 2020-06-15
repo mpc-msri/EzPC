@@ -110,6 +110,7 @@ rule read =
   | "uint64" { TUINT64 }
   | "bool"  { TBOOL }
   | "void" {TVOID }
+  | "float32" {TFLOAT32}
   | "true" { TRUE }
   | "false" { FALSE }
   | "al" { ARITHMETIC }
@@ -140,6 +141,8 @@ rule read =
               with Failure _ -> raise (Error ("literal overflow int64")) }
   | int "uL" { try UINT64 (cvt_uint64_literal (Lexing.lexeme lexbuf))
               with Failure _ -> raise (Error ("literal overflow uint64")) }
+  | float "f" {try FLOAT32 (cvt_flt64_literal (Lexing.lexeme lexbuf)) 
+              with Failure _ -> raise (Error (" literal overflow float32"))}
   | eof   { EOF }
   | _ { lex_error lexbuf }
 

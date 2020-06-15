@@ -130,6 +130,7 @@ let o_basetyp (t:base_type) :comp =
   | Int32  -> o_str "int32_t"
   | Int64  -> o_str "int64_t"
   | Bool   -> o_str "uint32_t"
+  | Float32 -> o_str "float"
 
 let rec o_secret_binop (g:gamma) (op:binop) (sl:secret_label) (e1:expr) (e2:expr) :comp =
   (*
@@ -226,6 +227,7 @@ and o_codegen_expr (g:gamma) (e:codegen_expr) :comp =
       | Secret sl -> failwith "Secret conditionals not allowed for this backend.")
 
   | App_codegen_expr (f, el) -> o_app (o_str f) (List.map o_codegen_expr el)
+  | Input_Flt_g (_, _, _, _) -> failwith ("Codegen floating-point input is not supported with this backend.")
   | Clear_val _ -> failwith ("Codegen_expr Clear_val is unsupported by this backend.") 
                                       
 let o_typ (t:typ) :comp =

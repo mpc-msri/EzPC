@@ -47,6 +47,7 @@ type base_type =
   | Int32
   | Int64
   | Bool
+  | Float32
 
 type secret_label = 
   | Arithmetic
@@ -63,6 +64,7 @@ type const =
   | Int32C   of int32
   | Int64C   of int64
   | BoolC    of bool
+  | Float32C of string (*Check the implicaitons/Possible source of error*)
 
 type unop =
   (* Arithmetic *)
@@ -187,6 +189,7 @@ let rec expr_to_string (e:expr) :string =
   | Const (Int32C n)  -> Int32.to_string n
   | Const (Int64C n)  -> Int64.to_string n
   | Const (BoolC b)   -> string_of_bool b
+  | Const (Float32C n) -> n
   | Var x -> x.name
   | Unop (op, e, lopt) ->
      let op_str = unop_to_string op ^ "_" ^
@@ -219,6 +222,7 @@ let rec typ_to_string (t:typ) :string =
        | Int32  -> "int32"
        | Int64  -> "int64"
        | Bool -> "bool"
+       | Float32 -> "float"
      in
      prefix ^ " " ^ bt_str
   | Array (quals, t, e) ->
@@ -349,6 +353,7 @@ let typeof_const (c:const) (r:range) :typ =
    | UInt64C n -> Base (UInt64, Some Public)
    | Int32C n  -> Base (Int32, Some Public)
    | Int64C n  -> Base (Int64, Some Public)
+   | Float32C n -> Base (Float32, Some Public)
    | BoolC b   -> Base (Bool, Some Public)) |> mk_syntax r
 
 let join_types (t1:typ) (t2:typ) :typ option =
@@ -659,3 +664,5 @@ let get_unsigned (bt:base_type) :base_type =
   | UInt32 | UInt64 | Bool -> bt
   | Int32 -> UInt32
   | Int64 -> UInt64
+  | Float32 -> Float32
+  | _ -> UInt64

@@ -146,6 +146,13 @@ let check_expected_int_typ (e:expr) (t:typ) (l:label) :unit result =
   | Base (bt, Some lt) when (bt = UInt32 || bt = UInt64 || bt = Int32 || bt = Int64) && lt = l -> Well_typed ()
   | _ -> err
 
+let check_expected_flt_typ (e:expr) (t:typ) (l:label) :unit result =
+  let err = Type_error ("Expression " ^ (expr_to_string e) ^ " should have a float type with label " ^ label_to_string l ^
+                          ", instead got: " ^ typ_to_string t, e.metadata) in
+  match t.data with
+  | Base (bt, Some lt) when (bt = Float32) && lt = l -> Well_typed ()
+  | _ -> err
+
 let check_expected_bool_typ (e:expr) (t:typ) (l:label) :unit result =
   let err = Type_error ("Expression " ^ (expr_to_string e) ^ " should have bool type with label " ^ label_to_string l ^
                           ", instead got: " ^ typ_to_string t, e.metadata) in
@@ -255,6 +262,8 @@ let rec check_type_well_formedness (g:gamma) (t:typ) :unit result =
   match t.data with
   | Base (_, None) -> Type_error ("Unlabeled type: " ^ (typ_to_string t), t.metadata)
   | Base (Bool, Some (Secret Arithmetic)) -> Type_error ("Bool type cannot be arithmetic shared: " ^ (typ_to_string t), t.metadata)
+  | Base (Float32, Some (Secret Arithmetic)) ->  Type_error ("Float type cannot be arithmetic shared: " ^ (typ_to_string t), t.metadata)
+  | Base (Float32, Some (Secret Boolean))
   | Base (UInt32, Some (Secret _))
   | Base (Int32, Some (Secret _)) -> if Config.get_bitlen () = 32 then Well_typed () else bitlen_err 32
   | Base (UInt64, Some (Secret _))

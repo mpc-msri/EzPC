@@ -1,0 +1,871 @@
+diff --git a/EzPC/EzPC/ABY_example/common/ezpc.h b/EzPC/EzPC/ABY_example/common/ezpc.h
+index 6f55640..f00fcc5 100644
+--- a/EzPC/EzPC/ABY_example/common/ezpc.h
++++ b/EzPC/EzPC/ABY_example/common/ezpc.h
+@@ -36,6 +36,11 @@ SOFTWARE.
+ #include<cmath>
+ using namespace std;
+ 
++share* put_flt_cons32_gate(Circuit* c, float val, uint32_t bitlen, e_role role){
++  assert(c->GetCircuitType() == C_BOOLEAN);
++  uint32_t* val_int = (uint32_t*)&val;
++  return ((BooleanCircuit*)c)->PutINGate(val_int, bitlen, SERVER);
++}
+ /*
+  * somehow we need this redirection for adding Cons gates
+  * directly calling PutConsGate gives an error
+@@ -113,7 +118,7 @@ share* arithmetic_right_shift(Circuit* c, share* val, uint32_t shift_factor) {
+ struct output_queue_elmt {
+   ostream& os;  //output stream to which we will output (cout or files), can this be a reference to prevent copying?
+   e_role role;  //who should we output the clear value to
+-  enum {PrintMsg, PrintValue } kind;
++  enum {PrintMsg, PrintValue, PrintFloatValue } kind;
+   string msg;
+   share *ptr;
+ };
+@@ -131,6 +136,18 @@ void add_to_output_queue(output_queue &q,
+   q.push_back(elmt);
+ }
+ 
++/*
++ * called from the EzPC generated code
++ */
++void add_float_to_output_queue(output_queue &q,
++			 share *ptr,
++			 e_role role,
++			 ostream &os)
++{
++  struct output_queue_elmt elmt { os, role, output_queue_elmt::PrintFloatValue, "", ptr };
++  q.push_back(elmt);
++}
++
+ void add_print_msg_to_output_queue (output_queue &q, string msg, e_role role, ostream &os)
+ {
+   struct output_queue_elmt elmt { os, role, output_queue_elmt::PrintMsg, msg, NULL };
+@@ -153,7 +170,20 @@ void flush_output_queue(output_queue &q, e_role role, uint32_t bitlen)
+           it->os << it->ptr->get_clear_value<uint64_t>() << endl;
+         }
+       }
+-    } else {
++    } else if (it->kind == output_queue_elmt::PrintFloatValue){
++      if(it->role == ALL || it->role == role) {  //if the queue element role is same as mine
++        if(bitlen == 32) {  //output to the stream
++          uint32_t out_int_val = it->ptr->get_clear_value<uint32_t>() ;
++          float out_val = *((float*)&out_int_val);
++          it->os << out_val << endl;
++        } else {
++          uint64_t out_int_val = it->ptr->get_clear_value<uint64_t>() ;
++          double out_val = *((double*)&out_int_val);
++          it->os << out_val << endl;
++        }
++      }
++    }
++    else{
+       if(it->role == ALL || it->role == role) {  //if the queue element role is same as mine
+         it->os << it->msg << endl;
+       }
+diff --git a/EzPC/EzPC/Makefile b/EzPC/EzPC/Makefile
+index 641efe6..4830ce7 100644
+--- a/EzPC/EzPC/Makefile
++++ b/EzPC/EzPC/Makefile
+@@ -1,7 +1,7 @@
+ OCAMLC=ocamlc
+ GEN_FOLDER=gen
+ FCFILE=empty
+-FLAGS=-cflags '-w -11@8 -g' -use-menhir -use-ocamlfind -package str -package stdint # -yaccflags -v,--unused-tokens,--explain,--list-errors
++FLAGS=-cflags '-w -11@8 -g' -use-menhir -use-ocamlfind -package str -package stdint  # -yaccflags -v,--unused-tokens,--explain,--list-errors
+ 
+ all: clean main.byte
+ default: main
+diff --git a/EzPC/EzPC/ast.ml b/EzPC/EzPC/ast.ml
+index 9c3fb39..93749a3 100644
+--- a/EzPC/EzPC/ast.ml
++++ b/EzPC/EzPC/ast.ml
+@@ -47,6 +47,7 @@ type base_type =
+   | Int32
+   | Int64
+   | Bool
++  | Float32
+ 
+ type secret_label = 
+   | Arithmetic
+@@ -63,18 +64,23 @@ type const =
+   | Int32C   of int32
+   | Int64C   of int64
+   | BoolC    of bool
++  | Float32C of string (*Check the implicaitons/Possible source of error*)
+ 
+ type unop =
+   (* Arithmetic *)
+   | U_minus | Bitwise_neg
+   (* Logical *)
+   | Not
++  (* Floating Point *)
++  | Float_exp | Float_exp2
+ 
+ type binop =
+   (* Arithmetic *)
+   | Sum | Sub | Mul | Div | Mod | Pow | Greater_than | Less_than | Is_equal | Greater_than_equal | Less_than_equal | R_shift_a | L_shift | Bitwise_and | Bitwise_or | Bitwise_xor
+   (* Logical *)
+   | And | Or | Xor | R_shift_l
++  (* Floating Point *)
++  | Float_sum | Float_sub | Float_mul | Float_div
+ 
+ type var = {
+     name: string;
+@@ -155,13 +161,19 @@ let unop_to_string (u:unop) :string =
+   | U_minus -> "-"
+   | Bitwise_neg -> "~"
+   | Not -> "!"
++  | Float_exp2 -> "FLT2EXP"
++  | Float_exp -> "FLTEXP"
+             
+ let binop_to_string (b:binop) :string =
+   match b with
+   | Sum -> "+"
++  | Float_sum -> "+."
+   | Sub -> "-"
++  | Float_sub -> "-."
+   | Mul -> "*"
++  | Float_mul -> "*."
+   | Div -> "/"
++  | Float_div -> "/."
+   | Mod -> "%"
+   | Pow -> "pow"
+   | Greater_than -> ">"
+@@ -187,6 +199,7 @@ let rec expr_to_string (e:expr) :string =
+   | Const (Int32C n)  -> Int32.to_string n
+   | Const (Int64C n)  -> Int64.to_string n
+   | Const (BoolC b)   -> string_of_bool b
++  | Const (Float32C n) -> n
+   | Var x -> x.name
+   | Unop (op, e, lopt) ->
+      let op_str = unop_to_string op ^ "_" ^
+@@ -219,6 +232,7 @@ let rec typ_to_string (t:typ) :string =
+        | Int32  -> "int32"
+        | Int64  -> "int64"
+        | Bool -> "bool"
++       | Float32 -> "float"
+      in
+      prefix ^ " " ^ bt_str
+   | Array (quals, t, e) ->
+@@ -349,6 +363,7 @@ let typeof_const (c:const) (r:range) :typ =
+    | UInt64C n -> Base (UInt64, Some Public)
+    | Int32C n  -> Base (Int32, Some Public)
+    | Int64C n  -> Base (Int64, Some Public)
++   | Float32C n -> Base (Float32, Some Public)
+    | BoolC b   -> Base (Bool, Some Public)) |> mk_syntax r
+ 
+ let join_types (t1:typ) (t2:typ) :typ option =
+@@ -659,3 +674,5 @@ let get_unsigned (bt:base_type) :base_type =
+   | UInt32 | UInt64 | Bool -> bt
+   | Int32 -> UInt32
+   | Int64 -> UInt64
++  | Float32 -> Float32
++  | _ -> UInt64
+diff --git a/EzPC/EzPC/codegen.ml b/EzPC/EzPC/codegen.ml
+index 5b66636..3e7655d 100644
+--- a/EzPC/EzPC/codegen.ml
++++ b/EzPC/EzPC/codegen.ml
+@@ -45,12 +45,18 @@ let o_punop :unop -> comp = function
+   | U_minus -> o_str "-"
+   | Bitwise_neg -> o_str "~"
+   | Not -> o_str "!"
++  | Float_exp -> failwith ("Operator: FLOATEXP should not public")
++  | Float_exp2 -> failwith ("Operator: FLOAT2EXP should not public")
+                         
+ let o_pbinop :binop -> comp = function
+   | Sum          -> o_str "+"
++  | Float_sum    -> o_str "+"
+   | Sub          -> o_str "-"
++  | Float_sub    -> o_str "-"
+   | Mul          -> o_str "*"
++  | Float_mul    -> o_str "*"
+   | Div          -> o_str "/"
++  | Float_div          -> o_str "/"
+   | Mod          -> o_str "%"
+   | Pow          -> failwith "Pow is not an infix operator, so o_pbinop can't handle it"
+   | Greater_than -> o_str ">"
+@@ -97,23 +103,38 @@ let o_cbfunction_maybe_coerce (coerce:bool) (l:secret_label) (f:comp) (args:comp
+ 
+ let o_cbfunction :secret_label -> comp -> comp list -> comp = o_cbfunction_maybe_coerce false
+ 
++let o_flt_app (head:comp) (op_s: comp) (args:comp list) :comp = 
++  o_hd_and_args head (args @ [  (op_s);  ( o_str "bitlen");  (o_str "1");  (o_str "no_status")])
++
++let o_fltunfunction (l:secret_label) (s_op: comp) (args: comp list): comp = 
++  o_flt_app (seq (o_slabel_maybe_coerce true Boolean)  (o_str "->PutFPGate") ) s_op args
++
+ let o_sunop (l:secret_label) (op:unop) (c:comp) :comp =
+-  let c_op =
++  let aux (arg: comp) = o_cbfunction_maybe_coerce true l arg [c] in
++  let float_aux_unop (op_s:string): comp = o_fltunfunction l (o_str op_s)  [c] in
+     match op with
+     | U_minus -> failwith "Codegen: unary minus is not being produced by lexer or parser right now."
+     | Bitwise_neg 
+-    | Not -> o_str "PutINVGate"
+-  in
+-  o_cbfunction_maybe_coerce true l c_op [c]
++    | Not ->  aux (o_str "PutINVGate")
++    | Float_exp -> float_aux_unop "EXP"
++    | Float_exp2 -> float_aux_unop "EXP2"
+   
++let o_fltfunction (l:secret_label) (s_op: comp) (args: comp list): comp = 
++  o_flt_app (seq (o_slabel_maybe_coerce true Boolean)  (o_str "->PutFPGate") ) s_op args
++
+ let o_sbinop (l:secret_label) (op:binop) (c1:comp) (c2:comp) :comp =
+   let aux (s:string) (coerce:bool) :comp = o_cbfunction_maybe_coerce coerce l (o_str s) [c1; c2] in
++  let float_aux (op_s:string): comp = o_fltfunction l (o_str op_s)  [c1; c2] in 
+   let err (s:string) = failwith ("Operator: " ^ s ^ " should have been desugared") in
+   match op with
+   | Sum                -> aux "PutADDGate" false
+   | Sub                -> aux "PutSUBGate" false
+   | Mul                -> aux "PutMULGate" false
+   | Greater_than       -> aux "PutGTGate" false
++  | Float_sum          -> float_aux "ADD" 
++  | Float_sub          -> float_aux "SUB" 
++  | Float_mul          -> float_aux "MUL" 
++  | Float_div          -> float_aux "DIV" 
+   | Div                -> err "DIV"
+   | Mod                -> err "MOD"
+   | Less_than          -> err "LT"
+@@ -137,18 +158,20 @@ let o_pconditional (c1:comp) (c2:comp) (c3:comp) :comp =
+ let o_sconditional (l:secret_label) (c_cond:comp) (c_then:comp) (c_else:comp) :comp =
+   o_cbfunction l (o_str "PutMUXGate") [c_then; c_else; c_cond]
+ 
++let o_flt_subsumption (gate: comp) (args: comp list): comp = 
++  o_app gate (args @ [(o_str "bitlen"); (o_str "role")])
++
+ let o_subsumption (src:label) (tgt:secret_label) (t:typ) (arg:comp) :comp =
+   match src with
+     | Public -> 
+-       let fn =
+-         o_str (
+-             match t.data with
+-             | Base (UInt32, _) | Base (Int32, _) -> "put_cons32_gate"
+-             | Base (UInt64, _) | Base (Int64, _) -> "put_cons64_gate"
+-             | Base (Bool, _) -> "put_cons1_gate"
+-             | _ -> failwith ("codegen:Subsumption node with an unexpected typ: " ^ (typ_to_string t)))
+-       in
+-       o_app fn [o_slabel tgt; arg]
++       (let aux (s:string) : comp = o_app (o_str s) [o_slabel tgt; arg] in
++       (let flt_aux (s:string): comp = o_flt_subsumption (o_str s) [o_slabel_maybe_coerce true tgt; arg] in
++          match t.data with
++          | Base (UInt32, _) | Base (Int32, _) -> aux "put_cons32_gate"
++          | Base (UInt64, _) | Base (Int64, _) -> aux "put_cons64_gate"
++          | Base (Bool, _) -> aux "put_cons1_gate"
++          | Base (Float32,_) -> flt_aux "put_flt_cons32_gate"
++          | _ -> failwith ("codegen:Subsumption node with an unexpected typ: " ^ (typ_to_string t))))
+     | Secret Arithmetic ->
+        let fn_name = if Config.get_bool_sharing_mode () = Config.Yao then "PutA2YGate" else "PutA2BGate" in
+        o_cbfunction tgt (o_str fn_name) [arg]
+@@ -165,6 +188,7 @@ let o_basetyp (t:base_type) :comp =
+   | UInt64 -> o_str "uint64_t"
+   | Int32  -> o_str "int32_t"
+   | Int64  -> o_str "int64_t"
++  | Float32 -> o_str "float"
+   | Bool   -> o_str "uint32_t"
+ 
+ let rec o_secret_binop (g:gamma) (op:binop) (sl:secret_label) (e1:expr) (e2:expr) :comp =
+@@ -174,7 +198,7 @@ let rec o_secret_binop (g:gamma) (op:binop) (sl:secret_label) (e1:expr) (e2:expr
+   let t1 = e1 |> typeof_expr g |> get_opt in
+   let is_signed =
+     match t1.data with
+-    | Base (Int32, _) | Base (Int64, _) -> true
++    | Base (Int32, _) | Base (Int64, _) | Base (Float32, _) -> true
+     | _ -> false
+   in
+   let fn_name (s:string) =
+@@ -215,6 +239,8 @@ and o_expr (g:gamma) (e:expr) :comp =
+   | Const (UInt64C n) -> seq (o_str (" (uint64_t)")) (o_uint64 n)
+ 
+   | Const (BoolC b) -> o_bool b
++
++  | Const (Float32C n) ->  seq (o_str (" (float)")) (o_str n)
+     
+   | Var s -> o_var s
+ 
+@@ -250,6 +276,8 @@ and o_codegen_expr (g:gamma) (e:codegen_expr) :comp =
+   in
+   match e with
+   | Base_e e -> o_expr e
++
++  | Input_Flt_g (r, sl, s, bt) -> o_flt_subsumption (o_str "put_flt_cons32_gate") [o_slabel_maybe_coerce true sl; o_str s.name]
+               
+   | Input_g (r, sl, s, bt) -> o_cbfunction sl (o_str "PutINGate") [o_str s.name; get_bitlen bt; o_role r]
+ 
+@@ -300,11 +328,17 @@ let o_ite (c_if:comp) (c_then:comp) (c_else_opt:comp option) :comp =
+ 
+ let o_assign (lhs:comp) (rhs:comp) :comp = seq lhs (seq (o_str " = ") rhs)
+ 
++(* let o_fltAssign (lhs:comp) (rhs:comp) :comp = seq (o_flt_decl) (seq (o_str "\n") (o_g)) *)
++
+ let o_decl (c_t:comp) (c_varname:comp) (init_opt:comp option) :comp =
+   let c = seq c_t (seq o_space c_varname) in
+   if is_none init_opt then c
+   else seq c (seq (o_str " = ") (get_opt init_opt))
+                                          
++let get_fresh_flt_var_public: (unit -> string) = 
++  let r = ref 0 in
++  fun _ -> let s = "__tmp__float__var" ^ (string_of_int !r) in r := !r + 1; s
++
+ let get_fresh_var :(unit -> string) =
+   let r = ref 0 in
+   fun _ -> let s = "__tmp__fresh_var_" ^ (string_of_int !r) in r := !r + 1; s
+@@ -348,7 +382,7 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
+     
+   | Seq (s1, s2) -> o_codegen_stmt g (Seq_codegen (Base_s s1, Base_s s2))
+ 
+-  | Input (e_role, e_var, t) when is_role e_role && is_var e_var ->
++  | Input (e_role, e_var, t) when is_role e_role && is_var e_var  ->
+      let rng = s.metadata in
+      let r, x = get_role e_role, get_var e_var in
+      let is_arr = is_array_typ t in
+@@ -398,11 +432,17 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
+        if is_secret_label l then
+          let sl = get_secret_label l in
+          let cin = If_codegen (Public, r_cmp, cin, None) in
++         let input_key = 
++          (match bt with
++          | Float32 ->
++            Input_Flt_g (r, sl, tmp_var_name, bt)
++          | _ ->
++            Input_g (r, sl, tmp_var_name, bt)) in
+          (* add an input gate *)
+          let assgn = Assign_codegen (assgn_left,
+                                      Conditional_codegen (r_cmp,
+-                                                          Input_g (r, sl, tmp_var_name, bt),
+-                                                          Dummy_g (sl, bt), Public))
++                                                           input_key,
++                                                           Dummy_g (sl, bt), Public))
+          in
+          Seq_codegen (cin, assgn)
+        else
+@@ -494,7 +534,12 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
+                             s)
+              ) el (List.length el - 1, s) |> snd
+          in
+-         aux (App_codegen ("add_to_output_queue", [Base_e (Var { name = "out_q"; index = 0 } |> mk_dsyntax "");
++         let output_msg = 
++            match bt with
++            | Float32 -> "add_float_to_output_queue"
++            | _ -> "add_to_output_queue"
++         in 
++         aux (App_codegen (output_msg, [Base_e (Var { name = "out_q"; index = 0 } |> mk_dsyntax "");
+                                                    Output_g (r, sl, elmt_of_e);
+                                                    Base_e e_role;
+                                                    Base_e (Var { name = "cout"; index = 0 } |> mk_dsyntax "")]))
+@@ -628,6 +673,9 @@ and o_codegen_stmt (g:gamma) (s:codegen_stmt) :comp * gamma =
+ 
+   | Read_interim _ -> failwith "Impossible! we don't support reading of arbitrary shares"
+ 
++  (* | Assign_codegen (e1, e2) when (typeof_expr g e1) == Float32 -> o_fltAssign (o_codegen_expr g e1) (o_codegen_expr g e2), g *)
++  (*Only one expr needs checking as the other's type is implied after typechecking*)
++  
+   | Assign_codegen (e1, e2) -> o_with_semicolon (o_assign (o_codegen_expr g e1) (o_codegen_expr g e2)), g
+            
+   | For_codegen (e1, e2, e3, s) ->
+@@ -739,7 +787,7 @@ e_role role;\n"
+ 
+ let aby_main_prelude_string :string =
+ "role = role_param;\n\
+-party = new ABYParty(role_param, address, port, seclvl, bitlen, nthreads, mt_alg, 520000000);\n\
++party = new ABYParty(role_param, address, port, seclvl, bitlen, nthreads, mt_alg);\n\
+ std::vector<Sharing*>& sharings = party->GetSharings();\n\
+ ycirc = (sharings)[S_YAO]->GetCircuitBuildRoutine();\n\
+ acirc = (sharings)[S_ARITH]->GetCircuitBuildRoutine();\n\
+diff --git a/EzPC/EzPC/codegenast.ml b/EzPC/EzPC/codegenast.ml
+index 590c3b5..0d95abc 100644
+--- a/EzPC/EzPC/codegenast.ml
++++ b/EzPC/EzPC/codegenast.ml
+@@ -38,6 +38,7 @@ type codegen_expr =
+   | Base_e              of expr
+   | Input_g             of role * secret_label * var * base_type  (* base_type is used by the oblivc backend to output the correct format string specifier in the oblivc input function *)
+   | Output_g            of role * secret_label * codegen_expr     (* only used by the ABY backend, in oblivc output is a statement, see Output_s below *)
++  | Input_Flt_g         of role * secret_label * var * base_type
+   | Dummy_g             of secret_label * base_type
+   | Clear_val           of codegen_expr * base_type
+   | Conditional_codegen of codegen_expr * codegen_expr * codegen_expr * label
+diff --git a/EzPC/EzPC/codegenoblivc.ml b/EzPC/EzPC/codegenoblivc.ml
+index 84e2be0..626742d 100644
+--- a/EzPC/EzPC/codegenoblivc.ml
++++ b/EzPC/EzPC/codegenoblivc.ml
+@@ -54,6 +54,7 @@ let o_unop :unop -> comp = function
+   | U_minus -> o_str "-"
+   | Bitwise_neg -> o_str "~"
+   | Not -> o_str "!"
++  | _ -> failwith "no support for unary floating-point operations in OBLIVC"
+                         
+ let o_binop :binop -> comp = function
+   | Sum          -> o_str "+"
+@@ -76,6 +77,7 @@ let o_binop :binop -> comp = function
+   | Or           -> o_str "|"
+   | Xor          -> o_str "^"
+   | R_shift_l    -> o_str ">>"
++  | _ -> failwith "no support for bindary floating-point operations in OBLIVC"
+ 
+ let o_conditional (c1:comp) (c2:comp) (c3:comp) :comp =
+   seq c1 (seq (o_str " ? ") (seq c2 (seq (o_str " : ") c3)))
+diff --git a/EzPC/EzPC/codegenporthos.ml b/EzPC/EzPC/codegenporthos.ml
+index 2fb982c..fcfcc17 100644
+--- a/EzPC/EzPC/codegenporthos.ml
++++ b/EzPC/EzPC/codegenporthos.ml
+@@ -45,6 +45,7 @@ let o_punop :unop -> comp = function
+   | U_minus -> o_str "-"
+   | Bitwise_neg -> o_str "~"
+   | Not -> o_str "!"
++  | _ -> failwith "no support for unary floating-point operations in porthos"
+                         
+ let o_pbinop :binop -> comp = function
+   | Sum          -> o_str "+"
+@@ -67,6 +68,7 @@ let o_pbinop :binop -> comp = function
+   | Or           -> o_str "||"
+   | Xor          -> o_str "^"
+   | R_shift_l    -> o_str ">>"
++  | _ -> failwith "no support for binary floating-point operations in porthos"
+ 
+ let o_hd_and_args (head:comp) (args:comp list) :comp =
+   match args with
+@@ -87,6 +89,7 @@ let o_sunop (l:secret_label) (op:unop) (c:comp) :comp =
+   | U_minus -> failwith "Codegen: unary minus is not being produced by lexer or parser right now."
+   | Bitwise_neg -> err_unsupp "Bitwise_neg"
+   | Not -> err_unsupp "Boolean_not"
++  | _ -> failwith "no support for secret unary floating-point operations in porthos"
+   
+ let o_sbinop (l:secret_label) (op:binop) (c1:comp) (c2:comp) :comp =
+   let err (s:string) = failwith ("Codegen: Operator: " ^ s ^ " should have been desugared") in
+@@ -113,6 +116,7 @@ let o_sbinop (l:secret_label) (op:binop) (c1:comp) (c2:comp) :comp =
+   | Xor                -> err_unsupp "Boolean_xor"
+   | R_shift_l          -> err_unsupp "Logical_right_shift"
+   | Pow                -> err_unsupp "Pow"
++  | _ -> failwith "no support for secret binary floating-point operations in porthos"
+                
+ let o_pconditional (c1:comp) (c2:comp) (c3:comp) :comp =
+   seq c1 (seq (o_str " ? ") (seq c2 (seq (o_str " : ") c3)))
+@@ -130,6 +134,7 @@ let o_basetyp (t:base_type) :comp =
+   | Int32  -> o_str "int32_t"
+   | Int64  -> o_str "int64_t"
+   | Bool   -> o_str "uint32_t"
++  | Float32 -> o_str "float"
+ 
+ let rec o_secret_binop (g:gamma) (op:binop) (sl:secret_label) (e1:expr) (e2:expr) :comp =
+   (*
+@@ -226,6 +231,7 @@ and o_codegen_expr (g:gamma) (e:codegen_expr) :comp =
+       | Secret sl -> failwith "Secret conditionals not allowed for this backend.")
+ 
+   | App_codegen_expr (f, el) -> o_app (o_str f) (List.map o_codegen_expr el)
++  | Input_Flt_g (_, _, _, _) -> failwith ("Codegen floating-point input is not supported with this backend.")
+   | Clear_val _ -> failwith ("Codegen_expr Clear_val is unsupported by this backend.") 
+                                       
+ let o_typ (t:typ) :comp =
+diff --git a/EzPC/EzPC/epowx/epowx.ezpc b/EzPC/EzPC/epowx/epowx.ezpc
+new file mode 100644
+index 0000000..b804df8
+--- /dev/null
++++ b/EzPC/EzPC/epowx/epowx.ezpc
+@@ -0,0 +1,145 @@
++def uint32_al epowx(uint32_al x){
++
++  uint32_al negX = (0u - x);
++  bool_bl isPos = ((negX>x)?true:false);
++  uint32 SCALE = 16777216u;
++  x = isPos?x:negX;
++
++  uint32_al ans = SCALE;
++  uint32_al y = SCALE;
++  
++  x = (x + 12u);
++
++  y = (y >> 12) * x;
++  ans = isPos?(ans + y):(ans-y);
++
++  y = (y >> 12) * x;
++  uint32_pl count = 8388608u;
++  y = (y >> 12) * (count >> 12);
++  ans = ans+y;
++
++  y = (y >> 12) * x;
++  count = 5592405u;
++  y = (y >> 12) * (count >> 12);
++  ans = isPos?(ans + y):(ans-y);
++
++  y = (y >> 12) * x;
++  count = 4194304u;
++  y = (y >> 12) * (count >> 12);
++  ans = ans+y;
++
++  y = (y >> 12) * x;
++  count = 3355443u;
++  y = (y >> 12) * (count >> 12);
++  ans = isPos?(ans + y):(ans-y);
++  
++
++  return ans;   
++}
++
++def float32_bl epowxFlt(float32_pl x){
++
++  float32_pl N;
++
++  float32_bl sN = N;
++  float32_bl d = x -. (sN *. 0.69315f);
++  float32_bl ans = 1.0f;
++  float32_bl y = 1.0f;
++
++  y = y *. d;
++  ans = ans +. y;
++
++  y = y *. d;
++  y = y /. 2.0f;
++  ans = ans +. y;
++
++  y = y *. d;
++  y = y /. 3.0f;
++  ans = ans +. y;
++
++  ans = ans *. FLT2EXP(sN);
++  output(ALL, ans);
++  
++  return ans;
++}
++
++def void main ()
++{
++  
++float32_pl x;
++uint32_al ans;
++float32_bl y;
++y = epowxFlt(x);
++
++(*
++x = 4249404927u;
++ans = epowx(x);output(SERVER, ans);
++
++x = 4253723619u;
++ans = epowx(x);output(SERVER, ans);
++
++x = 4257646952u;
++ans = epowx(x);output(SERVER, ans);
++
++x = 4261191305u;
++ans = epowx(x);output(SERVER, ans);
++
++x = 4264408623u;
++ans = epowx(x);output(SERVER, ans);
++
++x = 4267317129u;
++ans = epowx(x);output(SERVER, ans);
++
++x = 4269943715u;
++ans = epowx(x);output(SERVER, ans);
++
++x = 4272326333u;
++ans = epowx(x);output(SERVER, ans);
++
++x = 4274479792u;
++ans = epowx(x);output(SERVER, ans);
++
++x = 4276431531u;
++ans = epowx(x);output(SERVER, ans);
++
++x = 4278190080u;
++ans = epowx(x);output(SERVER, ans);
++
++x = 0u;
++ans = epowx(x);output(SERVER, ans);
++
++x = 16777216u;
++ans = epowx(x);output(SERVER, ans);
++
++x = 18535765u;
++ans = epowx(x);output(SERVER, ans);
++
++x = 20487504u;
++ans = epowx(x);output(SERVER, ans);
++
++x = 22640963u;
++ans = epowx(x);output(SERVER, ans);
++
++x = 25023581u;
++ans = epowx(x);output(SERVER, ans);
++
++x = 27650167u;
++ans = epowx(x);output(SERVER, ans);
++
++x = 30558673u;
++ans = epowx(x);output(SERVER, ans);
++
++x = 33775991u;
++ans = epowx(x);output(SERVER, ans);
++
++x = 37320344u;
++ans = epowx(x);output(SERVER, ans);
++
++x = 41243677u;
++ans = epowx(x);output(SERVER, ans);
++
++x = 45562369u;
++ans = epowx(x);output(SERVER, ans);
++*)
++
++}
+\ No newline at end of file
+diff --git a/EzPC/EzPC/infer.ml b/EzPC/EzPC/infer.ml
+index 37a0f52..9ace254 100644
+--- a/EzPC/EzPC/infer.ml
++++ b/EzPC/EzPC/infer.ml
+@@ -62,6 +62,8 @@ and infer_binop_label (g:gamma) (op:binop) (e1:expr) (e2:expr) (lopt:label optio
+         match op with
+         | Sum | Sub | Div | Mod -> set_default_label None
+         | Mul -> Binop (op, e1, e2, Some (Secret Arithmetic))
++        | Float_sum | Float_div | Float_sub | Float_mul ->
++               Binop(op, e1, e2, Some (Secret Boolean))
+         | Pow -> Binop (op, e1, e2, Some Public)
+         | Greater_than | Less_than | Greater_than_equal | Less_than_equal | Is_equal ->
+            Binop (op, e1, e2, Some (Secret Boolean))
+diff --git a/EzPC/EzPC/lexer.mll b/EzPC/EzPC/lexer.mll
+index c5296f1..4c5cde8 100644
+--- a/EzPC/EzPC/lexer.mll
++++ b/EzPC/EzPC/lexer.mll
+@@ -53,6 +53,8 @@ let cvt_uint32_literal s =
+   Uint32.of_string (String.sub s 0 (String.length s - 1))
+ let cvt_uint64_literal s =
+   Uint64.of_string (String.sub s 0 (String.length s - 2))
++let cvt_flt64_literal s = 
++  (String.sub s 0 (String.length s - 1))
+ }
+ 
+ let white = [' ' '\t']+
+@@ -63,6 +65,7 @@ let all = ['a'-'z' 'A'-'Z' '0'-'9']
+ let id = letter all*
+ let bool = "true" | "false"
+ let eol = '\r' | '\n' | "\r\n"
++let float = int "." int
+ 
+ rule read = 
+   parse
+@@ -82,10 +85,16 @@ rule read =
+   | "="   { EQUALS }
+   | "~"   { BITWISE_NEG }
+   | "!"   { NOT }
++  | "+."  { FLOAT_SUM }
+   | "+"   { SUM }
++  | "-."  { FLOAT_SUB }
+   | "-"   { SUB }
++  | "*."  { FLOAT_MUL }
+   | "*"   { MUL }
++  | "/."  { FLOAT_DIV }
+   | "/"   { DIV }
++  | "FLT2EXP" { FLOAT_EXP2 }
++  | "FLTEXP"  { FLOAT_EXP }
+   | "%"   { MOD }
+   | "^^"  { POW }
+   | ">>"  { R_SHIFT_A }
+@@ -110,6 +119,7 @@ rule read =
+   | "uint64" { TUINT64 }
+   | "bool"  { TBOOL }
+   | "void" {TVOID }
++  | "float32" {TFLOAT32}
+   | "true" { TRUE }
+   | "false" { FALSE }
+   | "al" { ARITHMETIC }
+@@ -140,6 +150,8 @@ rule read =
+               with Failure _ -> raise (Error ("literal overflow int64")) }
+   | int "uL" { try UINT64 (cvt_uint64_literal (Lexing.lexeme lexbuf))
+               with Failure _ -> raise (Error ("literal overflow uint64")) }
++  | float "f" {try FLOAT32 (cvt_flt64_literal (Lexing.lexeme lexbuf)) 
++              with Failure _ -> raise (Error (" literal overflow float32"))}
+   | eof   { EOF }
+   | _ { lex_error lexbuf }
+ 
+diff --git a/EzPC/EzPC/parser.mly b/EzPC/EzPC/parser.mly
+index d9dfb07..8f3c7d9 100644
+--- a/EzPC/EzPC/parser.mly
++++ b/EzPC/EzPC/parser.mly
+@@ -64,6 +64,7 @@ let match_stmt_option msg str =
+ %token <Stdint.uint64> UINT64
+ %token <Stdint.int32> INT32
+ %token <Stdint.int64> INT64
++%token <string> FLOAT32
+ %token LPAREN RPAREN
+ %token LBRACE RBRACE
+ %token LBRACKET RBRACKET
+@@ -71,7 +72,7 @@ let match_stmt_option msg str =
+ %token OUTPUT INPUT
+ %token RETURN
+ %token COMMA
+-%token TINT32 TINT64 TUINT32 TUINT64
++%token TINT32 TINT64 TUINT32 TUINT64 TFLOAT32
+ %token TBOOL TRUE FALSE
+ %token TVOID
+ %token ARITHMETIC BOOLEAN PUBLIC
+@@ -81,6 +82,7 @@ let match_stmt_option msg str =
+ %token EQUALS
+ %token BITWISE_NEG NOT
+ %token SUM SUB MUL DIV MOD POW R_SHIFT_A L_SHIFT BITWISE_AND BITWISE_OR BITWISE_XOR AND OR XOR R_SHIFT_L
++%token FLOAT_SUM FLOAT_SUB FLOAT_MUL FLOAT_DIV FLOAT_EXP2 FLOAT_EXP
+ %token LESS_THAN GREATER_THAN IS_EQUAL GREATER_THAN_EQUAL LESS_THAN_EQUAL
+ %token SUBSUMPTION FOR WHILE
+ %token EOF
+@@ -105,9 +107,11 @@ let match_stmt_option msg str =
+ %left IS_EQUAL
+ %left GREATER_THAN GREATER_THAN_EQUAL LESS_THAN LESS_THAN_EQUAL
+ %left R_SHIFT_A L_SHIFT R_SHIFT_L
+-%left SUM SUB
++%left SUM SUB 
+ %left MUL DIV MOD
+ %left POW
++%left FLOAT_MUL FLOAT_DIV 
++%left FLOAT_SUM FLOAT_SUB
+ %nonassoc BINOP_ASSOC
+ %nonassoc BINOP_SOME_ASSOC
+ %nonassoc UNOP_ASSOC
+@@ -137,6 +141,7 @@ base_type:
+   | TINT32 { Ast.Int32 }
+   | TINT64 { Ast.Int64 }
+   | TBOOL { Ast.Bool }
++  | TFLOAT32 {Ast.Float32}
+   ;
+ 
+ index_expr:
+@@ -154,7 +159,7 @@ type_:
+ 
+ ret_typ_:
+   | t = type_ { Ast.Typ t }
+-  | _ = TVOID { Ast.Void (astnd () $startpos $endpos) }
++  | na = TVOID { Ast.Void (astnd () $startpos $endpos) }
+ 
+ binder:
+   | typ = type_; var = ID { let v = { name = var; index = 0 } in (v, typ) }
+@@ -204,6 +209,7 @@ expr:
+   | x = ID { let v = { name = x; index = 0; } in astnd (Ast.Var v) $startpos $endpos }
+   | u = unop; e1 = expr; { astnd (Ast.Unop (u, e1, None)) $startpos $endpos }    %prec UNOP_ASSOC
+   | u = unop; UNDERSCORE; l = label; e1 = expr; { astnd (Ast.Unop (u, e1, Some l)) $startpos $endpos }    %prec UNOP_SOME_ASSOC
++  | u = float_op_exp; LPAREN; e1 = expr; RPAREN { astnd  ( Ast.Unop (u, e1, None)) $startpos $endpos } 
+   | e1 = expr; b = binop; e2 = expr; { astnd (Ast.Binop(b,e1,e2,None)) $startpos $endpos }    %prec BINOP_ASSOC
+   | e1 = expr; b = binop; UNDERSCORE; l = label; e2 = expr; { astnd (Ast.Binop(b,e1,e2,Some(l))) $startpos $endpos }    %prec BINOP_SOME_ASSOC
+   | e1 = expr; QUESTION_MARK; e2 = expr; COLON; e3 = expr { astnd (Ast.Conditional(e1,e2,e3,None)) $startpos $endpos }  %prec CONDITIONAL
+@@ -215,6 +221,12 @@ expr:
+   | error { parse_error "Expr: " $startpos $endpos}
+   ;
+ 
++float_op_exp:
++  | FLOAT_EXP { Ast.Float_exp }
++  | FLOAT_EXP2  { Ast.Float_exp2 }
++  | error { parse_error "Float_op_exp: " $startpos $endpos }
++  ;
++
+ expr_:
+   | LPAREN; e = expr; RPAREN  { e }
+   ;
+@@ -248,6 +260,10 @@ binop:
+   | OR { Ast.Or }
+   | XOR { Ast.Xor }
+   | R_SHIFT_L { Ast.R_shift_l }
++  | FLOAT_SUM { Ast.Float_sum }
++  | FLOAT_SUB { Ast.Float_sub }
++  | FLOAT_MUL { Ast.Float_mul }
++  | FLOAT_DIV { Ast.Float_div }
+   ;
+ 
+ const:
+@@ -259,8 +275,10 @@ const:
+   | i = UINT64 { Ast.UInt64C i }
+   | SUB; i = INT64; { Ast.Int64C (Int64.neg i) }
+   | SUB; i = UINT64; { Ast.UInt64C (Uint64.neg i) }
+-  | _ = TRUE { Ast.BoolC true }
+-  | _ = FALSE { Ast.BoolC false }
++  | i = FLOAT32 {Ast.Float32C i }
++  | SUB; i = FLOAT32; { Ast.Float32C (String.concat "" (List.cons "-" [i]) ) }
++  | tr = TRUE { Ast.BoolC true }
++  | fl = FALSE { Ast.BoolC false }
+   ;
+ 
+ label:
+@@ -269,6 +287,6 @@ label:
+   ;
+ 
+ secret_label:
+-  | _ = ARITHMETIC { Ast.Arithmetic }
+-  | _ = BOOLEAN { Ast.Boolean }
++  | ar = ARITHMETIC { Ast.Arithmetic }
++  | bl = BOOLEAN { Ast.Boolean }
+   ;
+diff --git a/EzPC/EzPC/runtests.sh b/EzPC/EzPC/runtests.sh
+old mode 100644
+new mode 100755
+diff --git a/EzPC/EzPC/tc.ml b/EzPC/EzPC/tc.ml
+index 9d1ae05..33d4bbe 100644
+--- a/EzPC/EzPC/tc.ml
++++ b/EzPC/EzPC/tc.ml
+@@ -97,6 +97,7 @@ let check_unop_label_is_consistent (e:expr) (op:unop) (l:label) :unit result =
+      | U_minus -> Type_error ("Unary minus should have been desugared: " ^ expr_to_string e, e.metadata)
+      | Bitwise_neg when l = Boolean -> Well_typed ()
+      | Not when l = Boolean -> Well_typed ()
++     | Float_exp | Float_exp2 when l = Boolean -> Well_typed ()
+      | _ -> Type_error ("Unary operator expected a boolean label: " ^ expr_to_string e, e.metadata)
+ 
+ (*
+@@ -110,6 +111,7 @@ let check_binop_label_is_consistent (e:expr) (op:binop) (l:label) :unit result =
+      match op with
+      | Sum | Sub | Div | Mod -> Well_typed ()
+      | Mul when l = Arithmetic -> Well_typed ()
++     | Float_sum | Float_sub | Float_mul |Float_div  when l = Boolean -> Well_typed ()
+      | Greater_than | Less_than | Greater_than_equal | Less_than_equal | Is_equal when l = Boolean -> Well_typed ()
+      | L_shift when l = Boolean -> Well_typed ()
+      | R_shift_a when l = Boolean -> Well_typed ()
+@@ -146,6 +148,13 @@ let check_expected_int_typ (e:expr) (t:typ) (l:label) :unit result =
+   | Base (bt, Some lt) when (bt = UInt32 || bt = UInt64 || bt = Int32 || bt = Int64) && lt = l -> Well_typed ()
+   | _ -> err
+ 
++let check_expected_flt_typ (e:expr) (t:typ) (l:label) :unit result =
++  let err = Type_error ("Expression " ^ (expr_to_string e) ^ " should have a float type with label " ^ label_to_string l ^
++                          ", instead got: " ^ typ_to_string t, e.metadata) in
++  match t.data with
++  | Base (bt, Some lt) when (bt = Float32) && lt = l -> Well_typed ()
++  | _ -> err
++
+ let check_expected_bool_typ (e:expr) (t:typ) (l:label) :unit result =
+   let err = Type_error ("Expression " ^ (expr_to_string e) ^ " should have bool type with label " ^ label_to_string l ^
+                           ", instead got: " ^ typ_to_string t, e.metadata) in
+@@ -173,6 +182,8 @@ let rec tc_expr (g:gamma) (e:expr) :eresult =
+                           bind (match op with
+                                 | Bitwise_neg -> check_expected_int_typ e1 t1 l
+                                 | Not -> check_expected_bool_typ e1 t1 l
++                                | Float_exp | Float_exp2 -> 
++                                   check_expected_flt_typ e1 t1 l
+                                 | _ -> Type_error ("Unexpected operator: " ^ unop_to_string op, e.metadata)) (fun _ -> Well_typed t1))))
+ 
+   | Binop (op, e1, e2, lopt) ->
+@@ -199,6 +210,9 @@ let rec tc_expr (g:gamma) (e:expr) :eresult =
+                                  | And | Or | Xor -> 
+                                     bind (check_expected_bool_typ e1 t1 l) (fun _ ->
+                                            bind (check_expected_bool_typ e2 t2 l) (fun _ -> Well_typed t1))
++                                 | Float_sum | Float_sub | Float_div | Float_mul ->
++                                    bind (check_expected_flt_typ e1 t1 l) (fun _ ->
++                                          bind (check_expected_flt_typ e2 t2 l) (fun _ -> Well_typed t1))
+                                  | _ -> Type_error ("Unexpected operator: " ^ binop_to_string op, e.metadata)))))
+ 
+   | Conditional (e1, e2, e3, Some Public) ->
+@@ -255,6 +269,8 @@ let rec check_type_well_formedness (g:gamma) (t:typ) :unit result =
+   match t.data with
+   | Base (_, None) -> Type_error ("Unlabeled type: " ^ (typ_to_string t), t.metadata)
+   | Base (Bool, Some (Secret Arithmetic)) -> Type_error ("Bool type cannot be arithmetic shared: " ^ (typ_to_string t), t.metadata)
++  | Base (Float32, Some (Secret Arithmetic)) ->  Type_error ("Float type cannot be arithmetic shared: " ^ (typ_to_string t), t.metadata)
++  | Base (Float32, Some (Secret Boolean))
+   | Base (UInt32, Some (Secret _))
+   | Base (Int32, Some (Secret _)) -> if Config.get_bitlen () = 32 then Well_typed () else bitlen_err 32
+   | Base (UInt64, Some (Secret _))
+diff --git a/EzPC/EzPC/tcenv.ml b/EzPC/EzPC/tcenv.ml
+index 624112f..530aef2 100644
+--- a/EzPC/EzPC/tcenv.ml
++++ b/EzPC/EzPC/tcenv.ml
+@@ -142,6 +142,8 @@ let rec typeof_expr (g:gamma) (e:expr) :typ option =
+      (match op with
+       | Sum | Sub | Mul | Div | Mod | Pow | Bitwise_and | Bitwise_or | Bitwise_xor ->
+          map_opt (typeof_expr g e1) (fun t1 -> map_opt (typeof_expr g e2) (fun t2 -> join_types t1 t2)) |> double_opt |> double_opt
++      | Float_sum | Float_sub | Float_mul | Float_div ->
++          map_opt (typeof_expr g e1) (fun t1 -> map_opt (typeof_expr g e2) (fun t2 -> join_types t1 t2)) |> double_opt |> double_opt
+       | R_shift_a | L_shift | R_shift_l -> typeof_expr g e1
+       | Greater_than | Less_than | Is_equal | Greater_than_equal | Less_than_equal ->
+          Base (Bool, lopt) |> mk_syntax e.metadata |> some
