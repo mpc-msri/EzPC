@@ -154,7 +154,7 @@ type_:
 
 ret_typ_:
   | t = type_ { Ast.Typ t }
-  | _ = TVOID { Ast.Void (astnd () $startpos $endpos) }
+  | TVOID { Ast.Void (astnd () $startpos $endpos) }
 
 binder:
   | typ = type_; var = ID { let v = { name = var; index = 0 } in (v, typ) }
@@ -259,8 +259,8 @@ const:
   | i = UINT64 { Ast.UInt64C i }
   | SUB; i = INT64; { Ast.Int64C (Int64.neg i) }
   | SUB; i = UINT64; { Ast.UInt64C (Uint64.neg i) }
-  | _ = TRUE { Ast.BoolC true }
-  | _ = FALSE { Ast.BoolC false }
+  | TRUE { Ast.BoolC true }
+  | FALSE { Ast.BoolC false }
   ;
 
 label:
@@ -269,6 +269,6 @@ label:
   ;
 
 secret_label:
-  | _ = ARITHMETIC { Ast.Arithmetic }
-  | _ = BOOLEAN { Ast.Boolean }
+  | ARITHMETIC { Ast.Arithmetic }
+  | BOOLEAN { Ast.Boolean }
   ;
