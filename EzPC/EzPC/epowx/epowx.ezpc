@@ -8,7 +8,7 @@ def uint32_al epowx(uint32_al x){
   uint32_al ans = SCALE;
   uint32_al y = SCALE;
   
-  x = (x >> 12);
+  x = (x + 12u);
 
   y = (y >> 12) * x;
   ans = isPos?(ans + y):(ans-y);
@@ -32,48 +32,43 @@ def uint32_al epowx(uint32_al x){
   count = 3355443u;
   y = (y >> 12) * (count >> 12);
   ans = isPos?(ans + y):(ans-y);
+  
+
   return ans;   
 }
 
-def float64_bl epowxFlt(float64_pl x){
-  float64_pl N;
+def float32_bl epowxFlt(float32_pl x){
 
-  float64_bl sX = x;
-  float64_bl sN = N;
-  float64_pl Log2 = 0.69315f;
-  float64_bl slog2 = Log2;
-  float64_bl d = sX -. sN *. Log2;
-  float64_pl one = 1.0f;
-  float64_pl two = 2.0f;
-  float64_pl three = 3.0f;
-  float64_bl ans = one;
-  float64_bl y = one;
-  float64_bl count = two;
+  float32_pl N;
+
+  float32_bl sN = N;
+  float32_bl d = x -. (sN *. 0.69315f);
+  float32_bl ans = 1.0f;
+  float32_bl y = 1.0f;
 
   y = y *. d;
   ans = ans +. y;
 
   y = y *. d;
-  y = y /. count;
+  y = y /. 2.0f;
   ans = ans +. y;
-
-  count = three;
 
   y = y *. d;
-  y = y /. count;
+  y = y /. 3.0f;
   ans = ans +. y;
-
 
   ans = ans *. FLT2EXP(sN);
+  output(ALL, ans);
+  
   return ans;
 }
 
 def void main ()
 {
   
-float64_pl x;
+float32_pl x;
 uint32_al ans;
-float64_bl y;
+float32_bl y;
 y = epowxFlt(x);
 
 (*

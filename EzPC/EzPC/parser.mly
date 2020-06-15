@@ -64,7 +64,7 @@ let match_stmt_option msg str =
 %token <Stdint.uint64> UINT64
 %token <Stdint.int32> INT32
 %token <Stdint.int64> INT64
-%token <string> FLOAT64
+%token <string> FLOAT32
 %token LPAREN RPAREN
 %token LBRACE RBRACE
 %token LBRACKET RBRACKET
@@ -72,7 +72,7 @@ let match_stmt_option msg str =
 %token OUTPUT INPUT
 %token RETURN
 %token COMMA
-%token TINT32 TINT64 TUINT32 TUINT64 TFLOAT64
+%token TINT32 TINT64 TUINT32 TUINT64 TFLOAT32
 %token TBOOL TRUE FALSE
 %token TVOID
 %token ARITHMETIC BOOLEAN PUBLIC
@@ -110,8 +110,8 @@ let match_stmt_option msg str =
 %left SUM SUB 
 %left MUL DIV MOD
 %left POW
-%left FLOAT_SUM FLOAT_SUB
 %left FLOAT_MUL FLOAT_DIV 
+%left FLOAT_SUM FLOAT_SUB
 %nonassoc BINOP_ASSOC
 %nonassoc BINOP_SOME_ASSOC
 %nonassoc UNOP_ASSOC
@@ -141,7 +141,7 @@ base_type:
   | TINT32 { Ast.Int32 }
   | TINT64 { Ast.Int64 }
   | TBOOL { Ast.Bool }
-  | TFLOAT64 {Ast.Float64}
+  | TFLOAT32 {Ast.Float32}
   ;
 
 index_expr:
