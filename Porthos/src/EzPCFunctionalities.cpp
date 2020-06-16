@@ -80,59 +80,26 @@ void MatMul2D(int32_t i,
 #endif
 }
 
-//TODO: right now dim is getting ignored, but once the const optimization is done in tf compilation, dim should be a constant
-//Then use dim to find out which axis to take max on
-
-void ArgMax1(int32_t outArrS1, 
-		int32_t inArrS1, 
-		int32_t inArrS2, 
+void ArgMax(int32_t s1, 
+		int32_t s2, 
 		vector< vector<porthosSecretType> >& inArr, 
-		int32_t dim, 
 		vector<porthosSecretType>& outArr)
 {
 		
 	log_print("EzPCFunctionalities : Starting ArgMax1 ... ");
-	vector<porthosSecretType> Arr(inArrS1*inArrS2);
-	vector<porthosSecretType> maxi(outArrS1);
-	for(int ii=0;ii<inArrS1;ii++){
-		for(int jj=0;jj<inArrS2;jj++){
-			Arr[ii*inArrS2 + jj] = inArr[ii][jj]; //Each row is of size inArrS2
+	vector<porthosSecretType> Arr(s1*s2);
+	vector<porthosSecretType> maxi(s1);
+	for(int ii=0;ii<s1;ii++){
+		for(int jj=0;jj<s2;jj++){
+			Arr[ii*s2 + jj] = inArr[ii][jj]; //Each row is of size inArrS2
 		}
 	}
-	funcMaxMPC(Arr, maxi, outArr, inArrS1, inArrS2, true);
+	funcMaxMPC(Arr, maxi, outArr, s1, s2, true);
 }
 
-void ArgMax3(int32_t outs1, 
-		int32_t outs2, 
-		int32_t outs3, 
-		int32_t ins1, 
-		int32_t ins2, 
-		int32_t ins3, 
-		int32_t ins4,
-		vector< vector< vector< vector<porthosSecretType> > > >& inArr, 
-		int32_t dim, 
-		vector< vector< vector<porthosSecretType> > >& outArr)
-{
-
-	log_print("EzPCFunctionalities : Starting ArgMax3 ... ");
-	vector<porthosSecretType> Arr(ins3*ins4);
-	vector<porthosSecretType> maxi(outs3);
-	vector<porthosSecretType> maxIndex(outs3);
-	for(int ii=0;ii<ins3;ii++){
-		for(int jj=0;jj<ins4;jj++){
-			Arr[ii*ins4 + jj] = inArr[0][0][ii][jj]; //Each row is of size inArrS2
-		}
-	}
-	funcMaxMPC(Arr, maxi, maxIndex, ins3, ins4, true);
-	for(int ii=0;ii<outs3;ii++){
-		outArr[0][0][ii] = maxIndex[ii];
-	}
-}
-
-void Relu2(int32_t s1, 
-		int32_t s2, 
-		vector< vector<porthosSecretType> >& inArr, 
-		vector< vector<porthosSecretType> >& outArr,
+void Relu(int32_t size, 
+		vector<porthosSecretType>& inArr, 
+		vector<porthosSecretType>& outArr,
 		int32_t sf,
 		bool doTruncation)
 {
@@ -143,73 +110,10 @@ void Relu2(int32_t s1,
 	porthosLongUnsignedInt bytesSent = commObject.totalDataSent;
 	porthosLongUnsignedInt bytesReceived = commObject.totalDataReceived;
 #endif
-	vector<porthosSecretType> finArr(s1*s2, 0);
-	vector<porthosSecretType> foutArr(s1*s2, 0);
-	for(int i=0;i<s1;i++){
-		for(int j=0;j<s2;j++){
-			finArr[i*s2+j] = inArr[i][j];
-		}
+	funcRELUMPC(inArr, outArr, size);
+	if (doTruncation && ((partyNum==PARTY_A) || (partyNum==PARTY_B))){
+		funcTruncate2PC(outArr, sf, size);
 	}
-	funcRELUMPC(finArr, foutArr, s1*s2);
-	if (doTruncation && ((partyNum==PARTY_A) || (partyNum==PARTY_B)))
-		funcTruncate2PC(foutArr, sf, s1*s2);
-	for(int i=0;i<s1;i++){
-		for(int j=0;j<s2;j++){
-			outArr[i][j] = foutArr[i*s2+j];
-		}
-	}
-#if (LOG_LAYERWISE)
-	high_resolution_clock::time_point t2 = high_resolution_clock::now();
-	
-	duration<double> time_span = duration_cast<duration<double>>(t2 - t1);
-	auto tt = time_span.count();
-	commObject.timeRelu += tt;
-	commObject.dataRelu[0] += (commObject.totalDataSent - bytesSent);
-	commObject.dataRelu[1] += (commObject.totalDataReceived - bytesReceived);
-#endif
-}
-
-void Relu4(int32_t s1, 
-		int32_t s2, 
-		int32_t s3, 
-		int32_t s4, 
-		vector< vector< vector< vector<porthosSecretType> > > >& inArr, 
-		vector< vector< vector< vector<porthosSecretType> > > >& outArr,
-		int32_t sf,
-		bool doTruncation)
-{
-	log_print("EzPCFunctionalities : Starting Relu4 ... ");
-
-#if (LOG_LAYERWISE)
-	high_resolution_clock::time_point t1 = high_resolution_clock::now();
-	porthosLongUnsignedInt bytesSent = commObject.totalDataSent;
-	porthosLongUnsignedInt bytesReceived = commObject.totalDataReceived;
-#endif
-
-	vector<porthosSecretType> finArr(s1*s2*s3*s4, 0);
-	vector<porthosSecretType> foutArr(s1*s2*s3*s4, 0);
-	for(int i=0;i<s1;i++){
-		for(int j=0;j<s2;j++){
-			for(int k=0;k<s3;k++){
-				for(int l=0;l<s4;l++){
-					finArr[i*s2*s3*s4 + j*s3*s4 + k*s4 + l] = inArr[i][j][k][l];
-				}
-			}
-		}
-	}
-	funcRELUMPC(finArr, foutArr, s1*s2*s3*s4);
-	if (doTruncation && ((partyNum==PARTY_A) || (partyNum==PARTY_B)))
-		funcTruncate2PC(foutArr, sf, s1*s2*s3*s4);
-	for(int i=0;i<s1;i++){
-		for(int j=0;j<s2;j++){
-			for(int k=0;k<s3;k++){
-				for(int l=0;l<s4;l++){
-					outArr[i][j][k][l] = foutArr[i*s2*s3*s4 + j*s3*s4 + k*s4 + l];
-				}
-			}
-		}
-	}
-
 #if (LOG_LAYERWISE)
 	high_resolution_clock::time_point t2 = high_resolution_clock::now();
 	
@@ -419,7 +323,7 @@ void AvgPool(int32_t N,
 #endif
 }
 
-void ElemWiseSecretVectorMult(int32_t size, 
+void ElemWiseSecretSharedVectorMult(int32_t size, 
 		vector < porthosSecretType > & arr1, 
 		vector < porthosSecretType > & arr2, 
 		vector < porthosSecretType > & outputArr)
@@ -444,127 +348,32 @@ void ElemWiseSecretVectorMult(int32_t size,
 #endif
 }
 
+void ElemWiseActModelVectorMult(int32_t size, vector<porthosSecretType>& arr1, vector<porthosSecretType>& arr2, vector<porthosSecretType>& outputArr)
+{
+	ElemWiseSecretSharedVectorMult(size, arr1, arr2, outputArr);
+}
+
 void ElemWiseVectorPublicDiv(int32_t size, 
 	vector<porthosSecretType>& arr1, 
 	int32_t divisor,
 	vector<porthosSecretType>& outputArr)
 {
-	//TODO
+	//Not being used in our networks right now
+	assert(false);
 }
 
-void ScaleUp1(int32_t s1, vector<porthosSecretType>& arr, int32_t sf)
+void ScaleUp(int32_t s1, vector<porthosSecretType>& arr, int32_t sf)
 {
 	for(int i=0;i<s1;i++){
 		arr[i] = arr[i] << sf;
 	}
 }
 
-void ScaleUp2(int32_t s1, int32_t s2, vector< vector<porthosSecretType> >& arr, int32_t sf)
+void ScaleDown(int32_t s1, vector<porthosSecretType>& arr, int32_t sf)
 {
-	for(int i=0;i<s1;i++){
-		for(int j=0;j<s2;j++){
-			arr[i][j] = arr[i][j] << sf;
-		}
-	}
-}
-
-void ScaleUp3(int32_t s1, int32_t s2, int32_t s3, vector< vector< vector<porthosSecretType> > >& arr, int32_t sf)
-{
-	for(int i=0;i<s1;i++){
-		for(int j=0;j<s2;j++){
-			for(int k=0;k<s3;k++){
-				arr[i][j][k] = arr[i][j][k] << sf;
-			}
-		}
-	}
-}
-
-void ScaleUp4(int32_t s1, int32_t s2, int32_t s3, int32_t s4, vector< vector< vector< vector<porthosSecretType> > > >& arr, int32_t sf)
-{
-	for(int i=0;i<s1;i++){
-		for(int j=0;j<s2;j++){
-			for(int k=0;k<s3;k++){
-				for(int l=0;l<s4;l++){
-					arr[i][j][k][l] = arr[i][j][k][l] << sf;
-				}
-			}
-		}
-	}
-}
-
-void ScaleDown1(int32_t s1, vector<porthosSecretType>& arr, int32_t sf)
-{	
+	assert(FLOAT_PRECISION == sf && "Please make FLOAT_PRECISION same as sf used in the network and recompile.");
 	if ((partyNum==PARTY_A) || (partyNum==PARTY_B))
 		funcTruncate2PC(arr, sf, s1);
-}
-
-void ScaleDown2(int32_t s1, int32_t s2, vector< vector<porthosSecretType> >& arr, int32_t sf)
-{
-	int32_t size = s1*s2;
-	vector<porthosSecretType> arr1d(size);
-	for(int i=0;i<s1;i++){
-		for(int j=0;j<s2;j++){
-			arr1d[i*s2 + j] = arr[i][j];
-		}
-	}
-
-	if ((partyNum==PARTY_A) || (partyNum==PARTY_B))
-		funcTruncate2PC(arr1d, sf, size);
-	for(int i=0;i<s1;i++){
-		for(int j=0;j<s2;j++){
-			arr[i][j] = arr1d[i*s2 + j];
-		}
-	}
-}
-
-void ScaleDown3(int32_t s1, int32_t s2, int32_t s3, vector< vector< vector<porthosSecretType> > >& arr, int32_t sf)
-{
-	int32_t size = s1*s2*s3;
-	vector<porthosSecretType> arr1d(size);
-	for(int i=0;i<s1;i++){
-		for(int j=0;j<s2;j++){
-			for(int k=0;k<s3;k++){
-				arr1d[i*s2*s3 + j*s3 + k] = arr[i][j][k];
-			}
-		}
-	}
-
-	if ((partyNum==PARTY_A) || (partyNum==PARTY_B))
-		funcTruncate2PC(arr1d, sf, size);
-	for(int i=0;i<s1;i++){
-		for(int j=0;j<s2;j++){
-			for(int k=0;k<s3;k++){
-				arr[i][j][k] = arr1d[i*s2*s3 + j*s3 + k];
-			}
-		}
-	}
-}
-
-void ScaleDown4(int32_t s1, int32_t s2, int32_t s3, int32_t s4, vector< vector< vector< vector<porthosSecretType> > > >& arr, int32_t sf)
-{
-	int32_t size = s1*s2*s3*s4;
-	vector<porthosSecretType> arr1d(size);
-	for(int i=0;i<s1;i++){
-		for(int j=0;j<s2;j++){
-			for(int k=0;k<s3;k++){
-				for(int l=0;l<s4;l++){
-					arr1d[i*s2*s3*s4 + j*s3*s4 + k*s4 + l] = arr[i][j][k][l];
-				}
-			}
-		}
-	}
-
-	if ((partyNum==PARTY_A) || (partyNum==PARTY_B))
-		funcTruncate2PC(arr1d, sf, size);
-	for(int i=0;i<s1;i++){
-		for(int j=0;j<s2;j++){
-			for(int k=0;k<s3;k++){
-				for(int l=0;l<s4;l++){
-					arr[i][j][k][l] = arr1d[i*s2*s3*s4 + j*s3*s4 + k*s4 + l];
-				}
-			}
-		}
-	}
 }
 
 void Conv2DWrapper(int32_t N, int32_t H, int32_t W, int32_t CI, 
@@ -607,8 +416,40 @@ void ClearMemSecret4(int32_t s1, int32_t s2, int32_t s3, int32_t s4, vector< vec
 	arr = vector< vector< vector< vector< porthosSecretType > > > >();
 }
 
+void ClearMemSecret5(int32_t s1, int32_t s2, int32_t s3, int32_t s4, int32_t s5, vector< vector< vector< vector< vector< porthosSecretType > > > > >& arr){
+	arr = vector< vector< vector< vector< vector< porthosSecretType > > > > >();
+}
+
+void ClearMemPublic(int32_t x)
+{
+	return;
+}
+
+void ClearMemPublic1(int32_t s1, vector< int32_t >& arr){
+	arr = vector< int32_t >();
+}
+
 void ClearMemPublic2(int32_t s1, int32_t s2, vector< vector< int32_t > >& arr){
 	arr = vector< vector< int32_t > >();
+}
+
+void ClearMemPublic3(int32_t s1, int32_t s2, int32_t s3, vector< vector< vector< int32_t > > >& arr){
+	arr = vector< vector< vector< int32_t > > >();
+
+}
+
+void ClearMemPublic4(int32_t s1, int32_t s2, int32_t s3, int32_t s4, vector< vector< vector< vector< int32_t > > > >& arr){
+	arr = vector< vector< vector< vector< int32_t > > > >();
+}
+
+void ClearMemPublic5(int32_t s1, int32_t s2, int32_t s3, int32_t s4, int32_t s5, vector< vector< vector< vector< vector< int32_t > > > > >& arr){
+	arr = vector< vector< vector< vector< vector< int32_t > > > > >();
+}
+
+void Floor(int32_t size, vector<porthosSecretType>& inArr, vector<porthosSecretType>& outArr, int32_t sf)
+{
+	//Not being used in any network right now
+	assert(false);
 }
 
 void StartComputation(){

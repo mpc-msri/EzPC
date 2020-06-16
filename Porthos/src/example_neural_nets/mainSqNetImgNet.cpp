@@ -108,9 +108,6 @@ ParallelAESObject* aes_parallel;
 
 
 
-
-
-
 void MatAddBroadCast2(int32_t s1, int32_t s2, vector < vector < uint64_t > >& A, vector < uint64_t >& B, vector < vector < uint64_t > >& outArr){
 for (uint32_t i1 =  (int32_t)0; i1 < s1; i1++){
 for (uint32_t i2 =  (int32_t)0; i2 < s2; i2++){
@@ -506,6 +503,9 @@ Conv2DReshapeFilter(FH, FW, CI, CO, filterArr, filterReshaped);
 Conv2DReshapeInput(N, H, W, CI, FH, FW, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideH, strideW, reshapedIPRows, reshapedIPCols, inputArr, inputReshaped);
 MatMul2D(reshapedFilterRows, reshapedFilterCols, reshapedIPCols, filterReshaped, inputReshaped, matmulOP, 1);
 Conv2DReshapeMatMulOP(N, newH, newW, CO, matmulOP, outArr);
+ClearMemSecret2(reshapedFilterRows, reshapedFilterCols, filterReshaped);
+ClearMemSecret2(reshapedIPRows, reshapedIPCols, inputReshaped);
+ClearMemSecret2(reshapedFilterRows, reshapedIPCols, matmulOP);
 }
 
 void Conv2DLoopInner(int32_t N, int32_t H, int32_t W, int32_t CI, int32_t FH, int32_t FW, int32_t CO, int32_t zPadHLeft, int32_t zPadHRight, int32_t zPadWLeft, int32_t zPadWRight, int32_t strideH, int32_t strideW, int32_t outH, int32_t outW, int32_t G, vector < vector < vector < vector < uint64_t > > > >& inputArr, vector < vector < vector < vector < uint64_t > > > >& filterArr, vector < vector < vector < vector < uint64_t > > > >& outArr){
@@ -663,6 +663,9 @@ Conv2DReshapeFilterGroup(FH, FW, CI, CO, g, G, filterArr, filterReshaped);
 Conv2DReshapeInputGroup(N, H, W, CI, FH, FW, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideH, strideW, g, G, reshapedIPRows, reshapedIPCols, inputArr, inputReshaped);
 MatMul2D(reshapedFilterRows, reshapedFilterCols, reshapedIPCols, filterReshaped, inputReshaped, matmulOP, 1);
 Conv2DReshapeMatMulOPGroup(N, outH, outW, CO, g, G, matmulOP, outArr);
+ClearMemSecret2(reshapedFilterRows, reshapedFilterCols, filterReshaped);
+ClearMemSecret2(reshapedIPRows, reshapedIPCols, inputReshaped);
+ClearMemSecret2(reshapedFilterRows, reshapedIPCols, matmulOP);
 }
 }
 
@@ -775,6 +778,9 @@ Conv3DReshapeFilter(FD, FH, FW, CI, CO, filterArr, filterReshaped);
 Conv3DReshapeInput(N, D, H, W, CI, FD, FH, FW, zPadDLeft, zPadDRight, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideD, strideH, strideW, reshapedIPRows, reshapedIPCols, inputArr, inputReshaped);
 MatMul2D(reshapedFilterRows, reshapedFilterCols, reshapedIPCols, filterReshaped, inputReshaped, matmulOP, 1);
 Conv3DReshapeMatMulOP(N, newD, newH, newW, CO, matmulOP, outArr);
+ClearMemSecret2(reshapedFilterRows, reshapedFilterCols, filterReshaped);
+ClearMemSecret2(reshapedIPRows, reshapedIPCols, inputReshaped);
+ClearMemSecret2(reshapedFilterRows, reshapedIPCols, matmulOP);
 }
 
 void Conv3DLoopInner(int32_t N, int32_t D, int32_t H, int32_t W, int32_t CI, int32_t FD, int32_t FH, int32_t FW, int32_t CO, int32_t zPadDLeft, int32_t zPadDRight, int32_t zPadHLeft, int32_t zPadHRight, int32_t zPadWLeft, int32_t zPadWRight, int32_t strideD, int32_t strideH, int32_t strideW, int32_t outD, int32_t outH, int32_t outW, vector < vector < vector < vector < vector < uint64_t > > > > >& inputArr, vector < vector < vector < vector < vector < uint64_t > > > > >& filterArr, vector < vector < vector < vector < vector < uint64_t > > > > >& outArr){
@@ -925,6 +931,9 @@ ConvTranspose2DReshapeFilter(FH, FW, CO, CI, filterArr, filterReshaped);
 ConvTranspose2DReshapeInput(N, HPrime, WPrime, CI, FH, FW, zPadTrHLeft, zPadTrHRight, zPadTrWLeft, zPadTrWRight, strideH, strideW, reshapedIPRows, reshapedIPCols, inputArr, inputReshaped);
 MatMul2D(reshapedFilterRows, reshapedFilterCols, reshapedIPCols, filterReshaped, inputReshaped, matmulOP, 1);
 ConvTranspose2DReshapeMatMulOP(N, H, W, CO, matmulOP, outArr);
+ClearMemSecret2(reshapedFilterRows, reshapedFilterCols, filterReshaped);
+ClearMemSecret2(reshapedIPRows, reshapedIPCols, inputReshaped);
+ClearMemSecret2(reshapedFilterRows, reshapedIPCols, matmulOP);
 }
 
 void ConvTranspose3DReshapeFilter(int32_t FD, int32_t FH, int32_t FW, int32_t CO, int32_t CI, vector < vector < vector < vector < vector < uint64_t > > > > >& inputArr, vector < vector < uint64_t > >& outputArr){
@@ -1032,6 +1041,9 @@ ConvTranspose3DReshapeFilter(FD, FH, FW, CO, CI, filterArr, filterReshaped);
 ConvTranspose3DReshapeInput(N, DPrime, HPrime, WPrime, CI, FD, FH, FW, zPadTrDLeft, zPadTrDRight, zPadTrHLeft, zPadTrHRight, zPadTrWLeft, zPadTrWRight, strideD, strideH, strideW, reshapedIPRows, reshapedIPCols, inputArr, inputReshaped);
 MatMul2D(reshapedFilterRows, reshapedFilterCols, reshapedIPCols, filterReshaped, inputReshaped, matmulOP, 1);
 Conv3DReshapeMatMulOP(N, D, H, W, CO, matmulOP, outArr);
+ClearMemSecret2(reshapedFilterRows, reshapedFilterCols, filterReshaped);
+ClearMemSecret2(reshapedIPRows, reshapedIPCols, inputReshaped);
+ClearMemSecret2(reshapedFilterRows, reshapedIPCols, matmulOP);
 }
 
 void ConvTranspose3DLoopInner(int32_t N, int32_t D, int32_t H, int32_t W, int32_t CI, int32_t FD, int32_t FH, int32_t FW, int32_t CO, int32_t zPadDLeft, int32_t zPadDRight, int32_t zPadHLeft, int32_t zPadHRight, int32_t zPadWLeft, int32_t zPadWRight, int32_t strideD, int32_t strideH, int32_t strideW, int32_t outD, int32_t outH, int32_t outW, vector < vector < vector < vector < vector < uint64_t > > > > >& inputArr, vector < vector < vector < vector < vector < uint64_t > > > > >& filterArr, vector < vector < vector < vector < vector < uint64_t > > > > >& outArr){
@@ -1226,9 +1238,9 @@ multArrReshaped[linIdx] = multArr[i4];
 }
 }
 }
-ElemWiseSecretVectorMult(inpSize, inArrReshaped, multArrReshaped, multExprAns);
+ElemWiseActModelVectorMult(inpSize, inArrReshaped, multArrReshaped, multExprAns);
 if ((multExprScaleDownSf >  (int32_t)0)) {
-ScaleDown1(inpSize, multExprAns, multExprScaleDownSf);
+ScaleDown(inpSize, multExprAns, multExprScaleDownSf);
 }
 
 vector < uint64_t > biasArrScaledUp = make_vector<uint64_t>(s4);
@@ -1236,7 +1248,7 @@ for (uint32_t ii =  (int32_t)0; ii < s4; ii++){
 biasArrScaledUp[ii] = biasArr[ii];
 }
 if ((biasExprScaleUpSf >  (int32_t)0)) {
-ScaleUp1(s4, biasArrScaledUp, biasExprScaleUpSf);
+ScaleUp(s4, biasArrScaledUp, biasExprScaleUpSf);
 }
 for (uint32_t i1 =  (int32_t)0; i1 < s1; i1++){
 for (uint32_t i2 =  (int32_t)0; i2 < s2; i2++){
@@ -1249,6 +1261,10 @@ outputArr[i1][i2][i3][i4] = multExprAns[linIdx]+biasArrScaledUp[i4];
 }
 }
 }
+ClearMemSecret1(inpSize, inArrReshaped);
+ClearMemSecret1(inpSize, multArrReshaped);
+ClearMemSecret1(inpSize, multExprAns);
+ClearMemSecret1(s4, biasArrScaledUp);
 }
 
 void FusedBatchNorm5511(int32_t s1, int32_t s2, int32_t s3, int32_t s4, int32_t s5, vector < vector < vector < vector < vector < uint64_t > > > > >& inArr, vector < uint64_t >& multArr, vector < uint64_t >& biasArr, int32_t multExprScaleDownSf, int32_t biasExprScaleUpSf, vector < vector < vector < vector < vector < uint64_t > > > > >& outputArr){
@@ -1274,9 +1290,9 @@ multArrReshaped[linIdx] = multArr[i5];
 }
 }
 }
-ElemWiseSecretVectorMult(inpSize, inArrReshaped, multArrReshaped, multExprAns);
+ElemWiseActModelVectorMult(inpSize, inArrReshaped, multArrReshaped, multExprAns);
 if ((multExprScaleDownSf >  (int32_t)0)) {
-ScaleDown1(inpSize, multExprAns, multExprScaleDownSf);
+ScaleDown(inpSize, multExprAns, multExprScaleDownSf);
 }
 
 vector < uint64_t > biasArrScaledUp = make_vector<uint64_t>(s5);
@@ -1284,7 +1300,7 @@ for (uint32_t ii =  (int32_t)0; ii < s5; ii++){
 biasArrScaledUp[ii] = biasArr[ii];
 }
 if ((biasExprScaleUpSf >  (int32_t)0)) {
-ScaleUp1(s5, biasArrScaledUp, biasExprScaleUpSf);
+ScaleUp(s5, biasArrScaledUp, biasExprScaleUpSf);
 }
 for (uint32_t i1 =  (int32_t)0; i1 < s1; i1++){
 for (uint32_t i2 =  (int32_t)0; i2 < s2; i2++){
@@ -1299,6 +1315,10 @@ outputArr[i1][i2][i3][i4][i5] = multExprAns[linIdx]+biasArrScaledUp[i5];
 }
 }
 }
+ClearMemSecret1(inpSize, inArrReshaped);
+ClearMemSecret1(inpSize, multArrReshaped);
+ClearMemSecret1(inpSize, multExprAns);
+ClearMemSecret1(s5, biasArrScaledUp);
 }
 
 void ElemWiseMul2(int32_t s1, int32_t s2, vector < vector < uint64_t > >& arr1, vector < vector < uint64_t > >& arr2, vector < vector < uint64_t > >& outArr){
@@ -1318,7 +1338,7 @@ arr1Reshaped[linIdx] = arr1[i1][i2];
 arr2Reshaped[linIdx] = arr2[i1][i2];
 }
 }
-ElemWiseSecretVectorMult(inpSize, arr1Reshaped, arr2Reshaped, outArrReshaped);
+ElemWiseSecretSharedVectorMult(inpSize, arr1Reshaped, arr2Reshaped, outArrReshaped);
 for (uint32_t i1 =  (int32_t)0; i1 < s1; i1++){
 for (uint32_t i2 =  (int32_t)0; i2 < s2; i2++){
 
@@ -1326,6 +1346,9 @@ int32_t linIdx = ((i1 * s2) + i2);
 outArr[i1][i2] = outArrReshaped[linIdx];
 }
 }
+ClearMemSecret1(inpSize, arr1Reshaped);
+ClearMemSecret1(inpSize, arr2Reshaped);
+ClearMemSecret1(inpSize, outArrReshaped);
 }
 
 void ElemWiseMul4(int32_t s1, int32_t s2, int32_t s3, int32_t s4, vector < vector < vector < vector < uint64_t > > > >& arr1, vector < vector < vector < vector < uint64_t > > > >& arr2, vector < vector < vector < vector < uint64_t > > > >& outArr){
@@ -1349,7 +1372,7 @@ arr2Reshaped[linIdx] = arr2[i1][i2][i3][i4];
 }
 }
 }
-ElemWiseSecretVectorMult(inpSize, arr1Reshaped, arr2Reshaped, outArrReshaped);
+ElemWiseSecretSharedVectorMult(inpSize, arr1Reshaped, arr2Reshaped, outArrReshaped);
 for (uint32_t i1 =  (int32_t)0; i1 < s1; i1++){
 for (uint32_t i2 =  (int32_t)0; i2 < s2; i2++){
 for (uint32_t i3 =  (int32_t)0; i3 < s3; i3++){
@@ -1361,6 +1384,9 @@ outArr[i1][i2][i3][i4] = outArrReshaped[linIdx];
 }
 }
 }
+ClearMemSecret1(inpSize, arr1Reshaped);
+ClearMemSecret1(inpSize, arr2Reshaped);
+ClearMemSecret1(inpSize, outArrReshaped);
 }
 
 void ElemWiseMul5(int32_t s1, int32_t s2, int32_t s3, int32_t s4, int32_t s5, vector < vector < vector < vector < vector < uint64_t > > > > >& arr1, vector < vector < vector < vector < vector < uint64_t > > > > >& arr2, vector < vector < vector < vector < vector < uint64_t > > > > >& outArr){
@@ -1386,7 +1412,7 @@ arr2Reshaped[linIdx] = arr2[i1][i2][i3][i4][i5];
 }
 }
 }
-ElemWiseSecretVectorMult(inpSize, arr1Reshaped, arr2Reshaped, outArrReshaped);
+ElemWiseSecretSharedVectorMult(inpSize, arr1Reshaped, arr2Reshaped, outArrReshaped);
 for (uint32_t i1 =  (int32_t)0; i1 < s1; i1++){
 for (uint32_t i2 =  (int32_t)0; i2 < s2; i2++){
 for (uint32_t i3 =  (int32_t)0; i3 < s3; i3++){
@@ -1400,6 +1426,9 @@ outArr[i1][i2][i3][i4][i5] = outArrReshaped[linIdx];
 }
 }
 }
+ClearMemSecret1(inpSize, arr1Reshaped);
+ClearMemSecret1(inpSize, arr2Reshaped);
+ClearMemSecret1(inpSize, outArrReshaped);
 }
 
 void ReduceMean24(int32_t outS1, int32_t outS2, int32_t inS1, int32_t inS2, int32_t inS3, int32_t inS4, vector < vector < vector < vector < uint64_t > > > >& inputArr, vector < int32_t >& axes, vector < vector < uint64_t > >& outputArr){
@@ -1429,6 +1458,8 @@ for (uint32_t i2 =  (int32_t)0; i2 < outS2; i2++){
 outputArr[i1][i2] = outputArrReshaped[((i1 * outS2) + i2)];
 }
 }
+ClearMemSecret1(outputSize, sumArr);
+ClearMemSecret1(outputSize, outputArrReshaped);
 }
 
 void ReduceMeanONNX24(int32_t outS1, int32_t outS2, int32_t inS1, int32_t inS2, int32_t inS3, int32_t inS4, vector < vector < vector < vector < uint64_t > > > >& inputArr, int32_t axis1, int32_t axis2, vector < vector < uint64_t > >& outputArr){
@@ -1458,22 +1489,338 @@ for (uint32_t i2 =  (int32_t)0; i2 < outS2; i2++){
 outputArr[i1][i2] = outputArrReshaped[((i1 * outS2) + i2)];
 }
 }
+ClearMemSecret1(outputSize, sumArr);
+ClearMemSecret1(outputSize, outputArrReshaped);
 }
 
-void ClearMemPublic(int32_t x){
-return ;
+void ArgMax1(int32_t outArrS1, int32_t inArrS1, int32_t inArrS2, vector < vector < uint64_t > >& inArr, int32_t dim, vector < uint64_t >& outArr){
+ArgMax(inArrS1, inArrS2, inArr, outArr);
 }
 
-void ClearMemPublic1(int32_t s, vector < int32_t >& x){
-return ;
+void ArgMax3(int32_t outs1, int32_t outs2, int32_t outs3, int32_t ins1, int32_t ins2, int32_t ins3, int32_t ins4, vector < vector < vector < vector < uint64_t > > > >& inArr, int32_t dim, vector < vector < vector < uint64_t > > >& outArr){
+
+int32_t size = ((ins1 * ins2) * ins3);
+
+vector < vector < uint64_t > > reshapedInArr = make_vector<uint64_t>(size, ins4);
+
+vector < uint64_t > reshapedOutArr = make_vector<uint64_t>(size);
+for (uint32_t i1 =  (int32_t)0; i1 < ins1; i1++){
+for (uint32_t i2 =  (int32_t)0; i2 < ins2; i2++){
+for (uint32_t i3 =  (int32_t)0; i3 < ins3; i3++){
+for (uint32_t i4 =  (int32_t)0; i4 < ins4; i4++){
+
+int32_t linIdx = ((((i1 * ins2) * ins3) + (i2 * ins3)) + i3);
+reshapedInArr[linIdx][i4] = inArr[i1][i2][i3][i4];
+}
+}
+}
+}
+ArgMax(size, ins4, reshapedInArr, reshapedOutArr);
+for (uint32_t i1 =  (int32_t)0; i1 < ins1; i1++){
+for (uint32_t i2 =  (int32_t)0; i2 < ins2; i2++){
+for (uint32_t i3 =  (int32_t)0; i3 < ins3; i3++){
+
+int32_t linIdx = ((((i1 * ins2) * ins3) + (i2 * ins3)) + i3);
+outArr[i1][i2][i3] = reshapedOutArr[linIdx];
+}
+}
+}
+ClearMemSecret2(size, ins4, reshapedInArr);
+ClearMemSecret1(size, reshapedOutArr);
 }
 
-void ClearMemPublic4(int32_t s1, int32_t s2, int32_t s3, int32_t s4, vector < vector < vector < vector < int32_t > > > >& arr){
-return ;
+void Relu2(int32_t s1, int32_t s2, vector < vector < uint64_t > >& inArr, vector < vector < uint64_t > >& outArr, int32_t sf, uint32_t doTruncation){
+
+int32_t size = (s1 * s2);
+
+vector < uint64_t > reshapedInArr = make_vector<uint64_t>(size);
+
+vector < uint64_t > reshapedOutArr = make_vector<uint64_t>(size);
+for (uint32_t i1 =  (int32_t)0; i1 < s1; i1++){
+for (uint32_t i2 =  (int32_t)0; i2 < s2; i2++){
+
+int32_t linIdx = ((i1 * s2) + i2);
+reshapedInArr[linIdx] = inArr[i1][i2];
+}
+}
+Relu(size, reshapedInArr, reshapedOutArr, sf, doTruncation);
+for (uint32_t i1 =  (int32_t)0; i1 < s1; i1++){
+for (uint32_t i2 =  (int32_t)0; i2 < s2; i2++){
+
+int32_t linIdx = ((i1 * s2) + i2);
+outArr[i1][i2] = reshapedOutArr[linIdx];
+}
+}
+ClearMemSecret1(size, reshapedInArr);
+ClearMemSecret1(size, reshapedOutArr);
 }
 
-void ClearMemPublic5(int32_t s1, int32_t s2, int32_t s3, int32_t s4, int32_t s5, vector < vector < vector < vector < vector < int32_t > > > > >& arr){
-return ;
+void Relu4(int32_t s1, int32_t s2, int32_t s3, int32_t s4, vector < vector < vector < vector < uint64_t > > > >& inArr, vector < vector < vector < vector < uint64_t > > > >& outArr, int32_t sf, uint32_t doTruncation){
+
+int32_t size = (((s1 * s2) * s3) * s4);
+
+vector < uint64_t > reshapedInArr = make_vector<uint64_t>(size);
+
+vector < uint64_t > reshapedOutArr = make_vector<uint64_t>(size);
+for (uint32_t i1 =  (int32_t)0; i1 < s1; i1++){
+for (uint32_t i2 =  (int32_t)0; i2 < s2; i2++){
+for (uint32_t i3 =  (int32_t)0; i3 < s3; i3++){
+for (uint32_t i4 =  (int32_t)0; i4 < s4; i4++){
+
+int32_t linIdx = ((((((i1 * s2) * s3) * s4) + ((i2 * s3) * s4)) + (i3 * s4)) + i4);
+reshapedInArr[linIdx] = inArr[i1][i2][i3][i4];
+}
+}
+}
+}
+Relu(size, reshapedInArr, reshapedOutArr, sf, doTruncation);
+for (uint32_t i1 =  (int32_t)0; i1 < s1; i1++){
+for (uint32_t i2 =  (int32_t)0; i2 < s2; i2++){
+for (uint32_t i3 =  (int32_t)0; i3 < s3; i3++){
+for (uint32_t i4 =  (int32_t)0; i4 < s4; i4++){
+
+int32_t linIdx = ((((((i1 * s2) * s3) * s4) + ((i2 * s3) * s4)) + (i3 * s4)) + i4);
+outArr[i1][i2][i3][i4] = reshapedOutArr[linIdx];
+}
+}
+}
+}
+ClearMemSecret1(size, reshapedInArr);
+ClearMemSecret1(size, reshapedOutArr);
+}
+
+void Relu5(int32_t s1, int32_t s2, int32_t s3, int32_t s4, int32_t s5, vector < vector < vector < vector < vector < uint64_t > > > > >& inArr, vector < vector < vector < vector < vector < uint64_t > > > > >& outArr, int32_t sf, uint32_t doTruncation){
+
+int32_t size = ((((s1 * s2) * s3) * s4) * s5);
+
+vector < uint64_t > reshapedInArr = make_vector<uint64_t>(size);
+
+vector < uint64_t > reshapedOutArr = make_vector<uint64_t>(size);
+for (uint32_t i1 =  (int32_t)0; i1 < s1; i1++){
+for (uint32_t i2 =  (int32_t)0; i2 < s2; i2++){
+for (uint32_t i3 =  (int32_t)0; i3 < s3; i3++){
+for (uint32_t i4 =  (int32_t)0; i4 < s4; i4++){
+for (uint32_t i5 =  (int32_t)0; i5 < s5; i5++){
+
+int32_t linIdx = ((((((((i1 * s2) * s3) * s4) * s5) + (((i2 * s3) * s4) * s5)) + ((i3 * s4) * s5)) + (i4 * s5)) + i5);
+reshapedInArr[linIdx] = inArr[i1][i2][i3][i4][i5];
+}
+}
+}
+}
+}
+Relu(size, reshapedInArr, reshapedOutArr, sf, doTruncation);
+for (uint32_t i1 =  (int32_t)0; i1 < s1; i1++){
+for (uint32_t i2 =  (int32_t)0; i2 < s2; i2++){
+for (uint32_t i3 =  (int32_t)0; i3 < s3; i3++){
+for (uint32_t i4 =  (int32_t)0; i4 < s4; i4++){
+for (uint32_t i5 =  (int32_t)0; i5 < s5; i5++){
+
+int32_t linIdx = ((((((((i1 * s2) * s3) * s4) * s5) + (((i2 * s3) * s4) * s5)) + ((i3 * s4) * s5)) + (i4 * s5)) + i5);
+outArr[i1][i2][i3][i4][i5] = reshapedOutArr[linIdx];
+}
+}
+}
+}
+}
+ClearMemSecret1(size, reshapedInArr);
+ClearMemSecret1(size, reshapedOutArr);
+}
+
+void Floor2(int32_t s1, int32_t s2, vector < vector < uint64_t > >& inArr, vector < vector < uint64_t > >& outArr, int32_t sf){
+
+int32_t size = (s1 * s2);
+
+vector < uint64_t > reshapedInArr = make_vector<uint64_t>(size);
+
+vector < uint64_t > reshapedOutArr = make_vector<uint64_t>(size);
+for (uint32_t i1 =  (int32_t)0; i1 < s1; i1++){
+for (uint32_t i2 =  (int32_t)0; i2 < s2; i2++){
+
+int32_t linIdx = ((i1 * s2) + i2);
+reshapedInArr[linIdx] = inArr[i1][i2];
+}
+}
+Floor(size, reshapedInArr, reshapedOutArr, sf);
+for (uint32_t i1 =  (int32_t)0; i1 < s1; i1++){
+for (uint32_t i2 =  (int32_t)0; i2 < s2; i2++){
+
+int32_t linIdx = ((i1 * s2) + i2);
+outArr[i1][i2] = reshapedOutArr[linIdx];
+}
+}
+ClearMemSecret1(size, reshapedInArr);
+ClearMemSecret1(size, reshapedOutArr);
+}
+
+void ScaleUp1(int32_t s1, vector < uint64_t >& arr, int32_t sf){
+ScaleUp(s1, arr, sf);
+}
+
+void ScaleUp2(int32_t s1, int32_t s2, vector < vector < uint64_t > >& arr, int32_t sf){
+
+int32_t size = (s1 * s2);
+
+vector < uint64_t > reshapedArr = make_vector<uint64_t>(size);
+for (uint32_t i1 =  (int32_t)0; i1 < s1; i1++){
+for (uint32_t i2 =  (int32_t)0; i2 < s2; i2++){
+
+int32_t linIdx = ((i1 * s2) + i2);
+reshapedArr[linIdx] = arr[i1][i2];
+}
+}
+ScaleUp(size, reshapedArr, sf);
+for (uint32_t i1 =  (int32_t)0; i1 < s1; i1++){
+for (uint32_t i2 =  (int32_t)0; i2 < s2; i2++){
+
+int32_t linIdx = ((i1 * s2) + i2);
+arr[i1][i2] = reshapedArr[linIdx];
+}
+}
+ClearMemSecret1(size, reshapedArr);
+}
+
+void ScaleUp3(int32_t s1, int32_t s2, int32_t s3, vector < vector < vector < uint64_t > > >& arr, int32_t sf){
+
+int32_t size = ((s1 * s2) * s3);
+
+vector < uint64_t > reshapedArr = make_vector<uint64_t>(size);
+for (uint32_t i1 =  (int32_t)0; i1 < s1; i1++){
+for (uint32_t i2 =  (int32_t)0; i2 < s2; i2++){
+for (uint32_t i3 =  (int32_t)0; i3 < s3; i3++){
+
+int32_t linIdx = ((((i1 * s2) * s3) + (i2 * s3)) + i3);
+reshapedArr[linIdx] = arr[i1][i2][i3];
+}
+}
+}
+ScaleUp(size, reshapedArr, sf);
+for (uint32_t i1 =  (int32_t)0; i1 < s1; i1++){
+for (uint32_t i2 =  (int32_t)0; i2 < s2; i2++){
+for (uint32_t i3 =  (int32_t)0; i3 < s3; i3++){
+
+int32_t linIdx = ((((i1 * s2) * s3) + (i2 * s3)) + i3);
+arr[i1][i2][i3] = reshapedArr[linIdx];
+}
+}
+}
+ClearMemSecret1(size, reshapedArr);
+}
+
+void ScaleUp4(int32_t s1, int32_t s2, int32_t s3, int32_t s4, vector < vector < vector < vector < uint64_t > > > >& arr, int32_t sf){
+
+int32_t size = (((s1 * s2) * s3) * s4);
+
+vector < uint64_t > reshapedArr = make_vector<uint64_t>(size);
+for (uint32_t i1 =  (int32_t)0; i1 < s1; i1++){
+for (uint32_t i2 =  (int32_t)0; i2 < s2; i2++){
+for (uint32_t i3 =  (int32_t)0; i3 < s3; i3++){
+for (uint32_t i4 =  (int32_t)0; i4 < s4; i4++){
+
+int32_t linIdx = ((((((i1 * s2) * s3) * s4) + ((i2 * s3) * s4)) + (i3 * s4)) + i4);
+reshapedArr[linIdx] = arr[i1][i2][i3][i4];
+}
+}
+}
+}
+ScaleUp(size, reshapedArr, sf);
+for (uint32_t i1 =  (int32_t)0; i1 < s1; i1++){
+for (uint32_t i2 =  (int32_t)0; i2 < s2; i2++){
+for (uint32_t i3 =  (int32_t)0; i3 < s3; i3++){
+for (uint32_t i4 =  (int32_t)0; i4 < s4; i4++){
+
+int32_t linIdx = ((((((i1 * s2) * s3) * s4) + ((i2 * s3) * s4)) + (i3 * s4)) + i4);
+arr[i1][i2][i3][i4] = reshapedArr[linIdx];
+}
+}
+}
+}
+ClearMemSecret1(size, reshapedArr);
+}
+
+void ScaleDown1(int32_t s1, vector < uint64_t >& arr, int32_t sf){
+ScaleDown(s1, arr, sf);
+}
+
+void ScaleDown2(int32_t s1, int32_t s2, vector < vector < uint64_t > >& arr, int32_t sf){
+
+int32_t size = (s1 * s2);
+
+vector < uint64_t > reshapedArr = make_vector<uint64_t>(size);
+for (uint32_t i1 =  (int32_t)0; i1 < s1; i1++){
+for (uint32_t i2 =  (int32_t)0; i2 < s2; i2++){
+
+int32_t linIdx = ((i1 * s2) + i2);
+reshapedArr[linIdx] = arr[i1][i2];
+}
+}
+ScaleDown(size, reshapedArr, sf);
+for (uint32_t i1 =  (int32_t)0; i1 < s1; i1++){
+for (uint32_t i2 =  (int32_t)0; i2 < s2; i2++){
+
+int32_t linIdx = ((i1 * s2) + i2);
+arr[i1][i2] = reshapedArr[linIdx];
+}
+}
+ClearMemSecret1(size, reshapedArr);
+}
+
+void ScaleDown3(int32_t s1, int32_t s2, int32_t s3, vector < vector < vector < uint64_t > > >& arr, int32_t sf){
+
+int32_t size = ((s1 * s2) * s3);
+
+vector < uint64_t > reshapedArr = make_vector<uint64_t>(size);
+for (uint32_t i1 =  (int32_t)0; i1 < s1; i1++){
+for (uint32_t i2 =  (int32_t)0; i2 < s2; i2++){
+for (uint32_t i3 =  (int32_t)0; i3 < s3; i3++){
+
+int32_t linIdx = ((((i1 * s2) * s3) + (i2 * s3)) + i3);
+reshapedArr[linIdx] = arr[i1][i2][i3];
+}
+}
+}
+ScaleDown(size, reshapedArr, sf);
+for (uint32_t i1 =  (int32_t)0; i1 < s1; i1++){
+for (uint32_t i2 =  (int32_t)0; i2 < s2; i2++){
+for (uint32_t i3 =  (int32_t)0; i3 < s3; i3++){
+
+int32_t linIdx = ((((i1 * s2) * s3) + (i2 * s3)) + i3);
+arr[i1][i2][i3] = reshapedArr[linIdx];
+}
+}
+}
+ClearMemSecret1(size, reshapedArr);
+}
+
+void ScaleDown4(int32_t s1, int32_t s2, int32_t s3, int32_t s4, vector < vector < vector < vector < uint64_t > > > >& arr, int32_t sf){
+
+int32_t size = (((s1 * s2) * s3) * s4);
+
+vector < uint64_t > reshapedArr = make_vector<uint64_t>(size);
+for (uint32_t i1 =  (int32_t)0; i1 < s1; i1++){
+for (uint32_t i2 =  (int32_t)0; i2 < s2; i2++){
+for (uint32_t i3 =  (int32_t)0; i3 < s3; i3++){
+for (uint32_t i4 =  (int32_t)0; i4 < s4; i4++){
+
+int32_t linIdx = ((((((i1 * s2) * s3) * s4) + ((i2 * s3) * s4)) + (i3 * s4)) + i4);
+reshapedArr[linIdx] = arr[i1][i2][i3][i4];
+}
+}
+}
+}
+ScaleDown(size, reshapedArr, sf);
+for (uint32_t i1 =  (int32_t)0; i1 < s1; i1++){
+for (uint32_t i2 =  (int32_t)0; i2 < s2; i2++){
+for (uint32_t i3 =  (int32_t)0; i3 < s3; i3++){
+for (uint32_t i4 =  (int32_t)0; i4 < s4; i4++){
+
+int32_t linIdx = ((((((i1 * s2) * s3) * s4) + ((i2 * s3) * s4)) + (i3 * s4)) + i4);
+arr[i1][i2][i3][i4] = reshapedArr[linIdx];
+}
+}
+}
+}
+ClearMemSecret1(size, reshapedArr);
 }
 
 
@@ -1531,7 +1878,7 @@ e_role role = partyNum;
 
 
 vector < vector < vector < vector < uint64_t > > > > tmp0 = make_vector<uint64_t>( (int32_t)1,  (int32_t)227,  (int32_t)227,  (int32_t)3);
-/* Variable to read the clear value corresponding to the input variable tmp0 at (1583,1-1583,46) */
+/* Variable to read the clear value corresponding to the input variable tmp0 at (1930,1-1930,46) */
 uint64_t __tmp_in_tmp0;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)1; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)227; i1++){
@@ -1547,7 +1894,7 @@ tmp0[i0][i1][i2][i3] = (role == CLIENT) ? __tmp_in_tmp0 : 0;
 }
 
 vector < vector < vector < vector < uint64_t > > > > tmp1 = make_vector<uint64_t>( (int32_t)3,  (int32_t)3,  (int32_t)3,  (int32_t)64);
-/* Variable to read the clear value corresponding to the input variable tmp1 at (1586,1-1586,43) */
+/* Variable to read the clear value corresponding to the input variable tmp1 at (1933,1-1933,43) */
 uint64_t __tmp_in_tmp1;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)3; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)3; i1++){
@@ -1563,7 +1910,7 @@ tmp1[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp1 : 0;
 }
 
 vector < uint64_t > tmp2 = make_vector<uint64_t>( (int32_t)64);
-/* Variable to read the clear value corresponding to the input variable tmp2 at (1589,1-1589,34) */
+/* Variable to read the clear value corresponding to the input variable tmp2 at (1936,1-1936,34) */
 uint64_t __tmp_in_tmp2;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)64; i0++){
 if ((role == SERVER)) {
@@ -1573,7 +1920,7 @@ tmp2[i0] = (role == SERVER) ? __tmp_in_tmp2 : 0;
 }
 
 vector < vector < vector < vector < uint64_t > > > > tmp3 = make_vector<uint64_t>( (int32_t)1,  (int32_t)1,  (int32_t)64,  (int32_t)16);
-/* Variable to read the clear value corresponding to the input variable tmp3 at (1592,1-1592,44) */
+/* Variable to read the clear value corresponding to the input variable tmp3 at (1939,1-1939,44) */
 uint64_t __tmp_in_tmp3;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)1; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)1; i1++){
@@ -1589,7 +1936,7 @@ tmp3[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp3 : 0;
 }
 
 vector < uint64_t > tmp4 = make_vector<uint64_t>( (int32_t)16);
-/* Variable to read the clear value corresponding to the input variable tmp4 at (1595,1-1595,34) */
+/* Variable to read the clear value corresponding to the input variable tmp4 at (1942,1-1942,34) */
 uint64_t __tmp_in_tmp4;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)16; i0++){
 if ((role == SERVER)) {
@@ -1599,7 +1946,7 @@ tmp4[i0] = (role == SERVER) ? __tmp_in_tmp4 : 0;
 }
 
 vector < vector < vector < vector < uint64_t > > > > tmp5 = make_vector<uint64_t>( (int32_t)1,  (int32_t)1,  (int32_t)16,  (int32_t)64);
-/* Variable to read the clear value corresponding to the input variable tmp5 at (1598,1-1598,44) */
+/* Variable to read the clear value corresponding to the input variable tmp5 at (1945,1-1945,44) */
 uint64_t __tmp_in_tmp5;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)1; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)1; i1++){
@@ -1615,7 +1962,7 @@ tmp5[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp5 : 0;
 }
 
 vector < uint64_t > tmp6 = make_vector<uint64_t>( (int32_t)64);
-/* Variable to read the clear value corresponding to the input variable tmp6 at (1601,1-1601,34) */
+/* Variable to read the clear value corresponding to the input variable tmp6 at (1948,1-1948,34) */
 uint64_t __tmp_in_tmp6;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)64; i0++){
 if ((role == SERVER)) {
@@ -1625,7 +1972,7 @@ tmp6[i0] = (role == SERVER) ? __tmp_in_tmp6 : 0;
 }
 
 vector < vector < vector < vector < uint64_t > > > > tmp7 = make_vector<uint64_t>( (int32_t)3,  (int32_t)3,  (int32_t)16,  (int32_t)64);
-/* Variable to read the clear value corresponding to the input variable tmp7 at (1604,1-1604,44) */
+/* Variable to read the clear value corresponding to the input variable tmp7 at (1951,1-1951,44) */
 uint64_t __tmp_in_tmp7;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)3; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)3; i1++){
@@ -1641,7 +1988,7 @@ tmp7[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp7 : 0;
 }
 
 vector < uint64_t > tmp8 = make_vector<uint64_t>( (int32_t)64);
-/* Variable to read the clear value corresponding to the input variable tmp8 at (1607,1-1607,34) */
+/* Variable to read the clear value corresponding to the input variable tmp8 at (1954,1-1954,34) */
 uint64_t __tmp_in_tmp8;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)64; i0++){
 if ((role == SERVER)) {
@@ -1651,7 +1998,7 @@ tmp8[i0] = (role == SERVER) ? __tmp_in_tmp8 : 0;
 }
 
 vector < vector < vector < vector < uint64_t > > > > tmp9 = make_vector<uint64_t>( (int32_t)1,  (int32_t)1,  (int32_t)128,  (int32_t)16);
-/* Variable to read the clear value corresponding to the input variable tmp9 at (1610,1-1610,45) */
+/* Variable to read the clear value corresponding to the input variable tmp9 at (1957,1-1957,45) */
 uint64_t __tmp_in_tmp9;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)1; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)1; i1++){
@@ -1667,7 +2014,7 @@ tmp9[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp9 : 0;
 }
 
 vector < uint64_t > tmp10 = make_vector<uint64_t>( (int32_t)16);
-/* Variable to read the clear value corresponding to the input variable tmp10 at (1613,1-1613,35) */
+/* Variable to read the clear value corresponding to the input variable tmp10 at (1960,1-1960,35) */
 uint64_t __tmp_in_tmp10;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)16; i0++){
 if ((role == SERVER)) {
@@ -1677,7 +2024,7 @@ tmp10[i0] = (role == SERVER) ? __tmp_in_tmp10 : 0;
 }
 
 vector < vector < vector < vector < uint64_t > > > > tmp11 = make_vector<uint64_t>( (int32_t)1,  (int32_t)1,  (int32_t)16,  (int32_t)64);
-/* Variable to read the clear value corresponding to the input variable tmp11 at (1616,1-1616,45) */
+/* Variable to read the clear value corresponding to the input variable tmp11 at (1963,1-1963,45) */
 uint64_t __tmp_in_tmp11;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)1; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)1; i1++){
@@ -1693,7 +2040,7 @@ tmp11[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp11 : 0;
 }
 
 vector < uint64_t > tmp12 = make_vector<uint64_t>( (int32_t)64);
-/* Variable to read the clear value corresponding to the input variable tmp12 at (1619,1-1619,35) */
+/* Variable to read the clear value corresponding to the input variable tmp12 at (1966,1-1966,35) */
 uint64_t __tmp_in_tmp12;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)64; i0++){
 if ((role == SERVER)) {
@@ -1703,7 +2050,7 @@ tmp12[i0] = (role == SERVER) ? __tmp_in_tmp12 : 0;
 }
 
 vector < vector < vector < vector < uint64_t > > > > tmp13 = make_vector<uint64_t>( (int32_t)3,  (int32_t)3,  (int32_t)16,  (int32_t)64);
-/* Variable to read the clear value corresponding to the input variable tmp13 at (1622,1-1622,45) */
+/* Variable to read the clear value corresponding to the input variable tmp13 at (1969,1-1969,45) */
 uint64_t __tmp_in_tmp13;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)3; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)3; i1++){
@@ -1719,7 +2066,7 @@ tmp13[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp13 : 0;
 }
 
 vector < uint64_t > tmp14 = make_vector<uint64_t>( (int32_t)64);
-/* Variable to read the clear value corresponding to the input variable tmp14 at (1625,1-1625,35) */
+/* Variable to read the clear value corresponding to the input variable tmp14 at (1972,1-1972,35) */
 uint64_t __tmp_in_tmp14;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)64; i0++){
 if ((role == SERVER)) {
@@ -1729,7 +2076,7 @@ tmp14[i0] = (role == SERVER) ? __tmp_in_tmp14 : 0;
 }
 
 vector < vector < vector < vector < uint64_t > > > > tmp15 = make_vector<uint64_t>( (int32_t)1,  (int32_t)1,  (int32_t)128,  (int32_t)32);
-/* Variable to read the clear value corresponding to the input variable tmp15 at (1628,1-1628,46) */
+/* Variable to read the clear value corresponding to the input variable tmp15 at (1975,1-1975,46) */
 uint64_t __tmp_in_tmp15;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)1; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)1; i1++){
@@ -1745,7 +2092,7 @@ tmp15[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp15 : 0;
 }
 
 vector < uint64_t > tmp16 = make_vector<uint64_t>( (int32_t)32);
-/* Variable to read the clear value corresponding to the input variable tmp16 at (1631,1-1631,35) */
+/* Variable to read the clear value corresponding to the input variable tmp16 at (1978,1-1978,35) */
 uint64_t __tmp_in_tmp16;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)32; i0++){
 if ((role == SERVER)) {
@@ -1755,7 +2102,7 @@ tmp16[i0] = (role == SERVER) ? __tmp_in_tmp16 : 0;
 }
 
 vector < vector < vector < vector < uint64_t > > > > tmp17 = make_vector<uint64_t>( (int32_t)1,  (int32_t)1,  (int32_t)32,  (int32_t)128);
-/* Variable to read the clear value corresponding to the input variable tmp17 at (1634,1-1634,46) */
+/* Variable to read the clear value corresponding to the input variable tmp17 at (1981,1-1981,46) */
 uint64_t __tmp_in_tmp17;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)1; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)1; i1++){
@@ -1771,7 +2118,7 @@ tmp17[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp17 : 0;
 }
 
 vector < uint64_t > tmp18 = make_vector<uint64_t>( (int32_t)128);
-/* Variable to read the clear value corresponding to the input variable tmp18 at (1637,1-1637,36) */
+/* Variable to read the clear value corresponding to the input variable tmp18 at (1984,1-1984,36) */
 uint64_t __tmp_in_tmp18;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)128; i0++){
 if ((role == SERVER)) {
@@ -1781,7 +2128,7 @@ tmp18[i0] = (role == SERVER) ? __tmp_in_tmp18 : 0;
 }
 
 vector < vector < vector < vector < uint64_t > > > > tmp19 = make_vector<uint64_t>( (int32_t)3,  (int32_t)3,  (int32_t)32,  (int32_t)128);
-/* Variable to read the clear value corresponding to the input variable tmp19 at (1640,1-1640,46) */
+/* Variable to read the clear value corresponding to the input variable tmp19 at (1987,1-1987,46) */
 uint64_t __tmp_in_tmp19;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)3; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)3; i1++){
@@ -1797,7 +2144,7 @@ tmp19[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp19 : 0;
 }
 
 vector < uint64_t > tmp20 = make_vector<uint64_t>( (int32_t)128);
-/* Variable to read the clear value corresponding to the input variable tmp20 at (1643,1-1643,36) */
+/* Variable to read the clear value corresponding to the input variable tmp20 at (1990,1-1990,36) */
 uint64_t __tmp_in_tmp20;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)128; i0++){
 if ((role == SERVER)) {
@@ -1807,7 +2154,7 @@ tmp20[i0] = (role == SERVER) ? __tmp_in_tmp20 : 0;
 }
 
 vector < vector < vector < vector < uint64_t > > > > tmp21 = make_vector<uint64_t>( (int32_t)1,  (int32_t)1,  (int32_t)256,  (int32_t)32);
-/* Variable to read the clear value corresponding to the input variable tmp21 at (1646,1-1646,46) */
+/* Variable to read the clear value corresponding to the input variable tmp21 at (1993,1-1993,46) */
 uint64_t __tmp_in_tmp21;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)1; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)1; i1++){
@@ -1823,7 +2170,7 @@ tmp21[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp21 : 0;
 }
 
 vector < uint64_t > tmp22 = make_vector<uint64_t>( (int32_t)32);
-/* Variable to read the clear value corresponding to the input variable tmp22 at (1649,1-1649,35) */
+/* Variable to read the clear value corresponding to the input variable tmp22 at (1996,1-1996,35) */
 uint64_t __tmp_in_tmp22;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)32; i0++){
 if ((role == SERVER)) {
@@ -1833,7 +2180,7 @@ tmp22[i0] = (role == SERVER) ? __tmp_in_tmp22 : 0;
 }
 
 vector < vector < vector < vector < uint64_t > > > > tmp23 = make_vector<uint64_t>( (int32_t)1,  (int32_t)1,  (int32_t)32,  (int32_t)128);
-/* Variable to read the clear value corresponding to the input variable tmp23 at (1652,1-1652,46) */
+/* Variable to read the clear value corresponding to the input variable tmp23 at (1999,1-1999,46) */
 uint64_t __tmp_in_tmp23;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)1; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)1; i1++){
@@ -1849,7 +2196,7 @@ tmp23[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp23 : 0;
 }
 
 vector < uint64_t > tmp24 = make_vector<uint64_t>( (int32_t)128);
-/* Variable to read the clear value corresponding to the input variable tmp24 at (1655,1-1655,36) */
+/* Variable to read the clear value corresponding to the input variable tmp24 at (2002,1-2002,36) */
 uint64_t __tmp_in_tmp24;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)128; i0++){
 if ((role == SERVER)) {
@@ -1859,7 +2206,7 @@ tmp24[i0] = (role == SERVER) ? __tmp_in_tmp24 : 0;
 }
 
 vector < vector < vector < vector < uint64_t > > > > tmp25 = make_vector<uint64_t>( (int32_t)3,  (int32_t)3,  (int32_t)32,  (int32_t)128);
-/* Variable to read the clear value corresponding to the input variable tmp25 at (1658,1-1658,46) */
+/* Variable to read the clear value corresponding to the input variable tmp25 at (2005,1-2005,46) */
 uint64_t __tmp_in_tmp25;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)3; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)3; i1++){
@@ -1875,7 +2222,7 @@ tmp25[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp25 : 0;
 }
 
 vector < uint64_t > tmp26 = make_vector<uint64_t>( (int32_t)128);
-/* Variable to read the clear value corresponding to the input variable tmp26 at (1661,1-1661,36) */
+/* Variable to read the clear value corresponding to the input variable tmp26 at (2008,1-2008,36) */
 uint64_t __tmp_in_tmp26;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)128; i0++){
 if ((role == SERVER)) {
@@ -1885,7 +2232,7 @@ tmp26[i0] = (role == SERVER) ? __tmp_in_tmp26 : 0;
 }
 
 vector < vector < vector < vector < uint64_t > > > > tmp27 = make_vector<uint64_t>( (int32_t)1,  (int32_t)1,  (int32_t)256,  (int32_t)48);
-/* Variable to read the clear value corresponding to the input variable tmp27 at (1664,1-1664,46) */
+/* Variable to read the clear value corresponding to the input variable tmp27 at (2011,1-2011,46) */
 uint64_t __tmp_in_tmp27;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)1; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)1; i1++){
@@ -1901,7 +2248,7 @@ tmp27[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp27 : 0;
 }
 
 vector < uint64_t > tmp28 = make_vector<uint64_t>( (int32_t)48);
-/* Variable to read the clear value corresponding to the input variable tmp28 at (1667,1-1667,35) */
+/* Variable to read the clear value corresponding to the input variable tmp28 at (2014,1-2014,35) */
 uint64_t __tmp_in_tmp28;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)48; i0++){
 if ((role == SERVER)) {
@@ -1911,7 +2258,7 @@ tmp28[i0] = (role == SERVER) ? __tmp_in_tmp28 : 0;
 }
 
 vector < vector < vector < vector < uint64_t > > > > tmp29 = make_vector<uint64_t>( (int32_t)1,  (int32_t)1,  (int32_t)48,  (int32_t)192);
-/* Variable to read the clear value corresponding to the input variable tmp29 at (1670,1-1670,46) */
+/* Variable to read the clear value corresponding to the input variable tmp29 at (2017,1-2017,46) */
 uint64_t __tmp_in_tmp29;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)1; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)1; i1++){
@@ -1927,7 +2274,7 @@ tmp29[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp29 : 0;
 }
 
 vector < uint64_t > tmp30 = make_vector<uint64_t>( (int32_t)192);
-/* Variable to read the clear value corresponding to the input variable tmp30 at (1673,1-1673,36) */
+/* Variable to read the clear value corresponding to the input variable tmp30 at (2020,1-2020,36) */
 uint64_t __tmp_in_tmp30;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)192; i0++){
 if ((role == SERVER)) {
@@ -1937,7 +2284,7 @@ tmp30[i0] = (role == SERVER) ? __tmp_in_tmp30 : 0;
 }
 
 vector < vector < vector < vector < uint64_t > > > > tmp31 = make_vector<uint64_t>( (int32_t)3,  (int32_t)3,  (int32_t)48,  (int32_t)192);
-/* Variable to read the clear value corresponding to the input variable tmp31 at (1676,1-1676,46) */
+/* Variable to read the clear value corresponding to the input variable tmp31 at (2023,1-2023,46) */
 uint64_t __tmp_in_tmp31;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)3; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)3; i1++){
@@ -1953,7 +2300,7 @@ tmp31[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp31 : 0;
 }
 
 vector < uint64_t > tmp32 = make_vector<uint64_t>( (int32_t)192);
-/* Variable to read the clear value corresponding to the input variable tmp32 at (1679,1-1679,36) */
+/* Variable to read the clear value corresponding to the input variable tmp32 at (2026,1-2026,36) */
 uint64_t __tmp_in_tmp32;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)192; i0++){
 if ((role == SERVER)) {
@@ -1963,7 +2310,7 @@ tmp32[i0] = (role == SERVER) ? __tmp_in_tmp32 : 0;
 }
 
 vector < vector < vector < vector < uint64_t > > > > tmp33 = make_vector<uint64_t>( (int32_t)1,  (int32_t)1,  (int32_t)384,  (int32_t)48);
-/* Variable to read the clear value corresponding to the input variable tmp33 at (1682,1-1682,46) */
+/* Variable to read the clear value corresponding to the input variable tmp33 at (2029,1-2029,46) */
 uint64_t __tmp_in_tmp33;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)1; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)1; i1++){
@@ -1979,7 +2326,7 @@ tmp33[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp33 : 0;
 }
 
 vector < uint64_t > tmp34 = make_vector<uint64_t>( (int32_t)48);
-/* Variable to read the clear value corresponding to the input variable tmp34 at (1685,1-1685,35) */
+/* Variable to read the clear value corresponding to the input variable tmp34 at (2032,1-2032,35) */
 uint64_t __tmp_in_tmp34;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)48; i0++){
 if ((role == SERVER)) {
@@ -1989,7 +2336,7 @@ tmp34[i0] = (role == SERVER) ? __tmp_in_tmp34 : 0;
 }
 
 vector < vector < vector < vector < uint64_t > > > > tmp35 = make_vector<uint64_t>( (int32_t)1,  (int32_t)1,  (int32_t)48,  (int32_t)192);
-/* Variable to read the clear value corresponding to the input variable tmp35 at (1688,1-1688,46) */
+/* Variable to read the clear value corresponding to the input variable tmp35 at (2035,1-2035,46) */
 uint64_t __tmp_in_tmp35;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)1; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)1; i1++){
@@ -2005,7 +2352,7 @@ tmp35[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp35 : 0;
 }
 
 vector < uint64_t > tmp36 = make_vector<uint64_t>( (int32_t)192);
-/* Variable to read the clear value corresponding to the input variable tmp36 at (1691,1-1691,36) */
+/* Variable to read the clear value corresponding to the input variable tmp36 at (2038,1-2038,36) */
 uint64_t __tmp_in_tmp36;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)192; i0++){
 if ((role == SERVER)) {
@@ -2015,7 +2362,7 @@ tmp36[i0] = (role == SERVER) ? __tmp_in_tmp36 : 0;
 }
 
 vector < vector < vector < vector < uint64_t > > > > tmp37 = make_vector<uint64_t>( (int32_t)3,  (int32_t)3,  (int32_t)48,  (int32_t)192);
-/* Variable to read the clear value corresponding to the input variable tmp37 at (1694,1-1694,46) */
+/* Variable to read the clear value corresponding to the input variable tmp37 at (2041,1-2041,46) */
 uint64_t __tmp_in_tmp37;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)3; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)3; i1++){
@@ -2031,7 +2378,7 @@ tmp37[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp37 : 0;
 }
 
 vector < uint64_t > tmp38 = make_vector<uint64_t>( (int32_t)192);
-/* Variable to read the clear value corresponding to the input variable tmp38 at (1697,1-1697,36) */
+/* Variable to read the clear value corresponding to the input variable tmp38 at (2044,1-2044,36) */
 uint64_t __tmp_in_tmp38;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)192; i0++){
 if ((role == SERVER)) {
@@ -2041,7 +2388,7 @@ tmp38[i0] = (role == SERVER) ? __tmp_in_tmp38 : 0;
 }
 
 vector < vector < vector < vector < uint64_t > > > > tmp39 = make_vector<uint64_t>( (int32_t)1,  (int32_t)1,  (int32_t)384,  (int32_t)64);
-/* Variable to read the clear value corresponding to the input variable tmp39 at (1700,1-1700,46) */
+/* Variable to read the clear value corresponding to the input variable tmp39 at (2047,1-2047,46) */
 uint64_t __tmp_in_tmp39;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)1; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)1; i1++){
@@ -2057,7 +2404,7 @@ tmp39[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp39 : 0;
 }
 
 vector < uint64_t > tmp40 = make_vector<uint64_t>( (int32_t)64);
-/* Variable to read the clear value corresponding to the input variable tmp40 at (1703,1-1703,35) */
+/* Variable to read the clear value corresponding to the input variable tmp40 at (2050,1-2050,35) */
 uint64_t __tmp_in_tmp40;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)64; i0++){
 if ((role == SERVER)) {
@@ -2067,7 +2414,7 @@ tmp40[i0] = (role == SERVER) ? __tmp_in_tmp40 : 0;
 }
 
 vector < vector < vector < vector < uint64_t > > > > tmp41 = make_vector<uint64_t>( (int32_t)1,  (int32_t)1,  (int32_t)64,  (int32_t)256);
-/* Variable to read the clear value corresponding to the input variable tmp41 at (1706,1-1706,46) */
+/* Variable to read the clear value corresponding to the input variable tmp41 at (2053,1-2053,46) */
 uint64_t __tmp_in_tmp41;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)1; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)1; i1++){
@@ -2083,7 +2430,7 @@ tmp41[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp41 : 0;
 }
 
 vector < uint64_t > tmp42 = make_vector<uint64_t>( (int32_t)256);
-/* Variable to read the clear value corresponding to the input variable tmp42 at (1709,1-1709,36) */
+/* Variable to read the clear value corresponding to the input variable tmp42 at (2056,1-2056,36) */
 uint64_t __tmp_in_tmp42;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)256; i0++){
 if ((role == SERVER)) {
@@ -2093,7 +2440,7 @@ tmp42[i0] = (role == SERVER) ? __tmp_in_tmp42 : 0;
 }
 
 vector < vector < vector < vector < uint64_t > > > > tmp43 = make_vector<uint64_t>( (int32_t)3,  (int32_t)3,  (int32_t)64,  (int32_t)256);
-/* Variable to read the clear value corresponding to the input variable tmp43 at (1712,1-1712,46) */
+/* Variable to read the clear value corresponding to the input variable tmp43 at (2059,1-2059,46) */
 uint64_t __tmp_in_tmp43;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)3; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)3; i1++){
@@ -2109,7 +2456,7 @@ tmp43[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp43 : 0;
 }
 
 vector < uint64_t > tmp44 = make_vector<uint64_t>( (int32_t)256);
-/* Variable to read the clear value corresponding to the input variable tmp44 at (1715,1-1715,36) */
+/* Variable to read the clear value corresponding to the input variable tmp44 at (2062,1-2062,36) */
 uint64_t __tmp_in_tmp44;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)256; i0++){
 if ((role == SERVER)) {
@@ -2119,7 +2466,7 @@ tmp44[i0] = (role == SERVER) ? __tmp_in_tmp44 : 0;
 }
 
 vector < vector < vector < vector < uint64_t > > > > tmp45 = make_vector<uint64_t>( (int32_t)1,  (int32_t)1,  (int32_t)512,  (int32_t)64);
-/* Variable to read the clear value corresponding to the input variable tmp45 at (1718,1-1718,46) */
+/* Variable to read the clear value corresponding to the input variable tmp45 at (2065,1-2065,46) */
 uint64_t __tmp_in_tmp45;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)1; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)1; i1++){
@@ -2135,7 +2482,7 @@ tmp45[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp45 : 0;
 }
 
 vector < uint64_t > tmp46 = make_vector<uint64_t>( (int32_t)64);
-/* Variable to read the clear value corresponding to the input variable tmp46 at (1721,1-1721,35) */
+/* Variable to read the clear value corresponding to the input variable tmp46 at (2068,1-2068,35) */
 uint64_t __tmp_in_tmp46;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)64; i0++){
 if ((role == SERVER)) {
@@ -2145,7 +2492,7 @@ tmp46[i0] = (role == SERVER) ? __tmp_in_tmp46 : 0;
 }
 
 vector < vector < vector < vector < uint64_t > > > > tmp47 = make_vector<uint64_t>( (int32_t)1,  (int32_t)1,  (int32_t)64,  (int32_t)256);
-/* Variable to read the clear value corresponding to the input variable tmp47 at (1724,1-1724,46) */
+/* Variable to read the clear value corresponding to the input variable tmp47 at (2071,1-2071,46) */
 uint64_t __tmp_in_tmp47;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)1; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)1; i1++){
@@ -2161,7 +2508,7 @@ tmp47[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp47 : 0;
 }
 
 vector < uint64_t > tmp48 = make_vector<uint64_t>( (int32_t)256);
-/* Variable to read the clear value corresponding to the input variable tmp48 at (1727,1-1727,36) */
+/* Variable to read the clear value corresponding to the input variable tmp48 at (2074,1-2074,36) */
 uint64_t __tmp_in_tmp48;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)256; i0++){
 if ((role == SERVER)) {
@@ -2171,7 +2518,7 @@ tmp48[i0] = (role == SERVER) ? __tmp_in_tmp48 : 0;
 }
 
 vector < vector < vector < vector < uint64_t > > > > tmp49 = make_vector<uint64_t>( (int32_t)3,  (int32_t)3,  (int32_t)64,  (int32_t)256);
-/* Variable to read the clear value corresponding to the input variable tmp49 at (1730,1-1730,46) */
+/* Variable to read the clear value corresponding to the input variable tmp49 at (2077,1-2077,46) */
 uint64_t __tmp_in_tmp49;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)3; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)3; i1++){
@@ -2187,7 +2534,7 @@ tmp49[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp49 : 0;
 }
 
 vector < uint64_t > tmp50 = make_vector<uint64_t>( (int32_t)256);
-/* Variable to read the clear value corresponding to the input variable tmp50 at (1733,1-1733,36) */
+/* Variable to read the clear value corresponding to the input variable tmp50 at (2080,1-2080,36) */
 uint64_t __tmp_in_tmp50;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)256; i0++){
 if ((role == SERVER)) {
@@ -2197,7 +2544,7 @@ tmp50[i0] = (role == SERVER) ? __tmp_in_tmp50 : 0;
 }
 
 vector < vector < vector < vector < uint64_t > > > > tmp51 = make_vector<uint64_t>( (int32_t)1,  (int32_t)1,  (int32_t)512,  (int32_t)1000);
-/* Variable to read the clear value corresponding to the input variable tmp51 at (1736,1-1736,48) */
+/* Variable to read the clear value corresponding to the input variable tmp51 at (2083,1-2083,48) */
 uint64_t __tmp_in_tmp51;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)1; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)1; i1++){
@@ -2213,7 +2560,7 @@ tmp51[i0][i1][i2][i3] = (role == SERVER) ? __tmp_in_tmp51 : 0;
 }
 
 vector < uint64_t > tmp52 = make_vector<uint64_t>( (int32_t)1000);
-/* Variable to read the clear value corresponding to the input variable tmp52 at (1739,1-1739,37) */
+/* Variable to read the clear value corresponding to the input variable tmp52 at (2086,1-2086,37) */
 uint64_t __tmp_in_tmp52;
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)1000; i0++){
 if ((role == SERVER)) {
@@ -2231,8 +2578,8 @@ ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)3,  (int32_t)64, tmp1);
 vector < vector < vector < vector < uint64_t > > > > tmp56 = make_vector<uint64_t>( (int32_t)1,  (int32_t)113,  (int32_t)113,  (int32_t)64);
 ScaleUp1( (int32_t)64, tmp2,  (int32_t)9);
 MatAddBroadCast4( (int32_t)1,  (int32_t)113,  (int32_t)113,  (int32_t)64, tmp53, tmp2, tmp56);
-ClearMemSecret4( (int32_t)1,  (int32_t)113,  (int32_t)113,  (int32_t)64, tmp53);
 ClearMemSecret1( (int32_t)64, tmp2);
+ClearMemSecret4( (int32_t)1,  (int32_t)113,  (int32_t)113,  (int32_t)64, tmp53);
 
 vector < vector < vector < vector < uint64_t > > > > tmp59 = make_vector<uint64_t>( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)64);
 MaxPool( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)64,  (int32_t)3,  (int32_t)3,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)2,  (int32_t)2,  (int32_t)1,  (int32_t)113,  (int32_t)113,  (int32_t)64, tmp56, tmp59);
@@ -2279,8 +2626,8 @@ ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)16, tmp69);
 vector < vector < vector < vector < uint64_t > > > > tmp81 = make_vector<uint64_t>( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)64);
 ScaleUp1( (int32_t)64, tmp8,  (int32_t)9);
 MatAddBroadCast4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)64, tmp78, tmp8, tmp81);
-ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)64, tmp78);
 ClearMemSecret1( (int32_t)64, tmp8);
+ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)64, tmp78);
 
 vector < vector < vector < vector < uint64_t > > > > tmp84 = make_vector<uint64_t>( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)64);
 Relu4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)64, tmp81, tmp84,  (int32_t)9, 1);
@@ -2290,9 +2637,9 @@ int32_t tmp86 =  (int32_t)3;
 
 vector < vector < vector < vector < uint64_t > > > > tmp87 = make_vector<uint64_t>( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128);
 Concat2T444( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128,  (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)64, tmp76,  (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)64, tmp84, tmp86, tmp87);
-ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)64, tmp76);
 ClearMemPublic(tmp86);
 ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)64, tmp84);
+ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)64, tmp76);
 
 vector < vector < vector < vector < uint64_t > > > > tmp91 = make_vector<uint64_t>( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)16);
 Conv2DWrapper( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128,  (int32_t)1,  (int32_t)1,  (int32_t)16,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)1,  (int32_t)1, tmp87, tmp9, tmp91);
@@ -2302,8 +2649,8 @@ ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)128,  (int32_t)16, tmp9);
 vector < vector < vector < vector < uint64_t > > > > tmp94 = make_vector<uint64_t>( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)16);
 ScaleUp1( (int32_t)16, tmp10,  (int32_t)9);
 MatAddBroadCast4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)16, tmp91, tmp10, tmp94);
-ClearMemSecret1( (int32_t)16, tmp10);
 ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)16, tmp91);
+ClearMemSecret1( (int32_t)16, tmp10);
 
 vector < vector < vector < vector < uint64_t > > > > tmp97 = make_vector<uint64_t>( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)16);
 Relu4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)16, tmp94, tmp97,  (int32_t)9, 1);
@@ -2316,8 +2663,8 @@ ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)16,  (int32_t)64, tmp11);
 vector < vector < vector < vector < uint64_t > > > > tmp101 = make_vector<uint64_t>( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)64);
 ScaleUp1( (int32_t)64, tmp12,  (int32_t)9);
 MatAddBroadCast4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)64, tmp99, tmp12, tmp101);
-ClearMemSecret1( (int32_t)64, tmp12);
 ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)64, tmp99);
+ClearMemSecret1( (int32_t)64, tmp12);
 
 vector < vector < vector < vector < uint64_t > > > > tmp104 = make_vector<uint64_t>( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)64);
 Relu4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)64, tmp101, tmp104,  (int32_t)9, 1);
@@ -2331,8 +2678,8 @@ ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)16,  (int32_t)64, tmp13);
 vector < vector < vector < vector < uint64_t > > > > tmp109 = make_vector<uint64_t>( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)64);
 ScaleUp1( (int32_t)64, tmp14,  (int32_t)9);
 MatAddBroadCast4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)64, tmp106, tmp14, tmp109);
-ClearMemSecret1( (int32_t)64, tmp14);
 ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)64, tmp106);
+ClearMemSecret1( (int32_t)64, tmp14);
 
 vector < vector < vector < vector < uint64_t > > > > tmp112 = make_vector<uint64_t>( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)64);
 Relu4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)64, tmp109, tmp112,  (int32_t)9, 1);
@@ -2342,8 +2689,8 @@ int32_t tmp114 =  (int32_t)3;
 
 vector < vector < vector < vector < uint64_t > > > > tmp115 = make_vector<uint64_t>( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128);
 Concat2T444( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128,  (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)64, tmp104,  (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)64, tmp112, tmp114, tmp115);
-ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)64, tmp112);
 ClearMemPublic(tmp114);
+ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)64, tmp112);
 ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)64, tmp104);
 
 vector < vector < vector < vector < uint64_t > > > > tmp119 = make_vector<uint64_t>( (int32_t)1,  (int32_t)27,  (int32_t)27,  (int32_t)128);
@@ -2381,8 +2728,8 @@ ClearMemSecret4( (int32_t)1,  (int32_t)27,  (int32_t)27,  (int32_t)128, tmp131);
 
 vector < vector < vector < vector < uint64_t > > > > tmp136 = make_vector<uint64_t>( (int32_t)1,  (int32_t)27,  (int32_t)27,  (int32_t)128);
 Conv2DWrapper( (int32_t)1,  (int32_t)27,  (int32_t)27,  (int32_t)32,  (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1, tmp127, tmp19, tmp136);
-ClearMemSecret4( (int32_t)1,  (int32_t)27,  (int32_t)27,  (int32_t)32, tmp127);
 ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)32,  (int32_t)128, tmp19);
+ClearMemSecret4( (int32_t)1,  (int32_t)27,  (int32_t)27,  (int32_t)32, tmp127);
 
 vector < vector < vector < vector < uint64_t > > > > tmp139 = make_vector<uint64_t>( (int32_t)1,  (int32_t)27,  (int32_t)27,  (int32_t)128);
 ScaleUp1( (int32_t)128, tmp20,  (int32_t)9);
@@ -2399,8 +2746,8 @@ int32_t tmp144 =  (int32_t)3;
 vector < vector < vector < vector < uint64_t > > > > tmp145 = make_vector<uint64_t>( (int32_t)1,  (int32_t)27,  (int32_t)27,  (int32_t)256);
 Concat2T444( (int32_t)1,  (int32_t)27,  (int32_t)27,  (int32_t)256,  (int32_t)1,  (int32_t)27,  (int32_t)27,  (int32_t)128, tmp134,  (int32_t)1,  (int32_t)27,  (int32_t)27,  (int32_t)128, tmp142, tmp144, tmp145);
 ClearMemSecret4( (int32_t)1,  (int32_t)27,  (int32_t)27,  (int32_t)128, tmp142);
-ClearMemSecret4( (int32_t)1,  (int32_t)27,  (int32_t)27,  (int32_t)128, tmp134);
 ClearMemPublic(tmp144);
+ClearMemSecret4( (int32_t)1,  (int32_t)27,  (int32_t)27,  (int32_t)128, tmp134);
 
 vector < vector < vector < vector < uint64_t > > > > tmp149 = make_vector<uint64_t>( (int32_t)1,  (int32_t)27,  (int32_t)27,  (int32_t)32);
 Conv2DWrapper( (int32_t)1,  (int32_t)27,  (int32_t)27,  (int32_t)256,  (int32_t)1,  (int32_t)1,  (int32_t)32,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)1,  (int32_t)1, tmp145, tmp21, tmp149);
@@ -2410,8 +2757,8 @@ ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)256,  (int32_t)32, tmp21);
 vector < vector < vector < vector < uint64_t > > > > tmp152 = make_vector<uint64_t>( (int32_t)1,  (int32_t)27,  (int32_t)27,  (int32_t)32);
 ScaleUp1( (int32_t)32, tmp22,  (int32_t)9);
 MatAddBroadCast4( (int32_t)1,  (int32_t)27,  (int32_t)27,  (int32_t)32, tmp149, tmp22, tmp152);
-ClearMemSecret4( (int32_t)1,  (int32_t)27,  (int32_t)27,  (int32_t)32, tmp149);
 ClearMemSecret1( (int32_t)32, tmp22);
+ClearMemSecret4( (int32_t)1,  (int32_t)27,  (int32_t)27,  (int32_t)32, tmp149);
 
 vector < vector < vector < vector < uint64_t > > > > tmp155 = make_vector<uint64_t>( (int32_t)1,  (int32_t)27,  (int32_t)27,  (int32_t)32);
 Relu4( (int32_t)1,  (int32_t)27,  (int32_t)27,  (int32_t)32, tmp152, tmp155,  (int32_t)9, 1);
@@ -2433,14 +2780,14 @@ ClearMemSecret4( (int32_t)1,  (int32_t)27,  (int32_t)27,  (int32_t)128, tmp159);
 
 vector < vector < vector < vector < uint64_t > > > > tmp164 = make_vector<uint64_t>( (int32_t)1,  (int32_t)27,  (int32_t)27,  (int32_t)128);
 Conv2DWrapper( (int32_t)1,  (int32_t)27,  (int32_t)27,  (int32_t)32,  (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1, tmp155, tmp25, tmp164);
-ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)32,  (int32_t)128, tmp25);
 ClearMemSecret4( (int32_t)1,  (int32_t)27,  (int32_t)27,  (int32_t)32, tmp155);
+ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)32,  (int32_t)128, tmp25);
 
 vector < vector < vector < vector < uint64_t > > > > tmp167 = make_vector<uint64_t>( (int32_t)1,  (int32_t)27,  (int32_t)27,  (int32_t)128);
 ScaleUp1( (int32_t)128, tmp26,  (int32_t)9);
 MatAddBroadCast4( (int32_t)1,  (int32_t)27,  (int32_t)27,  (int32_t)128, tmp164, tmp26, tmp167);
-ClearMemSecret4( (int32_t)1,  (int32_t)27,  (int32_t)27,  (int32_t)128, tmp164);
 ClearMemSecret1( (int32_t)128, tmp26);
+ClearMemSecret4( (int32_t)1,  (int32_t)27,  (int32_t)27,  (int32_t)128, tmp164);
 
 vector < vector < vector < vector < uint64_t > > > > tmp170 = make_vector<uint64_t>( (int32_t)1,  (int32_t)27,  (int32_t)27,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)27,  (int32_t)27,  (int32_t)128, tmp167, tmp170,  (int32_t)9, 1);
@@ -2460,14 +2807,14 @@ ClearMemSecret4( (int32_t)1,  (int32_t)27,  (int32_t)27,  (int32_t)256, tmp173);
 
 vector < vector < vector < vector < uint64_t > > > > tmp179 = make_vector<uint64_t>( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)48);
 Conv2DWrapper( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)256,  (int32_t)1,  (int32_t)1,  (int32_t)48,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)1,  (int32_t)1, tmp177, tmp27, tmp179);
-ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)256,  (int32_t)48, tmp27);
 ClearMemSecret4( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)256, tmp177);
+ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)256,  (int32_t)48, tmp27);
 
 vector < vector < vector < vector < uint64_t > > > > tmp182 = make_vector<uint64_t>( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)48);
 ScaleUp1( (int32_t)48, tmp28,  (int32_t)9);
 MatAddBroadCast4( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)48, tmp179, tmp28, tmp182);
-ClearMemSecret4( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)48, tmp179);
 ClearMemSecret1( (int32_t)48, tmp28);
+ClearMemSecret4( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)48, tmp179);
 
 vector < vector < vector < vector < uint64_t > > > > tmp185 = make_vector<uint64_t>( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)48);
 Relu4( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)48, tmp182, tmp185,  (int32_t)9, 1);
@@ -2480,8 +2827,8 @@ ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)48,  (int32_t)192, tmp29);
 vector < vector < vector < vector < uint64_t > > > > tmp189 = make_vector<uint64_t>( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)192);
 ScaleUp1( (int32_t)192, tmp30,  (int32_t)9);
 MatAddBroadCast4( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)192, tmp187, tmp30, tmp189);
-ClearMemSecret4( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)192, tmp187);
 ClearMemSecret1( (int32_t)192, tmp30);
+ClearMemSecret4( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)192, tmp187);
 
 vector < vector < vector < vector < uint64_t > > > > tmp192 = make_vector<uint64_t>( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)192);
 Relu4( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)192, tmp189, tmp192,  (int32_t)9, 1);
@@ -2489,8 +2836,8 @@ ClearMemSecret4( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)192, tmp189);
 
 vector < vector < vector < vector < uint64_t > > > > tmp194 = make_vector<uint64_t>( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)192);
 Conv2DWrapper( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)48,  (int32_t)3,  (int32_t)3,  (int32_t)192,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1, tmp185, tmp31, tmp194);
-ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)48,  (int32_t)192, tmp31);
 ClearMemSecret4( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)48, tmp185);
+ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)48,  (int32_t)192, tmp31);
 
 vector < vector < vector < vector < uint64_t > > > > tmp197 = make_vector<uint64_t>( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)192);
 ScaleUp1( (int32_t)192, tmp32,  (int32_t)9);
@@ -2506,14 +2853,14 @@ int32_t tmp202 =  (int32_t)3;
 
 vector < vector < vector < vector < uint64_t > > > > tmp203 = make_vector<uint64_t>( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)384);
 Concat2T444( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)384,  (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)192, tmp192,  (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)192, tmp200, tmp202, tmp203);
-ClearMemSecret4( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)192, tmp200);
 ClearMemSecret4( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)192, tmp192);
+ClearMemSecret4( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)192, tmp200);
 ClearMemPublic(tmp202);
 
 vector < vector < vector < vector < uint64_t > > > > tmp207 = make_vector<uint64_t>( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)48);
 Conv2DWrapper( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)384,  (int32_t)1,  (int32_t)1,  (int32_t)48,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)1,  (int32_t)1, tmp203, tmp33, tmp207);
-ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)384,  (int32_t)48, tmp33);
 ClearMemSecret4( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)384, tmp203);
+ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)384,  (int32_t)48, tmp33);
 
 vector < vector < vector < vector < uint64_t > > > > tmp210 = make_vector<uint64_t>( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)48);
 ScaleUp1( (int32_t)48, tmp34,  (int32_t)9);
@@ -2547,8 +2894,8 @@ ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)48,  (int32_t)192, tmp37);
 vector < vector < vector < vector < uint64_t > > > > tmp225 = make_vector<uint64_t>( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)192);
 ScaleUp1( (int32_t)192, tmp38,  (int32_t)9);
 MatAddBroadCast4( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)192, tmp222, tmp38, tmp225);
-ClearMemSecret1( (int32_t)192, tmp38);
 ClearMemSecret4( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)192, tmp222);
+ClearMemSecret1( (int32_t)192, tmp38);
 
 vector < vector < vector < vector < uint64_t > > > > tmp228 = make_vector<uint64_t>( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)192);
 Relu4( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)192, tmp225, tmp228,  (int32_t)9, 1);
@@ -2558,8 +2905,8 @@ int32_t tmp230 =  (int32_t)3;
 
 vector < vector < vector < vector < uint64_t > > > > tmp231 = make_vector<uint64_t>( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)384);
 Concat2T444( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)384,  (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)192, tmp220,  (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)192, tmp228, tmp230, tmp231);
-ClearMemSecret4( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)192, tmp220);
 ClearMemPublic(tmp230);
+ClearMemSecret4( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)192, tmp220);
 ClearMemSecret4( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)192, tmp228);
 
 vector < vector < vector < vector < uint64_t > > > > tmp235 = make_vector<uint64_t>( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)64);
@@ -2584,8 +2931,8 @@ ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)64,  (int32_t)256, tmp41);
 vector < vector < vector < vector < uint64_t > > > > tmp245 = make_vector<uint64_t>( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)256);
 ScaleUp1( (int32_t)256, tmp42,  (int32_t)9);
 MatAddBroadCast4( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)256, tmp243, tmp42, tmp245);
-ClearMemSecret4( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)256, tmp243);
 ClearMemSecret1( (int32_t)256, tmp42);
+ClearMemSecret4( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)256, tmp243);
 
 vector < vector < vector < vector < uint64_t > > > > tmp248 = make_vector<uint64_t>( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)256);
 Relu4( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)256, tmp245, tmp248,  (int32_t)9, 1);
@@ -2599,8 +2946,8 @@ ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)64,  (int32_t)256, tmp43);
 vector < vector < vector < vector < uint64_t > > > > tmp253 = make_vector<uint64_t>( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)256);
 ScaleUp1( (int32_t)256, tmp44,  (int32_t)9);
 MatAddBroadCast4( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)256, tmp250, tmp44, tmp253);
-ClearMemSecret1( (int32_t)256, tmp44);
 ClearMemSecret4( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)256, tmp250);
+ClearMemSecret1( (int32_t)256, tmp44);
 
 vector < vector < vector < vector < uint64_t > > > > tmp256 = make_vector<uint64_t>( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)256);
 Relu4( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)256, tmp253, tmp256,  (int32_t)9, 1);
@@ -2610,9 +2957,9 @@ int32_t tmp258 =  (int32_t)3;
 
 vector < vector < vector < vector < uint64_t > > > > tmp259 = make_vector<uint64_t>( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)512);
 Concat2T444( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)512,  (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)256, tmp248,  (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)256, tmp256, tmp258, tmp259);
-ClearMemSecret4( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)256, tmp256);
-ClearMemSecret4( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)256, tmp248);
 ClearMemPublic(tmp258);
+ClearMemSecret4( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)256, tmp248);
+ClearMemSecret4( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)256, tmp256);
 
 vector < vector < vector < vector < uint64_t > > > > tmp263 = make_vector<uint64_t>( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)64);
 Conv2DWrapper( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)512,  (int32_t)1,  (int32_t)1,  (int32_t)64,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)1,  (int32_t)1, tmp259, tmp45, tmp263);
@@ -2622,8 +2969,8 @@ ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)512,  (int32_t)64, tmp45);
 vector < vector < vector < vector < uint64_t > > > > tmp266 = make_vector<uint64_t>( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)64);
 ScaleUp1( (int32_t)64, tmp46,  (int32_t)9);
 MatAddBroadCast4( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)64, tmp263, tmp46, tmp266);
-ClearMemSecret1( (int32_t)64, tmp46);
 ClearMemSecret4( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)64, tmp263);
+ClearMemSecret1( (int32_t)64, tmp46);
 
 vector < vector < vector < vector < uint64_t > > > > tmp269 = make_vector<uint64_t>( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)64);
 Relu4( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)64, tmp266, tmp269,  (int32_t)9, 1);
@@ -2645,14 +2992,14 @@ ClearMemSecret4( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)256, tmp273);
 
 vector < vector < vector < vector < uint64_t > > > > tmp278 = make_vector<uint64_t>( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)256);
 Conv2DWrapper( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)64,  (int32_t)3,  (int32_t)3,  (int32_t)256,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1, tmp269, tmp49, tmp278);
-ClearMemSecret4( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)64, tmp269);
 ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)64,  (int32_t)256, tmp49);
+ClearMemSecret4( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)64, tmp269);
 
 vector < vector < vector < vector < uint64_t > > > > tmp281 = make_vector<uint64_t>( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)256);
 ScaleUp1( (int32_t)256, tmp50,  (int32_t)9);
 MatAddBroadCast4( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)256, tmp278, tmp50, tmp281);
-ClearMemSecret1( (int32_t)256, tmp50);
 ClearMemSecret4( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)256, tmp278);
+ClearMemSecret1( (int32_t)256, tmp50);
 
 vector < vector < vector < vector < uint64_t > > > > tmp284 = make_vector<uint64_t>( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)256);
 Relu4( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)256, tmp281, tmp284,  (int32_t)9, 1);
@@ -2668,8 +3015,8 @@ ClearMemSecret4( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)256, tmp276);
 
 vector < vector < vector < vector < uint64_t > > > > tmp291 = make_vector<uint64_t>( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)1000);
 Conv2DWrapper( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)512,  (int32_t)1,  (int32_t)1,  (int32_t)1000,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)1,  (int32_t)1, tmp287, tmp51, tmp291);
-ClearMemSecret4( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)512, tmp287);
 ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)512,  (int32_t)1000, tmp51);
+ClearMemSecret4( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)512, tmp287);
 
 vector < vector < vector < vector < uint64_t > > > > tmp294 = make_vector<uint64_t>( (int32_t)1,  (int32_t)13,  (int32_t)13,  (int32_t)1000);
 ScaleUp1( (int32_t)1000, tmp52,  (int32_t)9);

@@ -38,36 +38,14 @@ void MatMul2D(int32_t i,
 		vector< vector<porthosSecretType> >& C, 
 		bool modelIsA);
 
-void ArgMax1(int32_t outArrS1, 
-		int32_t inArrS1, 
-		int32_t inArrS2, 
-		vector< vector<porthosSecretType> >& inArr, 
-		int32_t dim, vector<porthosSecretType>& outArr);
-
-void ArgMax3(int32_t outs1, 
-		int32_t outs2, 
-		int32_t outs3, 
-		int32_t ins1, 
-		int32_t ins2, 
-		int32_t ins3, 
-		int32_t ins4,
-		vector< vector< vector< vector<porthosSecretType> > > >& inArr, 
-		int32_t dim, 
-		vector< vector< vector<porthosSecretType> > >& outArr);
-
-void Relu2(int32_t s1, 
+void ArgMax(int32_t s1, 
 		int32_t s2, 
 		vector< vector<porthosSecretType> >& inArr, 
-		vector< vector<porthosSecretType> >& outArr,
-		int32_t sf,
-		bool doTruncation);
+		vector<porthosSecretType>& outArr);
 
-void Relu4(int32_t s1, 
-		int32_t s2, 
-		int32_t s3, 
-		int32_t s4, 
-		vector< vector< vector< vector<porthosSecretType> > > >& inArr, 
-		vector< vector< vector< vector<porthosSecretType> > > >& outArr,
+void Relu(int32_t size, 
+		vector<porthosSecretType>& inArr, 
+		vector<porthosSecretType>& outArr,
 		int32_t sf,
 		bool doTruncation);
 
@@ -109,19 +87,13 @@ void AvgPool(int32_t N,
 		vector< vector< vector< vector<porthosSecretType> > > >& inArr, 
 		vector< vector< vector< vector<porthosSecretType> > > >& outArr);
 
-void ElemWiseSecretVectorMult(int32_t size, vector<porthosSecretType>& arr1, vector<porthosSecretType>& arr2, vector<porthosSecretType>& outputArr);
+void ElemWiseSecretSharedVectorMult(int32_t size, vector<porthosSecretType>& arr1, vector<porthosSecretType>& arr2, vector<porthosSecretType>& outputArr);
+void ElemWiseActModelVectorMult(int32_t size, vector<porthosSecretType>& arr1, vector<porthosSecretType>& arr2, vector<porthosSecretType>& outputArr);
 void ElemWiseVectorPublicDiv(int32_t size, vector<porthosSecretType>& arr1, int32_t divisor, vector<porthosSecretType>& outputArr);
 
 
-void ScaleUp1(int32_t s1, vector<porthosSecretType>& arr, int32_t sf);
-void ScaleUp2(int32_t s1, int32_t s2, vector< vector<porthosSecretType> >& arr, int32_t sf);
-void ScaleUp3(int32_t s1, int32_t s2, int32_t s3, vector< vector< vector<porthosSecretType> > >& arr, int32_t sf);
-void ScaleUp4(int32_t s1, int32_t s2, int32_t s3, int32_t s4, vector< vector< vector< vector<porthosSecretType> > > >& arr, int32_t sf);
-
-void ScaleDown1(int32_t s1, vector<porthosSecretType>& arr, int32_t sf);
-void ScaleDown2(int32_t s1, int32_t s2, vector< vector<porthosSecretType> >& arr, int32_t sf);
-void ScaleDown3(int32_t s1, int32_t s2, int32_t s3, vector< vector< vector<porthosSecretType> > >& arr, int32_t sf);
-void ScaleDown4(int32_t s1, int32_t s2, int32_t s3, int32_t s4, vector< vector< vector< vector<porthosSecretType> > > >& arr, int32_t sf);
+void ScaleUp(int32_t s1, vector<porthosSecretType>& arr, int32_t sf);
+void ScaleDown(int32_t s1, vector<porthosSecretType>& arr, int32_t sf);
 
 void Conv2D(int32_t N, int32_t H, int32_t W, int32_t CI, 
 				int32_t FH, int32_t FW, int32_t CO, 
@@ -145,7 +117,17 @@ void ClearMemSecret1(int32_t s1, vector< porthosSecretType >& arr);
 void ClearMemSecret2(int32_t s1, int32_t s2, vector< vector< porthosSecretType > >& arr);
 void ClearMemSecret3(int32_t s1, int32_t s2, int32_t s3, vector< vector< vector< porthosSecretType > > >& arr);
 void ClearMemSecret4(int32_t s1, int32_t s2, int32_t s3, int32_t s4, vector< vector< vector< vector< porthosSecretType > > > >& arr);
+void ClearMemSecret5(int32_t s1, int32_t s2, int32_t s3, int32_t s4, int32_t s5, vector< vector< vector< vector< vector< porthosSecretType > > > > >& arr);
+
+void ClearMemPublic(int32_t x);
+void ClearMemPublic1(int32_t s1, vector< int32_t >& arr);
 void ClearMemPublic2(int32_t s1, int32_t s2, vector< vector< int32_t > >& arr);
+void ClearMemPublic3(int32_t s1, int32_t s2, int32_t s3, vector< vector< vector< int32_t > > >& arr);
+void ClearMemPublic4(int32_t s1, int32_t s2, int32_t s3, int32_t s4, vector< vector< vector< vector< int32_t > > > >& arr);
+void ClearMemPublic5(int32_t s1, int32_t s2, int32_t s3, int32_t s4, int32_t s5, vector< vector< vector< vector< vector< int32_t > > > > >& arr);
+
+void Floor(int32_t size, vector<porthosSecretType>& inArr, vector<porthosSecretType>& outArr, int32_t sf);
+
 
 void StartComputation();
 void EndComputation();
