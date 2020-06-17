@@ -459,10 +459,10 @@ int32_t curPosH = (leftTopCornerH + fh);
 
 int32_t curPosW = (leftTopCornerW + fw);
 
-uint64_t val = ( (int64_t)0);
+uint64_t val = funcSSCons( (int64_t)0);
 for (uint32_t ci =  (int32_t)0; ci < CI; ci++){
 if ((((curPosH <  (int32_t)0) || (curPosH >= H)) || ((curPosW <  (int32_t)0) || (curPosW >= W)))) {
-val = ( (int64_t)0);
+val = funcSSCons( (int64_t)0);
 } else {
 val = inputArr[n][curPosH][curPosW][ci];
 }
@@ -520,7 +520,7 @@ for (uint32_t g =  (int32_t)0; g < G; g++){
 for (uint32_t h =  (int32_t)0; h < outH; h++){
 for (uint32_t w =  (int32_t)0; w < outW; w++){
 
-uint64_t val = ( (int64_t)0);
+uint64_t val = funcSSCons( (int64_t)0);
 
 int32_t ci = ((GIS * g) + cig);
 
@@ -614,12 +614,12 @@ int32_t curPosH = (leftTopCornerH + fh);
 
 int32_t curPosW = (leftTopCornerW + fw);
 
-uint64_t val = ( (int64_t)0);
+uint64_t val = funcSSCons( (int64_t)0);
 
 int32_t startCI = (g * CIG);
 for (uint32_t ci =  (int32_t)0; ci < CIG; ci++){
 if ((((curPosH <  (int32_t)0) || (curPosH >= H)) || ((curPosW <  (int32_t)0) || (curPosW >= W)))) {
-val = ( (int64_t)0);
+val = funcSSCons( (int64_t)0);
 } else {
 val = inputArr[n][curPosH][curPosW][(ci + startCI)];
 }
@@ -728,10 +728,10 @@ int32_t curPosH = (leftTopCornerH + fh);
 
 int32_t curPosW = (leftTopCornerW + fw);
 
-uint64_t val = ( (int64_t)0);
+uint64_t val = funcSSCons( (int64_t)0);
 for (uint32_t ci =  (int32_t)0; ci < CI; ci++){
 if (((((curPosD <  (int32_t)0) || (curPosD >= D)) || ((curPosH <  (int32_t)0) || (curPosH >= H))) || ((curPosW <  (int32_t)0) || (curPosW >= W)))) {
-val = ( (int64_t)0);
+val = funcSSCons( (int64_t)0);
 } else {
 val = inputArr[n][curPosD][curPosH][curPosW][ci];
 }
@@ -791,7 +791,7 @@ for (uint32_t h =  (int32_t)0; h < outH; h++){
 for (uint32_t w =  (int32_t)0; w < outW; w++){
 for (uint32_t ci =  (int32_t)0; ci < CI; ci++){
 
-uint64_t val = ( (int64_t)0);
+uint64_t val = funcSSCons( (int64_t)0);
 for (uint32_t fd = (d * strideD); fd < ((d * strideD) + FD); fd++){
 for (uint32_t fh = (h * strideH); fh < ((h * strideH) + FH); fh++){
 for (uint32_t fw = (w * strideW); fw < ((w * strideW) + FW); fw++){
@@ -883,10 +883,10 @@ int32_t curPosH = (leftTopCornerH + fh);
 
 int32_t curPosW = (leftTopCornerW + fw);
 
-uint64_t val = ( (int64_t)0);
+uint64_t val = funcSSCons( (int64_t)0);
 for (uint32_t ci =  (int32_t)0; ci < CI; ci++){
 if ((((curPosH <  (int32_t)0) || (curPosH >= HPrimeTilde)) || ((curPosW <  (int32_t)0) || (curPosW >= WPrimeTilde)))) {
-val = ( (int64_t)0);
+val = funcSSCons( (int64_t)0);
 } else {
 if ((((curPosH % strideH) ==  (int32_t)0) && ((curPosW % strideW) ==  (int32_t)0))) {
 
@@ -895,7 +895,7 @@ int32_t idxInputH = (curPosH / strideH);
 int32_t idxInputW = (curPosW / strideW);
 val = inputArr[n][idxInputH][idxInputW][ci];
 } else {
-val = ( (int64_t)0);
+val = funcSSCons( (int64_t)0);
 }
 }
 outputArr[((((fh * FW) * CI) + (fw * CI)) + ci)][linIdxFilterMult] = val;
@@ -987,10 +987,10 @@ int32_t curPosH = (leftTopCornerH + fh);
 
 int32_t curPosW = (leftTopCornerW + fw);
 
-uint64_t val = ( (int64_t)0);
+uint64_t val = funcSSCons( (int64_t)0);
 for (uint32_t ci =  (int32_t)0; ci < CI; ci++){
 if (((((curPosD <  (int32_t)0) || (curPosD >= DPrimeTilde)) || ((curPosH <  (int32_t)0) || (curPosH >= HPrimeTilde))) || ((curPosW <  (int32_t)0) || (curPosW >= WPrimeTilde)))) {
-val = ( (int64_t)0);
+val = funcSSCons( (int64_t)0);
 } else {
 if (((((curPosD % strideD) ==  (int32_t)0) && ((curPosH % strideH) ==  (int32_t)0)) && ((curPosW % strideW) ==  (int32_t)0))) {
 
@@ -1001,7 +1001,7 @@ int32_t idxInputH = (curPosH / strideH);
 int32_t idxInputW = (curPosW / strideW);
 val = inputArr[n][idxInputD][idxInputH][idxInputW][ci];
 } else {
-val = ( (int64_t)0);
+val = funcSSCons( (int64_t)0);
 }
 }
 outputArr[((((((fd * FH) * FW) * CI) + ((fh * FW) * CI)) + (fw * CI)) + ci)][linIdxFilterMult] = val;
@@ -1054,7 +1054,7 @@ for (uint32_t h =  (int32_t)0; h < outH; h++){
 for (uint32_t w =  (int32_t)0; w < outW; w++){
 for (uint32_t ci =  (int32_t)0; ci < CI; ci++){
 
-uint64_t val = ( (int64_t)0);
+uint64_t val = funcSSCons( (int64_t)0);
 for (uint32_t fd = d; fd < (d + FD); fd++){
 for (uint32_t fh = h; fh < (h + FH); fh++){
 for (uint32_t fw = w; fw < (w + FW); fw++){
@@ -1121,7 +1121,7 @@ for (uint32_t l =  (int32_t)0; l < s4; l++){
 if (((((((((i >= lbounds1) && (i < rbounds1excl)) && (j >= lbounds2)) && (j < rbounds2excl)) && (k >= lbounds3)) && (k < rbounds3excl)) && (l >= lbounds4)) && (l < rbounds4excl))) {
 outArr[i][j][k][l] = inpArr[(i - paddings[ (int32_t)0][ (int32_t)0])][(j - paddings[ (int32_t)1][ (int32_t)0])][(k - paddings[ (int32_t)2][ (int32_t)0])][(l - paddings[ (int32_t)3][ (int32_t)0])];
 } else {
-outArr[i][j][k][l] = ( (int64_t)0);
+outArr[i][j][k][l] = funcSSCons( (int64_t)0);
 }
 }
 }
@@ -1158,7 +1158,7 @@ for (uint32_t m =  (int32_t)0; m < s5; m++){
 if (((((((((((i >= lbounds1) && (i < rbounds1excl)) && (j >= lbounds2)) && (j < rbounds2excl)) && (k >= lbounds3)) && (k < rbounds3excl)) && (l >= lbounds4)) && (l < rbounds4excl)) && (m >= lbounds5)) && (m < rbounds5excl))) {
 outArr[i][j][k][l][m] = inpArr[(i - paddings[ (int32_t)0][ (int32_t)0])][(j - paddings[ (int32_t)1][ (int32_t)0])][(k - paddings[ (int32_t)2][ (int32_t)0])][(l - paddings[ (int32_t)3][ (int32_t)0])][(m - paddings[ (int32_t)4][ (int32_t)0])];
 } else {
-outArr[i][j][k][l][m] = ( (int64_t)0);
+outArr[i][j][k][l][m] = funcSSCons( (int64_t)0);
 }
 }
 }
@@ -1191,7 +1191,7 @@ for (uint32_t l =  (int32_t)0; l < o4; l++){
 if (((((((((i >= lbounds1) && (i < rbounds1excl)) && (j >= lbounds2)) && (j < rbounds2excl)) && (k >= lbounds3)) && (k < rbounds3excl)) && (l >= lbounds4)) && (l < rbounds4excl))) {
 outArr[i][j][k][l] = inpArr[(i - paddings[ (int32_t)0])][(j - paddings[ (int32_t)1])][(k - paddings[ (int32_t)2])][(l - paddings[ (int32_t)3])];
 } else {
-outArr[i][j][k][l] = ( (int64_t)0);
+outArr[i][j][k][l] = funcSSCons( (int64_t)0);
 }
 }
 }
@@ -1443,7 +1443,7 @@ vector < uint64_t > outputArrReshaped = make_vector<uint64_t>(outputSize);
 for (uint32_t i1 =  (int32_t)0; i1 < outS1; i1++){
 for (uint32_t i2 =  (int32_t)0; i2 < outS2; i2++){
 
-uint64_t summ = ( (int64_t)0);
+uint64_t summ = funcSSCons( (int64_t)0);
 for (uint32_t i =  (int32_t)0; i < inS2; i++){
 for (uint32_t j =  (int32_t)0; j < inS3; j++){
 summ = summ+inputArr[i1][i][j][i2];
@@ -1474,7 +1474,7 @@ vector < uint64_t > outputArrReshaped = make_vector<uint64_t>(outputSize);
 for (uint32_t i1 =  (int32_t)0; i1 < outS1; i1++){
 for (uint32_t i2 =  (int32_t)0; i2 < outS2; i2++){
 
-uint64_t summ = ( (int64_t)0);
+uint64_t summ = funcSSCons( (int64_t)0);
 for (uint32_t i =  (int32_t)0; i < inS3; i++){
 for (uint32_t j =  (int32_t)0; j < inS4; j++){
 summ = summ+inputArr[i1][i2][i][j];
@@ -8688,9 +8688,9 @@ ClearMemSecret4( (int32_t)7,  (int32_t)7,  (int32_t)3,  (int32_t)64, tmp1);
 vector < vector < vector < vector < uint64_t > > > > tmp610 = make_vector<uint64_t>( (int32_t)1,  (int32_t)112,  (int32_t)112,  (int32_t)64);
 ScaleDown4( (int32_t)1,  (int32_t)112,  (int32_t)112,  (int32_t)64, tmp607,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)112,  (int32_t)112,  (int32_t)64, tmp607, tmp2, tmp3,  (int32_t)0,  (int32_t)11, tmp610);
-ClearMemSecret4( (int32_t)1,  (int32_t)112,  (int32_t)112,  (int32_t)64, tmp607);
-ClearMemSecret1( (int32_t)64, tmp2);
 ClearMemSecret1( (int32_t)64, tmp3);
+ClearMemSecret1( (int32_t)64, tmp2);
+ClearMemSecret4( (int32_t)1,  (int32_t)112,  (int32_t)112,  (int32_t)64, tmp607);
 
 vector < vector < vector < vector < uint64_t > > > > tmp614 = make_vector<uint64_t>( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)64);
 MaxPool( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)64,  (int32_t)3,  (int32_t)3,  (int32_t)0,  (int32_t)1,  (int32_t)0,  (int32_t)1,  (int32_t)2,  (int32_t)2,  (int32_t)1,  (int32_t)112,  (int32_t)112,  (int32_t)64, tmp610, tmp614);
@@ -8702,8 +8702,8 @@ ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)64, tmp614);
 
 vector < vector < vector < vector < uint64_t > > > > tmp618 = make_vector<uint64_t>( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)64);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)64, tmp616, tmp6, tmp7,  (int32_t)0,  (int32_t)11, tmp618);
-ClearMemSecret1( (int32_t)64, tmp7);
 ClearMemSecret1( (int32_t)64, tmp6);
+ClearMemSecret1( (int32_t)64, tmp7);
 
 vector < vector < vector < vector < uint64_t > > > > tmp621 = make_vector<uint64_t>( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)64);
 Relu4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)64, tmp618, tmp621,  (int32_t)11, 1);
@@ -8711,15 +8711,15 @@ ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)64, tmp618);
 
 vector < vector < vector < vector < uint64_t > > > > tmp623 = make_vector<uint64_t>( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128);
 Conv2DWrapper( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)64,  (int32_t)1,  (int32_t)1,  (int32_t)128,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)1,  (int32_t)1, tmp621, tmp10, tmp623);
-ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)64, tmp621);
 ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)64,  (int32_t)128, tmp10);
+ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)64, tmp621);
 
 vector < vector < vector < vector < uint64_t > > > > tmp626 = make_vector<uint64_t>( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128, tmp623,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128, tmp623, tmp11, tmp12,  (int32_t)0,  (int32_t)11, tmp626);
-ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128, tmp623);
 ClearMemSecret1( (int32_t)128, tmp12);
 ClearMemSecret1( (int32_t)128, tmp11);
+ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128, tmp623);
 
 vector < vector < vector < vector < uint64_t > > > > tmp630 = make_vector<uint64_t>( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128, tmp626, tmp630,  (int32_t)11, 1);
@@ -8727,8 +8727,8 @@ ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128, tmp626);
 
 vector < vector < vector < vector < uint64_t > > > > tmp632 = make_vector<uint64_t>( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)32);
 Conv2DWrapper( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128,  (int32_t)3,  (int32_t)3,  (int32_t)32,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1, tmp630, tmp15, tmp632);
-ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp15);
 ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128, tmp630);
+ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp15);
 
 int32_t tmp635 =  (int32_t)3;
 
@@ -8736,8 +8736,8 @@ vector < vector < vector < vector < uint64_t > > > > tmp636 = make_vector<uint64
 ScaleDown4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)32, tmp632,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)96,  (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)64, tmp616,  (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)32, tmp632, tmp635, tmp636);
 ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)32, tmp632);
-ClearMemPublic(tmp635);
 ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)64, tmp616);
+ClearMemPublic(tmp635);
 
 vector < vector < vector < vector < uint64_t > > > > tmp640 = make_vector<uint64_t>( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)96);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)96, tmp636, tmp16, tmp17,  (int32_t)0,  (int32_t)11, tmp640);
@@ -8750,14 +8750,14 @@ ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)96, tmp640);
 
 vector < vector < vector < vector < uint64_t > > > > tmp645 = make_vector<uint64_t>( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128);
 Conv2DWrapper( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)96,  (int32_t)1,  (int32_t)1,  (int32_t)128,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)1,  (int32_t)1, tmp643, tmp20, tmp645);
-ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)96, tmp643);
 ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)96,  (int32_t)128, tmp20);
+ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)96, tmp643);
 
 vector < vector < vector < vector < uint64_t > > > > tmp648 = make_vector<uint64_t>( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128, tmp645,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128, tmp645, tmp21, tmp22,  (int32_t)0,  (int32_t)11, tmp648);
-ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128, tmp645);
 ClearMemSecret1( (int32_t)128, tmp22);
+ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128, tmp645);
 ClearMemSecret1( (int32_t)128, tmp21);
 
 vector < vector < vector < vector < uint64_t > > > > tmp652 = make_vector<uint64_t>( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128);
@@ -8780,8 +8780,8 @@ ClearMemPublic(tmp657);
 
 vector < vector < vector < vector < uint64_t > > > > tmp662 = make_vector<uint64_t>( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128, tmp658, tmp26, tmp27,  (int32_t)0,  (int32_t)11, tmp662);
-ClearMemSecret1( (int32_t)128, tmp26);
 ClearMemSecret1( (int32_t)128, tmp27);
+ClearMemSecret1( (int32_t)128, tmp26);
 
 vector < vector < vector < vector < uint64_t > > > > tmp665 = make_vector<uint64_t>( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128, tmp662, tmp665,  (int32_t)11, 1);
@@ -8789,15 +8789,15 @@ ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128, tmp662);
 
 vector < vector < vector < vector < uint64_t > > > > tmp667 = make_vector<uint64_t>( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128);
 Conv2DWrapper( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128,  (int32_t)1,  (int32_t)1,  (int32_t)128,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)1,  (int32_t)1, tmp665, tmp30, tmp667);
-ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128, tmp665);
 ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)128,  (int32_t)128, tmp30);
+ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128, tmp665);
 
 vector < vector < vector < vector < uint64_t > > > > tmp670 = make_vector<uint64_t>( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128, tmp667,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128, tmp667, tmp31, tmp32,  (int32_t)0,  (int32_t)11, tmp670);
-ClearMemSecret1( (int32_t)128, tmp32);
 ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128, tmp667);
 ClearMemSecret1( (int32_t)128, tmp31);
+ClearMemSecret1( (int32_t)128, tmp32);
 
 vector < vector < vector < vector < uint64_t > > > > tmp674 = make_vector<uint64_t>( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128, tmp670, tmp674,  (int32_t)11, 1);
@@ -8813,9 +8813,9 @@ int32_t tmp679 =  (int32_t)3;
 vector < vector < vector < vector < uint64_t > > > > tmp680 = make_vector<uint64_t>( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)160);
 ScaleDown4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)32, tmp676,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)160,  (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128, tmp658,  (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)32, tmp676, tmp679, tmp680);
-ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128, tmp658);
-ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)32, tmp676);
 ClearMemPublic(tmp679);
+ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)32, tmp676);
+ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128, tmp658);
 
 vector < vector < vector < vector < uint64_t > > > > tmp684 = make_vector<uint64_t>( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)160);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)160, tmp680, tmp36, tmp37,  (int32_t)0,  (int32_t)11, tmp684);
@@ -8852,14 +8852,14 @@ int32_t tmp701 =  (int32_t)3;
 vector < vector < vector < vector < uint64_t > > > > tmp702 = make_vector<uint64_t>( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)192);
 ScaleDown4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)32, tmp698,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)192,  (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)160, tmp680,  (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)32, tmp698, tmp701, tmp702);
-ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)160, tmp680);
 ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)32, tmp698);
 ClearMemPublic(tmp701);
+ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)160, tmp680);
 
 vector < vector < vector < vector < uint64_t > > > > tmp706 = make_vector<uint64_t>( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)192);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)192, tmp702, tmp46, tmp47,  (int32_t)0,  (int32_t)11, tmp706);
-ClearMemSecret1( (int32_t)192, tmp46);
 ClearMemSecret1( (int32_t)192, tmp47);
+ClearMemSecret1( (int32_t)192, tmp46);
 
 vector < vector < vector < vector < uint64_t > > > > tmp709 = make_vector<uint64_t>( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)192);
 Relu4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)192, tmp706, tmp709,  (int32_t)11, 1);
@@ -8873,9 +8873,9 @@ ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)192, tmp709);
 vector < vector < vector < vector < uint64_t > > > > tmp714 = make_vector<uint64_t>( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128, tmp711,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128, tmp711, tmp51, tmp52,  (int32_t)0,  (int32_t)11, tmp714);
-ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128, tmp711);
-ClearMemSecret1( (int32_t)128, tmp52);
 ClearMemSecret1( (int32_t)128, tmp51);
+ClearMemSecret1( (int32_t)128, tmp52);
+ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128, tmp711);
 
 vector < vector < vector < vector < uint64_t > > > > tmp718 = make_vector<uint64_t>( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128, tmp714, tmp718,  (int32_t)11, 1);
@@ -8883,22 +8883,22 @@ ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128, tmp714);
 
 vector < vector < vector < vector < uint64_t > > > > tmp720 = make_vector<uint64_t>( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)32);
 Conv2DWrapper( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128,  (int32_t)3,  (int32_t)3,  (int32_t)32,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1, tmp718, tmp55, tmp720);
-ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128, tmp718);
 ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp55);
+ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128, tmp718);
 
 int32_t tmp723 =  (int32_t)3;
 
 vector < vector < vector < vector < uint64_t > > > > tmp724 = make_vector<uint64_t>( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)224);
 ScaleDown4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)32, tmp720,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)224,  (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)192, tmp702,  (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)32, tmp720, tmp723, tmp724);
+ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)192, tmp702);
 ClearMemPublic(tmp723);
 ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)32, tmp720);
-ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)192, tmp702);
 
 vector < vector < vector < vector < uint64_t > > > > tmp728 = make_vector<uint64_t>( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)224);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)224, tmp724, tmp56, tmp57,  (int32_t)0,  (int32_t)11, tmp728);
-ClearMemSecret1( (int32_t)224, tmp56);
 ClearMemSecret1( (int32_t)224, tmp57);
+ClearMemSecret1( (int32_t)224, tmp56);
 
 vector < vector < vector < vector < uint64_t > > > > tmp731 = make_vector<uint64_t>( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)224);
 Relu4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)224, tmp728, tmp731,  (int32_t)11, 1);
@@ -8906,15 +8906,15 @@ ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)224, tmp728);
 
 vector < vector < vector < vector < uint64_t > > > > tmp733 = make_vector<uint64_t>( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128);
 Conv2DWrapper( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)224,  (int32_t)1,  (int32_t)1,  (int32_t)128,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)1,  (int32_t)1, tmp731, tmp60, tmp733);
-ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)224, tmp731);
 ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)224,  (int32_t)128, tmp60);
+ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)224, tmp731);
 
 vector < vector < vector < vector < uint64_t > > > > tmp736 = make_vector<uint64_t>( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128, tmp733,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128, tmp733, tmp61, tmp62,  (int32_t)0,  (int32_t)11, tmp736);
+ClearMemSecret1( (int32_t)128, tmp61);
 ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128, tmp733);
 ClearMemSecret1( (int32_t)128, tmp62);
-ClearMemSecret1( (int32_t)128, tmp61);
 
 vector < vector < vector < vector < uint64_t > > > > tmp740 = make_vector<uint64_t>( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)128, tmp736, tmp740,  (int32_t)11, 1);
@@ -8931,14 +8931,14 @@ vector < vector < vector < vector < uint64_t > > > > tmp746 = make_vector<uint64
 ScaleDown4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)32, tmp742,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)256,  (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)224, tmp724,  (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)32, tmp742, tmp745, tmp746);
 ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)224, tmp724);
-ClearMemPublic(tmp745);
 ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)32, tmp742);
+ClearMemPublic(tmp745);
 
 vector < vector < vector < vector < uint64_t > > > > tmp750 = make_vector<uint64_t>( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)256);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)256, tmp746, tmp66, tmp67,  (int32_t)0,  (int32_t)11, tmp750);
-ClearMemSecret1( (int32_t)256, tmp66);
-ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)256, tmp746);
 ClearMemSecret1( (int32_t)256, tmp67);
+ClearMemSecret4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)256, tmp746);
+ClearMemSecret1( (int32_t)256, tmp66);
 
 vector < vector < vector < vector < uint64_t > > > > tmp754 = make_vector<uint64_t>( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)256);
 Relu4( (int32_t)1,  (int32_t)56,  (int32_t)56,  (int32_t)256, tmp750, tmp754,  (int32_t)11, 1);
@@ -8965,15 +8965,15 @@ ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp761);
 
 vector < vector < vector < vector < uint64_t > > > > tmp766 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128);
 Conv2DWrapper( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128,  (int32_t)1,  (int32_t)1,  (int32_t)128,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)1,  (int32_t)1, tmp764, tmp75, tmp766);
-ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)128,  (int32_t)128, tmp75);
 ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp764);
+ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)128,  (int32_t)128, tmp75);
 
 vector < vector < vector < vector < uint64_t > > > > tmp769 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp766,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp766, tmp76, tmp77,  (int32_t)0,  (int32_t)11, tmp769);
-ClearMemSecret1( (int32_t)128, tmp77);
-ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp766);
 ClearMemSecret1( (int32_t)128, tmp76);
+ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp766);
+ClearMemSecret1( (int32_t)128, tmp77);
 
 vector < vector < vector < vector < uint64_t > > > > tmp773 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp769, tmp773,  (int32_t)11, 1);
@@ -8981,8 +8981,8 @@ ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp769);
 
 vector < vector < vector < vector < uint64_t > > > > tmp775 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)32);
 Conv2DWrapper( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128,  (int32_t)3,  (int32_t)3,  (int32_t)32,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1, tmp773, tmp80, tmp775);
-ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp80);
 ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp773);
+ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp80);
 
 int32_t tmp778 =  (int32_t)3;
 
@@ -8990,13 +8990,13 @@ vector < vector < vector < vector < uint64_t > > > > tmp779 = make_vector<uint64
 ScaleDown4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)32, tmp775,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)160,  (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp759,  (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)32, tmp775, tmp778, tmp779);
 ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)32, tmp775);
-ClearMemPublic(tmp778);
 ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp759);
+ClearMemPublic(tmp778);
 
 vector < vector < vector < vector < uint64_t > > > > tmp783 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)160);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)160, tmp779, tmp81, tmp82,  (int32_t)0,  (int32_t)11, tmp783);
-ClearMemSecret1( (int32_t)160, tmp81);
 ClearMemSecret1( (int32_t)160, tmp82);
+ClearMemSecret1( (int32_t)160, tmp81);
 
 vector < vector < vector < vector < uint64_t > > > > tmp786 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)160);
 Relu4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)160, tmp783, tmp786,  (int32_t)11, 1);
@@ -9004,8 +9004,8 @@ ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)160, tmp783);
 
 vector < vector < vector < vector < uint64_t > > > > tmp788 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128);
 Conv2DWrapper( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)160,  (int32_t)1,  (int32_t)1,  (int32_t)128,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)1,  (int32_t)1, tmp786, tmp85, tmp788);
-ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)160, tmp786);
 ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)160,  (int32_t)128, tmp85);
+ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)160, tmp786);
 
 vector < vector < vector < vector < uint64_t > > > > tmp791 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp788,  (int32_t)11);
@@ -9020,22 +9020,22 @@ ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp791);
 
 vector < vector < vector < vector < uint64_t > > > > tmp797 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)32);
 Conv2DWrapper( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128,  (int32_t)3,  (int32_t)3,  (int32_t)32,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1, tmp795, tmp90, tmp797);
-ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp795);
 ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp90);
+ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp795);
 
 int32_t tmp800 =  (int32_t)3;
 
 vector < vector < vector < vector < uint64_t > > > > tmp801 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)192);
 ScaleDown4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)32, tmp797,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)192,  (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)160, tmp779,  (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)32, tmp797, tmp800, tmp801);
+ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)32, tmp797);
 ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)160, tmp779);
 ClearMemPublic(tmp800);
-ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)32, tmp797);
 
 vector < vector < vector < vector < uint64_t > > > > tmp805 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)192);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)192, tmp801, tmp91, tmp92,  (int32_t)0,  (int32_t)11, tmp805);
-ClearMemSecret1( (int32_t)192, tmp91);
 ClearMemSecret1( (int32_t)192, tmp92);
+ClearMemSecret1( (int32_t)192, tmp91);
 
 vector < vector < vector < vector < uint64_t > > > > tmp808 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)192);
 Relu4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)192, tmp805, tmp808,  (int32_t)11, 1);
@@ -9043,8 +9043,8 @@ ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)192, tmp805);
 
 vector < vector < vector < vector < uint64_t > > > > tmp810 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128);
 Conv2DWrapper( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)192,  (int32_t)1,  (int32_t)1,  (int32_t)128,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)1,  (int32_t)1, tmp808, tmp95, tmp810);
-ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)192, tmp808);
 ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)192,  (int32_t)128, tmp95);
+ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)192, tmp808);
 
 vector < vector < vector < vector < uint64_t > > > > tmp813 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp810,  (int32_t)11);
@@ -9059,22 +9059,22 @@ ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp813);
 
 vector < vector < vector < vector < uint64_t > > > > tmp819 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)32);
 Conv2DWrapper( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128,  (int32_t)3,  (int32_t)3,  (int32_t)32,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1, tmp817, tmp100, tmp819);
-ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp100);
 ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp817);
+ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp100);
 
 int32_t tmp822 =  (int32_t)3;
 
 vector < vector < vector < vector < uint64_t > > > > tmp823 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)224);
 ScaleDown4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)32, tmp819,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)224,  (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)192, tmp801,  (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)32, tmp819, tmp822, tmp823);
-ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)32, tmp819);
 ClearMemPublic(tmp822);
 ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)192, tmp801);
+ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)32, tmp819);
 
 vector < vector < vector < vector < uint64_t > > > > tmp827 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)224);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)224, tmp823, tmp101, tmp102,  (int32_t)0,  (int32_t)11, tmp827);
-ClearMemSecret1( (int32_t)224, tmp101);
 ClearMemSecret1( (int32_t)224, tmp102);
+ClearMemSecret1( (int32_t)224, tmp101);
 
 vector < vector < vector < vector < uint64_t > > > > tmp830 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)224);
 Relu4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)224, tmp827, tmp830,  (int32_t)11, 1);
@@ -9089,8 +9089,8 @@ vector < vector < vector < vector < uint64_t > > > > tmp835 = make_vector<uint64
 ScaleDown4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp832,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp832, tmp106, tmp107,  (int32_t)0,  (int32_t)11, tmp835);
 ClearMemSecret1( (int32_t)128, tmp106);
-ClearMemSecret1( (int32_t)128, tmp107);
 ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp832);
+ClearMemSecret1( (int32_t)128, tmp107);
 
 vector < vector < vector < vector < uint64_t > > > > tmp839 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp835, tmp839,  (int32_t)11, 1);
@@ -9098,17 +9098,17 @@ ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp835);
 
 vector < vector < vector < vector < uint64_t > > > > tmp841 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)32);
 Conv2DWrapper( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128,  (int32_t)3,  (int32_t)3,  (int32_t)32,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1, tmp839, tmp110, tmp841);
-ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp110);
 ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp839);
+ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp110);
 
 int32_t tmp844 =  (int32_t)3;
 
 vector < vector < vector < vector < uint64_t > > > > tmp845 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)256);
 ScaleDown4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)32, tmp841,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)256,  (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)224, tmp823,  (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)32, tmp841, tmp844, tmp845);
-ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)224, tmp823);
-ClearMemPublic(tmp844);
 ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)32, tmp841);
+ClearMemPublic(tmp844);
+ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)224, tmp823);
 
 vector < vector < vector < vector < uint64_t > > > > tmp849 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)256);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)256, tmp845, tmp111, tmp112,  (int32_t)0,  (int32_t)11, tmp849);
@@ -9121,14 +9121,14 @@ ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)256, tmp849);
 
 vector < vector < vector < vector < uint64_t > > > > tmp854 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128);
 Conv2DWrapper( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)256,  (int32_t)1,  (int32_t)1,  (int32_t)128,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)1,  (int32_t)1, tmp852, tmp115, tmp854);
-ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)256, tmp852);
 ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)256,  (int32_t)128, tmp115);
+ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)256, tmp852);
 
 vector < vector < vector < vector < uint64_t > > > > tmp857 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp854,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp854, tmp116, tmp117,  (int32_t)0,  (int32_t)11, tmp857);
-ClearMemSecret1( (int32_t)128, tmp117);
 ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp854);
+ClearMemSecret1( (int32_t)128, tmp117);
 ClearMemSecret1( (int32_t)128, tmp116);
 
 vector < vector < vector < vector < uint64_t > > > > tmp861 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128);
@@ -9146,13 +9146,13 @@ vector < vector < vector < vector < uint64_t > > > > tmp867 = make_vector<uint64
 ScaleDown4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)32, tmp863,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)288,  (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)256, tmp845,  (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)32, tmp863, tmp866, tmp867);
 ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)32, tmp863);
-ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)256, tmp845);
 ClearMemPublic(tmp866);
+ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)256, tmp845);
 
 vector < vector < vector < vector < uint64_t > > > > tmp871 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)288);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)288, tmp867, tmp121, tmp122,  (int32_t)0,  (int32_t)11, tmp871);
-ClearMemSecret1( (int32_t)288, tmp122);
 ClearMemSecret1( (int32_t)288, tmp121);
+ClearMemSecret1( (int32_t)288, tmp122);
 
 vector < vector < vector < vector < uint64_t > > > > tmp874 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)288);
 Relu4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)288, tmp871, tmp874,  (int32_t)11, 1);
@@ -9160,15 +9160,15 @@ ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)288, tmp871);
 
 vector < vector < vector < vector < uint64_t > > > > tmp876 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128);
 Conv2DWrapper( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)288,  (int32_t)1,  (int32_t)1,  (int32_t)128,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)1,  (int32_t)1, tmp874, tmp125, tmp876);
-ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)288,  (int32_t)128, tmp125);
 ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)288, tmp874);
+ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)288,  (int32_t)128, tmp125);
 
 vector < vector < vector < vector < uint64_t > > > > tmp879 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp876,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp876, tmp126, tmp127,  (int32_t)0,  (int32_t)11, tmp879);
 ClearMemSecret1( (int32_t)128, tmp126);
-ClearMemSecret1( (int32_t)128, tmp127);
 ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp876);
+ClearMemSecret1( (int32_t)128, tmp127);
 
 vector < vector < vector < vector < uint64_t > > > > tmp883 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp879, tmp883,  (int32_t)11, 1);
@@ -9176,8 +9176,8 @@ ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp879);
 
 vector < vector < vector < vector < uint64_t > > > > tmp885 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)32);
 Conv2DWrapper( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128,  (int32_t)3,  (int32_t)3,  (int32_t)32,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1, tmp883, tmp130, tmp885);
-ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp130);
 ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp883);
+ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp130);
 
 int32_t tmp888 =  (int32_t)3;
 
@@ -9185,8 +9185,8 @@ vector < vector < vector < vector < uint64_t > > > > tmp889 = make_vector<uint64
 ScaleDown4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)32, tmp885,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)320,  (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)288, tmp867,  (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)32, tmp885, tmp888, tmp889);
 ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)288, tmp867);
-ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)32, tmp885);
 ClearMemPublic(tmp888);
+ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)32, tmp885);
 
 vector < vector < vector < vector < uint64_t > > > > tmp893 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)320);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)320, tmp889, tmp131, tmp132,  (int32_t)0,  (int32_t)11, tmp893);
@@ -9199,15 +9199,15 @@ ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)320, tmp893);
 
 vector < vector < vector < vector < uint64_t > > > > tmp898 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128);
 Conv2DWrapper( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)320,  (int32_t)1,  (int32_t)1,  (int32_t)128,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)1,  (int32_t)1, tmp896, tmp135, tmp898);
-ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)320,  (int32_t)128, tmp135);
 ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)320, tmp896);
+ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)320,  (int32_t)128, tmp135);
 
 vector < vector < vector < vector < uint64_t > > > > tmp901 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp898,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp898, tmp136, tmp137,  (int32_t)0,  (int32_t)11, tmp901);
-ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp898);
-ClearMemSecret1( (int32_t)128, tmp137);
 ClearMemSecret1( (int32_t)128, tmp136);
+ClearMemSecret1( (int32_t)128, tmp137);
+ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp898);
 
 vector < vector < vector < vector < uint64_t > > > > tmp905 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp901, tmp905,  (int32_t)11, 1);
@@ -9238,15 +9238,15 @@ ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)352, tmp915);
 
 vector < vector < vector < vector < uint64_t > > > > tmp920 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128);
 Conv2DWrapper( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)352,  (int32_t)1,  (int32_t)1,  (int32_t)128,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)1,  (int32_t)1, tmp918, tmp145, tmp920);
-ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)352, tmp918);
 ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)352,  (int32_t)128, tmp145);
+ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)352, tmp918);
 
 vector < vector < vector < vector < uint64_t > > > > tmp923 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp920,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp920, tmp146, tmp147,  (int32_t)0,  (int32_t)11, tmp923);
+ClearMemSecret1( (int32_t)128, tmp147);
 ClearMemSecret1( (int32_t)128, tmp146);
 ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp920);
-ClearMemSecret1( (int32_t)128, tmp147);
 
 vector < vector < vector < vector < uint64_t > > > > tmp927 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp923, tmp927,  (int32_t)11, 1);
@@ -9254,17 +9254,17 @@ ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp923);
 
 vector < vector < vector < vector < uint64_t > > > > tmp929 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)32);
 Conv2DWrapper( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128,  (int32_t)3,  (int32_t)3,  (int32_t)32,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1, tmp927, tmp150, tmp929);
-ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp927);
 ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp150);
+ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp927);
 
 int32_t tmp932 =  (int32_t)3;
 
 vector < vector < vector < vector < uint64_t > > > > tmp933 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)384);
 ScaleDown4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)32, tmp929,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)384,  (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)352, tmp911,  (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)32, tmp929, tmp932, tmp933);
-ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)352, tmp911);
 ClearMemPublic(tmp932);
 ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)32, tmp929);
+ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)352, tmp911);
 
 vector < vector < vector < vector < uint64_t > > > > tmp937 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)384);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)384, tmp933, tmp151, tmp152,  (int32_t)0,  (int32_t)11, tmp937);
@@ -9283,9 +9283,9 @@ ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)384, tmp940);
 vector < vector < vector < vector < uint64_t > > > > tmp945 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp942,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp942, tmp156, tmp157,  (int32_t)0,  (int32_t)11, tmp945);
-ClearMemSecret1( (int32_t)128, tmp157);
 ClearMemSecret1( (int32_t)128, tmp156);
 ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp942);
+ClearMemSecret1( (int32_t)128, tmp157);
 
 vector < vector < vector < vector < uint64_t > > > > tmp949 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp945, tmp949,  (int32_t)11, 1);
@@ -9301,9 +9301,9 @@ int32_t tmp954 =  (int32_t)3;
 vector < vector < vector < vector < uint64_t > > > > tmp955 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)416);
 ScaleDown4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)32, tmp951,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)416,  (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)384, tmp933,  (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)32, tmp951, tmp954, tmp955);
-ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)384, tmp933);
 ClearMemPublic(tmp954);
 ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)32, tmp951);
+ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)384, tmp933);
 
 vector < vector < vector < vector < uint64_t > > > > tmp959 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)416);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)416, tmp955, tmp161, tmp162,  (int32_t)0,  (int32_t)11, tmp959);
@@ -9323,8 +9323,8 @@ vector < vector < vector < vector < uint64_t > > > > tmp967 = make_vector<uint64
 ScaleDown4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp964,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp964, tmp166, tmp167,  (int32_t)0,  (int32_t)11, tmp967);
 ClearMemSecret1( (int32_t)128, tmp167);
-ClearMemSecret1( (int32_t)128, tmp166);
 ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp964);
+ClearMemSecret1( (int32_t)128, tmp166);
 
 vector < vector < vector < vector < uint64_t > > > > tmp971 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp967, tmp971,  (int32_t)11, 1);
@@ -9332,17 +9332,17 @@ ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp967);
 
 vector < vector < vector < vector < uint64_t > > > > tmp973 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)32);
 Conv2DWrapper( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128,  (int32_t)3,  (int32_t)3,  (int32_t)32,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1, tmp971, tmp170, tmp973);
-ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp971);
 ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp170);
+ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp971);
 
 int32_t tmp976 =  (int32_t)3;
 
 vector < vector < vector < vector < uint64_t > > > > tmp977 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)448);
 ScaleDown4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)32, tmp973,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)448,  (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)416, tmp955,  (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)32, tmp973, tmp976, tmp977);
+ClearMemPublic(tmp976);
 ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)32, tmp973);
 ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)416, tmp955);
-ClearMemPublic(tmp976);
 
 vector < vector < vector < vector < uint64_t > > > > tmp981 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)448);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)448, tmp977, tmp171, tmp172,  (int32_t)0,  (int32_t)11, tmp981);
@@ -9361,9 +9361,9 @@ ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)448, tmp984);
 vector < vector < vector < vector < uint64_t > > > > tmp989 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp986,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp986, tmp176, tmp177,  (int32_t)0,  (int32_t)11, tmp989);
+ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp986);
 ClearMemSecret1( (int32_t)128, tmp177);
 ClearMemSecret1( (int32_t)128, tmp176);
-ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp986);
 
 vector < vector < vector < vector < uint64_t > > > > tmp993 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp989, tmp993,  (int32_t)11, 1);
@@ -9371,22 +9371,22 @@ ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp989);
 
 vector < vector < vector < vector < uint64_t > > > > tmp995 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)32);
 Conv2DWrapper( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128,  (int32_t)3,  (int32_t)3,  (int32_t)32,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1, tmp993, tmp180, tmp995);
-ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp993);
 ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp180);
+ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp993);
 
 int32_t tmp998 =  (int32_t)3;
 
 vector < vector < vector < vector < uint64_t > > > > tmp999 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)480);
 ScaleDown4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)32, tmp995,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)480,  (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)448, tmp977,  (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)32, tmp995, tmp998, tmp999);
-ClearMemPublic(tmp998);
 ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)32, tmp995);
+ClearMemPublic(tmp998);
 ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)448, tmp977);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1003 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)480);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)480, tmp999, tmp181, tmp182,  (int32_t)0,  (int32_t)11, tmp1003);
-ClearMemSecret1( (int32_t)480, tmp181);
 ClearMemSecret1( (int32_t)480, tmp182);
+ClearMemSecret1( (int32_t)480, tmp181);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1006 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)480);
 Relu4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)480, tmp1003, tmp1006,  (int32_t)11, 1);
@@ -9400,9 +9400,9 @@ ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)480,  (int32_t)128, tmp185);
 vector < vector < vector < vector < uint64_t > > > > tmp1011 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp1008,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp1008, tmp186, tmp187,  (int32_t)0,  (int32_t)11, tmp1011);
-ClearMemSecret1( (int32_t)128, tmp186);
-ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp1008);
 ClearMemSecret1( (int32_t)128, tmp187);
+ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp1008);
+ClearMemSecret1( (int32_t)128, tmp186);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1015 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)128, tmp1011, tmp1015,  (int32_t)11, 1);
@@ -9418,15 +9418,15 @@ int32_t tmp1020 =  (int32_t)3;
 vector < vector < vector < vector < uint64_t > > > > tmp1021 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)512);
 ScaleDown4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)32, tmp1017,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)512,  (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)480, tmp999,  (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)32, tmp1017, tmp1020, tmp1021);
-ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)32, tmp1017);
-ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)480, tmp999);
 ClearMemPublic(tmp1020);
+ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)480, tmp999);
+ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)32, tmp1017);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1025 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)512);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)512, tmp1021, tmp191, tmp192,  (int32_t)0,  (int32_t)11, tmp1025);
-ClearMemSecret1( (int32_t)512, tmp192);
 ClearMemSecret1( (int32_t)512, tmp191);
 ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)512, tmp1021);
+ClearMemSecret1( (int32_t)512, tmp192);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1029 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)512);
 Relu4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)512, tmp1025, tmp1029,  (int32_t)11, 1);
@@ -9434,8 +9434,8 @@ ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)512, tmp1025)
 
 vector < vector < vector < vector < uint64_t > > > > tmp1031 = make_vector<uint64_t>( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)256);
 Conv2DWrapper( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)512,  (int32_t)1,  (int32_t)1,  (int32_t)256,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)1,  (int32_t)1, tmp1029, tmp195, tmp1031);
-ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)512, tmp1029);
 ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)512,  (int32_t)256, tmp195);
+ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)512, tmp1029);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1034 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)256);
 AvgPool( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)256,  (int32_t)2,  (int32_t)2,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)2,  (int32_t)2,  (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)256, tmp1031, tmp1034);
@@ -9444,8 +9444,8 @@ ClearMemSecret4( (int32_t)1,  (int32_t)28,  (int32_t)28,  (int32_t)256, tmp1031)
 vector < vector < vector < vector < uint64_t > > > > tmp1036 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)256);
 ScaleDown4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)256, tmp1034,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)256, tmp1034, tmp196, tmp197,  (int32_t)0,  (int32_t)11, tmp1036);
-ClearMemSecret1( (int32_t)256, tmp196);
 ClearMemSecret1( (int32_t)256, tmp197);
+ClearMemSecret1( (int32_t)256, tmp196);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1039 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)256);
 Relu4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)256, tmp1036, tmp1039,  (int32_t)11, 1);
@@ -9459,9 +9459,9 @@ ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)256,  (int32_t)128, tmp200);
 vector < vector < vector < vector < uint64_t > > > > tmp1044 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1041,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1041, tmp201, tmp202,  (int32_t)0,  (int32_t)11, tmp1044);
-ClearMemSecret1( (int32_t)128, tmp202);
-ClearMemSecret1( (int32_t)128, tmp201);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1041);
+ClearMemSecret1( (int32_t)128, tmp201);
+ClearMemSecret1( (int32_t)128, tmp202);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1048 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1044, tmp1048,  (int32_t)11, 1);
@@ -9492,14 +9492,14 @@ ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)288, tmp1058)
 
 vector < vector < vector < vector < uint64_t > > > > tmp1063 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 Conv2DWrapper( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)288,  (int32_t)1,  (int32_t)1,  (int32_t)128,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)1,  (int32_t)1, tmp1061, tmp210, tmp1063);
-ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)288, tmp1061);
 ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)288,  (int32_t)128, tmp210);
+ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)288, tmp1061);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1066 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1063,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1063, tmp211, tmp212,  (int32_t)0,  (int32_t)11, tmp1066);
-ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1063);
 ClearMemSecret1( (int32_t)128, tmp212);
+ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1063);
 ClearMemSecret1( (int32_t)128, tmp211);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1070 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
@@ -9516,9 +9516,9 @@ int32_t tmp1075 =  (int32_t)3;
 vector < vector < vector < vector < uint64_t > > > > tmp1076 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)320);
 ScaleDown4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1072,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)320,  (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)288, tmp1054,  (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1072, tmp1075, tmp1076);
+ClearMemPublic(tmp1075);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)288, tmp1054);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1072);
-ClearMemPublic(tmp1075);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1080 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)320);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)320, tmp1076, tmp216, tmp217,  (int32_t)0,  (int32_t)11, tmp1080);
@@ -9531,8 +9531,8 @@ ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)320, tmp1080)
 
 vector < vector < vector < vector < uint64_t > > > > tmp1085 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 Conv2DWrapper( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)320,  (int32_t)1,  (int32_t)1,  (int32_t)128,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)1,  (int32_t)1, tmp1083, tmp220, tmp1085);
-ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)320, tmp1083);
 ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)320,  (int32_t)128, tmp220);
+ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)320, tmp1083);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1088 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1085,  (int32_t)11);
@@ -9547,8 +9547,8 @@ ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1088)
 
 vector < vector < vector < vector < uint64_t > > > > tmp1094 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32);
 Conv2DWrapper( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128,  (int32_t)3,  (int32_t)3,  (int32_t)32,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1, tmp1092, tmp225, tmp1094);
-ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp225);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1092);
+ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp225);
 
 int32_t tmp1097 =  (int32_t)3;
 
@@ -9556,8 +9556,8 @@ vector < vector < vector < vector < uint64_t > > > > tmp1098 = make_vector<uint6
 ScaleDown4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1094,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)352,  (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)320, tmp1076,  (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1094, tmp1097, tmp1098);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)320, tmp1076);
-ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1094);
 ClearMemPublic(tmp1097);
+ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1094);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1102 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)352);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)352, tmp1098, tmp226, tmp227,  (int32_t)0,  (int32_t)11, tmp1102);
@@ -9576,9 +9576,9 @@ ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)352, tmp1105)
 vector < vector < vector < vector < uint64_t > > > > tmp1110 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1107,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1107, tmp231, tmp232,  (int32_t)0,  (int32_t)11, tmp1110);
+ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1107);
 ClearMemSecret1( (int32_t)128, tmp232);
 ClearMemSecret1( (int32_t)128, tmp231);
-ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1107);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1114 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1110, tmp1114,  (int32_t)11, 1);
@@ -9586,22 +9586,22 @@ ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1110)
 
 vector < vector < vector < vector < uint64_t > > > > tmp1116 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32);
 Conv2DWrapper( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128,  (int32_t)3,  (int32_t)3,  (int32_t)32,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1, tmp1114, tmp235, tmp1116);
-ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1114);
 ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp235);
+ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1114);
 
 int32_t tmp1119 =  (int32_t)3;
 
 vector < vector < vector < vector < uint64_t > > > > tmp1120 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)384);
 ScaleDown4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1116,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)384,  (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)352, tmp1098,  (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1116, tmp1119, tmp1120);
-ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1116);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)352, tmp1098);
+ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1116);
 ClearMemPublic(tmp1119);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1124 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)384);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)384, tmp1120, tmp236, tmp237,  (int32_t)0,  (int32_t)11, tmp1124);
-ClearMemSecret1( (int32_t)384, tmp237);
 ClearMemSecret1( (int32_t)384, tmp236);
+ClearMemSecret1( (int32_t)384, tmp237);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1127 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)384);
 Relu4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)384, tmp1124, tmp1127,  (int32_t)11, 1);
@@ -9609,15 +9609,15 @@ ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)384, tmp1124)
 
 vector < vector < vector < vector < uint64_t > > > > tmp1129 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 Conv2DWrapper( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)384,  (int32_t)1,  (int32_t)1,  (int32_t)128,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)1,  (int32_t)1, tmp1127, tmp240, tmp1129);
-ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)384, tmp1127);
 ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)384,  (int32_t)128, tmp240);
+ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)384, tmp1127);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1132 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1129,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1129, tmp241, tmp242,  (int32_t)0,  (int32_t)11, tmp1132);
-ClearMemSecret1( (int32_t)128, tmp242);
 ClearMemSecret1( (int32_t)128, tmp241);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1129);
+ClearMemSecret1( (int32_t)128, tmp242);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1136 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1132, tmp1136,  (int32_t)11, 1);
@@ -9648,15 +9648,15 @@ ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)416, tmp1146)
 
 vector < vector < vector < vector < uint64_t > > > > tmp1151 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 Conv2DWrapper( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)416,  (int32_t)1,  (int32_t)1,  (int32_t)128,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)1,  (int32_t)1, tmp1149, tmp250, tmp1151);
-ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)416,  (int32_t)128, tmp250);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)416, tmp1149);
+ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)416,  (int32_t)128, tmp250);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1154 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1151,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1151, tmp251, tmp252,  (int32_t)0,  (int32_t)11, tmp1154);
 ClearMemSecret1( (int32_t)128, tmp251);
-ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1151);
 ClearMemSecret1( (int32_t)128, tmp252);
+ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1151);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1158 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1154, tmp1158,  (int32_t)11, 1);
@@ -9664,8 +9664,8 @@ ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1154)
 
 vector < vector < vector < vector < uint64_t > > > > tmp1160 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32);
 Conv2DWrapper( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128,  (int32_t)3,  (int32_t)3,  (int32_t)32,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1, tmp1158, tmp255, tmp1160);
-ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp255);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1158);
+ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp255);
 
 int32_t tmp1163 =  (int32_t)3;
 
@@ -9673,13 +9673,13 @@ vector < vector < vector < vector < uint64_t > > > > tmp1164 = make_vector<uint6
 ScaleDown4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1160,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)448,  (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)416, tmp1142,  (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1160, tmp1163, tmp1164);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)416, tmp1142);
-ClearMemPublic(tmp1163);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1160);
+ClearMemPublic(tmp1163);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1168 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)448);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)448, tmp1164, tmp256, tmp257,  (int32_t)0,  (int32_t)11, tmp1168);
-ClearMemSecret1( (int32_t)448, tmp256);
 ClearMemSecret1( (int32_t)448, tmp257);
+ClearMemSecret1( (int32_t)448, tmp256);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1171 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)448);
 Relu4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)448, tmp1168, tmp1171,  (int32_t)11, 1);
@@ -9687,15 +9687,15 @@ ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)448, tmp1168)
 
 vector < vector < vector < vector < uint64_t > > > > tmp1173 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 Conv2DWrapper( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)448,  (int32_t)1,  (int32_t)1,  (int32_t)128,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)1,  (int32_t)1, tmp1171, tmp260, tmp1173);
-ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)448,  (int32_t)128, tmp260);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)448, tmp1171);
+ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)448,  (int32_t)128, tmp260);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1176 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1173,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1173, tmp261, tmp262,  (int32_t)0,  (int32_t)11, tmp1176);
-ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1173);
-ClearMemSecret1( (int32_t)128, tmp261);
 ClearMemSecret1( (int32_t)128, tmp262);
+ClearMemSecret1( (int32_t)128, tmp261);
+ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1173);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1180 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1176, tmp1180,  (int32_t)11, 1);
@@ -9703,17 +9703,17 @@ ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1176)
 
 vector < vector < vector < vector < uint64_t > > > > tmp1182 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32);
 Conv2DWrapper( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128,  (int32_t)3,  (int32_t)3,  (int32_t)32,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1, tmp1180, tmp265, tmp1182);
-ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp265);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1180);
+ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp265);
 
 int32_t tmp1185 =  (int32_t)3;
 
 vector < vector < vector < vector < uint64_t > > > > tmp1186 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)480);
 ScaleDown4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1182,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)480,  (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)448, tmp1164,  (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1182, tmp1185, tmp1186);
-ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)448, tmp1164);
 ClearMemPublic(tmp1185);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1182);
+ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)448, tmp1164);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1190 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)480);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)480, tmp1186, tmp266, tmp267,  (int32_t)0,  (int32_t)11, tmp1190);
@@ -9732,9 +9732,9 @@ ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)480,  (int32_t)128, tmp270);
 vector < vector < vector < vector < uint64_t > > > > tmp1198 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1195,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1195, tmp271, tmp272,  (int32_t)0,  (int32_t)11, tmp1198);
-ClearMemSecret1( (int32_t)128, tmp272);
-ClearMemSecret1( (int32_t)128, tmp271);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1195);
+ClearMemSecret1( (int32_t)128, tmp271);
+ClearMemSecret1( (int32_t)128, tmp272);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1202 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1198, tmp1202,  (int32_t)11, 1);
@@ -9742,22 +9742,22 @@ ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1198)
 
 vector < vector < vector < vector < uint64_t > > > > tmp1204 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32);
 Conv2DWrapper( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128,  (int32_t)3,  (int32_t)3,  (int32_t)32,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1, tmp1202, tmp275, tmp1204);
-ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1202);
 ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp275);
+ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1202);
 
 int32_t tmp1207 =  (int32_t)3;
 
 vector < vector < vector < vector < uint64_t > > > > tmp1208 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)512);
 ScaleDown4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1204,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)512,  (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)480, tmp1186,  (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1204, tmp1207, tmp1208);
-ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)480, tmp1186);
-ClearMemPublic(tmp1207);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1204);
+ClearMemPublic(tmp1207);
+ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)480, tmp1186);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1212 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)512);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)512, tmp1208, tmp276, tmp277,  (int32_t)0,  (int32_t)11, tmp1212);
-ClearMemSecret1( (int32_t)512, tmp276);
 ClearMemSecret1( (int32_t)512, tmp277);
+ClearMemSecret1( (int32_t)512, tmp276);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1215 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)512);
 Relu4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)512, tmp1212, tmp1215,  (int32_t)11, 1);
@@ -9771,9 +9771,9 @@ ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)512,  (int32_t)128, tmp280);
 vector < vector < vector < vector < uint64_t > > > > tmp1220 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1217,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1217, tmp281, tmp282,  (int32_t)0,  (int32_t)11, tmp1220);
+ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1217);
 ClearMemSecret1( (int32_t)128, tmp281);
 ClearMemSecret1( (int32_t)128, tmp282);
-ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1217);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1224 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1220, tmp1224,  (int32_t)11, 1);
@@ -9781,22 +9781,22 @@ ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1220)
 
 vector < vector < vector < vector < uint64_t > > > > tmp1226 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32);
 Conv2DWrapper( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128,  (int32_t)3,  (int32_t)3,  (int32_t)32,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1, tmp1224, tmp285, tmp1226);
-ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp285);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1224);
+ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp285);
 
 int32_t tmp1229 =  (int32_t)3;
 
 vector < vector < vector < vector < uint64_t > > > > tmp1230 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)544);
 ScaleDown4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1226,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)544,  (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)512, tmp1208,  (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1226, tmp1229, tmp1230);
-ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)512, tmp1208);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1226);
 ClearMemPublic(tmp1229);
+ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)512, tmp1208);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1234 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)544);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)544, tmp1230, tmp286, tmp287,  (int32_t)0,  (int32_t)11, tmp1234);
-ClearMemSecret1( (int32_t)544, tmp287);
 ClearMemSecret1( (int32_t)544, tmp286);
+ClearMemSecret1( (int32_t)544, tmp287);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1237 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)544);
 Relu4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)544, tmp1234, tmp1237,  (int32_t)11, 1);
@@ -9804,14 +9804,14 @@ ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)544, tmp1234)
 
 vector < vector < vector < vector < uint64_t > > > > tmp1239 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 Conv2DWrapper( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)544,  (int32_t)1,  (int32_t)1,  (int32_t)128,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)1,  (int32_t)1, tmp1237, tmp290, tmp1239);
-ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)544,  (int32_t)128, tmp290);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)544, tmp1237);
+ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)544,  (int32_t)128, tmp290);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1242 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1239,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1239, tmp291, tmp292,  (int32_t)0,  (int32_t)11, tmp1242);
-ClearMemSecret1( (int32_t)128, tmp291);
 ClearMemSecret1( (int32_t)128, tmp292);
+ClearMemSecret1( (int32_t)128, tmp291);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1239);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1246 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
@@ -9829,13 +9829,13 @@ vector < vector < vector < vector < uint64_t > > > > tmp1252 = make_vector<uint6
 ScaleDown4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1248,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)576,  (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)544, tmp1230,  (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1248, tmp1251, tmp1252);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1248);
-ClearMemPublic(tmp1251);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)544, tmp1230);
+ClearMemPublic(tmp1251);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1256 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)576);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)576, tmp1252, tmp296, tmp297,  (int32_t)0,  (int32_t)11, tmp1256);
-ClearMemSecret1( (int32_t)576, tmp296);
 ClearMemSecret1( (int32_t)576, tmp297);
+ClearMemSecret1( (int32_t)576, tmp296);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1259 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)576);
 Relu4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)576, tmp1256, tmp1259,  (int32_t)11, 1);
@@ -9849,9 +9849,9 @@ ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)576, tmp1259)
 vector < vector < vector < vector < uint64_t > > > > tmp1264 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1261,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1261, tmp301, tmp302,  (int32_t)0,  (int32_t)11, tmp1264);
+ClearMemSecret1( (int32_t)128, tmp302);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1261);
 ClearMemSecret1( (int32_t)128, tmp301);
-ClearMemSecret1( (int32_t)128, tmp302);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1268 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1264, tmp1268,  (int32_t)11, 1);
@@ -9859,8 +9859,8 @@ ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1264)
 
 vector < vector < vector < vector < uint64_t > > > > tmp1270 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32);
 Conv2DWrapper( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128,  (int32_t)3,  (int32_t)3,  (int32_t)32,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1, tmp1268, tmp305, tmp1270);
-ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp305);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1268);
+ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp305);
 
 int32_t tmp1273 =  (int32_t)3;
 
@@ -9882,15 +9882,15 @@ ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)608, tmp1278)
 
 vector < vector < vector < vector < uint64_t > > > > tmp1283 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 Conv2DWrapper( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)608,  (int32_t)1,  (int32_t)1,  (int32_t)128,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)1,  (int32_t)1, tmp1281, tmp310, tmp1283);
-ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)608, tmp1281);
 ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)608,  (int32_t)128, tmp310);
+ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)608, tmp1281);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1286 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1283,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1283, tmp311, tmp312,  (int32_t)0,  (int32_t)11, tmp1286);
 ClearMemSecret1( (int32_t)128, tmp311);
-ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1283);
 ClearMemSecret1( (int32_t)128, tmp312);
+ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1283);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1290 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1286, tmp1290,  (int32_t)11, 1);
@@ -9912,8 +9912,8 @@ ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)608, tmp1274)
 
 vector < vector < vector < vector < uint64_t > > > > tmp1300 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)640);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)640, tmp1296, tmp316, tmp317,  (int32_t)0,  (int32_t)11, tmp1300);
-ClearMemSecret1( (int32_t)640, tmp317);
 ClearMemSecret1( (int32_t)640, tmp316);
+ClearMemSecret1( (int32_t)640, tmp317);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1303 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)640);
 Relu4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)640, tmp1300, tmp1303,  (int32_t)11, 1);
@@ -9928,8 +9928,8 @@ vector < vector < vector < vector < uint64_t > > > > tmp1308 = make_vector<uint6
 ScaleDown4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1305,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1305, tmp321, tmp322,  (int32_t)0,  (int32_t)11, tmp1308);
 ClearMemSecret1( (int32_t)128, tmp321);
-ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1305);
 ClearMemSecret1( (int32_t)128, tmp322);
+ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1305);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1312 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1308, tmp1312,  (int32_t)11, 1);
@@ -9937,8 +9937,8 @@ ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1308)
 
 vector < vector < vector < vector < uint64_t > > > > tmp1314 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32);
 Conv2DWrapper( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128,  (int32_t)3,  (int32_t)3,  (int32_t)32,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1, tmp1312, tmp325, tmp1314);
-ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp325);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1312);
+ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp325);
 
 int32_t tmp1317 =  (int32_t)3;
 
@@ -9946,8 +9946,8 @@ vector < vector < vector < vector < uint64_t > > > > tmp1318 = make_vector<uint6
 ScaleDown4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1314,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)672,  (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)640, tmp1296,  (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1314, tmp1317, tmp1318);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1314);
-ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)640, tmp1296);
 ClearMemPublic(tmp1317);
+ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)640, tmp1296);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1322 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)672);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)672, tmp1318, tmp326, tmp327,  (int32_t)0,  (int32_t)11, tmp1322);
@@ -9966,9 +9966,9 @@ ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)672, tmp1325)
 vector < vector < vector < vector < uint64_t > > > > tmp1330 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1327,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1327, tmp331, tmp332,  (int32_t)0,  (int32_t)11, tmp1330);
-ClearMemSecret1( (int32_t)128, tmp332);
-ClearMemSecret1( (int32_t)128, tmp331);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1327);
+ClearMemSecret1( (int32_t)128, tmp331);
+ClearMemSecret1( (int32_t)128, tmp332);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1334 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1330, tmp1334,  (int32_t)11, 1);
@@ -9976,16 +9976,16 @@ ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1330)
 
 vector < vector < vector < vector < uint64_t > > > > tmp1336 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32);
 Conv2DWrapper( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128,  (int32_t)3,  (int32_t)3,  (int32_t)32,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1, tmp1334, tmp335, tmp1336);
-ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp335);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1334);
+ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp335);
 
 int32_t tmp1339 =  (int32_t)3;
 
 vector < vector < vector < vector < uint64_t > > > > tmp1340 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)704);
 ScaleDown4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1336,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)704,  (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)672, tmp1318,  (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1336, tmp1339, tmp1340);
-ClearMemPublic(tmp1339);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)672, tmp1318);
+ClearMemPublic(tmp1339);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1336);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1344 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)704);
@@ -10005,9 +10005,9 @@ ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)704, tmp1347)
 vector < vector < vector < vector < uint64_t > > > > tmp1352 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1349,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1349, tmp341, tmp342,  (int32_t)0,  (int32_t)11, tmp1352);
-ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1349);
 ClearMemSecret1( (int32_t)128, tmp342);
 ClearMemSecret1( (int32_t)128, tmp341);
+ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1349);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1356 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1352, tmp1356,  (int32_t)11, 1);
@@ -10015,22 +10015,22 @@ ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1352)
 
 vector < vector < vector < vector < uint64_t > > > > tmp1358 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32);
 Conv2DWrapper( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128,  (int32_t)3,  (int32_t)3,  (int32_t)32,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1, tmp1356, tmp345, tmp1358);
-ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1356);
 ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp345);
+ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1356);
 
 int32_t tmp1361 =  (int32_t)3;
 
 vector < vector < vector < vector < uint64_t > > > > tmp1362 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)736);
 ScaleDown4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1358,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)736,  (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)704, tmp1340,  (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1358, tmp1361, tmp1362);
+ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)704, tmp1340);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1358);
 ClearMemPublic(tmp1361);
-ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)704, tmp1340);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1366 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)736);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)736, tmp1362, tmp346, tmp347,  (int32_t)0,  (int32_t)11, tmp1366);
-ClearMemSecret1( (int32_t)736, tmp346);
 ClearMemSecret1( (int32_t)736, tmp347);
+ClearMemSecret1( (int32_t)736, tmp346);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1369 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)736);
 Relu4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)736, tmp1366, tmp1369,  (int32_t)11, 1);
@@ -10045,8 +10045,8 @@ vector < vector < vector < vector < uint64_t > > > > tmp1374 = make_vector<uint6
 ScaleDown4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1371,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1371, tmp351, tmp352,  (int32_t)0,  (int32_t)11, tmp1374);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1371);
-ClearMemSecret1( (int32_t)128, tmp351);
 ClearMemSecret1( (int32_t)128, tmp352);
+ClearMemSecret1( (int32_t)128, tmp351);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1378 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1374, tmp1378,  (int32_t)11, 1);
@@ -10054,8 +10054,8 @@ ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1374)
 
 vector < vector < vector < vector < uint64_t > > > > tmp1380 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32);
 Conv2DWrapper( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128,  (int32_t)3,  (int32_t)3,  (int32_t)32,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1, tmp1378, tmp355, tmp1380);
-ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1378);
 ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp355);
+ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1378);
 
 int32_t tmp1383 =  (int32_t)3;
 
@@ -10063,13 +10063,13 @@ vector < vector < vector < vector < uint64_t > > > > tmp1384 = make_vector<uint6
 ScaleDown4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1380,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)768,  (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)736, tmp1362,  (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1380, tmp1383, tmp1384);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1380);
-ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)736, tmp1362);
 ClearMemPublic(tmp1383);
+ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)736, tmp1362);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1388 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)768);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)768, tmp1384, tmp356, tmp357,  (int32_t)0,  (int32_t)11, tmp1388);
-ClearMemSecret1( (int32_t)768, tmp357);
 ClearMemSecret1( (int32_t)768, tmp356);
+ClearMemSecret1( (int32_t)768, tmp357);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1391 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)768);
 Relu4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)768, tmp1388, tmp1391,  (int32_t)11, 1);
@@ -10077,15 +10077,15 @@ ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)768, tmp1388)
 
 vector < vector < vector < vector < uint64_t > > > > tmp1393 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 Conv2DWrapper( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)768,  (int32_t)1,  (int32_t)1,  (int32_t)128,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)1,  (int32_t)1, tmp1391, tmp360, tmp1393);
-ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)768,  (int32_t)128, tmp360);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)768, tmp1391);
+ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)768,  (int32_t)128, tmp360);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1396 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1393,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1393, tmp361, tmp362,  (int32_t)0,  (int32_t)11, tmp1396);
+ClearMemSecret1( (int32_t)128, tmp362);
 ClearMemSecret1( (int32_t)128, tmp361);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1393);
-ClearMemSecret1( (int32_t)128, tmp362);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1400 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1396, tmp1400,  (int32_t)11, 1);
@@ -10093,17 +10093,17 @@ ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1396)
 
 vector < vector < vector < vector < uint64_t > > > > tmp1402 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32);
 Conv2DWrapper( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128,  (int32_t)3,  (int32_t)3,  (int32_t)32,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1, tmp1400, tmp365, tmp1402);
-ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp365);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1400);
+ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp365);
 
 int32_t tmp1405 =  (int32_t)3;
 
 vector < vector < vector < vector < uint64_t > > > > tmp1406 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)800);
 ScaleDown4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1402,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)800,  (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)768, tmp1384,  (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1402, tmp1405, tmp1406);
-ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1402);
-ClearMemPublic(tmp1405);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)768, tmp1384);
+ClearMemPublic(tmp1405);
+ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1402);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1410 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)800);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)800, tmp1406, tmp366, tmp367,  (int32_t)0,  (int32_t)11, tmp1410);
@@ -10122,9 +10122,9 @@ ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)800,  (int32_t)128, tmp370);
 vector < vector < vector < vector < uint64_t > > > > tmp1418 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1415,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1415, tmp371, tmp372,  (int32_t)0,  (int32_t)11, tmp1418);
-ClearMemSecret1( (int32_t)128, tmp371);
-ClearMemSecret1( (int32_t)128, tmp372);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1415);
+ClearMemSecret1( (int32_t)128, tmp372);
+ClearMemSecret1( (int32_t)128, tmp371);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1422 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1418, tmp1422,  (int32_t)11, 1);
@@ -10132,17 +10132,17 @@ ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1418)
 
 vector < vector < vector < vector < uint64_t > > > > tmp1424 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32);
 Conv2DWrapper( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128,  (int32_t)3,  (int32_t)3,  (int32_t)32,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1, tmp1422, tmp375, tmp1424);
-ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp375);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1422);
+ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp375);
 
 int32_t tmp1427 =  (int32_t)3;
 
 vector < vector < vector < vector < uint64_t > > > > tmp1428 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)832);
 ScaleDown4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1424,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)832,  (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)800, tmp1406,  (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1424, tmp1427, tmp1428);
+ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)800, tmp1406);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1424);
 ClearMemPublic(tmp1427);
-ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)800, tmp1406);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1432 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)832);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)832, tmp1428, tmp376, tmp377,  (int32_t)0,  (int32_t)11, tmp1432);
@@ -10161,9 +10161,9 @@ ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)832, tmp1435)
 vector < vector < vector < vector < uint64_t > > > > tmp1440 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1437,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1437, tmp381, tmp382,  (int32_t)0,  (int32_t)11, tmp1440);
-ClearMemSecret1( (int32_t)128, tmp381);
-ClearMemSecret1( (int32_t)128, tmp382);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1437);
+ClearMemSecret1( (int32_t)128, tmp382);
+ClearMemSecret1( (int32_t)128, tmp381);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1444 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1440, tmp1444,  (int32_t)11, 1);
@@ -10171,22 +10171,22 @@ ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1440)
 
 vector < vector < vector < vector < uint64_t > > > > tmp1446 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32);
 Conv2DWrapper( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128,  (int32_t)3,  (int32_t)3,  (int32_t)32,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1, tmp1444, tmp385, tmp1446);
-ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1444);
 ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp385);
+ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1444);
 
 int32_t tmp1449 =  (int32_t)3;
 
 vector < vector < vector < vector < uint64_t > > > > tmp1450 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)864);
 ScaleDown4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1446,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)864,  (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)832, tmp1428,  (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1446, tmp1449, tmp1450);
+ClearMemPublic(tmp1449);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1446);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)832, tmp1428);
-ClearMemPublic(tmp1449);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1454 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)864);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)864, tmp1450, tmp386, tmp387,  (int32_t)0,  (int32_t)11, tmp1454);
-ClearMemSecret1( (int32_t)864, tmp386);
 ClearMemSecret1( (int32_t)864, tmp387);
+ClearMemSecret1( (int32_t)864, tmp386);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1457 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)864);
 Relu4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)864, tmp1454, tmp1457,  (int32_t)11, 1);
@@ -10194,15 +10194,15 @@ ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)864, tmp1454)
 
 vector < vector < vector < vector < uint64_t > > > > tmp1459 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 Conv2DWrapper( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)864,  (int32_t)1,  (int32_t)1,  (int32_t)128,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)1,  (int32_t)1, tmp1457, tmp390, tmp1459);
-ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)864,  (int32_t)128, tmp390);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)864, tmp1457);
+ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)864,  (int32_t)128, tmp390);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1462 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1459,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1459, tmp391, tmp392,  (int32_t)0,  (int32_t)11, tmp1462);
-ClearMemSecret1( (int32_t)128, tmp391);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1459);
 ClearMemSecret1( (int32_t)128, tmp392);
+ClearMemSecret1( (int32_t)128, tmp391);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1466 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1462, tmp1466,  (int32_t)11, 1);
@@ -10219,13 +10219,13 @@ vector < vector < vector < vector < uint64_t > > > > tmp1472 = make_vector<uint6
 ScaleDown4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1468,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)896,  (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)864, tmp1450,  (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1468, tmp1471, tmp1472);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1468);
-ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)864, tmp1450);
 ClearMemPublic(tmp1471);
+ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)864, tmp1450);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1476 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)896);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)896, tmp1472, tmp396, tmp397,  (int32_t)0,  (int32_t)11, tmp1476);
-ClearMemSecret1( (int32_t)896, tmp396);
 ClearMemSecret1( (int32_t)896, tmp397);
+ClearMemSecret1( (int32_t)896, tmp396);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1479 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)896);
 Relu4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)896, tmp1476, tmp1479,  (int32_t)11, 1);
@@ -10233,8 +10233,8 @@ ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)896, tmp1476)
 
 vector < vector < vector < vector < uint64_t > > > > tmp1481 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 Conv2DWrapper( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)896,  (int32_t)1,  (int32_t)1,  (int32_t)128,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)1,  (int32_t)1, tmp1479, tmp400, tmp1481);
-ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)896, tmp1479);
 ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)896,  (int32_t)128, tmp400);
+ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)896, tmp1479);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1484 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1481,  (int32_t)11);
@@ -10249,8 +10249,8 @@ ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1484)
 
 vector < vector < vector < vector < uint64_t > > > > tmp1490 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32);
 Conv2DWrapper( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128,  (int32_t)3,  (int32_t)3,  (int32_t)32,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1, tmp1488, tmp405, tmp1490);
-ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1488);
 ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp405);
+ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1488);
 
 int32_t tmp1493 =  (int32_t)3;
 
@@ -10278,9 +10278,9 @@ ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)928, tmp1501)
 vector < vector < vector < vector < uint64_t > > > > tmp1506 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1503,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1503, tmp411, tmp412,  (int32_t)0,  (int32_t)11, tmp1506);
-ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1503);
 ClearMemSecret1( (int32_t)128, tmp412);
 ClearMemSecret1( (int32_t)128, tmp411);
+ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1503);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1510 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1506, tmp1510,  (int32_t)11, 1);
@@ -10296,9 +10296,9 @@ int32_t tmp1515 =  (int32_t)3;
 vector < vector < vector < vector < uint64_t > > > > tmp1516 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)960);
 ScaleDown4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1512,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)960,  (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)928, tmp1494,  (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1512, tmp1515, tmp1516);
+ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)928, tmp1494);
 ClearMemPublic(tmp1515);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1512);
-ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)928, tmp1494);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1520 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)960);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)960, tmp1516, tmp416, tmp417,  (int32_t)0,  (int32_t)11, tmp1520);
@@ -10311,15 +10311,15 @@ ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)960, tmp1520)
 
 vector < vector < vector < vector < uint64_t > > > > tmp1525 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 Conv2DWrapper( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)960,  (int32_t)1,  (int32_t)1,  (int32_t)128,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)1,  (int32_t)1, tmp1523, tmp420, tmp1525);
-ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)960,  (int32_t)128, tmp420);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)960, tmp1523);
+ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)960,  (int32_t)128, tmp420);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1528 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1525,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1525, tmp421, tmp422,  (int32_t)0,  (int32_t)11, tmp1528);
-ClearMemSecret1( (int32_t)128, tmp422);
 ClearMemSecret1( (int32_t)128, tmp421);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1525);
+ClearMemSecret1( (int32_t)128, tmp422);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1532 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1528, tmp1532,  (int32_t)11, 1);
@@ -10357,8 +10357,8 @@ vector < vector < vector < vector < uint64_t > > > > tmp1550 = make_vector<uint6
 ScaleDown4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1547,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1547, tmp431, tmp432,  (int32_t)0,  (int32_t)11, tmp1550);
 ClearMemSecret1( (int32_t)128, tmp432);
-ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1547);
 ClearMemSecret1( (int32_t)128, tmp431);
+ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1547);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1554 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)128, tmp1550, tmp1554,  (int32_t)11, 1);
@@ -10374,15 +10374,15 @@ int32_t tmp1559 =  (int32_t)3;
 vector < vector < vector < vector < uint64_t > > > > tmp1560 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)1024);
 ScaleDown4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1556,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)1024,  (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)992, tmp1538,  (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1556, tmp1559, tmp1560);
-ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)992, tmp1538);
 ClearMemPublic(tmp1559);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)32, tmp1556);
+ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)992, tmp1538);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1564 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)1024);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)1024, tmp1560, tmp436, tmp437,  (int32_t)0,  (int32_t)11, tmp1564);
+ClearMemSecret1( (int32_t)1024, tmp436);
 ClearMemSecret1( (int32_t)1024, tmp437);
 ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)1024, tmp1560);
-ClearMemSecret1( (int32_t)1024, tmp436);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1568 = make_vector<uint64_t>( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)1024);
 Relu4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)1024, tmp1564, tmp1568,  (int32_t)11, 1);
@@ -10400,8 +10400,8 @@ ClearMemSecret4( (int32_t)1,  (int32_t)14,  (int32_t)14,  (int32_t)512, tmp1570)
 vector < vector < vector < vector < uint64_t > > > > tmp1575 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)512);
 ScaleDown4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)512, tmp1573,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)512, tmp1573, tmp441, tmp442,  (int32_t)0,  (int32_t)11, tmp1575);
-ClearMemSecret1( (int32_t)512, tmp441);
 ClearMemSecret1( (int32_t)512, tmp442);
+ClearMemSecret1( (int32_t)512, tmp441);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1578 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)512);
 Relu4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)512, tmp1575, tmp1578,  (int32_t)11, 1);
@@ -10409,15 +10409,15 @@ ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)512, tmp1575);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1580 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128);
 Conv2DWrapper( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)512,  (int32_t)1,  (int32_t)1,  (int32_t)128,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)1,  (int32_t)1, tmp1578, tmp445, tmp1580);
-ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)512, tmp1578);
 ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)512,  (int32_t)128, tmp445);
+ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)512, tmp1578);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1583 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1580,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1580, tmp446, tmp447,  (int32_t)0,  (int32_t)11, tmp1583);
 ClearMemSecret1( (int32_t)128, tmp446);
-ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1580);
 ClearMemSecret1( (int32_t)128, tmp447);
+ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1580);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1587 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1583, tmp1587,  (int32_t)11, 1);
@@ -10433,14 +10433,14 @@ int32_t tmp1592 =  (int32_t)3;
 vector < vector < vector < vector < uint64_t > > > > tmp1593 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)544);
 ScaleDown4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32, tmp1589,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)544,  (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)512, tmp1573,  (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32, tmp1589, tmp1592, tmp1593);
-ClearMemPublic(tmp1592);
 ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32, tmp1589);
 ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)512, tmp1573);
+ClearMemPublic(tmp1592);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1597 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)544);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)544, tmp1593, tmp451, tmp452,  (int32_t)0,  (int32_t)11, tmp1597);
-ClearMemSecret1( (int32_t)544, tmp452);
 ClearMemSecret1( (int32_t)544, tmp451);
+ClearMemSecret1( (int32_t)544, tmp452);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1600 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)544);
 Relu4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)544, tmp1597, tmp1600,  (int32_t)11, 1);
@@ -10454,9 +10454,9 @@ ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)544,  (int32_t)128, tmp455);
 vector < vector < vector < vector < uint64_t > > > > tmp1605 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1602,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1602, tmp456, tmp457,  (int32_t)0,  (int32_t)11, tmp1605);
-ClearMemSecret1( (int32_t)128, tmp456);
 ClearMemSecret1( (int32_t)128, tmp457);
 ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1602);
+ClearMemSecret1( (int32_t)128, tmp456);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1609 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1605, tmp1609,  (int32_t)11, 1);
@@ -10464,22 +10464,22 @@ ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1605);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1611 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32);
 Conv2DWrapper( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128,  (int32_t)3,  (int32_t)3,  (int32_t)32,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1, tmp1609, tmp460, tmp1611);
-ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp460);
 ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1609);
+ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp460);
 
 int32_t tmp1614 =  (int32_t)3;
 
 vector < vector < vector < vector < uint64_t > > > > tmp1615 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)576);
 ScaleDown4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32, tmp1611,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)576,  (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)544, tmp1593,  (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32, tmp1611, tmp1614, tmp1615);
+ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32, tmp1611);
 ClearMemPublic(tmp1614);
 ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)544, tmp1593);
-ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32, tmp1611);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1619 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)576);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)576, tmp1615, tmp461, tmp462,  (int32_t)0,  (int32_t)11, tmp1619);
-ClearMemSecret1( (int32_t)576, tmp462);
 ClearMemSecret1( (int32_t)576, tmp461);
+ClearMemSecret1( (int32_t)576, tmp462);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1622 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)576);
 Relu4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)576, tmp1619, tmp1622,  (int32_t)11, 1);
@@ -10493,8 +10493,8 @@ ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)576,  (int32_t)128, tmp465);
 vector < vector < vector < vector < uint64_t > > > > tmp1627 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1624,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1624, tmp466, tmp467,  (int32_t)0,  (int32_t)11, tmp1627);
-ClearMemSecret1( (int32_t)128, tmp466);
 ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1624);
+ClearMemSecret1( (int32_t)128, tmp466);
 ClearMemSecret1( (int32_t)128, tmp467);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1631 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128);
@@ -10503,22 +10503,22 @@ ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1627);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1633 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32);
 Conv2DWrapper( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128,  (int32_t)3,  (int32_t)3,  (int32_t)32,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1, tmp1631, tmp470, tmp1633);
-ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp470);
 ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1631);
+ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp470);
 
 int32_t tmp1636 =  (int32_t)3;
 
 vector < vector < vector < vector < uint64_t > > > > tmp1637 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)608);
 ScaleDown4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32, tmp1633,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)608,  (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)576, tmp1615,  (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32, tmp1633, tmp1636, tmp1637);
-ClearMemPublic(tmp1636);
 ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)576, tmp1615);
+ClearMemPublic(tmp1636);
 ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32, tmp1633);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1641 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)608);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)608, tmp1637, tmp471, tmp472,  (int32_t)0,  (int32_t)11, tmp1641);
-ClearMemSecret1( (int32_t)608, tmp472);
 ClearMemSecret1( (int32_t)608, tmp471);
+ClearMemSecret1( (int32_t)608, tmp472);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1644 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)608);
 Relu4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)608, tmp1641, tmp1644,  (int32_t)11, 1);
@@ -10532,9 +10532,9 @@ ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)608, tmp1644);
 vector < vector < vector < vector < uint64_t > > > > tmp1649 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1646,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1646, tmp476, tmp477,  (int32_t)0,  (int32_t)11, tmp1649);
-ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1646);
 ClearMemSecret1( (int32_t)128, tmp477);
 ClearMemSecret1( (int32_t)128, tmp476);
+ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1646);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1653 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1649, tmp1653,  (int32_t)11, 1);
@@ -10551,13 +10551,13 @@ vector < vector < vector < vector < uint64_t > > > > tmp1659 = make_vector<uint6
 ScaleDown4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32, tmp1655,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)640,  (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)608, tmp1637,  (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32, tmp1655, tmp1658, tmp1659);
 ClearMemPublic(tmp1658);
-ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32, tmp1655);
 ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)608, tmp1637);
+ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32, tmp1655);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1663 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)640);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)640, tmp1659, tmp481, tmp482,  (int32_t)0,  (int32_t)11, tmp1663);
-ClearMemSecret1( (int32_t)640, tmp482);
 ClearMemSecret1( (int32_t)640, tmp481);
+ClearMemSecret1( (int32_t)640, tmp482);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1666 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)640);
 Relu4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)640, tmp1663, tmp1666,  (int32_t)11, 1);
@@ -10565,8 +10565,8 @@ ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)640, tmp1663);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1668 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128);
 Conv2DWrapper( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)640,  (int32_t)1,  (int32_t)1,  (int32_t)128,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)1,  (int32_t)1, tmp1666, tmp485, tmp1668);
-ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)640,  (int32_t)128, tmp485);
 ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)640, tmp1666);
+ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)640,  (int32_t)128, tmp485);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1671 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1668,  (int32_t)11);
@@ -10589,14 +10589,14 @@ int32_t tmp1680 =  (int32_t)3;
 vector < vector < vector < vector < uint64_t > > > > tmp1681 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)672);
 ScaleDown4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32, tmp1677,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)672,  (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)640, tmp1659,  (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32, tmp1677, tmp1680, tmp1681);
-ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)640, tmp1659);
-ClearMemPublic(tmp1680);
 ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32, tmp1677);
+ClearMemPublic(tmp1680);
+ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)640, tmp1659);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1685 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)672);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)672, tmp1681, tmp491, tmp492,  (int32_t)0,  (int32_t)11, tmp1685);
-ClearMemSecret1( (int32_t)672, tmp491);
 ClearMemSecret1( (int32_t)672, tmp492);
+ClearMemSecret1( (int32_t)672, tmp491);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1688 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)672);
 Relu4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)672, tmp1685, tmp1688,  (int32_t)11, 1);
@@ -10604,8 +10604,8 @@ ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)672, tmp1685);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1690 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128);
 Conv2DWrapper( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)672,  (int32_t)1,  (int32_t)1,  (int32_t)128,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)1,  (int32_t)1, tmp1688, tmp495, tmp1690);
-ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)672, tmp1688);
 ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)672,  (int32_t)128, tmp495);
+ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)672, tmp1688);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1693 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1690,  (int32_t)11);
@@ -10620,8 +10620,8 @@ ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1693);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1699 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32);
 Conv2DWrapper( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128,  (int32_t)3,  (int32_t)3,  (int32_t)32,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1, tmp1697, tmp500, tmp1699);
-ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp500);
 ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1697);
+ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp500);
 
 int32_t tmp1702 =  (int32_t)3;
 
@@ -10629,8 +10629,8 @@ vector < vector < vector < vector < uint64_t > > > > tmp1703 = make_vector<uint6
 ScaleDown4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32, tmp1699,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)704,  (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)672, tmp1681,  (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32, tmp1699, tmp1702, tmp1703);
 ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32, tmp1699);
-ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)672, tmp1681);
 ClearMemPublic(tmp1702);
+ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)672, tmp1681);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1707 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)704);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)704, tmp1703, tmp501, tmp502,  (int32_t)0,  (int32_t)11, tmp1707);
@@ -10649,9 +10649,9 @@ ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)704,  (int32_t)128, tmp505);
 vector < vector < vector < vector < uint64_t > > > > tmp1715 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1712,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1712, tmp506, tmp507,  (int32_t)0,  (int32_t)11, tmp1715);
-ClearMemSecret1( (int32_t)128, tmp506);
-ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1712);
 ClearMemSecret1( (int32_t)128, tmp507);
+ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1712);
+ClearMemSecret1( (int32_t)128, tmp506);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1719 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1715, tmp1719,  (int32_t)11, 1);
@@ -10698,8 +10698,8 @@ ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1737);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1743 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32);
 Conv2DWrapper( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128,  (int32_t)3,  (int32_t)3,  (int32_t)32,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1, tmp1741, tmp520, tmp1743);
-ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1741);
 ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp520);
+ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1741);
 
 int32_t tmp1746 =  (int32_t)3;
 
@@ -10712,8 +10712,8 @@ ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32, tmp1743);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1751 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)768);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)768, tmp1747, tmp521, tmp522,  (int32_t)0,  (int32_t)11, tmp1751);
-ClearMemSecret1( (int32_t)768, tmp521);
 ClearMemSecret1( (int32_t)768, tmp522);
+ClearMemSecret1( (int32_t)768, tmp521);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1754 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)768);
 Relu4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)768, tmp1751, tmp1754,  (int32_t)11, 1);
@@ -10721,15 +10721,15 @@ ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)768, tmp1751);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1756 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128);
 Conv2DWrapper( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)768,  (int32_t)1,  (int32_t)1,  (int32_t)128,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)1,  (int32_t)1, tmp1754, tmp525, tmp1756);
-ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)768,  (int32_t)128, tmp525);
 ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)768, tmp1754);
+ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)768,  (int32_t)128, tmp525);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1759 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1756,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1756, tmp526, tmp527,  (int32_t)0,  (int32_t)11, tmp1759);
-ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1756);
-ClearMemSecret1( (int32_t)128, tmp526);
 ClearMemSecret1( (int32_t)128, tmp527);
+ClearMemSecret1( (int32_t)128, tmp526);
+ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1756);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1763 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1759, tmp1763,  (int32_t)11, 1);
@@ -10737,8 +10737,8 @@ ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1759);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1765 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32);
 Conv2DWrapper( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128,  (int32_t)3,  (int32_t)3,  (int32_t)32,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1, tmp1763, tmp530, tmp1765);
-ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1763);
 ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp530);
+ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1763);
 
 int32_t tmp1768 =  (int32_t)3;
 
@@ -10751,8 +10751,8 @@ ClearMemPublic(tmp1768);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1773 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)800);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)800, tmp1769, tmp531, tmp532,  (int32_t)0,  (int32_t)11, tmp1773);
-ClearMemSecret1( (int32_t)800, tmp531);
 ClearMemSecret1( (int32_t)800, tmp532);
+ClearMemSecret1( (int32_t)800, tmp531);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1776 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)800);
 Relu4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)800, tmp1773, tmp1776,  (int32_t)11, 1);
@@ -10766,9 +10766,9 @@ ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)800, tmp1776);
 vector < vector < vector < vector < uint64_t > > > > tmp1781 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1778,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1778, tmp536, tmp537,  (int32_t)0,  (int32_t)11, tmp1781);
-ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1778);
-ClearMemSecret1( (int32_t)128, tmp537);
 ClearMemSecret1( (int32_t)128, tmp536);
+ClearMemSecret1( (int32_t)128, tmp537);
+ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1778);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1785 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1781, tmp1785,  (int32_t)11, 1);
@@ -10784,14 +10784,14 @@ int32_t tmp1790 =  (int32_t)3;
 vector < vector < vector < vector < uint64_t > > > > tmp1791 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)832);
 ScaleDown4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32, tmp1787,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)832,  (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)800, tmp1769,  (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32, tmp1787, tmp1790, tmp1791);
-ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32, tmp1787);
 ClearMemPublic(tmp1790);
+ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32, tmp1787);
 ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)800, tmp1769);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1795 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)832);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)832, tmp1791, tmp541, tmp542,  (int32_t)0,  (int32_t)11, tmp1795);
-ClearMemSecret1( (int32_t)832, tmp542);
 ClearMemSecret1( (int32_t)832, tmp541);
+ClearMemSecret1( (int32_t)832, tmp542);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1798 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)832);
 Relu4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)832, tmp1795, tmp1798,  (int32_t)11, 1);
@@ -10799,15 +10799,15 @@ ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)832, tmp1795);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1800 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128);
 Conv2DWrapper( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)832,  (int32_t)1,  (int32_t)1,  (int32_t)128,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)1,  (int32_t)1, tmp1798, tmp545, tmp1800);
-ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)832, tmp1798);
 ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)832,  (int32_t)128, tmp545);
+ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)832, tmp1798);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1803 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1800,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1800, tmp546, tmp547,  (int32_t)0,  (int32_t)11, tmp1803);
 ClearMemSecret1( (int32_t)128, tmp546);
-ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1800);
 ClearMemSecret1( (int32_t)128, tmp547);
+ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1800);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1807 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1803, tmp1807,  (int32_t)11, 1);
@@ -10815,17 +10815,17 @@ ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1803);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1809 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32);
 Conv2DWrapper( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128,  (int32_t)3,  (int32_t)3,  (int32_t)32,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1, tmp1807, tmp550, tmp1809);
-ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1807);
 ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp550);
+ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1807);
 
 int32_t tmp1812 =  (int32_t)3;
 
 vector < vector < vector < vector < uint64_t > > > > tmp1813 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)864);
 ScaleDown4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32, tmp1809,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)864,  (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)832, tmp1791,  (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32, tmp1809, tmp1812, tmp1813);
+ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)832, tmp1791);
 ClearMemPublic(tmp1812);
 ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32, tmp1809);
-ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)832, tmp1791);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1817 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)864);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)864, tmp1813, tmp551, tmp552,  (int32_t)0,  (int32_t)11, tmp1817);
@@ -10838,15 +10838,15 @@ ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)864, tmp1817);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1822 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128);
 Conv2DWrapper( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)864,  (int32_t)1,  (int32_t)1,  (int32_t)128,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)1,  (int32_t)1, tmp1820, tmp555, tmp1822);
-ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)864, tmp1820);
 ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)864,  (int32_t)128, tmp555);
+ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)864, tmp1820);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1825 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1822,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1822, tmp556, tmp557,  (int32_t)0,  (int32_t)11, tmp1825);
-ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1822);
-ClearMemSecret1( (int32_t)128, tmp556);
 ClearMemSecret1( (int32_t)128, tmp557);
+ClearMemSecret1( (int32_t)128, tmp556);
+ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1822);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1829 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1825, tmp1829,  (int32_t)11, 1);
@@ -10854,22 +10854,22 @@ ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1825);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1831 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32);
 Conv2DWrapper( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128,  (int32_t)3,  (int32_t)3,  (int32_t)32,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1, tmp1829, tmp560, tmp1831);
-ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp560);
 ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1829);
+ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp560);
 
 int32_t tmp1834 =  (int32_t)3;
 
 vector < vector < vector < vector < uint64_t > > > > tmp1835 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)896);
 ScaleDown4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32, tmp1831,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)896,  (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)864, tmp1813,  (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32, tmp1831, tmp1834, tmp1835);
-ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)864, tmp1813);
-ClearMemPublic(tmp1834);
 ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32, tmp1831);
+ClearMemPublic(tmp1834);
+ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)864, tmp1813);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1839 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)896);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)896, tmp1835, tmp561, tmp562,  (int32_t)0,  (int32_t)11, tmp1839);
-ClearMemSecret1( (int32_t)896, tmp562);
 ClearMemSecret1( (int32_t)896, tmp561);
+ClearMemSecret1( (int32_t)896, tmp562);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1842 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)896);
 Relu4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)896, tmp1839, tmp1842,  (int32_t)11, 1);
@@ -10877,8 +10877,8 @@ ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)896, tmp1839);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1844 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128);
 Conv2DWrapper( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)896,  (int32_t)1,  (int32_t)1,  (int32_t)128,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)1,  (int32_t)1, tmp1842, tmp565, tmp1844);
-ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)896,  (int32_t)128, tmp565);
 ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)896, tmp1842);
+ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)896,  (int32_t)128, tmp565);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1847 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1844,  (int32_t)11);
@@ -10893,8 +10893,8 @@ ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1847);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1853 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32);
 Conv2DWrapper( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128,  (int32_t)3,  (int32_t)3,  (int32_t)32,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1, tmp1851, tmp570, tmp1853);
-ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp570);
 ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1851);
+ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp570);
 
 int32_t tmp1856 =  (int32_t)3;
 
@@ -10907,8 +10907,8 @@ ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32, tmp1853);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1861 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)928);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)928, tmp1857, tmp571, tmp572,  (int32_t)0,  (int32_t)11, tmp1861);
-ClearMemSecret1( (int32_t)928, tmp572);
 ClearMemSecret1( (int32_t)928, tmp571);
+ClearMemSecret1( (int32_t)928, tmp572);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1864 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)928);
 Relu4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)928, tmp1861, tmp1864,  (int32_t)11, 1);
@@ -10922,9 +10922,9 @@ ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)928, tmp1864);
 vector < vector < vector < vector < uint64_t > > > > tmp1869 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1866,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1866, tmp576, tmp577,  (int32_t)0,  (int32_t)11, tmp1869);
+ClearMemSecret1( (int32_t)128, tmp577);
 ClearMemSecret1( (int32_t)128, tmp576);
 ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1866);
-ClearMemSecret1( (int32_t)128, tmp577);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1873 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1869, tmp1873,  (int32_t)11, 1);
@@ -10932,17 +10932,17 @@ ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1869);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1875 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32);
 Conv2DWrapper( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128,  (int32_t)3,  (int32_t)3,  (int32_t)32,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1, tmp1873, tmp580, tmp1875);
-ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1873);
 ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp580);
+ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1873);
 
 int32_t tmp1878 =  (int32_t)3;
 
 vector < vector < vector < vector < uint64_t > > > > tmp1879 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)960);
 ScaleDown4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32, tmp1875,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)960,  (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)928, tmp1857,  (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32, tmp1875, tmp1878, tmp1879);
-ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32, tmp1875);
 ClearMemPublic(tmp1878);
 ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)928, tmp1857);
+ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32, tmp1875);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1883 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)960);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)960, tmp1879, tmp581, tmp582,  (int32_t)0,  (int32_t)11, tmp1883);
@@ -10955,15 +10955,15 @@ ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)960, tmp1883);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1888 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128);
 Conv2DWrapper( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)960,  (int32_t)1,  (int32_t)1,  (int32_t)128,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)0,  (int32_t)1,  (int32_t)1, tmp1886, tmp585, tmp1888);
-ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)960,  (int32_t)128, tmp585);
 ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)960, tmp1886);
+ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)960,  (int32_t)128, tmp585);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1891 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1888,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1888, tmp586, tmp587,  (int32_t)0,  (int32_t)11, tmp1891);
+ClearMemSecret1( (int32_t)128, tmp587);
 ClearMemSecret1( (int32_t)128, tmp586);
 ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1888);
-ClearMemSecret1( (int32_t)128, tmp587);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1895 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1891, tmp1895,  (int32_t)11, 1);
@@ -10979,14 +10979,14 @@ int32_t tmp1900 =  (int32_t)3;
 vector < vector < vector < vector < uint64_t > > > > tmp1901 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)992);
 ScaleDown4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32, tmp1897,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)992,  (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)960, tmp1879,  (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32, tmp1897, tmp1900, tmp1901);
+ClearMemPublic(tmp1900);
 ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32, tmp1897);
 ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)960, tmp1879);
-ClearMemPublic(tmp1900);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1905 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)992);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)992, tmp1901, tmp591, tmp592,  (int32_t)0,  (int32_t)11, tmp1905);
-ClearMemSecret1( (int32_t)992, tmp592);
 ClearMemSecret1( (int32_t)992, tmp591);
+ClearMemSecret1( (int32_t)992, tmp592);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1908 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)992);
 Relu4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)992, tmp1905, tmp1908,  (int32_t)11, 1);
@@ -11000,9 +11000,9 @@ ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)992, tmp1908);
 vector < vector < vector < vector < uint64_t > > > > tmp1913 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128);
 ScaleDown4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1910,  (int32_t)11);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1910, tmp596, tmp597,  (int32_t)0,  (int32_t)11, tmp1913);
-ClearMemSecret1( (int32_t)128, tmp597);
-ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1910);
 ClearMemSecret1( (int32_t)128, tmp596);
+ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1910);
+ClearMemSecret1( (int32_t)128, tmp597);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1917 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128);
 Relu4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1913, tmp1917,  (int32_t)11, 1);
@@ -11010,23 +11010,23 @@ ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1913);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1919 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32);
 Conv2DWrapper( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128,  (int32_t)3,  (int32_t)3,  (int32_t)32,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1, tmp1917, tmp600, tmp1919);
-ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1917);
 ClearMemSecret4( (int32_t)3,  (int32_t)3,  (int32_t)128,  (int32_t)32, tmp600);
+ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)128, tmp1917);
 
 int32_t tmp1922 =  (int32_t)3;
 
 vector < vector < vector < vector < uint64_t > > > > tmp1923 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)1024);
 ScaleDown4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32, tmp1919,  (int32_t)11);
 Concat2T444( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)1024,  (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)992, tmp1901,  (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32, tmp1919, tmp1922, tmp1923);
-ClearMemPublic(tmp1922);
 ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)32, tmp1919);
 ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)992, tmp1901);
+ClearMemPublic(tmp1922);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1927 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)1024);
 FusedBatchNorm4411( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)1024, tmp1923, tmp601, tmp602,  (int32_t)0,  (int32_t)11, tmp1927);
+ClearMemSecret1( (int32_t)1024, tmp601);
 ClearMemSecret4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)1024, tmp1923);
 ClearMemSecret1( (int32_t)1024, tmp602);
-ClearMemSecret1( (int32_t)1024, tmp601);
 
 vector < vector < vector < vector < uint64_t > > > > tmp1931 = make_vector<uint64_t>( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)1024);
 Relu4( (int32_t)1,  (int32_t)7,  (int32_t)7,  (int32_t)1024, tmp1927, tmp1931,  (int32_t)11, 1);
@@ -11051,8 +11051,8 @@ int32_t tmp1941 =  (int32_t)3;
 
 vector < vector < vector < uint64_t > > > tmp1942 = make_vector<uint64_t>( (int32_t)1,  (int32_t)1,  (int32_t)1);
 ArgMax3( (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1000, tmp1938, tmp1941, tmp1942);
-ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1000, tmp1938);
 ClearMemPublic(tmp1941);
+ClearMemSecret4( (int32_t)1,  (int32_t)1,  (int32_t)1,  (int32_t)1000, tmp1938);
 EndComputation();
 for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)1; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)1; i1++){

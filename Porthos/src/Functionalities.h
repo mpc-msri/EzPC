@@ -151,7 +151,9 @@ porthosSecretType funcReluPrime(porthosSecretType a);
 porthosSecretType funcDiv(porthosSecretType a, 
 		porthosSecretType b);
 
-porthosSecretType funcSSCons(porthosSecretType a);
+porthosSecretType funcSSCons(int32_t x);
+porthosSecretType funcSSCons(int64_t x);
+
 
 porthosSecretType funcReconstruct2PCCons(porthosSecretType a, 
 		int revealToParties);

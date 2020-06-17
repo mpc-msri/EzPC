@@ -2041,13 +2041,36 @@ porthosSecretType funcReluPrime(porthosSecretType a)
 	return tmp2[0];
 }
 
-porthosSecretType funcSSCons(porthosSecretType a)
+porthosSecretType funcSSCons(int32_t x)
 {
-	vector<porthosSecretType> tmp1(1,a);
-	vector<porthosSecretType> tmp2(1,0);
-	funcSecretShareConstant(tmp1, tmp2, 1);
-	return tmp2[0];
+	/*
+		Secret share public value x between the two parties. 
+		Corresponding ezpc statement would be int32_al x = 0;
+		Set one party share as x and other party's share as 0.
+	*/
+	if (partyNum == PARTY_A){
+		return x;
+	}
+	if (partyNum == PARTY_B){
+		return 0;
+	}
 }
+
+porthosSecretType funcSSCons(int64_t x)
+{
+	/*
+		Secret share public value x between the two parties. 
+		Corresponding ezpc statement would be int32_al x = 0;
+		Set one party share as x and other party's share as 0.
+	*/
+	if (partyNum == PARTY_A){
+		return x;
+	}
+	if (partyNum == PARTY_B){
+		return 0;
+	}
+}
+
 
 //Arg2 revealToParties is a bitmask as to which parties should see the reconstructed values
 //10 - party 0, 01 - party 1, 11 - party 0 & 1
