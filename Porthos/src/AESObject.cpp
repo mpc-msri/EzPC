@@ -35,6 +35,9 @@ using namespace std;
 AESObject::AESObject(string filename)
 {
 	ifstream f(filename);
+	if(!f.good()){
+		throw std::invalid_argument("The file "+filename+" does not exist. Please run the code from the correct directory (Porthos root) and not from Porthos/src/..../bin/. Please use the scripts party0.sh, party1.sh and party2.sh located in Porthos root.");
+	}
 	string str { istreambuf_iterator<char>(f), istreambuf_iterator<char>() };
 	f.close();
 	int len = str.length();
