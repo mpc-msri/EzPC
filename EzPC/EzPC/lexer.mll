@@ -53,6 +53,8 @@ let cvt_uint32_literal s =
   Uint32.of_string (String.sub s 0 (String.length s - 1))
 let cvt_uint64_literal s =
   Uint64.of_string (String.sub s 0 (String.length s - 2))
+let cvt_flt64_literal s = 
+  (String.sub s 0 (String.length s - 1))
 }
 
 let white = [' ' '\t']+
@@ -63,6 +65,7 @@ let all = ['a'-'z' 'A'-'Z' '0'-'9']
 let id = letter all*
 let bool = "true" | "false"
 let eol = '\r' | '\n' | "\r\n"
+let float = int "." int
 
 rule read = 
   parse
@@ -82,10 +85,16 @@ rule read =
   | "="   { EQUALS }
   | "~"   { BITWISE_NEG }
   | "!"   { NOT }
+  | "+."  { FLOAT_SUM }
   | "+"   { SUM }
+  | "-."  { FLOAT_SUB }
   | "-"   { SUB }
+  | "*."  { FLOAT_MUL }
   | "*"   { MUL }
+  | "/."  { FLOAT_DIV }
   | "/"   { DIV }
+  | "FLT2EXP" { FLOAT_EXP2 }
+  | "FLTEXP"  { FLOAT_EXP }
   | "%"   { MOD }
   | "^^"  { POW }
   | ">>"  { R_SHIFT_A }
@@ -110,6 +119,7 @@ rule read =
   | "uint64" { TUINT64 }
   | "bool"  { TBOOL }
   | "void" {TVOID }
+  | "float64" {TFLOAT64}
   | "true" { TRUE }
   | "false" { FALSE }
   | "al" { ARITHMETIC }
@@ -140,6 +150,8 @@ rule read =
               with Failure _ -> raise (Error ("literal overflow int64")) }
   | int "uL" { try UINT64 (cvt_uint64_literal (Lexing.lexeme lexbuf))
               with Failure _ -> raise (Error ("literal overflow uint64")) }
+  | float "f" {try FLOAT64 (cvt_flt64_literal (Lexing.lexeme lexbuf)) 
+              with Failure _ -> raise (Error (" literal overflow float64"))}
   | eof   { EOF }
   | _ { lex_error lexbuf }
 

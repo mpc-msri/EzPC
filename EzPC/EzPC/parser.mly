@@ -64,6 +64,7 @@ let match_stmt_option msg str =
 %token <Stdint.uint64> UINT64
 %token <Stdint.int32> INT32
 %token <Stdint.int64> INT64
+%token <string> FLOAT64
 %token LPAREN RPAREN
 %token LBRACE RBRACE
 %token LBRACKET RBRACKET
@@ -71,7 +72,7 @@ let match_stmt_option msg str =
 %token OUTPUT INPUT
 %token RETURN
 %token COMMA
-%token TINT32 TINT64 TUINT32 TUINT64
+%token TINT32 TINT64 TUINT32 TUINT64 TFLOAT64
 %token TBOOL TRUE FALSE
 %token TVOID
 %token ARITHMETIC BOOLEAN PUBLIC
@@ -81,6 +82,7 @@ let match_stmt_option msg str =
 %token EQUALS
 %token BITWISE_NEG NOT
 %token SUM SUB MUL DIV MOD POW R_SHIFT_A L_SHIFT BITWISE_AND BITWISE_OR BITWISE_XOR AND OR XOR R_SHIFT_L
+%token FLOAT_SUM FLOAT_SUB FLOAT_MUL FLOAT_DIV FLOAT_EXP2 FLOAT_EXP
 %token LESS_THAN GREATER_THAN IS_EQUAL GREATER_THAN_EQUAL LESS_THAN_EQUAL
 %token SUBSUMPTION FOR WHILE
 %token EOF
@@ -105,9 +107,11 @@ let match_stmt_option msg str =
 %left IS_EQUAL
 %left GREATER_THAN GREATER_THAN_EQUAL LESS_THAN LESS_THAN_EQUAL
 %left R_SHIFT_A L_SHIFT R_SHIFT_L
-%left SUM SUB
+%left SUM SUB 
 %left MUL DIV MOD
 %left POW
+%left FLOAT_SUM FLOAT_SUB
+%left FLOAT_MUL FLOAT_DIV 
 %nonassoc BINOP_ASSOC
 %nonassoc BINOP_SOME_ASSOC
 %nonassoc UNOP_ASSOC
@@ -137,6 +141,7 @@ base_type:
   | TINT32 { Ast.Int32 }
   | TINT64 { Ast.Int64 }
   | TBOOL { Ast.Bool }
+  | TFLOAT64 {Ast.Float64}
   ;
 
 index_expr:
@@ -204,6 +209,7 @@ expr:
   | x = ID { let v = { name = x; index = 0; } in astnd (Ast.Var v) $startpos $endpos }
   | u = unop; e1 = expr; { astnd (Ast.Unop (u, e1, None)) $startpos $endpos }    %prec UNOP_ASSOC
   | u = unop; UNDERSCORE; l = label; e1 = expr; { astnd (Ast.Unop (u, e1, Some l)) $startpos $endpos }    %prec UNOP_SOME_ASSOC
+  | u = float_op_exp; LPAREN; e1 = expr; RPAREN { astnd  ( Ast.Unop (u, e1, None)) $startpos $endpos } 
   | e1 = expr; b = binop; e2 = expr; { astnd (Ast.Binop(b,e1,e2,None)) $startpos $endpos }    %prec BINOP_ASSOC
   | e1 = expr; b = binop; UNDERSCORE; l = label; e2 = expr; { astnd (Ast.Binop(b,e1,e2,Some(l))) $startpos $endpos }    %prec BINOP_SOME_ASSOC
   | e1 = expr; QUESTION_MARK; e2 = expr; COLON; e3 = expr { astnd (Ast.Conditional(e1,e2,e3,None)) $startpos $endpos }  %prec CONDITIONAL
@@ -213,6 +219,12 @@ expr:
   | LESS_THAN; l1 = label; SUBSUMPTION; l2 = label; GREATER_THAN; e = expr { astnd (Ast.Subsumption(e, l1, l2)) $startpos $endpos }
   | e = expr_ { e }
   | error { parse_error "Expr: " $startpos $endpos}
+  ;
+
+float_op_exp:
+  | FLOAT_EXP { Ast.Float_exp }
+  | FLOAT_EXP2  { Ast.Float_exp2 }
+  | error { parse_error "Float_op_exp: " $startpos $endpos }
   ;
 
 expr_:
@@ -248,6 +260,10 @@ binop:
   | OR { Ast.Or }
   | XOR { Ast.Xor }
   | R_SHIFT_L { Ast.R_shift_l }
+  | FLOAT_SUM { Ast.Float_sum }
+  | FLOAT_SUB { Ast.Float_sub }
+  | FLOAT_MUL { Ast.Float_mul }
+  | FLOAT_DIV { Ast.Float_div }
   ;
 
 const:
@@ -261,6 +277,8 @@ const:
   | SUB; i = UINT64; { Ast.UInt64C (Uint64.neg i) }
   | TRUE { Ast.BoolC true }
   | FALSE { Ast.BoolC false }
+  | i = FLOAT64 {Ast.Float64C i }
+  | SUB; i = FLOAT64; { Ast.Float64C (String.concat "" (List.cons "-" [i]) ) }
   ;
 
 label:

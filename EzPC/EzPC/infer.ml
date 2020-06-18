@@ -62,6 +62,8 @@ and infer_binop_label (g:gamma) (op:binop) (e1:expr) (e2:expr) (lopt:label optio
         match op with
         | Sum | Sub | Div | Mod -> set_default_label None
         | Mul -> Binop (op, e1, e2, Some (Secret Arithmetic))
+        | Float_sum | Float_div | Float_sub | Float_mul ->
+               Binop(op, e1, e2, Some (Secret Boolean))
         | Pow -> Binop (op, e1, e2, Some Public)
         | Greater_than | Less_than | Greater_than_equal | Less_than_equal | Is_equal ->
            Binop (op, e1, e2, Some (Secret Boolean))

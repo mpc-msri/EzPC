@@ -97,6 +97,7 @@ let check_unop_label_is_consistent (e:expr) (op:unop) (l:label) :unit result =
      | U_minus -> Type_error ("Unary minus should have been desugared: " ^ expr_to_string e, e.metadata)
      | Bitwise_neg when l = Boolean -> Well_typed ()
      | Not when l = Boolean -> Well_typed ()
+     | Float_exp | Float_exp2 when l = Boolean -> Well_typed ()
      | _ -> Type_error ("Unary operator expected a boolean label: " ^ expr_to_string e, e.metadata)
 
 (*
@@ -110,6 +111,7 @@ let check_binop_label_is_consistent (e:expr) (op:binop) (l:label) :unit result =
      match op with
      | Sum | Sub | Div | Mod -> Well_typed ()
      | Mul when l = Arithmetic -> Well_typed ()
+     | Float_sum | Float_sub | Float_mul |Float_div  when l = Boolean -> Well_typed ()
      | Greater_than | Less_than | Greater_than_equal | Less_than_equal | Is_equal when l = Boolean -> Well_typed ()
      | L_shift when l = Boolean -> Well_typed ()
      | R_shift_a when l = Boolean -> Well_typed ()
@@ -146,6 +148,13 @@ let check_expected_int_typ (e:expr) (t:typ) (l:label) :unit result =
   | Base (bt, Some lt) when (bt = UInt32 || bt = UInt64 || bt = Int32 || bt = Int64) && lt = l -> Well_typed ()
   | _ -> err
 
+let check_expected_flt_typ (e:expr) (t:typ) (l:label) :unit result =
+  let err = Type_error ("Expression " ^ (expr_to_string e) ^ " should have a float type with label " ^ label_to_string l ^
+                          ", instead got: " ^ typ_to_string t, e.metadata) in
+  match t.data with
+  | Base (bt, Some lt) when (bt = Float64) && lt = l -> Well_typed ()
+  | _ -> err
+
 let check_expected_bool_typ (e:expr) (t:typ) (l:label) :unit result =
   let err = Type_error ("Expression " ^ (expr_to_string e) ^ " should have bool type with label " ^ label_to_string l ^
                           ", instead got: " ^ typ_to_string t, e.metadata) in
@@ -173,6 +182,8 @@ let rec tc_expr (g:gamma) (e:expr) :eresult =
                           bind (match op with
                                 | Bitwise_neg -> check_expected_int_typ e1 t1 l
                                 | Not -> check_expected_bool_typ e1 t1 l
+                                | Float_exp | Float_exp2 -> 
+                                   check_expected_flt_typ e1 t1 l
                                 | _ -> Type_error ("Unexpected operator: " ^ unop_to_string op, e.metadata)) (fun _ -> Well_typed t1))))
 
   | Binop (op, e1, e2, lopt) ->
@@ -199,6 +210,9 @@ let rec tc_expr (g:gamma) (e:expr) :eresult =
                                  | And | Or | Xor -> 
                                     bind (check_expected_bool_typ e1 t1 l) (fun _ ->
                                            bind (check_expected_bool_typ e2 t2 l) (fun _ -> Well_typed t1))
+                                 | Float_sum | Float_sub | Float_div | Float_mul ->
+                                    bind (check_expected_flt_typ e1 t1 l) (fun _ ->
+                                          bind (check_expected_flt_typ e2 t2 l) (fun _ -> Well_typed t1))
                                  | _ -> Type_error ("Unexpected operator: " ^ binop_to_string op, e.metadata)))))
 
   | Conditional (e1, e2, e3, Some Public) ->
@@ -259,6 +273,7 @@ let rec check_type_well_formedness (g:gamma) (t:typ) :unit result =
   | Base (Int32, Some (Secret _)) -> if Config.get_bitlen () = 32 then Well_typed () else bitlen_err 32
   | Base (UInt64, Some (Secret _))
   | Base (Int64, Some (Secret _)) -> if Config.get_bitlen () = 64 then Well_typed () else bitlen_err 64
+  | Base (Float64, Some (Secret _)) 
   | Base _ -> Well_typed ()
   | Array (_, bt, e) ->
      bind (check_type_well_formedness g bt) (fun _ ->

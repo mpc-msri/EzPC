@@ -36,6 +36,12 @@ SOFTWARE.
 #include<cmath>
 using namespace std;
 
+share* put_flt_cons64_gate(Circuit* c, float val){
+  cout<<"EzPC.h, float_const_put Testing circuit type..."<<endl;
+  assert(circ->GetCircuitType() == C_BOOLEAN || circ->GetCircuitType() == C_YAO);
+  uint32_t* val = (uint32_t*)&val;
+  return ((BooleanCircuit*)c)->PutInGate(val, 32, SERVER);
+}
 /*
  * somehow we need this redirection for adding Cons gates
  * directly calling PutConsGate gives an error
