@@ -165,6 +165,31 @@ void funcConv3DMPC(
 		int32_t consSF,
 		vector< vector< vector< vector< vector<porthosSecretType> > > > >& outArr);
 
+void ConvTranspose3DLoop(int32_t N, 
+		int32_t DPrime, 
+		int32_t HPrime, 
+		int32_t WPrime, 
+		int32_t CI, 
+		int32_t FD, 
+		int32_t FH, 
+		int32_t FW, 
+		int32_t CO, 
+		int32_t D, 
+		int32_t H, 
+		int32_t W, 
+		int32_t zPadTrDLeft, 
+		int32_t zPadTrDRight, 
+		int32_t zPadTrHLeft, 
+		int32_t zPadTrHRight, 
+		int32_t zPadTrWLeft, 
+		int32_t zPadTrWRight, 
+		int32_t strideD, 
+		int32_t strideH, 
+		int32_t strideW, 
+		vector< vector< vector< vector< vector<porthosSecretType> > > > >& inputArr, 
+		vector< vector< vector< vector< vector<porthosSecretType> > > > >& filterArr, 
+		vector< vector< vector< vector< vector<porthosSecretType> > > > >& outArr);
+
 void ConvTranspose3DCSFMPC(int32_t N, 
 		int32_t DPrime, 
 		int32_t HPrime, 
@@ -186,10 +211,11 @@ void ConvTranspose3DCSFMPC(int32_t N,
 		int32_t strideD, 
 		int32_t strideH, 
 		int32_t strideW, 
-		auto& inputArr, 
-		auto& filterArr, 
+		vector< vector< vector< vector< vector<porthosSecretType> > > > >& inputArr, 
+		vector< vector< vector< vector< vector<porthosSecretType> > > > >& filterArr, 
 		int32_t consSF, 
-		auto& outArr);
+		vector< vector< vector< vector< vector<porthosSecretType> > > > >& outArr);
+
 
 /******************* Wrapper integer function calls ********************/
 porthosSecretType funcMult(porthosSecretType a, 

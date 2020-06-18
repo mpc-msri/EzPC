@@ -2147,6 +2147,7 @@ void funcConv3DMPC(
 			int32_t outD = ((((D - FD) + (zPadDLeft + zPadDRight)) / strideD) +  (int32_t)1);
 			int32_t outH = ((((H - FH) + (zPadHLeft + zPadHRight)) / strideH) +  (int32_t)1);
 			int32_t outW = ((((W - FW) + (zPadWLeft + zPadWRight)) / strideW) +  (int32_t)1);
+			std::cout<<"D, H, W of output: "<<outD<<" "<<outH<<" "<<outW<<std::endl;
 
 			auto A = make_vector<porthosSecretType>(N, D, H, W, CI);
 			auto B = make_vector<porthosSecretType>(FD, FH, FW, CI, CO);
@@ -2301,7 +2302,7 @@ void funcConv3DMPC(
 			}
 		}
 
-void ConvTranspose3DLoopInner(int32_t N, 
+void ConvTranspose3DLoopInnerClear(int32_t N, 
 		int32_t D, 
 		int32_t H, 
 		int32_t W, 
@@ -2384,10 +2385,10 @@ void ConvTranspose3DLoop(int32_t N,
 		int32_t strideD, 
 		int32_t strideH, 
 		int32_t strideW, 
-		auto& inputArr, 
-		auto& filterArr, 
-		auto& outArr){
-ConvTranspose3DLoopInner(N, DPrime, HPrime, WPrime, CI, FD, FH, FW, CO, zPadTrDLeft, zPadTrDRight, zPadTrHLeft, zPadTrHRight, zPadTrWLeft, zPadTrWRight, strideD, strideH, strideW, D, H, W, inputArr, filterArr, outArr);
+		vector< vector< vector< vector< vector<porthosSecretType> > > > >& inputArr, 
+		vector< vector< vector< vector< vector<porthosSecretType> > > > >& filterArr, 
+		vector< vector< vector< vector< vector<porthosSecretType> > > > >& outArr){
+ConvTranspose3DLoopInnerClear(N, DPrime, HPrime, WPrime, CI, FD, FH, FW, CO, zPadTrDLeft, zPadTrDRight, zPadTrHLeft, zPadTrHRight, zPadTrWLeft, zPadTrWRight, strideD, strideH, strideW, D, H, W, inputArr, filterArr, outArr);
 }
 
 void ConvTranspose3DCSFMPC(int32_t N, 
@@ -2411,10 +2412,10 @@ void ConvTranspose3DCSFMPC(int32_t N,
 		int32_t strideD, 
 		int32_t strideH, 
 		int32_t strideW, 
-		auto& inputArr, 
-		auto& filterArr, 
+		vector< vector< vector< vector< vector<porthosSecretType> > > > >& inputArr, 
+		vector< vector< vector< vector< vector<porthosSecretType> > > > >& filterArr, 
 		int32_t consSF, 
-		auto& outArr){
+		vector< vector< vector< vector< vector<porthosSecretType> > > > >& outArr){
 
 			auto A = make_vector<porthosSecretType>(N, DPrime, HPrime, WPrime, CI);
 			auto B = make_vector<porthosSecretType>(FD, FH, FW, CI, CO);
