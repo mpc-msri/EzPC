@@ -45,4 +45,4 @@ target_compile_options(Porthos-Protocols
 #add_network(SqNetImgNet)
 add_test(porthos_conv3d0)
 add_test(porthos_conv_transpose3d0)
-
+add_test(porthos_prostate_640)
