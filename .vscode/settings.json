@@ -1,8 +1,0 @@
-{
-    "files.associations": {
-        "ostream": "cpp"
-    },
-    "ocaml.sandbox": {
-        "kind": "global"
-    }
-}

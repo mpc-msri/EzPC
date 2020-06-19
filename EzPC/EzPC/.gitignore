@@ -1,6 +1,6 @@
 _build/
+.vscode/
 ezpc
 main.byte
-*.ezpc
-*.cpp
 !dot_product.ezpc
+gen/

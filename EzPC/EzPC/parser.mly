@@ -265,6 +265,8 @@ const:
   | SUB; i = UINT64; { Ast.UInt64C (Uint64.neg i) }
   | TRUE { Ast.BoolC true }
   | FALSE { Ast.BoolC false }
+  | i = FLOAT32 {Ast.Float32C i }
+  | SUB; i = FLOAT32; { Ast.Float32C (String.concat "" (List.cons "-" [i]) ) }
   ;
 
 label:
