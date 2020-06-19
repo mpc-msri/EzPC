@@ -2139,8 +2139,9 @@ void funcConv3DMPC(
 		vector< vector< vector< vector< vector<porthosSecretType> > > > >& inputArr,
 		vector< vector< vector< vector< vector<porthosSecretType> > > > >& filterArr,
 		int32_t consSF,
-		vector< vector< vector< vector< vector<porthosSecretType> > > > >& outArr) {
-
+		vector< vector< vector< vector< vector<porthosSecretType> > > > >& outArr) 
+{
+	log_print("funcConv3DCSF");
 			// out -> n, outd, outh, outw, co
 			// in -> n, d, h, w, cin
 			// filter -> filter_depth, filter_height, filter_width, in_channels, out_channels
@@ -2415,8 +2416,9 @@ void ConvTranspose3DCSFMPC(int32_t N,
 		vector< vector< vector< vector< vector<porthosSecretType> > > > >& inputArr, 
 		vector< vector< vector< vector< vector<porthosSecretType> > > > >& filterArr, 
 		int32_t consSF, 
-		vector< vector< vector< vector< vector<porthosSecretType> > > > >& outArr){
-
+		vector< vector< vector< vector< vector<porthosSecretType> > > > >& outArr)
+{
+	log_print("ConvTranspose3DCSFMPC");
 			auto A = make_vector<porthosSecretType>(N, DPrime, HPrime, WPrime, CI);
 			auto B = make_vector<porthosSecretType>(FD, FH, FW, CI, CO);
 			auto C = make_vector<porthosSecretType>(N, D, H, W, CO);

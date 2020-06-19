@@ -59,8 +59,8 @@ using namespace std;
 /******************************************************/
 
 //Some flags for debugging
-#define LOG_DEBUG false
-#define LOG_LAYERWISE false
+#define LOG_DEBUG true
+#define LOG_LAYERWISE true
 //Uncomment this if you want to send and receive
 //serially for debugging
 #define PARALLEL_COMM
