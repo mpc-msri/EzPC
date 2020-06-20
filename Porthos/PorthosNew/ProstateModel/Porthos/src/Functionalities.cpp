@@ -2326,7 +2326,9 @@ void ConvTranspose3DLoopInnerClear(int32_t N,
 		int32_t outW, 
 		auto& inputArr, 
 		auto& filterArr, 
-		auto& outArr){
+		auto& outArr)
+{
+#pragma omp parallel for collapse(5)
 for (uint32_t n =  (int32_t)0; n < N; n++){
 for (uint32_t co =  (int32_t)0; co < CO; co++){
 for (uint32_t d =  (int32_t)0; d < outD; d++){
@@ -2420,25 +2422,25 @@ void ConvTranspose3DCSFMPC(int32_t N,
 {
 	log_print("ConvTranspose3DCSFMPC");
 			auto A = make_vector<porthosSecretType>(N, DPrime, HPrime, WPrime, CI);
-			auto B = make_vector<porthosSecretType>(FD, FH, FW, CI, CO);
+			auto B = make_vector<porthosSecretType>(FD, FH, FW, CO, CI);
 			auto C = make_vector<porthosSecretType>(N, D, H, W, CO);
 
 			if(HELPER) {
 				auto A1 = make_vector<porthosSecretType>(N, DPrime, HPrime, WPrime, CI);
 				auto A2 = make_vector<porthosSecretType>(N, DPrime, HPrime, WPrime, CI);
-				auto B1 = make_vector<porthosSecretType>(FD, FH, FW, CI, CO);
-				auto B2 = make_vector<porthosSecretType>(FD, FH, FW, CI, CO);
+				auto B1 = make_vector<porthosSecretType>(FD, FH, FW, CO, CI);
+				auto B2 = make_vector<porthosSecretType>(FD, FH, FW, CO, CI);
 				auto C1 = make_vector<porthosSecretType>(N, D, H, W, CO);
 				auto C2 = make_vector<porthosSecretType>(N, D, H, W, CO);
 
 				populate_5D_vector(A1, N, DPrime, HPrime, WPrime, CI, "a1");
 				populate_5D_vector(A2, N, DPrime, HPrime, WPrime, CI, "a2");
-				populate_5D_vector(B1, FD, FH, FW, CI, CO, "b1");
-				populate_5D_vector(B2, FD, FH, FW, CI, CO, "b2");
+				populate_5D_vector(B1, FD, FH, FW, CO, CI, "b1");
+				populate_5D_vector(B2, FD, FH, FW, CO, CI, "b2");
 				populate_5D_vector(C1, N, D, H, W, CO, "c1");
 
 				add_5D_vectors(A1, A2, A, N, DPrime, HPrime, WPrime, CI);
-				add_5D_vectors(B1, B2, B, FD, FH, FW, CI, CO);
+				add_5D_vectors(B1, B2, B, FD, FH, FW, CO, CI);
 
 				ConvTranspose3DLoop(N, DPrime, HPrime, WPrime, CI, FD, FH, FW, CO, D, H, W, zPadTrDLeft, zPadTrDRight, zPadTrHLeft, zPadTrHRight, zPadTrWLeft, zPadTrWRight, strideD, strideH, strideW, A, B, C);
 
@@ -2458,7 +2460,7 @@ void ConvTranspose3DCSFMPC(int32_t N,
 #endif
 #ifdef DEBUGGING
 				send_5D_vector(A, PARTY_A, N, DPrime, HPrime, WPrime, CI);
-				send_5D_vector(B, PARTY_A, FD, FH, FW, CI, CO);
+				send_5D_vector(B, PARTY_A, FD, FH, FW, CO, CI);
 				send_5D_vector(C, PARTY_A, N, D, H, W, CO);
 #endif
 
@@ -2468,29 +2470,29 @@ void ConvTranspose3DCSFMPC(int32_t N,
 #ifdef DEBUGGING
 				if(partyNum == PARTY_B){
 					send_5D_vector(inputArr, PARTY_A, N, DPrime, HPrime, WPrime, CI);
-					send_5D_vector(filterArr, PARTY_A, FD, FH, FW, CI, CO);
+					send_5D_vector(filterArr, PARTY_A, FD, FH, FW, CO, CI);
 					return;
 				}
 				else if(partyNum == PARTY_A){
 					auto x = make_vector<porthosSecretType>(N, DPrime, HPrime, WPrime, CI);
-					auto y = make_vector<porthosSecretType>(FD, FH, FW, CI, CO);
+					auto y = make_vector<porthosSecretType>(FD, FH, FW, CO, CI);
 					auto a = make_vector<porthosSecretType>(N, DPrime, HPrime, WPrime, CI);
-					auto b = make_vector<porthosSecretType>(FD, FH, FW, CI, CO);
+					auto b = make_vector<porthosSecretType>(FD, FH, FW, CO, CI);
 					auto c = make_vector<porthosSecretType>(N, D, H, W, CO);
 					auto c_ans = make_vector<porthosSecretType>(N, D, H, W, CO);
 					auto c_temp = make_vector<porthosSecretType>(N, D, H, W, CO);
 					auto e = make_vector<porthosSecretType>(N, DPrime, HPrime, WPrime, CI);
-					auto f = make_vector<porthosSecretType>(FD, FH, FW, CI, CO);
+					auto f = make_vector<porthosSecretType>(FD, FH, FW, CO, CI);
 
 					receive_5D_vector(ref(a), PARTY_C, N, DPrime, HPrime, WPrime, CI);
-					receive_5D_vector(ref(b), PARTY_C, FD, FH, FW, CI, CO);
+					receive_5D_vector(ref(b), PARTY_C, FD, FH, FW, CO, CI);
 					receive_5D_vector(ref(c), PARTY_C, N, D, H, W, CO);
 					receive_5D_vector(ref(x), PARTY_B, N, DPrime, HPrime, WPrime, CI);
-					receive_5D_vector(ref(y), PARTY_B, FD, FH, FW, CI, CO);
+					receive_5D_vector(ref(y), PARTY_B, FD, FH, FW, CO, CI);
 					add_5D_vectors(x, inputArr, x, N, DPrime, HPrime, WPrime, CI);
-					add_5D_vectors(y, filterArr, y, FD, FH, FW, CI, CO);
+					add_5D_vectors(y, filterArr, y, FD, FH, FW, CO, CI);
 					subtract_5D_vectors(x, a, e, N, DPrime, HPrime, WPrime, CI);
-					subtract_5D_vectors(y, b, f, FD, FH, FW, CI, CO);
+					subtract_5D_vectors(y, b, f, FD, FH, FW, CO, CI);
 					subtract_5D_vectors(x, e, A, N, DPrime, HPrime, WPrime, CI);
 					ConvTranspose3DLoop(N, DPrime, HPrime, WPrime, CI, FD, FH, FW, CO, D, H, W, zPadTrDLeft, zPadTrDRight, zPadTrHLeft, zPadTrHRight, zPadTrWLeft, zPadTrWRight, strideD, strideH, strideW, A, f, c_temp);
 					ConvTranspose3DLoop(N, DPrime, HPrime, WPrime, CI, FD, FH, FW, CO, D, H, W, zPadTrDLeft, zPadTrDRight, zPadTrHLeft, zPadTrHRight, zPadTrWLeft, zPadTrWRight, strideD, strideH, strideW, e, y, c_ans);
@@ -2506,37 +2508,37 @@ void ConvTranspose3DCSFMPC(int32_t N,
 				}
 #endif
 				auto E = make_vector<porthosSecretType>(N, DPrime, HPrime, WPrime, CI);
-				auto F = make_vector<porthosSecretType>(FD, FH, FW, CI, CO);
+				auto F = make_vector<porthosSecretType>(FD, FH, FW, CO, CI);
 				auto temp_C = make_vector<porthosSecretType>(N, D, H, W, CO);
 				auto temp_E = make_vector<porthosSecretType>(N, DPrime, HPrime, WPrime, CI);
-				auto temp_F = make_vector<porthosSecretType>(FD, FH, FW, CI, CO);
+				auto temp_F = make_vector<porthosSecretType>(FD, FH, FW, CO, CI);
 				if (partyNum == PARTY_A) {
 					populate_5D_vector(A, N, DPrime, HPrime, WPrime, CI, "a1");
-					populate_5D_vector(B, FD, FH, FW, CI, CO, "b1");
+					populate_5D_vector(B, FD, FH, FW, CO, CI, "b1");
 					populate_5D_vector(C, N, D, H, W, CO, "c1");
 				}
 
 				if (partyNum == PARTY_B) {
 					populate_5D_vector(A, N, DPrime, HPrime, WPrime, CI, "a2");
-					populate_5D_vector(B, FD, FH, FW, CI, CO, "b2");
+					populate_5D_vector(B, FD, FH, FW, CO, CI, "b2");
 				}
 
 				subtract_5D_vectors(inputArr, A, E, N, DPrime, HPrime, WPrime, CI);
-				subtract_5D_vectors(filterArr, B, F, FD, FH, FW, CI, CO);
+				subtract_5D_vectors(filterArr, B, F, FD, FH, FW, CO, CI);
 
 #if (LOG_LAYERWISE)
 				auto t1 = high_resolution_clock::now();
 #endif
 				if (partyNum == PARTY_A) {
 					send_5D_vector(ref(E), adversary(partyNum), N, DPrime, HPrime, WPrime, CI);
-					send_5D_vector(ref(F), adversary(partyNum), FD, FH, FW, CI, CO);
+					send_5D_vector(ref(F), adversary(partyNum), FD, FH, FW, CO, CI);
 					receive_5D_vector(ref(temp_E), adversary(partyNum), N, DPrime, HPrime, WPrime, CI);
-					receive_5D_vector(ref(temp_F), adversary(partyNum), FD, FH, FW, CI, CO);
+					receive_5D_vector(ref(temp_F), adversary(partyNum), FD, FH, FW, CO, CI);
 				} else {
 					receive_5D_vector(ref(temp_E), adversary(partyNum), N, DPrime, HPrime, WPrime, CI);
-					receive_5D_vector(ref(temp_F), adversary(partyNum), FD, FH, FW, CI, CO);
+					receive_5D_vector(ref(temp_F), adversary(partyNum), FD, FH, FW, CO, CI);
 					send_5D_vector(ref(E), adversary(partyNum), N, DPrime, HPrime, WPrime, CI);
-					send_5D_vector(ref(F), adversary(partyNum), FD, FH, FW, CI, CO);
+					send_5D_vector(ref(F), adversary(partyNum), FD, FH, FW, CO, CI);
 				}
 #if (LOG_LAYERWISE)
 				auto t2 = high_resolution_clock::now();
@@ -2544,7 +2546,7 @@ void ConvTranspose3DCSFMPC(int32_t N,
 				commObject.timeMatmul[0] += tt;
 #endif
 				add_5D_vectors(E, temp_E, E, N, DPrime, HPrime, WPrime, CI);
-				add_5D_vectors(F, temp_F, F, FD, FH, FW, CI, CO);
+				add_5D_vectors(F, temp_F, F, FD, FH, FW, CO, CI);
 				
 				//Receive C1 from P2 after E and F have been revealed.
 				if (partyNum == PARTY_B) {
