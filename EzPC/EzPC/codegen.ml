@@ -51,6 +51,7 @@ let o_pbinop :binop -> comp = function
   | Sub          -> o_str "-"
   | Mul          -> o_str "*"
   | Div          -> o_str "/"
+  | Float_div    -> o_str "/"
   | Mod          -> o_str "%"
   | Pow          -> failwith "Pow is not an infix operator, so o_pbinop can't handle it"
   | Greater_than -> o_str ">"
@@ -92,13 +93,16 @@ let o_hd_and_args (head:comp) (args:comp list) :comp =
 
 let o_app (head:comp) (args:comp list) :comp = o_hd_and_args head args
 
+let o_div_app (coerce:bool) (l:secret_label) (args:comp list) :comp = 
+  o_app  (seq (o_str "put_int_div_gate") (o_slabel_maybe_coerce true l)) args
+
 let o_cbfunction_maybe_coerce (coerce:bool) (l:secret_label) (f:comp) (args:comp list) :comp =
-  o_app (seq (o_slabel_maybe_coerce coerce l) (seq (o_str "->") f)) args
+  o_app (seq (o_slabel_maybe_coerce coerce l) (seq (o_str "->") (f))) args
 
 let o_cbfunction :secret_label -> comp -> comp list -> comp = o_cbfunction_maybe_coerce false
 
 let o_flt_app (head:comp) (op_s: comp) (args:comp list) :comp = 
-  o_hd_and_args head (args @ [  (op_s);  ( o_str "bitlen");  (o_str "1");  (o_str "no_status")])
+  o_hd_and_args head (args @ [  (op_s);  ( o_str "bitlen");  (o_str "nvals");  (o_str "no_status")])
 
 let o_fltunfunction (l:secret_label) (s_op: comp) (args: comp list): comp = 
   o_flt_app (seq (o_slabel_maybe_coerce true Boolean)  (o_str "->PutFPGate") ) s_op args
@@ -123,8 +127,12 @@ let o_sbinop (l:secret_label) (op:binop) (c1:comp) (c2:comp) :comp =
   | Sum                -> aux "PutADDGate" false
   | Sub                -> aux "PutSUBGate" false
   | Mul                -> aux "PutMULGate" false
+  | Div                -> o_div_app false l [c1; c2]
   | Greater_than       -> aux "PutGTGate" false
-  | Div                -> err "DIV"
+  | Float_sum          -> float_aux "ADD" 
+  | Float_sub          -> float_aux "SUB" 
+  | Float_mul          -> float_aux "MUL" 
+  | Float_div          -> float_aux "DIV" 
   | Mod                -> err "MOD"
   | Less_than          -> err "LT"
   | Is_equal           -> err "EQ"
