@@ -1,7 +1,0 @@
-util/Miracl/
-**/*.o
-**/*.out
-*.log
-**/*.swp
-lib_eigen/
-**/build/
