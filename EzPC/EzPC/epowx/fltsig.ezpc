@@ -1,0 +1,42 @@
+def float32_bl sigmoidX(float32_bl x){
+  float32_bl ans = 0.5f;
+  float32_bl y = x;
+  float32_bl factor;
+  x = x *. x;
+  x = -1.0f *. x;
+
+  ans = ans +. (y /. 4.0f);
+
+  y = y *. x;
+  factor = y /. 48.0f;
+  ans = ans +. factor;
+
+  y = y *. x;
+  factor = (y) /. 480.0f;
+  ans = ans +. factor;
+
+  y = y *. x;
+  factor = (y *. 17.0f) /. 80640.0f;
+  ans = ans +. factor;
+
+  y = y *. x;
+  factor = (y *. 31.0f) /. 1451520.0f;
+  ans = ans +. factor;
+
+  y = y *. x;
+  factor = (y *. 619.0f) /. 319334499.0f;
+  ans = ans +. factor;
+
+ 
+  return ans;
+}
+
+def void main ()
+{
+
+float32_bl x;
+float32_bl ans;
+
+x = 1.4915215969085693359375f;
+ans = sigmoidX(x);
+}
