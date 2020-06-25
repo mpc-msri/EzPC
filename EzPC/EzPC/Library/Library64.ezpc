@@ -111,10 +111,11 @@ def uint64_bl unsigneddivbl(uint64_bl x, uint64_bl y){
 	return longDivision(x, y, true);
 }
 
-def uint64_bl unsigneddival(uint64_al x, uint64_al y){
+def uint64_al unsigneddival(uint64_al x, uint64_al y){
 	uint64_bl bx = x;
 	uint64_bl by = y;
-	return bx/by;
+	uint64_al ans = bx/by;
+	return ans;
 }
 
 def int64_bl signeddivbl(int64_bl x, int64_bl y){
@@ -130,7 +131,8 @@ def int64_bl signeddivbl(int64_bl x, int64_bl y){
 def int64_bl signeddival(int64_al x, int64_al y){
 	int64_bl bx = x;
 	int64_bl by = y;
-	return bx/by;
+	int64_al ans = bx/by;
+	return ans;
 }
 
 (*************** mod ***************)

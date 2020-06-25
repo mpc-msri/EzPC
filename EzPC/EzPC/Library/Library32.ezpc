@@ -111,10 +111,11 @@ def uint32_bl unsigneddivbl(uint32_bl x, uint32_bl y){
 	return longDivision(x, y, true);
 }
 
-def uint32_bl unsigneddival(uint32_al x, uint32_al y){
+def uint32_al unsigneddival(uint32_al x, uint32_al y){
 	uint32_bl bx = x;
 	uint32_bl by = y;
-	return bx/by;
+	uint32_al ans = bx/by;
+	return ans;
 }
 
 def int32_bl signeddivbl(int32_bl x, int32_bl y){
@@ -127,10 +128,11 @@ def int32_bl signeddivbl(int32_bl x, int32_bl y){
 	return (isResNeg ? (0u - ures) : ures);
 }
 
-def int32_bl signeddival(int32_al x, int32_al y){
+def int32_al signeddival(int32_al x, int32_al y){
 	int32_bl bx = x;
 	int32_bl by = y;
-	return bx/by;
+	int32_al ans = bx/by;
+	return ans;
 }
 
 (*************** mod ***************)
