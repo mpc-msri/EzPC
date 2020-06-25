@@ -1,0 +1,40 @@
+def float32_bl tanhX(float32_bl x){
+  float32_bl ans = x;
+  float32_bl y = x;
+  float32_bl factor;
+  x = x *. x;
+  x = -1.0f *. x;
+
+  y = y *. x;
+  factor = y /. 3.0f;
+  ans = ans +. factor;
+
+  y = y *. x;
+  factor = (y *. 2.0f) /. 15.0f;
+  ans = ans +. factor;
+
+  y = y *. x;
+  factor = (y *. 17.0f) /. 315.0f;
+  ans = ans +. factor;
+
+  y = y *. x;
+  factor = (y *. 62.0f) /. 2835.0f;
+  ans = ans +. factor;
+
+  y = y *. x;
+  factor = (y *. 1382.0f) /. 155925.0f;
+  ans = ans +. factor;
+
+ 
+  return ans;
+}
+
+def void main ()
+{
+
+float32_bl x;
+float32_bl ans;
+
+x = 1.4915215969085693359375f;
+ans = tanhX(x);
+}
