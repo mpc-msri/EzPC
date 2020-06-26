@@ -10,23 +10,23 @@ def uint32_al epowx(uint32_al x){
   ans = (ans-y);
 
   y = (y >> 12) * x;
-  uint32_pl count = 8388608u;
-  y = (y >> 12) * (count >> 12);
+  uint32_pl count = 2048u;
+  y = (y >> 12) * (count);
   ans = ans+y;
 
   y = (y >> 12) * x;
-  count = 5592405u;
-  y = (y >> 12) * (count >> 12);
+  count = 1365u;
+  y = (y >> 12) * (count);
   ans = (ans-y);
 
   y = (y >> 12) * x;
-  count = 4194304u;
-  y = (y >> 12) * (count >> 12);
+  count = 1024u;
+  y = (y >> 12) * (count);
   ans = ans+y;
 
   y = (y >> 12) * x;
-  count = 3355443u;
-  y = (y >> 12) * (count >> 12);
+  count = 819u;
+  y = (y >> 12) * (count);
   ans = (ans-y);
   
   return ans;   
