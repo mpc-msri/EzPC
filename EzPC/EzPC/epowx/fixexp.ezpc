@@ -8,7 +8,7 @@ def uint32_al epowx(uint32_al x){
   uint32_al ans = SCALE;
   uint32_al y = SCALE;
   
-  x = (x >> 12u);
+  x = (x >> 12);
 
   y = (y >> 12) * x;
   ans = isPos?(ans + y):(ans-y);

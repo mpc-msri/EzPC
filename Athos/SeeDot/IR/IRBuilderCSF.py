@@ -859,7 +859,8 @@ class IRBuilderCSF(ASTVisitor):
 		(prog_1, expr_1) = self.visit(node.decl)
 		typ_1 = node.decl.type
 		idf = node.name.name
-		self.name_mapping[idf] = expr_1.idf	
+		if hasattr(expr_1, 'idf'):
+			self.name_mapping[idf] = expr_1.idf	
 		(prog_2, expr_2) = self.visit(node.expr)
 		prog_2 = prog_2.subst(idf, expr_1)
 		expr_2 = expr_2.subst(idf, expr_1)

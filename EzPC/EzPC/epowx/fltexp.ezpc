@@ -1,6 +1,6 @@
 def float32_bl epowx(float32_pl x){
 
-  float32_pl N(* = round((x)*_M_LOG2E)*);
+  float32_pl N(* = round((x)*1.4426950408889634074)*);
 
   float32_bl sN = N;
   float32_bl d = x -. (sN *. 0.69315f);
