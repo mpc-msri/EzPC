@@ -27,6 +27,7 @@ import numpy as np
 
 import Util, Type
 
+#TODO - check if this can be cleaned up
 class Op():
 	Op = Enum('Op', '+ - * / << >> & | ^ ~ ! && || < <= > >= == != max .* ./')
 	Op.print = lambda self, writer: writer.printf('%s', self.name)
@@ -174,8 +175,7 @@ class Assn(Cmd):
 		self.var = var
 		self.e = e
 	def subst(self, from_idf:str, to_e:Expr):
-		return self.__class__(self.var.subst(from_idf, to_e),
-						self.e  .subst(from_idf, to_e))
+		return self.__class__(self.var.subst(from_idf, to_e), self.e.subst(from_idf, to_e))
 
 class If(Cmd):
 	def __init__(self, cond:Expr, trueCmds:CmdList, falseCmds:CmdList=[]):
@@ -289,14 +289,17 @@ class Input(Cmd):
 		return self.__class__(self.expr.subst(from_idf, to_e), self.shape, self.dataType, self.isSecret)
 
 class Decl(Cmd):
-	def __init__(self, varIdf:str, typeExpr:Type.Type, bitlen:int=-1, isSecret:str="secret"):
+	def __init__(self, varIdf:str, typeExpr:Type.Type, bitlen:int=-1, isSecret:bool=True, value:list=None):
 		self.varIdf = varIdf
 		self.typeExpr = typeExpr
 		self.bitlen = Util.Config.wordLength if bitlen==-1 else bitlen
 		self.isSecret = isSecret
+		if (value):
+			assert(isinstance(value,list))
+		self.value = value
 
 	def subst(self, from_idf:str, to_e:Expr):
-		return self.__class__(self.varIdf, self.typeExpr, self.bitlen, self.isSecret)
+		return self.__class__(self.varIdf, self.typeExpr, self.bitlen, self.isSecret, self.value)
 
 class DataType():
 

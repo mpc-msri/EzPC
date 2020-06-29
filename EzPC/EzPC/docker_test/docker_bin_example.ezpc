@@ -1,63 +1,56 @@
+(*
+
+Authors: Mayank Rathee, Nishant Kumar, Aseem Rastogi.
+
+Copyright:
+Copyright (c) 2018 Microsoft Research
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*)
+
 int32 datasize = 1;
-
 int32 thresholdSpace = 5;
-
 int32 thresholdTime = 5;                                                                                               
-
- 
 
 def bool_bl closeInTime(int32_bl t1, int32_bl t2)
 
 {
-
   int32_bl diff = t1 > t2 ? t1 - t2 : t2 - t1;
-
   return (diff < thresholdTime);
 
-}
-
- 
+} 
 
 def bool_bl closeInSpace(int32_al lat1, int32_al long1, int32_al lat2, int32_al long2)
-
 {
-
   return ((((lat1 - lat2)*(lat1 - lat2)) + ((long1 - long2)*(long1 - long2))) < thresholdSpace);
-
 }
 
- 
-
- 
-
 def void main()
-
 {
-
-         input(SERVER, dataLocLat, int32_al[datasize]);
-
+        input(SERVER, dataLocLat, int32_al[datasize]);
         input(SERVER, dataLocLong, int32_al[datasize]);
-
         input(SERVER, dataTime, int32_bl[datasize]);
-
         input(CLIENT, queryLocLat, int32_al);
-
         input(CLIENT, queryLocLong, int32_al);
-
         input(CLIENT, queryTime, int32_bl);
-
         bool_bl e = false;
-
- 
-
         for i = [0:datasize]
-
         {
-
            e = e ? e : (closeInTime(queryTime,dataTime[i]) &&_bl closeInSpace(queryLocLat,queryLocLong,dataLocLat[i],dataLocLong[i]));
-
         };
-
         output(ALL, e);
-
 }

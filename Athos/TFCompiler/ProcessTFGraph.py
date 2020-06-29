@@ -34,7 +34,6 @@ def checkTFNodeNameForEq(curNodeOp:str, givenOp:str):
 	return (curNodeOp == "\"" + givenOp + "\"")
 
 def generateASTForNode(graph, curNode, dictNodeNameToOutVarStr, extraNodeInfoDict):
-	# print("===>>> Generating AST for (nodeOp, nodeName) : (" + curNode.getOp() + ", " + curNode.getName() + ")")
 	curNodeOp = curNode.getOp()
 	ast = None
 	func = getattr(TFNodesAST, curNodeOp[1:-1]) #To remove the " at the begin and end
@@ -84,7 +83,6 @@ def readSizeInfo(fileName):
 	sizeInfo = {}
 	for line in allLines:
 		tokens = line.split()
-		#assert(len(tokens) > 1) # Nodes with no size info are not getting outputted right now
 		nodeName = tokens[0]
 		tokens = tokens[1:]
 		nodeOPSize = []
@@ -140,9 +138,6 @@ def main():
 	for curNode in graph.getAllNodesRef():
 		inputsRef = curNode.getInputsRef()
 		for i,curInput in enumerate(inputsRef):
-			#TODO for training : below is not correct
-			# if (curInput.endswith(':1"')):
-			# 	inputsRef[i] = curInput.split(':1')[0] + '"'
 			if (curInput.startswith('"^')):
 				# My hypothesis from empirical observation is that inputs which have '^' ahead of the node name
 				#	denote control flow dependency and not data dependency.

@@ -50,6 +50,23 @@ do
 		shift # past argument
 		shift # past value
 		;;
+		--modulo)
+		MODULO="$2"
+		allArgs="${allArgs} $1 $2"
+		shift
+		shift
+		;;
+		--sf)
+		allArgs="${allArgs} $1 $2"
+		shift
+		shift
+		;;
+		--backend)
+		BACKEND="$2"
+		allArgs="${allArgs} $1 $2"
+		shift
+		shift
+		;;
 		--bool_sharing| --shares_dir)
 		allArgs="${allArgs} $1 $2"
 		shift # past argument
@@ -67,6 +84,11 @@ do
 	esac
 done
 set -- "${POSITIONAL[@]}" # restore positional parameters
+if [ "$BITLEN" -gt 32 ]; then
+	BITLEN="64"
+else
+	BITLEN="32"
+fi
 
 if [ -z ${HELP} ]; then
 	# Set bitlen to 32 if not specified in command line args

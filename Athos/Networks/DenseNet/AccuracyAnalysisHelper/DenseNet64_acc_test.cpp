@@ -367,7 +367,7 @@ temp =  (int64_t)0;
 } else {
 temp = inArr[n][curPosH][curPosW][c];
 }
-maxi = (maxi < temp) ? temp : maxi;
+maxi = ((maxi - temp) < 0) ? temp : maxi;
 }
 }
 outArr[n][ctH][ctW][c] = maxi;
@@ -382,6 +382,14 @@ ctH = (ctH +  (int32_t)1);
 }
 }
 }
+
+int64_t div_floor(int64_t a, int64_t b){ //b is assumed to be +ve, hence unsigned
+  int64_t q = a/b;
+  int64_t r = a%b;
+  int64_t corr = ((r!=0) && (r<0));
+  return q-corr;
+}
+
 
 void AvgPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t ksizeH, int32_t ksizeW, int32_t zPadHLeft, int32_t zPadHRight, int32_t zPadWLeft, int32_t zPadWRight, int32_t strideH, int32_t strideW, int32_t N1, int32_t imgH, int32_t imgW, int32_t C1, auto& inArr, auto& outArr){
 
@@ -431,7 +439,7 @@ int64_t ksizeW64 = ksizeW;
 
 int64_t filterSz64 = (ksizeH64 * ksizeW64);
 
-int64_t curFilterAvg = (curFilterSum / filterSz64);
+int64_t curFilterAvg = div_floor(curFilterSum, filterSz64);
 filterAvg[rowIdx] = curFilterAvg;
 rowIdx = (rowIdx +  (int32_t)1);
 leftTopCornerW = (leftTopCornerW + strideW);

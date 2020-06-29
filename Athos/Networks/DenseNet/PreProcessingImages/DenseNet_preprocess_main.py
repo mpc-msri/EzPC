@@ -80,17 +80,6 @@ def _process_image(filename, coder):
   with tf.gfile.GFile(filename, 'rb') as f:
     image_data = f.read()
 
-  # TODO
-  # Clean the dirty data.
-  # if _is_png(filename):
-  #   # 1 image is a PNG.
-  #   tf.logging.info('Converting PNG to JPEG for %s' % filename)
-  #   image_data = coder.png_to_jpeg(image_data)
-  # elif _is_cmyk(filename):
-  #   # 22 JPEG images are in CMYK colorspace.
-  #   tf.logging.info('Converting CMYK to RGB for %s' % filename)
-  #   image_data = coder.cmyk_to_rgb(image_data)
-
   # Decode the RGB JPEG.
   image = coder.decode_jpeg(image_data)
 
@@ -132,11 +121,14 @@ def main():
 
   def helper_img(curImgNum):
     actualImgNum = curImgNum if not(randomIdxToBeChosen) else randomIdxToBeChosen[curImgNum-1]
+    saveFilePath = os.path.join(preProcessedImgFolderName, 'ImageNum_' + str(actualImgNum) + '.inp')
+    if (os.path.exists(saveFilePath)):
+      print("Preprocessed file already exists. Skipping. Img Num = {0}".format(actualImgNum))
+      return 
     imgFileName = os.path.join(imgFolderName, fileNamePrefix + "{:08d}".format(actualImgNum) + '.JPEG')
     image_buffer, height, width = _process_image(imgFileName, coder)
     preprocessed_image_buffer = sess.run(DenseNet_preprocessing.preprocess_image(image_buffer, 224, 224))
 
-    saveFilePath = os.path.join(preProcessedImgFolderName, 'ImageNum_' + str(actualImgNum) + '.inp')
     dumpImageDataFloat(preprocessed_image_buffer, saveFilePath, 'w')
 
   pid = os.getpid()

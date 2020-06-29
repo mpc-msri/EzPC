@@ -117,13 +117,13 @@ def max_pool_2x2(x):
 def weight_variable(shape):
   """weight_variable generates a weight variable of a given shape."""
   # initial = tf.truncated_normal(shape, stddev=0.1)
-  initial = tf.constant(0.25, shape=shape) #TODO: For now, have changed the values of the weights to be constants rather than from a distribution
+  initial = tf.constant(0.25, shape=shape)
   return tf.Variable(initial)
 
 
 def bias_variable(shape):
   """bias_variable generates a bias variable of a given shape."""
-  initial = tf.constant(0.25, shape=shape) #TODO : Giving value of 1. for now
+  initial = tf.constant(0.25, shape=shape)
   return tf.Variable(initial)
 
 def findLabel(oneHotAns):

@@ -270,11 +270,6 @@ class TFNodesAST:
 									isSecret=False)
 		return (None, retAST)
 
-	def Maximum(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
-		inputsRef = curNode.getInputsRef()
-		assert(len(inputsRef) == 2)
-		return (None, AST.BOp(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]), TFNodesAST.getOperatorsIdx('max'), AST.ID(dictNodeNameToOutVarStr[inputsRef[1]])))
-
 	def Reshape(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
 		assert(len(inputsRef) == 2)
@@ -570,20 +565,6 @@ class TFNodesAST:
 								 curNodeShapeLi,
 								 TFNodesAST.getOperatorsIdx('+')))
 
-	def Prod(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
-		inputsRef = curNode.getInputsRef()
-		attrMapRef = curNode.getAttrMapRef()
-		assert(len(inputsRef) == 2)
-		keepdims = False
-		if ("\"keep_dims\"" in attrMapRef):
-			keepdims = attrMapRef["\"keep_dims\""].getB()
-		curNodeShapeLi = extraNodeInfoDict[curNode.getName()][0]
-		return (None, AST.Reduce(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]), 
-								 AST.ID(dictNodeNameToOutVarStr[inputsRef[1]]),
-								 AST.Int(int(keepdims), 32, isSecret=False),
-								 curNodeShapeLi,
-								 TFNodesAST.getOperatorsIdx('*')))	
-
 	def Mean(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
 		attrMapRef = curNode.getAttrMapRef()
@@ -665,7 +646,6 @@ class TFNodesAST:
 		return (None, AST.Transpose(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]), permList))
 
 	def Squeeze(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
-		# TODO : Do this in somewhat better way
 		inputsRef = curNode.getInputsRef()
 		inputTensorShape = extraNodeInfoDict[inputsRef[0]][0]
 		inputTensorRank = len(inputTensorShape)
@@ -693,20 +673,13 @@ class TFNodesAST:
 		inputsRef = curNode.getInputsRef()
 		return (None, AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]))
 
+	def ReadVariableOp(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
+		inputsRef = curNode.getInputsRef()
+		return (None, AST.ID(dictNodeNameToOutVarStr[inputsRef[0]])) 
+
 	def Softmax(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
-		return (None, AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]))
-	# def StridedSlice(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
-	# 	inputsRef = curNode.getInputsRef()
-	# 	return (None, AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]))
+		return (None, AST.ID(dictNodeNameToOutVarStr[inputsRef[0]])) 
 
-	# def Pack(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
-	# 	inputsRef = curNode.getInputsRef()
-	# 	N = curNode.getAttrMapRef()["\"N\""].getI()
-	# 	axis = curNode.getAttrMapRef()["\"axis\""].getI()
-	# 	assert(len(inputsRef)==N)
-	# 	retAST = AST.UninterpFuncCall(extraNodeInfoDict[curNode.getName()][0],
-	# 								TFNodesAST.UninterpFuncCallNames.Pack.name, 
-	# 								 list(map(lambda x : AST.ID(dictNodeNameToOutVarStr[x]), inputsRef)) + [AST.Int(axis)] )
-	# 	return (None, retAST)
-	
+	def VarHandleOp(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
+		return TFNodesAST.VariableV2(graph, curNode, dictNodeNameToOutVarStr, extraNodeInfoDict)

@@ -38,10 +38,6 @@ class MtdAST(ASTVisitor):
 	def visitDecl(self, node:AST.Decl, mtd:dict):
 		node.metadata.update(mtd)
 
-	def visitTransp(self, node:AST.Transp, mtd:dict):
-		node.metadata.update(mtd)
-		self.visit(node.expr, mtd)
-
 	def visitTranspose(self, node:AST.Transpose, mtd:dict):
 		node.metadata.update(mtd)
 		self.visit(node.expr, mtd)
@@ -54,10 +50,6 @@ class MtdAST(ASTVisitor):
 		node.metadata.update(mtd)
 		self.visit(node.expr, mtd)
 	
-	def visitIndex(self, node:AST.Index, mtd:dict):
-		node.metadata.update(mtd)
-		self.visit(node.expr, mtd)
-
 	def visitUOp(self, node:AST.UOp, mtd:dict):
 		node.metadata.update(mtd)
 		self.visit(node.expr, mtd)
@@ -99,5 +91,3 @@ class MtdAST(ASTVisitor):
 		self.visit(node.expr, mtd)
 		self.visit(node.multExpr, mtd)
 		self.visit(node.addExpr, mtd)
-
-		

@@ -34,7 +34,6 @@ def get_optimized_graph_def(output_tensor):
    'strip_unused_nodes',
    'fold_batch_norms',
    'fold_constants(ignore_errors=true)'
-   # 'merge_duplicate_nodes', # Removing this otherwise in the output graph the topological ordering is broken - fix some other day #TODO_nishkum
   ]
   optimized_graph_def = TransformGraph(graph_def, [], [output_tensor.name], transforms)
   return optimized_graph_def
@@ -47,7 +46,6 @@ def save_graph_metadata(output_tensor, sess, feed_dict):
    'strip_unused_nodes',
    'fold_batch_norms',
    'fold_constants(ignore_errors=true)'
-   # 'merge_duplicate_nodes', # Removing this otherwise in the output graph the topological ordering is broken - fix some other day #TODO_nishkum
   ]
   optimized_graph_def = TransformGraph(graph_def, [], [output_tensor.name], transforms)
   with open('./graphDef.mtdata', 'w') as f:

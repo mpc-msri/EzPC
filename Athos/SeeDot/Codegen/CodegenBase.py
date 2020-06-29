@@ -158,60 +158,19 @@ class CodegenBase:
 		self.out.decreaseIndent()
 		self.out.printf('}\n', indent=True)
 
-	def printComment(self, ir):
-		self.out.printf('\n')
-		self.out.printf('// ' + ir.msg + '\n', indent = True)
-
 	def printProg(self, ir):
 		for cmd in ir.cmd_l:
 			self.print(cmd)
 
 	def printPrint(self, ir):
-		if outputPragmas() and forArduino():
-			self.out.printf('Serial.println(', indent=True)
-		else:
-			self.out.printf('cout << ', indent=True)
+		self.out.printf('cout << ', indent=True)
 		self.print(ir.expr)
-		if outputPragmas():
-			self.out.printf(');\n')
-		else:
-			self.out.printf(' << endl;\n')
+		self.out.printf(' << endl;\n')
 
 	def printPrintAsFloat(self, ir):
-		if outputPragmas() and forArduino():
-			self.out.printf('Serial.println(float(', indent=True)
-		else:
-			self.out.printf('cout << ((float)(', indent=True)
+		self.out.printf('cout << ((float)(', indent=True)
 		self.print(ir.expr)
-		if outputPragmas() and forArduino():
-			self.out.printf(') * ' + str(2 ** ir.expnt) + ', 6);')
-		else:
-			self.out.printf(')) * ' + str(2 ** ir.expnt) + ' << "";\n')
-
-	def printFuncCall(self, ir):
-		self.out.printf("%s(" % ir.name, indent = True)
-		keys = list(ir.argList)
-		for i in range(len(keys)):
-			arg = keys[i]
-			if isinstance(arg, IR.Var) and arg.idf in self.decls.keys() and not arg.idf == 'X':
-				type = self.decls[arg.idf]
-				if isinstance(type, Type.Tensor):
-					if type.dim == 0:
-						x = -1
-					else:
-						x = type.dim - len(arg.idx)
-				else:
-					x = -1
-			else:
-				x = 0
-			if x != 0:
-				self.out.printf("&")
-			self.print(arg)
-			if x != 0 and x != -1:
-				self.out.printf("[0]" * x)
-			if i != len(keys) - 1:
-				self.out.printf(", ")
-		self.out.printf(");\n\n")
+		self.out.printf(')) * ' + str(2 ** ir.expnt) + ' << "";\n')
 
 	def print(self, ir):
 		if isinstance(ir, IR.Int):

@@ -45,12 +45,6 @@ class PrintAST(ASTVisitor):
 		else:
 			print(indent * node.depth, node.shape, end=' ')
 
-	def visitTransp(self, node:AST.Transp, args=None):
-		node.expr.depth = node.depth + 1
-		print(indent * node.depth, end=' ')
-		self.visit(node.expr)
-		print("^T", end=' ')
-
 	def visitTranspose(self, node:AST.Transpose, args=None):
 		node.expr.depth = node.depth + 1
 		print(indent * node.depth, end=' ')
@@ -70,15 +64,6 @@ class PrintAST(ASTVisitor):
 		node.expr.depth = node.depth + 1
 		print(indent * node.depth, node.poolType, end=' ')
 		self.visit(node.expr)
-
-	def visitIndex(self, node:AST.Index, args=None):
-		node.expr.depth = node.depth + 1
-		print(indent * node.depth, end = ' ')
-		self.visit(node.expr)
-		print("[", end=' ')
-		for x in node.index:
-			print(x, end = ' ')
-		print("]", end=' ')
 
 	def visitUOp(self, node:AST.UOp, args=None):
 		node.expr.depth = node.depth + 1

@@ -39,9 +39,6 @@ class ASTVisitor:
 			for elem in node.valueList:
 				self.visit(elem, args)
 
-	def visitTransp(self, node:AST.Transp, args=None):
-		self.visit(node.expr, args)
-
 	def visitTranspose(self, node:AST.Transpose, args=None):
 		self.visit(node.expr, args)
 
@@ -49,9 +46,6 @@ class ASTVisitor:
 		self.visit(node.expr, args)
 	
 	def visitPool(self, node:AST.Pool, args=None):
-		self.visit(node.expr, args)
-
-	def visitIndex(self, node:AST.Index, args=None):
 		self.visit(node.expr, args)
 
 	def visitUOp(self, node:AST.UOp, args=None):
@@ -101,16 +95,12 @@ class ASTVisitor:
 			return self.visitId(node, args)
 		elif isinstance(node, AST.Decl):
 			return self.visitDecl(node, args)
-		elif isinstance(node, AST.Transp):
-			return self.visitTransp(node, args)
 		elif isinstance(node, AST.Transpose):
 			return self.visitTranspose(node, args)
 		elif isinstance(node, AST.Reshape):
 			return self.visitReshape(node, args)
 		elif isinstance(node, AST.Pool):
 			return self.visitPool(node, args)
-		elif isinstance(node, AST.Index):
-			return self.visitIndex(node, args)
 		elif isinstance(node, AST.UOp):
 			return self.visitUOp(node, args)
 		elif isinstance(node, AST.BOp):

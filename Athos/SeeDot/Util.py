@@ -49,6 +49,7 @@ class Config:
 	outputFileName = None
 	printASTBool = None
 	wordLength = None
+	actualWordLength = None
 	disableRMO = None
 	disableLivenessOpti = None
 	disableAllOpti = None

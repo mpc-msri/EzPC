@@ -318,7 +318,7 @@ let partition (p:program) :codegen_program =
     | _ -> failwith "Impossible! last program declaration in partition has to be main"
   in
 
-  if Config.get_codegen () = Config.CPP && not (Config.get_debug_partitions ()) then rest, [Base_s main]
+  if (Config.get_codegen () = Config.CPP || Config.get_codegen () = Config.CPPRING) && not (Config.get_debug_partitions ()) then rest, [Base_s main]
   else
     let main = main |> inline_fn_calls g in
     print_msg "Partition: inlined function calls ...";
