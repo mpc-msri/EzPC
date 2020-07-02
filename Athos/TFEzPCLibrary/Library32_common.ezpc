@@ -1182,7 +1182,6 @@ def void PadONNX441(int32_pl o1, int32_pl o2, int32_pl o3, int32_pl o4, int32_pl
 def void Squeeze24(int32_pl s1, int32_pl s2, int32_pl dim1, int32_pl dim2, int32_pl ins1, int32_pl ins2, int32_pl ins3, int32_pl ins4, int32_al[ins1][ins2][ins3][ins4] inArr, int32_al[s1][s2] outArr)
 {	
 	(* Since num of elements are same in both arrays, therefore do a linear traversal of both and fill *)
-
 	for i=[0:ins1]{
 		for j=[0:ins2]{
 			for k=[0:ins3]{
@@ -1195,7 +1194,39 @@ def void Squeeze24(int32_pl s1, int32_pl s2, int32_pl dim1, int32_pl dim2, int32
 			};
 		};
 	};
+}
 
+def void Squeeze34(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl dim, int32_pl ins1, int32_pl ins2, int32_pl ins3, int32_pl ins4, int32_al[ins1][ins2][ins3][ins4] inArr, int32_al[s1][s2][s3] outArr)
+{	
+	(* Since num of elements are same in both arrays, therefore do a linear traversal of both and fill *)
+	for i=[0:ins1]{
+		for j=[0:ins2]{
+			for k=[0:ins3]{
+				for l=[0:ins4]{
+					int32_pl linIdx = (i*ins2*ins3*ins4) + (j*ins3*ins4) + (k*ins4) + l;
+					int32_pl outIdx1 = linIdx / (s2*s3);
+					int32_pl outIdx2 = (linIdx - (outIdx1*s2*s3)) / s3;
+					int32_pl outIdx3 = (linIdx - (outIdx1*s2*s3) - (outIdx2*s3));
+					outArr[outIdx1][outIdx2][outIdx3] = inArr[i][j][k][l];
+				};
+			};
+		};
+	};
+}
+
+def void Squeeze23(int32_pl s1, int32_pl s2, int32_pl dim, int32_pl ins1, int32_pl ins2, int32_pl ins3, int32_al[ins1][ins2][ins3] inArr, int32_al[s1][s2] outArr)
+{	
+	(* Since num of elements are same in both arrays, therefore do a linear traversal of both and fill *)
+	for i=[0:ins1]{
+		for j=[0:ins2]{
+			for k=[0:ins3]{
+				int32_pl linIdx = (i*ins2*ins3) + (j*ins3) + (k);
+				int32_pl outIdx1 = linIdx / s2;
+				int32_pl outIdx2 = linIdx % s2;
+				outArr[outIdx1][outIdx2] = inArr[i][j][k];
+			};
+		};
+	};
 }
 
 (**************************)
