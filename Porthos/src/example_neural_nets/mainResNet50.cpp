@@ -1061,7 +1061,6 @@ for (uint32_t fw = w; fw < (w + FW); fw++){
 
 int32_t curPosD = ((fd - zPadDLeft) / strideD);
 
-int32_t curPosH = ((fh - zPadHLeft) / strideD);
 int32_t curPosH = ((fh - zPadHLeft) / strideH);
 
 int32_t curPosW = ((fw - zPadWLeft) / strideW);
