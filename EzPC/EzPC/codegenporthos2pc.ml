@@ -93,9 +93,9 @@ let o_sbinop (l:secret_label) (op:binop) (c1:comp) (c2:comp) :comp =
   let err_unsupp (s:string) = failwith ("Codegen: Operator: " ^ s ^ " is not supported by this backend.") in
   let infix_op (op_comp :comp) = seq c1 (seq op_comp c2) in
   match op with
-  | Sum                -> infix_op (o_str "+")
-  | Sub                -> infix_op (o_str "-")
-  | Mul                -> o_cbfunction l (o_str "funcMult") [c1; c2]
+  | Sum                -> o_cbfunction l (o_str "SecretAdd") [c1; c2]
+  | Sub                -> o_cbfunction l (o_str "SecretSub") [c1; c2]
+  | Mul                -> o_cbfunction l (o_str "SecretMult") [c1; c2]
   | Greater_than       -> err_unsupp "Greater_than"
   | Div                -> err_unsupp "Div"
   | Mod                -> err_unsupp "MOD"
@@ -124,12 +124,14 @@ let o_subsumption (src:label) (tgt:secret_label) (t:typ) (arg:comp) :comp =
     | Secret Boolean -> failwith "Codegen: Subsumption from secrets is not allowed for this backend."
 
 let o_basetyp (t:base_type) :comp =
+  let uint32_basetype_str :string = if Config.get_porthos2pc_backend () = OT then "uint32_t" else "uint64_t" in
+  let int32_basetype_str :string = if Config.get_porthos2pc_backend () = OT then "int32_t" else "int64_t" in
   match t with
-  | UInt32 -> o_str "uint32_t"
+  | UInt32 -> o_str uint32_basetype_str
   | UInt64 -> o_str "uint64_t"
-  | Int32  -> o_str "int32_t"
+  | Int32  -> o_str int32_basetype_str
   | Int64  -> o_str "int64_t"
-  | Bool   -> o_str "uint32_t"
+  | Bool   -> o_str uint32_basetype_str
 
 let rec o_secret_binop (g:gamma) (op:binop) (sl:secret_label) (e1:expr) (e2:expr) :comp =
   (*
@@ -163,6 +165,19 @@ let rec o_secret_binop (g:gamma) (op:binop) (sl:secret_label) (e1:expr) (e2:expr
 and o_expr (g:gamma) (e:expr) :comp =
   let o_expr = o_expr g in
   let o_codegen_expr = o_codegen_expr g in
+  let uint32_basetype_str :string = if Config.get_porthos2pc_backend () = OT then "uint32_t" else "uint64_t" in
+  let rec o_array_read_rec (ga:gamma) (ea:expr) : (comp*comp*int) =
+    match ea.data with
+    | Array_read (e1,e2) -> 
+        (let tt = get_opt (typeof_expr ga e1) in
+        match tt.data with 
+        | Base (_,_) -> failwith "Unknown control flow"
+        | Array (_,_,e2size) -> 
+            (let (e1size,e1idx,iter) = o_array_read_rec ga e1 in  
+            let e2idx = o_expr e2 in
+            ((seq e1size (seq (o_str ",") (o_expr e2size))),(seq e1idx (seq (o_str ",") e2idx)),iter+1)))
+    | _ -> (o_expr ea, o_str "", 0)
+  in
   match e.data with
   | Role r -> o_role r
 
@@ -170,7 +185,7 @@ and o_expr (g:gamma) (e:expr) :comp =
 
   | Const (Int64C n) -> seq (o_str (" (int64_t)")) (o_int64 n)
 
-  | Const (UInt32C n) -> seq (o_str (" (uint32_t)")) (o_uint32 n)
+  | Const (UInt32C n) -> seq (o_str (" (" ^ uint32_basetype_str ^ ")")) (o_uint32 n)
 
   | Const (UInt64C n) -> seq (o_str (" (uint64_t)")) (o_uint64 n)
 
@@ -192,7 +207,9 @@ and o_expr (g:gamma) (e:expr) :comp =
 
   | Conditional (e1, e2, e3, lopt) -> o_codegen_expr (Conditional_codegen (Base_e e1, Base_e e2, Base_e e3, (get_opt lopt)))
 
-  | Array_read (e1, e2) -> seq (o_expr e1) (seq (o_str "[") (seq (o_expr e2) (o_str "]")))
+  | Array_read (e1, e2) -> 
+      let (esize,eidx,ndarr) = o_array_read_rec g e in 
+      seq (o_str ("Arr" ^ (string_of_int ndarr) ^ "DIdxRowM(")) (seq esize (seq eidx (o_str ")")))
 
   | App (f, args) -> o_app (o_str f) (List.map o_expr args)
 
@@ -227,19 +244,20 @@ and o_codegen_expr (g:gamma) (e:codegen_expr) :comp =
 
   | App_codegen_expr (f, el) -> o_app (o_str f) (List.map o_codegen_expr el)
   | Clear_val _ -> failwith ("Codegen_expr Clear_val is unsupported by this backend.") 
-                                      
-let rec o_typ (t:typ) :comp =
+
+let rec o_typ_rec (t:typ) :comp =
+  let uint32_basetype_str :string = if Config.get_porthos2pc_backend () = OT then "uint32_t" else "uint64_t" in
   match t.data with
   | Base (Int64, Some (Secret _)) -> o_str "uint64_t"
+  | Base (Int32, Some (Secret _)) -> o_str uint32_basetype_str
   | Base (_, Some (Secret _)) -> failwith "Codegen: For secret shared variables, only int64 is allowed by this backend."
   | Base (bt, _) -> o_basetyp bt
-  | Array (quals, _, _) -> 
-    let rec aux (t1:typ) :comp = 
-      match t1.data with
-      | Base _ -> o_typ t1
-      | Array (_, t2, _) -> seq (seq (o_str "vector < ") (aux t2)) (o_str " >") 
-    in 
-    seq (if quals |> List.mem Immutable then o_str "const " else o_null) (aux t)
+  | Array (quals,tt, _) -> seq (if quals |> List.mem Immutable then o_str "const " else o_null) (o_typ_rec tt) 
+                                      
+let o_typ (t:typ) :comp =
+  match t.data with
+  | Array (_,_, _) -> seq (o_typ_rec t) (o_str "*")
+  | _ -> o_typ_rec t
 
 let o_ret_typ (t:ret_typ) :comp =
   match t with
@@ -248,11 +266,12 @@ let o_ret_typ (t:ret_typ) :comp =
              
 let o_array_init (g:gamma) (t:typ) :comp =
   let t, l = get_array_bt_and_dimensions t in
-  let s = seq (o_str "make_vector<") (seq (o_typ t) (o_str ">")) in
+  let s = seq (o_str "make_array<") (seq (o_typ t) (o_str ">")) in
   o_app s (List.map (o_expr g) l)
 
 let o_for (index:comp) (lower:comp) (upper:comp) (body:comp) :comp =
-  let init = seq (o_str "for (uint32_t ") (seq index (seq (o_str " = ") lower)) in
+  let uint32_basetype_str :string = if Config.get_porthos2pc_backend () = OT then "uint32_t" else "uint64_t" in
+  let init = seq (o_str ("for (" ^ uint32_basetype_str ^ " ")) (seq index (seq (o_str " = ") lower)) in
   let term = seq index (seq (o_str " < ") upper) in
   let incr = seq index (o_str "++)") in
   let header = seq init (seq (o_str "; ") (seq term (seq (o_str "; ") (seq incr (o_str "{"))))) in
@@ -354,7 +373,7 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
 
      (* this is the innermost loop body *)
      let base_init =
-       let role_var = { name = "role"; index = 0 } in
+       let role_var = { name = "party"; index = 0 } in
        let r_cmp = Base_e (Binop (Is_equal, Var role_var |> mk_dsyntax "", Role r |> mk_dsyntax "", Some Public) |> mk_dsyntax "") in
        (* if role == r then cin into the temporary variable *)
        let cin = Cin ("cin", Base_e (Var tmp_var_name |> mk_dsyntax "") , bt) in
@@ -403,6 +422,7 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
 
        (* list of array dimensions, if any *)
        let el = if is_arr then t |> get_array_bt_and_dimensions |> snd else [] in
+       
 
        (* expression that we will put in the lhs for each output gate, and cout eventually *)
        let elmt_of_e =
@@ -485,7 +505,7 @@ and o_codegen_stmt (g:gamma) (s:codegen_stmt) :comp * gamma =
   | _ -> failwith "o_codegen_stmt: impossible case"
 
 let o_binder (b:binder) :comp =
-  let o_typ (t:typ) :comp = if is_array_typ t then seq (o_typ t) (o_str "&") else o_typ t in
+  let o_typ (t:typ) :comp = o_typ t in
   seq (b |> snd |> o_typ) (seq o_space (b |> fst |> o_var))
 
 let o_global (g0:gamma) (d:global) :comp * gamma =
@@ -502,206 +522,196 @@ let o_global (g0:gamma) (d:global) :comp * gamma =
      seq (o_with_semicolon (seq (o_str "const ") (o_decl (o_typ t) (o_expr g0 e_var) (Some (o_expr g0 init))))) o_newline,
      add_global_const g0 d.data
 
-let prelude_string (sf:string) :string = 
+let prelude_string :string =
 "\
 /*\n\
 This is an autogenerated file, generated using the EzPC compiler.\n\
 */\n\
-#include \"globals.h\"\n\
-\n\
-#include<vector>\n\
-#include<math.h>\n\
-#include<cstdlib>\n\
-#include<iostream>\n\
-#include<fstream>\n\
-#include \"EzPCFunctionalities.h\"\n\
-\n\
-using namespace std;\n\
-uint32_t FLOAT_PRECISION = "
-^
-sf
-^
-";\n\
-uint32_t public_lrshift(uint32_t x, uint32_t y){\n\
-return (x >> y);\n\
-}\n\
-\n\
-int32_t public_lrshift(int32_t x, uint32_t y){\n\
-return ((int32_t)(((uint32_t)x) >> y));\n\
-}\n\
-\n\
-uint64_t public_lrshift(uint64_t x, uint64_t y){\n\
-return (x >> y);\n\
-}\n\
-\n\
-int64_t public_lrshift(int64_t x, uint64_t y){\n\
-return ((int64_t)(((uint64_t)x) >> y));\n\
-}\n\
-\n\
-template<typename T>\n\
-vector<T> make_vector(size_t size) {\n\
-return std::vector<T>(size);\n\
-}\n\
-\n\
-template <typename T, typename... Args>\n\
-auto make_vector(size_t first, Args... sizes)\n\
-{\n\
-auto inner = make_vector<T>(sizes...);\n\
-return vector<decltype(inner)>(first, inner);\n\
-}\n\
-\n\
-template<typename T>\n\
-ostream& operator<< (ostream &os, const vector<T> &v)\n\
-{\n\
-for(auto it = v.begin (); it != v.end (); ++it) {\n\
-os << *it << endl;\n\
-}\n\
-return os;\n\
-}\n\
-\n\
 "
                                    
-let porthos_prelude_string :string =
-"\
-#include \"ezpc.h\"\n\
+let porthos_prelude_string (hash_define_str:string) :string =
+  let bitlen = Config.get_actual_bitlen () |> string_of_int in
+"\n\
+#define BITLEN_"
+^
+bitlen
+^
+"\n\
+#define "
+^
+hash_define_str
+^
+"
 \n\
-extern int partyNum;\n\
-vector<uint64_t*> toFreeMemoryLaterArr;\n\
-int NUM_OF_PARTIES;\n\
+
+#include \"globals.h\"\n\
+#include \"functionalities_wrapper.h\"\n\
+#include <iostream>\n\
+using namespace std;\n\
 \n\
-AESObject* aes_common;\n\
-AESObject* aes_indep;\n\
-AESObject* aes_a_1;\n\
-AESObject* aes_a_2;\n\
-AESObject* aes_b_1;\n\
-AESObject* aes_b_2;\n\
-AESObject* aes_c_1;\n\
-AESObject* aes_share_conv_bit_shares_p0_p2;\n\
-AESObject* aes_share_conv_bit_shares_p1_p2;\n\
-AESObject* aes_share_conv_shares_mod_odd_p0_p2;\n\
-AESObject* aes_share_conv_shares_mod_odd_p1_p2;\n\
-AESObject* aes_comp_msb_shares_lsb_p0_p2;\n\
-AESObject* aes_comp_msb_shares_lsb_p1_p2;\n\
-AESObject* aes_comp_msb_shares_bit_vec_p0_p2;\n\
-AESObject* aes_comp_msb_shares_bit_vec_p1_p2;\n\
-AESObject* aes_conv_opti_a_1;\n\
-AESObject* aes_conv_opti_a_2;\n\
-AESObject* aes_conv_opti_b_1;\n\
-AESObject* aes_conv_opti_b_2;\n\
-AESObject* aes_conv_opti_c_1;\n\
-ParallelAESObject* aes_parallel;\n\
+template<typename T>\n\
+T* make_array(size_t s1){\n\
+  return new T[s1];\n\
+}\n\
 \n\
+template<typename T>\n\
+T* make_array(size_t s1, size_t s2){\n\
+  return new T[s1*s2];\n\
+}\n\
+\n\
+template<typename T>\n\
+T* make_array(size_t s1, size_t s2, size_t s3){\n\
+  return new T[s1*s2*s3];\n\
+}\n\
+\n\
+template<typename T>\n\
+T* make_array(size_t s1, size_t s2, size_t s3, size_t s4){\n\
+  return new T[s1*s2*s3*s4];\n\
+}\n\
+\n\
+template<typename T>\n\
+T* make_array(size_t s1, size_t s2, size_t s3, size_t s4, size_t s5){\n\
+  return new T[s1*s2*s3*s4*s5];\n\
+}\n\
 "
 
 let porthos_main_decl :string =
 "
 \n\
-extern int instanceID;
 int main(int argc, char** argv)\n\
 {\n\
 "
 
 let porthos_main_prelude_string :string =
 "\
-parseInputs(argc, argv);\n\
-string whichNetwork = \"Your Network\";\n\
-show_porthos_mode();\n\
-string indep_key_location, common_key_location;\n\
-if(partyNum == PARTY_A){\n\
-  indep_key_location = \"files/keyA\";\n\
-  common_key_location = \"files/keyAB\";\n\
-}\n\
-else if(partyNum == PARTY_B){\n\
-  indep_key_location = \"files/keyB\";\n\
-  common_key_location = \"files/keyAB\";\n\
-}\n\
-else{\n\
-  indep_key_location = \"files/keyB\";\n\
-  common_key_location = \"files/keyAB\";\n\
-}\n\
-aes_indep = new AESObject(indep_key_location);\n\
-aes_common = new AESObject(common_key_location);\n\
-aes_a_1 = new AESObject(\"files/keyD\");\n\
-aes_a_2 = new AESObject(\"files/keyD\");\n\
-aes_b_1 = new AESObject(\"files/keyD\");\n\
-aes_b_2 = new AESObject(\"files/keyD\");\n\
-aes_c_1 = new AESObject(\"files/keyD\");\n\
-aes_share_conv_bit_shares_p0_p2 = new AESObject(\"files/keyD\");\n\
-aes_share_conv_bit_shares_p1_p2 = new AESObject(\"files/keyD\");\n\
-aes_share_conv_shares_mod_odd_p0_p2 = new AESObject(\"files/keyD\");\n\
-aes_share_conv_shares_mod_odd_p1_p2 = new AESObject(\"files/keyD\");\n\
-aes_comp_msb_shares_lsb_p0_p2 = new AESObject(\"files/keyD\");\n\
-aes_comp_msb_shares_lsb_p1_p2 = new AESObject(\"files/keyD\");\n\
-aes_comp_msb_shares_bit_vec_p0_p2 = new AESObject(\"files/keyD\");\n\
-aes_comp_msb_shares_bit_vec_p1_p2 = new AESObject(\"files/keyD\");\n\
-aes_conv_opti_a_1 = new AESObject(\"files/keyD\");\n\
-aes_conv_opti_a_2 = new AESObject(\"files/keyD\");\n\
-aes_conv_opti_b_1 = new AESObject(\"files/keyD\");\n\
-aes_conv_opti_b_2 = new AESObject(\"files/keyD\");\n\
-aes_conv_opti_c_1 = new AESObject(\"files/keyD\");\n\
-aes_parallel = new ParallelAESObject(common_key_location);\n\
+ArgMapping amap;\n\
+int port = 32000;\n\
+string serverAddr = \"127.0.0.1\";\n\
 \n\
-if (MPC)\n\
-{\n\
-initializeMPC();\n\
-initializeCommunication(argv[2], partyNum);\n\
-synchronize(2000000); \n\
+amap.arg(\"r\", party, \"Role of party: ALICE/SERVER = 1; BOB/CLIENT = 2\");\n\
+amap.arg(\"p\", port, \"Port Number\");\n\
+amap.arg(\"ip\", serverAddr, \"IP Address of server (ALICE)\");\n\
+amap.parse(argc, argv);\n\
+\n\
+assert(party==pie::ALICE || party==pie::BOB);\n\
+\n\
+checkIfUsingEigen();\n\
+for(int i=0;i<numThreads;i++){\n\
+ioArr[i] = new pie::NetIO(party==pie::ALICE ? nullptr : serverAddr.c_str(), port+i);\n\
+otInstanceArr[i] = new pie::IKNP<pie::NetIO>(ioArr[i]);\n\
+prgInstanceArr[i] = new pie::PRG128();\n\
+kkotInstanceArr[i] = new pie::KKOT < pie::NetIO > (ioArr[i]);\n\
+matmulInstanceArr[i] = new Matmul<pie::NetIO, intType, pie::IKNP<pie::NetIO>>(party, bitlength, ioArr[i], otInstanceArr[i], nullptr);\n\
+if (i == 0) {\n\
+otpackArr[i] = new pie::OTPack<pie::NetIO>(ioArr[i], party, baseForRelu, bitlength);\n\
+} \n\
+else if (i == 1) {\n\
+otpackArr[i] = new pie::OTPack<pie::NetIO>(ioArr[i], 3-party, baseForRelu, bitlength);\n\
+} \n\
+else if (i & 1) {\n\
+otpackArr[i] = new pie::OTPack<pie::NetIO>(ioArr[i], 3-party, baseForRelu, bitlength, false);\n\
+otpackArr[i]->copy(otpackArr[1]);\n\
+} \n\
+else {\n\
+otpackArr[i] = new pie::OTPack<pie::NetIO>(ioArr[i], party, baseForRelu, bitlength, false);\n\
+otpackArr[i]->copy(otpackArr[0]);\n\
+}\n\
 }\n\
 \n\
-if (PARALLEL) aes_parallel->precompute();\n\
+io = ioArr[0];\n\
+iknpOT = new pie::IKNP<pie::NetIO>(io);\n\
+iknpOTRoleReversed = new pie::IKNP<pie::NetIO>(io); //TCP is full duplex -- so both side OT on same TCP should be good\n\
+kkot = new pie::KKOT<pie::NetIO>(io);\n\
+prg128Instance = new pie::PRG128();\n\
+otpack = new pie::OTPack<pie::NetIO>(io, party, baseForRelu, bitlength);\n\
 \n\
-e_role role = partyNum;\n\
-"
-
-let porthos_postlude_string :string = 
-"\n\
-cout << \"----------------------------------\" << endl;\n\
-cout << NUM_OF_PARTIES << \"PC code, P\" << partyNum << endl;\n\
-cout << NUM_ITERATIONS << \" iterations, \" << whichNetwork << endl;\n\
-cout << \"----------------------------------\" << endl << endl;\n\
+matmulImpl = new Matmul<pie::NetIO, intType, pie::IKNP<pie::NetIO>>(party, bitlength, io, iknpOT, iknpOTRoleReversed);\n\
 \n\
 \n\
-/****************************** CLEAN-UP ******************************/\n\
-delete aes_common;\n\
-delete aes_indep;\n\
-delete aes_a_1;\n\
-delete aes_a_2;\n\
-delete aes_b_1;\n\
-delete aes_b_2;\n\
-delete aes_c_1;\n\
-delete aes_share_conv_bit_shares_p0_p2;\n\
-delete aes_share_conv_bit_shares_p1_p2;\n\
-delete aes_share_conv_shares_mod_odd_p0_p2;\n\
-delete aes_share_conv_shares_mod_odd_p1_p2;\n\
-delete aes_comp_msb_shares_lsb_p0_p2;\n\
-delete aes_comp_msb_shares_lsb_p1_p2;\n\
-delete aes_comp_msb_shares_bit_vec_p0_p2;\n\
-delete aes_comp_msb_shares_bit_vec_p1_p2;\n\
-delete aes_conv_opti_a_1;\n\
-delete aes_conv_opti_a_2;\n\
-delete aes_conv_opti_b_1;\n\
-delete aes_conv_opti_b_2;\n\
-delete aes_conv_opti_c_1;\n\
-delete aes_parallel;\n\
-deleteObjects();\n\
+#ifdef PIE_OT\n\
+reluImpl = new ReLURingProtocol<pie::NetIO, intType>(party,RING,io,bitlength,baseForRelu,otpack);\n\
+maxpoolImpl = new MaxPoolProtocol<pie::NetIO, intType>(party,RING,io,bitlength,baseForRelu,0,otpack,reluImpl);\n\
+argmaxImpl = new ArgMaxProtocol<pie::NetIO, intType>(party,RING,io,bitlength,baseForRelu,0,otpack,reluImpl);\n\
+#endif\n\
 \n\
-return 0;\n\
+#ifdef PIE_HE\n\
+reluImpl = new ReLUFieldProtocol<pie::NetIO, intType>(party,FIELD,io,bitlength,baseForRelu,prime_mod,otpack);\n\
+maxpoolImpl = new MaxPoolProtocol<pie::NetIO, intType>(party,FIELD,io,bitlength,baseForRelu,prime_mod,otpack,reluImpl);\n\
+argmaxImpl = new ArgMaxProtocol<pie::NetIO, intType>(party,FIELD,io,bitlength,baseForRelu,prime_mod,otpack,reluImpl);\n\
+heConvImpl = new ConvField(party,io);\n\
+heFCImpl = new FCField(party,io);\n\
+heProdImpl = new ElemWiseProdField(party, io);\n\
+assertFieldRun();\n\
+#endif\n\
+#ifdef MULTITHREADED_NONLIN\n\
+#ifdef PIE_OT\n\
+for(int i = 0; i < numThreads; i++) {\n\
+if (i & 1) {\n\
+reluImplArr[i] = new ReLURingProtocol<pie::NetIO, intType>(3-party,RING,ioArr[i],bitlength,baseForRelu,otpackArr[i]);\n\
+maxpoolImplArr[i] = new MaxPoolProtocol<pie::NetIO, intType>(3-party,RING,ioArr[i],bitlength,baseForRelu,0,otpackArr[i],reluImplArr[i]);\n\
+} \n\
+else {\n\
+reluImplArr[i] = new ReLURingProtocol<pie::NetIO, intType>(party,RING,ioArr[i],bitlength,baseForRelu,otpackArr[i]);\n\
+maxpoolImplArr[i] = new MaxPoolProtocol<pie::NetIO, intType>(party,RING,ioArr[i],bitlength,baseForRelu,0,otpackArr[i],reluImplArr[i]);\n\
+}\n\
+}\n\
+#endif\n\
+#ifdef PIE_HE\n\
+for(int i = 0; i < numThreads; i++) {\n\
+if (i & 1) {\n\
+reluImplArr[i] = new ReLUFieldProtocol<pie::NetIO, intType>(3-party,FIELD,ioArr[i],bitlength,baseForRelu,prime_mod,otpackArr[i]);\n\
+maxpoolImplArr[i] = new MaxPoolProtocol<pie::NetIO, intType>(3-party,FIELD,ioArr[i],bitlength,baseForRelu,prime_mod,otpackArr[i],reluImplArr[i]);\n\
+} \n\
+else {\n\
+reluImplArr[i] = new ReLUFieldProtocol<pie::NetIO, intType>(party,FIELD,ioArr[i],bitlength,baseForRelu,prime_mod,otpackArr[i]);\n\
+maxpoolImplArr[i] = new MaxPoolProtocol<pie::NetIO, intType>(party,FIELD,ioArr[i],bitlength,baseForRelu,prime_mod,otpackArr[i],reluImplArr[i]);\n\
+}\n\
+}\n\
+#endif\n\
+#endif\n\
+\n\
+if (party==pie::ALICE){\n\
+iknpOT->setup_send();\n\
+iknpOTRoleReversed->setup_recv();\n\
+}\n\
+else if (party==pie::BOB){\n\
+iknpOT->setup_recv();\n\
+iknpOTRoleReversed->setup_send();\n\
+}\n\
+cout<<\"After base ots, communication = \"<<(io->counter)<<\" bytes\"<<endl;
 "
 
 let o_one_program ((globals, main):global list * codegen_stmt) (ofname:string) :unit =
-  let prelude =
-    let sf = Config.get_sf () |> string_of_int in
-    o_str ((prelude_string sf) ^ "\n" ^ (porthos_prelude_string))
+  let (hash_define_str, main_prelude) = 
+    let modulo_str = Config.get_modulo () |> Uint64.to_string in
+    let hash_define_str = 
+      if (Config.get_porthos2pc_backend () = OT) then "PIE_OT"
+      else "PIE_HE"
+    in
+    let main_prelude = 
+      if (Config.get_porthos2pc_backend () = OT) then begin
+        (* OT case *)
+        if Config.get_modulo () = Uint64.shift_left (Uint64.of_int 1) (Config.get_actual_bitlen ()) then ""
+        else failwith "Modulo can only be (1<<bitlen) for OT case for Porthos2PC backend."
+      end
+      else begin
+        (* HE case *)
+        if Config.get_modulo () <> Uint64.shift_left (Uint64.of_int 1) (Config.get_actual_bitlen ()) then 
+          "prime_mod = " ^ modulo_str ^ ";\n\
+          "
+        else ""
+      end
+    in 
+    (hash_define_str, main_prelude) 
   in
 
-  let main_header =
-    if Config.get_codegen () = Config.CPP then o_str "\n\nint main () {\n"
-    else o_str porthos_main_decl
+  let prelude = o_str (prelude_string ^ "\n" ^ (porthos_prelude_string hash_define_str))
   in
 
-  let main_prelude =
-    if Config.get_codegen () = Config.CPP then o_null
-    else seq (o_str porthos_main_prelude_string) o_newline
+  let main_header = o_str porthos_main_decl
+  in
+
+  let main_prelude = seq (seq (o_str main_prelude) (o_str porthos_main_prelude_string)) o_newline
   in
   
   let main_prelude, g =
@@ -712,10 +722,7 @@ let o_one_program ((globals, main):global list * codegen_stmt) (ofname:string) :
     seq prelude (seq c_globals (seq main_header main_prelude)), g
   in
   let main_body, g = o_codegen_stmt ([] |> push_local_scope g) main in
-  let main_end =
-    if Config.get_codegen () = Config.PORTHOS then
-      o_str porthos_postlude_string
-    else o_null
+  let main_end = o_null
   in
 
   let file = seq main_prelude (seq main_body main_end) in

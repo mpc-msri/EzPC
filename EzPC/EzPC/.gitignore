@@ -1,6 +1,5 @@
-_build/
-ezpc
-main.byte
+_build
+*.byte
 *.ezpc
 *.cpp
-!dot_product.ezpc
+ezpc

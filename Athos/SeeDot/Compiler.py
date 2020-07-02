@@ -40,7 +40,7 @@ import Optimizations.LivenessOpti as LivenessOpti
 
 class Compiler:
 	def __init__(self, version, target, sfType, astFile, printASTBool, consSF, bitlen, outputFileName,
-				disableRMO, disableLivenessOpti, disableAllOpti, debugVar):
+				disableRMO, disableLivenessOpti, disableTruncOpti, disableAllOpti, debugVar):
 		assert(version == Util.Version.Fixed)
 		assert(target == Util.Target.EzPC)
 		assert(sfType == Util.SFType.Constant)
@@ -55,12 +55,17 @@ class Compiler:
 		Util.Config.astFile = astFile
 		Util.Config.printASTBool = printASTBool
 		Util.Config.consSF = consSF
-		Util.Config.wordLength = int(bitlen)
 		Util.Config.outputFileName = outputFileName
 		Util.Config.disableRMO = disableRMO
 		Util.Config.disableLivenessOpti = disableLivenessOpti
+		Util.Config.disableTruncOpti = disableTruncOpti
 		Util.Config.disableAllOpti = disableAllOpti
 		Util.Config.debugVar = debugVar
+		Util.Config.actualWordLength = int(bitlen)
+		if (Util.Config.actualWordLength > 32):
+			Util.Config.wordLength = 64
+		else:
+			Util.Config.wordLength = 32
 	
 	def insertStartEndFunctionCalls(self, res:(IR.Prog, IR.Expr)):
 		prog = res[0]
@@ -79,15 +84,15 @@ class Compiler:
 		if not(Util.Config.disableAllOpti):
 			if not(Util.Config.disableRMO):
 				print("Performing Relu-maxpool optimization...")
-				# Perform optimizations on the AST
 				ReluMaxpoolOpti.ReluMaxpoolOpti().visit(ast)
-
+				print("Relu-maxpool optimization done.")
+		
 			if not(Util.Config.disableLivenessOpti):
 				print("Performing Liveness Optimization...")
-				# Perform liveness analysis optimization on the AST
 				mtdAST = MtdAST()
 				LivenessOpti.LivenessAnalysis().visit(ast)
 				LivenessOpti.LivenessOpti().visit(ast, [mtdAST, 0, {}])
+				print("Liveness optimization done.")
 		
 		if Util.Config.printASTBool:
 			PrintAST().visit(ast)
@@ -104,13 +109,11 @@ class Compiler:
 
 		# Insert a generic start_computation and end_computation function call after all input IR statements.
 		res = self.insertStartEndFunctionCalls(res);
-
 		writer = Writer(Util.Config.outputFileName)
-
 		debugVarEzPCName = compiler.name_mapping[Util.Config.debugVar] if (Util.Config.debugVar in compiler.name_mapping) else None  
 
 		if Util.forEzPC():
-			codegen = EzPCCodegen(writer, compiler.decls,  debugVarEzPCName)
+			codegen = EzPCCodegen(writer, compiler.globalDecls, debugVarEzPCName)
 		else:
 			assert False
 

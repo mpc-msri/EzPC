@@ -90,8 +90,9 @@ extern int NUM_OF_PARTIES;
 #define PARTY_B 1
 #define PARTY_C 2
 
+extern uint32_t FLOAT_PRECISION;
+
 #define PRIME_NUMBER 127
-#define FLOAT_PRECISION 12
 #define PRIMARY (partyNum == PARTY_A or partyNum == PARTY_B)
 #define HELPER (partyNum == PARTY_C)
 #define MPC (THREE_PC)
@@ -139,8 +140,11 @@ const __m128i BIT128 = _mm_setr_epi8(128,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);
 #define _aligned_malloc(size,alignment) aligned_alloc(alignment,size)
 #define _aligned_free free
 #define getrandom(min, max) ((rand()%(int)(((max) + 1)-(min)))+ (min))
-#define floatToMyType(a) ((porthosSecretType)(a * (1 << FLOAT_PRECISION)))
 #define Arr2DIdx(arr,rows,cols,i,j) (*(arr + i*cols + j))
 #define Arr4DIdx(arr,s0,s1,s2,s3,i,j,k,l) (*(arr + i*s1*s2*s3 + j*s2*s3 + k*s3 + l))
+
+inline porthosSecretType floatToMyType(porthosSecretType a){
+	return (a * (1 << FLOAT_PRECISION));
+}
 
 #endif

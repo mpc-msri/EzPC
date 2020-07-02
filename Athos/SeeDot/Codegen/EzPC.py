@@ -30,9 +30,9 @@ import IR.IRUtil as IRUtil
 from Codegen.CodegenBase import CodegenBase
 
 class EzPC(CodegenBase):
-	def __init__(self, writer, decls, debugVar):
+	def __init__(self, writer, globalDecls, debugVar):
 		self.out = writer
-		self.decls = decls
+		self.globalDecls = globalDecls
 		self.consSFUsed = Util.Config.consSF
 		self.debugVar = debugVar
 
@@ -44,13 +44,13 @@ class EzPC(CodegenBase):
 	def _out_prefix(self):
 		self.out.printf('\n\ndef void main(){\n')
 		self.out.increaseIndent()
-		# self.printVarDecls()
+		self.printGlobalVarDecls()
 
-	def printVarDecls(self):
-		for decl in self.decls:
+	def printGlobalVarDecls(self):
+		for decl in self.globalDecls:
 			typ_str = IR.DataType.getIntStr()
 			idf_str = decl
-			declProp = self.decls[decl]
+			declProp = self.globalDecls[decl]
 			curType = declProp[0]
 			if (len(declProp)>1):
 				# If label specified in decl, then use that
@@ -127,12 +127,15 @@ class EzPC(CodegenBase):
 
 	def printDecl(self, ir):
 		typ_str = IR.DataType.getIntStrForBitlen(ir.bitlen)
-		variableLabel = 'pl' if ir.isSecret=="public" else 'al'
+		variableLabel = 'pl' if not(ir.isSecret) else 'al'
 
 		if Type.isInt(ir.typeExpr): shape_str = ''
 		elif Type.isTensor(ir.typeExpr): shape_str = ''.join(['[' + str(n) + ']' for n in ir.typeExpr.shape])
-		self.out.printf('%s_%s%s %s;\n', typ_str, variableLabel, shape_str, ir.varIdf, indent=True)
-		self.out.printf('\n')
+		self.out.printf('%s_%s%s %s', typ_str, variableLabel, shape_str, ir.varIdf, indent=True)
+		if (ir.value):
+			assert(Type.isInt(ir.typeExpr)) #In EzPC ints can be declared and assigned in same line, not tensors
+			self.out.printf(' = %s', str(ir.value[0]))
+		self.out.printf(';\n\n')
 
 	def _out_suffix(self, expr:IR.Expr):
 		if self.debugVar is None:

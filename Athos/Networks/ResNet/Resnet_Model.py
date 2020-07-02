@@ -94,11 +94,7 @@ def conv2d_fixed_padding(inputs, filters, kernel_size, strides, data_format):
   return tf.layers.conv2d(
       inputs=inputs, filters=filters, kernel_size=kernel_size, strides=strides,
       padding=('SAME' if strides == 1 else 'VALID'), use_bias=False,
-      
-      #TODO : Changing initializer to make my life easy
-      # kernel_initializer=tf.variance_scaling_initializer(),
       kernel_initializer=tf.constant_initializer(value=0.001),
-
       data_format=data_format)
 
 
@@ -538,25 +534,11 @@ class Model(object):
         inputs = batch_norm(inputs, training, self.data_format)
         inputs = tf.nn.relu(inputs)
 
-      # The current top layer has shape
-      # `batch_size x pool_size x pool_size x final_size`.
-      # ResNet does an Average Pooling layer over pool_size,
-      # but that is the same as doing a reduce_mean. We do a reduce_mean
-      # here because it performs better than AveragePooling2D.
       axes = [2, 3] if self.data_format == 'channels_first' else [1, 2]
-      
-      # TODO : Changing model to make my life easy
-      # inputs = tf.reduce_mean(input_tensor=inputs, axis=axes, keepdims=True)
-      inputs = tf.nn.avg_pool(inputs, ksize=[1,7,7,1], strides=[1,1,1,1], padding='VALID')
-      
+      inputs = tf.nn.avg_pool(inputs, ksize=[1,7,7,1], strides=[1,1,1,1], padding='VALID')      
       inputs = tf.identity(inputs, 'final_reduce_mean')
-
       inputs = tf.squeeze(inputs, axes)
-
-      #TODO : Changing initializer to make my life easy
-      # inputs = tf.layers.dense(inputs=inputs, units=self.num_classes)
       inputs = tf.layers.dense(inputs=inputs, units=self.num_classes, kernel_initializer=tf.constant_initializer(value=0.001))
-      
 
       inputs = tf.identity(inputs, 'final_dense')
       return inputs

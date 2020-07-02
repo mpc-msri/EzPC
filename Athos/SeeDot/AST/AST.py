@@ -34,7 +34,6 @@ OperatorsSymbolDict = {
 		"Equal": '==',
 		"ElemWiseMul":'.*',
 		"ElemWiseDiv": './',
-		"Max": 'max',
 		"Floor": 'floor',
 		"Shape": 'shape',
 		"Mean": 'mean',
@@ -52,7 +51,6 @@ class Operators(Enum):
 	Equal = auto()
 	ElemWiseMul = auto()
 	ElemWiseDiv = auto()
-	Max = auto()
 	Floor = auto()
 	Shape = auto()
 	Mean = auto()
@@ -88,7 +86,7 @@ class Operators(Enum):
 		return ((imgSize + totalPadding - filterSize) // stride) + 1
 
 class PaddingKeysDict:
-	ConvDim = 2 #2D or 3D convolution, default to 2D ##TODO: Add 1D conv when required
+	ConvDim = 2 #2D or 3D convolution, default to 2D
 				#Also used for convTranpose
 	FH = "FH"
 	FW = "FW"
@@ -127,17 +125,19 @@ class ASTNode:
 		self.optidict = {}
 
 class Int(ASTNode):
-	def __init__(self, value: int, bitLen=None, isSecret=True):
+	def __init__(self, value: int, bitLen=None, isSecret=True, isScaled=False):
 		if assertInputTypes: 
 			assert isinstance(value, int)
 			if bitLen: 
 				assert isinstance(bitLen, int)
 				assert ((bitLen==32) or (bitLen==64))
 			assert isinstance(isSecret, bool)
+			assert isinstance(isScaled, bool)
 		super().__init__()
 		self.value = value
 		self.bitLen = bitLen
 		self.isSecret = isSecret
+		self.isScaled = isScaled
 
 class Float(ASTNode):
 	def __init__(self, value: float, isSecret=True):
@@ -157,7 +157,7 @@ class ID(ASTNode):
 
 # shape : list of int, valueList : list of int/float AST Nodes
 class Decl(ASTNode):
-	def __init__(self, shape: list, dataType: str, valueList: list, isSecret=True):
+	def __init__(self, shape: list, dataType: str, valueList: list, isSecret=True, isScaled=False):
 		if assertInputTypes:
 			for elem in shape: assert isinstance(elem, int)
 			if dataType:
@@ -165,26 +165,21 @@ class Decl(ASTNode):
 			if valueList: 
 				for elem in valueList: assert isinstance(elem ,(Int,Float))
 			assert(isinstance(isSecret, bool))
+			assert(isinstance(isScaled, bool))
 		super().__init__()
 		self.shape = shape
 		self.dataType = dataType
 		self.valueList = valueList
 		self.isSecret = isSecret
-
-# expr : ASTNode
-class Transp(ASTNode):
-	def __init__(self, expr: ASTNode):
-		if assertInputTypes:
-			assert isinstance(expr, ASTNode)
-		super().__init__()
-		self.expr = expr
+		self.isScaled = isScaled
 
 # expr : ASTNode, perm : list of ints
 class Transpose(ASTNode):
-	def __init__(self, expr: ASTNode, perm: list):
+	def __init__(self, expr: ASTNode, perm: list = None):
 		if assertInputTypes:
 			assert isinstance(expr, ASTNode)
-			for elem in perm: assert isinstance(elem, int)
+			if perm:
+				for elem in perm: assert isinstance(elem, int)
 		super().__init__()
 		self.expr = expr
 		self.perm = perm
@@ -229,16 +224,6 @@ class Pool(ASTNode):
 		self.expr = expr
 		self.options = options
 
-# expr:ID, index : list of int
-class Index(ASTNode):
-	def __init__(self, expr: ID, index: list):
-		if assertInputTypes:
-			assert isinstance(expr, ID)
-			for elem in index: assert isinstance(elem, int)
-		super().__init__()
-		self.expr = expr
-		self.index = index
-
 class UOp(ASTNode):
 	def __init__(self, op: Operators, expr:ASTNode):
 		if assertInputTypes:
@@ -270,7 +255,7 @@ class BOp(ASTNode):
 				assert (PaddingKeysDict.strideH in options)
 				assert (PaddingKeysDict.strideW in options)
 				if PaddingKeysDict.ConvDim in options:
-					assert(options[PaddingKeysDict.ConvDim]==2 or options[PaddingKeysDict.ConvDim]==3) #1D conv is not supported right now
+					assert(options[PaddingKeysDict.ConvDim]==2 or options[PaddingKeysDict.ConvDim]==3)
 					if options[PaddingKeysDict.ConvDim]==3:
 						#3D conv - assert over the depth dimension
 						assert (PaddingKeysDict.FD in options)

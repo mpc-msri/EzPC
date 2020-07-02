@@ -22,6 +22,7 @@ SOFTWARE.
 
 *)
 
+open Stdint
 open Printf
 open Utils
 open Config
@@ -81,13 +82,16 @@ let tc_and_codegen (p:program) (file:string) :unit =
              else p
            in
            let p =
-             if Config.get_codegen () = CPP then p |> erase_labels_program
+             if Config.get_codegen () = CPP || Config.get_codegen () = CPPRING 
+             then p |> erase_labels_program
              else p
            in
            let p = partition p in
            print_msg ("Split the program into " ^ string_of_int (p |> snd |> List.length) ^ " partition(s), generating .cpp files");
            if Config.get_codegen () = OBLIVC then Codegenoblivc.o_program p file
            else if Config.get_codegen () = PORTHOS then Codegenporthos.o_program p file
+           else if Config.get_codegen () = PORTHOS2PC then Codegenporthos2pc.o_program p file
+           else if Config.get_codegen () = CPPRING then Codegencppring.o_program p file
            else Codegen.o_program p file;
            Well_typed ()) in
   match x with
@@ -109,14 +113,16 @@ let o_prefix :string ref = ref ""
 let input_file :string ref = ref ""
 
 let specs = Arg.align [
-                ("--bitlen", Arg.Int Config.set_bitlen, " Bitlength to be used for shares (32 or 64, default 32)");
+                ("--bitlen", Arg.Int Config.set_bitlen, "Bitlength to be used for shares");
                 ("--codegen", Arg.String (fun s -> match s with
                                                    | "ABY" -> ABY |> Config.set_codegen
                                                    | "CPP" -> CPP |> Config.set_codegen
                                                    | "OBLIVC" -> OBLIVC |> Config.set_codegen
                                                    | "PORTHOS" -> PORTHOS |> Config.set_codegen
+                                                   | "PORTHOS2PC" -> PORTHOS2PC |> Config.set_codegen
+                                                   | "CPPRING" -> CPPRING |> Config.set_codegen
                                                    | _ -> failwith "Invalid codegen mode"),
-                 " Codegen mode (ABY or CPP or OBLIVC or PORTHOS, default ABY)");
+                 " Codegen mode (ABY or CPP or OBLIVC or PORTHOS or PORTHOS2PC or CPPRING, default ABY)");
                 ("--o_prefix", Arg.String (fun s -> o_prefix := s), " Prefix for output files, default is the input file prefix");
                 ("--disable-tac", Arg.Unit Config.disable_tac, " Disable 3-address code transformation (also disables the CSE optimization)");
                 ("--disable-cse", Arg.Unit Config.disable_cse, " Disable Common Subexpression Elimination optimization");
@@ -128,11 +134,39 @@ let specs = Arg.align [
                  " Bool sharing mode (Yao or GMW, default Yao)");
                 ("--shares_dir", Arg.String (fun s -> Config.set_shares_dir s), " Directory where share files should be created");
                 ("--debug_partitions", Arg.Unit Config.set_debug_partitions, " Debug partitions (if codegen is ABY then dump shares in clear, if codegen is CPP then generate partitions)");
+                ("--modulo", Arg.String Config.set_modulo, 
+                  "Modulo to be used for shares. Applicable for CPPRING/PORTHOS2PC backend. 
+                  For PORTHOS2PC, for backend type OT, this should be power of 2 and for backend type HE, this should be a prime.");
+                ("--backend", Arg.String (fun s -> match s with
+                                                   | "OT" -> OT |> Config.set_porthos2pc_backend
+                                                   | "HE" -> HE |> Config.set_porthos2pc_backend
+                                                   | _ -> failwith "Invalid backend type"),
+                 "Porthos2PC Backend Type (OT or HE, default OT).");
+                ("--sf", Arg.Int Config.set_sf, "Scale factor to be used in compilation. Valid only for PORTHOS.");
               ]
 let _ =
   Random.self_init ();
   
   let _ = Arg.parse specs (fun f -> input_file := f) ("usage: ezpc [options] [input file]. options are:") in
+
+  let _ =
+    if Config.get_codegen () = CPP && Config.get_actual_bitlen () <> 32 && Config.get_actual_bitlen () <> 64
+    then failwith "CPP codegen requires bitlen of 32/64.";
+
+    if Config.get_codegen () <> PORTHOS && Config.get_sf () <> 0
+    then failwith "sf only valid for PORTHOS.";
+
+    if Config.get_codegen () <> CPPRING && Config.get_codegen () <> PORTHOS2PC 
+      && (Config.get_modulo () <> (Uint64.shift_left (Uint64.of_int 1) (Config.get_bitlen ())) || (Config.get_bitlen () <> 32 && Config.get_bitlen () <> 64)) 
+    then failwith "Modulo and {bitlen not equal to 32/64} only supported for CPPRING/PORTHOS2PC backend.";
+
+    if Config.get_codegen () = CPPRING && (Config.get_bitlen () = 64 || Config.get_bitlen () = 32) 
+      && Config.get_modulo () = (Uint64.shift_left (Uint64.of_int 1) (Config.get_bitlen ()))
+    then begin
+    print_msg ("CPPRING codegen called for 1<<{32/64} ring. Switching to codegen CPP with bitlen = 32/64.");
+    Config.set_codegen CPP
+    end
+  in
 
   let input_file_name = !input_file in
   let b = Str.string_match (Str.regexp "\\(.*\\)\\.ezpc") input_file_name 0 in
@@ -140,6 +174,13 @@ let _ =
   let prefix = Str.matched_group 1 input_file_name in
   
   if !o_prefix = "" then o_prefix := prefix;
+
+  let _ = 
+    if Config.get_codegen () = PORTHOS2PC then begin
+      let backend_type = if Config.get_porthos2pc_backend () = OT then "OT" else "HE" in
+      o_prefix := !o_prefix ^ "_" ^ backend_type;
+    end
+  in
 
   let file_contents = load_file !input_file in
   print_msg ("Read file " ^ !input_file);

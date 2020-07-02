@@ -38,7 +38,7 @@ print("ExpectedNumElements in all preprocessed images = ", expectedNumElements)
 badImages = []
 for i in range(startImgNum,endImgNum):
 	if ((i % (numImg/10))==0):
-		print("Reched i = {0}.".format(i))
+		print("Reached i = {0}.".format(i))
 	filename = os.path.join(preProcessedImagesDir, 'ImageNum_'+str(i)+'.inp')
 	with open(filename, 'r') as ff:
 		line = ff.readline()

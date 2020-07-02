@@ -22,24 +22,35 @@ SOFTWARE.
 
 '''
 
+import Util
 import operator
 from functools import reduce
-
 import AST.AST as AST
 from AST.ASTVisitor import ASTVisitor
+
 class Type:
 	pass
 
 class Int(Type):
-	pass
+	def __init__(self, bitlen=-1, isSecret=False):
+		if bitlen==-1:
+			self.bitlen = Util.Config.wordLength
+		else:
+			self.bitlen = bitlen
+		self.isSecret = isSecret
 
 class Unit(Type):
 	pass
 
 class Tensor(Type):
-	def __init__(self, shape:list):
+	def __init__(self, shape:list, bitlen=-1, isSecret=True):
 		self.shape = shape
 		self.dim = len(shape)
+		if bitlen==-1:
+			self.bitlen = Util.Config.wordLength
+		else:
+			self.bitlen = bitlen
+		self.isSecret = isSecret
 
 	def size(self):
 		return reduce(operator.mul, self.shape, 1)
@@ -69,12 +80,15 @@ def isEqual(type1:Type, type2:Type):
 
 class InferType(ASTVisitor):
 	def visitInt(self, node:AST.Int, args=None):
-		node.type = Int()
+		bitlen = Util.Config.wordLength
+		if node.bitLen:
+			bitlen = node.bitLen
+		node.type = Int(bitlen, node.isSecret)
 		return node.type
 
 	def visitFloat(self, node:AST.Float, args=None):
 		# Float is represented as a tensor with 0 dimension
-		node.type = Tensor([])
+		node.type = Tensor([], -1, node.isSecret)
 		return node.type
 
 	def visitId(self, node:AST.ID, args=None):
@@ -86,18 +100,8 @@ class InferType(ASTVisitor):
 		return node.type
 
 	def visitDecl(self, node:AST.Decl, args=None):
-		node.type = Tensor(node.shape)
-		return node.type
-
-	def visitTransp(self, node:AST.Transp, args=None):
-		node.expr.gamma = dict(node.gamma)
-		exprType = self.visit(node.expr)
-		
-		assert isTensor(exprType) and exprType.dim == 2
-
-		[m, n] = exprType.shape
-		node.type = Tensor([n, m])
-
+		#TODO -- fill in bitlen properly
+		node.type = Tensor(node.shape, -1, node.isSecret)
 		return node.type
 
 	def visitTranspose(self, node:AST.Transpose, args=None):
@@ -108,6 +112,8 @@ class InferType(ASTVisitor):
 
 		perm = node.perm
 		shape = exprType.shape
+		if (perm is None):
+			perm = [i for i in reversed(range(len(shape)))]
 		new_shape = []
 		for i in perm:
 			new_shape.append(shape[i])
@@ -149,21 +155,6 @@ class InferType(ASTVisitor):
 
 		return node.type
 
-	def visitIndex(self, node:AST.Index, args=None):
-		node.expr.gamma = dict(node.gamma)
-		exprType = self.visit(node.expr)
-		assert isTensor(exprType) and exprType.dim >= 1
-
-		for curIdx in node.index:
-			curIdx.gamma = dict(node.gamma)
-			indexType = self.visit(curIdx)
-			assert isInt(indexType)
-
-		shape = exprType.shape[len(node.index):]
-		node.type = Tensor(shape)
-
-		return node.type
-
 	def visitUOp(self, node:AST.UOp, args=None):
 		node.expr.gamma = dict(node.gamma)
 		node.type = self.visit(node.expr)
@@ -179,7 +170,7 @@ class InferType(ASTVisitor):
 		if node.op in [AST.Operators.ADD, AST.Operators.ElemWiseMul, AST.Operators.ElemWiseDiv]:
 			# Ops supporting broadcasting
 			return self.typeCheckBroadcastOps(node, eType, fType)
-		elif node.op in [AST.Operators.SUB, AST.Operators.Equal, AST.Operators.Max]:
+		elif node.op in [AST.Operators.SUB, AST.Operators.Equal]:
 			return self.visitBopAddLike(node, eType, fType)
 		elif node.op == AST.Operators.MUL:
 			return self.visitBopMul(node, eType, fType)
@@ -211,7 +202,7 @@ class InferType(ASTVisitor):
 		assert len(eType.shape) >= len(fType.shape)
 
 		if isInt(eType) and isInt(fType):
-			node.type = Int()
+			node.type = Int(eType.bitlen, eType.isSecret)
 		elif isTensor(eType) and isTensor(fType):
 			revETypeShape = eType.shape[::-1]
 			revFTypeShape = fType.shape[::-1]
@@ -231,7 +222,7 @@ class InferType(ASTVisitor):
 
 	def visitBopMul(self, node:AST.BOp, eType:Type, fType:Type, args=None):
 		if isInt(eType) and isInt(fType):
-			node.type = Int()
+			node.type = Int(eType.bitlen, eType.isSecret)
 		elif isTensor(eType) and isTensor(fType):
 			if eType.dim == 0:
 				node.type = fType
@@ -368,6 +359,7 @@ class InferType(ASTVisitor):
 		elif node.op  == AST.Operators.ClearMemPublic:
 			node.type = Unit()
 		else:
+			print(node.op)
 			assert False
 
 		return node.type
@@ -441,3 +433,4 @@ class InferType(ASTVisitor):
 
 		node.type = exprType
 		return node.type
+

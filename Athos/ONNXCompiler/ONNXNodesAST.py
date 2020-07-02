@@ -347,8 +347,8 @@ class ONNXNodesAST:
 		input1AST = AST.ID(node_name_to_out_var_dict[inputsRef[0]])
 		input2AST = AST.ID(node_name_to_out_var_dict[inputsRef[1]])
 
-		if('transA' in node.attrs and node.attrs['transA']): input1AST = AST.Transp(input1AST)
-		if('transB' in node.attrs and node.attrs['transB']): input2AST = AST.Transp(input2AST)
+		if('transA' in node.attrs and node.attrs['transA']): input1AST = AST.Transpose(input1AST)
+		if('transB' in node.attrs and node.attrs['transB']): input2AST = AST.Transpose(input2AST)
 
 		# W*x + b
 		seedot_output_ast = AST.BOp(AST.BOp(input1AST, getOperatorsIdx('*'), input2AST), getOperatorsIdx('+'), AST.ID(node_name_to_out_var_dict[inputsRef[2]]))

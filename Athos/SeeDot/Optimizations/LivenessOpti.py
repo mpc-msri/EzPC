@@ -47,12 +47,7 @@ class LivenessAnalysis(ASTVisitor):
 	def visitDecl(self, node:AST.Decl, args):
 		return []
 
-	def visitTransp(self, node:AST.Transp, args):
-		unboundVars = self.visit(node.expr, args)
-		node.optidict[self.optidictKey] = unboundVars
-		return unboundVars
-
-	def visitTranspose(self, node:AST.Transp, args):
+	def visitTranspose(self, node:AST.Transpose, args):
 		unboundVars = self.visit(node.expr, args)
 		node.optidict[self.optidictKey] = unboundVars
 		return unboundVars
@@ -63,11 +58,6 @@ class LivenessAnalysis(ASTVisitor):
 		return unboundVars
 	
 	def visitPool(self, node:AST.Pool, args):
-		unboundVars = self.visit(node.expr, args)
-		node.optidict[self.optidictKey] = unboundVars
-		return unboundVars
-
-	def visitIndex(self, node:AST.Index, args):
 		unboundVars = self.visit(node.expr, args)
 		node.optidict[self.optidictKey] = unboundVars
 		return unboundVars
@@ -91,6 +81,10 @@ class LivenessAnalysis(ASTVisitor):
 		declVars = self.visit(node.decl, args)
 		exprVars = self.visit(node.expr, args)
 		unboundVars = list((set(declVars)|set(exprVars))-set([node.name.name]))
+		if isinstance(node.decl, AST.ID):
+			#This is of the type let J1 = J2 in J1. 
+			#	Since J1 and J2 refer to the same variable, J2 should remain bounded.
+			unboundVars = list(set(unboundVars) - set([node.decl.name]))
 		node.optidict[self.optidictKey] = unboundVars
 		return unboundVars		
 

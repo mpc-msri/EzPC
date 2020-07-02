@@ -78,26 +78,7 @@ def shrUint(e:Expr, n:int) -> Expr:
 	return IntBop(e, Op.Op['>>'], Int(n))
 
 def shr(e:Expr, n:int) -> Expr:
-	if forArduino() or forHls():
-		return shrForArduino(e, n)
-	else:
-		return shrDefault(e, n)
-
-def shrForArduino(e:Expr, n:int) -> Expr:
-	assert(n >= 0)
-	if(n == 0): return e
-	
-	if getShrType() == "shr":
-		return cond_zero(e, IntBop(e, Op.Op['>>'], Int(n)), IntUop(Op.Op['-'], IntBop(IntUop(Op.Op['-'], e), Op.Op['>>'], Int(n))))
-	elif getShrType() == "shr+":
-		mask = Int((2 ** n) - 1)
-		return cond_zero(e, IntBop(e, Op.Op['>>'], Int(n)), IntBop(IntBop(e, Op.Op['+'], mask), Op.Op['>>'], Int(n)))
-	elif getShrType() == "div":
-		intVar = Int(2 ** n)
-		if intVar.n == 0: return zero
-		return div(e, intVar)
-	else:
-		assert False
+	return shrDefault(e, n)
 
 def shrDefault(e:Expr, n:int) -> Expr:
 	assert(n >= 0)

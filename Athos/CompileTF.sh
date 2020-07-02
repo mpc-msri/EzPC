@@ -36,13 +36,16 @@ echo -e "Loaded paths: EzPCDir - $EzPCDir, PorthosDir - $PorthosDir"
 
 usage() {
 	echo -e "CrypTFlow compilation script. Options:";
-	echo -e "<-b|--bitlen> <bitlen> :: Bit length to compile for. Possible options: 32/64. Defaults to 64";
+	echo -e "<-b|--bitlen> <bitlen> :: Bit length to compile for. Defaults to 64";
 	echo -e "<-s|--scaling-fac> <sf> :: Scaling factor to compile for. Defaults to 12.";
-	echo -e "<-t|--target> <target> :: Compilation target. Possible options: CPP/PORTHOS. Defaults to CPP.";
+	echo -e "<-t|--target> <target> :: Compilation target. Possible options: ABY/CPP/CPPRING/PORTHOS/PORTHOS2PC. Defaults to CPP.";
 	echo -e "<-f|--filename> :: Python tensorflow file to compile."
+	echo -e "<--modulo> :: Modulo to be used for shares. Applicable for CPPRING/PORTHOS2PC backend. For PORTHOS2PC, for backend type OT, this should be power of 2 and for backend type HE, this should be a prime."
+	echo -e "<--backend> :: Backend to be used - OT/HE (default OT). Applicable for PORTHOS2PC backend."
 	echo -e "<--disable-hlil-all-opti> :: Disable all optimizations in HLIL."
 	echo -e "<--disable-rmo> :: Disable Relu-Maxpool optimization."
 	echo -e "<--disable-liveness-opti> :: Disable Liveness Optimization."
+	echo -e "<--disable-trunc-opti> :: Disable truncation placement optimization."
 	echo -e "<--exec-python> <num of args for python script> <args for python script>... :: Execute the python script which is passed for compilation.";
 	echo -e "<--help> :: help options.";
 	exit 1;
@@ -76,6 +79,16 @@ do
 		shift
 		shift
 		;;
+		--modulo)
+		MODULO="$2"
+		shift
+		shift
+		;;
+		--backend)
+		BACKEND="$2"
+		shift
+		shift
+		;;
 		--exec-python)
 		numargs="$2"
 		shift
@@ -102,6 +115,10 @@ do
 		DisableLivenessOpti=Y
 		shift # past one arg
 		;;
+		--disable-trunc-opti)
+		DisableTruncOpti=Y
+		shift # past one arg
+		;;
 		*)    # unknown option
 		usage
 		;;
@@ -114,6 +131,13 @@ fi
 
 if [ ! -z "$EXECPYTHON" ]; then
 	echo -e "Exec-python parameter passed. EXECPYTHONARGS=$EXECPYTHONARGS."
+fi
+
+ACTUALBITLEN="${BITLEN}"
+if [ "$ACTUALBITLEN" -gt 32 ]; then
+	BITLEN="64"
+else
+	BITLEN="32"
 fi
 
 compilationTargetLower=$(echo "$COMPILATIONTARGET" | awk '{print tolower($0)}')
@@ -147,7 +171,7 @@ cd - > /dev/null
 cd ./TFCompiler
 python3 ProcessTFGraph.py "$fullFilePath"
 cd ../SeeDot
-seedotArgs="--astFile ${fullDirPath}/astOutput.pkl --consSF ${SCALINGFACTOR} --bitlen ${BITLEN} --outputFileName ${ezpcOutputFullFileName}"
+seedotArgs="--astFile ${fullDirPath}/astOutput.pkl --consSF ${SCALINGFACTOR} --bitlen ${ACTUALBITLEN} --outputFileName ${ezpcOutputFullFileName}"
 if [ ! -z "$DisableHLILAllOpti" ]; then
 	seedotArgs="${seedotArgs} --disableAllOpti True"
 fi
@@ -157,29 +181,44 @@ fi
 if [ ! -z "$DisableLivenessOpti" ]; then
 	seedotArgs="${seedotArgs} --disableLivenessOpti True"
 fi
+if [ ! -z "$DisableTruncOpti" ]; then
+	seedotArgs="${seedotArgs} --disableTruncOpti True"
+fi
 python3 SeeDot.py $seedotArgs
 cd ..
 libraryFile="$compilationTargetLower"
-if [ "$compilationTargetLower" == "aby" ];then 
+if [ "$compilationTargetLower" == "aby" ] || [ "$compilationTargetLower" == "cppring" ] ; then 
 	libraryFile="cpp"
 fi
-cat "./TFEzPCLibrary/Library${BITLEN}_$libraryFile.ezpc" "./TFEzPCLibrary/Library${BITLEN}_common.ezpc" "$ezpcOutputFullFileName" > temp
+if [ "$libraryFile" == "cpp" ];then
+	# CPP/ABY backend
+	cat "./TFEzPCLibrary/Library${BITLEN}_${libraryFile}_pre.ezpc" "./TFEzPCLibrary/Library${BITLEN}_common.ezpc" "./TFEzPCLibrary/Library${BITLEN}_${libraryFile}_post.ezpc" "$ezpcOutputFullFileName" > temp
+else
+	cat "./TFEzPCLibrary/Library${BITLEN}_${libraryFile}.ezpc" "./TFEzPCLibrary/Library${BITLEN}_common.ezpc" "$ezpcOutputFullFileName" > temp
+fi
 mv temp "$ezpcOutputFullFileName"
 cp "$ezpcOutputFullFileName" "$EzPCDir/EzPC"
 cd "$EzPCDir/EzPC"
 eval `opam config env`
-./ezpc.sh "$ezpcOutputFullFileName" --bitlen "$BITLEN" --codegen "$compilationTargetHigher" --disable-tac
-if [ "$compilationTargetLower" == "cpp" ]; then
+ezpcArgs="--bitlen ${ACTUALBITLEN} --codegen ${compilationTargetHigher} --disable-tac"
+if [ ! -z "$MODULO" ]; then
+	ezpcArgs="${ezpcArgs} --modulo ${MODULO}"
+fi
+if [ ! -z "$BACKEND" ]; then
+	backendUpper=$(echo "$BACKEND" | awk '{print toupper($0)}')
+	ezpcArgs="${ezpcArgs} --backend ${backendUpper}"
+	finalCodeOutputFileName=${ezpcOutputFileName}_${backendUpper}'0.cpp'
+fi
+if [ "$compilationTargetLower" == "porthos" ] ; then
+	ezpcArgs="${ezpcArgs} --sf ${SCALINGFACTOR}"
+fi
+./ezpc.sh "$ezpcOutputFullFileName" ${ezpcArgs}
+if [ "$compilationTargetLower" == "cpp" ] || [ "$compilationTargetLower" == "cppring" ] ; then
 	cd "$fullDirPath"
 	g++ -O3 "$finalCodeOutputFileName" -o "$actualFileName.out"
 	echo -e "All compilation done."
-elif [ "$compilationTargetLower" == "porthos" ]; then
+else
 	cd - > /dev/null
-	python3 ./HelperScripts/AthosToPorthosTemp.py "$fullDirPath/$finalCodeOutputFileName"
-	# cd "$fullDirPath"
-	# cp "$finalCodeOutputFileName" "$porthosFullDirPath/src/main.cpp"
-	# cd "$porthosFullDirPath"
-	# make -j
 	echo -e "All compilation done."
 	if hash clang-format 2> /dev/null; then
 		clang-format -style=LLVM $fullDirPath/$finalCodeOutputFileName > tmp_clang
