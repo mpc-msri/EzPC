@@ -914,7 +914,7 @@ void funcShareConvertMPC(vector<porthosSecretType> &a,
 		//Send first half of x2 to Party B and second half of x1 to party A.
 #ifdef PARALLEL_COMM
 		thread *threads_a = new thread[2];
-		threads_a[0] = thread(sendArr<smallType>, bit_shares_x_1.data() + (size/2) , PARTY_A, (size - (size/2))*BIT_SIZE);
+		threads_a[0] = thread(sendArr<smallType>, bit_shares_x_1.data() + (size/2)*BIT_SIZE , PARTY_A, (size - (size/2))*BIT_SIZE);	
 		threads_a[1] = thread(sendArr<smallType>, bit_shares_x_2.data(), PARTY_B, (size/2)*BIT_SIZE);
 
 		for(int th=0; th<2; th++){
@@ -922,7 +922,7 @@ void funcShareConvertMPC(vector<porthosSecretType> &a,
 		}
 		delete[] threads_a;
 #else
-		sendArr<smallType>(bit_shares_x_1.data() + (size/2) , PARTY_A, (size - (size/2))*BIT_SIZE);
+		sendArr<smallType>(bit_shares_x_1.data() + (size/2)*BIT_SIZE , PARTY_A, (size - (size/2))*BIT_SIZE);	
 		sendArr<smallType>(bit_shares_x_2.data(), PARTY_B, (size/2)*BIT_SIZE);
 #endif
 
@@ -988,7 +988,7 @@ void funcShareConvertMPC(vector<porthosSecretType> &a,
 #endif
 
 		//Now get the remaining bits from P2.
-		receiveArr<smallType>(bit_shares.data() + receiveStart, PARTY_C, (receiveEnd - receiveStart)*BIT_SIZE);
+		receiveArr<smallType>(bit_shares.data() + receiveStart*BIT_SIZE, PARTY_C, (receiveEnd - receiveStart)*BIT_SIZE);	
 		receiveArr<porthosSecretType>(delta_shares.data() + receiveStart, PARTY_C, (receiveEnd - receiveStart));
 	}
 #endif //end of share convert optimization
@@ -997,7 +997,7 @@ void funcShareConvertMPC(vector<porthosSecretType> &a,
 	{
 		for(size_t i=0;i<size;i++)
 		{
-			r[i] = r[i] - 1;
+			r[i] = r[i] - 1ULL;
 		}
 	}
 
@@ -1007,9 +1007,6 @@ void funcShareConvertMPC(vector<porthosSecretType> &a,
 	{
 		vector<porthosSecretType> eta_shares_1(size);
 		vector<porthosSecretType> eta_shares_2(size);
-
-		for (size_t i = 0; i < size; ++i)
-			etaP[i] = 1 - etaP[i];
 
 		sharesModuloOdd<smallType>(eta_shares_1, eta_shares_2, etaP, size, "INDEP");
 		sendVector<porthosSecretType>(eta_shares_1, PARTY_A, size);
@@ -1021,10 +1018,14 @@ void funcShareConvertMPC(vector<porthosSecretType> &a,
 		receiveVector<porthosSecretType>(eta_shares, PARTY_C, size);
 		funcXORModuloOdd2PC(etaDP, eta_shares, theta_shares, size);
 		addModuloOdd<porthosSecretType, smallType>(theta_shares, betai, theta_shares, size);
-		subtractModuloOdd<porthosSecretType, porthosSecretType>(theta_shares, delta_shares, theta_shares, size);
+		addModuloOdd<porthosSecretType, porthosSecretType>(theta_shares, delta_shares, theta_shares, size);	
 
-		if (partyNum == PARTY_A)
+		if (partyNum == PARTY_A){
+			for(size_t i=0; i<size; i++){
+				alpha[i] = alpha[i] + 1;
+			}	
 			subtractModuloOdd<porthosSecretType, smallType>(theta_shares, alpha, theta_shares, size);
+		}
 
 		subtractModuloOdd<porthosSecretType, porthosSecretType>(a, theta_shares, a, size);
 	}
@@ -1401,8 +1402,8 @@ void funcRELUPrime3PC(const vector<porthosSecretType> &a,
 	porthosSecretType j = 0;
 
 	for (size_t i = 0; i < size; ++i)
-		twoA[i] = (a[i] << 1);
-
+		twoA[i] = (a[i] * 2);	
+	
 	funcShareConvertMPC(twoA, size);
 	funcComputeMSB3PC(twoA, b, size);
 
