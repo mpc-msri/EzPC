@@ -73,7 +73,7 @@ def save_graph_metadata(output_tensor, sess, feed_dict):
 
   return optimized_graph_def
 
-def updateWeightsForBN(optimized_graph_def, sess, feed_dict):
+def updateWeightsForBN(optimized_graph_def, sess, feed_dict={}):
   def findNodeInGraphDefWithName(graphDef, curName):
     for curNode in graphDef.node:
       if curNode.name == curName:
@@ -82,18 +82,18 @@ def updateWeightsForBN(optimized_graph_def, sess, feed_dict):
 
   print("Updating weights for BN...")
 
-  graph = tf.get_default_graph()
+  graph = sess.graph 
   graphDef = optimized_graph_def
 
   for node in graphDef.node:
-      if (node.op == 'FusedBatchNorm'):
-        print("node.name = {0}".format(node.name))
+      if (node.op == 'FusedBatchNorm' or node.op == 'FusedBatchNormV3'):
+        print("Updating BN weight, node.name = {0}".format(node.name))
         gamma = graph.get_operation_by_name(node.input[1]).outputs[0]
         beta = graph.get_operation_by_name(node.input[2]).outputs[0]
         mu = graph.get_operation_by_name(node.input[3]).outputs[0]
         variance = graph.get_operation_by_name(node.input[4]).outputs[0]
 
-        epsilon = 1e-5 # Taken from non-fused BN of TF
+        epsilon = node.attr['epsilon'].f
         rsigma = tf.rsqrt(variance + epsilon)
 
         sess.run(tf.assign(gamma, gamma*rsigma))

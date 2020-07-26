@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Authors: Nishant Kumar.
+# Authors: Nishant Kumar, Pratik Bhatu.
 
 # Copyright:
 # Copyright (c) 2018 Microsoft Research
@@ -39,14 +39,13 @@ usage() {
 	echo -e "<-b|--bitlen> <bitlen> :: Bit length to compile for. Defaults to 64";
 	echo -e "<-s|--scaling-fac> <sf> :: Scaling factor to compile for. Defaults to 12.";
 	echo -e "<-t|--target> <target> :: Compilation target. Possible options: ABY/CPP/CPPRING/PORTHOS/PORTHOS2PC. Defaults to CPP.";
-	echo -e "<-f|--filename> :: Python tensorflow file to compile."
+	echo -e "<-f|--filename> :: Tensorflow protobuf file to compile."
 	echo -e "<--modulo> :: Modulo to be used for shares. Applicable for CPPRING/PORTHOS2PC backend. For PORTHOS2PC, for backend type OT, this should be power of 2 and for backend type HE, this should be a prime."
 	echo -e "<--backend> :: Backend to be used - OT/HE (default OT). Applicable for PORTHOS2PC backend."
 	echo -e "<--disable-hlil-all-opti> :: Disable all optimizations in HLIL."
 	echo -e "<--disable-rmo> :: Disable Relu-Maxpool optimization."
 	echo -e "<--disable-liveness-opti> :: Disable Liveness Optimization."
 	echo -e "<--disable-trunc-opti> :: Disable truncation placement optimization."
-	echo -e "<--exec-python> <num of args for python script> <args for python script>... :: Execute the python script which is passed for compilation.";
 	echo -e "<-h|--help> :: help options.";
 	exit 1;
 }
@@ -89,16 +88,6 @@ do
 		shift
 		shift
 		;;
-		--exec-python)
-		numargs="$2"
-		shift
-		shift
-		for ((curArgNum=0;curArgNum<$numargs;curArgNum++)); do
-			EXECPYTHONARGS="${EXECPYTHONARGS} $1"
-			shift #past this argument
-		done
-		EXECPYTHON=Y
-		;;
 		-h|--help)
 		HELP=Y
 		shift # past one arg
@@ -129,10 +118,6 @@ if [ ! -z "$HELP" ] || [ -z "$FILENAME" ] ; then
 	usage 
 fi
 
-if [ ! -z "$EXECPYTHON" ]; then
-	echo -e "Exec-python parameter passed. EXECPYTHONARGS=$EXECPYTHONARGS."
-fi
-
 ACTUALBITLEN="${BITLEN}"
 if [ "$ACTUALBITLEN" -gt 32 ]; then
 	BITLEN="64"
@@ -152,26 +137,19 @@ fullFilePath=$(realpath "$FILENAME")
 ezpcOutputFileName=${actualFileName}'_'${BITLEN}'_'${compilationTargetLower}
 ezpcOutputFullFileName=${fullDirPath}'/'${ezpcOutputFileName}'.ezpc'
 finalCodeOutputFileName=${ezpcOutputFileName}'0.cpp'
-if [ "$extension" != "py" ]; then
-	echo -e "Error: Provide a python file to compile."
+if [ "$extension" != "pb" ]; then
+	echo -e "Error: Provide a tensorflow pb file to compile."
 	usage
 fi
 cd "$fullDirPath"
-if [ ! -z "$EXECPYTHON" ] ; then
-	echo -e "********* Executing python script passed to compile. *********"
-	if [ "$EXECPYTHONARGS" = "" ]; then
-		python3 "$baseFileName"
-	else
-		python3 "$baseFileName" "$EXECPYTHONARGS"
-	fi
-	echo -e "********* Python script compilation done. *********"
-fi
 
 cd - > /dev/null
 cd ./TFCompiler
 python3 ProcessTFGraph.py "$fullFilePath"
 cd ../SeeDot
 seedotArgs="--astFile ${fullDirPath}/astOutput.pkl --consSF ${SCALINGFACTOR} --bitlen ${ACTUALBITLEN} --outputFileName ${ezpcOutputFullFileName}"
+#Temporarily always disable trunc optimization. TODO: Remove when fixed.
+DisableTruncOpti=Y
 if [ ! -z "$DisableHLILAllOpti" ]; then
 	seedotArgs="${seedotArgs} --disableAllOpti True"
 fi

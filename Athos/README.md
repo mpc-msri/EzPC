@@ -18,7 +18,9 @@ The codebase is organized as follows:
 - `TFCompiler`: This contains python modules which are called from the TensorFlow code for the dumping of TensorFlow metadata (required by Athos for compilation to MPC protocols).
 - `TFEzPCLibrary`: This contains library code written in EzPC for the TensorFlow nodes required during compilation.
 - `CompileTF.sh`: The Athos compilation script. Try `./CompileTF.sh --help` for options.
+- `CompileTFGraph.sh`: The Athos compilation script for protobuf models. Try `./CompileTFGraph.sh --help` for options.
 - `Paths.config`: This can be used to override the default folders for EzPC and Porthos.
+- `CompilerScripts`: This folder contains scripts used for processing and compiling dumped models.
 
 # Usage
 Here we provide an example on how to use Athos to compile TensorFlow based ResNet-50 code to Porthos semi-honest 3PC protocol and subsequently run it. The relevant TensorFlow code for ResNet-50 can be found in `./Networks/ResNet/ResNet_main.py`.
