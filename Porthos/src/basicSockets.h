@@ -103,7 +103,7 @@ public:
 		measurement = a;
 	}
 
-	void incrementSent(int size)
+	void incrementSent(size_t size)
 	{
 		if (measurement)
 		{
@@ -112,7 +112,7 @@ public:
 		}
 	}
 
-	void incrementRecv(int size)
+	void incrementRecv(size_t size)
 	{
 		if (measurement)
 		{
