@@ -97,6 +97,7 @@ extern void Conv3DWrapper(int32_pl N, int32_pl D, int32_pl H, int32_pl W, int32_
 				   int32_pl strideD, int32_pl strideH, int32_pl strideW, 
 				   int64_al[N][D][H][W][CI] inputArr, 
 				   int64_al[FD][FH][FW][CI][CO] filterArr,
+				   int32_pl consSF,
 				   int64_al[N][((D-FD+(zPadDLeft+zPadDRight))/strideD)+1][((H-FH+(zPadHLeft+zPadHRight))/strideH)+1][((W-FW+(zPadWLeft+zPadWRight))/strideW)+1][CO] outArr);
 
 extern void Conv2DGroupWrapper(int32_pl N, int32_pl H, int32_pl W, int32_pl CI, 
@@ -123,4 +124,5 @@ extern void ConvTranspose3DWrapper(int32_pl N, int32_pl DPrime, int32_pl HPrime,
 				   int32_pl strideD, int32_pl strideH, int32_pl strideW,
 				   int64_al[N][DPrime][HPrime][WPrime][CI] inputArr, 
 				   int64_al[FD][FH][FW][CO][CI] filterArr, 
+				   int32_pl consSF,
 				   int64_al[N][D][H][W][CO] outArr);

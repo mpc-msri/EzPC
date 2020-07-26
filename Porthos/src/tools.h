@@ -271,6 +271,41 @@ void zero_2D_vector(vector< vector<porthosSecretType> >& vec,
 		int d1, 
 		int d2);
 
+
+void add_5D_vectors(vector< vector< vector< vector< vector<porthosSecretType> > > > >& inp_l, 
+		vector< vector< vector< vector< vector<porthosSecretType> > > > >& inp_r, 
+		vector< vector< vector< vector< vector<porthosSecretType> > > > >& out, 
+		int d1, 
+		int d2, 
+		int d3, 
+		int d4, 
+		int d5);
+
+void subtract_5D_vectors(vector< vector< vector< vector< vector<porthosSecretType> > > > >& inp_l, 
+		vector< vector< vector< vector< vector<porthosSecretType> > > > >& inp_r, 
+		vector< vector< vector< vector< vector<porthosSecretType> > > > >& out, 
+		int d1, 
+		int d2, 
+		int d3, 
+		int d4, 
+		int d5);
+
+void flatten_5D_vector(vector< vector< vector< vector< vector<porthosSecretType> > > > >& input,
+                        vector<porthosSecretType>& output,
+                        int d1,
+                        int d2,
+                        int d3,
+                        int d4,
+                        int d5);
+
+void deflatten_5D_vector(vector<porthosSecretType>& input,
+                        vector< vector< vector< vector< vector<porthosSecretType> > > > >& output,
+                        int d1,
+                        int d2,
+                        int d3,
+                        int d4,
+                        int d5);
+
 void add_4D_vectors(vector< vector< vector< vector<porthosSecretType> > > >& inp_l, 
 		vector< vector< vector< vector<porthosSecretType> > > >& inp_r, 
 		vector< vector< vector< vector<porthosSecretType> > > >& out, 
@@ -310,6 +345,22 @@ void deflatten_2D_vector(vector<porthosSecretType>& input,
 			vector< vector<porthosSecretType> >& output, 
 			int d1, 
 			int d2);
+
+void send_5D_vector(vector< vector< vector< vector< vector<porthosSecretType> > > > >& input,
+			int party,
+			int d1, 
+			int d2, 
+			int d3, 
+			int d4,
+			int d5);
+
+void receive_5D_vector(vector< vector< vector< vector< vector<porthosSecretType> > > > >& recv,
+			int party,
+			int d1, 
+			int d2, 
+			int d3, 
+			int d4,
+			int d5);
 
 void send_4D_vector(vector< vector< vector< vector<porthosSecretType> > > >& input, 
 			int d1, 
@@ -352,6 +403,14 @@ void send_2D_vector(vector< vector<porthosSecretType> >& input,
 void receive_2D_vector(vector< vector<porthosSecretType> >& recv, 
 			int d1, 
 			int d2);
+
+void populate_5D_vector(vector< vector< vector< vector< vector<porthosSecretType> > > > >& vec, 
+			int d1, 
+			int d2, 
+			int d3, 
+			int d4, 
+			int d5, 
+			string type);
 
 void populate_4D_vector(vector< vector< vector< vector<porthosSecretType> > > >& vec, 
 			int d1, 

@@ -67,8 +67,9 @@ fi
 echo "Starting onnx run"
 # can use either 'onnx_run_tf' or 'onnx_run'
 # onnx_run is faster and has lesser dependencies 
-# but may not support all operations
+# but may not support all operations (like conv3d)
 python3 "onnx_run.py" ${modelName}'.onnx' ${debugOnnxNode} > "debug/log_onnx_run.txt"
+#python3 "onnx_run_tf.py" ${modelName}'.onnx' ${debugOnnxNode} > "debug/log_onnx_run.txt"
 echo -e "${GREEN}Finished onnx run${NC}"
 
 echo "Starting process_onnx"
@@ -90,8 +91,7 @@ echo -e "${GREEN}Finished seedot to ezpc compilation${NC}"
 
 python3 -c 'import common; common.merge_name_map()'
 
-
-cat "../TFEzPCLibrary/Library${BITLEN}_cpp.ezpc" "../TFEzPCLibrary/Library${BITLEN}_common.ezpc" ${data_dir}"/"${ezpcOutputFullFileName} > temp
+cat "../TFEzPCLibrary/Library${BITLEN}_cpp_pre.ezpc" "../TFEzPCLibrary/Library${BITLEN}_common.ezpc" "../TFEzPCLibrary/Library${BITLEN}_cpp_post.ezpc"  ${data_dir}"/"${ezpcOutputFullFileName} > temp
 mv temp "$ezpcOutputFullFileName"
 
 mv "$ezpcOutputFullFileName" "$EzPCDir/EzPC"

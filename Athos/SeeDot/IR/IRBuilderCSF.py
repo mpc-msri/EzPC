@@ -450,6 +450,12 @@ class IRBuilderCSF(ASTVisitor):
 
 			outputShape = typ_3.shape
 			argsDict = OrderedDict()
+			inp1_shape = node.expr1.type.shape
+			inp2_shape = node.expr2.type.shape
+			for ii,curDimSize in enumerate(inp1_shape):
+				argsDict[IR.Int(curDimSize, 32)] = "size_" + str(ii)
+			for ii,curDimSize in enumerate(inp2_shape):
+				argsDict[IR.Int(curDimSize, 32)] = "size_" + str(ii)
 			for ii,curDimSize in enumerate(outputShape):
 				argsDict[IR.Int(curDimSize, 32)] = "size_" + str(ii)
 			argsDict[expr_1] = "A"
@@ -471,7 +477,7 @@ class IRBuilderCSF(ASTVisitor):
 		elif (node.op == AST.Operators.ElemWiseDiv):
 			op_ir = IR.Op.Op['./']
 			funcName = "ElemWiseDiv"
-		
+
 		typ_3 = node.type
 		expr_3 = self.getTempVar()
 		cmd0 = IR.Comment(expr_1.idf + ' ' + op_ir.name + ' ' + expr_2.idf)
@@ -692,14 +698,16 @@ class IRBuilderCSF(ASTVisitor):
 			funcCallArgsDict[IR.Int(node.options[AST.PaddingKeysDict.strideD], 32)] = "strideD"	
 		funcCallArgsDict[IR.Int(node.options[AST.PaddingKeysDict.strideH], 32)] = "strideH"
 		funcCallArgsDict[IR.Int(node.options[AST.PaddingKeysDict.strideW], 32)] = "strideW"
-		
+
 		isGroupConv = False
-		if AST.PaddingKeysDict.group in node.options.keys():		
+		if AST.PaddingKeysDict.group in node.options.keys():
 			funcCallArgsDict[IR.Int(node.options[AST.PaddingKeysDict.group], 32)] = "G"
 			isGroupConv = True
 
 		funcCallArgsDict[expr1] = "input"
 		funcCallArgsDict[expr2] = "filter"
+		if convDim == 3:
+			funcCallArgsDict[IR.Int(Util.Config.consSF, 32)] = "consSF"
 		funcCallArgsDict[returnExpr] = "output"
 
 		if convDim == 2:
@@ -710,7 +718,7 @@ class IRBuilderCSF(ASTVisitor):
 		if isGroupConv:
 			funcCallName += "Group"
 
-		funcCallName += "Wrapper"	
+		funcCallName += "Wrapper"
 
 		funcCall = IR.FuncCall(funcCallName, funcCallArgsDict)
 		progConv = IR.Prog([comment, funcCall])
@@ -729,11 +737,11 @@ class IRBuilderCSF(ASTVisitor):
 				progExtraBefore = IRUtil.prog_merge(progExtraBefore, self.addTruncateFunctionCall(node.expr2, "Conv", expr2, expr2_sf-self.scaleFac))
 				self.scaleFacMapping[expr_2.idf] = self.scaleFac
 			self.scaleFacMapping[returnExpr.idf] = 2*self.scaleFac
-		
+
 		returnProg = IRUtil.prog_merge(prog1, prog2, progExtraBefore, progConv)
 		returnProg = IRUtil.prog_merge(IR.Prog([IR.Decl(returnExpr.idf, node.type)]), returnProg, progExtraAfter)
 		return (returnProg, returnExpr)
-	
+
 	def visitBopConvTranspose(self, node:AST.BOp, args=None):
 		(prog1, expr1) = self.visit(node.expr1)
 		(prog2, expr2) = self.visit(node.expr2)
@@ -807,12 +815,15 @@ class IRBuilderCSF(ASTVisitor):
 
 		funcCallArgsDict[expr1] = "input"
 		funcCallArgsDict[expr2] = "filter"
+		if convDim == 3:
+			funcCallArgsDict[IR.Int(Util.Config.consSF, 32)] = "consSF"
 		funcCallArgsDict[returnExpr] = "output"
 
 		if convDim == 2:
 			funcCallName = "ConvTranspose2D"
 		else:
 			funcCallName = "ConvTranspose3D"
+		funcCallName += "Wrapper"
 		funcCall = IR.FuncCall(funcCallName, funcCallArgsDict)
 
 		progConv = IR.Prog([comment, funcCall])

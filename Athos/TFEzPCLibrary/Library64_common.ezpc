@@ -23,7 +23,7 @@ SOFTWARE.
 *)
 
 (**************************)
-def void MatAddBroadCast2(int32_pl s1, int32_pl s2, int64_al[s1][s2] A, int64_al[s2] B, int64_al[s1][s2] outArr){
+def void MatAddBroadCast2(int32_pl a1, int32_pl a2, int32_pl b1, int32_pl s1, int32_pl s2, int64_al[s1][s2] A, int64_al[s2] B, int64_al[s1][s2] outArr){
 	for i1=[0:s1]{
 		for i2=[0:s2]{
 			outArr[i1][i2] = A[i1][i2] + B[i2];
@@ -31,15 +31,23 @@ def void MatAddBroadCast2(int32_pl s1, int32_pl s2, int64_al[s1][s2] A, int64_al
 	};
 }
 
-def void MatAdd2(int32_pl s1, int32_pl s2, int64_al[s1][s2] A, int64_al[s1][s2] B, int64_al[s1][s2] outArr){
+def void MatAdd2(int32_pl a1, int32_pl a2, int32_pl b1, int32_pl b2, int32_pl s1, int32_pl s2, int64_al[a1][a2] A, int64_al[b1][b2] B, int64_al[s1][s2] outArr){
+	int32_pl aIdx1 = 0;
+	int32_pl aIdx2 = 0;
+	int32_pl bIdx1 = 0;
+	int32_pl bIdx2 = 0;
 	for i1=[0:s1]{
+		aIdx1 = ((a1 == 1) ? 0 : i1);
+		bIdx1 = ((b1 == 1) ? 0 : i1);
 		for i2=[0:s2]{
-			outArr[i1][i2] = A[i1][i2] + B[i1][i2];
+			aIdx2 = ((a2 == 1) ? 0 : i2);
+			bIdx2 = ((b2 == 1) ? 0 : i2);
+			outArr[i1][i2] = A[aIdx1][aIdx2] + B[bIdx1][bIdx2];
 		};
 	};
 }
 
-def void MatAddBroadCast4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int64_al[s1][s2][s3][s4] A, int64_al[s4] B, int64_al[s1][s2][s3][s4] outArr){
+def void MatAddBroadCast4(int32_pl a1, int32_pl a2, int32_pl a3, int32_pl a4, int32_pl b1, int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int64_al[s1][s2][s3][s4] A, int64_al[s4] B, int64_al[s1][s2][s3][s4] outArr){
 	for i1=[0:s1]{
 		for i2=[0:s2]{
 			for i3=[0:s3]{
@@ -51,19 +59,8 @@ def void MatAddBroadCast4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, in
 	};
 }
 
-def void MatAdd4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int64_al[s1][s2][s3][s4] A, int64_al[s1][s2][s3][s4] B, int64_al[s1][s2][s3][s4] outArr){
-	for i1=[0:s1]{
-		for i2=[0:s2]{
-			for i3=[0:s3]{
-				for i4=[0:s4]{
-					outArr[i1][i2][i3][i4] = A[i1][i2][i3][i4] + B[i1][i2][i3][i4];
-				};
-			};
-		};
-	};
-}
 
-def void MatAddBroadCast5(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int64_al[s1][s2][s3][s4][s5] A, int64_al[s5] B, int64_al[s1][s2][s3][s4][s5] outArr){
+def void MatAddBroadCast5(int32_pl a1, int32_pl a2, int32_pl a3, int32_pl a4, int32_pl a5, int32_pl b1, int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int64_al[s1][s2][s3][s4][s5] A, int64_al[s5] B, int64_al[s1][s2][s3][s4][s5] outArr){
 	for i1=[0:s1]{
 		for i2=[0:s2]{
 			for i3=[0:s3]{
@@ -77,20 +74,67 @@ def void MatAddBroadCast5(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, in
 	};
 }
 
-def void MatAdd5(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int64_al[s1][s2][s3][s4][s5] A, int64_al[s1][s2][s3][s4][s5] B, int64_al[s1][s2][s3][s4][s5] outArr){
+def void MatAdd4(int32_pl a1, int32_pl a2, int32_pl a3, int32_pl a4, int32_pl b1, int32_pl b2, int32_pl b3, int32_pl b4, int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int64_al[a1][a2][a3][a4] A, int64_al[b1][b2][b3][b4] B, int64_al[s1][s2][s3][s4] outArr){
+	int32_pl aIdx1 = 0;
+	int32_pl aIdx2 = 0;
+	int32_pl aIdx3 = 0;
+	int32_pl aIdx4 = 0;
+	int32_pl bIdx1 = 0;
+	int32_pl bIdx2 = 0;
+	int32_pl bIdx3 = 0;
+	int32_pl bIdx4 = 0;
 	for i1=[0:s1]{
+		aIdx1 = ((a1 == 1) ? 0 : i1);
+		bIdx1 = ((b1 == 1) ? 0 : i1);
 		for i2=[0:s2]{
+			aIdx2 = ((a2 == 1) ? 0 : i2);
+			bIdx2 = ((b2 == 1) ? 0 : i2);
 			for i3=[0:s3]{
+				aIdx3 = ((a3 == 1) ? 0 : i3);
+				bIdx3 = ((b3 == 1) ? 0 : i3);
 				for i4=[0:s4]{
-					for i5=[0:s5]{
-						outArr[i1][i2][i3][i4][i5] = A[i1][i2][i3][i4][i5] + B[i1][i2][i3][i4][i5];
-					};
+					aIdx4 = ((a4 == 1) ? 0 : i4);
+					bIdx4 = ((b4 == 1) ? 0 : i4);
+					outArr[i1][i2][i3][i4] = A[aIdx1][aIdx2][aIdx3][aIdx4] + B[bIdx1][bIdx2][bIdx3][bIdx4];
 				};
 			};
 		};
 	};
 }
 
+def void MatAdd5(int32_pl a1, int32_pl a2, int32_pl a3, int32_pl a4, int32_pl a5, int32_pl b1, int32_pl b2, int32_pl b3, int32_pl b4, int32_pl b5, int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int64_al[a1][a2][a3][a4][a5] A, int64_al[b1][b2][b3][b4][b5] B, int64_al[s1][s2][s3][s4][s5] outArr){
+	int32_pl aIdx1 = 0;
+	int32_pl aIdx2 = 0;
+	int32_pl aIdx3 = 0;
+	int32_pl aIdx4 = 0;
+	int32_pl aIdx5 = 0;
+	int32_pl bIdx1 = 0;
+	int32_pl bIdx2 = 0;
+	int32_pl bIdx3 = 0;
+	int32_pl bIdx4 = 0;
+	int32_pl bIdx5 = 0;
+	for i1=[0:s1]{
+		aIdx1 = ((a1 == 1) ? 0 : i1);
+		bIdx1 = ((b1 == 1) ? 0 : i1);
+		for i2=[0:s2]{
+			aIdx2 = ((a2 == 1) ? 0 : i2);
+			bIdx2 = ((b2 == 1) ? 0 : i2);
+			for i3=[0:s3]{
+				aIdx3 = ((a3 == 1) ? 0 : i3);
+				bIdx3 = ((b3 == 1) ? 0 : i3);
+				for i4=[0:s4]{
+					aIdx4 = ((a4 == 1) ? 0 : i4);
+					bIdx4 = ((b4 == 1) ? 0 : i4);
+					for i5=[0:s5]{
+						aIdx5 = ((a5 == 1) ? 0 : i5);
+						bIdx5 = ((b5 == 1) ? 0 : i5);
+						outArr[i1][i2][i3][i4][i5] = A[aIdx1][aIdx2][aIdx3][aIdx4][aIdx5] + B[bIdx1][bIdx2][bIdx3][bIdx4][bIdx5];
+					};
+				};
+			};
+		};
+	};
+}
 (**************************)
 def void CreateTensor1(int32_pl s1, int32_pl val, int32_pl[s1] arr){
 	for i1=[0:s1]{

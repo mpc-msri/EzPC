@@ -40,6 +40,7 @@ def void Conv3DWrapper(int32_pl N, int32_pl D, int32_pl H, int32_pl W, int32_pl 
 				   int32_pl strideD, int32_pl strideH, int32_pl strideW, 
 				   int32_al[N][D][H][W][CI] inputArr, 
 				   int32_al[FD][FH][FW][CI][CO] filterArr,
+				   int32_pl consSF,
 				   int32_al[N][((D-FD+(zPadDLeft+zPadDRight))/strideD)+1][((H-FH+(zPadHLeft+zPadHRight))/strideH)+1][((W-FW+(zPadWLeft+zPadWRight))/strideW)+1][CO] outArr)
 {
 	Conv3D(N, D, H, W, CI, FD, FH, FW, CO, zPadDLeft, zPadDRight, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideD, strideH, strideW, inputArr, filterArr, outArr);
@@ -75,9 +76,9 @@ def void ConvTranspose3DWrapper(int32_pl N, int32_pl DPrime, int32_pl HPrime, in
 				   int32_pl strideD, int32_pl strideH, int32_pl strideW,
 				   int32_al[N][DPrime][HPrime][WPrime][CI] inputArr, 
 				   int32_al[FD][FH][FW][CO][CI] filterArr, 
+				   int32_pl consSF,
 				   int32_al[N][D][H][W][CO] outArr)
 {
 	ConvTranspose3D(N, DPrime, HPrime, WPrime, CI, FD, FH, FW, CO, D, H, W, zPadTrDLeft, zPadTrDRight, zPadTrHLeft, zPadTrHRight, zPadTrWLeft, zPadTrWRight, strideD, strideH, strideW, inputArr, filterArr, outArr);
 }
-
 

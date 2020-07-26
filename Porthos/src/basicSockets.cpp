@@ -325,8 +325,8 @@ bool PorthosNet::connectNow(){
 
 
 
-bool PorthosNet::sendMsg(const void* data, int size, int conn){
-	int left = size;
+bool PorthosNet::sendMsg(const void* data, size_t size, int conn){
+	long long left = size;
 	int n;
 #if (LOG_LAYERWISE)
 	auto t1 = high_resolution_clock::now();
@@ -354,15 +354,15 @@ bool PorthosNet::sendMsg(const void* data, int size, int conn){
 	return true;
 }
 
-bool PorthosNet::receiveMsg(void* buff, int size, int conn){
-	memset(buff, 0, (unsigned long)size);
+bool PorthosNet::receiveMsg(void* buff, size_t size, int conn){
+	memset(buff, 0, size);
 	int n = 0;
 
 #if (LOG_LAYERWISE)
 	auto t1 = high_resolution_clock::now();
 #endif
 
-	int left = size;
+	long long left = size;
 	while(left > 0)
 	{
 		n = Sockread(this->socketFd[conn], &((char*)buff)[size-left], left);

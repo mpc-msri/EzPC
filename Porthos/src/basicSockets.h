@@ -179,13 +179,13 @@ public:
 	 * Send Data to the other side.
 	 * return true for success or false for failure.
 	 */
-	bool sendMsg(const void* data, int size, int conn);
+	bool sendMsg(const void* data, size_t size, int conn);
 
 	/**
 	 * Recive data from other side.
 	 * return true for success or false for failure.
 	 */
-	bool receiveMsg(void* buff, int buffSize, int conn);
+	bool receiveMsg(void* buff, size_t buffSize, int conn);
 };
 
 

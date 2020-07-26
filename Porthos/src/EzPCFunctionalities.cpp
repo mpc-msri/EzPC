@@ -398,51 +398,79 @@ void Conv2DWrapper(int32_t N, int32_t H, int32_t W, int32_t CI,
 
 }
 
+void Conv3DWrapper(int32_t N, int32_t D, int32_t H, int32_t W, int32_t CI,
+                        int32_t FD, int32_t FH, int32_t FW, int32_t CO,
+                        int32_t zPadDLeft, int32_t zPadDRight,
+                        int32_t zPadHLeft, int32_t zPadHRight,
+                        int32_t zPadWLeft, int32_t zPadWRight,
+                        int32_t strideD, int32_t strideH, int32_t strideW,
+                        vector< vector< vector< vector< vector<porthosSecretType> > > > >& inputArr,
+                        vector< vector< vector< vector< vector<porthosSecretType> > > > >& filterArr,
+                        int32_t consSF,
+                        vector< vector< vector< vector< vector<porthosSecretType> > > > >& outArr)
+{
+	funcConv3DMPC(N, D, H, W, CI, FD, FH, FW, CO, zPadDLeft, zPadDRight, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideD, strideH, strideW, inputArr, filterArr, consSF, outArr);
+}
 
-void ClearMemSecret1(int32_t s1, vector< porthosSecretType >& arr){
+void ConvTranspose3DWrapper(int32_t N, int32_t DPrime, int32_t HPrime, int32_t WPrime, int32_t CI,
+                                int32_t FD, int32_t FH, int32_t FW, int32_t CO,
+                                int32_t D, int32_t H, int32_t W,
+                                int32_t zPadTrDLeft, int32_t zPadTrDRight,
+                                int32_t zPadTrHLeft, int32_t zPadTrHRight,
+                                int32_t zPadTrWLeft, int32_t zPadTrWRight,
+                                int32_t strideD, int32_t strideH, int32_t strideW,
+                                vector< vector< vector< vector< vector<porthosSecretType> > > > >& inputArr,
+                                vector< vector< vector< vector< vector<porthosSecretType> > > > >& filterArr,
+                                int32_t consSF,
+                                vector< vector< vector< vector< vector<porthosSecretType> > > > >& outArr)
+{
+	ConvTranspose3DCSFMPC(N, DPrime, HPrime, WPrime, CI, FD, FH, FW, CO, D, H, W, zPadTrDLeft, zPadTrDRight, zPadTrHLeft, zPadTrHRight, zPadTrWLeft, zPadTrWRight, strideD, strideH, strideW, inputArr, filterArr, consSF, outArr);
+}
+
+void ClearMemSecret1(int64_t s1, vector< porthosSecretType >& arr){
 	arr = vector< porthosSecretType >();
 }
 
-void ClearMemSecret2(int32_t s1, int32_t s2, vector< vector< porthosSecretType > >& arr){
+void ClearMemSecret2(int64_t s1, int64_t s2, vector< vector< porthosSecretType > >& arr){
 	arr = vector< vector< porthosSecretType > >();
 }
 
-void ClearMemSecret3(int32_t s1, int32_t s2, int32_t s3, vector< vector< vector< porthosSecretType > > >& arr){
+void ClearMemSecret3(int64_t s1, int64_t s2, int64_t s3, vector< vector< vector< porthosSecretType > > >& arr){
 	arr = vector< vector< vector< porthosSecretType > > >();
 
 }
 
-void ClearMemSecret4(int32_t s1, int32_t s2, int32_t s3, int32_t s4, vector< vector< vector< vector< porthosSecretType > > > >& arr){
+void ClearMemSecret4(int64_t s1, int64_t s2, int64_t s3, int64_t s4, vector< vector< vector< vector< porthosSecretType > > > >& arr){
 	arr = vector< vector< vector< vector< porthosSecretType > > > >();
 }
 
-void ClearMemSecret5(int32_t s1, int32_t s2, int32_t s3, int32_t s4, int32_t s5, vector< vector< vector< vector< vector< porthosSecretType > > > > >& arr){
+void ClearMemSecret5(int64_t s1, int64_t s2, int64_t s3, int64_t s4, int64_t s5, vector< vector< vector< vector< vector< porthosSecretType > > > > >& arr){
 	arr = vector< vector< vector< vector< vector< porthosSecretType > > > > >();
 }
 
-void ClearMemPublic(int32_t x)
+void ClearMemPublic(int64_t x)
 {
 	return;
 }
 
-void ClearMemPublic1(int32_t s1, vector< int32_t >& arr){
+void ClearMemPublic1(int64_t s1, vector< int32_t >& arr){
 	arr = vector< int32_t >();
 }
 
-void ClearMemPublic2(int32_t s1, int32_t s2, vector< vector< int32_t > >& arr){
+void ClearMemPublic2(int64_t s1, int64_t s2, vector< vector< int32_t > >& arr){
 	arr = vector< vector< int32_t > >();
 }
 
-void ClearMemPublic3(int32_t s1, int32_t s2, int32_t s3, vector< vector< vector< int32_t > > >& arr){
+void ClearMemPublic3(int64_t s1, int64_t s2, int64_t s3, vector< vector< vector< int32_t > > >& arr){
 	arr = vector< vector< vector< int32_t > > >();
 
 }
 
-void ClearMemPublic4(int32_t s1, int32_t s2, int32_t s3, int32_t s4, vector< vector< vector< vector< int32_t > > > >& arr){
+void ClearMemPublic4(int64_t s1, int64_t s2, int64_t s3, int64_t s4, vector< vector< vector< vector< int32_t > > > >& arr){
 	arr = vector< vector< vector< vector< int32_t > > > >();
 }
 
-void ClearMemPublic5(int32_t s1, int32_t s2, int32_t s3, int32_t s4, int32_t s5, vector< vector< vector< vector< vector< int32_t > > > > >& arr){
+void ClearMemPublic5(int64_t s1, int64_t s2, int64_t s3, int64_t s4, int64_t s5, vector< vector< vector< vector< vector< int32_t > > > > >& arr){
 	arr = vector< vector< vector< vector< vector< int32_t > > > > >();
 }
 
