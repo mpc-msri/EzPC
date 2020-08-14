@@ -175,27 +175,27 @@ void analyseComputeVsCommTime()
 //Aggregate some stats about ongoing communication
 void aggregateCommunication()
 {
-	vector<porthosSecretType> vec(4, 0), temp(4, 0);
+	vector<size_t> vec(4, 0), temp(4, 0);
 	vec[0] = commObject.getSent();
 	vec[1] = commObject.getRecv();
 	vec[2] = commObject.getRoundsSent();
 	vec[3] = commObject.getRoundsRecv();
 
 	if (partyNum == PARTY_B or partyNum == PARTY_C)
-		sendVector<porthosSecretType>(vec, PARTY_A, 4);
+		sendVector<size_t>(vec, PARTY_A, 4);
 
 	if (partyNum == PARTY_A)
 	{
-		receiveVector<porthosSecretType>(temp, PARTY_B, 4);
-		addVectors<porthosSecretType>(vec, temp, vec, 4);
-		receiveVector<porthosSecretType>(temp, PARTY_C, 4);
-		addVectors<porthosSecretType>(vec, temp, vec, 4);
+		receiveVector<size_t>(temp, PARTY_B, 4);
+		addVectors<size_t>(vec, temp, vec, 4);
+		receiveVector<size_t>(temp, PARTY_C, 4);
+		addVectors<size_t>(vec, temp, vec, 4);
 	}
 
 	if (partyNum == PARTY_A)
 	{
 		cout << "------------------------------------" << endl;
-		cout << "Total communication: " << (float)vec[0]/1000000 << "MB (sent) and " << (float)vec[1]/1000000 << "MB (recv)\n";
+		cout << "Total communication: " << (double)vec[0]/1000000 << "MB (sent) and " << (double)vec[1]/1000000 << "MB (recv)\n";
 		cout << "Total #calls: " << vec[2] << " (sends) and " << vec[3] << " (recvs)" << endl;
 		cout << "------------------------------------" << endl;
 	}

@@ -3,21 +3,16 @@
  * basicSockets.cpp
  *
  *  Created on: Aug 3, 2015
- *      Author: froike(Roi Inbar) 
+ *      Author: froike(Roi Inbar)
  * 	Modified: Aner Ben-Efraim
- * 
+ *
  */
+#ifndef PORTHOSNET_H_
+#define PORTHOSNET_H_
 
 #include <stdio.h>
-//#include <stropts.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
-
-#ifdef __APPLE__
-#include <net/if.h>
-#else
-#include <linux/netdevice.h>
-#endif
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -27,17 +22,12 @@
 #include "globals.h"
 using namespace std;
 
-#ifndef PORTHOSNET_H_
-#define PORTHOSNET_H_
+#include <boost/array.hpp>
+#include <boost/asio.hpp>
+using boost::asio::ip::tcp;
 
-#ifdef _WIN32
- #include<winsock2.h>
-#else
-	#include <sys/socket.h>
-	#include <netinet/in.h>
-	#include <arpa/inet.h>
-	#include <stdbool.h>
-#endif
+
+
 /*GLOBAL VARIABLES - LIST OF IP ADDRESSES*/
 extern char** localIPaddrs;
 extern int numberOfAddresses;
@@ -52,36 +42,36 @@ int getPartyNum(char* filename);
 class CommunicationObject
 {
 private:
-	porthosLongUnsignedInt bytesSent = 0;
-	porthosLongUnsignedInt bytesReceived = 0;
-	porthosLongUnsignedInt numberOfSends = 0;
-	porthosLongUnsignedInt numberOfRecvs = 0;	
-	bool measurement = false;	
+	size_t bytesSent = 0;
+	size_t bytesReceived = 0;
+	size_t numberOfSends = 0;
+	size_t numberOfRecvs = 0;
+	bool measurement = false;
 
 public:
 #if (LOG_LAYERWISE)
 	double totalTimeInSending;
 	double totalTimeInReceiving;
-	porthosLongUnsignedInt totalDataSent;
-	porthosLongUnsignedInt totalDataReceived;
-	porthosLongUnsignedInt minSizeSent = 0;
+	size_t totalDataSent;
+	size_t totalDataReceived;
+	size_t minSizeSent = 0;
 
-	porthosLongUnsignedInt dataMatmul[2] = {0,0};
+	size_t dataMatmul[2] = {0,0};
 	double timeMatmul[2] = {0.0,0.0};
 
-	porthosLongUnsignedInt dataRelu[2] = {0,0};
+	size_t dataRelu[2] = {0,0};
 	double timeRelu = 0.0;
 
-	porthosLongUnsignedInt dataMaxPool[2] = {0,0};
+	size_t dataMaxPool[2] = {0,0};
 	double timeMaxpool = 0.0;
 
-	porthosLongUnsignedInt dataBN[2] = {0,0};
+	size_t dataBN[2] = {0,0};
 	double timeBN = 0.0;
 
-	porthosLongUnsignedInt dataAvgPool[2] = {0,0};
+	size_t dataAvgPool[2] = {0,0};
 	double timeAvgPool = 0.0;
 #endif
-	
+
 	void reset()
 	{
 		bytesSent = 0;
@@ -121,10 +111,10 @@ public:
 		}
 	}
 
-	porthosLongUnsignedInt getSent() {return bytesSent;}
-	porthosLongUnsignedInt getRecv() {return bytesReceived;}
-	porthosLongUnsignedInt getRoundsSent() {return numberOfSends;}
-	porthosLongUnsignedInt getRoundsRecv() {return numberOfRecvs;}
+	size_t getSent() {return bytesSent;}
+	size_t getRecv() {return bytesReceived;}
+	size_t getRoundsSent() {return numberOfSends;}
+	size_t getRoundsRecv() {return numberOfRecvs;}
 	bool getMeasurement() {return measurement;}
 };
 
@@ -134,13 +124,7 @@ private:
 	char * host;
 	unsigned int port;
 	bool is_JustServer;
-	int socketFd[NUMCONNECTIONS];
-	#ifdef _WIN32
-	    PCSTR Cport;
-		WSADATA wsa;
-		DWORD dwRetval;
-	#endif
-
+	tcp::socket* sockets[NUMCONNECTIONS];
 
 public:
 	/**
@@ -161,7 +145,6 @@ public:
 	 */
 	void* sendAndRecive(const void* data, int get_size, int send_size);
 
-	
 	virtual ~PorthosNet();
 
 	/**

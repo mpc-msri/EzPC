@@ -8,7 +8,6 @@
  *
  */
 
-#define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include "basicSockets.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -27,43 +26,15 @@ using namespace std::chrono;
 
 #define bufferSize 256
 
-#ifdef __linux__
-#include <unistd.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#define Sockwrite(sock, data, size) write(sock, data, size)
-#define Sockread(sock, buff, bufferSize) read(sock, buff, bufferSize)
-//#define socklen_t int
-
-#elif __APPLE__
-#include <unistd.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#define Sockwrite(sock, data, size) write(sock, data, size)
-#define Sockread(sock, buff, bufferSize) read(sock, buff, bufferSize)
-//#define socklen_t int
-
-#elif _WIN32
-//#pragma comment (lib, "ws2_32.lib") //Winsock Library
-#pragma comment (lib, "Ws2_32.lib")
-//#pragma comment (lib, "Mswsock.lib")
-//#pragma comment (lib, "AdvApi32.lib")
-#include<winsock.h>
-//#include <ws2tcpip.h>
-#define socklen_t int
-#define close closesocket
-#define Sockwrite(sock, data, size) send(sock, (char*)data, size, 0)
-#define Sockread(sock, buff, bufferSize) recv(sock, (char*)buff, bufferSize, 0)
-#endif
-
 /*GLOBAL VARIABLES - LIST OF IP ADDRESSES*/
 char** localIPaddrs;
 int numberOfAddresses;
 
 //For communication measurements
 CommunicationObject commObject;
+
+// Global for maintaining all io context
+boost::asio::io_service io_service;
 
 std::string exec(const char* cmd)
 {
@@ -130,23 +101,19 @@ char** getIPAddresses(const int domain)
 	}
 
 	close(s);
-
 	return ans;
 }
 
 int getPartyNum(char* filename)
 {
-
 	FILE * f = fopen(filename, "r");
 
 	char buff[STRING_BUFFER_SIZE];
 	char ip[STRING_BUFFER_SIZE];
 
-	localIPaddrs=getIPAddresses(AF_INET);
+	localIPaddrs = getIPAddresses(AF_INET);
 	string tmp;
 	int player = 0;
-	//for (int i = 0; i < numberOfAddresses; i++)
-	//	cout << localIPaddrs[i] << endl;
 	while (true)
 	{
 		fgets(buff, STRING_BUFFER_SIZE, f);
@@ -157,193 +124,130 @@ int getPartyNum(char* filename)
 		player++;
 	}
 	fclose(f);
-
+	return -1;
 }
 
 PorthosNet::PorthosNet(char* host, int portno) {
 	this->port = portno;
-#ifdef _WIN32
-	this->Cport = (PCSTR)portno;
-#endif
 	this->host = host;
 	this->is_JustServer = false;
-	for (int i = 0; i < NUMCONNECTIONS; i++) this->socketFd[i] = -1;
-#ifdef _WIN32
-	if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
-	{
-		printf("Failed. Error Code : %d\n", WSAGetLastError());
-	}
-	else printf("WSP Initialised.\n");
-#endif
-
+	for (int i = 0; i < NUMCONNECTIONS; i++)
+		this->sockets[i] = new tcp::socket(io_service);
 }
 
 PorthosNet::PorthosNet(int portno) {
 	this->port = portno;
 	this->host = "";
 	this->is_JustServer = true;
-	for (int i = 0; i < NUMCONNECTIONS; i++) this->socketFd[i] = -1;
-#ifdef _WIN32
-	if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
-	{
-		printf("Failed. Error Code : %d\n", WSAGetLastError());
-	}
-	else printf("WSP Initialised.\n");
-#endif
+	for (int i = 0; i < NUMCONNECTIONS; i++)
+		this->sockets[i] = new tcp::socket(io_service);
 }
 
 PorthosNet::~PorthosNet() {
-	for (int conn = 0; conn < NUMCONNECTIONS; conn++)
-		close(socketFd[conn]);
-#ifdef _WIN32
-	WSACleanup();
-#endif
-	//printf("Closing connection\n");
+	for (int conn = 0; conn < NUMCONNECTIONS; conn++) {
+		boost::system::error_code ec;
+		sockets[conn]->shutdown(tcp::socket::shutdown_both, ec);
+		if (ec)
+			std::cout << "Shutdown of send/recv on socket failed: " << ec.message() << std::endl;
+		sockets[conn]->close(ec);
+		if (ec)
+			std::cout << "Closing of socket failed: " << ec.message() << std::endl;
+		free(sockets[conn]);
+	}
 }
 
 bool PorthosNet::listenNow(){
-	int serverSockFd;
-	socklen_t clilen;
-
-	struct sockaddr_in serv_addr, cli_addr[NUMCONNECTIONS];
-
-
-	serverSockFd = socket(AF_INET, SOCK_STREAM, 0);
-	if (serverSockFd < 0){
-		cout<<"ERROR opening socket"<<endl;
-		return false;
-	}
-	memset(&serv_addr, 0,sizeof(serv_addr));
-
-	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_addr.s_addr = INADDR_ANY;
-	serv_addr.sin_port = htons(this->port);
-
-	int yes=1;
-
-	if (setsockopt(serverSockFd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) == -1)
-	{
-		perror("setsockopt");
-		exit(1);
-	}
-
-	int testCounter=0;
-	while (bind(serverSockFd, (struct sockaddr *) &serv_addr,
-				sizeof(serv_addr)) < 0 && testCounter<10){
-		cout<<"ERROR on binding: "<< port <<endl;
-		cout<<"Count: "<< testCounter<<endl;
-		perror("Binding");
-		testCounter++;
-		sleep(2);
-	}
-	if (testCounter==10) return false;
-	
-	listen(serverSockFd, 10);
-
-	for (int conn = 0; conn < NUMCONNECTIONS; conn++)
-	{
-		clilen = sizeof(cli_addr[conn]);
-		//printf("Start listening %d! ", conn);
-		this->socketFd[conn] = accept(serverSockFd,
-				(struct sockaddr *) &cli_addr[conn],
-				&clilen);
-		if (this->socketFd[conn] < 0){
-			cout<<"ERROR on accept"<<endl;
+	tcp::acceptor acceptor(io_service, tcp::endpoint(tcp::v4(), port));
+	for (int conn = 0; conn < NUMCONNECTIONS; conn++) {
+		boost::system::error_code ec;
+		acceptor.accept(*sockets[conn], ec);
+		if (ec) {
+			std::cout << "Error in accepting socket connection on port "
+				<< port << ". " << ec.message() << std::endl;
 			return false;
 		}
-		//use TCP_NODELAY on the socket
-		int flag = 1;
-		int result = setsockopt(this->socketFd[conn], /* socket affected */
-				IPPROTO_TCP,                  /* set option at TCP level */
-				TCP_NODELAY,                  /* name of option */
-				(char *) &flag,               /* the cast is historical */
-				sizeof(int));                 /* length of option value */
-		if (result < 0) {
-			cout << "error setting NODELAY. exiting" << endl;
-			exit (-1);
+		tcp::no_delay tcpNoDelayOption(true);
+		sockets[conn]->set_option(tcpNoDelayOption, ec);
+		if (ec) {
+			std::cout << ec.message() << std::endl;
+			return false;
 		}
-
-		//printf("Connected %d! ", conn);
+		boost::asio::socket_base::keep_alive keepAliveOption(true);
+		sockets[conn]->set_option(keepAliveOption, ec);
+		if (ec) {
+			std::cout << ec.message() << std::endl;
+			return false;
+		}
 	}
-	close(serverSockFd);
 	return true;
 }
 
-
 bool PorthosNet::connectNow(){
-	struct sockaddr_in serv_addr[NUMCONNECTIONS];
-	struct hostent *server;
-	int n;
-
 	if (is_JustServer){
 		cout<<"ERROR: Never got a host... please use the second constructor"<<endl;;
 		return false;
 	}
 
-	for (int conn = 0; conn < NUMCONNECTIONS; conn++)
-	{
-		//fprintf(stderr,"usage %s hostname port\n", host);
-		socketFd[conn] = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-		if (socketFd[conn] < 0){
-			cout << ("ERROR opening socket") << endl;
+	tcp::resolver resolver(io_service);
+	tcp::resolver::query query(host, std::to_string(port));
+	tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
+
+	for (int conn = 0; conn < NUMCONNECTIONS; conn++) {
+		std::cout << "Trying to connect\n";
+		boost::system::error_code ec;
+		boost::asio::connect(*sockets[conn], endpoint_iterator, ec);
+		int count = 1;
+		while(ec) {
+			ec.clear();
+			if (count % 50 == 0) {
+				std::cout << "Not managing to connect. " << "Count=" << count << endl;
+				std::cout << ec.message() << ". Trying again." << std::endl;
+			}
+			sleep(1);
+			boost::asio::connect(*sockets[conn], endpoint_iterator, ec);
+			count++;
+		}
+		tcp::no_delay tcpNoDelayOption(true);
+		sockets[conn]->set_option(tcpNoDelayOption, ec);
+		if (ec) {
+			std::cout << ec.message() << std::endl;
 			return false;
 		}
-
-		//use TCP_NODELAY on the socket
-		int flag = 1;
-		int result = setsockopt(socketFd[conn],       /* socket affected */
-				IPPROTO_TCP,                  /* set option at TCP level */
-				TCP_NODELAY,                  /* name of option */
-				(char *) &flag,               /* the cast is historical */
-				sizeof(int));                 /* length of option value */
-		if (result < 0) {
-			cout << "error setting NODELAY. exiting" << endl;
-			exit (-1);
+		boost::asio::socket_base::keep_alive keepAliveOption(true);
+		sockets[conn]->set_option(keepAliveOption, ec);
+		if (ec) {
+			std::cout << ec.message() << std::endl;
+			return false;
 		}
-
-
-		memset(&serv_addr[conn], 0, sizeof(serv_addr[conn]));
-		serv_addr[conn].sin_family		= AF_INET;
-		serv_addr[conn].sin_addr.s_addr	= inet_addr(host);
-		serv_addr[conn].sin_port			= htons(port);
-
-		int count = 0;
-		//cout << "Trying to connect to server " << endl; cout << "IP: " << host << "port " << port << endl;
-		while (connect(socketFd[conn], (struct sockaddr *) &serv_addr[conn], sizeof(serv_addr[conn])) < 0)
-		{
-			count++;
-			if (count % 50 == 0)
-				cout << "Not managing to connect. " << "Count=" << count << endl;
-			sleep(1);
-		}
-
-		//printf("Connected! %d \n",count);
 	}
-
 	return true;
 }
 
-
+bool sendChunk(const void* data, size_t size, tcp::socket &socket) {
+	boost::system::error_code ec;
+	boost::asio::write(socket, boost::asio::buffer(data, size), ec);
+	if (ec) {
+		std::cout << "sendChunk: ERROR writing to socket" << std::endl;
+		std::cout << ec.message() << "\n";
+		return false;
+	}
+	return true;
+}
 
 bool PorthosNet::sendMsg(const void* data, size_t size, int conn){
-	long long left = size;
-	int n;
 #if (LOG_LAYERWISE)
 	auto t1 = high_resolution_clock::now();
 #endif
-	while (left > 0)
-	{
-		n = Sockwrite(this->socketFd[conn], &((char*)data)[size - left], left);
-		if (n < 0) {
-			cout << "ERROR writing to socket" << endl;
-			return false;
-		}
-		left -= n;
+	boost::system::error_code ec;
+	boost::asio::write(*sockets[conn], boost::asio::buffer(data, size), ec);
+	if (ec) {
+		std::cout << "ERROR writing to socket" << std::endl;
+		std::cout << ec.message() << "\n";
+		return false;
 	}
 #if (LOG_LAYERWISE)
 	auto t2 = high_resolution_clock::now();
 	auto tt = (duration_cast<duration<double>>(t2 - t1)).count();
-	//cout<<"Sending "<<(size/1000.0)<<" KB data over "<<tt<<" seconds. Speed in MBps = "<<(size/(1000000.0*tt))<<endl;
 	commObject.totalDataSent += size;
 	commObject.totalTimeInSending += tt;
 	if (size < commObject.minSizeSent){
@@ -356,34 +260,22 @@ bool PorthosNet::sendMsg(const void* data, size_t size, int conn){
 
 bool PorthosNet::receiveMsg(void* buff, size_t size, int conn){
 	memset(buff, 0, size);
-	int n = 0;
-
 #if (LOG_LAYERWISE)
 	auto t1 = high_resolution_clock::now();
 #endif
-
-	long long left = size;
-	while(left > 0)
-	{
-		n = Sockread(this->socketFd[conn], &((char*)buff)[size-left], left);
-		left -= n;
-		if (n < 0) {
-			cout << "ERROR reading from socket" << endl;
-			cout << "Size = " << size << ", Left = " << left << ", n = " << n << endl;
-			return false;
-		}
-		if (n == 0) break;
+	boost::system::error_code ec;
+	boost::asio::read(*sockets[conn], boost::asio::buffer(buff, size), ec);
+	if (ec) {
+		std::cout << "ERROR reading from socket" << std::endl;
+		std::cout << ec.message() << "\n";
+		return false;
 	}
-
 #if (LOG_LAYERWISE)
 	auto t2 = high_resolution_clock::now();
 	auto tt = (duration_cast<duration<double>>(t2 - t1)).count();
-	//cout<<"Receiving "<<(size/1000.0)<<" KB data over "<<tt<<" seconds. Speed in MBps = "<<(size/(1000000.0*tt))<<endl;
 	commObject.totalDataReceived += size;
 	commObject.totalTimeInReceiving += tt;
 #endif
-
 	commObject.incrementRecv(size);
-
 	return true;
 }

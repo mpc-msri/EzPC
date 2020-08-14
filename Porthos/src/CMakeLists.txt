@@ -14,6 +14,7 @@ set(NAME "Porthos")
 
 find_package(OpenMP REQUIRED)
 find_package(OpenSSL REQUIRED)
+find_package(Boost 1.65 REQUIRED)
 
 FILE(GLOB CXXSources *.cpp)
 list(REMOVE_ITEM CXXSources ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp)
@@ -29,7 +30,7 @@ target_link_libraries(Porthos-Protocols
 
 macro (add_network _name)
 	add_executable(${_name} ${CMAKE_CURRENT_SOURCE_DIR}/example_neural_nets/main${_name}.cpp)
-	target_link_libraries(${_name} Porthos-Protocols) 
+	target_link_libraries(${_name} Porthos-Protocols -lrt -lboost_system)
 endmacro()
 
 target_compile_options(Porthos-Protocols
