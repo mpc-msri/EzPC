@@ -1888,10 +1888,10 @@ for (uint32_t i0 =  (uint32_t)0; i0 <  (int32_t)1; i0++){
 for (uint32_t i1 =  (uint32_t)0; i1 <  (int32_t)32; i1++){
 for (uint32_t i2 =  (uint32_t)0; i2 <  (int32_t)32; i2++){
 for (uint32_t i3 =  (uint32_t)0; i3 <  (int32_t)3; i3++){
-if ((party == SERVER)) {
+if ((party == CLIENT)) {
 cin >> __tmp_in_tmp0;
 }
-Arr4DIdxRowM(tmp0, (int32_t)1, (int32_t)32, (int32_t)32, (int32_t)3,i0,i1,i2,i3) = (party == SERVER) ? __tmp_in_tmp0 : 0;
+Arr4DIdxRowM(tmp0, (int32_t)1, (int32_t)32, (int32_t)32, (int32_t)3,i0,i1,i2,i3) = (party == CLIENT) ? __tmp_in_tmp0 : 0;
 }
 }
 }
