@@ -3,7 +3,7 @@
 Authors: Aseem Rastogi, Nishant Kumar, Mayank Rathee.
 
 Copyright:
-Copyright (c) 2018 Microsoft Research
+Copyright (c) 2020 Microsoft Research
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -593,88 +593,88 @@ amap.arg(\"p\", port, \"Port Number\");\n\
 amap.arg(\"ip\", serverAddr, \"IP Address of server (ALICE)\");\n\
 amap.parse(argc, argv);\n\
 \n\
-assert(party==pie::ALICE || party==pie::BOB);\n\
+assert(party==sci::ALICE || party==sci::BOB);\n\
 \n\
 checkIfUsingEigen();\n\
 for(int i=0;i<numThreads;i++){\n\
-ioArr[i] = new pie::NetIO(party==pie::ALICE ? nullptr : serverAddr.c_str(), port+i);\n\
-otInstanceArr[i] = new pie::IKNP<pie::NetIO>(ioArr[i]);\n\
-prgInstanceArr[i] = new pie::PRG128();\n\
-kkotInstanceArr[i] = new pie::KKOT < pie::NetIO > (ioArr[i]);\n\
-matmulInstanceArr[i] = new Matmul<pie::NetIO, intType, pie::IKNP<pie::NetIO>>(party, bitlength, ioArr[i], otInstanceArr[i], nullptr);\n\
+ioArr[i] = new sci::NetIO(party==sci::ALICE ? nullptr : serverAddr.c_str(), port+i);\n\
+otInstanceArr[i] = new sci::IKNP<sci::NetIO>(ioArr[i]);\n\
+prgInstanceArr[i] = new sci::PRG128();\n\
+kkotInstanceArr[i] = new sci::KKOT < sci::NetIO > (ioArr[i]);\n\
+matmulInstanceArr[i] = new Matmul<sci::NetIO, intType, sci::IKNP<sci::NetIO>>(party, bitlength, ioArr[i], otInstanceArr[i], nullptr);\n\
 if (i == 0) {\n\
-otpackArr[i] = new pie::OTPack<pie::NetIO>(ioArr[i], party, baseForRelu, bitlength);\n\
+otpackArr[i] = new sci::OTPack<sci::NetIO>(ioArr[i], party, baseForRelu, bitlength);\n\
 } \n\
 else if (i == 1) {\n\
-otpackArr[i] = new pie::OTPack<pie::NetIO>(ioArr[i], 3-party, baseForRelu, bitlength);\n\
+otpackArr[i] = new sci::OTPack<sci::NetIO>(ioArr[i], 3-party, baseForRelu, bitlength);\n\
 } \n\
 else if (i & 1) {\n\
-otpackArr[i] = new pie::OTPack<pie::NetIO>(ioArr[i], 3-party, baseForRelu, bitlength, false);\n\
+otpackArr[i] = new sci::OTPack<sci::NetIO>(ioArr[i], 3-party, baseForRelu, bitlength, false);\n\
 otpackArr[i]->copy(otpackArr[1]);\n\
 } \n\
 else {\n\
-otpackArr[i] = new pie::OTPack<pie::NetIO>(ioArr[i], party, baseForRelu, bitlength, false);\n\
+otpackArr[i] = new sci::OTPack<sci::NetIO>(ioArr[i], party, baseForRelu, bitlength, false);\n\
 otpackArr[i]->copy(otpackArr[0]);\n\
 }\n\
 }\n\
 \n\
 io = ioArr[0];\n\
-iknpOT = new pie::IKNP<pie::NetIO>(io);\n\
-iknpOTRoleReversed = new pie::IKNP<pie::NetIO>(io); //TCP is full duplex -- so both side OT on same TCP should be good\n\
-kkot = new pie::KKOT<pie::NetIO>(io);\n\
-prg128Instance = new pie::PRG128();\n\
-otpack = new pie::OTPack<pie::NetIO>(io, party, baseForRelu, bitlength);\n\
+iknpOT = new sci::IKNP<sci::NetIO>(io);\n\
+iknpOTRoleReversed = new sci::IKNP<sci::NetIO>(io); //TCP is full duplex -- so both side OT on same TCP should be good\n\
+kkot = new sci::KKOT<sci::NetIO>(io);\n\
+prg128Instance = new sci::PRG128();\n\
+otpack = new sci::OTPack<sci::NetIO>(io, party, baseForRelu, bitlength);\n\
 \n\
-matmulImpl = new Matmul<pie::NetIO, intType, pie::IKNP<pie::NetIO>>(party, bitlength, io, iknpOT, iknpOTRoleReversed);\n\
+matmulImpl = new Matmul<sci::NetIO, intType, sci::IKNP<sci::NetIO>>(party, bitlength, io, iknpOT, iknpOTRoleReversed);\n\
 \n\
 \n\
-#ifdef PIE_OT\n\
-reluImpl = new ReLURingProtocol<pie::NetIO, intType>(party,RING,io,bitlength,baseForRelu,otpack);\n\
-maxpoolImpl = new MaxPoolProtocol<pie::NetIO, intType>(party,RING,io,bitlength,baseForRelu,0,otpack,reluImpl);\n\
-argmaxImpl = new ArgMaxProtocol<pie::NetIO, intType>(party,RING,io,bitlength,baseForRelu,0,otpack,reluImpl);\n\
+#ifdef SCI_OT\n\
+reluImpl = new ReLURingProtocol<sci::NetIO, intType>(party,RING,io,bitlength,baseForRelu,otpack);\n\
+maxpoolImpl = new MaxPoolProtocol<sci::NetIO, intType>(party,RING,io,bitlength,baseForRelu,0,otpack,reluImpl);\n\
+argmaxImpl = new ArgMaxProtocol<sci::NetIO, intType>(party,RING,io,bitlength,baseForRelu,0,otpack,reluImpl);\n\
 #endif\n\
 \n\
-#ifdef PIE_HE\n\
-reluImpl = new ReLUFieldProtocol<pie::NetIO, intType>(party,FIELD,io,bitlength,baseForRelu,prime_mod,otpack);\n\
-maxpoolImpl = new MaxPoolProtocol<pie::NetIO, intType>(party,FIELD,io,bitlength,baseForRelu,prime_mod,otpack,reluImpl);\n\
-argmaxImpl = new ArgMaxProtocol<pie::NetIO, intType>(party,FIELD,io,bitlength,baseForRelu,prime_mod,otpack,reluImpl);\n\
+#ifdef SCI_HE\n\
+reluImpl = new ReLUFieldProtocol<sci::NetIO, intType>(party,FIELD,io,bitlength,baseForRelu,prime_mod,otpack);\n\
+maxpoolImpl = new MaxPoolProtocol<sci::NetIO, intType>(party,FIELD,io,bitlength,baseForRelu,prime_mod,otpack,reluImpl);\n\
+argmaxImpl = new ArgMaxProtocol<sci::NetIO, intType>(party,FIELD,io,bitlength,baseForRelu,prime_mod,otpack,reluImpl);\n\
 heConvImpl = new ConvField(party,io);\n\
 heFCImpl = new FCField(party,io);\n\
 heProdImpl = new ElemWiseProdField(party, io);\n\
 assertFieldRun();\n\
 #endif\n\
 #ifdef MULTITHREADED_NONLIN\n\
-#ifdef PIE_OT\n\
+#ifdef SCI_OT\n\
 for(int i = 0; i < numThreads; i++) {\n\
 if (i & 1) {\n\
-reluImplArr[i] = new ReLURingProtocol<pie::NetIO, intType>(3-party,RING,ioArr[i],bitlength,baseForRelu,otpackArr[i]);\n\
-maxpoolImplArr[i] = new MaxPoolProtocol<pie::NetIO, intType>(3-party,RING,ioArr[i],bitlength,baseForRelu,0,otpackArr[i],reluImplArr[i]);\n\
+reluImplArr[i] = new ReLURingProtocol<sci::NetIO, intType>(3-party,RING,ioArr[i],bitlength,baseForRelu,otpackArr[i]);\n\
+maxpoolImplArr[i] = new MaxPoolProtocol<sci::NetIO, intType>(3-party,RING,ioArr[i],bitlength,baseForRelu,0,otpackArr[i],reluImplArr[i]);\n\
 } \n\
 else {\n\
-reluImplArr[i] = new ReLURingProtocol<pie::NetIO, intType>(party,RING,ioArr[i],bitlength,baseForRelu,otpackArr[i]);\n\
-maxpoolImplArr[i] = new MaxPoolProtocol<pie::NetIO, intType>(party,RING,ioArr[i],bitlength,baseForRelu,0,otpackArr[i],reluImplArr[i]);\n\
+reluImplArr[i] = new ReLURingProtocol<sci::NetIO, intType>(party,RING,ioArr[i],bitlength,baseForRelu,otpackArr[i]);\n\
+maxpoolImplArr[i] = new MaxPoolProtocol<sci::NetIO, intType>(party,RING,ioArr[i],bitlength,baseForRelu,0,otpackArr[i],reluImplArr[i]);\n\
 }\n\
 }\n\
 #endif\n\
-#ifdef PIE_HE\n\
+#ifdef SCI_HE\n\
 for(int i = 0; i < numThreads; i++) {\n\
 if (i & 1) {\n\
-reluImplArr[i] = new ReLUFieldProtocol<pie::NetIO, intType>(3-party,FIELD,ioArr[i],bitlength,baseForRelu,prime_mod,otpackArr[i]);\n\
-maxpoolImplArr[i] = new MaxPoolProtocol<pie::NetIO, intType>(3-party,FIELD,ioArr[i],bitlength,baseForRelu,prime_mod,otpackArr[i],reluImplArr[i]);\n\
+reluImplArr[i] = new ReLUFieldProtocol<sci::NetIO, intType>(3-party,FIELD,ioArr[i],bitlength,baseForRelu,prime_mod,otpackArr[i]);\n\
+maxpoolImplArr[i] = new MaxPoolProtocol<sci::NetIO, intType>(3-party,FIELD,ioArr[i],bitlength,baseForRelu,prime_mod,otpackArr[i],reluImplArr[i]);\n\
 } \n\
 else {\n\
-reluImplArr[i] = new ReLUFieldProtocol<pie::NetIO, intType>(party,FIELD,ioArr[i],bitlength,baseForRelu,prime_mod,otpackArr[i]);\n\
-maxpoolImplArr[i] = new MaxPoolProtocol<pie::NetIO, intType>(party,FIELD,ioArr[i],bitlength,baseForRelu,prime_mod,otpackArr[i],reluImplArr[i]);\n\
+reluImplArr[i] = new ReLUFieldProtocol<sci::NetIO, intType>(party,FIELD,ioArr[i],bitlength,baseForRelu,prime_mod,otpackArr[i]);\n\
+maxpoolImplArr[i] = new MaxPoolProtocol<sci::NetIO, intType>(party,FIELD,ioArr[i],bitlength,baseForRelu,prime_mod,otpackArr[i],reluImplArr[i]);\n\
 }\n\
 }\n\
 #endif\n\
 #endif\n\
 \n\
-if (party==pie::ALICE){\n\
+if (party==sci::ALICE){\n\
 iknpOT->setup_send();\n\
 iknpOTRoleReversed->setup_recv();\n\
 }\n\
-else if (party==pie::BOB){\n\
+else if (party==sci::BOB){\n\
 iknpOT->setup_recv();\n\
 iknpOTRoleReversed->setup_send();\n\
 }\n\
@@ -685,8 +685,8 @@ let o_one_program ((globals, main):global list * codegen_stmt) (ofname:string) :
   let (hash_define_str, main_prelude) = 
     let modulo_str = Config.get_modulo () |> Uint64.to_string in
     let hash_define_str = 
-      if (Config.get_porthos2pc_backend () = OT) then "PIE_OT"
-      else "PIE_HE"
+      if (Config.get_porthos2pc_backend () = OT) then "SCI_OT"
+      else "SCI_HE"
     in
     let main_prelude = 
       if (Config.get_porthos2pc_backend () = OT) then begin
