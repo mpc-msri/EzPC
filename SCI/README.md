@@ -1,4 +1,4 @@
-# CrypTFlow2: Practical 2-Party Secure Inference
+# Secure and Correct Inference (SCI) Library
 
 ## Introduction
 This directory contains the code for the Secure and Correct Inference (SCI) library from "CrypTFlow2: Practical 2-Party Secure Inference".
