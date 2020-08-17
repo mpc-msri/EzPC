@@ -87,7 +87,6 @@ def updateWeightsForBN(optimized_graph_def, sess, feed_dict={}):
 
   for node in graphDef.node:
       if (node.op == 'FusedBatchNorm' or node.op == 'FusedBatchNormV3'):
-        print("Updating BN weight, node.name = {0}".format(node.name))
         gamma = graph.get_operation_by_name(node.input[1]).outputs[0]
         beta = graph.get_operation_by_name(node.input[2]).outputs[0]
         mu = graph.get_operation_by_name(node.input[3]).outputs[0]
@@ -140,3 +139,8 @@ def dumpImgAndWeightsDataSeparate(sess, imgData, evalTensors, imgFileName, weigh
   dumpImageDataInt(imgData, imgFileName, scalingFac, 'w')
   dumpTrainedWeightsInt(sess, evalTensors, weightFileName, scalingFac, 'w', alreadyEvaluated=alreadyEvaluated)
 
+def numpy_float_array_to_float_val_str(input_array):
+  chunk = ''
+  for val in numpy.nditer(input_array):
+    chunk += str(val) + '\n'
+  return chunk

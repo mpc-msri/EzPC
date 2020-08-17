@@ -163,6 +163,8 @@ def infer(savePreTrainedWeightsInt, savePreTrainedWeightsFloat, scalingFac, runP
       print("*************** Done Prediction****************")
       duration = end_time - start_time
       print("Time taken in prediction : ", duration)
+      with open('ResNet_tf_pred.float','w+') as f:
+        f.write(DumpTFMtData.numpy_float_array_to_float_val_str(predictions))
 
     trainVarsName = []
     for node in optimized_graph_def.node:
@@ -175,7 +177,6 @@ def infer(savePreTrainedWeightsInt, savePreTrainedWeightsFloat, scalingFac, runP
       DumpTFMtData.dumpTrainedWeightsFloat(sess, trainVars, 'ResNet_weights_float.inp', 'w')
     if saveImgAndWtData:
       DumpTFMtData.dumpImgAndWeightsDataSeparate(sess, images[0], trainVars, 'ResNet_img.inp', 'ResNet_weights.inp', scalingFac)
-
     return predictions
 
 def parseArgs():
