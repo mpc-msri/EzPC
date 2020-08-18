@@ -1,7 +1,7 @@
 # Secure and Correct Inference (SCI) Library
 
 ## Introduction
-This directory contains the code for the Secure and Correct Inference (SCI) library from "CrypTFlow2: Practical 2-Party Secure Inference".
+This directory contains the code for the Secure and Correct Inference (SCI) library from ["CrypTFlow2: Practical 2-Party Secure Inference"](https://eprint.iacr.org/2020/1002).
 
 ## Required Packages
  - g++ (version >= 8)
