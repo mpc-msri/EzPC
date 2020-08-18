@@ -17,7 +17,14 @@ message(STATUS "Option: BUILD_NETWORKS = ${BUILD_NETWORKS}")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
+set(CMAKE_PREFIX_PATH
+    ${CMAKE_CURRENT_SOURCE_DIR}/extern/SEAL/native/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/extern/eigen/build)
+
+include_directories(
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/extern/SEAL/native/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/extern/eigen)
 
 if(NOT CMAKE_BUILD_TYPE)
    set(CMAKE_BUILD_TYPE Release)
