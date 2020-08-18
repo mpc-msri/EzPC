@@ -24,6 +24,7 @@ SOFTWARE.
 
 #include <cstdint> //Only keep standard headers over here
 #include <chrono>  //Keep the local repo based headers below, once constants are defined
+#include <string>
 #include <thread>
 #include <map>
 
