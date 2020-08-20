@@ -28,7 +28,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 message(STATUS "Build type (CMAKE_BUILD_TYPE): ${CMAKE_BUILD_TYPE}")
 
-set(CMAKE_CXX_FLAGS "-pthread -Wall -march=native -maes -mrdseed -faligned-new -std=c++17 -w")
+set(CMAKE_CXX_FLAGS "-pthread -Wall -maes -msse4.1 -mavx -mavx2 -mrdseed -faligned-new -std=c++17 -w")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -ggdb")
 

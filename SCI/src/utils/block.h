@@ -115,7 +115,7 @@ __attribute__((target("avx")))
 inline block256 makeBlock256(int64_t w, int64_t x, int64_t y, int64_t z) { // return w||x||y||z (MSB->LSB)
     return _mm256_set_epi64x(w, x, y, z);
 }
-__attribute__((target("avx")))
+__attribute__((target("avx2,avx")))
 inline block256 makeBlock256(block128 x, block128 y) { // return x (MSB) || y (LSB)
     return _mm256_inserti128_si256(_mm256_castsi128_si256(y), x, 1);
     // return _mm256_loadu2_m128i(&x, &y);
@@ -139,7 +139,7 @@ __attribute__((target("sse2")))
 inline block128 xorBlocks(block128 x, block128 y) {
 	return _mm_xor_si128(x,y);
 }
-__attribute__((target("avx")))
+__attribute__((target("avx2")))
 inline block256 xorBlocks(block256 x, block256 y) {
     return _mm256_xor_si256(x, y);
 }
@@ -147,7 +147,7 @@ __attribute__((target("sse2")))
 inline block128 andBlocks(block128 x, block128 y) {
 	return _mm_and_si128(x,y);
 }
-__attribute__((target("avx")))
+__attribute__((target("avx2")))
 inline block256 andBlocks(block256 x, block256 y) {
 	return _mm256_and_si256(x,y);
 }
@@ -178,7 +178,7 @@ inline void xorBlocks_arr(block256* res, const block256* x, block256 y, int nblo
 	}
 }
 
-__attribute__((target("sse4")))
+__attribute__((target("sse4.1,sse2")))
 inline bool cmpBlock(const block128 * x, const block128 * y, int nblocks) {
 	const block128 * dest = nblocks+x;
 	for (; x != dest;) {
@@ -189,7 +189,7 @@ inline bool cmpBlock(const block128 * x, const block128 * y, int nblocks) {
 	return true;
 }
 
-__attribute__((target("avx")))
+__attribute__((target("avx2,avx")))
 inline bool cmpBlock(const block256 * x, const block256 * y, int nblocks) {
 	const block256 * dest = nblocks+x;
 	for (; x != dest;) {
@@ -209,7 +209,7 @@ inline bool block_cmp(const block256 * x, const block256 * y, int nblocks) {
 	return cmpBlock(x,y,nblocks);
 }
 
-__attribute__((target("sse4")))
+__attribute__((target("sse4.1")))
 inline bool isZero(const block128 * b) {
 	return _mm_testz_si128(*b,*b) > 0;
 }
@@ -219,7 +219,7 @@ inline bool isZero(const block256 * b) {
 	return _mm256_testz_si256(*b,*b) > 0;
 }
 
-__attribute__((target("sse4")))
+__attribute__((target("sse4.1,sse2")))
 inline bool isOne(const block128 * b) {
 	__m128i neq = _mm_xor_si128(*b, one_block());
 	return _mm_testz_si128(neq, neq) > 0;
@@ -371,58 +371,6 @@ inline block128 RIGHTSHIFT(block128 bl) {
 	__m128i tmp = _mm_and_si128(bl,mask);
 	bl = _mm_slli_epi64(bl, 1);
 	return _mm_xor_si128(bl,tmp);
-}
-
-/**
-	  University of Bristol : Open Access Software Licence
-
-	  Copyright (c) 2016, The University of Bristol, a chartered corporation having Royal Charter number RC000648 and a charity (number X1121) and its place of administration being at Senate House, Tyndall Avenue, Bristol, BS8 1TH, United Kingdom.
-
-	  All rights reserved
-
-	  Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
-
-	  1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-
-	  2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-
-	  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-
-	  Any use of the software for scientific publications or commercial purposes should be reported to the University of Bristol (OSI-notifications@bristol.ac.uk and quote reference 1914). This is for impact and usage monitoring purposes only.
-
-	  Enquiries about further applications and development opportunities are welcome. Please contact nigel@cs.bris.ac.uk
-
-	  Contact GitHub API Training Shop Blog About
-	 */
-__attribute__((target("sse2,pclmul")))
-inline void mul128(__m128i a, __m128i b, __m128i *res1, __m128i *res2) {
-	/*	block128 a0xora1 = xorBlocks(a, _mm_srli_si128(a, 8));
-		block128 b0xorb1 = xorBlocks(b, _mm_srli_si128(b, 8));
-
-		block128 a0b0 = _mm_clmulepi64_si128(a, b, 0x00);
-		block128 a1b1 = _mm_clmulepi64_si128(a, b, 0x11);
-		block128 ab = _mm_clmulepi64_si128(a0xora1, b0xorb1, 0x00);
-
-		block128 tmp = xorBlocks(a0b0, a1b1);
-		tmp = xorBlocks(tmp, ab);
-
-		*res1 = xorBlocks(a1b1, _mm_srli_si128(tmp, 8));
-		*res2 = xorBlocks(a0b0, _mm_slli_si128(tmp, 8));*/
-	__m128i tmp3, tmp4, tmp5, tmp6;
-	tmp3 = _mm_clmulepi64_si128(a, b, 0x00);
-	tmp4 = _mm_clmulepi64_si128(a, b, 0x10);
-	tmp5 = _mm_clmulepi64_si128(a, b, 0x01);
-	tmp6 = _mm_clmulepi64_si128(a, b, 0x11);
-
-	tmp4 = _mm_xor_si128(tmp4, tmp5);
-	tmp5 = _mm_slli_si128(tmp4, 8);
-	tmp4 = _mm_srli_si128(tmp4, 8);
-	tmp3 = _mm_xor_si128(tmp3, tmp5);
-	tmp6 = _mm_xor_si128(tmp6, tmp4);
-	// initial mul now in tmp3, tmp6
-	*res1 = tmp3;
-	*res2 = tmp6;
 }
 }
 #endif//UTIL_BLOCK_H__
