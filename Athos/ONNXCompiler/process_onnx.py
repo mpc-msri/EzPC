@@ -106,7 +106,7 @@ def main():
 
 def process_input_variables(program, innermost_let_ast_node, node_name_to_out_var_dict, out_var_count, mtdAST, graph_def, value_info):
 	node = graph_def.input[0]
-	curAst = ONNXNodesAST.Input(node, value_info, node_name_to_out_var_dict)
+	curAst = ONNXNodesAST.Input(node, value_info, node_name_to_out_var_dict, 1)
 	mtdForCurAST = {AST.ASTNode.mtdKeyTFOpName : 'Input',
 						AST.ASTNode.mtdKeyTFNodeName : node.name}
 	cur_out_var_ast_node = AST.ID(node.name)	
