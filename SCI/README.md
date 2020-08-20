@@ -12,7 +12,7 @@ This directory contains the code for the Secure and Correct Inference (SCI) libr
  - SEAL 3.3.2
  - Eigen 3.3
 
-SEAL and Eigen are included in `extern/` to be compiled and installed. The other packages can be installed directly using `sudo apt-get install <package>` on Linux.
+SEAL and Eigen are included in `extern/` and are automatically compiled and installed. The other packages can be installed directly using `sudo apt-get install <package>` on Linux.
 
 ## Compilation
 

@@ -1,8 +1,12 @@
 cmake_minimum_required (VERSION 3.0)
 
+# Set paths to GNU gcc and g++ on Mac OS X
+set(MAC_GCC "/usr/local/bin/gcc-9")
+set(MAC_GPP "/usr/local/bin/g++-9")
+
 if(APPLE)
-    set(CMAKE_C_COMPILER "/usr/local/bin/gcc-9")
-    set(CMAKE_CXX_COMPILER "/usr/local/bin/g++-9")
+    set(CMAKE_C_COMPILER ${MAC_GCC})
+    set(CMAKE_CXX_COMPILER ${MAC_GPP})
 endif()
 
 project (SCI)
@@ -17,14 +21,7 @@ message(STATUS "Option: BUILD_NETWORKS = ${BUILD_NETWORKS}")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
-set(CMAKE_PREFIX_PATH
-    ${CMAKE_CURRENT_SOURCE_DIR}/extern/SEAL/native/src
-    ${CMAKE_CURRENT_SOURCE_DIR}/extern/eigen/build)
-
-include_directories(
-    ${CMAKE_CURRENT_SOURCE_DIR}/src
-    ${CMAKE_CURRENT_SOURCE_DIR}/extern/SEAL/native/src
-    ${CMAKE_CURRENT_SOURCE_DIR}/extern/eigen)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 if(NOT CMAKE_BUILD_TYPE)
    set(CMAKE_BUILD_TYPE Release)
