@@ -165,6 +165,8 @@ def infer(savePreTrainedWeightsInt, savePreTrainedWeightsFloat, scalingFac, runP
       print("Time taken in prediction : ", duration)
       with open('ResNet_tf_pred.float','w+') as f:
         f.write(DumpTFMtData.numpy_float_array_to_float_val_str(predictions))
+      with open('ResNet_tf_pred.time','w') as f:
+        f.write(str(round(duration, 2))) 
 
     trainVarsName = []
     for node in optimized_graph_def.node:
