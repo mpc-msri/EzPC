@@ -113,6 +113,26 @@ void Conv2DWrapper(int32_t N, int32_t H, int32_t W, int32_t CI,
 				vector< vector< vector< vector<porthosSecretType> > > >& filterArr, 
 				vector< vector< vector< vector<porthosSecretType> > > >& outArr);
 
+void Conv2DGroup(int32_t N, int32_t H, int32_t W, int32_t CI, 
+				int32_t FH, int32_t FW, int32_t CO, 
+				int32_t zPadHLeft, int32_t zPadHRight, 
+				int32_t zPadWLeft, int32_t zPadWRight, 
+				int32_t strideH, int32_t strideW, 
+				int32_t G,
+				vector< vector< vector< vector<porthosSecretType> > > >& inputArr, 
+				vector< vector< vector< vector<porthosSecretType> > > >& filterArr, 
+				vector< vector< vector< vector<porthosSecretType> > > >& outArr);
+
+void Conv2DGroupWrapper(int32_t N, int32_t H, int32_t W, int32_t CI, 
+				int32_t FH, int32_t FW, int32_t CO, 
+				int32_t zPadHLeft, int32_t zPadHRight, 
+				int32_t zPadWLeft, int32_t zPadWRight, 
+				int32_t strideH, int32_t strideW, 
+				int32_t G,
+				vector< vector< vector< vector<porthosSecretType> > > >& inputArr, 
+				vector< vector< vector< vector<porthosSecretType> > > >& filterArr, 
+				vector< vector< vector< vector<porthosSecretType> > > >& outArr);
+
 void Conv3D(int32_t N, int32_t D, int32_t H, int32_t W, int32_t CI,
 			int32_t FD, int32_t FH, int32_t FW, int32_t CO,
 			int32_t zPadDLeft, int32_t zPadDRight, 
