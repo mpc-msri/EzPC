@@ -228,6 +228,8 @@ void FCField::matrix_multiplication(
         bool verify_output = false,
         bool verbose = false)
 {
+    std::clock_t c_start = std::clock();
+
     assert(num_cols == 1);
     data.filter_h = num_rows;
     data.filter_w = common_dim;
@@ -356,6 +358,13 @@ void FCField::matrix_multiplication(
         free_keys(party, encryptor_, decryptor_, evaluator_,
                 encoder_, gal_keys_, zero_);
     }
+
+    std::clock_t c_end = std::clock();
+    double time_elapsed_s = 1.0 * (c_end-c_start) / CLOCKS_PER_SEC;
+    if(party == ALICE) std::cout << "[Server] CPU time in sec for current matmul: "
+        << YELLOW << time_elapsed_s << RESET << endl;
+    else std::cout << "[Client] CPU time in sec for current matmul: "
+        << YELLOW << time_elapsed_s << RESET << endl;
 }
 
 void FCField::verify(

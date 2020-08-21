@@ -24,6 +24,7 @@ Modified by Deevashwer Rathee
 */
 
 #include "LinearHE/conv-field.h"
+#include <ctime>
 
 using namespace std;
 using namespace sci;
@@ -751,6 +752,8 @@ void ConvField::convolution(
         bool verify_output = false,
         bool verbose = false)
 {
+    std::clock_t c_start = std::clock();
+
     int paddedH = H+zPadHLeft+zPadHRight;
     int paddedW = W+zPadWLeft+zPadWRight;
     int newH = 1 + (paddedH-FH)/strideH;
@@ -891,6 +894,13 @@ void ConvField::convolution(
         }
         if (verify_output) verify(H, W, CI, CO, image, &filters, outArr);
     }
+
+    std::clock_t c_end = std::clock();
+    double time_elapsed_s = 1.0 * (c_end-c_start) / CLOCKS_PER_SEC;
+    if(party == ALICE) std::cout << "[Server] CPU time in sec for current conv: "
+        << YELLOW << time_elapsed_s << RESET << endl;
+    else std::cout << "[Client] CPU time in sec for current conv: "
+        << YELLOW << time_elapsed_s << RESET << endl;
 }
 
 void ConvField::verify(

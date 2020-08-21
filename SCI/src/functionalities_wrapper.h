@@ -1056,6 +1056,7 @@ void ElemWiseActModelVectorMult(int32_t size, intType* inArr, intType* multArrVe
 #ifdef LOG_LAYERWISE
     auto temp = TIMER_TILL_NOW;
     BatchNormInMilliSec += temp;
+    std::cout<<"Time in sec for current elemwise_prod = "<<(temp/1000.0)<<std::endl; 
     uint64_t curComm;
     FIND_ALL_IO_TILL_NOW(curComm);
     BatchNormCommSent += curComm;
