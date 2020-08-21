@@ -42,6 +42,15 @@ void Conv2D(int32_t N, int32_t H, int32_t W, int32_t CI,
         intType* inputArr, intType* filterArr, 
         intType* outArr);
 
+void Conv2DGroup(signedIntType N, signedIntType H, signedIntType W, signedIntType CI,
+        signedIntType FH, signedIntType FW, signedIntType CO,
+        signedIntType zPadHLeft, signedIntType zPadHRight,
+        signedIntType zPadWLeft, signedIntType zPadWRight,
+        signedIntType strideH, signedIntType strideW,
+        signedIntType G,
+        intType* inputArr, intType* filterArr,
+        intType* outArr);
+
 void MatMul2D(int32_t s1, int32_t s2, int32_t s3, const intType* A, const intType* B, intType* C, bool modelIsA)
 {
 #ifdef LOG_LAYERWISE
@@ -946,6 +955,21 @@ void Conv2DWrapper(signedIntType N, signedIntType H, signedIntType W, signedIntT
         delete[] VoutputArr;
     }
 #endif
+}
+
+void Conv2DGroupWrapper(signedIntType N, signedIntType H, signedIntType W, signedIntType CI,
+        signedIntType FH, signedIntType FW, signedIntType CO,
+        signedIntType zPadHLeft, signedIntType zPadHRight,
+        signedIntType zPadWLeft, signedIntType zPadWRight,
+        signedIntType strideH, signedIntType strideW,
+        signedIntType G,
+        intType* inputArr,
+        intType* filterArr,
+        intType* outArr) {
+//#ifdef SCI_OT
+    Conv2DGroup(N,H,W,CI,FH,FW,CO,zPadHLeft,zPadHRight,zPadWLeft,zPadWRight,strideH,strideW,G,inputArr,filterArr,outArr);
+//#else
+//#endif
 }
 
 void ElemWiseActModelVectorMult(int32_t size, intType* inArr, intType* multArrVec, intType* outputArr)
