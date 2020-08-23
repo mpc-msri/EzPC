@@ -1012,10 +1012,10 @@ void Conv2DGroupWrapper(signedIntType N, signedIntType H, signedIntType W, signe
         intType* inputArr,
         intType* filterArr,
         intType* outArr) {
-//#ifdef SCI_OT
+#ifdef SCI_HE
     Conv2DGroup(N,H,W,CI,FH,FW,CO,zPadHLeft,zPadHRight,zPadWLeft,zPadWRight,strideH,strideW,G,inputArr,filterArr,outArr);
 //#else
-//#endif
+#endif
 }
 
 void ElemWiseActModelVectorMult(int32_t size, intType* inArr, intType* multArrVec, intType* outputArr)
