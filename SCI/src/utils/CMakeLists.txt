@@ -6,6 +6,10 @@ find_package(GMP REQUIRED)
 
 add_library(SCI-utils INTERFACE)
 
+if(USE_RANDOM_DEVICE)
+    target_compile_definitions(SCI-utils INTERFACE EMP_USE_RANDOM_DEVICE=1)
+endif(USE_RANDOM_DEVICE)
+
 target_include_directories(SCI-utils
     INTERFACE ${OPENSSL_INCLUDE_DIR} ${GMP_INCLUDE_DIR}
 )
