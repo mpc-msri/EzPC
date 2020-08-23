@@ -34,6 +34,17 @@ SOFTWARE.
 #include "functionalities_pt.h"
 #endif
 
+#define INIT_ALL_IO_WAIT_TIME uint64_t __ioStartWaitTime[::numThreads];\
+        for(int __thrdCtr = 0; __thrdCtr < ::numThreads; __thrdCtr++){\
+            __ioStartWaitTime[__thrdCtr] = ::ioArr[__thrdCtr]->wait_time_ms;\
+        }
+#define FIND_MAX_WAIT_TIME(var) uint64_t __curWaitTime = 0;\
+        for(int __thrdCtr = 0; __thrdCtr < ::numThreads; __thrdCtr++){\
+             __curWaitTime = std::max(__curWaitTime,\
+             (::ioArr[__thrdCtr]->wait_time_ms) - __ioStartWaitTime[__thrdCtr]);\
+        }\
+        var = __curWaitTime;
+
 void Conv2D(int32_t N, int32_t H, int32_t W, int32_t CI, 
         int32_t FH, int32_t FW, int32_t CO, 
         int32_t zPadHLeft, int32_t zPadHRight, 
@@ -56,6 +67,7 @@ void MatMul2D(int32_t s1, int32_t s2, int32_t s3, const intType* A, const intTyp
 #ifdef LOG_LAYERWISE
     INIT_ALL_IO_DATA_SENT;
     INIT_TIMER;
+    INIT_ALL_IO_WAIT_TIME;
 #endif
     
     std::cout<<"Matmul called s1,s2,s3 = "<<s1<<" "<<s2<<" "<<s3<<std::endl;
@@ -186,6 +198,10 @@ void MatMul2D(int32_t s1, int32_t s2, int32_t s3, const intType* A, const intTyp
     uint64_t curComm;
     FIND_ALL_IO_TILL_NOW(curComm);
     MatmulCommSent += curComm;
+    uint64_t maxWaitTime;
+    FIND_MAX_WAIT_TIME(maxWaitTime);
+    WaitTimeInMilliSec += maxWaitTime;
+    std::cout<<"Max wait time in sec for current matmul = "<<(maxWaitTime/1000.0)<<std::endl; 
 #endif
 
 #ifdef VERIFY_LAYERWISE
@@ -253,6 +269,7 @@ void ArgMax(int32_t s1, int32_t s2, intType* inArr, intType* outArr)
 #ifdef LOG_LAYERWISE
     INIT_ALL_IO_DATA_SENT;
     INIT_TIMER;
+    INIT_ALL_IO_WAIT_TIME;
 #endif
 
     static int ctr = 1;
@@ -268,6 +285,10 @@ void ArgMax(int32_t s1, int32_t s2, intType* inArr, intType* outArr)
     uint64_t curComm;
     FIND_ALL_IO_TILL_NOW(curComm);
     ArgmaxCommSent += curComm;
+    uint64_t maxWaitTime;
+    FIND_MAX_WAIT_TIME(maxWaitTime);
+    WaitTimeInMilliSec += maxWaitTime;
+    std::cout<<"Max wait time in sec for current argmax = "<<(maxWaitTime/1000.0)<<std::endl; 
 #endif
 
 #ifdef VERIFY_LAYERWISE
@@ -315,6 +336,7 @@ void Relu(int32_t size, intType* inArr, intType* outArr, int sf, bool doTruncati
 #ifdef LOG_LAYERWISE
     INIT_ALL_IO_DATA_SENT;
     INIT_TIMER;
+    INIT_ALL_IO_WAIT_TIME;
 #endif
 
     static int ctr = 1;
@@ -355,6 +377,10 @@ void Relu(int32_t size, intType* inArr, intType* outArr, int sf, bool doTruncati
     uint64_t curComm;
     FIND_ALL_IO_TILL_NOW(curComm);
     ReluCommSent += curComm;
+    uint64_t maxWaitTime;
+    FIND_MAX_WAIT_TIME(maxWaitTime);
+    WaitTimeInMilliSec += maxWaitTime;
+    std::cout<<"Max wait time in sec for current relu = "<<(maxWaitTime/1000.0)<<std::endl; 
 #endif
 
     if (doTruncation) 
@@ -362,6 +388,7 @@ void Relu(int32_t size, intType* inArr, intType* outArr, int sf, bool doTruncati
 #ifdef LOG_LAYERWISE
         INIT_ALL_IO_DATA_SENT;
         INIT_TIMER;
+        INIT_ALL_IO_WAIT_TIME;
 #endif
         for(int i=0;i<eightDivElemts;i++){
             msbShare[i] = 0; //After relu, all numbers are +ve
@@ -382,6 +409,10 @@ void Relu(int32_t size, intType* inArr, intType* outArr, int sf, bool doTruncati
         uint64_t curComm;
         FIND_ALL_IO_TILL_NOW(curComm);
         TruncationCommSent += curComm;
+        uint64_t maxWaitTime;
+        FIND_MAX_WAIT_TIME(maxWaitTime);
+        WaitTimeInMilliSec += maxWaitTime;
+        std::cout<<"Max wait time in sec for current truncation = "<<(maxWaitTime/1000.0)<<std::endl; 
 #endif
     } 
     else {
@@ -471,6 +502,7 @@ void MaxPool(int32_t N, int32_t H, int32_t W, int32_t C,
 #ifdef LOG_LAYERWISE
     INIT_ALL_IO_DATA_SENT;
     INIT_TIMER;
+    INIT_ALL_IO_WAIT_TIME;
 #endif
 
     static int ctr = 1;
@@ -574,6 +606,10 @@ void MaxPool(int32_t N, int32_t H, int32_t W, int32_t C,
     uint64_t curComm;
     FIND_ALL_IO_TILL_NOW(curComm);
     MaxpoolCommSent += curComm;
+    uint64_t maxWaitTime;
+    FIND_MAX_WAIT_TIME(maxWaitTime);
+    WaitTimeInMilliSec += maxWaitTime;
+    std::cout<<"Max wait time in sec for current maxpool = "<<(maxWaitTime/1000.0)<<std::endl; 
 #endif
 
 #ifdef VERIFY_LAYERWISE
@@ -648,6 +684,7 @@ void AvgPool(int32_t N, int32_t H, int32_t W, int32_t C,
 #ifdef LOG_LAYERWISE
     INIT_ALL_IO_DATA_SENT;
     INIT_TIMER;
+    INIT_ALL_IO_WAIT_TIME;
 #endif
 
     static int ctr = 1;
@@ -738,6 +775,10 @@ void AvgPool(int32_t N, int32_t H, int32_t W, int32_t C,
     uint64_t curComm;
     FIND_ALL_IO_TILL_NOW(curComm);
     AvgpoolCommSent += curComm;
+    uint64_t maxWaitTime;
+    FIND_MAX_WAIT_TIME(maxWaitTime);
+    WaitTimeInMilliSec += maxWaitTime;
+    std::cout<<"Max wait time in sec for current avgpool = "<<(maxWaitTime/1000.0)<<std::endl; 
 #endif
 
 #ifdef VERIFY_LAYERWISE
@@ -814,6 +855,7 @@ void Conv2DWrapper(signedIntType N, signedIntType H, signedIntType W, signedIntT
 #ifdef LOG_LAYERWISE
     INIT_ALL_IO_DATA_SENT;
     INIT_TIMER;
+    INIT_ALL_IO_WAIT_TIME;
 #endif
 
     static int ctr = 1;
@@ -878,6 +920,10 @@ void Conv2DWrapper(signedIntType N, signedIntType H, signedIntType W, signedIntT
     uint64_t curComm;
     FIND_ALL_IO_TILL_NOW(curComm);
     ConvCommSent += curComm;
+    uint64_t maxWaitTime;
+    FIND_MAX_WAIT_TIME(maxWaitTime);
+    WaitTimeInMilliSec += maxWaitTime;
+    std::cout<<"Max wait time in sec for current conv = "<<(maxWaitTime/1000.0)<<std::endl; 
 #endif
 
 #ifdef VERIFY_LAYERWISE
@@ -977,6 +1023,7 @@ void ElemWiseActModelVectorMult(int32_t size, intType* inArr, intType* multArrVe
 #ifdef LOG_LAYERWISE
     INIT_ALL_IO_DATA_SENT;
     INIT_TIMER;
+    INIT_ALL_IO_WAIT_TIME;
 #endif
 
     if (party==CLIENT){
@@ -1060,6 +1107,10 @@ void ElemWiseActModelVectorMult(int32_t size, intType* inArr, intType* multArrVe
     uint64_t curComm;
     FIND_ALL_IO_TILL_NOW(curComm);
     BatchNormCommSent += curComm;
+    uint64_t maxWaitTime;
+    FIND_MAX_WAIT_TIME(maxWaitTime);
+    WaitTimeInMilliSec += maxWaitTime;
+    std::cout<<"Max wait time in sec for current batchnorm = "<<(maxWaitTime/1000.0)<<std::endl; 
 #endif
 
 #ifdef VERIFY_LAYERWISE
@@ -1113,6 +1164,7 @@ void ScaleDown(int32_t size, intType* inArr, int32_t sf)
 #ifdef LOG_LAYERWISE
     INIT_ALL_IO_DATA_SENT;
     INIT_TIMER;
+    INIT_ALL_IO_WAIT_TIME;
 #endif
 
     int eightDivElemts = ((size + 8 - 1)/8)*8; //(ceil of s1*s2/8.0)*8
@@ -1142,6 +1194,10 @@ void ScaleDown(int32_t size, intType* inArr, int32_t sf)
     uint64_t curComm;
     FIND_ALL_IO_TILL_NOW(curComm);
     TruncationCommSent += curComm;
+    uint64_t maxWaitTime;
+    FIND_MAX_WAIT_TIME(maxWaitTime);
+    WaitTimeInMilliSec += maxWaitTime;
+    std::cout<<"Max wait time in sec for current scaledown = "<<(maxWaitTime/1000.0)<<std::endl; 
 #endif
 
 #ifdef VERIFY_LAYERWISE
@@ -1247,6 +1303,7 @@ void EndComputation(){
     std::cout<<"Total time in MaxPool = "<<(MaxpoolTimeInMilliSec/1000.0)<<" seconds."<<std::endl;
     std::cout<<"Total time in AvgPool = "<<(AvgpoolTimeInMilliSec/1000.0)<<" seconds."<<std::endl;
     std::cout<<"Total time in Argmax = "<<(ArgmaxTimeInMilliSec/1000.0)<<" seconds."<<std::endl;
+    std::cout<<"Total wait time = "<<(WaitTimeInMilliSec/1000.0)<<" seconds."<<std::endl;
     std::cout<<"------------------------------------------------------\n";
     std::cout<<"Conv data sent = "<<((ConvCommSent)/(1.0*(1ULL<<20)))<<" MiB."<<std::endl;
     std::cout<<"Matmul data sent = "<<((MatmulCommSent)/(1.0*(1ULL<<20)))<<" MiB."<<std::endl;
@@ -1293,7 +1350,7 @@ void EndComputation(){
         }
         std::fstream result(file_addr.c_str(), std::fstream::out|std::fstream::app);
         if(write_title){
-            result << "Network,Algebra,Bitlen,Base,#Threads,Total Time,Total Comm,Conv Time,Conv Comm,MatMul Time,MatMul Comm,BatchNorm Time,BatchNorm Comm,Truncation Time,Truncation Comm,ReLU Time,ReLU Comm,MaxPool Time,MaxPool Comm,AvgPool Time,AvgPool Comm,ArgMax Time,ArgMax Comm" << std::endl;
+            result << "Network,Algebra,Bitlen,Base,#Threads,Total Time,Total Comm,Conv Time,Conv Comm,MatMul Time,MatMul Comm,BatchNorm Time,BatchNorm Comm,Truncation Time,Truncation Comm,ReLU Time,ReLU Comm,MaxPool Time,MaxPool Comm,AvgPool Time,AvgPool Comm,ArgMax Time,ArgMax Comm,Wait Time" << std::endl;
         }
         result << get_network_label(network_name) << ","
             << (isNativeRing ? "Ring": "Field") << ","
@@ -1317,7 +1374,8 @@ void EndComputation(){
             << AvgpoolTimeInMilliSec/1000.0 << ","
             << (AvgpoolCommSent+AvgpoolCommSentClient)/(1.0*(1ULL<<20)) << ","
             << ArgmaxTimeInMilliSec/1000.0 << ","
-            << (ArgmaxCommSent+ArgmaxCommSentClient)/(1.0*(1ULL<<20)) << std::endl;
+            << (ArgmaxCommSent+ArgmaxCommSentClient)/(1.0*(1ULL<<20)) << ","
+            << WaitTimeInMilliSec/1000.0 << std::endl;
         result.close();
 #endif
     }

@@ -55,6 +55,7 @@ class NetIO: public IOChannel<NetIO> { public:
 	string addr;
 	int port;
 	uint64_t counter = 0;
+    uint64_t wait_time_ms = 0;
 	NetIO(const char * address, int port, bool quiet = false) {
 		this->port = port;
 		is_server = (address == nullptr);
@@ -160,6 +161,7 @@ class NetIO: public IOChannel<NetIO> { public:
 			fflush(stream);
 		has_sent = false;
 		int sent = 0;
+        auto start_timer = std::chrono::high_resolution_clock::now();
 		while(sent < len) {
 			int res = fread(sent + (char*)data, 1, len - sent, stream);
 			if (res >= 0)
@@ -167,6 +169,8 @@ class NetIO: public IOChannel<NetIO> { public:
 			else 
 				fprintf(stderr,"error: net_send_data %d\n", res);
 		}
+        wait_time_ms += std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::high_resolution_clock::now()-start_timer).count();
 	}
 };
 /**@}*/

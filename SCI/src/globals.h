@@ -207,6 +207,8 @@ int32_t party = 0;
 extern const int numThreads = 4;
 
 #ifdef LOG_LAYERWISE
+uint64_t WaitTimeInMilliSec = 0;
+
 uint64_t ConvTimeInMilliSec = 0;
 uint64_t MatmulTimeInMilliSec = 0;
 uint64_t BatchNormInMilliSec = 0;
