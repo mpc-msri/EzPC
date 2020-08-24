@@ -38,7 +38,7 @@ SOFTWARE.
 #define MULTITHREADED_TRUNC
 #define MULTITHREADED_DOTPROD
 #endif
-#define VERIFY_LAYERWISE
+//#define VERIFY_LAYERWISE
 #define WRITE_LOG
 
 enum NetworkName {
