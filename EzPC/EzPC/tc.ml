@@ -347,11 +347,11 @@ let rec tc_stmt (g:gamma) (s:stmt) :sresult =
   | For (_, e_var, e1, e2, s) when is_var e_var ->    (* TODO: check for qualifier consistency? *)
      let x = get_var e_var in
      bind (tc_expr g e1) (fun t1 ->
-            bind (check_expected_typ e1 t1 (Base (Int32, Some Public) |> mk_syntax e_var.metadata)) (fun _ ->
+            bind (check_expected_typ e1 t1 (Base (Int64, Some Public) |> mk_syntax e_var.metadata)) (fun _ ->
                    bind (tc_expr g e2) (fun t2 ->
                           bind (check_expected_typ e2 t2 t1) (fun _ ->
                                  let g_body = [x,
-                                               Base (Int32, Some Public) |> mk_syntax e_var.metadata] |> push_local_scope g in
+                                               Base (Int64, Some Public) |> mk_syntax e_var.metadata] |> push_local_scope g in
                                  bind (tc_stmt g_body s) (fun _ ->
                                         if SSet.mem x (modifies (g.top_level_functions |> List.map (fun (f, (bs, _)) -> (f, bs))) s)
                                         then Type_error ("Loop variable cannot be modified in the loop", s.metadata)

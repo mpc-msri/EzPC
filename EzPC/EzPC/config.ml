@@ -44,7 +44,7 @@ type configuration = {
   }
 
 let c_private :configuration ref = ref {
-                                       bitlen = 32;
+                                       bitlen = 64;
                                        out_mode = ABY;
                                        tac = true;
                                        cse = true;

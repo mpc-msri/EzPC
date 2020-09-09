@@ -1,0 +1,75 @@
+def void MatMul(int64_al[100][32] a, int64_al[21][21] b, int64_al[21][21] c, int64_pl i1, int64_pl i2, int64_pl i3)
+{
+    int64_al sum = 0L;
+    for i=[0L:i1]
+    {
+        for j=[0L:i2]
+        {
+            sum = 0L;
+            for k=[0L:i3]
+            {
+                int64_al prod = (a[i][k] * b[k][j]);
+                sum = sum + prod;
+            };
+            c[i][j] = sum;
+        };
+    };
+}
+
+def void MatAdd(int64_al[100][100] a, int64_al[100][100] b, int64_al[100][100] c, int64_pl i1, int64_pl i2)
+{
+    for i=[0L:i1]
+    {
+        for j=[0L:i2]
+        {
+            c[i][j] = a[i][j] + b[i][j];
+        }
+    }
+}
+
+def void main()
+{
+    input(SERVER, W1, int64_bl[30][8]);
+    input(SERVER, W2, int64_bl[8][64]); 
+    input(SERVER, U1, int64_bl[64][8]);
+    input(SERVER, U2, int64_bl[8][64]);
+    input(SERVER, Bg, int64_bl[1][64]);
+    input(SERVER, Bh, int64_bl[1][64]);
+    input(SERVER, FC1, int64_bl[64][20]);
+    input(SERVER, FC2, int64_bl[20][72]);
+    input(SERVER, FCBias, int64_bl[1][72]);
+
+    input(CLIENT, X, int64_al[210][1]);
+
+    int64 zeta = 2623523L;
+    int64 nu = 183599L;
+
+    int64_al[64][1] H;
+    for i=[0:64]
+    {
+        H[i][0] = 0L;
+    }
+    int64_al[1][64] a;
+    int64_al[1][64] b;
+    int64_al[1][64] c;
+    
+    int64_al[1][8] tmp1;
+    int64_al[1][8] tmp2;
+
+    for i=[0:7]
+    {
+        int64_al[1][30] XX;
+        for j=[0:30]
+        {
+            XX[0][j] = X[30*i + j][0];
+        }
+        MatMul(XX, W1, tmp1, 1, 8, 30);
+        MatMul(tmp1, W2, a, 1, 64, 8);
+
+        MatMul(H, U1, tmp2, 1, 8, 64);
+        MatMul(tmp2, U2, b, 1, 64, 8);
+
+        MatAdd(a, b, c, 1, 64);        
+
+    }
+}
