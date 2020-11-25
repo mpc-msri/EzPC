@@ -112,6 +112,32 @@ def prefixAllPlaceHolderNodes(graph):
 			remNodes.append(curNode)
 	graph.setNodesList(placeHolderNodes + remNodes)
 
+
+# List of Optimisations
+# 1. Split squared difference into (a-b)*(a-b)
+def simplifyGraph(graph):
+	allNodes = graph.getAllNodesRef()
+	nodesMap = graph.getAllNodes()
+	newNodes = []
+	inputsFixup = {}
+	for curNode in allNodes:
+		inputs = curNode.getInputsRef()
+		for i in range(len(inputs)):
+			if inputs[i] in inputsFixup:
+				inputs[i] = inputsFixup[inputs[i]]
+		if (curNode.getOp() == "SquaredDifference"):
+			sub = Graph.Node("Sub", inputs.copy(), curNode.getName() + "__sub")
+			mul = Graph.Node("Mul", [sub.getName(), sub.getName()], curNode.getName() + "__mul")
+			newNodes.append(sub)
+			newNodes.append(mul)
+			nodesMap[sub.getName()] = sub
+			nodesMap[mul.getName()] = mul
+			inputsFixup[curNode.getName()] = mul.getName()
+			nodesMap.pop(curNode.getName())
+		else:
+			newNodes.append(curNode)
+	graph.setNodesList(newNodes)
+
 def main():
 	sys.setrecursionlimit(10000)
 
@@ -131,6 +157,8 @@ def main():
 	sizeInfoFileName = os.path.join(folderName, 'sizeInfo.mtdata')
 	sizeInfo = readSizeInfo(sizeInfoFileName)
 
+	# Tensorflow graph level optimisations
+	simplifyGraph(graph)
 	# Place all PlaceHolder nodes together at the beginning
 	prefixAllPlaceHolderNodes(graph)
 

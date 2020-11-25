@@ -501,11 +501,14 @@ class Value:
         return self.__val
 
 class Node:
-    def __init__(self):
-        self.__name = ""        #Name of node
-        self.__op = ""          #Name of operation carried out by node
-        self.__inputs = []      #List of all inputs to the current node
-        self.__attr = {}        #Map of (attrName, Value) of all attributes for the current node
+    def __init__(self, op="", inputs=None, name=""):
+        self.__name = name          #Name of node
+        self.__op = op              #Name of operation carried out by node
+        if inputs is None:
+            self.__inputs = []      #List of all inputs to the current node
+        else:
+            self.__inputs = inputs
+        self.__attr = {}            #Map of (attrName, Value) of all attributes for the current node
 
     def getName(self):
         return self.__name
