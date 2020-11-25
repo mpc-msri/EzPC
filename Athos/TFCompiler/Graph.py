@@ -520,7 +520,7 @@ class Node:
         return self.__attr
 
     def getAttrVal(self, attrName):
-        qName = '"' + attrName + '"'
+        qName = attrName
         if not qName in self.__attr:
             return None
         return self.__attr[qName]
@@ -541,7 +541,7 @@ class Node:
                     #keyStr is already non-None .. there is then probably some error
                     print("Too many keys found while parsing attr for node at line =", cnt, file=sys.stderr)
                     return (False, cnt)
-                keyStr = tokens[1]
+                keyStr = tokens[1][1:-1]
             elif (curToken == "value"):
                 curVal = Value()
                 (noParseError, cnt) = curVal.readFromFilePointer(fileP, cnt)
@@ -570,13 +570,13 @@ class Node:
                 return (True, cnt)
             elif (curToken == "name:"):
                 if (errIfTokensNotMinLen(tokens, 2, cnt, "node")): return (False, cnt)
-                self.__name = tokens[1]
+                self.__name = tokens[1][1:-1]
             elif (curToken == "op:"):
                 if (errIfTokensNotMinLen(tokens, 2, cnt, "node")): return (False, cnt)
-                self.__op = tokens[1]
+                self.__op = tokens[1][1:-1]
             elif (curToken == "input:"):
                 if (errIfTokensNotMinLen(tokens, 2, cnt, "node")): return (False, cnt)
-                self.__inputs.append(tokens[1])
+                self.__inputs.append(tokens[1][1:-1])
             elif (curToken == "attr"):
                 (noParseError, cnt) = self.readAttrFromFilePointer(fileP, cnt)
                 if (not(noParseError)):

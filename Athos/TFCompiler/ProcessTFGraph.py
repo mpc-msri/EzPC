@@ -36,7 +36,7 @@ def checkTFNodeNameForEq(curNodeOp:str, givenOp:str):
 def generateASTForNode(graph, curNode, dictNodeNameToOutVarStr, extraNodeInfoDict):
 	curNodeOp = curNode.getOp()
 	ast = None
-	func = getattr(TFNodesAST, curNodeOp[1:-1]) #To remove the " at the begin and end
+	func = getattr(TFNodesAST, curNodeOp)
 	(assignedVarAST, curAST) = func(graph, curNode, dictNodeNameToOutVarStr, extraNodeInfoDict)
 	return (assignedVarAST, curAST)
 
@@ -53,8 +53,8 @@ def generateIRCode(graph, extraInfoDict):
 			assert(curInp in dictNodeNameToOutVarStr) #Consequence of topological sorting of the TF graph
 		(assignedVarAST, curAst) = generateASTForNode(graph, curNode, dictNodeNameToOutVarStr, extraInfoDict)
 
-		mtdForCurAST = {AST.ASTNode.mtdKeyTFOpName : curNode.getOp()[1:-1],
-						AST.ASTNode.mtdKeyTFNodeName : curNode.getName()[1:-1]}
+		mtdForCurAST = {AST.ASTNode.mtdKeyTFOpName : curNode.getOp(),
+						AST.ASTNode.mtdKeyTFNodeName : curNode.getName()}
 
 		if (curAst is None):
 			dictNodeNameToOutVarStr[curNode.getName()] = None
@@ -104,7 +104,7 @@ def prefixAllPlaceHolderNodes(graph):
 	placeHolderNodes = []
 	remNodes = []
 	for curNode in allNodes:
-		if (curNode.getOp() == "\"Placeholder\"" or curNode.getOp() == "\"VariableV2\""):
+		if (curNode.getOp() == "Placeholder" or curNode.getOp() == "VariableV2"):
 			# Assert this is indeed a leaf node
 			assert(len(curNode.getInputsRef()) == 0)
 			placeHolderNodes.append(curNode)
@@ -138,19 +138,19 @@ def main():
 	for curNode in graph.getAllNodesRef():
 		inputsRef = curNode.getInputsRef()
 		for i,curInput in enumerate(inputsRef):
-			if (curInput.startswith('"^')):
+			if (curInput.startswith('^')):
 				# My hypothesis from empirical observation is that inputs which have '^' ahead of the node name
 				#	denote control flow dependency and not data dependency.
 				#	For all purposes for this compilation, control and data dependency is considered same.
 				#	The reasoning being that everything is serial -- and graph execution is done in a 
 				#		a topological sort.
-				inputsRef[i] = '"' + curInput.split('^')[-1]
+				inputsRef[i] = curInput.split('^')[-1]
 
 	# Create extra info dict
 	# Format : (sizeInfo)
 	extraInfoDict = {}
 	for k,v in sizeInfo.items():
-		extraInfoDict["\"" + k + "\""] = (v,)
+		extraInfoDict[k] = (v,)
 	for curNode in graph.getAllNodesRef():
 		if (curNode.getName() not in extraInfoDict):
 			extraInfoDict[curNode.getName()] = (None,)
