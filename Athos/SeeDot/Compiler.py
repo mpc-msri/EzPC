@@ -29,6 +29,7 @@ import Util
 import IR.IR as IR
 import AST.AST as AST
 from Writer import Writer
+import Type as Type
 from Type import InferType
 import IR.IRUtil as IRUtil
 from AST.PrintAST  import PrintAST
@@ -77,6 +78,34 @@ class Compiler:
 		prog.cmd_l.append(IR.FuncCall('EndComputation', []))
 		return (prog, expr)
 
+	def fixOuputScale(self, res:(IR.Prog, IR.Expr), compiler:IRBuilderCSF):
+		prog = res[0]
+		expr = res[1]
+		output_scale = compiler.scaleFacMapping[expr.idf]
+		if output_scale == Util.Config.consSF:
+			return (prog, expr)
+		elif output_scale > Util.Config.consSF:
+			scale_down =  output_scale - Util.Config.consSF
+			type = compiler.typeInfo[expr.idf]
+			if Type.isInt(type):
+				output_shape = []
+			if Type.isTensor(type):
+				output_shape = type.shape
+
+			argsDict = OrderedDict()
+			funcName = "ScaleDown"
+			for ii, curDimSize in enumerate(output_shape):
+				argsDict[IR.Int(curDimSize, 32)] = "size_" + str(ii)
+			funcName = funcName + str(len(output_shape))
+			argsDict[expr] = "expr"
+			argsDict[IR.Int(scale_down,32)] = "consSF"
+			funcCall = IR.FuncCall(funcName, argsDict)
+			new_prog = IR.Prog([funcCall])
+			prog = IRUtil.prog_merge(prog, new_prog)
+			return (prog, expr)
+		else:
+			assert False, "Scale up shouldnt be required of final output. We lost precision somewhere"
+
 	def run(self):
 		with open(Util.Config.astFile, 'rb') as ff:
 			ast = pickle.load(ff)
@@ -104,6 +133,7 @@ class Compiler:
 		IRUtil.init()
 		compiler = IRBuilderCSF()
 		res = compiler.visit(ast)
+		res = self.fixOuputScale(res, compiler);
 
 		Util.write_debug_info(compiler.name_mapping) 
 

@@ -33,8 +33,9 @@ import Type as Type
 import AST.AST as AST
 import IR.IRUtil as IRUtil
 from AST.ASTVisitor import ASTVisitor
+from AST.IRBuilderAST import IRBuilderAST
 
-class IRBuilderCSF(ASTVisitor):
+class IRBuilderCSF(IRBuilderAST):
 	varNameDelim = ''
 	def __init__(self, intPartBitwidth=-1):
 		# For tracking temp variables
