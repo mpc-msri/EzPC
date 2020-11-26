@@ -16,26 +16,26 @@ def delete_nodes(graph, ops):
     tf.import_graph_def(new_gd, name="")
   return new_graph
 
-def remove_dead_nodes(graph, input_tensors, output_tensors):
+def remove_dead_nodes(graph, in_list, out_list):
   transforms = ['remove_nodes(op=Identity)', 'strip_unused_nodes']
-  in_list = [i.name for i in input_tensors]
-  out_list = [i.name for i in output_tensors]
   optimized_graph_def = TransformGraph(graph.as_graph_def(), in_list, out_list, transforms)
   with tf.Graph().as_default() as opt_graph:
     tf.import_graph_def(optimized_graph_def, name="")
     return opt_graph
 
 def convert_consts_to_var(graph, const_names_list):
+
   const_var_names_pairs = []
   ops_to_delete = []
   with graph.as_default():
+    preexisting_vars = [tf.get_variable(i.name, i.outputs[0].shape) for i in graph.get_operations() if i.type=="VariableV2" or i.type=="Variable"]
+
     var_list = []
     for name in const_names_list:
-      #tensor = graph.get_tensor_by_name('{}:0'.format(name))
       tensor = graph.get_operation_by_name(name).outputs[0]
       with tf.Session() as sess:
         t_value = sess.run(tensor)
-      t_name = '{}_const_var'.format(name)
+      t_name = '{}_mpc_const_var'.format(name)
       var = tf.Variable(t_value, name=t_name)
       const_var_names_pairs.append((name, t_name))
       var_list.append(var)
@@ -45,7 +45,8 @@ def convert_consts_to_var(graph, const_names_list):
       var_op = graph.get_operation_by_name('{}/read'.format(var_name))
       ge.swap_outputs(ge.sgv(const_op), ge.sgv(var_op))
       ops_to_delete.append(const_op)
-    tf.compat.v1.variables_initializer(var_list, 'init_constvars')
+
+    tf.compat.v1.variables_initializer(var_list + preexisting_vars, 'init_constvars')
   return delete_nodes(graph, ops_to_delete)
 
 def get_inputs(op):
