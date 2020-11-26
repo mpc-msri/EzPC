@@ -45,6 +45,10 @@ OperatorsSymbolDict = {
 		"ClearMemPublic": 'clearmempublic'
 }
 
+class Party(Enum):
+	SERVER = 0
+	CLIENT = 1
+
 class Operators(Enum):
 	ADD = auto()
 	SUB = auto()
@@ -361,12 +365,12 @@ class Reduce(ASTNode):
 # Also, take note of the last parameter - "inputByParty". This can be used to set the party which
 #	which will do the input for this variable. Defaults to 0, which is interpretted as SERVER by the codegen.
 class Input(ASTNode):
-	def __init__(self, shape:list, dataType:str, isSecret=True, inputByParty=0): 
+	def __init__(self, shape:list, dataType:str, isSecret=True, inputByParty=Party.SERVER):
 		if assertInputTypes:
 			for elem in shape: assert isinstance(elem, int)
 			assert isinstance(dataType, str)
-			assert isinstance(inputByParty, int)
-			assert(inputByParty==0 or inputByParty==1) #Right now EzPC supports input by two parties.
+			assert isinstance(inputByParty, Party)
+			assert(inputByParty==Party.CLIENT or inputByParty==Party.SERVER) #Right now EzPC supports input by two parties.
 		super().__init__()
 		self.shape = shape
 		self.dataType = dataType

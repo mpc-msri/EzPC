@@ -89,10 +89,12 @@ class PrintAST(ASTVisitor):
 			node.expr.depth = node.depth + 1
 		print(indent * node.depth, "(", end=' ')
 		print("let", end=' ')
+		if(hasattr(node.name, 'type') and hasattr(node.name.type, 'taint')):
+			print("<", node.decl.type.taint.name, ">",end=' ')
 		self.visit(node.name)
 		print("=", end=' ')
 		self.visit(node.decl)
-		print("in", "{", node.metadata[AST.ASTNode.mtdKeyTFOpName], node.metadata[AST.ASTNode.mtdKeyTFNodeName], "}", end='\n')
+		print("{", node.metadata[AST.ASTNode.mtdKeyTFOpName], node.metadata[AST.ASTNode.mtdKeyTFNodeName], "} in ", end='\n')
 		self.visit(node.expr)
 		print(')',end='')
 
@@ -113,7 +115,7 @@ class PrintAST(ASTVisitor):
 		self.visit(node.keepdims)
 
 	def visitInput(self, node:AST.Input, args=None):
-		print(indent * node.depth, "input( ", node.shape, node.dataType, end='')
+		print(indent * node.depth, "input( ", node.shape, node.dataType, " <", node.inputByParty.name, "> ", end='')
 		print(" )", end='')
 
 	def visitFusedBatchNorm(self, node:AST.FusedBatchNorm, args=None):

@@ -100,12 +100,8 @@ class EzPC(CodegenBase):
 			assert False
 
 	def printInput(self, ir:IR.Input):
-		if (ir.inputByParty==0):
-			inputByPartyStr = "SERVER"
-		elif (ir.inputByParty==1):
-			inputByPartyStr = "CLIENT"
-		else:
-			assert(False) #For now the only supported values of party to input is 0 or 1
+		inputByPartyStr = ir.inputByParty.name
+		assert(inputByPartyStr == "SERVER" or inputByPartyStr == "CLIENT") #For now the only supported values of party to input is 0 or 1
 		self.out.printf('input({0}, {1}, '.format(inputByPartyStr, ir.expr.idf), indent=True)
 		#assert(ir.dataType in ["DT_INT32"]) ####TODO: fix this
 		if Util.Config.wordLength == 32:

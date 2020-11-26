@@ -27,23 +27,103 @@ import operator
 from functools import reduce
 import AST.AST as AST
 from AST.ASTVisitor import ASTVisitor
+from enum import Enum, auto
+import copy
 
 class Type:
 	pass
 
+'''
+We want to analyse the taint of every tensor that flows in the graph.
+The possible taints for tensors are:
+{
+	Client: Input to the ML model (eg: the image input)
+	Server: The weights of the model
+	ClientXServer[C&S]: A tensor that is dervied after operations on both client and server tensors.
+	Secret_constant: A tensor that is a constant but declared as a secret
+	Public_constant: A tensor that is a constant but declared as public
+}
+Note: For ML models we don't expect to encounter any secret_constants and instead expect them
+to be encoded as weights of the model and so instead has the server taint.
+
+We infer taints in the following manner:
+                    Client         Server      C&S     Secret_constant     Public_constant
+Client              Client         C&S         C&S     Client              Client
+Server              C&S            Server      C&S     Server              Server
+C&S                 C&S            C&S         C&S     C&S                 C&S
+Secret_constant     C&S            C&S         C&S     Secret_constant     Secret_constant
+Public_constant     Client         Server      C&S     Secret_constant     Public_constant
+'''
+
+class Taints(Enum):
+	CLIENT = auto()
+	SERVER = auto()
+	CLIENT_SERVER = auto()
+	SECRET_C = auto()
+	PUBLIC_C = auto()
+
+constantTaintsMapping = { True : Taints.SECRET_C, False : Taints.PUBLIC_C}
+
+TaintsTable = {
+		Taints.CLIENT : {
+			Taints.CLIENT : Taints.CLIENT,
+			Taints.SERVER : Taints.CLIENT_SERVER,
+			Taints.CLIENT_SERVER: Taints.CLIENT_SERVER,
+			Taints.SECRET_C: Taints.CLIENT,
+			Taints.PUBLIC_C: Taints.CLIENT
+			},
+		Taints.SERVER : {
+			Taints.CLIENT : Taints.CLIENT_SERVER,
+			Taints.SERVER : Taints.SERVER,
+			Taints.CLIENT_SERVER: Taints.CLIENT_SERVER,
+			Taints.SECRET_C: Taints.SERVER,
+			Taints.PUBLIC_C: Taints.SERVER
+			},
+		Taints.CLIENT_SERVER : {
+			Taints.CLIENT : Taints.CLIENT_SERVER,
+			Taints.SERVER : Taints.CLIENT_SERVER,
+			Taints.CLIENT_SERVER: Taints.CLIENT_SERVER,
+			Taints.SECRET_C: Taints.CLIENT_SERVER,
+			Taints.PUBLIC_C: Taints.CLIENT_SERVER
+			},
+		Taints.SECRET_C : {
+			Taints.CLIENT : Taints.CLIENT,
+			Taints.SERVER : Taints.SERVER,
+			Taints.CLIENT_SERVER: Taints.CLIENT_SERVER,
+			Taints.SECRET_C: Taints.SECRET_C,
+			Taints.PUBLIC_C: Taints.SECRET_C
+			},
+		Taints.PUBLIC_C : {
+			Taints.CLIENT : Taints.CLIENT,
+			Taints.SERVER : Taints.SERVER,
+			Taints.CLIENT_SERVER: Taints.CLIENT_SERVER,
+			Taints.SECRET_C: Taints.SECRET_C,
+			Taints.PUBLIC_C: Taints.PUBLIC_C
+			}
+	}
+def getTaint_taint(t1: Taints, t2: Taints):
+	return TaintsTable[t1][t2]
+
+def getTaint_type(t1: Type, t2: Type):
+	return TaintsTable[t1.taint][t2.taint]
+
 class Int(Type):
-	def __init__(self, bitlen=-1, isSecret=False):
+	def __init__(self, bitlen=-1, isSecret=False, taint=Taints.PUBLIC_C):
 		if bitlen==-1:
 			self.bitlen = Util.Config.wordLength
 		else:
 			self.bitlen = bitlen
 		self.isSecret = isSecret
+		self.taint = taint
+
+	def __copy__(self):
+		return type(self)(self.bitlen, self.isSecret, self.taint)
 
 class Unit(Type):
 	pass
 
 class Tensor(Type):
-	def __init__(self, shape:list, bitlen=-1, isSecret=True):
+	def __init__(self, shape:list, bitlen=-1, isSecret=True, taint=Taints.PUBLIC_C):
 		self.shape = shape
 		self.dim = len(shape)
 		if bitlen==-1:
@@ -51,6 +131,10 @@ class Tensor(Type):
 		else:
 			self.bitlen = bitlen
 		self.isSecret = isSecret
+		self.taint = taint
+
+	def __copy__(self):
+		return type(self)(self.shape, self.bitlen, self.isSecret, self.taint)
 
 	def size(self):
 		return reduce(operator.mul, self.shape, 1)
@@ -83,12 +167,12 @@ class InferType(ASTVisitor):
 		bitlen = Util.Config.wordLength
 		if node.bitLen:
 			bitlen = node.bitLen
-		node.type = Int(bitlen, node.isSecret)
+		node.type = Int(bitlen, node.isSecret, constantTaintsMapping[node.isSecret])
 		return node.type
 
 	def visitFloat(self, node:AST.Float, args=None):
-		# Float is represented as a tensor with 0 dimension
-		node.type = Tensor([], -1, node.isSecret)
+		# Float is represented as an int in fixedpt.
+		node.type = Int(isSecret=node.isSecret, taint=constantTaintsMapping[node.isSecret])
 		return node.type
 
 	def visitId(self, node:AST.ID, args=None):
@@ -101,7 +185,10 @@ class InferType(ASTVisitor):
 
 	def visitDecl(self, node:AST.Decl, args=None):
 		#TODO -- fill in bitlen properly
-		node.type = Tensor(node.shape, -1, node.isSecret)
+		if (node.shape == []):
+			node.type = Int(isSecret=node.isSecret, taint=constantTaintsMapping[node.isSecret])
+		else:
+			node.type = Tensor(shape=node.shape, isSecret=node.isSecret, taint=constantTaintsMapping[node.isSecret])
 		return node.type
 
 	def visitTranspose(self, node:AST.Transpose, args=None):
@@ -117,7 +204,7 @@ class InferType(ASTVisitor):
 		new_shape = []
 		for i in perm:
 			new_shape.append(shape[i])
-		node.type = Tensor(new_shape)
+		node.type = Tensor(new_shape, exprType.bitlen, exprType.isSecret, exprType.taint)
 		return node.type
 
 	def visitReshape(self, node:AST.Reshape, args=None):
@@ -128,7 +215,7 @@ class InferType(ASTVisitor):
 		
 		# Reshape is valid if the total number of elements remain same after reshape
 		assert reduce(operator.mul, exprType.shape, 1) == reduce(operator.mul, node.shape, 1)
-		node.type = Tensor(node.shape)
+		node.type = Tensor(node.shape, exprType.bitlen, exprType.isSecret, exprType.taint)
 
 		return node.type
 
@@ -151,7 +238,7 @@ class InferType(ASTVisitor):
 		newH = ((H + zPadHLeft + zPadHRight - FH)//strideH) + 1
 		newW = ((W + zPadWLeft + zPadWRight - FW)//strideW) + 1
 
-		node.type = Tensor([N, newH, newW, CI])
+		node.type = Tensor([N, newH, newW, CI], exprType.bitlen, exprType.isSecret, exprType.taint)
 
 		return node.type
 
@@ -202,7 +289,7 @@ class InferType(ASTVisitor):
 		assert len(eType.shape) >= len(fType.shape)
 
 		if isInt(eType) and isInt(fType):
-			node.type = Int(eType.bitlen, eType.isSecret)
+			node.type = Int(eType.bitlen)
 		elif isTensor(eType) and isTensor(fType):
 			revETypeShape = eType.shape[::-1]
 			revFTypeShape = fType.shape[::-1]
@@ -214,10 +301,13 @@ class InferType(ASTVisitor):
 					assert False
 
 			# Broadcast possible
-			node.type = eType
+			node.type = copy.copy(eType)
 		else:
 			print(eType, fType)
 			assert False
+
+		node.type.taint = getTaint_type(eType, fType)
+		node.type.isSecret = eType.isSecret | fType.isSecret
 		return node.type
 
 	def visitBopMul(self, node:AST.BOp, eType:Type, fType:Type, args=None):
@@ -225,18 +315,21 @@ class InferType(ASTVisitor):
 			node.type = Int(eType.bitlen, eType.isSecret)
 		elif isTensor(eType) and isTensor(fType):
 			if eType.dim == 0:
-				node.type = fType
+				node.type = copy.copy(fType)
 			elif fType.dim == 0:
-				node.type = eType
+				node.type = copy.copy(eType)
 			else:
 				assert eType.dim == 2 and fType.dim == 2
 				[n1, n2] = eType.shape
 				[n3, n4] = fType.shape
 				assert n2 == n3
-				node.type = Tensor([n1, n4])
+				node.type = Tensor([n1, n4], eType.bitlen)
 		else:
 			print("Error: Unknown condition in type checking.", file=sys.stderr)
 			assert(False)
+
+		node.type.taint = getTaint_type(eType, fType)
+		node.type.isSecret = eType.isSecret | fType.isSecret
 
 		return node.type
 
@@ -291,7 +384,7 @@ class InferType(ASTVisitor):
 			shape = [N, newH, newW, CO]
 		elif convDim == 3:
 			shape = [N, newD, newH, newW, CO]
-		node.type = Tensor(shape)
+		node.type = Tensor(shape, eType.bitlen, eType.isSecret | fType.isSecret, getTaint_type(eType, fType))
 		return node.type
 
 	def visitBopConvTranspose(self, node:AST.BOp, eType:Type, fType:Type, args=None):
@@ -328,7 +421,7 @@ class InferType(ASTVisitor):
 		#		of size shape = [N, outputImgH, outputImgW, CI], and filter of size [FH, FW, CI, CO].
 		#		Hence, the input for this convTranspose would be [N, HP, WP, CO]
 
-		node.type = Tensor(shape)
+		node.type = Tensor(shape, eType.bitlen, eType.isSecret | fType.isSecret, getTaint_type(eType, fType))
 		return node.type
 
 	def visitBopAddLike(self, node:AST.BOp, eType: Type, fType: Type, args=None):
@@ -339,7 +432,9 @@ class InferType(ASTVisitor):
 		else:
 			assert False
 		
-		node.type = eType
+		node.type = copy.copy(eType)
+		node.type.taint = getTaint_type(eType, fType)
+		node.type.isSecret = eType.isSecret | fType.isSecret
 		return node.type
 
 	def visitFunc(self, node:AST.Func, args=None):
@@ -348,18 +443,30 @@ class InferType(ASTVisitor):
 
 		if node.op == AST.Operators.RELU:
 			assert isTensor(eType) and eType.dim >= 1
-			node.type = eType
+			node.type = copy.copy(eType)
+		elif node.op == AST.Operators.TANH:
+			assert isTensor(eType)
+			node.type = copy.copy(eType)
+		elif node.op == AST.Operators.SIGMOID:
+			assert isTensor(eType)
+			node.type = copy.copy(eType)
+		elif node.op == AST.Operators.SQRT:
+			assert isTensor(eType)
+			node.type = copy.copy(eType)
+		elif node.op == AST.Operators.RSQRT:
+			assert isTensor(eType)
+			node.type = copy.copy(eType)
 		elif node.op == AST.Operators.Floor:
-			node.type = eType
+			node.type = copy.copy(eType)
 		elif node.op == AST.Operators.Shape:
 			assert isTensor(eType)
-			node.type = Tensor([len(eType.shape)])
+			node.type = Tensor([len(eType.shape)], eType.bitlen, eType.isSecret, eType.taint)
 		elif node.op  == AST.Operators.ClearMemSecret:
 			node.type = Unit()
 		elif node.op  == AST.Operators.ClearMemPublic:
 			node.type = Unit()
 		else:
-			print(node.op)
+			print("Type inference not implemented for", node.op)
 			assert False
 
 		return node.type
@@ -368,49 +475,51 @@ class InferType(ASTVisitor):
 		node.decl.gamma = dict(node.gamma)
 		eType = self.visit(node.decl)
 
+		node.name.gamma = { node.name.name : eType}
+		self.visit(node.name)
+
 		node.expr.gamma = dict(node.gamma)
 		node.expr.gamma[node.name.name] = eType
 		fType = self.visit(node.expr)
 
-		node.type = fType
+		node.type = copy.copy(fType)
 		return node.type
 
 	def visitUninterpFuncCall(self, node:AST.UninterpFuncCall, args=None):
 		# Assert that outputShape and inputDims are lists of int astNode.
 		assert(len(node.argsList) > 0)
+		isSecret = False
+		taint = Taints.PUBLIC_C
 		for curArg in node.argsList:
 			curArg.gamma = dict(node.gamma)
-			self.visit(curArg) #This should set the type of each of the input nodes
+			eType = self.visit(curArg) #This should set the type of each of the input nodes
+			isSecret = isSecret | eType.isSecret
+			taint = getTaint_taint(taint, eType.taint)
 		outputShape = node.outputShape
-		node.type = Tensor(outputShape)
+		node.type = Tensor(outputShape, isSecret=isSecret, taint=taint)
 		return node.type
 
 	def visitArgMax(self, node:AST.ArgMax, args=None):
 		node.expr.gamma = dict(node.gamma)
-		inpTensorType = self.visit(node.expr)
+		eType = self.visit(node.expr)
 		
 		node.dim.gamma = dict(node.gamma)
 		dimType = self.visit(node.dim)
 		assert(isInt(dimType) or (isTensor(dimType) and (len(dimType.shape)==0)))
 
-		node.type = Tensor(node.outputShape)
+		node.type = Tensor(node.outputShape, eType.bitlen, eType.isSecret, eType.taint)
 		return node.type
 	
 	def visitReduce(self, node:AST.Reduce, args=None):
 		cur_gamma = dict(node.gamma)
 		node.expr.gamma = cur_gamma
-		node.dim.gamma = cur_gamma
-		node.keepdims.gamma = cur_gamma
+		eType = self.visit(node.expr)
 
-		self.visit(node.expr)
-		self.visit(node.dim)
-		self.visit(node.keepdims)
-
-		node.type = Tensor(node.outShape)
+		node.type = Tensor(node.outShape, eType.bitlen, eType.isSecret, eType.taint)
 		return node.type
 
 	def visitInput(self, node:AST.Input, args=None):
-		node.type = Tensor(node.shape)
+		node.type = Tensor(node.shape, isSecret=node.isSecret, taint=Taints[node.inputByParty.name])
 		return node.type
 
 	def visitFusedBatchNorm(self, node:AST.FusedBatchNorm, args=None):
@@ -431,6 +540,9 @@ class InferType(ASTVisitor):
 
 		assert(exprType.shape[-1]==C1 and C1==C2)
 
-		node.type = exprType
-		return node.type
+		taint = getTaint_taint(exprType.taint, multExprType.taint)
+		taint = getTaint_taint(taint, addExprType.taint)
 
+		node.type = copy.copy(exprType)
+		node.type.taint = taint
+		return node.type

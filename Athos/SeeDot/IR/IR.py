@@ -26,6 +26,7 @@ from enum import Enum
 import numpy as np
 
 import Util, Type
+import AST.AST as AST
 
 #TODO - check if this can be cleaned up
 class Op():
@@ -278,7 +279,7 @@ class FuncCall(Cmd):
 		return self.__class__(self.name, argList_new)
 
 class Input(Cmd):
-	def __init__(self, expr:Expr, shape:list, dataType:str, isSecret=True, inputByParty=0): 
+	def __init__(self, expr:Expr, shape:list, dataType:str, isSecret=True, inputByParty=AST.Party.SERVER):
 		self.expr = expr
 		self.shape = shape
 		self.dataType = dataType
@@ -286,7 +287,7 @@ class Input(Cmd):
 		self.inputByParty = inputByParty
 
 	def subst(self, from_idf:str, to_e:Expr):
-		return self.__class__(self.expr.subst(from_idf, to_e), self.shape, self.dataType, self.isSecret)
+		return self.__class__(self.expr.subst(from_idf, to_e), self.shape, self.dataType, self.isSecret, self.inputByParty)
 
 class Decl(Cmd):
 	def __init__(self, varIdf:str, typeExpr:Type.Type, bitlen:int=-1, isSecret:bool=True, value:list=None):

@@ -63,8 +63,6 @@ class IRBuilderCSF(IRBuilderAST):
 			self.intPartBitwidth = self.bitwidth - 2*self.scaleFac
 		self.scaleFacMapping = {}
 
-		self.inputByPartyMapping = {}
-
 	def getConsSF(self):
 		return Util.Config.consSF
 
@@ -114,6 +112,12 @@ class IRBuilderCSF(IRBuilderAST):
 		funcCall = IR.FuncCall(funcName, argsDict)
 		prog = IR.Prog([comment, funcCall])
 		return prog
+
+	def isModel(self, node:AST.ASTNode):
+		if(node.type.taint == Type.Taints.SERVER):
+			return True
+		else:
+			return False
 
 	#=================
 	# Visit Functions
@@ -625,19 +629,16 @@ class IRBuilderCSF(IRBuilderAST):
 		funcCallArgsDict[expr_2] = "B"
 		funcCallArgsDict[expr_3] = "C"
 
-		#Add an arg as to which arg out of A or B is the model
-		#	This is ok, since Athos is right now tailored for neural network inference
-		#	and in inference, in every linear layer, either of A or B will be the model.
-		#	This is required because for some backends, knowing which of A or B is the model
-		#	can make a difference in their performance.
+		# Add an arg as to which arg out of A or B is a model weight
+		# This is ok, since Athos is right now tailored for neural network inference
+		# and in inference, in every linear layer, either of A or B will be a model weight.
+		# This is required because for some backends, knowing which of A or B is a model weight
+		# can make a difference in their performance.
 		modelIsA = True
-		if ((expr_1.idf in self.inputByPartyMapping) and (self.inputByPartyMapping[expr_1.idf]==0)):
-			modelIsA = True
-		elif ((expr_2.idf in self.inputByPartyMapping) and (self.inputByPartyMapping[expr_2.idf]==0)):
+		assert (self.isModel(node.expr1) or self.isModel(node.expr2)), "Expecting one of A or B to be an input by the server (model weight)."
+		modelIsA = True
+		if (not self.isModel(node.expr1)):
 			modelIsA = False
-		else:
-			print("Expecting one of A or B to be the model, input by the server.")
-			assert(False)
 		funcCallArgsDict[IR.Bool(modelIsA)] = "modelIsA"
 
 		progExtraBefore = IR.Prog([])
@@ -971,9 +972,6 @@ class IRBuilderCSF(IRBuilderAST):
 			self.name_mapping[idf] = expr_1.idf
 		if (not(Util.Config.disableTruncOpti)):
 			self.scaleFacMapping[idf] = self.scaleFacMapping[expr_1.idf]	
-		if (expr_1.idf in self.inputByPartyMapping):
-			self.inputByPartyMapping[idf] = self.inputByPartyMapping[expr_1.idf]
-			del self.inputByPartyMapping[expr_1.idf]
 		(prog_2, expr_2) = self.visit(node.expr)
 		prog_2 = prog_2.subst(idf, expr_1)
 		expr_2 = expr_2.subst(idf, expr_1)
@@ -1083,7 +1081,6 @@ class IRBuilderCSF(IRBuilderAST):
 		comment = IR.Comment(str(node.metadata))
 		if not(Util.Config.disableTruncOpti):
 			self.scaleFacMapping[returnExpr.idf] = self.scaleFac
-		self.inputByPartyMapping[returnExpr.idf] = node.inputByParty
 		return (IR.Prog([comment, IR.Input(returnExpr, node.shape, node.dataType, node.isSecret, node.inputByParty)]), returnExpr)
 
 	def visitReduce(self, node:AST.Reduce, args=None):

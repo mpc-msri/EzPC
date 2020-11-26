@@ -123,12 +123,12 @@ class Compiler:
 				LivenessOpti.LivenessOpti().visit(ast, [mtdAST, 0, {}])
 				print("Liveness optimization done.")
 		
+		# Perform type inference and annotate nodes with type information
+		InferType().visit(ast)
+
 		if Util.Config.printASTBool:
 			PrintAST().visit(ast)
 			sys.stdout.flush()
-
- 		# Perform type inference
-		InferType().visit(ast)
 
 		IRUtil.init()
 		compiler = IRBuilderCSF()
