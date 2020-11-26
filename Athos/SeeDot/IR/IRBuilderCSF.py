@@ -365,7 +365,7 @@ class IRBuilderCSF(IRBuilderAST):
 			# cmdl_assn
 			expr_1_elt = IRUtil.addIndex(expr_1, iters)
 			expr_2_elt = IRUtil.addIndex(expr_2, iters)
-			cmdl_assn = IRUtil.loop(typ_2.shape, iters, [IR.Assn(expr_2_elt, IRUtil.negate(expr_1_elt))])
+			cmdl_assn = IRUtil.loop(typ_2.shape, iters, [IR.Assn(expr_2_elt, IRUtil.sub(IRUtil.zero, expr_1_elt))])
 			comment = IR.Comment(str(node.metadata))
 			prog_2 = IRUtil.prog_merge(prog_1, IR.Prog([comment] + cmdl_assn))
 			prog_2 = IRUtil.prog_merge(IR.Prog([IR.Decl(expr_2.idf, node.type)]), prog_2)
