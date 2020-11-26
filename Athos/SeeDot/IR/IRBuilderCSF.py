@@ -53,6 +53,8 @@ class IRBuilderCSF(IRBuilderAST):
 		# Name mapping from SeeDot names to new names is useful for debugging
 		self.name_mapping = {}
 
+		self.actualbitwidth = Util.Config.actualWordLength
+
 		#This is for optimizing the #truncation calls
 		self.scaleFac = Util.Config.consSF
 		self.bitwidth = Util.Config.wordLength
@@ -856,12 +858,14 @@ class IRBuilderCSF(IRBuilderAST):
 
 	def visitFunc(self, node:AST.Func, args=None):
 		op = node.op
-		assert(op in [AST.Operators.Floor, AST.Operators.Shape, AST.Operators.RELU, AST.Operators.ClearMemSecret, AST.Operators.ClearMemPublic])
+		assert(op in [AST.Operators.Floor, AST.Operators.Shape, AST.Operators.RELU, AST.Operators.TANH,
+						AST.Operators.SIGMOID, AST.Operators.SQRT, AST.Operators.RSQRT,
+						AST.Operators.ClearMemSecret, AST.Operators.ClearMemPublic])
 		return self.visitFloorLike(node)
 
 	def visitFloorLike(self, node:AST.Func, args=None):
 		(prog1, expr1) = self.visit(node.expr)
-		tmpExpr = self.getTempVar()
+		out_expr = self.getTempVar()
 
 		if node.op == AST.Operators.Floor:
 			funcName = "Floor"
@@ -869,6 +873,14 @@ class IRBuilderCSF(IRBuilderAST):
 			funcName = "Shape"
 		elif node.op == AST.Operators.RELU:
 			funcName = "Relu"
+		elif node.op == AST.Operators.TANH:
+			funcName = "Tanh"
+		elif node.op == AST.Operators.SIGMOID:
+			funcName = "Sigmoid"
+		elif node.op == AST.Operators.SQRT:
+			funcName = "Sqrt"
+		elif node.op == AST.Operators.RSQRT:
+			funcName = "Sqrt"
 		elif node.op == AST.Operators.ClearMemSecret:
 			funcName = "ClearMemSecret"
 		elif node.op == AST.Operators.ClearMemPublic:
@@ -885,39 +897,64 @@ class IRBuilderCSF(IRBuilderAST):
 		argsList[expr1] = "inArr"
 
 		if Type.isTensor(node.type):
-			argsList[tmpExpr] = "outArr"
+			argsList[out_expr] = "outArr"
 			
 		if node.op == AST.Operators.Floor:
 			argsList[IR.Int(Util.Config.consSF,32)] = "curScale"
 
-		progExtra = IR.Prog([])
+		progExtraBefore = IR.Prog([])
 		if (Util.Config.disableTruncOpti):
 			if node.op == AST.Operators.RELU:
 				argsList[IR.Int(Util.Config.consSF,32)] = "consSF"
 				argsList[IR.Bool(False)] = "doTruncation"
+			if node.op in [AST.Operators.TANH, AST.Operators.SIGMOID, AST.Operators.SQRT, AST.Operators.RSQRT]:
+				argsList[IR.Int(self.scaleFac,32)] = "sA"
+				argsList[IR.Int(self.scaleFac,32)] = "sB"
 		else:
 			final_sf = self.scaleFacMapping[expr1.idf]
 			if node.op == AST.Operators.RELU:
 				argsList[IR.Int(final_sf - self.scaleFac,32)] = "consSF"
 				if (final_sf > self.scaleFac):
 					#If it can't tolerate one more mult operation, then scale down here
+					assert(final_sf - self.scaleFac == self.scaleFac)
 					final_sf = self.scaleFac
 					argsList[IR.Bool(True)] = "doTruncation"
 				else:
 					argsList[IR.Bool(False)] = "doTruncation"
-			self.scaleFacMapping[tmpExpr.idf] = final_sf
+			if node.op in [AST.Operators.TANH, AST.Operators.SIGMOID, AST.Operators.SQRT, AST.Operators.RSQRT]:
+				# Since these class of fucntions can only handle input of 32 bitlength, we have to scale down
+				# inputs before calling them.
+				if final_sf > 32:
+					assert (final_sf > self.scaleFac), "The program scaling factor is invalid. Should be lesser than 32 if network has tan/sig/sqrt"
+					assert(final_sf - self.scaleFac == self.scaleFac)
+					progExtraBefore = IRUtil.prog_merge(progExtraBefore, self.addTruncateFunctionCall(node.expr, node.op.name, expr1, final_sf - self.scaleFac))
+					self.scaleFacMapping[expr1.idf] = self.scaleFac
+					final_sf = self.scaleFac
+				argsList[IR.Int(final_sf,32)] = "sA"
+				argsList[IR.Int(final_sf,32)] = "sB"
+			self.scaleFacMapping[out_expr.idf] = final_sf
+
+		# Tanh/Sigmoid/Sqrt impl only supports upto 32 bitwidth for input
+		if node.op in [AST.Operators.TANH, AST.Operators.SIGMOID, AST.Operators.SQRT, AST.Operators.RSQRT]:
+			argsList[IR.Int(min(32, self.actualbitwidth), 32)] = "bwA"
+			argsList[IR.Int(self.actualbitwidth, 32)] = "bwB"
+			if node.op == AST.Operators.SQRT:
+				argsList[IR.Bool(False)] = "inverse"
+			if node.op == AST.Operators.RSQRT:
+				argsList[IR.Bool(True)] = "inverse"
+			argsList[IR.Int(8,32)] = "LUTBITS"
 		
 		comment = IR.Comment(str(node.metadata))
 		funcNameSuffix = ""
 		if Type.isTensor(inputType):
 			funcNameSuffix = str(len(inputType.shape))
 
-		progFinal = IRUtil.prog_merge(prog1 , IR.Prog([comment, IR.FuncCall(funcName + self.varNameDelim + funcNameSuffix, argsList)]))
+		progFinal = IR.Prog([comment, IR.FuncCall(funcName + self.varNameDelim + funcNameSuffix, argsList)])
 		if Type.isTensor(node.type):
-			progFinal = IRUtil.prog_merge(IR.Prog([IR.Decl(tmpExpr.idf, node.type)]), progFinal)
+			progFinal = IRUtil.prog_merge(IR.Prog([IR.Decl(out_expr.idf, node.type)]), progFinal)
 
-		progFinal = IRUtil.prog_merge(progFinal, progExtra)
-		return (progFinal, tmpExpr)
+		progFinal = IRUtil.prog_merge(prog1, progExtraBefore, progFinal)
+		return (progFinal, out_expr)
 
 	def visitLet(self, node:AST.Let, args=None):
 		(prog_1, expr_1) = self.visit(node.decl)

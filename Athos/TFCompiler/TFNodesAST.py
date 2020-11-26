@@ -227,6 +227,26 @@ class TFNodesAST:
 		assert(len(inputsRef)==1)
 		return (None, AST.Func(TFNodesAST.getOperatorsIdx('relu'), AST.ID(dictNodeNameToOutVarStr[inputsRef[0]])))
 
+	def Tanh(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
+		inputsRef = curNode.getInputsRef()
+		assert(len(inputsRef)==1)
+		return (None, AST.Func(TFNodesAST.getOperatorsIdx('tanh'), AST.ID(dictNodeNameToOutVarStr[inputsRef[0]])))
+
+	def Sqrt(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
+		inputsRef = curNode.getInputsRef()
+		assert(len(inputsRef)==1)
+		return (None, AST.Func(TFNodesAST.getOperatorsIdx('sqrt'), AST.ID(dictNodeNameToOutVarStr[inputsRef[0]])))
+
+	def Rsqrt(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
+		inputsRef = curNode.getInputsRef()
+		assert(len(inputsRef)==1)
+		return (None, AST.Func(TFNodesAST.getOperatorsIdx('rsqrt'), AST.ID(dictNodeNameToOutVarStr[inputsRef[0]])))
+
+	def Sigmoid(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
+		inputsRef = curNode.getInputsRef()
+		assert(len(inputsRef)==1)
+		return (None, AST.Func(TFNodesAST.getOperatorsIdx('sigmoid'), AST.ID(dictNodeNameToOutVarStr[inputsRef[0]])))
+
 	def Shape(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
 		assert(len(inputsRef)==1)
@@ -668,10 +688,6 @@ class TFNodesAST:
 							TFNodesAST.getOperatorsIdx('+'),
 							AST.ID(dictNodeNameToOutVarStr[inputsRef[1]])
 							))
-
-	def Sigmoid(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
-		inputsRef = curNode.getInputsRef()
-		return (None, AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]))
 
 	def ReadVariableOp(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()

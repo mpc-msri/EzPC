@@ -31,6 +31,10 @@ OperatorsSymbolDict = {
 		"CONV": '#',
 		"CONVTRANSPOSE": "#T", #ConvTranspose
 		"RELU": 'relu',
+		"TANH": 'tanh',
+		"SIGMOID": 'sigmoid',
+		"SQRT": 'sqrt',
+		"RSQRT": 'rsqrt',
 		"Equal": '==',
 		"ElemWiseMul":'.*',
 		"ElemWiseDiv": './',
@@ -48,6 +52,10 @@ class Operators(Enum):
 	CONV = auto()
 	CONVTRANSPOSE = auto()
 	RELU = auto()
+	TANH = auto()
+	SIGMOID = auto()
+	SQRT = auto()
+	RSQRT = auto()
 	Equal = auto()
 	ElemWiseMul = auto()
 	ElemWiseDiv = auto()
