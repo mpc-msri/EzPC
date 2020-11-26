@@ -356,21 +356,20 @@ class ArgMax(ASTNode):
 		self.inShape = inShape
 
 class Reduce(ASTNode):
-	def __init__(self, expr:ID, dim:ID, keepdims:Int, outShape:list, op: Operators):
+	def __init__(self, expr:ID, keepdims:bool, outShape:list, op: Operators, reductionAxesList: list):
 		# keepdims is unused for now
 		if assertInputTypes:
 			assert isinstance(expr, ID)
-			assert isinstance(dim, ID)
-			assert isinstance(keepdims, Int)
+			assert isinstance(keepdims, bool)
 			assert isinstance(outShape, list)
 			for elem in outShape: assert isinstance(elem, int)
 			assert isinstance(op, Operators)
 		super().__init__()
 		self.expr = expr
-		self.dim = dim
 		self.keepdims = keepdims
 		self.outShape = outShape
 		self.op = op
+		self.reductionAxesList = reductionAxesList
 
 # shape : list of int, dataType : ID
 # NOTE: Though datatype is being passed to this function, the output code eventually only has 

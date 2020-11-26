@@ -107,7 +107,7 @@ class LivenessAnalysis(ASTVisitor):
 		return unboundVars
 
 	def visitReduce(self, node:AST.Reduce, args):
-		unboundVars = list(set(self.visit(node.expr, args) + self.visit(node.dim, args) + self.visit(node.keepdims, args)))
+		unboundVars = list(set(self.visit(node.expr, args)))
 		node.optidict[self.optidictKey] = unboundVars
 		return unboundVars
 

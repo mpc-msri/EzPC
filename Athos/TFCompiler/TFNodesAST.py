@@ -578,12 +578,18 @@ class TFNodesAST:
 		keepdims = False
 		if ("keep_dims" in attrMapRef):
 			keepdims = attrMapRef["keep_dims"].getB()
+
+		reductionAxesNodeName = inputsRef[1]
+		redAxesN = graph.__getitem__(reductionAxesNodeName)
+		redAxesT = redAxesN.getAttrVal("value").getTensor()
+		reductionAxesList = redAxesT.getContentAsValArr()
+
 		curNodeShapeLi = extraNodeInfoDict[curNode.getName()][0]
 		return (None, { curNode.getName() : AST.Reduce(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]), 
-								 AST.ID(dictNodeNameToOutVarStr[inputsRef[1]]),
-								 AST.Int(int(keepdims), 32, isSecret=False),
+								 keepdims,
 								 curNodeShapeLi,
-								 TFNodesAST.getOperatorsIdx('+'))})
+								 TFNodesAST.getOperatorsIdx('+'),
+								 reductionAxesList)})
 
 	def Mean(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
@@ -592,12 +598,18 @@ class TFNodesAST:
 		keepdims = False
 		if ("keep_dims" in attrMapRef):
 			keepdims = attrMapRef["keep_dims"].getB()
+
+		reductionAxesNodeName = inputsRef[1]
+		redAxesN = graph.__getitem__(reductionAxesNodeName)
+		redAxesT = redAxesN.getAttrVal("value").getTensor()
+		reductionAxesList = redAxesT.getContentAsValArr()
+
 		curNodeShapeLi = extraNodeInfoDict[curNode.getName()][0]
-		return (None, { curNode.getName() : AST.Reduce(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]), 
-								AST.ID(dictNodeNameToOutVarStr[inputsRef[1]]), 
-								AST.Int(int(keepdims), 32, isSecret=False),
+		return (None, { curNode.getName() : AST.Reduce(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]),  
+								keepdims,
 								curNodeShapeLi,
-								TFNodesAST.getOperatorsIdx('mean'))})
+								TFNodesAST.getOperatorsIdx('mean'),
+								reductionAxesList)})
 
 	def ArgMax(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()

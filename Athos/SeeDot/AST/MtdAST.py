@@ -85,7 +85,6 @@ class MtdAST(ASTVisitor):
 	def visitReduce(self, node:AST.Reduce, mtd:dict):
 		node.metadata.update(mtd)
 		self.visit(node.expr, mtd)
-		self.visit(node.dim, mtd)
 
 	def visitInput(self, node:AST.Input, mtd:dict):
 		node.metadata.update(mtd)

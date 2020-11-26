@@ -117,8 +117,6 @@ class PrintAST(ASTVisitor):
 	def visitReduce(self, node:AST.Reduce, args=None):
 		print(indent * node.depth, "reduce", AST.OperatorsSymbolDict[node.op.name], end=' ')
 		self.visit(node.expr)
-		self.visit(node.dim)
-		self.visit(node.keepdims)
 
 	def visitInput(self, node:AST.Input, args=None):
 		print(indent * node.depth, "input( ", node.shape, node.dataType, " <", node.inputByParty.name, "> ", end='')

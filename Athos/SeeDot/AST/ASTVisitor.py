@@ -76,8 +76,6 @@ class ASTVisitor:
 
 	def visitReduce(self, node:AST.Reduce, args=None):
 		self.visit(node.expr, args)
-		self.visit(node.dim, args)
-		self.visit(node.keepdims, args)
 
 	def visitInput(self, node:AST.Input, args=None):
 		pass

@@ -1116,37 +1116,139 @@ class IRBuilderCSF(IRBuilderAST):
 
 	def visitReduce(self, node:AST.Reduce, args=None):
 		(prog_1, expr1) = self.visit(node.expr)
-		(prog_2, expr2) = self.visit(node.dim)
-
-		returnExpr = self.getTempVar()
-
 		assert(node.op in [AST.Operators.ADD, AST.Operators.Mean])
-		if (node.op == AST.Operators.ADD):
-			funcName = "ReduceSum"
-		elif (node.op == AST.Operators.Mean):
-			funcName = "ReduceMean"
+
+		# We already have the output shape so we dont need to calculate with keep_dims
+
+		'''
+			We need to reduce across axes.
+			Example: Say reduction axes are specified as 0,3 and keep dim = false
+			output rank -> len(input_shape) - len(reduction_axes)
+			output is 2D.
+			for i1=[0:s1]
+				for i2=[0:s2]
+					sum = 0
+					for i0=[0:s0]
+						for i3=[0:s3]
+							sum  = sum + input[i0][i1][i2][i3]
+					output[i1][i2] = sum / (s0 * s3)
+			if keep dim == true, output rank is same as input. We generate:
+					output[0][i1][i2][0] = sum / (s0 * s3)
+
+			Ideally the above loop nest is what we would want to generate. But since we have
+			a division, we need to make calls to the div functionality and flatten the tensors.
+			temp_flat[s1*s2];
+			out_flat[s1*s2];
+			for i1=[0:s1]
+				for i2=[0:s2]
+					sum = 0
+					for i0=[0:s0]
+						for i3=[0:s3]
+							sum  = sum + input[i0][i1][i2][i3]
+					temp_flat[i1*s2 + i2] = sum
+			ElemWiseVectorPublicDiv(size=s1*s2, inp=temp_flat, divisor=s0*s3, out=out_flat)
+			for i1=[0:s1]
+				for i2=[0:s2]
+				  output[i1][i2] = out_flat[i1*s2 + i2]
+
+		'''
+		reduced_dims = node.reductionAxesList
+		inputShape = node.expr.type.shape
+		perm = []
+		calculated_shape = []
+		inputiters = self.getTempIterators(node.expr.type.dim)
+		outputiters = []
+		no_elems = 1
+		j = 0
+		for i in range(len(inputShape)):
+			if i not in reduced_dims:
+				perm.append(i)
+				calculated_shape.append(inputShape[i])
+				outputiters.append(inputiters[j])
+				j = j + 1
+			else:
+				no_elems = no_elems * inputShape[i]
+				if node.keepdims == 1:
+					calculated_shape.append(1)
+					outputiters.append(IR.Int(0,32))
+		# perm will now be [ 1 ,2 ] + [ 0, 3]
+		perm.extend(reduced_dims)
+		loop_shape = [inputShape[perm[i]] for i in range(len(inputShape))]
+		outputShape = node.type.shape
+		assert(calculated_shape == outputShape)
+
+		sumExpr = self.getTempVar()
+		sumExpr_decl = IR.Decl(sumExpr.idf, Type.Int())
+		initSumCmd = IR.Assn(sumExpr, IRUtil.zero)
+		updateSumCmd = IR.Assn(sumExpr, IRUtil.add(sumExpr, IRUtil.addIndex(expr1, inputiters)))
+
+		outer_nesting = len(inputShape) - len(reduced_dims)
+		temp_flat = self.getTempVar()
+		temp_flat_decl = IR.Decl(temp_flat.idf,
+								Type.Tensor([Util.get_volume(loop_shape[:outer_nesting])], node.type.bitlen, node.type.isSecret, node.type.taint),
+								isSecret=node.type.isSecret)
+		# i1*s2 + i2
+		flat_idx_expr = IRUtil.getFlatArrIdxExpr(inputiters[:outer_nesting], loop_shape[:outer_nesting])
+		# temp_flat[i1*s2 + i2] = sum
+		temp_flat_expr = IRUtil.addIndex(temp_flat, [flat_idx_expr])
+		updateOutCmd = IR.Assn(temp_flat_expr, sumExpr)
+
+		# Generate the sum loop
+		inner_loops_processed = 0
+		sum_loop = [updateSumCmd]
+		for i in reversed(range(len(loop_shape))):
+			sum_loop = [IR.For(inputiters[i], 0, sum_loop, 0, endInt=loop_shape[i])]
+			inner_loops_processed+=1
+			if(inner_loops_processed == len(reduced_dims)):
+				sum_loop = [initSumCmd] + sum_loop + [updateOutCmd]
+
+		# Insert call to ElemWiseVectorPublicDiv(size=s1*s2, inp=temp_flat, divisor=s0*s3, out=out_flat)
+		out_flat = self.getTempVar()
+		out_flat_decl = IR.Decl(out_flat.idf,
+								Type.Tensor([Util.get_volume(loop_shape[:outer_nesting])], node.type.bitlen, node.type.isSecret, node.type.taint),
+								isSecret=node.type.isSecret)
+		argsDict = OrderedDict()
+		argsDict[IR.Int(Util.get_volume(loop_shape[:outer_nesting]), 32)] = "size"
+		argsDict[temp_flat] = "input"
+		argsDict[IR.Int(Util.get_volume(loop_shape[outer_nesting:]), 32)] = "divisor"
+		argsDict[out_flat] = "output"
+		div_call = IR.FuncCall("ElemWiseVectorPublicDiv", argsDict)
+
+		# Free temp_flat here
+		# Clear temp arrays
+		argsDict = OrderedDict()
+		argsDict[IR.Int(Util.get_volume(loop_shape[:outer_nesting]), 32)] = "size"
+		argsDict[temp_flat] = "A"
+		free_temp_flat_call = IR.FuncCall("ClearMemSecret1", argsDict)
+
+		# Unflatten the output
+		output = self.getTempVar()
+		output_decl =  IR.Decl(output.idf, node.type)
+		out_expr = IRUtil.addIndex(output, outputiters)
+		out_flat_expr = IRUtil.addIndex(out_flat, [flat_idx_expr])
+		out_assn_expr = IR.Assn(out_expr, out_flat_expr)
+		unflatten_loop = IRUtil.loop(loop_shape[:outer_nesting], inputiters[:outer_nesting], [out_assn_expr])
+
+		# Free out_flat here
+		argsDict = OrderedDict()
+		argsDict[IR.Int(Util.get_volume(loop_shape[:outer_nesting]), 32)] = "size"
+		argsDict[out_flat] = "A"
+		free_out_flat_call = IR.FuncCall("ClearMemSecret1", argsDict)
 
 		if not(Util.Config.disableTruncOpti):
-			self.scaleFacMapping[returnExpr.idf] = self.scaleFacMapping[expr1.idf]
+			self.scaleFacMapping[output.idf] = self.scaleFacMapping[expr1.idf]
 
-		funcArgsList = OrderedDict()
-		outputShape = node.type.shape
-		for ii, curDim in enumerate(outputShape):
-			funcArgsList[IR.Int(curDim, 32)] = "OutputShape_" + str(ii)
-
-		inputShape = node.expr.type.shape
-		for ii, curDim in enumerate(inputShape):
-			funcArgsList[IR.Int(curDim, 32)] = "InputShape_" + str(ii)
-
-		funcArgsList[expr1] = "inputArr"
-		funcArgsList[expr2] = "dimension"
-		funcArgsList[returnExpr] = "outArr"
-		funcCall = IR.FuncCall(funcName + self.varNameDelim + str(len(outputShape)) + self.varNameDelim + str(len(inputShape)), funcArgsList)
 		comment = IR.Comment(str(node.metadata))
-		prog_3 = IRUtil.prog_merge(prog_1, prog_2, IR.Prog([comment, funcCall]))
+		final_prog = IRUtil.prog_merge(	prog_1,
+										IR.Prog([comment]),
+										IR.Prog([sumExpr_decl, temp_flat_decl, out_flat_decl, output_decl]),
+										IR.Prog(sum_loop),
+										IR.Prog([div_call]),
+										IR.Prog([free_temp_flat_call]),
+										IR.Prog(unflatten_loop),
+										IR.Prog([free_out_flat_call]))
 
-		prog_3 = IRUtil.prog_merge(IR.Prog([IR.Decl(returnExpr.idf, node.type)]), prog_3)
-		return (prog_3, returnExpr)
+		return (final_prog, output)
 
 	def visitFusedBatchNorm(self, node:AST.FusedBatchNorm, args=None):
 		(prog1, expr1) = self.visit(node.expr)
@@ -1175,7 +1277,7 @@ class IRBuilderCSF(IRBuilderAST):
 			addExpr_sf = self.scaleFacMapping[expr3.idf]
 			if (expr_sf > self.scaleFac):
 				#Scale down needed
-				progExtraBefore = self.addTruncateFunctionCall(node.expr, "FusedBatchNorm", expr1, expr_sf - self.scaleFac)
+				progExtraBefore = IRUtil.prog_merge(progExtraBefore, self.addTruncateFunctionCall(node.expr, "FusedBatchNorm", expr1, expr_sf - self.scaleFac))
 				self.scaleFacMapping[expr1.idf] = self.scaleFac
 
 			if (multExpr_sf > self.scaleFac):
