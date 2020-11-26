@@ -888,8 +888,15 @@ class IRBuilderCSF(IRBuilderAST):
 		else:
 			assert False
 
+		# We don't need to clear scalars.
+		if node.op == AST.Operators.ClearMemSecret or node.op == AST.Operators.ClearMemPublic:
+			if Type.isInt(node.expr.type):
+				return (prog1, expr1)
+			if node.expr.type.dim == 0:
+				return (prog1, expr1)
+
 		argsList = OrderedDict()
-		
+
 		inputType = node.expr.type
 		if Type.isTensor(inputType):
 			for ii, curDim in enumerate(inputType.shape):
