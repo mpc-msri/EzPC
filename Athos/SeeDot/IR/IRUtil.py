@@ -174,3 +174,58 @@ def print_loop(shape:list, iters:list, cmdl_body:CmdList, factor=0) -> CmdList:
 		cmdl_for = [For(iters[i], 0, lt(iters[i], Int(shape[i])), cmdl_for, factor), Print(Var('""'))]
 	return cmdl_for
 
+# For tensor A of shape = 7 x 1 x 5
+# And out_iters         = [i0, i1, i2, i3]
+# Broadcast mask        = [True, False, True, False]
+# We generate iters     = A[i1][0][i3]
+# If input is scalar, broadcast_mask=[] and inp_shape=[]
+def getMaskedIters(broadcast_mask: list, out_iters: list, inp_shape : list):
+	base_idx = len(out_iters) - len(inp_shape)
+	masked_iters = []
+	for i in range(len(broadcast_mask)):
+		if broadcast_mask[i]:
+			masked_iters.append(Int(0,32))
+		else:
+			masked_iters.append(out_iters[base_idx])
+		base_idx +=1
+	return masked_iters
+
+# Given input
+# A      (4d array):  8 x 1 x 6 x 1
+# B      (3d array):      7 x 1 x 5
+# We generate a loop with
+# Result (4d array):  8 x 7 x 6 x 5
+# for i0=[0:8]
+#   for i1=[0:7]
+#     for i2=[0:6]
+#       for i3=[0:8]
+#         Result[i0][i1][i2][i3] = A[i0][0][i2][0] + B[i1][0][i3]
+def generateBroadcastLoopBOp(expr_1, inp1_shape: list, expr_2, inp2_shape : list, expr_out, op: Op.Op):
+	output_shape, broadcast_mask_1, broadcast_mask_2 = Util.getBroadcastShapes(inp1_shape, inp2_shape)
+	out_iters = [Var('i' + str(i)) for i in range(len(output_shape))]
+	inp1_iters = getMaskedIters(broadcast_mask_1, out_iters, inp1_shape)
+	inp2_iters = getMaskedIters(broadcast_mask_2, out_iters, inp2_shape)
+
+	inp1_arr_expr = addIndex(expr_1, inp1_iters)
+	inp2_arr_expr = addIndex(expr_2, inp2_iters)
+	out_arr_expr = addIndex(expr_out, out_iters)
+
+	assign_expr = Assn(out_arr_expr, IntBop(inp1_arr_expr, op, inp2_arr_expr))
+	out_loop = loop(output_shape, out_iters, [assign_expr])
+	out_prog = Prog(out_loop)
+	return out_prog
+
+# Generates the index into a flattened tensor.
+# Example:
+# for i1=[0:s1]
+#   for i2=[0:s2]
+#     for i3=[0:s3]
+#       for i4=[0:s4]
+# generate (i1*s2*s3*s4) + (i2*s3*s4) + (i3*s4) + (i4);
+def getFlatArrIdxExpr(iters:list, shape:list):
+	assert len(iters) == len(shape), "No. of loop idx vars should be equal to loop shapes"
+	flat_idx_expr = Int(0,32)
+	for i in range(len(iters)):
+		vol = get_volume(shape[i+1:])
+		flat_idx_expr = add(flat_idx_expr, mul(iters[i], Int(vol,32)))
+	return flat_idx_expr

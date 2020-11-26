@@ -274,11 +274,9 @@ class InferType(ASTVisitor):
 		node.expr2.gamma = dict(node.gamma)
 		fType = self.visit(node.expr2)
 
-		if node.op in [AST.Operators.ADD, AST.Operators.ElemWiseMul, AST.Operators.ElemWiseDiv]:
+		if node.op in [AST.Operators.ADD, AST.Operators.SUB, AST.Operators.Equal, AST.Operators.ElemWiseMul, AST.Operators.ElemWiseDiv]:
 			# Ops supporting broadcasting
 			return self.typeCheckBroadcastOps(node, eType, fType)
-		elif node.op in [AST.Operators.SUB, AST.Operators.Equal]:
-			return self.visitBopAddLike(node, eType, fType)
 		elif node.op == AST.Operators.MUL:
 			return self.visitBopMul(node, eType, fType)
 		elif node.op == AST.Operators.CONV:
@@ -293,35 +291,18 @@ class InferType(ASTVisitor):
 		# If adding a new op here which supports broadcasting, then be careful!
 		# Currently, its assumed the op is commutative. If that is not true, following will be wrong ! 
 
-		assert node.op in [AST.Operators.ADD, AST.Operators.ElemWiseMul, AST.Operators.ElemWiseDiv]
-		if (len(eType.shape) < len(fType.shape)):
-			# swap expr1 and expr2 -- this is valid for commutative ops
-			# be careful for ops which are not commutative
-			temp = node.expr1
-			node.expr1 = node.expr2
-			node.expr2 = temp
-
-			temp = eType
-			eType = fType
-			fType = temp
-		
-		# Now true that dim(eType) >= dim(fTYpe)
-		assert len(eType.shape) >= len(fType.shape)
-
+		assert node.op in [AST.Operators.ADD, AST.Operators.SUB, AST.Operators.Equal, AST.Operators.ElemWiseMul, AST.Operators.ElemWiseDiv]
 		if isInt(eType) and isInt(fType):
 			node.type = Int(eType.bitlen)
 		elif isTensor(eType) and isTensor(fType):
-			revETypeShape = eType.shape[::-1]
-			revFTypeShape = fType.shape[::-1]
-			for i, fTypeCurDim in enumerate(revFTypeShape):
-				eTypeCurDim = revETypeShape[i]
-				if not(eTypeCurDim==1 or fTypeCurDim==1 or eTypeCurDim==fTypeCurDim):
-					# broadcast not possible - raise error
-					print("Broadcast not possible for current node.", eType.shape, fType.shape)
-					assert False
-
-			# Broadcast possible
-			node.type = copy.copy(eType)
+			output_shape, _, _ = Util.getBroadcastShapes(eType.shape, fType.shape)
+			node.type = Tensor(shape=output_shape, bitlen=eType.bitlen)
+		elif isTensor(eType) and isInt(fType):
+			output_shape, _, _ = Util.getBroadcastShapes(eType.shape, [])
+			node.type = Tensor(shape=output_shape, bitlen=eType.bitlen)
+		elif isInt(eType) and isTensor(fType):
+			output_shape, _, _ = Util.getBroadcastShapes([], fType.shape)
+			node.type = Tensor(shape=output_shape, bitlen=eType.bitlen)
 		else:
 			print(eType, fType)
 			assert False
@@ -442,19 +423,6 @@ class InferType(ASTVisitor):
 		#		Hence, the input for this convTranspose would be [N, HP, WP, CO]
 
 		node.type = Tensor(shape, eType.bitlen, eType.isSecret | fType.isSecret, getTaint_type(eType, fType))
-		return node.type
-
-	def visitBopAddLike(self, node:AST.BOp, eType: Type, fType: Type, args=None):
-		if isInt(eType) and isInt(fType):
-			pass
-		elif isTensor(eType) and isTensor(fType):
-			assert eType.shape == fType.shape
-		else:
-			assert False
-		
-		node.type = copy.copy(eType)
-		node.type.taint = getTaint_type(eType, fType)
-		node.type.isSecret = eType.isSecret | fType.isSecret
 		return node.type
 
 	def visitFunc(self, node:AST.Func, args=None):

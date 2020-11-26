@@ -81,3 +81,64 @@ def write_debug_info(name_mapping):
 	with open('debug/seedot_ezpc_name_map.txt', 'w') as f:
 		for val in name_mapping:
 			f.write(val + '   ' + name_mapping[val] + '\n')		
+
+# Broadcasting Rules:
+# A      (4d array):  8 x 1 x 6 x 1
+# B      (3d array):      7 x 1 x 5
+# Result (4d array):  8 x 7 x 6 x 5
+# Return Values
+# Shape A broadcast mask:  [False, True, False, True]
+# Shape B broadcast mask:  [True, False, True, False]
+# Result shape:  [8, 7, 6, 5]
+#
+# If input is a scalar, pass shape as []
+def getBroadcastShapes(Shape1 : list, Shape2 : list):
+	#Broadcast rules apply in reverse direction
+	shape1 = Shape1[::-1]
+	shape2 = Shape2[::-1]
+	len1 = len(shape1)
+	len2 = len(shape2)
+	outputshape = []
+	swapped = False
+	if len1 != len2:
+		if len1 > len2:
+			len1, len2 = len2, len1
+			shape1, shape2 = shape2, shape1
+			swapped = True
+		assert len1 < len2
+
+	broadcastMask1 = [False] * len1
+	broadcastMask2 = [False] * len2
+
+	for i in range(len2):
+		length = 0
+		if i >= len1:
+			#broadcastMask1[i] = True
+			outputshape.append(shape2[i])
+			continue
+		if shape1[i] != shape2[i]:
+			if shape1[i] == 1:
+				outputshape.append(shape2[i])
+				broadcastMask1[i] = True
+			elif shape2[i] == 1:
+				outputshape.append(shape1[i])
+				broadcastMask2[i] = True
+			else:
+				print("Dimension no. {} has a mismatch of length.".format(len2 - i))
+				assert False,  "Cannot broadcast. Program is malformed. Atleast one length should have been 1. i1: {} i2: {}".format(shape1[i], shape2[i])
+		else:
+			outputshape.append(shape1[i])
+
+	if swapped:
+		broadcastMask1, broadcastMask2 = broadcastMask2, broadcastMask1
+
+	outputshape.reverse()
+	broadcastMask1.reverse()
+	broadcastMask2.reverse()
+	return outputshape, broadcastMask1, broadcastMask2
+
+def get_volume(shape: list):
+	vol = 1
+	for i in shape:
+		vol = vol * i
+	return vol
