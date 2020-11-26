@@ -196,6 +196,19 @@ class Transpose(ASTNode):
 		self.expr = expr
 		self.perm = perm
 
+# expr : ASTNode, perm : list of ints
+class Slice(ASTNode):
+	def __init__(self, expr: ASTNode, subscriptRanges: list = None):
+		if assertInputTypes:
+			assert isinstance(expr, ID)
+			if subscriptRanges:
+				for elem in subscriptRanges:
+					assert isinstance(elem[0], int)
+					assert isinstance(elem[1], int)
+		super().__init__()
+		self.expr = expr
+		self.subscriptRanges = subscriptRanges
+
 # expr : ASTNode, shape : list of int, order : int : optional
 class Reshape(ASTNode):
 	def __init__(self, expr: ASTNode, shape: list, order: list):
@@ -363,7 +376,7 @@ class Reduce(ASTNode):
 # NOTE: Though datatype is being passed to this function, the output code eventually only has 
 #		int in the apt bitlen for which the whole compilation is done
 # Also, take note of the last parameter - "inputByParty". This can be used to set the party which
-#	which will do the input for this variable. Defaults to 0, which is interpretted as SERVER by the codegen.
+#	which will do the input for this variable. Defaults to SERVER.
 class Input(ASTNode):
 	def __init__(self, shape:list, dataType:str, isSecret=True, inputByParty=Party.SERVER):
 		if assertInputTypes:

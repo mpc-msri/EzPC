@@ -231,6 +231,37 @@ class IRBuilderCSF(IRBuilderAST):
 
 		return (final_prog, out_arr)
 
+	def visitSlice(self, node:AST.Slice, args=None):
+		(inp_prog, inp_arr) = self.visit(node.expr)
+		inp_type = node.expr.type
+		out_type = node.type
+		out_iters = self.getTempIterators(out_type.dim)
+		inp_iters = []
+		subscriptRanges = node.subscriptRanges
+		for idx,subrange in enumerate(subscriptRanges):
+			start = subrange[0]
+			inp_iters.append(IRUtil.add(out_iters[idx], IR.Int(start)))
+
+		out_arr = self.getTempVar()
+		out_arr_expr = IRUtil.addIndex(out_arr, out_iters)
+		inp_arr_expr = IRUtil.addIndex(inp_arr, inp_iters)
+		assign_expr = IR.Assn(out_arr_expr, inp_arr_expr)
+		loop = IRUtil.loop(out_type.shape, out_iters, [assign_expr])
+		# Finalize
+		comment1 = IR.Comment(str(node.metadata))
+		comment2 = IR.Comment("slice(" + inp_arr.idf + ", [" + ', '.join(str(e) for e in inp_type.shape) + "] --> [" + ', '.join(str(e) for e in out_type.shape) + "])")
+		slice_prog = IR.Prog([comment1, comment2] + loop)
+		final_prog = IRUtil.prog_merge(inp_prog, slice_prog)
+
+		for var in out_iters:
+			final_prog = IRUtil.prog_merge(IR.Prog([IR.Decl(var.idf, Type.Int(), isSecret=False)]), final_prog)
+		final_prog = IRUtil.prog_merge(IR.Prog([IR.Decl(out_arr.idf, out_type)]), final_prog)
+
+		if not(Util.Config.disableTruncOpti):
+			self.scaleFacMapping[out_arr.idf] = self.scaleFacMapping[inp_arr.idf]
+
+		return (final_prog, out_arr)
+
 	def visitReshape(self, node:AST.Reshape, args=None):
 		(prog_1, expr_1) = self.visit(node.expr)
 

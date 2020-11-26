@@ -207,6 +207,26 @@ class InferType(ASTVisitor):
 		node.type = Tensor(new_shape, exprType.bitlen, exprType.isSecret, exprType.taint)
 		return node.type
 
+	def visitSlice(self, node:AST.Slice, args=None):
+		node.expr.gamma = dict(node.gamma)
+		exprType = self.visit(node.expr)
+		assert isTensor(exprType)
+
+		subscriptRanges = node.subscriptRanges
+		shape = []
+		for i in subscriptRanges:
+			start = i[0]
+			end = i[1]
+			size = end - start + 1
+			shape.append(size)
+
+		assert(len(shape) == len(exprType.shape))
+		for i in range(0,len(shape)):
+			assert(shape[i] <= exprType.shape[i])
+
+		node.type = Tensor(shape, exprType.bitlen, exprType.isSecret, exprType.taint)
+		return node.type
+
 	def visitReshape(self, node:AST.Reshape, args=None):
 		node.expr.gamma = dict(node.gamma)
 		exprType = self.visit(node.expr)

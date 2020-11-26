@@ -74,7 +74,7 @@ class TFNodesAST:
 			transposeBBool = attrMapRef["transpose_b"].getB()
 		if (transposeABool): inp1AST = AST.Transp(inp1AST)
 		if (transposeBBool): inp2AST = AST.Transp(inp2AST)
-		return (None, AST.BOp(inp1AST, TFNodesAST.getOperatorsIdx('*'), inp2AST))
+		return (None, { curNode.getName() : AST.BOp(inp1AST, TFNodesAST.getOperatorsIdx('*'), inp2AST)})
 
 	def Placeholder(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		curNodeShapeLi = extraNodeInfoDict[curNode.getName()][0]
@@ -87,15 +87,15 @@ class TFNodesAST:
 		#	all model parameters are represented using Variable op nodes.
 		#	Hence, in the call to AST.Input, we pass inputByParty=1.
 
-		return (None, AST.Input(curNodeShapeLi, curNodeInputType.name, isSecret=True, inputByParty=1))
+		return (None, { curNode.getName() : AST.Input(curNodeShapeLi, curNodeInputType.name, isSecret=True, inputByParty=AST.Party.CLIENT)})
 
 	def Equal(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
 		assert(len(inputsRef) == 2)
-		return (None, AST.BOp(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]),
+		return (None, { curNode.getName() : AST.BOp(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]),
 							TFNodesAST.getOperatorsIdx('=='),
 							AST.ID(dictNodeNameToOutVarStr[inputsRef[1]])
-							))
+							)})
 
 	def Identity(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		#In SeeDot, J2=J1 creates a new reference for J1 -- so 
@@ -111,59 +111,59 @@ class TFNodesAST:
 		retAST = AST.UninterpFuncCall(curNodeShape,
 									TFNodesAST.UninterpFuncCallNames.CreateIdentity.name, 
 									[AST.ID(dictNodeNameToOutVarStr[inputsRef[0]])])
-		return (None, retAST)
+		return (None, { curNode.getName() : retAST})
 
 	def Add(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
 		assert(len(inputsRef) == 2)
-		return (None, AST.BOp(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]),
+		return (None, { curNode.getName() : AST.BOp(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]),
 							TFNodesAST.getOperatorsIdx('+'),
 							AST.ID(dictNodeNameToOutVarStr[inputsRef[1]])
-							))
+							)})
 	def AddV2(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
 		assert(len(inputsRef) == 2)
-		return (None, AST.BOp(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]),
+		return (None, { curNode.getName() : AST.BOp(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]),
 							TFNodesAST.getOperatorsIdx('+'),
 							AST.ID(dictNodeNameToOutVarStr[inputsRef[1]])
-							))
+							)})
 
 	def Mul(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
 		assert(len(inputsRef) == 2)
-		return (None, AST.BOp(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]),
+		return (None, { curNode.getName() : AST.BOp(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]),
 							TFNodesAST.getOperatorsIdx('.*'),
 							AST.ID(dictNodeNameToOutVarStr[inputsRef[1]])
-							))
+							)})
 
 	def Neg(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
 		assert(len(inputsRef) == 1)
-		return (None, AST.UOp(TFNodesAST.getOperatorsIdx('-'),
+		return (None, { curNode.getName() : AST.UOp(TFNodesAST.getOperatorsIdx('-'),
 						   AST.ID(dictNodeNameToOutVarStr[inputsRef[0]])
-						   ))
+						   )})
 
 	def Sub(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
 		assert(len(inputsRef) == 2)
-		return (None, AST.BOp(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]),
+		return (None, { curNode.getName() : AST.BOp(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]),
 							TFNodesAST.getOperatorsIdx('+'),
 							AST.UOp(TFNodesAST.getOperatorsIdx('-'), 
-															   AST.ID(dictNodeNameToOutVarStr[inputsRef[1]])
-															   )))
+							AST.ID(dictNodeNameToOutVarStr[inputsRef[1]])
+							))})
 
 	def Floor(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
 		assert(len(inputsRef) == 1)
-		return (None, AST.Func(TFNodesAST.getOperatorsIdx('floor'), AST.ID(dictNodeNameToOutVarStr[inputsRef[0]])))
+		return (None, { curNode.getName() : AST.Func(TFNodesAST.getOperatorsIdx('floor'), AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]))})
 
 	def RealDiv(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
 		assert(len(inputsRef) == 2)
-		return (None, AST.BOp(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]),
+		return (None, { curNode.getName() : AST.BOp(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]),
 							TFNodesAST.getOperatorsIdx('./'),
 							AST.ID(dictNodeNameToOutVarStr[inputsRef[1]])
-							))
+							)})
 
 	def FloorDiv(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
@@ -172,7 +172,7 @@ class TFNodesAST:
 							TFNodesAST.getOperatorsIdx('./'),
 							AST.ID(dictNodeNameToOutVarStr[inputsRef[1]])
 							)
-		return (None, AST.Func(TFNodesAST.getOperatorsIdx('floor'), realDivAST))
+		return (None, { curNode.getName() : AST.Func(TFNodesAST.getOperatorsIdx('floor'), realDivAST)})
 
 	def VariableV2(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		curNodeShapeLi = curNode.getAttrMapRef()["shape"].getShape().getDimRef()[:]
@@ -183,8 +183,8 @@ class TFNodesAST:
 		#	(in the scenario of secure inference), model is input by server and image by client.
 		#	We assume in the following that the PlaceHolder op node represents the image and 
 		#	all model parameters are represented using Variable op nodes.
-		#	Hence, in the call to AST.Input, we pass inputByParty=0.
-		return (None, AST.Input(curNodeShapeLi, curNodeInputType.name, isSecret=True, inputByParty=0))
+		#	Hence, in the call to AST.Input, we pass inputByParty as SERVER.
+		return (None, { curNode.getName() : AST.Input(curNodeShapeLi, curNodeInputType.name, isSecret=True, inputByParty=AST.Party.SERVER)})
 	
 	def Const(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		assert(len(curNode.getInputsRef()) == 0)
@@ -220,49 +220,49 @@ class TFNodesAST:
 			else:
 				assert False
 			retAST = AST.Decl(curNodeShape, None, dataPassed, isSecret=False)
-		return (None, retAST)
+		return (None, { curNode.getName() : retAST})
 
 	def Relu(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
 		assert(len(inputsRef)==1)
-		return (None, AST.Func(TFNodesAST.getOperatorsIdx('relu'), AST.ID(dictNodeNameToOutVarStr[inputsRef[0]])))
+		return (None, { curNode.getName() : AST.Func(TFNodesAST.getOperatorsIdx('relu'), AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]))})
 
 	def Tanh(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
 		assert(len(inputsRef)==1)
-		return (None, AST.Func(TFNodesAST.getOperatorsIdx('tanh'), AST.ID(dictNodeNameToOutVarStr[inputsRef[0]])))
+		return (None, { curNode.getName() : AST.Func(TFNodesAST.getOperatorsIdx('tanh'), AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]))})
 
 	def Sqrt(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
 		assert(len(inputsRef)==1)
-		return (None, AST.Func(TFNodesAST.getOperatorsIdx('sqrt'), AST.ID(dictNodeNameToOutVarStr[inputsRef[0]])))
+		return (None, { curNode.getName() : AST.Func(TFNodesAST.getOperatorsIdx('sqrt'), AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]))})
 
 	def Rsqrt(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
 		assert(len(inputsRef)==1)
-		return (None, AST.Func(TFNodesAST.getOperatorsIdx('rsqrt'), AST.ID(dictNodeNameToOutVarStr[inputsRef[0]])))
+		return (None, { curNode.getName() : AST.Func(TFNodesAST.getOperatorsIdx('rsqrt'), AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]))})
 
 	def Sigmoid(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
 		assert(len(inputsRef)==1)
-		return (None, AST.Func(TFNodesAST.getOperatorsIdx('sigmoid'), AST.ID(dictNodeNameToOutVarStr[inputsRef[0]])))
+		return (None, { curNode.getName() : AST.Func(TFNodesAST.getOperatorsIdx('sigmoid'), AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]))})
 
 	def Shape(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
 		assert(len(inputsRef)==1)
-		return (None, AST.Func(TFNodesAST.getOperatorsIdx('shape'), AST.ID(dictNodeNameToOutVarStr[inputsRef[0]])))
+		return (None, { curNode.getName() : AST.Func(TFNodesAST.getOperatorsIdx('shape'), AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]))})
 
 	def Cast(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
 		assert(len(inputsRef) == 1)
 		sourceType = curNode.getAttrMapRef()["SrcT"].getDataType()
 		destType = curNode.getAttrMapRef()["DstT"].getDataType()
-		return (None, AST.UninterpFuncCall(extraNodeInfoDict[curNode.getName()][0],
+		return (None, { curNode.getName() : AST.UninterpFuncCall(extraNodeInfoDict[curNode.getName()][0],
 											TFNodesAST.UninterpFuncCallNames.Cast.name, 
 											[AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]), 
 											AST.ID(sourceType.name),
 											AST.ID(destType.name)
-											]))
+											])})
 
 	def ZerosLike(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
@@ -273,7 +273,7 @@ class TFNodesAST:
 									TFNodesAST.UninterpFuncCallNames.CreateTensor.name, 
 									[AST.Int(0, isSecret=False)],
 									isSecret=False)
-		return (None, retAST)
+		return (None, { curNode.getName() : retAST})
 
 	def Fill(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
@@ -288,12 +288,12 @@ class TFNodesAST:
 									TFNodesAST.UninterpFuncCallNames.CreateTensor.name, 
 									[AST.ID(dictNodeNameToOutVarStr[inputsRef[1]]) ],
 									isSecret=False)
-		return (None, retAST)
+		return (None, { curNode.getName() : retAST})
 
 	def Reshape(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
 		assert(len(inputsRef) == 2)
-		return (None, AST.Reshape(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]), extraNodeInfoDict[curNode.getName()][0], None))
+		return (None, { curNode.getName() : AST.Reshape(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]), extraNodeInfoDict[curNode.getName()][0], None)})
 
 	def helper_findPadding(imgH, imgW, FH, FW, strideH, strideW, paddingUsedStr, imgD = None, FD = None, strideD = None):
 		if imgD:
@@ -374,10 +374,10 @@ class TFNodesAST:
 		options[AST.PaddingKeysDict.zPadWRight] = zPadWRight
 		options[AST.PaddingKeysDict.strideH] = strideH
 		options[AST.PaddingKeysDict.strideW] = strideW	  	
-		return (None, AST.BOp(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]), 
+		return (None, { curNode.getName() : AST.BOp(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]), 
 								TFNodesAST.getOperatorsIdx('#'),
 								AST.ID(dictNodeNameToOutVarStr[inputsRef[1]]), 
-								options))
+								options)})
 
 	def Conv3D(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
@@ -417,10 +417,10 @@ class TFNodesAST:
 		options[AST.PaddingKeysDict.strideH] = strideH
 		options[AST.PaddingKeysDict.strideW] = strideW
 		options[AST.PaddingKeysDict.ConvDim] = 3
-		return (None, AST.BOp(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]),
+		return (None, { curNode.getName() : AST.BOp(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]),
 						TFNodesAST.getOperatorsIdx('#'),
 						AST.ID(dictNodeNameToOutVarStr[inputsRef[1]]),
-						options))
+						options)})
 
 	def Conv3DBackpropInputV2(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
@@ -472,10 +472,10 @@ class TFNodesAST:
 		options[AST.PaddingKeysDict.outputImgD] = outputD
 		options[AST.PaddingKeysDict.outputImgH] = outputH
 		options[AST.PaddingKeysDict.outputImgW] = outputW
-		return (None, AST.BOp(AST.ID(dictNodeNameToOutVarStr[inputsRef[2]]),
+		return (None, { curNode.getName() : AST.BOp(AST.ID(dictNodeNameToOutVarStr[inputsRef[2]]),
 								TFNodesAST.getOperatorsIdx('#T'),
 								AST.ID(dictNodeNameToOutVarStr[inputsRef[1]]),
-								options))
+								options)})
 
 	def helper_processPool(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict, typeOfPool:str):
 		inputsRef = curNode.getInputsRef()
@@ -510,7 +510,7 @@ class TFNodesAST:
 		else: 
 			print("Unknown type of pooling layer.", file=sys.stderr)
 			assert(False)
-		return (None, AST.Pool(poolType,
+		return (None, { curNode.getName() : AST.Pool(poolType,
 							  AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]),
 							  {
 							  	AST.PaddingKeysDict.FH: kSizeH,
@@ -522,7 +522,7 @@ class TFNodesAST:
 							  	AST.PaddingKeysDict.strideH: strideH,
 							  	AST.PaddingKeysDict.strideW: strideW
 							  }
-							))
+							)})
 
 	def MaxPool(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		return TFNodesAST.helper_processPool(graph, curNode, dictNodeNameToOutVarStr, extraNodeInfoDict, 'MAXPOOL')
@@ -542,7 +542,7 @@ class TFNodesAST:
 									list(map(lambda x : AST.ID(dictNodeNameToOutVarStr[x]), inputsRef)),
 									outputDiffInpDims=1
 									) 
-		return (None, retAST)
+		return (None, { curNode.getName() : retAST})
 
 	def ExpandDims(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
@@ -550,7 +550,7 @@ class TFNodesAST:
 		retAST = AST.UninterpFuncCall(extraNodeInfoDict[curNode.getName()][0],
 										TFNodesAST.UninterpFuncCallNames.ExpandDims.name, 
 									  list(map(lambda x : AST.ID(dictNodeNameToOutVarStr[x]), inputsRef)))
-		return (None, retAST)
+		return (None, { curNode.getName() : retAST})
 
 	def Slice(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
@@ -562,14 +562,14 @@ class TFNodesAST:
 									AST.ID(dictNodeNameToOutVarStr[inputsRef[1]]),   # begin idx
 									AST.ID(dictNodeNameToOutVarStr[inputsRef[2]])	 # size
 									])
-		return (None, retAST)
+		return (None, { curNode.getName() : retAST})
 
 	def Tile(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
 		assert(len(inputsRef) == 2)
-		return (None, AST.UninterpFuncCall(extraNodeInfoDict[curNode.getName()][0],
+		return (None, { curNode.getName() : AST.UninterpFuncCall(extraNodeInfoDict[curNode.getName()][0],
 											TFNodesAST.UninterpFuncCallNames.Tile.name, 
-											[AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]), AST.ID(dictNodeNameToOutVarStr[inputsRef[1]])])) 
+											[AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]), AST.ID(dictNodeNameToOutVarStr[inputsRef[1]])])})
 
 	def Sum(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
@@ -579,11 +579,11 @@ class TFNodesAST:
 		if ("keep_dims" in attrMapRef):
 			keepdims = attrMapRef["keep_dims"].getB()
 		curNodeShapeLi = extraNodeInfoDict[curNode.getName()][0]
-		return (None, AST.Reduce(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]), 
+		return (None, { curNode.getName() : AST.Reduce(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]), 
 								 AST.ID(dictNodeNameToOutVarStr[inputsRef[1]]),
 								 AST.Int(int(keepdims), 32, isSecret=False),
 								 curNodeShapeLi,
-								 TFNodesAST.getOperatorsIdx('+')))
+								 TFNodesAST.getOperatorsIdx('+'))})
 
 	def Mean(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
@@ -593,30 +593,30 @@ class TFNodesAST:
 		if ("keep_dims" in attrMapRef):
 			keepdims = attrMapRef["keep_dims"].getB()
 		curNodeShapeLi = extraNodeInfoDict[curNode.getName()][0]
-		return (None, AST.Reduce(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]), 
+		return (None, { curNode.getName() : AST.Reduce(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]), 
 								AST.ID(dictNodeNameToOutVarStr[inputsRef[1]]), 
 								AST.Int(int(keepdims), 32, isSecret=False),
 								curNodeShapeLi,
-								TFNodesAST.getOperatorsIdx('mean')))
+								TFNodesAST.getOperatorsIdx('mean'))})
 
 	def ArgMax(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
 		assert(len(inputsRef) == 2)
-		return (None, AST.ArgMax(extraNodeInfoDict[curNode.getName()][0], 
+		return (None, { curNode.getName() : AST.ArgMax(extraNodeInfoDict[curNode.getName()][0], 
 								 AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]), 
 								 AST.ID(dictNodeNameToOutVarStr[inputsRef[1]]), 
-								 extraNodeInfoDict[inputsRef[0]][0]))
+								 extraNodeInfoDict[inputsRef[0]][0])})
 
 	def NoOp(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
-		return (None, None)
+		return (None, { curNode.getName() : None})
 
 	def Square(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
 		assert(len(inputsRef) == 1)
-		return (None, AST.BOp(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]),
+		return (None, { curNode.getName() : AST.BOp(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]),
 							  TFNodesAST.getOperatorsIdx('.*'),
 							  AST.ID(dictNodeNameToOutVarStr[inputsRef[0]])
-							  ))
+							  )})
 
 	def Pad(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		# Mode refers to 'CONSTANT', 'REFLECT' or 'SYMMETRIC'
@@ -631,27 +631,27 @@ class TFNodesAST:
 		assert(mode == 0 and constant_values == 0) # For now to make life easy - deal with SYMMETRIC AND REFLECT when time comes
 		inputsRef = curNode.getInputsRef()
 		inputTensorShapeLi = extraNodeInfoDict[inputsRef[0]][0]
-		return (None, AST.UninterpFuncCall(extraNodeInfoDict[curNode.getName()][0],
+		return (None, { curNode.getName() : AST.UninterpFuncCall(extraNodeInfoDict[curNode.getName()][0],
 											TFNodesAST.UninterpFuncCallNames.Pad.name,
 											[
 											AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]),
 											AST.ID(dictNodeNameToOutVarStr[inputsRef[1]])
 											],
 											outputDiffInpDims=1
-											))
+											)})
 
 	def FusedBatchNorm(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
-		return (None, AST.FusedBatchNorm(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]),
+		return (None, { curNode.getName() : AST.FusedBatchNorm(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]),
 										 AST.ID(dictNodeNameToOutVarStr[inputsRef[1]]),
 										 AST.ID(dictNodeNameToOutVarStr[inputsRef[2]]),
-										))
+										)})
 	def FusedBatchNormV3(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
-		return (None, AST.FusedBatchNorm(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]),
+		return (None, { curNode.getName() : AST.FusedBatchNorm(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]),
 										 AST.ID(dictNodeNameToOutVarStr[inputsRef[1]]),
 										 AST.ID(dictNodeNameToOutVarStr[inputsRef[2]]),
-										))
+										)})
 
 	def Transpose(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
@@ -663,7 +663,35 @@ class TFNodesAST:
 		permList = permTensor.getContentAsValArr()
 		assert(permTensor.getDType().kind == "i")
 		assert(permTensor.getShapeRef().getRank() == 1)
-		return (None, AST.Transpose(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]), permList))
+		return (None, { curNode.getName() : AST.Transpose(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]), permList)})
+
+	def Split(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
+		inputsRef = curNode.getInputsRef()
+		assert(len(inputsRef) == 2)
+		axisNodeName = inputsRef[0] # split_dim input. Has to be a constant. We don't support dynamic codegen yet
+		axisNode = graph.__getitem__(axisNodeName)
+		axisTensor = axisNode.getAttrVal("value").getTensor()
+		axis = axisTensor.getConstantVal()
+		numSplits = curNode.getAttrVal("num_split").getI()
+		inputTensorShape = extraNodeInfoDict[inputsRef[1]][0]
+		assert(axis < len(inputTensorShape)) 
+		assert(inputTensorShape[axis] % numSplits == 0) #Should perfectly split
+		sizeAlongSplitDim = int(inputTensorShape[axis]/numSplits)
+		outputAsts = {}
+		for i in range(0, numSplits):
+			output_name = curNode.getName()
+			if i != 0:
+				output_name += ":" + str(i)
+			subscriptRanges = []
+			for j in range(0, len(inputTensorShape)):
+				start = 0
+				end = inputTensorShape[j] - 1
+				if j == axis:
+					start = i*sizeAlongSplitDim
+					end = start + sizeAlongSplitDim - 1
+				subscriptRanges.append((start,end))
+			outputAsts[output_name] =  AST.Slice(AST.ID(dictNodeNameToOutVarStr[inputsRef[1]]), subscriptRanges)
+		return (None, outputAsts)
 
 	def Squeeze(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
@@ -673,33 +701,33 @@ class TFNodesAST:
 		squeezeDims = curNode.getAttrMapRef()["squeeze_dims"].getList().getILi()
 		squeezeDimsRank = len(squeezeDims)
 
-		return (None, AST.UninterpFuncCall(extraNodeInfoDict[curNode.getName()][0],
+		return (None, { curNode.getName() : AST.UninterpFuncCall(extraNodeInfoDict[curNode.getName()][0],
 											TFNodesAST.UninterpFuncCallNames.Squeeze.name,
 											list(map(lambda x : AST.Int(x, 32, isSecret=False), squeezeDims)) + 
 											[
 											AST.ID(dictNodeNameToOutVarStr[inputsRef[0]])
 											]
-											))
+											)})
 
 	def BiasAdd(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
 		assert(len(inputsRef) == 2)
-		return (None, AST.BOp(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]),
+		return (None, { curNode.getName() : AST.BOp(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]),
 							TFNodesAST.getOperatorsIdx('+'),
 							AST.ID(dictNodeNameToOutVarStr[inputsRef[1]])
-							))
+							)})
 
 	def ReadVariableOp(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
-		return (None, AST.ID(dictNodeNameToOutVarStr[inputsRef[0]])) 
+		return (None, { curNode.getName() : AST.ID(dictNodeNameToOutVarStr[inputsRef[0]])})
 
 	def Softmax(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
-		return (None, AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]))
+		return (None, { curNode.getName() : AST.ID(dictNodeNameToOutVarStr[inputsRef[0]])})
 
 	def StopGradient(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
-		return (None, AST.ID(dictNodeNameToOutVarStr[inputsRef[0]])) 
+		return (None, { curNode.getName() : AST.ID(dictNodeNameToOutVarStr[inputsRef[0]])})
 
 	def VarHandleOp(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		return TFNodesAST.VariableV2(graph, curNode, dictNodeNameToOutVarStr, extraNodeInfoDict)

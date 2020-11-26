@@ -52,6 +52,11 @@ class LivenessAnalysis(ASTVisitor):
 		node.optidict[self.optidictKey] = unboundVars
 		return unboundVars
 
+	def visitSlice(self, node:AST.Slice, args):
+		unboundVars = self.visit(node.expr, args)
+		node.optidict[self.optidictKey] = unboundVars
+		return unboundVars
+
 	def visitReshape(self, node:AST.Reshape, args):
 		unboundVars = self.visit(node.expr, args)
 		node.optidict[self.optidictKey] = unboundVars

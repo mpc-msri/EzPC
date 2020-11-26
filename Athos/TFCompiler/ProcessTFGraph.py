@@ -37,8 +37,8 @@ def generateASTForNode(graph, curNode, dictNodeNameToOutVarStr, extraNodeInfoDic
 	curNodeOp = curNode.getOp()
 	ast = None
 	func = getattr(TFNodesAST, curNodeOp)
-	(assignedVarAST, curAST) = func(graph, curNode, dictNodeNameToOutVarStr, extraNodeInfoDict)
-	return (assignedVarAST, curAST)
+	(assignedVarAST, curASTs) = func(graph, curNode, dictNodeNameToOutVarStr, extraNodeInfoDict)
+	return (assignedVarAST, curASTs)
 
 #Takes the graph DS and outputs IR in SeeDot for the same
 def generateIRCode(graph, extraInfoDict):
@@ -51,29 +51,29 @@ def generateIRCode(graph, extraInfoDict):
 	for curNode in graph.getAllNodesRef():
 		for curInp in curNode.getInputsRef():
 			assert(curInp in dictNodeNameToOutVarStr) #Consequence of topological sorting of the TF graph
-		(assignedVarAST, curAst) = generateASTForNode(graph, curNode, dictNodeNameToOutVarStr, extraInfoDict)
+		(assignedVarAST, curAsts) = generateASTForNode(graph, curNode, dictNodeNameToOutVarStr, extraInfoDict)
+		for outputName, curAst in curAsts.items():
+			mtdForCurAST = {AST.ASTNode.mtdKeyTFOpName : curNode.getOp(),
+							AST.ASTNode.mtdKeyTFNodeName : outputName}
 
-		mtdForCurAST = {AST.ASTNode.mtdKeyTFOpName : curNode.getOp(),
-						AST.ASTNode.mtdKeyTFNodeName : curNode.getName()}
-
-		if (curAst is None):
-			dictNodeNameToOutVarStr[curNode.getName()] = None
-			continue
-		curOutVarStr = outVarPrefix + str(outVarCt)
-		curOutVarAstNode = (assignedVarAST if assignedVarAST else AST.ID(curOutVarStr))
-		if program:
-			assert(type(innerMostLetASTNode) is AST.Let)
-			newNode = AST.Let(curOutVarAstNode, curAst, curOutVarAstNode)
-			mtdAST.visit(newNode, mtdForCurAST)
-			innerMostLetASTNode.expr = newNode
-			innerMostLetASTNode = newNode
-		else:
-			innerMostLetASTNode = AST.Let(AST.ID(curOutVarStr), curAst, curOutVarAstNode)
-			mtdAST.visit(innerMostLetASTNode, mtdForCurAST)
-			innerMostLetASTNode.depth = 0
-			program = innerMostLetASTNode
-		dictNodeNameToOutVarStr[curNode.getName()] = curOutVarStr
-		outVarCt += 1
+			if (curAst is None):
+				dictNodeNameToOutVarStr[outputName] = None
+				continue
+			curOutVarStr = outVarPrefix + str(outVarCt)
+			curOutVarAstNode = (assignedVarAST if assignedVarAST else AST.ID(curOutVarStr))
+			if program:
+				assert(type(innerMostLetASTNode) is AST.Let)
+				newNode = AST.Let(curOutVarAstNode, curAst, curOutVarAstNode)
+				mtdAST.visit(newNode, mtdForCurAST)
+				innerMostLetASTNode.expr = newNode
+				innerMostLetASTNode = newNode
+			else:
+				innerMostLetASTNode = AST.Let(AST.ID(curOutVarStr), curAst, curOutVarAstNode)
+				mtdAST.visit(innerMostLetASTNode, mtdForCurAST)
+				innerMostLetASTNode.depth = 0
+				program = innerMostLetASTNode
+			dictNodeNameToOutVarStr[outputName] = curOutVarStr
+			outVarCt += 1
 	return (program, dictNodeNameToOutVarStr)
 
 def readSizeInfo(fileName):
