@@ -679,6 +679,10 @@ class TFNodesAST:
 
 	def Softmax(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
+		return (None, AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]))
+
+	def StopGradient(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
+		inputsRef = curNode.getInputsRef()
 		return (None, AST.ID(dictNodeNameToOutVarStr[inputsRef[0]])) 
 
 	def VarHandleOp(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
