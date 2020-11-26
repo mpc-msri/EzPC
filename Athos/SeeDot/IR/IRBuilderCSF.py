@@ -783,7 +783,7 @@ class IRBuilderCSF(IRBuilderAST):
 		# and in inference, in every linear layer, either of A or B will be a model weight.
 		# This is required because for some backends, knowing which of A or B is a model weight
 		# can make a difference in their performance.
-		modelIsA = True
+
 		assert (self.isModel(node.expr1) or self.isModel(node.expr2)), "Expecting one of A or B to be an input by the server (model weight)."
 		modelIsA = True
 		if (not self.isModel(node.expr1)):

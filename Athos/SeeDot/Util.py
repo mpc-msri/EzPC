@@ -142,3 +142,82 @@ def get_volume(shape: list):
 	for i in shape:
 		vol = vol * i
 	return vol
+
+class DisjointSet:
+	class Node:
+		def __init__(self):
+			self.parent = self
+			self.children = []
+
+		def get_root(self):
+			if (self.parent != self):
+				old_parent = self.parent
+				self.parent = self.parent.get_root()
+				if self.parent != old_parent:
+					self.parent.children.append(self)
+					old_parent.children.remove(self)
+				return self.parent
+			else:
+				return self
+
+		def get_all_children(self):
+			all_children = []
+			all_children.extend(self.children)
+			tmp = []
+			for i in all_children:
+				tmp.extend(i.get_all_children())
+			all_children.extend(tmp)
+			return all_children
+
+	def __init__(self):
+		self.key_to_node = {}
+		self.node_to_key = {}
+
+	def inSet(self, inp):
+		return inp in self.key_to_node
+
+	def make_set(self, inp):
+		if self.inSet(inp):
+			return
+		n = self.Node()
+		self.key_to_node[inp] = n
+		self.node_to_key[n] = inp
+
+	def union(self, inp1, inp2):
+		n1 = self.key_to_node[inp1]
+		n2 = self.key_to_node[inp2]
+		r1 = n1.get_root()
+		r2 = n2.get_root()
+		if (r1 != r2):
+			r1.parent = r2
+			r2.children.append(r1)
+
+	def find(self, inp):
+		if not self.inSet(inp):
+			return None
+		return self.key_to_node[inp].get_root()
+
+	def find_key(self, inp):
+		node = self.find(inp)
+		if node is None:
+			return None
+		return self.node_to_key[node]
+
+	def get_set(self, inp):
+		if not self.inSet(inp):
+			return None
+		n = self.key_to_node[inp].get_root()
+		return [n] + n.get_all_children()
+
+	def get_key_set(self, inp):
+		nodes = self.get_set(inp)
+		if nodes is None:
+			return None
+		return [self.node_to_key[i] for i in nodes]
+
+	def print(self):
+		print(self.key_to_node)
+		print(self.node_to_key)
+
+	def print_set(self, inp):
+		print(self.get_key_set(inp))

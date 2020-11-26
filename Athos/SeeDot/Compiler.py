@@ -37,7 +37,8 @@ from AST.MtdAST import MtdAST
 from IR.IRBuilderCSF import IRBuilderCSF
 from Codegen.EzPC import EzPC as EzPCCodegen
 import Optimizations.ReluMaxpoolOpti as ReluMaxpoolOpti
-import Optimizations.LivenessOpti as LivenessOpti
+import Optimizations.GarbageCollector as GarbageCollector
+from collections import OrderedDict
 
 class Compiler:
 	def __init__(self, version, target, sfType, astFile, printASTBool, consSF, bitlen, outputFileName,
@@ -117,17 +118,18 @@ class Compiler:
 				print("Relu-maxpool optimization done.")
 		
 			if not(Util.Config.disableLivenessOpti):
-				print("Performing Liveness Optimization...")
+				print("Performing Garbage colelction...")
 				mtdAST = MtdAST()
-				LivenessOpti.LivenessAnalysis().visit(ast)
-				LivenessOpti.LivenessOpti().visit(ast, [mtdAST, 0, {}])
-				print("Liveness optimization done.")
+				GC = GarbageCollector.GarbageCollector(ast)
+				GC.run([mtdAST])
+				print("Garbage collection done.")
 		
 		# Perform type inference and annotate nodes with type information
 		InferType().visit(ast)
 
 		if Util.Config.printASTBool:
 			PrintAST().visit(ast)
+			print("\n")
 			sys.stdout.flush()
 
 		IRUtil.init()
