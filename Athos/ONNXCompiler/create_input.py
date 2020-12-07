@@ -4,7 +4,7 @@
 Authors: Shubham Ugare.
 
 Copyright:
-Copyright (c) 2018 Microsoft Research
+Copyright (c) 2020 Microsoft Research
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -52,22 +52,31 @@ def main():
 	np.save('debug/' + model_name + '/' + model_name + '_input', input_array)
 
 	(chunk, cnt) = common.numpy_float_array_to_fixed_point_val_str(input_array, scaling_factor)
+	f = open('debug/' + model_name + '/' + model_name + '_input.inp', 'w') 
+	f.write(chunk)
+	f.close()
 
 	model_name_to_val_dict = { init_vals.name: numpy_helper.to_array(init_vals).tolist() for init_vals in model.graph.initializer}
 
 	preprocess_batch_normalization(graph_def, model_name_to_val_dict)
 
+	chunk_n = ''
+	cnt_n = 0
 	for init_vals in model.graph.initializer:
 		(chunk_1, cnt_1) = common.numpy_float_array_to_fixed_point_val_str(
 			np.asarray(model_name_to_val_dict[init_vals.name], dtype=np.float32), scaling_factor)
-		chunk += chunk_1
-		cnt += cnt_1
+		chunk_n += chunk_1
+		cnt_n += cnt_1
 
-	f = open('debug/' + model_name + '/' + model_name + '_input.h', 'w') 
-	f.write(chunk)
+	f = open('debug/' + model_name + '/' + model_name + '_weights.inp', 'w') 
+	f.write(chunk_n)
 	f.close()
 
-	print('Total ' + str(cnt) + ' integers were written in ' + model_name + '_input.h')
+	f = open('debug/' + model_name + '/' + model_name + '_combined_input_weights.inp', 'w') 
+	f.write(chunk + chunk_n)
+	f.close()
+
+	print('Total ' + str(cnt + cnt_n) + ' integers were written in ' + model_name + '_combined_input_weights.inp')
 
 def preprocess_batch_normalization(graph_def, model_name_to_val_dict):
 	# set names to graph nodes if not present

@@ -3,7 +3,7 @@
 Authors: Nishant Kumar.
 
 Copyright:
-Copyright (c) 2018 Microsoft Research
+Copyright (c) 2020 Microsoft Research
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -36,12 +36,14 @@ def errIfTokensNotMinLen(tokens, minlen, lineNum, entity):
 class DataTypeEnum(enum.Enum):
     DT_INVALID = 0
     DT_FLOAT = 1
-    DT_BOOL = 2
-    DT_INT32 = 3
-    DT_INT64 = 4
+    DT_FLOAT16 = 2
+    DT_BOOL = 3
+    DT_INT32 = 4
+    DT_INT64 = 5
 
     def Parse(str):
         if (str == "DT_FLOAT"): return DataTypeEnum.DT_FLOAT
+        elif (str == "DT_HALF"): return DataTypeEnum.DT_FLOAT16
         elif (str == "DT_BOOL"): return DataTypeEnum.DT_BOOL
         elif (str == "DT_INT32"): return DataTypeEnum.DT_INT32
         elif (str == "DT_INT64"): return DataTypeEnum.DT_INT64
@@ -51,6 +53,7 @@ class DataTypeEnum(enum.Enum):
     def Size(dt):
         if (dt == DataTypeEnum.DT_INVALID): return 0
         elif (dt == DataTypeEnum.DT_FLOAT): return 4
+        elif (dt == DataTypeEnum.DT_FLOAT16): return 2
         elif (dt == DataTypeEnum.DT_BOOL): return 1
         elif (dt == DataTypeEnum.DT_INT32): return 4
         elif (dt == DataTypeEnum.DT_INT64): return 8
@@ -191,6 +194,8 @@ class Tensor:
             self.__valArr = [self.__valInput]*numElements
         elif ((self.__dtype == DataTypeEnum.DT_FLOAT) and (self.__valInput is not None)):
             self.__valArr = [self.__valInput]*numElements
+        elif ((self.__dtype == DataTypeEnum.DT_FLOAT16) and (self.__valInput is not None)):
+            self.__valArr = [self.__valInput]*numElements
         elif ((self.__dtype == DataTypeEnum.DT_INT32 or self.__dtype == DataTypeEnum.DT_INT64)
                 and (self.__valInput is not None)):
             self.__valArr = [self.__valInput]*numElements
@@ -310,6 +315,8 @@ class Tensor:
             # self.__valArr = returnArr
             if self.__dtype == DataTypeEnum.DT_FLOAT:
                 dtype = numpy.dtype('<f4')
+            elif self.__dtype == DataTypeEnum.DT_FLOAT16:
+                dtype = numpy.dtype('<f2')
             elif self.__dtype == DataTypeEnum.DT_BOOL:
                 dtype = numpy.dtype('bool')
             elif self.__dtype == DataTypeEnum.DT_INT32:
@@ -324,6 +331,8 @@ class Tensor:
     def getDType(self):
         if self.__dtype == DataTypeEnum.DT_FLOAT:
             dtype = numpy.dtype('<f4')
+        elif self.__dtype == DataTypeEnum.DT_FLOAT16:
+            dtype = numpy.dtype('<f2')
         elif self.__dtype == DataTypeEnum.DT_BOOL:
             dtype = numpy.dtype('bool')
         elif self.__dtype == DataTypeEnum.DT_INT32:
@@ -492,11 +501,14 @@ class Value:
         return self.__val
 
 class Node:
-    def __init__(self):
-        self.__name = ""        #Name of node
-        self.__op = ""          #Name of operation carried out by node
-        self.__inputs = []      #List of all inputs to the current node
-        self.__attr = {}        #Map of (attrName, Value) of all attributes for the current node
+    def __init__(self, op="", inputs=None, name=""):
+        self.__name = name          #Name of node
+        self.__op = op              #Name of operation carried out by node
+        if inputs is None:
+            self.__inputs = []      #List of all inputs to the current node
+        else:
+            self.__inputs = inputs
+        self.__attr = {}            #Map of (attrName, Value) of all attributes for the current node
 
     def getName(self):
         return self.__name
@@ -511,7 +523,7 @@ class Node:
         return self.__attr
 
     def getAttrVal(self, attrName):
-        qName = '"' + attrName + '"'
+        qName = attrName
         if not qName in self.__attr:
             return None
         return self.__attr[qName]
@@ -532,7 +544,7 @@ class Node:
                     #keyStr is already non-None .. there is then probably some error
                     print("Too many keys found while parsing attr for node at line =", cnt, file=sys.stderr)
                     return (False, cnt)
-                keyStr = tokens[1]
+                keyStr = tokens[1][1:-1]
             elif (curToken == "value"):
                 curVal = Value()
                 (noParseError, cnt) = curVal.readFromFilePointer(fileP, cnt)
@@ -561,13 +573,13 @@ class Node:
                 return (True, cnt)
             elif (curToken == "name:"):
                 if (errIfTokensNotMinLen(tokens, 2, cnt, "node")): return (False, cnt)
-                self.__name = tokens[1]
+                self.__name = tokens[1][1:-1]
             elif (curToken == "op:"):
                 if (errIfTokensNotMinLen(tokens, 2, cnt, "node")): return (False, cnt)
-                self.__op = tokens[1]
+                self.__op = tokens[1][1:-1]
             elif (curToken == "input:"):
                 if (errIfTokensNotMinLen(tokens, 2, cnt, "node")): return (False, cnt)
-                self.__inputs.append(tokens[1])
+                self.__inputs.append(tokens[1][1:-1])
             elif (curToken == "attr"):
                 (noParseError, cnt) = self.readAttrFromFilePointer(fileP, cnt)
                 if (not(noParseError)):
@@ -625,6 +637,7 @@ class Graph:
                 pass
             elif (curToken == "versions" or curToken == "library"):
                 print("Versions/Library node found. Ignoring remainder graph. Line =", cnt, file=sys.stderr)
+                print("Graph parsing successful.", file=sys.stderr)
                 return True
             else:
                 print("Unrecognized token in graph dump at line =", cnt, ", token =", curToken, file=sys.stderr)

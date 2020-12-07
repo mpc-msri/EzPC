@@ -3,7 +3,7 @@
 Authors: Nishant Kumar.
 
 Copyright:
-Copyright (c) 2018 Microsoft Research
+Copyright (c) 2020 Microsoft Research
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -34,20 +34,18 @@ def get_optimized_graph_def(output_tensor):
    'strip_unused_nodes',
    'fold_batch_norms',
    'fold_constants(ignore_errors=true)'
-   # 'merge_duplicate_nodes', # Removing this otherwise in the output graph the topological ordering is broken - fix some other day #TODO_nishkum
   ]
   optimized_graph_def = TransformGraph(graph_def, [], [output_tensor.name], transforms)
   return optimized_graph_def
 
 def save_graph_metadata(output_tensor, sess, feed_dict):
   #First save the graph def
-  graph_def = tf.get_default_graph().as_graph_def()
+  graph_def = sess.graph_def
   transforms = [
    'remove_nodes(op=Identity)', 
    'strip_unused_nodes',
    'fold_batch_norms',
    'fold_constants(ignore_errors=true)'
-   # 'merge_duplicate_nodes', # Removing this otherwise in the output graph the topological ordering is broken - fix some other day #TODO_nishkum
   ]
   optimized_graph_def = TransformGraph(graph_def, [], [output_tensor.name], transforms)
   with open('./graphDef.mtdata', 'w') as f:
@@ -56,11 +54,17 @@ def save_graph_metadata(output_tensor, sess, feed_dict):
   # Save size information for tensors on which output depends
   tensors_to_evaluate = []
   tensors_to_evaluate_names = []
-  graph = tf.get_default_graph()
+  graph = sess.graph
   for node in optimized_graph_def.node:
-    cur_output = graph.get_operation_by_name(node.name).outputs[0]
-    tensors_to_evaluate.append(cur_output)
-    tensors_to_evaluate_names.append(node.name)
+    output_number = 0
+    for cur_output in graph.get_operation_by_name(node.name).outputs:
+      tensors_to_evaluate.append(cur_output)
+      if output_number == 0:
+        tensor_name = node.name
+      else:
+        tensor_name = cur_output.name
+      tensors_to_evaluate_names.append(tensor_name)
+      output_number += 1
   tensors_evaluated = sess.run(tensors_to_evaluate, feed_dict)
   tensors_shape = list(map(lambda x : x.shape, tensors_evaluated))
 
@@ -75,7 +79,7 @@ def save_graph_metadata(output_tensor, sess, feed_dict):
 
   return optimized_graph_def
 
-def updateWeightsForBN(optimized_graph_def, sess, feed_dict):
+def updateWeightsForBN(optimized_graph_def, sess, feed_dict={}):
   def findNodeInGraphDefWithName(graphDef, curName):
     for curNode in graphDef.node:
       if curNode.name == curName:
@@ -84,18 +88,17 @@ def updateWeightsForBN(optimized_graph_def, sess, feed_dict):
 
   print("Updating weights for BN...")
 
-  graph = tf.get_default_graph()
+  graph = sess.graph 
   graphDef = optimized_graph_def
 
   for node in graphDef.node:
-      if (node.op == 'FusedBatchNorm'):
-        print("node.name = {0}".format(node.name))
+      if (node.op == 'FusedBatchNorm' or node.op == 'FusedBatchNormV3'):
         gamma = graph.get_operation_by_name(node.input[1]).outputs[0]
         beta = graph.get_operation_by_name(node.input[2]).outputs[0]
         mu = graph.get_operation_by_name(node.input[3]).outputs[0]
         variance = graph.get_operation_by_name(node.input[4]).outputs[0]
 
-        epsilon = 1e-5 # Taken from non-fused BN of TF
+        epsilon = node.attr['epsilon'].f
         rsigma = tf.rsqrt(variance + epsilon)
 
         sess.run(tf.assign(gamma, gamma*rsigma))
@@ -142,3 +145,8 @@ def dumpImgAndWeightsDataSeparate(sess, imgData, evalTensors, imgFileName, weigh
   dumpImageDataInt(imgData, imgFileName, scalingFac, 'w')
   dumpTrainedWeightsInt(sess, evalTensors, weightFileName, scalingFac, 'w', alreadyEvaluated=alreadyEvaluated)
 
+def numpy_float_array_to_float_val_str(input_array):
+  chunk = ''
+  for val in numpy.nditer(input_array):
+    chunk += str(val) + '\n'
+  return chunk

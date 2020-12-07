@@ -3,7 +3,7 @@
 Authors: Sridhar Gopinath, Nishant Kumar.
 
 Copyright:
-Copyright (c) 2018 Microsoft Research
+Copyright (c) 2020 Microsoft Research
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -39,19 +39,16 @@ class ASTVisitor:
 			for elem in node.valueList:
 				self.visit(elem, args)
 
-	def visitTransp(self, node:AST.Transp, args=None):
+	def visitTranspose(self, node:AST.Transpose, args=None):
 		self.visit(node.expr, args)
 
-	def visitTranspose(self, node:AST.Transpose, args=None):
+	def visitSlice(self, node:AST.Slice, args=None):
 		self.visit(node.expr, args)
 
 	def visitReshape(self, node:AST.Reshape, args=None):
 		self.visit(node.expr, args)
 	
 	def visitPool(self, node:AST.Pool, args=None):
-		self.visit(node.expr, args)
-
-	def visitIndex(self, node:AST.Index, args=None):
 		self.visit(node.expr, args)
 
 	def visitUOp(self, node:AST.UOp, args=None):
@@ -79,8 +76,6 @@ class ASTVisitor:
 
 	def visitReduce(self, node:AST.Reduce, args=None):
 		self.visit(node.expr, args)
-		self.visit(node.dim, args)
-		self.visit(node.keepdims, args)
 
 	def visitInput(self, node:AST.Input, args=None):
 		pass
@@ -101,16 +96,14 @@ class ASTVisitor:
 			return self.visitId(node, args)
 		elif isinstance(node, AST.Decl):
 			return self.visitDecl(node, args)
-		elif isinstance(node, AST.Transp):
-			return self.visitTransp(node, args)
 		elif isinstance(node, AST.Transpose):
 			return self.visitTranspose(node, args)
+		elif isinstance(node, AST.Slice):
+			return self.visitSlice(node, args)
 		elif isinstance(node, AST.Reshape):
 			return self.visitReshape(node, args)
 		elif isinstance(node, AST.Pool):
 			return self.visitPool(node, args)
-		elif isinstance(node, AST.Index):
-			return self.visitIndex(node, args)
 		elif isinstance(node, AST.UOp):
 			return self.visitUOp(node, args)
 		elif isinstance(node, AST.BOp):

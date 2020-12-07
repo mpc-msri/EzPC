@@ -3,7 +3,7 @@
 Authors: Nishant Kumar.
 
 Copyright:
-Copyright (c) 2018 Microsoft Research
+Copyright (c) 2020 Microsoft Research
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -38,11 +38,11 @@ class MtdAST(ASTVisitor):
 	def visitDecl(self, node:AST.Decl, mtd:dict):
 		node.metadata.update(mtd)
 
-	def visitTransp(self, node:AST.Transp, mtd:dict):
+	def visitTranspose(self, node:AST.Transpose, mtd:dict):
 		node.metadata.update(mtd)
 		self.visit(node.expr, mtd)
 
-	def visitTranspose(self, node:AST.Transpose, mtd:dict):
+	def visitSlice(self, node:AST.Slice, mtd:dict):
 		node.metadata.update(mtd)
 		self.visit(node.expr, mtd)
 
@@ -54,10 +54,6 @@ class MtdAST(ASTVisitor):
 		node.metadata.update(mtd)
 		self.visit(node.expr, mtd)
 	
-	def visitIndex(self, node:AST.Index, mtd:dict):
-		node.metadata.update(mtd)
-		self.visit(node.expr, mtd)
-
 	def visitUOp(self, node:AST.UOp, mtd:dict):
 		node.metadata.update(mtd)
 		self.visit(node.expr, mtd)
@@ -89,7 +85,6 @@ class MtdAST(ASTVisitor):
 	def visitReduce(self, node:AST.Reduce, mtd:dict):
 		node.metadata.update(mtd)
 		self.visit(node.expr, mtd)
-		self.visit(node.dim, mtd)
 
 	def visitInput(self, node:AST.Input, mtd:dict):
 		node.metadata.update(mtd)
@@ -99,5 +94,3 @@ class MtdAST(ASTVisitor):
 		self.visit(node.expr, mtd)
 		self.visit(node.multExpr, mtd)
 		self.visit(node.addExpr, mtd)
-
-		

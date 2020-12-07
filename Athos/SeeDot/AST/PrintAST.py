@@ -3,7 +3,7 @@
 Authors: Sridhar Gopinath, Nishant Kumar.
 
 Copyright:
-Copyright (c) 2018 Microsoft Research
+Copyright (c) 2020 Microsoft Research
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -45,17 +45,17 @@ class PrintAST(ASTVisitor):
 		else:
 			print(indent * node.depth, node.shape, end=' ')
 
-	def visitTransp(self, node:AST.Transp, args=None):
-		node.expr.depth = node.depth + 1
-		print(indent * node.depth, end=' ')
-		self.visit(node.expr)
-		print("^T", end=' ')
-
 	def visitTranspose(self, node:AST.Transpose, args=None):
 		node.expr.depth = node.depth + 1
 		print(indent * node.depth, end=' ')
 		self.visit(node.expr)
 		print("^Transpose", end=' ')
+
+	def visitSlice(self, node:AST.Transpose, args=None):
+		node.expr.depth = node.depth + 1
+		print(indent * node.depth, end=' ')
+		self.visit(node.expr)
+		print("extract slice", end=' ')
 
 	def visitReshape(self, node:AST.Reshape, args=None):
 		node.expr.depth = node.depth + 1
@@ -70,15 +70,6 @@ class PrintAST(ASTVisitor):
 		node.expr.depth = node.depth + 1
 		print(indent * node.depth, node.poolType, end=' ')
 		self.visit(node.expr)
-
-	def visitIndex(self, node:AST.Index, args=None):
-		node.expr.depth = node.depth + 1
-		print(indent * node.depth, end = ' ')
-		self.visit(node.expr)
-		print("[", end=' ')
-		for x in node.index:
-			print(x, end = ' ')
-		print("]", end=' ')
 
 	def visitUOp(self, node:AST.UOp, args=None):
 		node.expr.depth = node.depth + 1
@@ -104,10 +95,12 @@ class PrintAST(ASTVisitor):
 			node.expr.depth = node.depth + 1
 		print(indent * node.depth, "(", end=' ')
 		print("let", end=' ')
+		if(hasattr(node.name, 'type') and hasattr(node.name.type, 'taint')):
+			print("<", node.decl.type.taint.name, ">",end=' ')
 		self.visit(node.name)
 		print("=", end=' ')
 		self.visit(node.decl)
-		print("in", "{", node.metadata[AST.ASTNode.mtdKeyTFOpName], node.metadata[AST.ASTNode.mtdKeyTFNodeName], "}", end='\n')
+		print("{", node.metadata[AST.ASTNode.mtdKeyTFOpName], node.metadata[AST.ASTNode.mtdKeyTFNodeName], "} in ", end='\n')
 		self.visit(node.expr)
 		print(')',end='')
 
@@ -124,11 +117,9 @@ class PrintAST(ASTVisitor):
 	def visitReduce(self, node:AST.Reduce, args=None):
 		print(indent * node.depth, "reduce", AST.OperatorsSymbolDict[node.op.name], end=' ')
 		self.visit(node.expr)
-		self.visit(node.dim)
-		self.visit(node.keepdims)
 
 	def visitInput(self, node:AST.Input, args=None):
-		print(indent * node.depth, "input( ", node.shape, node.dataType, end='')
+		print(indent * node.depth, "input( ", node.shape, node.dataType, " <", node.inputByParty.name, "> ", end='')
 		print(" )", end='')
 
 	def visitFusedBatchNorm(self, node:AST.FusedBatchNorm, args=None):

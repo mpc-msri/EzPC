@@ -3,7 +3,7 @@
 Authors: Sridhar Gopinath, Nishant Kumar.
 
 Copyright:
-Copyright (c) 2018 Microsoft Research
+Copyright (c) 2020 Microsoft Research
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -29,6 +29,15 @@ from Compiler import Compiler
 
 class MainDriver:
 	def parseArgs(self):
+		def str2bool(v):
+		    if isinstance(v, bool):
+		       return v
+		    if v.lower() in ('true'):
+		        return True
+		    elif v.lower() in ('false'):
+		        return False
+		    else:
+		        raise argparse.ArgumentTypeError('Boolean value expected.')
 		parser = argparse.ArgumentParser()
 
 		parser.add_argument("-v", "--version", choices=Util.Version.All, default=Util.Version.Fixed, metavar='', help="Floating point code or fixed point code")
@@ -37,12 +46,13 @@ class MainDriver:
 		parser.add_argument("--astFile", help="Load AST from this file" )
 		parser.add_argument("-p", "--printAST", default=False, type=bool, help="Print the AST or not.")
 		parser.add_argument("--consSF", default=15, type=int, help="Use this constant scaling factor.")
-		parser.add_argument("--bitlen", default=64, type=int, choices=[32,64], help="Bitlength to compile to. Possible values: 32/64. Defaults to 64.")
-		parser.add_argument("--disableRMO", default=False, type=bool, help="Disable Relu-Maxpool optimization.")
-		parser.add_argument("--disableLivenessOpti", default=False, type=bool, help="Disable liveness optimization.")
-		parser.add_argument("--disableAllOpti", default=False, type=bool, help="Disable all optimizations.")
+		parser.add_argument("--bitlen", default=64, type=int, help="Bitlength to compile to. Defaults to 64.")
+		parser.add_argument("--disableRMO", default=False, type=str2bool, help="Disable Relu-Maxpool optimization.")
+		parser.add_argument("--disableLivenessOpti", default=False, type=str2bool, help="Disable liveness optimization.")
+		parser.add_argument("--disableTruncOpti", default=False, type=str2bool, help="Disable truncation placement optimization.")
+		parser.add_argument("--disableAllOpti", default=False, type=str2bool, help="Disable all optimizations.")
 		parser.add_argument("--outputFileName", help="Name of the output file with extension (Donot include folder path).")
-		parser.add_argument("--debugVar", help="Name of the onnx node to be debugged")
+		parser.add_argument("--debugVar", type=str, help="Name of the onnx node to be debugged")
 		
 		self.args = parser.parse_args()
 
@@ -58,6 +68,9 @@ class MainDriver:
 			print("Running with Relu-Maxpool optimization disabled.")
 		elif self.args.disableLivenessOpti:
 			print("Running with liveness optimization disabled.")
+		elif self.args.disableTruncOpti:
+			print("Running with truncation placement optimization disabled.")
+
 		obj = Compiler(self.args.version,
 					   self.args.target,
 					   self.args.sfType, 
@@ -68,6 +81,7 @@ class MainDriver:
 					   self.args.outputFileName,
 					   self.args.disableRMO,
 					   self.args.disableLivenessOpti,
+					   self.args.disableTruncOpti,
 					   self.args.disableAllOpti,
 					   self.args.debugVar
 					   )

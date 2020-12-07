@@ -3,7 +3,7 @@
 Authors: Aseem Rastogi, Nishant Kumar, Mayank Rathee.
 
 Copyright:
-Copyright (c) 2018 Microsoft Research
+Copyright (c) 2020 Microsoft Research
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -318,7 +318,7 @@ let partition (p:program) :codegen_program =
     | _ -> failwith "Impossible! last program declaration in partition has to be main"
   in
 
-  if Config.get_codegen () = Config.CPP && not (Config.get_debug_partitions ()) then rest, [Base_s main]
+  if (Config.get_codegen () = Config.CPP || Config.get_codegen () = Config.CPPRING) && not (Config.get_debug_partitions ()) then rest, [Base_s main]
   else
     let main = main |> inline_fn_calls g in
     print_msg "Partition: inlined function calls ...";

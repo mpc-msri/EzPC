@@ -3,7 +3,7 @@
 Authors: Nishant Kumar.
 
 Copyright:
-Copyright (c) 2018 Microsoft Research
+Copyright (c) 2020 Microsoft Research
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -23,27 +23,20 @@ SOFTWARE.
 *)
 
 (**************************)
-extern void MatMulCSF2D(int32_pl i, int32_pl j, int32_pl k, int32_al[i][j] A, int32_al[j][k] B, int32_al[i][k] C, int32_pl consSF);
+extern void MatMul2D(int32_pl i, int32_pl j, int32_pl k, int32_al[i][j] A, int32_al[j][k] B, int32_al[i][k] C, bool_pl modelIsA);
 
 (**************************)
-extern void ArgMax1(int32_pl outArrS1, int32_pl inArrS1, int32_pl inArrS2, int32_al[inArrS1][inArrS2] inArr, int32_pl dim, int32_al[outArrS1] outArr);
-
-extern void ArgMax3(int32_pl outs1, int32_pl outs2, int32_pl outs3, 
-			   int32_pl ins1, int32_pl ins2, int32_pl ins3, int32_pl ins4,
-			   int32_al[ins1][ins2][ins3][ins4] inArr, int32_pl dim, int32_al[outs1][outs2][outs3] outArr);
-
+extern void ArgMax(int32_pl s1, int32_pl s2, int32_al[s1][s2] inArr, int32_al[s1] outArr);
 
 (**************************)
-extern void Relu2(int32_pl s1, int32_pl s2, int32_al[s1][s2] inArr, int32_al[s1][s2] outArr);
-extern void Relu4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_al[s1][s2][s3][s4] inArr, int32_al[s1][s2][s3][s4] outArr);
-extern void Relu5(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int32_al[s1][s2][s3][s4][s5] inArr, int32_al[s1][s2][s3][s4][s5] outArr);
+extern void Relu(int32_pl s1, int32_al[s1] inArr, int32_al[s1] outArr, int32_pl sf, bool_pl doTruncation);
 
 (**************************)
-extern void ElemWiseMul2(int32_pl s1, int32_pl s2, int32_al[s1][s2] arr1, int32_al[s1][s2] arr2, int32_al[s1][s2] outArr, int32_pl shrout);
-extern void ElemWiseMul4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_al[s1][s2][s3][s4] arr1, int32_al[s1][s2][s3][s4] arr2, int32_al[s1][s2][s3][s4] outArr, int32_pl shrout);
+extern void Floor(int32_pl s1, int32_al[s1] inArr, int32_al[s1] outArr, int32_pl sf);
 
 (**************************)
-extern void MaxPool(int32_pl N, int32_pl H, int32_pl W, int32_pl C, 
+(* int32_al[N][H][W][C] input *)
+extern void MaxPool(int32_pl N, int32_pl H, int32_pl W, int32_pl C,
 				  int32_pl ksizeH, int32_pl ksizeW,
 				  int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight,
 				  int32_pl strideH, int32_pl strideW,
@@ -52,7 +45,8 @@ extern void MaxPool(int32_pl N, int32_pl H, int32_pl W, int32_pl C,
 				  int32_al[N][H][W][C] outArr);
 
 (**************************)
-extern void AvgPool(int32_pl N, int32_pl H, int32_pl W, int32_pl C, 
+(* int32_al[N][H][W][C] input *)
+extern void AvgPool(int32_pl N, int32_pl H, int32_pl W, int32_pl C,
 				  int32_pl ksizeH, int32_pl ksizeW,
 				  int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight,
 				  int32_pl strideH, int32_pl strideW,
@@ -61,25 +55,74 @@ extern void AvgPool(int32_pl N, int32_pl H, int32_pl W, int32_pl C,
 				  int32_al[N][H][W][C] outArr);
 
 (**************************)
-extern void FusedBatchNorm4411(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_al[s1][s2][s3][s4] inArr, int32_al[s4] multArr, int32_al[s4] biasArr, int32_pl consSF, int32_al[s1][s2][s3][s4] outputArr);
+extern void ElemWiseSecretSharedVectorMult(int32_pl s1, int32_al[s1] arr1, int32_al[s1] arr2, int32_al[s1] outArr);
+extern void ElemWiseActModelVectorMult(int32_pl s1, int32_al[s1] arr1, int32_al[s1] arr2, int32_al[s1] outArr);
+extern void ElemWiseVectorPublicDiv(int32_pl s1, int32_al[s1] arr1, int32_pl divisor, int32_al[s1] outArr);
 
 (**************************)
-extern void ReduceMean24(int32_pl outS1, int32_pl outS2, 
-					  int32_pl inS1, int32_pl inS2, int32_pl inS3, int32_pl inS4, 
-					  int32_al[inS1][inS2][inS3][inS4] inputArr,
-					  int32_pl[2] axes,
-					  int32_al[outS1][outS2] outputArr
-					  );
+extern void ScaleUp(int32_pl s1, int32_al[s1] arr, int32_pl sf);
+
+(**************************)
+extern void ScaleDown(int32_pl s1, int32_al[s1] arr, int32_pl sf);
 
 (**************************)
 extern void ClearMemSecret1(int32_pl s1, int32_al[s1] arr);
 extern void ClearMemSecret2(int32_pl s1, int32_pl s2, int32_al[s1][s2] arr);
 extern void ClearMemSecret3(int32_pl s1, int32_pl s2, int32_pl s3, int32_al[s1][s2][s3] arr);
 extern void ClearMemSecret4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_al[s1][s2][s3][s4] arr);
-extern void ClearMemSecret5(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int32_al[s1][s2][s3][s4][s5] arr)
-
+extern void ClearMemSecret5(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int32_al[s1][s2][s3][s4][s5] arr);
+extern void ClearMemPublic(int32_pl x);
+extern void ClearMemPublic1(int32_pl s, int32_pl[s] x);
 extern void ClearMemPublic2(int32_pl s1, int32_pl s2, int32_pl[s1][s2] arr);
+extern void ClearMemPublic3(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl[s1][s2][s3] arr);
+extern void ClearMemPublic4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl[s1][s2][s3][s4] arr);
+extern void ClearMemPublic5(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int32_pl[s1][s2][s3][s4][s5] arr);
 
 (**************************)
 extern void StartComputation();
 extern void EndComputation();
+
+(**************************)
+extern void Conv2DWrapper(int32_pl N, int32_pl H, int32_pl W, int32_pl CI, 
+				   int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
+				   int32_pl strideH, int32_pl strideW, 
+				   int32_al[N][H][W][CI] inputArr, 
+				   int32_al[FH][FW][CI][CO] filterArr, 
+				   int32_al[N][((H-FH+(zPadHLeft+zPadHRight))/strideH)+1][((W-FW+(zPadWLeft+zPadWRight))/strideW)+1][CO] outArr);
+
+extern void Conv3DWrapper(int32_pl N, int32_pl D, int32_pl H, int32_pl W, int32_pl CI, 
+				   int32_pl FD, int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl zPadDLeft, int32_pl zPadDRight, int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
+				   int32_pl strideD, int32_pl strideH, int32_pl strideW, 
+				   int32_al[N][D][H][W][CI] inputArr, 
+				   int32_al[FD][FH][FW][CI][CO] filterArr,
+				   int32_pl consSF,
+				   int32_al[N][((D-FD+(zPadDLeft+zPadDRight))/strideD)+1][((H-FH+(zPadHLeft+zPadHRight))/strideH)+1][((W-FW+(zPadWLeft+zPadWRight))/strideW)+1][CO] outArr);
+
+extern void Conv2DGroupWrapper(int32_pl N, int32_pl H, int32_pl W, int32_pl CI, 
+				   int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
+				   int32_pl strideH, int32_pl strideW, int32_pl G,
+				   int32_al[N][H][W][CI] inputArr, 
+				   int32_al[FH][FW][CI/G][CO] filterArr, 
+				   int32_al[N][((H-FH+(zPadHLeft+zPadHRight))/strideH)+1][((W-FW+(zPadWLeft+zPadWRight))/strideW)+1][CO] outArr);
+
+extern void ConvTranspose2DWrapper(int32_pl N, int32_pl HPrime, int32_pl WPrime, int32_pl CI, 
+				   int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl H, int32_pl W,
+				   int32_pl zPadTrHLeft, int32_pl zPadTrHRight, int32_pl zPadTrWLeft, int32_pl zPadTrWRight, 
+				   int32_pl strideH, int32_pl strideW,
+				   int32_al[N][HPrime][WPrime][CI] inputArr, 
+				   int32_al[FH][FW][CO][CI] filterArr, 
+				   int32_al[N][H][W][CO] outArr);
+
+extern void ConvTranspose3DWrapper(int32_pl N, int32_pl DPrime, int32_pl HPrime, int32_pl WPrime, int32_pl CI, 
+				   int32_pl FD, int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl D, int32_pl H, int32_pl W,
+				   int32_pl zPadTrDLeft, int32_pl zPadTrDRight, int32_pl zPadTrHLeft, int32_pl zPadTrHRight, int32_pl zPadTrWLeft, int32_pl zPadTrWRight, 
+				   int32_pl strideD, int32_pl strideH, int32_pl strideW,
+				   int32_al[N][DPrime][HPrime][WPrime][CI] inputArr, 
+				   int32_al[FD][FH][FW][CO][CI] filterArr, 
+				   int32_pl consSF,
+				   int32_al[N][D][H][W][CO] outArr);

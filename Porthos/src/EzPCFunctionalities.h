@@ -3,7 +3,7 @@
 Authors: Nishant Kumar, Mayank Rathee.
 
 Copyright:
-Copyright (c) 2018 Microsoft Research
+Copyright (c) 2020 Microsoft Research
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -30,42 +30,24 @@ SOFTWARE.
 using namespace std;
 
 /***************** Functions for different layers in NN *********************/
-void MatMulCSF2D(int32_t i, 
+void MatMul2D(int32_t i, 
 		int32_t j, 
 		int32_t k, 
 		vector< vector<porthosSecretType> >& A, 
 		vector< vector<porthosSecretType> >& B, 
 		vector< vector<porthosSecretType> >& C, 
-		int32_t consSF);
+		bool modelIsA);
 
-void ArgMax1(int32_t outArrS1, 
-		int32_t inArrS1, 
-		int32_t inArrS2, 
-		vector< vector<porthosSecretType> >& inArr, 
-		int32_t dim, vector<porthosSecretType>& outArr);
-
-void ArgMax3(int32_t outs1, 
-		int32_t outs2, 
-		int32_t outs3, 
-		int32_t ins1, 
-		int32_t ins2, 
-		int32_t ins3, 
-		int32_t ins4,
-		vector< vector< vector< vector<porthosSecretType> > > >& inArr, 
-		int32_t dim, 
-		vector< vector< vector<porthosSecretType> > >& outArr);
-
-void Relu2(int32_t s1, 
+void ArgMax(int32_t s1, 
 		int32_t s2, 
 		vector< vector<porthosSecretType> >& inArr, 
-		vector< vector<porthosSecretType> >& outArr);
+		vector<porthosSecretType>& outArr);
 
-void Relu4(int32_t s1, 
-		int32_t s2, 
-		int32_t s3, 
-		int32_t s4, 
-		vector< vector< vector< vector<porthosSecretType> > > >& inArr, 
-		vector< vector< vector< vector<porthosSecretType> > > >& outArr);
+void Relu(int32_t size, 
+		vector<porthosSecretType>& inArr, 
+		vector<porthosSecretType>& outArr,
+		int32_t sf,
+		bool doTruncation);
 
 void MaxPool(int32_t N, 
 		int32_t H, 
@@ -86,22 +68,6 @@ void MaxPool(int32_t N,
 		vector< vector< vector< vector<porthosSecretType> > > >& inArr, 
 		vector< vector< vector< vector<porthosSecretType> > > >& outArr);
 
-void ElemWiseMul2(int32_t s1, 
-		int32_t s2, 
-		vector< vector<porthosSecretType> >& arr1, 
-		vector< vector<porthosSecretType> >& arr2, 
-		vector< vector<porthosSecretType> >& outArr, 
-		int32_t shrout);
-
-void ElemWiseMul4(int32_t s1, 
-		int32_t s2, 
-		int32_t s3, 
-		int32_t s4, 
-		vector< vector< vector< vector<porthosSecretType> > > >& arr1, 
-		vector< vector< vector< vector<porthosSecretType> > > >& arr2, 
-		vector< vector< vector< vector<porthosSecretType> > > >& outArr, 
-		int32_t shrout);
-
 void AvgPool(int32_t N, 
 		int32_t H, 
 		int32_t W, 
@@ -121,28 +87,91 @@ void AvgPool(int32_t N,
 		vector< vector< vector< vector<porthosSecretType> > > >& inArr, 
 		vector< vector< vector< vector<porthosSecretType> > > >& outArr);
 
-void FusedBatchNorm4411(int32_t s1, 
-		int32_t s2, 
-		int32_t s3, 
-		int32_t s4, 
-		vector< vector< vector< vector<porthosSecretType> > > >& inArr, 
-		vector<porthosSecretType>& multArr, 
-		vector<porthosSecretType>& biasArr, 
-		int32_t consSF,
-		vector< vector< vector< vector<porthosSecretType> > > >& outputArr);
+void ElemWiseSecretSharedVectorMult(int32_t size, vector<porthosSecretType>& arr1, vector<porthosSecretType>& arr2, vector<porthosSecretType>& outputArr);
+void ElemWiseActModelVectorMult(int32_t size, vector<porthosSecretType>& arr1, vector<porthosSecretType>& arr2, vector<porthosSecretType>& outputArr);
+void ElemWiseVectorPublicDiv(int32_t size, vector<porthosSecretType>& arr1, int32_t divisor, vector<porthosSecretType>& outputArr);
 
-void ReduceMean24(int32_t outS1, 
-		int32_t outS2, 
-		int32_t inS1, int32_t inS2, int32_t inS3, int32_t inS4, 
-		vector< vector< vector< vector<porthosSecretType> > > >& inputArr,
-		vector<int32_t>& axes,
-		vector< vector<porthosSecretType> >& outputArr);
 
-void ClearMemSecret1(int32_t s1, vector< porthosSecretType >& arr);
-void ClearMemSecret2(int32_t s1, int32_t s2, vector< vector< porthosSecretType > >& arr);
-void ClearMemSecret3(int32_t s1, int32_t s2, int32_t s3, vector< vector< vector< porthosSecretType > > >& arr);
-void ClearMemSecret4(int32_t s1, int32_t s2, int32_t s3, int32_t s4, vector< vector< vector< vector< porthosSecretType > > > >& arr);
-void ClearMemPublic2(int32_t s1, int32_t s2, vector< vector< int32_t > >& arr);
+void ScaleUp(int32_t s1, vector<porthosSecretType>& arr, int32_t sf);
+void ScaleDown(int32_t s1, vector<porthosSecretType>& arr, int32_t sf);
+
+void Conv2D(int32_t N, int32_t H, int32_t W, int32_t CI, 
+				int32_t FH, int32_t FW, int32_t CO, 
+				int32_t zPadHLeft, int32_t zPadHRight, 
+				int32_t zPadWLeft, int32_t zPadWRight, 
+				int32_t strideH, int32_t strideW, 
+				vector< vector< vector< vector<porthosSecretType> > > >& inputArr, 
+				vector< vector< vector< vector<porthosSecretType> > > >& filterArr, 
+				vector< vector< vector< vector<porthosSecretType> > > >& outArr);
+
+void Conv2DWrapper(int32_t N, int32_t H, int32_t W, int32_t CI, 
+				int32_t FH, int32_t FW, int32_t CO, 
+				int32_t zPadHLeft, int32_t zPadHRight, 
+				int32_t zPadWLeft, int32_t zPadWRight, 
+				int32_t strideH, int32_t strideW, 
+				vector< vector< vector< vector<porthosSecretType> > > >& inputArr, 
+				vector< vector< vector< vector<porthosSecretType> > > >& filterArr, 
+				vector< vector< vector< vector<porthosSecretType> > > >& outArr);
+
+void Conv3D(int32_t N, int32_t D, int32_t H, int32_t W, int32_t CI,
+			int32_t FD, int32_t FH, int32_t FW, int32_t CO,
+			int32_t zPadDLeft, int32_t zPadDRight, 
+			int32_t zPadHLeft, int32_t zPadHRight, 
+			int32_t zPadWLeft, int32_t zPadWRight,
+			int32_t strideD, int32_t strideH, int32_t strideW,
+			vector< vector< vector< vector< vector<porthosSecretType> > > > >& inputArr,
+			vector< vector< vector< vector< vector<porthosSecretType> > > > >& filterArr,
+			vector< vector< vector< vector< vector<porthosSecretType> > > > >& outArr);
+
+void Conv3DWrapper(int32_t N, int32_t D, int32_t H, int32_t W, int32_t CI,
+			int32_t FD, int32_t FH, int32_t FW, int32_t CO,
+			int32_t zPadDLeft, int32_t zPadDRight, 
+			int32_t zPadHLeft, int32_t zPadHRight, 
+			int32_t zPadWLeft, int32_t zPadWRight,
+			int32_t strideD, int32_t strideH, int32_t strideW,
+			vector< vector< vector< vector< vector<porthosSecretType> > > > >& inputArr,
+			vector< vector< vector< vector< vector<porthosSecretType> > > > >& filterArr,
+			int32_t consSF,
+			vector< vector< vector< vector< vector<porthosSecretType> > > > >& outArr);
+
+void ConvTranspose3D(int32_t N, int32_t DPrime, int32_t HPrime, int32_t WPrime, int32_t CI,
+				int32_t FD, int32_t FH, int32_t FW, int32_t CO,
+				int32_t D, int32_t H, int32_t W,
+				int32_t zPadTrDLeft, int32_t zPadTrDRight,
+				int32_t zPadTrHLeft, int32_t zPadTrHRight,
+				int32_t zPadTrWLeft, int32_t zPadTrWRight,
+				int32_t strideD, int32_t strideH, int32_t strideW,
+				vector< vector< vector< vector< vector<porthosSecretType> > > > >& inputArr,
+				vector< vector< vector< vector< vector<porthosSecretType> > > > >& filterArr,
+				vector< vector< vector< vector< vector<porthosSecretType> > > > >& outArr);
+
+void ConvTranspose3DWrapper(int32_t N, int32_t DPrime, int32_t HPrime, int32_t WPrime, int32_t CI,
+				int32_t FD, int32_t FH, int32_t FW, int32_t CO,
+				int32_t D, int32_t H, int32_t W,
+				int32_t zPadTrDLeft, int32_t zPadTrDRight,
+				int32_t zPadTrHLeft, int32_t zPadTrHRight,
+				int32_t zPadTrWLeft, int32_t zPadTrWRight,
+				int32_t strideD, int32_t strideH, int32_t strideW,
+				vector< vector< vector< vector< vector<porthosSecretType> > > > >& inputArr,
+				vector< vector< vector< vector< vector<porthosSecretType> > > > >& filterArr,
+				int32_t consSF,
+				vector< vector< vector< vector< vector<porthosSecretType> > > > >& outArr);
+
+void ClearMemSecret1(int64_t s1, vector< porthosSecretType >& arr);
+void ClearMemSecret2(int64_t s1, int64_t s2, vector< vector< porthosSecretType > >& arr);
+void ClearMemSecret3(int64_t s1, int64_t s2, int64_t s3, vector< vector< vector< porthosSecretType > > >& arr);
+void ClearMemSecret4(int64_t s1, int64_t s2, int64_t s3, int64_t s4, vector< vector< vector< vector< porthosSecretType > > > >& arr);
+void ClearMemSecret5(int64_t s1, int64_t s2, int64_t s3, int64_t s4, int64_t s5, vector< vector< vector< vector< vector< porthosSecretType > > > > >& arr);
+
+void ClearMemPublic(int64_t x);
+void ClearMemPublic1(int64_t s1, vector< int32_t >& arr);
+void ClearMemPublic2(int64_t s1, int64_t s2, vector< vector< int32_t > >& arr);
+void ClearMemPublic3(int64_t s1, int64_t s2, int64_t s3, vector< vector< vector< int32_t > > >& arr);
+void ClearMemPublic4(int64_t s1, int64_t s2, int64_t s3, int64_t s4, vector< vector< vector< vector< int32_t > > > >& arr);
+void ClearMemPublic5(int64_t s1, int64_t s2, int64_t s3, int64_t s4, int64_t s5, vector< vector< vector< vector< vector< int32_t > > > > >& arr);
+
+void Floor(int32_t size, vector<porthosSecretType>& inArr, vector<porthosSecretType>& outArr, int32_t sf);
+
 
 void StartComputation();
 void EndComputation();

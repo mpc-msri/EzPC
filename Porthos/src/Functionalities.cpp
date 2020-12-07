@@ -3,7 +3,7 @@
 Authors: Sameer Wagh, Mayank Rathee, Nishant Kumar.
 
 Copyright:
-Copyright (c) 2018 Microsoft Research
+Copyright (c) 2020 Microsoft Research
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -50,13 +50,31 @@ auto make_vector(size_t first, Args... sizes)
 
 /******************************** Functionalities 2PC ********************************/ 
 
+void funcTruncateIdeal(vector<porthosSecretType>& vec, int sf, int size){
+	assert(sf == FLOAT_PRECISION);
+	if (partyNum == PARTY_A){
+		sendVector<porthosSecretType>(vec, PARTY_B, size);
+		for(int i=0;i<size;i++){
+			vec[i] = 0;
+		}
+	}
+	if (partyNum == PARTY_B){
+		vector<porthosSecretType> recv_vec(size, 0);
+		receiveVector<porthosSecretType>(recv_vec, PARTY_A, size);
+		for(int i=0;i<size;i++){
+			vec[i] = recv_vec[i] + vec[i];
+			vec[i] = ((porthosSignedSecretType)vec[i])>>sf;
+		}
+	}
+}
+
 // Share Truncation, truncate shares of a by power (in place) (power is logarithmic)
 void funcTruncate2PC(vector<porthosSecretType> &a, 
 		size_t power, 
 		size_t size)
 {
 	assert((partyNum == PARTY_A or partyNum == PARTY_B) && "Truncate called by spurious parties");
-
+	//funcTruncateIdeal(a, power, size);
 	if (partyNum == PARTY_A)
 		for (size_t i = 0; i < size; ++i)
 			a[i] = static_cast<porthosSecretType>(static_cast<porthosSignedSecretType>(a[i]) >> power);
@@ -72,21 +90,27 @@ void funcTruncate2PC(vector<vector<porthosSecretType>> &a,
 		size_t cols)
 {
 	assert((partyNum == PARTY_A or partyNum == PARTY_B) && "Truncate called by spurious parties");
+	vector<porthosSecretType> flatten_vec(rows*cols, 0);
+	flatten_2D_vector(a, flatten_vec, rows, cols);
+	funcTruncate2PC(flatten_vec, power, rows*cols);
+	deflatten_2D_vector(flatten_vec, a, rows, cols);
+}
 
-	if (partyNum == PARTY_A){
-		for(size_t i=0;i<rows;i++){
-			for(size_t j=0;j<cols;j++){
-				a[i][j] = static_cast<porthosSecretType>(static_cast<porthosSignedSecretType>(a[i][j]) >> power);
-			}
-		}
-	}
-	else if (partyNum == PARTY_B){
-		for(size_t i=0;i<rows;i++){
-			for(size_t j=0;j<cols;j++){
-				a[i][j] = - static_cast<porthosSecretType>(static_cast<porthosSignedSecretType>(- a[i][j]) >> power);
-			}
-		}
-	}
+void funcTruncate2PC(vector<vector<vector<vector<vector<porthosSecretType>>>>> &a,
+                size_t power,
+                size_t d1,
+                size_t d2,
+                size_t d3,
+                size_t d4,
+                size_t d5)
+{
+        assert((partyNum == PARTY_A or partyNum == PARTY_B) && "Truncate called by spurious parties");
+
+        size_t size = d1*d2*d3*d4*d5;
+        vector<porthosSecretType> flatten_vec(size, 0);
+        flatten_5D_vector(a, flatten_vec, d1,d2,d3,d4,d5);
+        funcTruncate2PC(flatten_vec, power, size);
+        deflatten_5D_vector(flatten_vec, a, d1,d2,d3,d4,d5);
 }
 
 // XOR shares with a public bit into output.
@@ -268,7 +292,7 @@ void funcMatMulMPC(const vector<porthosSecretType> &a,
 		size_t transpose_a, 
 		size_t transpose_b, 
 		uint32_t consSF,
-		bool areInputsScaled)
+		bool doTruncation)
 {
 	log_print("funcMatMulMPC");
 #if (LOG_DEBUG)
@@ -414,10 +438,10 @@ void funcMatMulMPC(const vector<porthosSecretType> &a,
 
 		addVectors<porthosSecretType>(c, C, c, size);
 
-		assert(FLOAT_PRECISION == consSF && "Please correct FLOAT_PRECISION value to be equal to consSF");
-
-		if (areInputsScaled)
+		if (doTruncation){
+			assert(FLOAT_PRECISION == consSF && "Please correct FLOAT_PRECISION value to be equal to consSF");
 			funcTruncate2PC(c, consSF, size);
+		}
 	}
 }
 
@@ -426,7 +450,8 @@ void funcDotProductMPC(const vector<porthosSecretType> &a,
 		const vector<porthosSecretType> &b,
 		vector<porthosSecretType> &c, 
 		size_t size,
-		uint32_t consSF)
+		uint32_t consSF,
+		bool doTruncation)
 {
 	log_print("funcDotProductMPC");
 
@@ -521,11 +546,56 @@ void funcDotProductMPC(const vector<porthosSecretType> &a,
 			receiveVector<porthosSecretType>(C, PARTY_C, size);
 
 		addVectors<porthosSecretType>(c, C, c, size);
-		
-		assert(FLOAT_PRECISION == consSF && "Please correct FLOAT_PRECISION value to be equal to consSF");
-		
-		funcTruncate2PC(c, consSF, size);
+
+		if (doTruncation){
+			assert(FLOAT_PRECISION == consSF && "Please correct FLOAT_PRECISION value to be equal to consSF");
+			funcTruncate2PC(c, consSF, size);
+		}
 	}
+#ifdef VERIFYLAYERWISE
+
+		if (partyNum == PARTY_A){
+				sendVector<porthosSecretType>(a, PARTY_B, size);
+				sendVector<porthosSecretType>(b, PARTY_B, size);
+				sendVector<porthosSecretType>(c, PARTY_B, size);
+		}
+		if (partyNum == PARTY_B){
+				auto aOther = make_vector<porthosSecretType>(size);
+				auto bOther = make_vector<porthosSecretType>(size);
+				auto localAns = make_vector<porthosSecretType>(size);
+				auto cOther = make_vector<porthosSecretType>(size);
+
+				receiveVector<porthosSecretType>(aOther, PARTY_A, size);
+				receiveVector<porthosSecretType>(bOther, PARTY_A, size);
+				receiveVector<porthosSecretType>(cOther, PARTY_A, size);
+
+				for(int i=0;i<size;i++){
+						aOther[i] = a[i] + aOther[i];
+						bOther[i] = b[i] + bOther[i];
+						cOther[i] = c[i] + cOther[i];
+
+						localAns[i] = ((porthosSignedSecretType)(aOther[i]*bOther[i]))>>consSF;
+				}
+
+				static int ctr = 1;
+				bool pass = true;
+				for(int i1=0;i1<size;i1++){
+						if (localAns[i1] != cOther[i1]){
+								std::cerr<<RED<<"ERROR in dotProd #"<<ctr<<" "<<i1<<" "<<localAns[i1]<<" "<<cOther[i1]<<RESET<<std::endl;
+								pass = false;
+						}
+				}
+
+				if (!pass){
+						std::cerr<<RED<<"There was an error in dotProd#"<<ctr<<RESET<<std::endl;
+				}
+				else{
+						std::cout<<GREEN<<"Executed dotProd#"<<ctr<<" correctly."<<RESET<<std::endl;
+				}
+				ctr++;
+		}
+
+#endif
 }
 
 //Multithreaded function for parallel private compare
@@ -912,7 +982,7 @@ void funcShareConvertMPC(vector<porthosSecretType> &a,
 		//Send first half of x2 to Party B and second half of x1 to party A.
 #ifdef PARALLEL_COMM
 		thread *threads_a = new thread[2];
-		threads_a[0] = thread(sendArr<smallType>, bit_shares_x_1.data() + (size/2) , PARTY_A, (size - (size/2))*BIT_SIZE);
+		threads_a[0] = thread(sendArr<smallType>, bit_shares_x_1.data() + (size/2)*BIT_SIZE , PARTY_A, (size - (size/2))*BIT_SIZE);	
 		threads_a[1] = thread(sendArr<smallType>, bit_shares_x_2.data(), PARTY_B, (size/2)*BIT_SIZE);
 
 		for(int th=0; th<2; th++){
@@ -920,7 +990,7 @@ void funcShareConvertMPC(vector<porthosSecretType> &a,
 		}
 		delete[] threads_a;
 #else
-		sendArr<smallType>(bit_shares_x_1.data() + (size/2) , PARTY_A, (size - (size/2))*BIT_SIZE);
+		sendArr<smallType>(bit_shares_x_1.data() + (size/2)*BIT_SIZE, PARTY_A, (size - (size/2))*BIT_SIZE);
 		sendArr<smallType>(bit_shares_x_2.data(), PARTY_B, (size/2)*BIT_SIZE);
 #endif
 
@@ -986,7 +1056,7 @@ void funcShareConvertMPC(vector<porthosSecretType> &a,
 #endif
 
 		//Now get the remaining bits from P2.
-		receiveArr<smallType>(bit_shares.data() + receiveStart, PARTY_C, (receiveEnd - receiveStart)*BIT_SIZE);
+		receiveArr<smallType>(bit_shares.data() + receiveStart*BIT_SIZE, PARTY_C, (receiveEnd - receiveStart)*BIT_SIZE);
 		receiveArr<porthosSecretType>(delta_shares.data() + receiveStart, PARTY_C, (receiveEnd - receiveStart));
 	}
 #endif //end of share convert optimization
@@ -995,7 +1065,7 @@ void funcShareConvertMPC(vector<porthosSecretType> &a,
 	{
 		for(size_t i=0;i<size;i++)
 		{
-			r[i] = r[i] - 1;
+			r[i] = r[i] - 1ULL;
 		}
 	}
 
@@ -1005,9 +1075,6 @@ void funcShareConvertMPC(vector<porthosSecretType> &a,
 	{
 		vector<porthosSecretType> eta_shares_1(size);
 		vector<porthosSecretType> eta_shares_2(size);
-
-		for (size_t i = 0; i < size; ++i)
-			etaP[i] = 1 - etaP[i];
 
 		sharesModuloOdd<smallType>(eta_shares_1, eta_shares_2, etaP, size, "INDEP");
 		sendVector<porthosSecretType>(eta_shares_1, PARTY_A, size);
@@ -1019,10 +1086,14 @@ void funcShareConvertMPC(vector<porthosSecretType> &a,
 		receiveVector<porthosSecretType>(eta_shares, PARTY_C, size);
 		funcXORModuloOdd2PC(etaDP, eta_shares, theta_shares, size);
 		addModuloOdd<porthosSecretType, smallType>(theta_shares, betai, theta_shares, size);
-		subtractModuloOdd<porthosSecretType, porthosSecretType>(theta_shares, delta_shares, theta_shares, size);
+		addModuloOdd<porthosSecretType, porthosSecretType>(theta_shares, delta_shares, theta_shares, size);	
 
-		if (partyNum == PARTY_A)
+		if (partyNum == PARTY_A){
+			for(size_t i=0; i<size; i++){
+				alpha[i] = alpha[i] + 1;
+			}	
 			subtractModuloOdd<porthosSecretType, smallType>(theta_shares, alpha, theta_shares, size);
+		}
 
 		subtractModuloOdd<porthosSecretType, porthosSecretType>(a, theta_shares, a, size);
 	}
@@ -1399,11 +1470,50 @@ void funcRELUPrime3PC(const vector<porthosSecretType> &a,
 	porthosSecretType j = 0;
 
 	for (size_t i = 0; i < size; ++i)
-		twoA[i] = (a[i] << 1);
+		twoA[i] = (a[i] * 2);	
 
+#ifdef VERIFYLAYERWISE
+	if (partyNum == PARTY_A){
+		sendVector<porthosSecretType>(twoA, PARTY_B, size);
+	}
+	if (partyNum == PARTY_B){
+		auto inOther = make_vector<porthosSecretType>(size);
+	
+		receiveVector<porthosSecretType>(inOther, PARTY_A, size);
+
+		for(int i=0;i<size;i++){
+			inOther[i] = twoA[i] + inOther[i];
+		}
+	}	
+#endif	
 	funcShareConvertMPC(twoA, size);
+#ifdef VERIFYLAYERWISE
+	if (partyNum == PARTY_A){
+		sendVector<porthosSecretType>(twoA, PARTY_B, size);
+	}
+	if (partyNum == PARTY_B){
+		auto aOther = make_vector<porthosSecretType>(size);
+	
+		receiveVector<porthosSecretType>(aOther, PARTY_A, size);
+		addModuloOdd<porthosSecretType, porthosSecretType>(aOther, twoA, aOther, size);
+	}
+#endif	
 	funcComputeMSB3PC(twoA, b, size);
+#ifdef VERIFYLAYERWISE
+	if (partyNum == PARTY_A){
+		sendVector<porthosSecretType>(b, PARTY_B, size);
+	}
+	if (partyNum == PARTY_B){
+		auto bOther = make_vector<porthosSecretType>(size);
+		//auto localAns = make_vector<porthosSecretType>(size);
+	
+		receiveVector<porthosSecretType>(bOther, PARTY_A, size);
 
+		for(int i=0;i<size;i++){
+			bOther[i] = b[i] + bOther[i];
+		}
+	}	
+#endif
 	if (partyNum == PARTY_A)
 		j = floatToMyType(1);
 
@@ -1423,6 +1533,45 @@ void funcRELUMPC(const vector<porthosSecretType> &a,
 
 	funcRELUPrime3PC(a, reluPrime, size);
 	funcSelectShares3PC(a, reluPrime, b, size);
+
+#ifdef VERIFYLAYERWISE
+	if (partyNum == PARTY_A){
+		sendVector<porthosSecretType>(a, PARTY_B, size);
+		sendVector<porthosSecretType>(b, PARTY_B, size);
+	}
+	if (partyNum == PARTY_B){
+		auto aOther = make_vector<porthosSecretType>(size);
+		auto bOther = make_vector<porthosSecretType>(size);
+		auto localAns = make_vector<porthosSecretType>(size);
+	
+		receiveVector<porthosSecretType>(aOther, PARTY_A, size);
+		receiveVector<porthosSecretType>(bOther, PARTY_A, size);
+
+		for(int i=0;i<size;i++){
+			aOther[i] = a[i] + aOther[i];
+			bOther[i] = b[i] + bOther[i];
+
+			localAns[i] = (((porthosSignedSecretType)aOther[i]) > 0) ? aOther[i] : 0;
+		}
+
+		static int ctr = 1;
+		bool pass = true;
+		for(int i1=0;i1<size;i1++){
+			if (localAns[i1] != bOther[i1]){
+				std::cerr<<RED<<"ERROR in relu#"<<ctr<<" "<<i1<<" "<<localAns[i1]<<" "<<bOther[i1]<<" "<<aOther[i1]<<RESET<<std::endl;
+				pass = false;
+			}
+		}
+
+		if (!pass){
+			std::cerr<<RED<<"There was an error in relu#"<<ctr<<RESET<<std::endl;
+		}
+		else{
+			std::cout<<GREEN<<"Executed relu#"<<ctr<<" correctly."<<RESET<<std::endl;
+		}
+		ctr++;
+	}	
+#endif	
 }
 
 //Chunk wise maximum of a vector of size rows*columns and maximum is caclulated of every
@@ -2018,6 +2167,644 @@ void funcConv2DCSF(int32_t N,
 	}
 }
 
+void Conv3DSliding(int32_t N, 
+		int32_t D, 
+		int32_t H, 
+		int32_t W, 
+		int32_t CI, 
+		int32_t FD, 
+		int32_t FH, 
+		int32_t FW, 
+		int32_t CO, 
+		int32_t zPadDLeft, 
+		int32_t zPadDRight, 
+		int32_t zPadHLeft, 
+		int32_t zPadHRight, 
+		int32_t zPadWLeft, 
+		int32_t zPadWRight, 
+		int32_t strideD, 
+		int32_t strideH, 
+		int32_t strideW, 
+		int32_t outD, 
+		int32_t outH, 
+		int32_t outW, 
+		auto& inputArr, 
+		auto& filterArr, 
+		int32_t consSF, 
+		auto& outArr){
+#pragma omp parallel for collapse(5)
+	for (uint32_t n =  (int32_t)0; n < N; n++){
+		for (uint32_t co =  (int32_t)0; co < CO; co++){
+			for (uint32_t d =  (int32_t)0; d < outD; d++){
+				for (uint32_t h =  (int32_t)0; h < outH; h++){
+					for (uint32_t w =  (int32_t)0; w < outW; w++){
+						for (uint32_t ci =  (int32_t)0; ci < CI; ci++){
+							int64_t val =  (int64_t)0;
+							for (uint32_t fd = (d * strideD); fd < ((d * strideD) + FD); fd++){
+								for (uint32_t fh = (h * strideH); fh < ((h * strideH) + FH); fh++){
+									for (uint32_t fw = (w * strideW); fw < ((w * strideW) + FW); fw++){
+										int32_t curPosD = (fd - zPadDLeft);
+										int32_t curPosH = (fh - zPadHLeft);
+										int32_t curPosW = (fw - zPadWLeft);
+										if (((((((curPosD >=  (int32_t)0) && (curPosH >=  (int32_t)0)) && (curPosW >=  (int32_t)0)) && (curPosD < D)) && (curPosH < H)) && (curPosW < W))) {
+
+											int32_t curFilterPosD = (fd - (d * strideD));
+
+											int32_t curFilterPosH = (fh - (h * strideH));
+
+											int32_t curFilterPosW = (fw - (w * strideW));
+											val = (val + (inputArr[n][curPosD][curPosH][curPosW][ci] * filterArr[curFilterPosD][curFilterPosH][curFilterPosW][ci][co]));
+										}
+									}
+								}
+							}
+							//outArr[n][d][h][w][co] = (outArr[n][d][h][w][co] + (val >> consSF));
+							outArr[n][d][h][w][co] = (outArr[n][d][h][w][co] + (val));
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+void funcConv3DMPC(
+		int32_t N,
+		int32_t D,
+		int32_t H,
+		int32_t W,
+		int32_t CI,
+		int32_t FD,
+		int32_t FH,
+		int32_t FW,
+		int32_t CO,
+		int32_t zPadDLeft,
+		int32_t zPadDRight,
+		int32_t zPadHLeft,
+		int32_t zPadHRight,
+		int32_t zPadWLeft,
+		int32_t zPadWRight,
+		int32_t strideD,
+		int32_t strideH,
+		int32_t strideW,
+		vector< vector< vector< vector< vector<porthosSecretType> > > > >& inputArr,
+		vector< vector< vector< vector< vector<porthosSecretType> > > > >& filterArr,
+		int32_t consSF,
+		vector< vector< vector< vector< vector<porthosSecretType> > > > >& outArr) 
+{
+	log_print("funcConv3DCSF");
+	// out -> n, outd, outh, outw, co
+	// in -> n, d, h, w, cin
+	// filter -> filter_depth, filter_height, filter_width, in_channels, out_channels
+	int32_t outD = ((((D - FD) + (zPadDLeft + zPadDRight)) / strideD) +  (int32_t)1);
+	int32_t outH = ((((H - FH) + (zPadHLeft + zPadHRight)) / strideH) +  (int32_t)1);
+	int32_t outW = ((((W - FW) + (zPadWLeft + zPadWRight)) / strideW) +  (int32_t)1);
+	std::cout<<"D, H, W of output: "<<outD<<" "<<outH<<" "<<outW<<std::endl;
+
+	auto A = make_vector<porthosSecretType>(N, D, H, W, CI);
+	auto B = make_vector<porthosSecretType>(FD, FH, FW, CI, CO);
+	auto C = make_vector<porthosSecretType>(N, outD, outH, outW, CO);
+
+	if(HELPER) {
+		auto A1 = make_vector<porthosSecretType>(N, D, H, W, CI);
+		auto A2 = make_vector<porthosSecretType>(N, D, H, W, CI);
+		auto B1 = make_vector<porthosSecretType>(FD, FH, FW, CI, CO);
+		auto B2 = make_vector<porthosSecretType>(FD, FH, FW, CI, CO);
+		auto C1 = make_vector<porthosSecretType>(N, outD, outH, outW, CO);
+		auto C2 = make_vector<porthosSecretType>(N, outD, outH, outW, CO);
+
+		populate_5D_vector(A1, N, D, H, W, CI, "a1");
+		populate_5D_vector(A2, N, D, H, W, CI, "a2");
+		populate_5D_vector(B1, FD, FH, FW, CI, CO, "b1");
+		populate_5D_vector(B2, FD, FH, FW, CI, CO, "b2");
+		populate_5D_vector(C1, N, outD, outH, outW, CO, "c1");
+
+		add_5D_vectors(A1, A2, A, N, D, H, W, CI);
+		add_5D_vectors(B1, B2, B, FD, FH, FW, CI, CO);
+
+		Conv3DSliding(N, D, H, W, CI, FD, FH, FW, CO, zPadDLeft, zPadDRight, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideD, strideH, strideW, outD, outH, outW, A, B, consSF, C);
+
+		subtract_5D_vectors(C, C1, C2, N, outD, outH, outW, CO);
+
+#if (LOG_LAYERWISE)
+		high_resolution_clock::time_point t1 = high_resolution_clock::now();
+#endif
+
+		send_5D_vector(C2, PARTY_B, N, outD, outH, outW, CO);
+
+#if (LOG_LAYERWISE)
+		high_resolution_clock::time_point t2 = high_resolution_clock::now();
+		duration<double> time_span = duration_cast<duration<double>>(t2 - t1);
+		auto tt = time_span.count();
+		commObject.timeMatmul[0] += tt;
+#endif
+#ifdef DEBUGGING
+		send_5D_vector(A, PARTY_A, N, D, H, W, CI);
+		send_5D_vector(B, PARTY_A, FD, FH, FW, CI, CO);
+		send_5D_vector(C, PARTY_A, N, outD, outH, outW, CO);
+#endif
+
+	}
+
+	if (PRIMARY) {
+#ifdef DEBUGGING
+		if(partyNum == PARTY_B){
+			send_5D_vector(inputArr, PARTY_A, N, D, H, W, CI);
+			send_5D_vector(filterArr, PARTY_A, FD, FH, FW, CI, CO);
+			return;
+		}
+		else if(partyNum == PARTY_A){
+			auto x = make_vector<porthosSecretType>(N, D, H, W, CI);
+			auto y = make_vector<porthosSecretType>(FD, FH, FW, CI, CO);
+			auto a = make_vector<porthosSecretType>(N, D, H, W, CI);
+			auto b = make_vector<porthosSecretType>(FD, FH, FW, CI, CO);
+			auto c = make_vector<porthosSecretType>(N, outD, outH, outW, CO);
+			auto c_ans = make_vector<porthosSecretType>(N, outD, outH, outW, CO);
+			auto c_temp = make_vector<porthosSecretType>(N, outD, outH, outW, CO);
+			auto e = make_vector<porthosSecretType>(N, D, H, W, CI);
+			auto f = make_vector<porthosSecretType>(FD, FH, FW, CI, CO);
+
+			receive_5D_vector(ref(a), PARTY_C, N, D, H, W, CI);
+			receive_5D_vector(ref(b), PARTY_C, FD, FH, FW, CI, CO);
+			receive_5D_vector(ref(c), PARTY_C, N, outD, outH, outW, CO);
+			receive_5D_vector(ref(x), PARTY_B, N, D, H, W, CI);
+			receive_5D_vector(ref(y), PARTY_B, FD, FH, FW, CI, CO);
+			add_5D_vectors(x, inputArr, x, N, D, H, W, CI);
+			add_5D_vectors(y, filterArr, y, FD, FH, FW, CI, CO);
+			subtract_5D_vectors(x, a, e, N, D, H, W, CI);
+			subtract_5D_vectors(y, b, f, FD, FH, FW, CI, CO);
+			subtract_5D_vectors(x, e, A, N, D, H, W, CI);
+			Conv3DSliding(N, D, H, W, CI, FD, FH, FW, CO, zPadDLeft, zPadDRight, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideD, strideH, strideW, outD, outH, outW, A, f, consSF, c_temp);
+			Conv3DSliding(N, D, H, W, CI, FD, FH, FW, CO, zPadDLeft, zPadDRight, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideD, strideH, strideW, outD, outH, outW, e, y, consSF, c_ans);
+			std::cout<<"From reconstructed code:"<<std::endl;
+			std::cout<<e[0][0][0][0][0]<<std::endl;
+			std::cout<<f[0][0][0][0][0]<<std::endl;
+			std::cout<<"From reconstructed code ends"<<std::endl;
+			add_5D_vectors(c_temp, c, c, N, outD, outH, outW, CO);
+			add_5D_vectors(c_ans, c, outArr, N, outD, outH, outW, CO);
+			funcTruncate2PC(outArr, consSF, N, outD, outH, outW, CO);
+			return;
+				
+		}
+#endif
+		auto E = make_vector<porthosSecretType>(N, D, H, W, CI);
+		auto F = make_vector<porthosSecretType>(FD, FH, FW, CI, CO);
+		auto temp_C = make_vector<porthosSecretType>(N, outD, outH, outW, CO);
+		auto temp_E = make_vector<porthosSecretType>(N, D, H, W, CI);
+		auto temp_F = make_vector<porthosSecretType>(FD, FH, FW, CI, CO);
+		if (partyNum == PARTY_A) {
+			populate_5D_vector(A, N, D, H, W, CI, "a1");
+			populate_5D_vector(B, FD, FH, FW, CI, CO, "b1");
+			populate_5D_vector(C, N, outD, outH, outW, CO, "c1");
+		}
+
+		if (partyNum == PARTY_B) {
+			populate_5D_vector(A, N, D, H, W, CI, "a2");
+			populate_5D_vector(B, FD, FH, FW, CI, CO, "b2");
+		}
+
+		subtract_5D_vectors(inputArr, A, E, N, D, H, W, CI);
+		subtract_5D_vectors(filterArr, B, F, FD, FH, FW, CI, CO);
+
+#if (LOG_LAYERWISE)
+		auto t1 = high_resolution_clock::now();
+#endif
+		if (partyNum == PARTY_A) {
+			send_5D_vector(ref(E), adversary(partyNum), N, D, H, W, CI);
+			send_5D_vector(ref(F), adversary(partyNum), FD, FH, FW, CI, CO);
+			receive_5D_vector(ref(temp_E), adversary(partyNum), N, D, H, W, CI);
+			receive_5D_vector(ref(temp_F), adversary(partyNum), FD, FH, FW, CI, CO);
+		} else {
+			receive_5D_vector(ref(temp_E), adversary(partyNum), N, D, H, W, CI);
+			receive_5D_vector(ref(temp_F), adversary(partyNum), FD, FH, FW, CI, CO);
+			send_5D_vector(ref(E), adversary(partyNum), N, D, H, W, CI);
+			send_5D_vector(ref(F), adversary(partyNum), FD, FH, FW, CI, CO);
+		}
+#if (LOG_LAYERWISE)
+		auto t2 = high_resolution_clock::now();
+		auto tt = (duration_cast<duration<double>>(t2 - t1)).count();
+		commObject.timeMatmul[0] += tt;
+#endif
+		add_5D_vectors(E, temp_E, E, N, D, H, W, CI);
+		add_5D_vectors(F, temp_F, F, FD, FH, FW, CI, CO);
+		
+		//Receive C1 from P2 after E and F have been revealed.
+		if (partyNum == PARTY_B) {
+			receive_5D_vector(ref(C), PARTY_C, N, outD, outH, outW, CO);
+			subtract_5D_vectors(inputArr, E, A, N, D, H, W, CI);
+			Conv3DSliding(N, D, H, W, CI, FD, FH, FW, CO, zPadDLeft, zPadDRight, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideD, strideH, strideW, outD, outH, outW, A, F, consSF, outArr);
+			Conv3DSliding(N, D, H, W, CI, FD, FH, FW, CO, zPadDLeft, zPadDRight, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideD, strideH, strideW, outD, outH, outW, E, filterArr, consSF, temp_C);
+		}
+
+		if (partyNum == PARTY_A) {
+			Conv3DSliding(N, D, H, W, CI, FD, FH, FW, CO, zPadDLeft, zPadDRight, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideD, strideH, strideW, outD, outH, outW, inputArr, F, consSF, outArr);
+			Conv3DSliding(N, D, H, W, CI, FD, FH, FW, CO, zPadDLeft, zPadDRight, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideD, strideH, strideW, outD, outH, outW, E, filterArr, consSF, temp_C);
+		}
+		//subtract_5D_vectors(inputArr, E, A, N, D, H, W, CI);
+		//std::cout<<"From secure code:"<<std::endl;
+		//std::cout<<E[0][0][0][0][0]<<std::endl;
+		//std::cout<<F[0][0][0][0][0]<<std::endl;
+		//std::cout<<"From secure code ends"<<std::endl;
+
+		add_5D_vectors(outArr, temp_C, outArr, N, outD, outH, outW, CO);
+		add_5D_vectors(C, outArr, outArr, N, outD, outH, outW, CO);
+		//if (areInputsScaled)
+	//	funcTruncate2PC(outArr, consSF, N, outD, outH, outW, CO);
+
+	}
+
+#ifdef VERIFYLAYERWISE
+	
+	if (partyNum == PARTY_A){
+		send_5D_vector(inputArr, PARTY_B, N, D, H, W, CI);
+		send_5D_vector(filterArr, PARTY_B, FD, FH, FW, CI, CO);
+		send_5D_vector(outArr, PARTY_B, N, outD, outH, outW, CO);
+	}
+	if (partyNum == PARTY_B){
+		auto inputArrOther = make_vector<porthosSecretType>(N, D, H, W, CI);
+		auto filterArrOther = make_vector<porthosSecretType>(FD, FH, FW, CI, CO);
+		auto outArrLocalAns = make_vector<porthosSecretType>(N, outD, outH, outW, CO);
+		auto outArrOther = make_vector<porthosSecretType>(N, outD, outH, outW, CO);
+	
+		receive_5D_vector(inputArrOther, PARTY_A, N, D, H, W, CI);
+		receive_5D_vector(filterArrOther, PARTY_A, FD, FH, FW, CI, CO);
+		receive_5D_vector(outArrOther, PARTY_A, N, outD, outH, outW, CO);
+
+		add_5D_vectors(inputArrOther, inputArr, inputArrOther, N, D, H, W, CI);
+		add_5D_vectors(filterArrOther, filterArr, filterArrOther, FD, FH, FW, CI, CO);
+		add_5D_vectors(outArrOther, outArr, outArrOther, N, outD, outH, outW, CO);
+
+		Conv3DSliding(N, D, H, W, CI, FD, FH, FW, CO, 
+					zPadDLeft, zPadDRight, 
+					zPadHLeft, zPadHRight, 
+					zPadWLeft, zPadWRight, 
+					strideD, strideH, strideW, 
+					outD, outH, outW, 
+					inputArrOther, filterArrOther, consSF, outArrLocalAns);
+
+		static int ctr = 1;
+		bool pass = true;
+		for(int i1=0;i1<N;i1++){
+			for(int i2=0;i2<outD;i2++){
+				for(int i3=0;i3<outH;i3++){
+					for(int i4=0;i4<outW;i4++){
+						for(int i5=0;i5<CO;i5++){
+							if ((((porthosSignedSecretType)outArrLocalAns[i1][i2][i3][i4][i5])>>consSF) != (((porthosSignedSecretType)outArrOther[i1][i2][i3][i4][i5]) >> consSF)){
+								std::cerr<<RED<<"ERROR in conv3d #"<<ctr<<" "<<i1<<" "<<i2<<" "<<i3<<" "<<i4<<" "<<i5<<" "<<
+									(((porthosSignedSecretType)outArrLocalAns[i1][i2][i3][i4][i5])>>consSF)<<" "<<
+									outArrOther[i1][i2][i3][i4][i5]<<RESET<<std::endl;
+								pass = false;
+							}
+						}
+					}
+				}
+			}
+		}
+
+		if (!pass){
+			std::cerr<<RED<<"There was an error in conv3d#"<<ctr<<RESET<<std::endl;
+		}
+		else{
+			std::cout<<GREEN<<"Executed conv3d#"<<ctr<<" correctly."<<RESET<<std::endl;
+		}
+		ctr++;
+	}	
+
+#endif	
+}
+
+void ConvTranspose3DLoopInnerClear(int32_t N, 
+		int32_t D, 
+		int32_t H, 
+		int32_t W, 
+		int32_t CI, 
+		int32_t FD, 
+		int32_t FH, 
+		int32_t FW, 
+		int32_t CO, 
+		int32_t zPadDLeft, 
+		int32_t zPadDRight, 
+		int32_t zPadHLeft, 
+		int32_t zPadHRight, 
+		int32_t zPadWLeft, 
+		int32_t zPadWRight, 
+		int32_t strideD, 
+		int32_t strideH, 
+		int32_t strideW, 
+		int32_t outD, 
+		int32_t outH, 
+		int32_t outW, 
+		auto& inputArr, 
+		auto& filterArr, 
+		auto& outArr)
+{
+#pragma omp parallel for collapse(5)
+for (uint32_t n =  (int32_t)0; n < N; n++){
+for (uint32_t co =  (int32_t)0; co < CO; co++){
+for (uint32_t d =  (int32_t)0; d < outD; d++){
+for (uint32_t h =  (int32_t)0; h < outH; h++){
+for (uint32_t w =  (int32_t)0; w < outW; w++){
+for (uint32_t ci =  (int32_t)0; ci < CI; ci++){
+
+int64_t val =  (int64_t)0;
+for (uint32_t fd = d; fd < (d + FD); fd++){
+for (uint32_t fh = h; fh < (h + FH); fh++){
+for (uint32_t fw = w; fw < (w + FW); fw++){
+
+int32_t curPosD = ((fd - zPadDLeft) / strideD);
+
+int32_t curPosH = ((fh - zPadHLeft) / strideD);
+
+int32_t curPosW = ((fw - zPadWLeft) / strideD);
+if ((((((((((curPosD >=  (int32_t)0) && (curPosH >=  (int32_t)0)) && (curPosW >=  (int32_t)0)) && (curPosD < D)) && (curPosH < H)) && (curPosW < W)) && (((fd - zPadDLeft) % strideD) ==  (int32_t)0)) && (((fh - zPadHLeft) % strideH) ==  (int32_t)0)) && (((fw - zPadWLeft) % strideW) ==  (int32_t)0))) {
+
+int32_t curFilterPosD = (((FD + d) - fd) -  (int32_t)1);
+
+int32_t curFilterPosH = (((FH + h) - fh) -  (int32_t)1);
+
+int32_t curFilterPosW = (((FW + w) - fw) -  (int32_t)1);
+val = (val + (inputArr[n][curPosD][curPosH][curPosW][ci] * filterArr[curFilterPosD][curFilterPosH][curFilterPosW][co][ci]));
+}
+}
+}
+}
+outArr[n][d][h][w][co] = (outArr[n][d][h][w][co] + val);
+}
+}
+}
+}
+}
+}
+}
+
+void ConvTranspose3DSliding(int32_t N, 
+		int32_t DPrime, 
+		int32_t HPrime, 
+		int32_t WPrime, 
+		int32_t CI, 
+		int32_t FD, 
+		int32_t FH, 
+		int32_t FW, 
+		int32_t CO, 
+		int32_t D, 
+		int32_t H, 
+		int32_t W, 
+		int32_t zPadTrDLeft, 
+		int32_t zPadTrDRight, 
+		int32_t zPadTrHLeft, 
+		int32_t zPadTrHRight, 
+		int32_t zPadTrWLeft, 
+		int32_t zPadTrWRight, 
+		int32_t strideD, 
+		int32_t strideH, 
+		int32_t strideW, 
+		vector< vector< vector< vector< vector<porthosSecretType> > > > >& inputArr, 
+		vector< vector< vector< vector< vector<porthosSecretType> > > > >& filterArr, 
+		vector< vector< vector< vector< vector<porthosSecretType> > > > >& outArr){
+ConvTranspose3DLoopInnerClear(N, DPrime, HPrime, WPrime, CI, FD, FH, FW, CO, zPadTrDLeft, zPadTrDRight, zPadTrHLeft, zPadTrHRight, zPadTrWLeft, zPadTrWRight, strideD, strideH, strideW, D, H, W, inputArr, filterArr, outArr);
+}
+
+void ConvTranspose3DCSFMPC(int32_t N, 
+		int32_t DPrime, 
+		int32_t HPrime, 
+		int32_t WPrime, 
+		int32_t CI, 
+		int32_t FD, 
+		int32_t FH, 
+		int32_t FW, 
+		int32_t CO, 
+		int32_t D, 
+		int32_t H, 
+		int32_t W, 
+		int32_t zPadTrDLeft, 
+		int32_t zPadTrDRight, 
+		int32_t zPadTrHLeft, 
+		int32_t zPadTrHRight, 
+		int32_t zPadTrWLeft, 
+		int32_t zPadTrWRight, 
+		int32_t strideD, 
+		int32_t strideH, 
+		int32_t strideW, 
+		vector< vector< vector< vector< vector<porthosSecretType> > > > >& inputArr, 
+		vector< vector< vector< vector< vector<porthosSecretType> > > > >& filterArr, 
+		int32_t consSF, 
+		vector< vector< vector< vector< vector<porthosSecretType> > > > >& outArr)
+{
+	log_print("ConvTranspose3DCSFMPC");
+	auto A = make_vector<porthosSecretType>(N, DPrime, HPrime, WPrime, CI);
+	auto B = make_vector<porthosSecretType>(FD, FH, FW, CO, CI);
+	auto C = make_vector<porthosSecretType>(N, D, H, W, CO);
+
+	if(HELPER) {
+		auto A1 = make_vector<porthosSecretType>(N, DPrime, HPrime, WPrime, CI);
+		auto A2 = make_vector<porthosSecretType>(N, DPrime, HPrime, WPrime, CI);
+		auto B1 = make_vector<porthosSecretType>(FD, FH, FW, CO, CI);
+		auto B2 = make_vector<porthosSecretType>(FD, FH, FW, CO, CI);
+		auto C1 = make_vector<porthosSecretType>(N, D, H, W, CO);
+		auto C2 = make_vector<porthosSecretType>(N, D, H, W, CO);
+
+		populate_5D_vector(A1, N, DPrime, HPrime, WPrime, CI, "a1");
+		populate_5D_vector(A2, N, DPrime, HPrime, WPrime, CI, "a2");
+		populate_5D_vector(B1, FD, FH, FW, CO, CI, "b1");
+		populate_5D_vector(B2, FD, FH, FW, CO, CI, "b2");
+		populate_5D_vector(C1, N, D, H, W, CO, "c1");
+
+		add_5D_vectors(A1, A2, A, N, DPrime, HPrime, WPrime, CI);
+		add_5D_vectors(B1, B2, B, FD, FH, FW, CO, CI);
+
+		ConvTranspose3DSliding(N, DPrime, HPrime, WPrime, CI, FD, FH, FW, CO, D, H, W, zPadTrDLeft, zPadTrDRight, zPadTrHLeft, zPadTrHRight, zPadTrWLeft, zPadTrWRight, strideD, strideH, strideW, A, B, C);
+
+		subtract_5D_vectors(C, C1, C2, N, D, H, W, CO);
+
+#if (LOG_LAYERWISE)
+		high_resolution_clock::time_point t1 = high_resolution_clock::now();
+#endif
+
+		send_5D_vector(C2, PARTY_B, N, D, H, W, CO);
+
+#if (LOG_LAYERWISE)
+		high_resolution_clock::time_point t2 = high_resolution_clock::now();
+		duration<double> time_span = duration_cast<duration<double>>(t2 - t1);
+		auto tt = time_span.count();
+		commObject.timeMatmul[0] += tt;
+#endif
+#ifdef DEBUGGING
+		send_5D_vector(A, PARTY_A, N, DPrime, HPrime, WPrime, CI);
+		send_5D_vector(B, PARTY_A, FD, FH, FW, CO, CI);
+		send_5D_vector(C, PARTY_A, N, D, H, W, CO);
+#endif
+
+	}
+
+	if (PRIMARY) {
+#ifdef DEBUGGING
+		if(partyNum == PARTY_B){
+			send_5D_vector(inputArr, PARTY_A, N, DPrime, HPrime, WPrime, CI);
+			send_5D_vector(filterArr, PARTY_A, FD, FH, FW, CO, CI);
+			return;
+		}
+		else if(partyNum == PARTY_A){
+			auto x = make_vector<porthosSecretType>(N, DPrime, HPrime, WPrime, CI);
+			auto y = make_vector<porthosSecretType>(FD, FH, FW, CO, CI);
+			auto a = make_vector<porthosSecretType>(N, DPrime, HPrime, WPrime, CI);
+			auto b = make_vector<porthosSecretType>(FD, FH, FW, CO, CI);
+			auto c = make_vector<porthosSecretType>(N, D, H, W, CO);
+			auto c_ans = make_vector<porthosSecretType>(N, D, H, W, CO);
+			auto c_temp = make_vector<porthosSecretType>(N, D, H, W, CO);
+			auto e = make_vector<porthosSecretType>(N, DPrime, HPrime, WPrime, CI);
+			auto f = make_vector<porthosSecretType>(FD, FH, FW, CO, CI);
+
+			receive_5D_vector(ref(a), PARTY_C, N, DPrime, HPrime, WPrime, CI);
+			receive_5D_vector(ref(b), PARTY_C, FD, FH, FW, CO, CI);
+			receive_5D_vector(ref(c), PARTY_C, N, D, H, W, CO);
+			receive_5D_vector(ref(x), PARTY_B, N, DPrime, HPrime, WPrime, CI);
+			receive_5D_vector(ref(y), PARTY_B, FD, FH, FW, CO, CI);
+			add_5D_vectors(x, inputArr, x, N, DPrime, HPrime, WPrime, CI);
+			add_5D_vectors(y, filterArr, y, FD, FH, FW, CO, CI);
+			subtract_5D_vectors(x, a, e, N, DPrime, HPrime, WPrime, CI);
+			subtract_5D_vectors(y, b, f, FD, FH, FW, CO, CI);
+			subtract_5D_vectors(x, e, A, N, DPrime, HPrime, WPrime, CI);
+			ConvTranspose3DSliding(N, DPrime, HPrime, WPrime, CI, FD, FH, FW, CO, D, H, W, zPadTrDLeft, zPadTrDRight, zPadTrHLeft, zPadTrHRight, zPadTrWLeft, zPadTrWRight, strideD, strideH, strideW, A, f, c_temp);
+			ConvTranspose3DSliding(N, DPrime, HPrime, WPrime, CI, FD, FH, FW, CO, D, H, W, zPadTrDLeft, zPadTrDRight, zPadTrHLeft, zPadTrHRight, zPadTrWLeft, zPadTrWRight, strideD, strideH, strideW, e, y, c_ans);
+			std::cout<<"From reconstructed code:"<<std::endl;
+			std::cout<<e[0][0][0][0][0]<<std::endl;
+			std::cout<<f[0][0][0][0][0]<<std::endl;
+			std::cout<<"From reconstructed code ends"<<std::endl;
+			add_5D_vectors(c_temp, c, c, N, D, H, W, CO);
+			add_5D_vectors(c_ans, c, outArr, N, D, H, W, CO);
+			funcTruncate2PC(outArr, consSF, N, D, H, W, CO);
+			return;
+				
+		}
+#endif
+		auto E = make_vector<porthosSecretType>(N, DPrime, HPrime, WPrime, CI);
+		auto F = make_vector<porthosSecretType>(FD, FH, FW, CO, CI);
+		auto temp_C = make_vector<porthosSecretType>(N, D, H, W, CO);
+		auto temp_E = make_vector<porthosSecretType>(N, DPrime, HPrime, WPrime, CI);
+		auto temp_F = make_vector<porthosSecretType>(FD, FH, FW, CO, CI);
+		if (partyNum == PARTY_A) {
+			populate_5D_vector(A, N, DPrime, HPrime, WPrime, CI, "a1");
+			populate_5D_vector(B, FD, FH, FW, CO, CI, "b1");
+			populate_5D_vector(C, N, D, H, W, CO, "c1");
+		}
+
+		if (partyNum == PARTY_B) {
+			populate_5D_vector(A, N, DPrime, HPrime, WPrime, CI, "a2");
+			populate_5D_vector(B, FD, FH, FW, CO, CI, "b2");
+		}
+
+		subtract_5D_vectors(inputArr, A, E, N, DPrime, HPrime, WPrime, CI);
+		subtract_5D_vectors(filterArr, B, F, FD, FH, FW, CO, CI);
+
+#if (LOG_LAYERWISE)
+		auto t1 = high_resolution_clock::now();
+#endif
+		if (partyNum == PARTY_A) {
+			send_5D_vector(ref(E), adversary(partyNum), N, DPrime, HPrime, WPrime, CI);
+			send_5D_vector(ref(F), adversary(partyNum), FD, FH, FW, CO, CI);
+			receive_5D_vector(ref(temp_E), adversary(partyNum), N, DPrime, HPrime, WPrime, CI);
+			receive_5D_vector(ref(temp_F), adversary(partyNum), FD, FH, FW, CO, CI);
+		} else {
+			receive_5D_vector(ref(temp_E), adversary(partyNum), N, DPrime, HPrime, WPrime, CI);
+			receive_5D_vector(ref(temp_F), adversary(partyNum), FD, FH, FW, CO, CI);
+			send_5D_vector(ref(E), adversary(partyNum), N, DPrime, HPrime, WPrime, CI);
+			send_5D_vector(ref(F), adversary(partyNum), FD, FH, FW, CO, CI);
+		}
+#if (LOG_LAYERWISE)
+		auto t2 = high_resolution_clock::now();
+		auto tt = (duration_cast<duration<double>>(t2 - t1)).count();
+		commObject.timeMatmul[0] += tt;
+#endif
+		add_5D_vectors(E, temp_E, E, N, DPrime, HPrime, WPrime, CI);
+		add_5D_vectors(F, temp_F, F, FD, FH, FW, CO, CI);
+		
+		//Receive C1 from P2 after E and F have been revealed.
+		if (partyNum == PARTY_B) {
+			receive_5D_vector(ref(C), PARTY_C, N, D, H, W, CO);
+			subtract_5D_vectors(inputArr, E, A, N, DPrime, HPrime, WPrime, CI);
+			ConvTranspose3DSliding(N, DPrime, HPrime, WPrime, CI, FD, FH, FW, CO, D, H, W, zPadTrDLeft, zPadTrDRight, zPadTrHLeft, zPadTrHRight, zPadTrWLeft, zPadTrWRight, strideD, strideH, strideW, A, F, outArr);
+			ConvTranspose3DSliding(N, DPrime, HPrime, WPrime, CI, FD, FH, FW, CO, D, H, W, zPadTrDLeft, zPadTrDRight, zPadTrHLeft, zPadTrHRight, zPadTrWLeft, zPadTrWRight, strideD, strideH, strideW, E, filterArr, temp_C);
+		}
+
+		if (partyNum == PARTY_A) {
+			ConvTranspose3DSliding(N, DPrime, HPrime, WPrime, CI, FD, FH, FW, CO, D, H, W, zPadTrDLeft, zPadTrDRight, zPadTrHLeft, zPadTrHRight, zPadTrWLeft, zPadTrWRight, strideD, strideH, strideW, inputArr, F, outArr);
+			ConvTranspose3DSliding(N, DPrime, HPrime, WPrime, CI, FD, FH, FW, CO, D, H, W, zPadTrDLeft, zPadTrDRight, zPadTrHLeft, zPadTrHRight, zPadTrWLeft, zPadTrWRight, strideD, strideH, strideW, E, filterArr, temp_C);
+		}
+		//subtract_5D_vectors(inputArr, E, A, N, D, H, W, CI);
+		//std::cout<<"From secure code:"<<std::endl;
+		//std::cout<<E[0][0][0][0][0]<<std::endl;
+		//std::cout<<F[0][0][0][0][0]<<std::endl;
+		//std::cout<<"From secure code ends"<<std::endl;
+
+		add_5D_vectors(outArr, temp_C, outArr, N, D, H, W, CO);
+		add_5D_vectors(C, outArr, outArr, N, D, H, W, CO);
+		//if (areInputsScaled)
+	//	funcTruncate2PC(outArr, consSF, N, D, H, W, CO);
+
+	}
+
+#ifdef VERIFYLAYERWISE
+		if (partyNum == PARTY_A){
+			send_5D_vector(inputArr, PARTY_B, N, DPrime, HPrime, WPrime, CI);
+			send_5D_vector(filterArr, PARTY_B, FD, FH, FW, CO, CI);
+			send_5D_vector(outArr, PARTY_B, N, D, H, W, CO);
+		}
+		if (partyNum == PARTY_B){
+			auto inputArrOther = make_vector<porthosSecretType>(N, DPrime, HPrime, WPrime, CI);
+			auto filterArrOther = make_vector<porthosSecretType>(FD, FH, FW, CO, CI);
+			auto outArrLocalAns = make_vector<porthosSecretType>(N, D, H, W, CO);
+			auto outArrOther = make_vector<porthosSecretType>(N, D, H, W, CO);
+		
+			receive_5D_vector(inputArrOther, PARTY_A, N, DPrime, HPrime, WPrime, CI);
+			receive_5D_vector(filterArrOther, PARTY_A, FD, FH, FW, CO, CI);
+			receive_5D_vector(outArrOther, PARTY_A, N, D, H, W, CO);
+	
+			add_5D_vectors(inputArrOther, inputArr, inputArrOther, N, DPrime, HPrime, WPrime, CI);
+			add_5D_vectors(filterArrOther, filterArr, filterArrOther, FD, FH, FW, CO, CI);
+			add_5D_vectors(outArrOther, outArr, outArrOther, N, D, H, W, CO);
+	
+			ConvTranspose3DSliding(N, DPrime, HPrime, WPrime, CI, FD, FH, FW, CO, D, H, W, 
+				zPadTrDLeft, zPadTrDRight, 
+				zPadTrHLeft, zPadTrHRight, 
+				zPadTrWLeft, zPadTrWRight, 
+				strideD, strideH, strideW, 
+				inputArrOther, 
+				filterArrOther, 
+				outArrLocalAns);
+
+			static int ctr = 1;
+	
+			bool pass = true;
+			for(int i1=0;i1<N;i1++){
+				for(int i2=0;i2<D;i2++){
+					for(int i3=0;i3<H;i3++){
+						for(int i4=0;i4<W;i4++){
+							for(int i5=0;i5<CO;i5++){
+								if ((((porthosSignedSecretType)outArrLocalAns[i1][i2][i3][i4][i5])>>consSF) != (((porthosSignedSecretType)outArrOther[i1][i2][i3][i4][i5]) >> consSF)){
+									std::cerr<<RED<<"ERROR in convtranspose #"<<ctr<<" "<<i1<<" "<<i2<<" "<<i3<<" "<<i4<<" "<<i5<<" "<<
+										(((porthosSignedSecretType)outArrLocalAns[i1][i2][i3][i4][i5])>>consSF)<<" "<<
+										outArrOther[i1][i2][i3][i4][i5]<<RESET<<std::endl;
+									pass = false;
+								}
+							}
+						}
+					}
+				}
+			}
+
+			if (!pass){
+				std::cerr<<RED<<"There was an error in convTranspose3d#"<<ctr<<RESET<<std::endl;
+			}			
+			else{
+				std::cout<<GREEN<<"Executed convTranspose3d#"<<ctr<<" correctly."<<RESET<<std::endl;
+			}
+			ctr++;
+		}	
+	
+#endif	
+}
+
+
 /************************************* End of main MPC functions ********************************************/
 
 /******************* Wrapper integer function calls ********************/
@@ -2039,13 +2826,36 @@ porthosSecretType funcReluPrime(porthosSecretType a)
 	return tmp2[0];
 }
 
-porthosSecretType funcSSCons(porthosSecretType a)
+porthosSecretType funcSSCons(int32_t x)
 {
-	vector<porthosSecretType> tmp1(1,a);
-	vector<porthosSecretType> tmp2(1,0);
-	funcSecretShareConstant(tmp1, tmp2, 1);
-	return tmp2[0];
+	/*
+		Secret share public value x between the two parties. 
+		Corresponding ezpc statement would be int32_al x = 0;
+		Set one party share as x and other party's share as 0.
+	*/
+	if (partyNum == PARTY_A){
+		return x;
+	}
+	if (partyNum == PARTY_B){
+		return 0;
+	}
 }
+
+porthosSecretType funcSSCons(int64_t x)
+{
+	/*
+		Secret share public value x between the two parties. 
+		Corresponding ezpc statement would be int32_al x = 0;
+		Set one party share as x and other party's share as 0.
+	*/
+	if (partyNum == PARTY_A){
+		return x;
+	}
+	if (partyNum == PARTY_B){
+		return 0;
+	}
+}
+
 
 //Arg2 revealToParties is a bitmask as to which parties should see the reconstructed values
 //10 - party 0, 01 - party 1, 11 - party 0 & 1

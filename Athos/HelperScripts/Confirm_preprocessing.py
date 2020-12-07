@@ -3,7 +3,7 @@
 Authors: Nishant Kumar.
 
 Copyright:
-Copyright (c) 2018 Microsoft Research
+Copyright (c) 2020 Microsoft Research
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -38,7 +38,7 @@ print("ExpectedNumElements in all preprocessed images = ", expectedNumElements)
 badImages = []
 for i in range(startImgNum,endImgNum):
 	if ((i % (numImg/10))==0):
-		print("Reched i = {0}.".format(i))
+		print("Reached i = {0}.".format(i))
 	filename = os.path.join(preProcessedImagesDir, 'ImageNum_'+str(i)+'.inp')
 	with open(filename, 'r') as ff:
 		line = ff.readline()

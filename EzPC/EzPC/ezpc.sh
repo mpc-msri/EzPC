@@ -3,7 +3,7 @@
 # Authors: Nishant Kumar.
 
 # Copyright:
-# Copyright (c) 2018 Microsoft Research
+# Copyright (c) 2020 Microsoft Research
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
@@ -50,6 +50,23 @@ do
 		shift # past argument
 		shift # past value
 		;;
+		--modulo)
+		MODULO="$2"
+		allArgs="${allArgs} $1 $2"
+		shift
+		shift
+		;;
+		--sf)
+		allArgs="${allArgs} $1 $2"
+		shift
+		shift
+		;;
+		--backend)
+		BACKEND="$2"
+		allArgs="${allArgs} $1 $2"
+		shift
+		shift
+		;;
 		--bool_sharing| --shares_dir)
 		allArgs="${allArgs} $1 $2"
 		shift # past argument
@@ -67,6 +84,11 @@ do
 	esac
 done
 set -- "${POSITIONAL[@]}" # restore positional parameters
+if [ "$BITLEN" -gt 32 ]; then
+	BITLEN="64"
+else
+	BITLEN="32"
+fi
 
 if [ -z ${HELP} ]; then
 	# Set bitlen to 32 if not specified in command line args

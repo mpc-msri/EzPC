@@ -175,27 +175,27 @@ void analyseComputeVsCommTime()
 //Aggregate some stats about ongoing communication
 void aggregateCommunication()
 {
-	vector<porthosSecretType> vec(4, 0), temp(4, 0);
+	vector<size_t> vec(4, 0), temp(4, 0);
 	vec[0] = commObject.getSent();
 	vec[1] = commObject.getRecv();
 	vec[2] = commObject.getRoundsSent();
 	vec[3] = commObject.getRoundsRecv();
 
 	if (partyNum == PARTY_B or partyNum == PARTY_C)
-		sendVector<porthosSecretType>(vec, PARTY_A, 4);
+		sendVector<size_t>(vec, PARTY_A, 4);
 
 	if (partyNum == PARTY_A)
 	{
-		receiveVector<porthosSecretType>(temp, PARTY_B, 4);
-		addVectors<porthosSecretType>(vec, temp, vec, 4);
-		receiveVector<porthosSecretType>(temp, PARTY_C, 4);
-		addVectors<porthosSecretType>(vec, temp, vec, 4);
+		receiveVector<size_t>(temp, PARTY_B, 4);
+		addVectors<size_t>(vec, temp, vec, 4);
+		receiveVector<size_t>(temp, PARTY_C, 4);
+		addVectors<size_t>(vec, temp, vec, 4);
 	}
 
 	if (partyNum == PARTY_A)
 	{
 		cout << "------------------------------------" << endl;
-		cout << "Total communication: " << (float)vec[0]/1000000 << "MB (sent) and " << (float)vec[1]/1000000 << "MB (recv)\n";
+		cout << "Total communication: " << (double)vec[0]/1000000 << "MB (sent) and " << (double)vec[1]/1000000 << "MB (recv)\n";
 		cout << "Total #calls: " << vec[2] << " (sends) and " << vec[3] << " (recvs)" << endl;
 		cout << "------------------------------------" << endl;
 	}
@@ -944,6 +944,28 @@ void add_4D_vectors(vector< vector< vector< vector<porthosSecretType> > > >& inp
 	}
 }
 
+void add_5D_vectors(vector< vector< vector< vector< vector<porthosSecretType> > > > >& inp_l, 
+		vector< vector< vector< vector< vector<porthosSecretType> > > > >& inp_r, 
+		vector< vector< vector< vector< vector<porthosSecretType> > > > >& out, 
+		int d1, 
+		int d2, 
+		int d3, 
+		int d4,
+		int d5)
+{
+	for(int i=0; i<d1; i++){
+		for(int j=0; j<d2; j++){
+			for(int k=0; k<d3; k++){
+				for(int l=0; l<d4; l++){
+					for(int m=0; m<d5; m++){
+						out[i][j][k][l][m] = inp_l[i][j][k][l][m] + inp_r[i][j][k][l][m];
+					}
+				}
+			}
+		}
+	}
+}
+
 void subtract_4D_vectors(vector< vector< vector< vector<porthosSecretType> > > >& inp_l, 
 			vector< vector< vector< vector<porthosSecretType> > > >& inp_r, 
 			vector< vector< vector< vector<porthosSecretType> > > >& out, 
@@ -961,6 +983,72 @@ void subtract_4D_vectors(vector< vector< vector< vector<porthosSecretType> > > >
 			}
 		}
 	}
+}
+
+void subtract_5D_vectors(vector< vector< vector< vector< vector<porthosSecretType> > > > >& inp_l, 
+		vector< vector< vector< vector< vector<porthosSecretType> > > > >& inp_r, 
+		vector< vector< vector< vector< vector<porthosSecretType> > > > >& out, 
+		int d1, 
+		int d2, 
+		int d3, 
+		int d4,
+		int d5)
+{
+	for(int i=0; i<d1; i++){
+		for(int j=0; j<d2; j++){
+			for(int k=0; k<d3; k++){
+				for(int l=0; l<d4; l++){
+					for(int m=0; m<d5; m++){
+						out[i][j][k][l][m] = inp_l[i][j][k][l][m] - inp_r[i][j][k][l][m];
+					}
+				}
+			}
+		}
+	}
+}
+
+void flatten_5D_vector(vector< vector< vector< vector< vector<porthosSecretType> > > > >& input, 
+			vector<porthosSecretType>& output, 
+			int d1, 
+			int d2, 
+			int d3, 
+			int d4, 
+			int d5)
+{
+	for(int i=0;i<d1;i++){
+		for(int j=0;j<d2;j++){
+			for(int k=0;k<d3;k++){
+				for(int l=0;l<d4;l++){
+					for(int m=0;m<d5;m++){
+						output[i*d2*d3*d4*d5 + j*d3*d4*d5 + k*d4*d5 + l*d5 + m] = input[i][j][k][l][m];
+					}
+				}
+			}
+		}
+	}
+
+}
+
+void deflatten_5D_vector(vector<porthosSecretType>& input, 
+			vector< vector< vector< vector< vector<porthosSecretType> > > > >& output, 
+			int d1, 
+			int d2, 
+			int d3, 
+			int d4, 
+			int d5)
+{
+	for(int i=0;i<d1;i++){
+		for(int j=0;j<d2;j++){
+			for(int k=0;k<d3;k++){
+				for(int l=0;l<d4;l++){
+					for(int m=0;m<d5;m++){
+						output[i][j][k][l][m] = input[i*d2*d3*d4*d5 + j*d3*d4*d5 + k*d4*d5 + l*d5 + m];
+					}
+				}
+			}
+		}
+	}
+
 }
 
 void flatten_4D_vector(vector< vector< vector< vector<porthosSecretType> > > >& input, 
@@ -1026,6 +1114,41 @@ void deflatten_2D_vector(vector<porthosSecretType>& input,
 	}
 
 }
+
+void send_5D_vector(vector< vector< vector< vector< vector<porthosSecretType> > > > >& input,
+			int party,
+                        int d1,
+                        int d2,
+                        int d3,
+                        int d4,
+                        int d5)
+{
+	vector<porthosSecretType> flat_input(d1*d2*d3*d4*d5, 0);
+
+	//Flatten and send.
+	flatten_5D_vector(input, flat_input, d1, d2, d3, d4, d5);
+
+	sendVector<porthosSecretType>(ref(flat_input), party, d1*d2*d3*d4*d5);
+
+}
+
+void receive_5D_vector(vector< vector< vector< vector< vector<porthosSecretType> > > > >& recv,
+			int party,
+                        int d1,
+                        int d2,
+                        int d3,
+                        int d4,
+                        int d5)
+{
+	vector<porthosSecretType> flat_recv(d1*d2*d3*d4*d5, 0);
+
+	//Receive and deflatten.
+	receiveVector<porthosSecretType>(ref(flat_recv), party, d1*d2*d3*d4*d5);
+
+	deflatten_5D_vector(flat_recv, recv, d1, d2, d3, d4, d5);
+
+}
+
 
 void send_4D_vector(vector< vector< vector< vector<porthosSecretType> > > >& input, 
 			int d1, 
@@ -1173,6 +1296,35 @@ void populate_4D_vector(vector< vector< vector< vector<porthosSecretType> > > >&
 			for(int k=0; k<d3; k++){
 				for(int l=0; l<d4; l++){
 					vec[i][j][k][l] = aesObject->get64Bits();
+				}
+			}
+		}
+	}
+}
+
+void populate_5D_vector(vector< vector< vector< vector< vector<porthosSecretType> > > > >& vec, 
+			int d1, 
+			int d2, 
+			int d3, 
+			int d4, 
+			int d5, 
+			string type)
+{
+	AESObject* aesObject;
+	if(type == "a1") aesObject = aes_conv_opti_a_1;
+	else if(type == "a2") aesObject = aes_conv_opti_a_2;
+	else if(type == "b1") aesObject = aes_conv_opti_b_1;
+	else if(type == "b2") aesObject = aes_conv_opti_b_2;
+	else if(type == "c1") aesObject = aes_conv_opti_c_1;
+	else assert(false);
+
+	for(int i=0; i<d1; i++){
+		for(int j=0; j<d2; j++){
+			for(int k=0; k<d3; k++){
+				for(int l=0; l<d4; l++){
+					for(int m=0; m<d5; m++){
+						vec[i][j][k][l][m] = aesObject->get64Bits();
+					}
 				}
 			}
 		}

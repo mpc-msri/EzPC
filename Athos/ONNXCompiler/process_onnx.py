@@ -2,7 +2,7 @@
 '''
 Authors: Shubham Ugare.
 Copyright:
-Copyright (c) 2018 Microsoft Research
+Copyright (c) 2020 Microsoft Research
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -106,7 +106,7 @@ def main():
 
 def process_input_variables(program, innermost_let_ast_node, node_name_to_out_var_dict, out_var_count, mtdAST, graph_def, value_info):
 	node = graph_def.input[0]
-	curAst = ONNXNodesAST.Input(node, value_info, node_name_to_out_var_dict)
+	curAst = ONNXNodesAST.Input(node, value_info, node_name_to_out_var_dict, 1)
 	mtdForCurAST = {AST.ASTNode.mtdKeyTFOpName : 'Input',
 						AST.ASTNode.mtdKeyTFNodeName : node.name}
 	cur_out_var_ast_node = AST.ID(node.name)	

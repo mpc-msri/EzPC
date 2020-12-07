@@ -1,0 +1,6 @@
+[submodule "CrypTFlow2/extern/SEAL"]
+	path = SCI/extern/SEAL
+	url = https://github.com/Microsoft/SEAL
+[submodule "CrypTFlow2/extern/eigen"]
+	path = SCI/extern/eigen
+	url = https://gitlab.com/libeigen/eigen

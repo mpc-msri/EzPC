@@ -1,0 +1,6 @@
+# Build Directory
+build/
+bin/
+
+# Vim c_tags files
+c_*

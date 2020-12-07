@@ -1,0 +1,85 @@
+(*
+
+Authors: Nishant Kumar.
+
+Copyright:
+Copyright (c) 2020 Microsoft Research
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*)
+
+
+def void Conv2DWrapper(int32_pl N, int32_pl H, int32_pl W, int32_pl CI, 
+				   int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
+				   int32_pl strideH, int32_pl strideW, 
+				   int64_al[N][H][W][CI] inputArr, 
+				   int64_al[FH][FW][CI][CO] filterArr, 
+				   int64_al[N][((H-FH+(zPadHLeft+zPadHRight))/strideH)+1][((W-FW+(zPadWLeft+zPadWRight))/strideW)+1][CO] outArr)
+{
+	Conv2D(N, H, W, CI, FH, FW, CO, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideH, strideW, inputArr, filterArr, outArr);
+}
+
+def void Conv3DWrapper(int32_pl N, int32_pl D, int32_pl H, int32_pl W, int32_pl CI, 
+				   int32_pl FD, int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl zPadDLeft, int32_pl zPadDRight, int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
+				   int32_pl strideD, int32_pl strideH, int32_pl strideW, 
+				   int64_al[N][D][H][W][CI] inputArr, 
+				   int64_al[FD][FH][FW][CI][CO] filterArr,
+				   int32_pl consSF,
+				   int64_al[N][((D-FD+(zPadDLeft+zPadDRight))/strideD)+1][((H-FH+(zPadHLeft+zPadHRight))/strideH)+1][((W-FW+(zPadWLeft+zPadWRight))/strideW)+1][CO] outArr)
+{
+	Conv3D(N, D, H, W, CI, FD, FH, FW, CO, zPadDLeft, zPadDRight, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideD, strideH, strideW, inputArr, filterArr, outArr);
+}
+
+def void Conv2DGroupWrapper(int32_pl N, int32_pl H, int32_pl W, int32_pl CI, 
+				   int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
+				   int32_pl strideH, int32_pl strideW, int32_pl G,
+				   int64_al[N][H][W][CI] inputArr, 
+				   int64_al[FH][FW][CI/G][CO] filterArr, 
+				   int64_al[N][((H-FH+(zPadHLeft+zPadHRight))/strideH)+1][((W-FW+(zPadWLeft+zPadWRight))/strideW)+1][CO] outArr)
+{
+	Conv2DGroup(N, H, W, CI, FH, FW, CO, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideH, strideW, G, inputArr, filterArr, outArr);
+}
+
+def void ConvTranspose2DWrapper(int32_pl N, int32_pl HPrime, int32_pl WPrime, int32_pl CI, 
+				   int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl H, int32_pl W,
+				   int32_pl zPadTrHLeft, int32_pl zPadTrHRight, int32_pl zPadTrWLeft, int32_pl zPadTrWRight, 
+				   int32_pl strideH, int32_pl strideW,
+				   int64_al[N][HPrime][WPrime][CI] inputArr, 
+				   int64_al[FH][FW][CO][CI] filterArr, 
+				   int64_al[N][H][W][CO] outArr)
+{
+	ConvTranspose2D(N, HPrime, WPrime, CI, FH, FW, CO, H, W, zPadTrHLeft, zPadTrHRight, zPadTrWLeft, zPadTrWRight, strideH, strideW, inputArr, filterArr, outArr);	
+}
+
+def void ConvTranspose3DWrapper(int32_pl N, int32_pl DPrime, int32_pl HPrime, int32_pl WPrime, int32_pl CI, 
+				   int32_pl FD, int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl D, int32_pl H, int32_pl W,
+				   int32_pl zPadTrDLeft, int32_pl zPadTrDRight, int32_pl zPadTrHLeft, int32_pl zPadTrHRight, int32_pl zPadTrWLeft, int32_pl zPadTrWRight, 
+				   int32_pl strideD, int32_pl strideH, int32_pl strideW,
+				   int64_al[N][DPrime][HPrime][WPrime][CI] inputArr, 
+				   int64_al[FD][FH][FW][CO][CI] filterArr, 
+				   int32_pl consSF,
+				   int64_al[N][D][H][W][CO] outArr)
+{
+	ConvTranspose3D(N, DPrime, HPrime, WPrime, CI, FD, FH, FW, CO, D, H, W, zPadTrDLeft, zPadTrDRight, zPadTrHLeft, zPadTrHRight, zPadTrWLeft, zPadTrWRight, strideD, strideH, strideW, inputArr, filterArr, outArr);
+}
+
+

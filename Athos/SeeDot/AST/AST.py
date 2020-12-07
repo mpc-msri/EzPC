@@ -3,7 +3,7 @@
 Authors: Nishant Kumar.
 
 Copyright:
-Copyright (c) 2018 Microsoft Research
+Copyright (c) 2020 Microsoft Research
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -31,16 +31,23 @@ OperatorsSymbolDict = {
 		"CONV": '#',
 		"CONVTRANSPOSE": "#T", #ConvTranspose
 		"RELU": 'relu',
+		"TANH": 'tanh',
+		"SIGMOID": 'sigmoid',
+		"SQRT": 'sqrt',
+		"RSQRT": 'rsqrt',
 		"Equal": '==',
 		"ElemWiseMul":'.*',
 		"ElemWiseDiv": './',
-		"Max": 'max',
 		"Floor": 'floor',
 		"Shape": 'shape',
 		"Mean": 'mean',
 		"ClearMemSecret": 'clearmemsecret',
 		"ClearMemPublic": 'clearmempublic'
 }
+
+class Party(Enum):
+	SERVER = 0
+	CLIENT = 1
 
 class Operators(Enum):
 	ADD = auto()
@@ -49,10 +56,13 @@ class Operators(Enum):
 	CONV = auto()
 	CONVTRANSPOSE = auto()
 	RELU = auto()
+	TANH = auto()
+	SIGMOID = auto()
+	SQRT = auto()
+	RSQRT = auto()
 	Equal = auto()
 	ElemWiseMul = auto()
 	ElemWiseDiv = auto()
-	Max = auto()
 	Floor = auto()
 	Shape = auto()
 	Mean = auto()
@@ -88,7 +98,7 @@ class Operators(Enum):
 		return ((imgSize + totalPadding - filterSize) // stride) + 1
 
 class PaddingKeysDict:
-	ConvDim = 2 #2D or 3D convolution, default to 2D ##TODO: Add 1D conv when required
+	ConvDim = 2 #2D or 3D convolution, default to 2D
 				#Also used for convTranpose
 	FH = "FH"
 	FW = "FW"
@@ -127,17 +137,19 @@ class ASTNode:
 		self.optidict = {}
 
 class Int(ASTNode):
-	def __init__(self, value: int, bitLen=None, isSecret=True):
+	def __init__(self, value: int, bitLen=None, isSecret=True, isScaled=False):
 		if assertInputTypes: 
 			assert isinstance(value, int)
 			if bitLen: 
 				assert isinstance(bitLen, int)
 				assert ((bitLen==32) or (bitLen==64))
 			assert isinstance(isSecret, bool)
+			assert isinstance(isScaled, bool)
 		super().__init__()
 		self.value = value
 		self.bitLen = bitLen
 		self.isSecret = isSecret
+		self.isScaled = isScaled
 
 class Float(ASTNode):
 	def __init__(self, value: float, isSecret=True):
@@ -157,7 +169,7 @@ class ID(ASTNode):
 
 # shape : list of int, valueList : list of int/float AST Nodes
 class Decl(ASTNode):
-	def __init__(self, shape: list, dataType: str, valueList: list, isSecret=True):
+	def __init__(self, shape: list, dataType: str, valueList: list, isSecret=True, isScaled=False):
 		if assertInputTypes:
 			for elem in shape: assert isinstance(elem, int)
 			if dataType:
@@ -165,29 +177,37 @@ class Decl(ASTNode):
 			if valueList: 
 				for elem in valueList: assert isinstance(elem ,(Int,Float))
 			assert(isinstance(isSecret, bool))
+			assert(isinstance(isScaled, bool))
 		super().__init__()
 		self.shape = shape
 		self.dataType = dataType
 		self.valueList = valueList
 		self.isSecret = isSecret
-
-# expr : ASTNode
-class Transp(ASTNode):
-	def __init__(self, expr: ASTNode):
-		if assertInputTypes:
-			assert isinstance(expr, ASTNode)
-		super().__init__()
-		self.expr = expr
+		self.isScaled = isScaled
 
 # expr : ASTNode, perm : list of ints
 class Transpose(ASTNode):
-	def __init__(self, expr: ASTNode, perm: list):
+	def __init__(self, expr: ASTNode, perm: list = None):
 		if assertInputTypes:
 			assert isinstance(expr, ASTNode)
-			for elem in perm: assert isinstance(elem, int)
+			if perm:
+				for elem in perm: assert isinstance(elem, int)
 		super().__init__()
 		self.expr = expr
 		self.perm = perm
+
+# expr : ASTNode, perm : list of ints
+class Slice(ASTNode):
+	def __init__(self, expr: ASTNode, subscriptRanges: list = None):
+		if assertInputTypes:
+			assert isinstance(expr, ID)
+			if subscriptRanges:
+				for elem in subscriptRanges:
+					assert isinstance(elem[0], int)
+					assert isinstance(elem[1], int)
+		super().__init__()
+		self.expr = expr
+		self.subscriptRanges = subscriptRanges
 
 # expr : ASTNode, shape : list of int, order : int : optional
 class Reshape(ASTNode):
@@ -229,16 +249,6 @@ class Pool(ASTNode):
 		self.expr = expr
 		self.options = options
 
-# expr:ID, index : list of int
-class Index(ASTNode):
-	def __init__(self, expr: ID, index: list):
-		if assertInputTypes:
-			assert isinstance(expr, ID)
-			for elem in index: assert isinstance(elem, int)
-		super().__init__()
-		self.expr = expr
-		self.index = index
-
 class UOp(ASTNode):
 	def __init__(self, op: Operators, expr:ASTNode):
 		if assertInputTypes:
@@ -270,7 +280,7 @@ class BOp(ASTNode):
 				assert (PaddingKeysDict.strideH in options)
 				assert (PaddingKeysDict.strideW in options)
 				if PaddingKeysDict.ConvDim in options:
-					assert(options[PaddingKeysDict.ConvDim]==2 or options[PaddingKeysDict.ConvDim]==3) #1D conv is not supported right now
+					assert(options[PaddingKeysDict.ConvDim]==2 or options[PaddingKeysDict.ConvDim]==3)
 					if options[PaddingKeysDict.ConvDim]==3:
 						#3D conv - assert over the depth dimension
 						assert (PaddingKeysDict.FD in options)
@@ -346,34 +356,33 @@ class ArgMax(ASTNode):
 		self.inShape = inShape
 
 class Reduce(ASTNode):
-	def __init__(self, expr:ID, dim:ID, keepdims:Int, outShape:list, op: Operators):
+	def __init__(self, expr:ID, keepdims:bool, outShape:list, op: Operators, reductionAxesList: list):
 		# keepdims is unused for now
 		if assertInputTypes:
 			assert isinstance(expr, ID)
-			assert isinstance(dim, ID)
-			assert isinstance(keepdims, Int)
+			assert isinstance(keepdims, bool)
 			assert isinstance(outShape, list)
 			for elem in outShape: assert isinstance(elem, int)
 			assert isinstance(op, Operators)
 		super().__init__()
 		self.expr = expr
-		self.dim = dim
 		self.keepdims = keepdims
 		self.outShape = outShape
 		self.op = op
+		self.reductionAxesList = reductionAxesList
 
 # shape : list of int, dataType : ID
 # NOTE: Though datatype is being passed to this function, the output code eventually only has 
 #		int in the apt bitlen for which the whole compilation is done
 # Also, take note of the last parameter - "inputByParty". This can be used to set the party which
-#	which will do the input for this variable. Defaults to 0, which is interpretted as SERVER by the codegen.
+#	which will do the input for this variable. Defaults to SERVER.
 class Input(ASTNode):
-	def __init__(self, shape:list, dataType:str, isSecret=True, inputByParty=0): 
+	def __init__(self, shape:list, dataType:str, isSecret=True, inputByParty=Party.SERVER):
 		if assertInputTypes:
 			for elem in shape: assert isinstance(elem, int)
 			assert isinstance(dataType, str)
-			assert isinstance(inputByParty, int)
-			assert(inputByParty==0 or inputByParty==1) #Right now EzPC supports input by two parties.
+			assert isinstance(inputByParty, Party)
+			assert(inputByParty==Party.CLIENT or inputByParty==Party.SERVER) #Right now EzPC supports input by two parties.
 		super().__init__()
 		self.shape = shape
 		self.dataType = dataType

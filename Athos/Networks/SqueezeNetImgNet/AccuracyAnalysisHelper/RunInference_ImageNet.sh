@@ -3,7 +3,7 @@
 # Authors: Nishant Kumar.
 
 # Copyright:
-# Copyright (c) 2018 Microsoft Research
+# Copyright (c) 2020 Microsoft Research
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
@@ -22,9 +22,9 @@
 
 
 NUMIMAGES=1000
-NUMPROCESSES=6
+NUMPROCESSES=20
 PERPROCESSIMAGES=$((NUMIMAGES / NUMPROCESSES))
-ScalesToTest=(10)
+ScalesToTest=(9)
 EXECUTABLENAME="SqueezeNet_acc32.out"
 RUNSERIAL=false #Change this to "true" to run the first NUMIMAGES.
 				#	"false" means it will pick up a random subset.
@@ -46,9 +46,9 @@ do
 		fi
 		if [ "$RUNSERIAL" = false ];
 		then
-			"./$EXECUTABLENAME" "$curScale" "$curImgStartNum" "$endImgNum" "$preProcessedImgSaveDirName" "$NUMIMAGES" "$RANDOMSUBSETFILEIDX" < "SqNet_img_input_weights_float.inp" > "InferenceOutputs/output_${curScale}_${curProcessNum}.outp" 2> "InferenceErrors/cerr_${curScale}_${curProcessNum}.outp" &
+			"./$EXECUTABLENAME" "$curScale" "$curImgStartNum" "$endImgNum" "$preProcessedImgSaveDirName" "$NUMIMAGES" "$RANDOMSUBSETFILEIDX" < "SqNet_trained_weights_float.inp" > "InferenceOutputs/output_${curScale}_${curProcessNum}.outp" 2> "InferenceErrors/cerr_${curScale}_${curProcessNum}.outp" &
 		else
-			"./$EXECUTABLENAME" "$curScale" "$curImgStartNum" "$endImgNum" "$preProcessedImgSaveDirName" < "SqNet_img_input_weights_float.inp" > "InferenceOutputs/output_${curScale}_${curProcessNum}.outp" 2> "InferenceErrors/cerr_${curScale}_${curProcessNum}.outp" &
+			"./$EXECUTABLENAME" "$curScale" "$curImgStartNum" "$endImgNum" "$preProcessedImgSaveDirName" < "SqNet_trained_weights_float.inp" > "InferenceOutputs/output_${curScale}_${curProcessNum}.outp" 2> "InferenceErrors/cerr_${curScale}_${curProcessNum}.outp" &
 		fi
 		pids+=($!)
 	done

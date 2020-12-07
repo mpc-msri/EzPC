@@ -4,7 +4,7 @@
 Authors: Shubham Ugare.
 
 Copyright:
-Copyright (c) 2018 Microsoft Research
+Copyright (c) 2020 Microsoft Research
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -102,8 +102,8 @@ def add_openmp_threading_to_convolution(file):
 		newfilename = file[:-5]+'1.cpp'
 		g = open(newfilename, 'w')
 		content = f.read()
-		content1 =  re.sub('void Conv3D\(.*','\g<0> \n #pragma omp parallel for collapse(5) ', content)
-		content2 =  re.sub('void ConvTranspose3D\(.*','\g<0> \n #pragma omp parallel for collapse(5) ', content1)
+		content1 =  re.sub('void Conv3DLoopInner\(.*','\g<0> \n #pragma omp parallel for collapse(5) ', content)
+		content2 =  re.sub('void ConvTranspose3DLoopInner\(.*','\g<0> \n #pragma omp parallel for collapse(5) ', content1)
 		g.write(content2)
 		g.close()
 
