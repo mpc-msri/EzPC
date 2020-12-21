@@ -404,7 +404,7 @@ class Value:
                 return (True, cnt)
             elif (curToken == "s:"):
                 if (errIfTokensNotMinLen(tokens, 2, cnt, "Value")): return (False, cnt)
-                self.__val = tokens[1]
+                self.__val = tokens[1][1:-1]
             elif (curToken == "i:"):
                 if (errIfTokensNotMinLen(tokens, 2, cnt, "Value")): return (False, cnt)
                 self.__val = int(tokens[1])

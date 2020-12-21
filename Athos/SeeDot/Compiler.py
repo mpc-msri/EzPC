@@ -83,7 +83,7 @@ class Compiler:
 		prog = res[0]
 		expr = res[1]
 		output_scale = compiler.scaleFacMapping[expr.idf]
-		if output_scale == Util.Config.consSF:
+		if output_scale == -1 or output_scale == Util.Config.consSF:
 			return (prog, expr)
 		elif output_scale > Util.Config.consSF:
 			scale_down =  output_scale - Util.Config.consSF
@@ -105,7 +105,7 @@ class Compiler:
 			prog = IRUtil.prog_merge(prog, new_prog)
 			return (prog, expr)
 		else:
-			assert False, "Scale up shouldnt be required of final output. We lost precision somewhere"
+			assert False, "Scale up shouldnt be required of final output {} -> {}. We lost precision somewhere".format(output_scale, Util.Config.consSF)
 
 	def run(self):
 		with open(Util.Config.astFile, 'rb') as ff:

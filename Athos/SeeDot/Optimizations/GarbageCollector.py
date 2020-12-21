@@ -264,3 +264,9 @@ class GarbageCollector(ASTVisitor):
 	def visitReduce(self, node:AST.Reduce, args):
 		usedVars = self.visit(node.expr, args)
 		return usedVars
+
+	def visitFusedBatchNorm(self, node:AST.FusedBatchNorm, args):
+		usedVars = self.visit(node.expr, args)
+		usedVars |= self.visit(node.multExpr, args)
+		usedVars |= self.visit(node.addExpr, args)
+		return usedVars

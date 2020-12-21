@@ -814,8 +814,8 @@ class IRBuilderCSF(IRBuilderAST):
 		return (prog_3, expr_3)
 
 	def visitBopConv(self, node:AST.BOp, args=None):
-		(prog1, expr1) = self.visit(node.expr1)
-		(prog2, expr2) = self.visit(node.expr2)
+		(prog1, expr_1) = self.visit(node.expr1)
+		(prog2, expr_2) = self.visit(node.expr2)
 		
 		convDim = 2
 		if (AST.PaddingKeysDict.ConvDim in node.options):
@@ -831,7 +831,7 @@ class IRBuilderCSF(IRBuilderAST):
 			assert(False)
 
 		returnExpr = self.getTempVar()
-		comment = IR.Comment(expr1.idf + ' # ' + expr2.idf + ', convDim = ' + str(convDim))
+		comment = IR.Comment(expr_1.idf + ' # ' + expr_2.idf + ', convDim = ' + str(convDim))
 		funcCallArgsDict = OrderedDict()
 		funcCallArgsDict[IR.Int(N, 32)] = "N"
 		if convDim == 3:
@@ -861,8 +861,8 @@ class IRBuilderCSF(IRBuilderAST):
 			funcCallArgsDict[IR.Int(node.options[AST.PaddingKeysDict.group], 32)] = "G"
 			isGroupConv = True
 
-		funcCallArgsDict[expr1] = "input"
-		funcCallArgsDict[expr2] = "filter"
+		funcCallArgsDict[expr_1] = "input"
+		funcCallArgsDict[expr_2] = "filter"
 		if convDim == 3:
 			funcCallArgsDict[IR.Int(Util.Config.consSF, 32)] = "consSF"
 		funcCallArgsDict[returnExpr] = "output"
@@ -886,13 +886,13 @@ class IRBuilderCSF(IRBuilderAST):
 			progExtraAfter = self.addTruncateFunctionCall(node, "Conv", returnExpr, Util.Config.consSF)
 		else:
 			inputs_same = (expr_1.idf == expr_2.idf)
-			expr1_sf = self.scaleFacMapping[expr1.idf]
-			expr2_sf = self.scaleFacMapping[expr2.idf]
+			expr1_sf = self.scaleFacMapping[expr_1.idf]
+			expr2_sf = self.scaleFacMapping[expr_2.idf]
 			if (expr1_sf > self.scaleFac):
-				progExtraBefore = self.addTruncateFunctionCall(node.expr1, "Conv", expr1, expr1_sf-self.scaleFac)
+				progExtraBefore = self.addTruncateFunctionCall(node.expr1, "Conv", expr_1, expr1_sf-self.scaleFac)
 				self.scaleFacMapping[expr1.idf] = self.scaleFac
 			if (not inputs_same) and (expr2_sf > self.scaleFac):
-				progExtraBefore = IRUtil.prog_merge(progExtraBefore, self.addTruncateFunctionCall(node.expr2, "Conv", expr2, expr2_sf-self.scaleFac))
+				progExtraBefore = IRUtil.prog_merge(progExtraBefore, self.addTruncateFunctionCall(node.expr2, "Conv", expr_2, expr2_sf-self.scaleFac))
 				self.scaleFacMapping[expr_2.idf] = self.scaleFac
 			self.scaleFacMapping[returnExpr.idf] = 2*self.scaleFac
 
@@ -901,8 +901,8 @@ class IRBuilderCSF(IRBuilderAST):
 		return (returnProg, returnExpr)
 
 	def visitBopConvTranspose(self, node:AST.BOp, args=None):
-		(prog1, expr1) = self.visit(node.expr1)
-		(prog2, expr2) = self.visit(node.expr2)
+		(prog1, expr_1) = self.visit(node.expr1)
+		(prog2, expr_2) = self.visit(node.expr2)
 
 		convDim = 2
 		if (AST.PaddingKeysDict.ConvDim in node.options):
@@ -942,7 +942,7 @@ class IRBuilderCSF(IRBuilderAST):
 			assert(AST.Operators.findConvOutputImgSize(d_prime_tilde, pad_d_tr_total, FD, stride_d_tr) == D)
 
 		returnExpr = self.getTempVar()
-		comment = IR.Comment(expr1.idf + ' #T ' + expr2.idf + ', convDim = ' + str(convDim))
+		comment = IR.Comment(expr_1.idf + ' #T ' + expr2.idf + ', convDim = ' + str(convDim))
 		funcCallArgsDict = OrderedDict()
 		funcCallArgsDict[IR.Int(N, 32)] = "N"
 		if convDim==3:
@@ -971,8 +971,8 @@ class IRBuilderCSF(IRBuilderAST):
 		funcCallArgsDict[IR.Int(strideH, 32)] = "strideH"
 		funcCallArgsDict[IR.Int(strideW, 32)] = "strideW"
 
-		funcCallArgsDict[expr1] = "input"
-		funcCallArgsDict[expr2] = "filter"
+		funcCallArgsDict[expr_1] = "input"
+		funcCallArgsDict[expr_2] = "filter"
 		if convDim == 3:
 			funcCallArgsDict[IR.Int(Util.Config.consSF, 32)] = "consSF"
 		funcCallArgsDict[returnExpr] = "output"
@@ -992,13 +992,13 @@ class IRBuilderCSF(IRBuilderAST):
 			progExtraAfter = self.addTruncateFunctionCall(node, "ConvTranspose", returnExpr, self.scaleFac)
 		else:
 			inputs_same = (expr_1.idf == expr_2.idf)
-			expr1_sf = self.scaleFacMapping[expr1.idf]
-			expr2_sf = self.scaleFacMapping[expr2.idf]
+			expr1_sf = self.scaleFacMapping[expr_1.idf]
+			expr2_sf = self.scaleFacMapping[expr_2.idf]
 			if (expr1_sf > self.scaleFac):
-				progExtraBefore = self.addTruncateFunctionCall(node.expr1, "ConvTranspose", expr1, expr1_sf-self.scaleFac)
-				self.scaleFacMapping[expr1.idf] = self.scaleFac
+				progExtraBefore = self.addTruncateFunctionCall(node.expr1, "ConvTranspose", expr_1, expr1_sf-self.scaleFac)
+				self.scaleFacMapping[expr_1.idf] = self.scaleFac
 			if (not inputs_same) and (expr2_sf > self.scaleFac):
-				progExtraBefore = IRUtil.prog_merge(progExtraBefore, self.addTruncateFunctionCall(node.expr2, "ConvTranspose", expr2, expr2_sf-self.scaleFac))
+				progExtraBefore = IRUtil.prog_merge(progExtraBefore, self.addTruncateFunctionCall(node.expr2, "ConvTranspose", expr_2, expr2_sf-self.scaleFac))
 				self.scaleFacMapping[expr2.idf] = self.scaleFac
 			self.scaleFacMapping[returnExpr.idf] = 2*self.scaleFac
 		
@@ -1216,7 +1216,7 @@ class IRBuilderCSF(IRBuilderAST):
 		funcArgsList[tmpExpr] = "outArr"
 
 		if not(Util.Config.disableTruncOpti):
-			self.scaleFacMapping[tmpExpr.idf] = 0 #TODO -- is this the right thing to do?
+			self.scaleFacMapping[tmpExpr.idf] = -1
 
 		funcCall = IR.FuncCall("ArgMax" + self.varNameDelim + str(len(outputShape)), funcArgsList)
 		comment = IR.Comment(str(node.metadata))
