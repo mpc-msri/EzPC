@@ -890,7 +890,7 @@ class IRBuilderCSF(IRBuilderAST):
 			expr2_sf = self.scaleFacMapping[expr_2.idf]
 			if (expr1_sf > self.scaleFac):
 				progExtraBefore = self.addTruncateFunctionCall(node.expr1, "Conv", expr_1, expr1_sf-self.scaleFac)
-				self.scaleFacMapping[expr1.idf] = self.scaleFac
+				self.scaleFacMapping[expr_1.idf] = self.scaleFac
 			if (not inputs_same) and (expr2_sf > self.scaleFac):
 				progExtraBefore = IRUtil.prog_merge(progExtraBefore, self.addTruncateFunctionCall(node.expr2, "Conv", expr_2, expr2_sf-self.scaleFac))
 				self.scaleFacMapping[expr_2.idf] = self.scaleFac
