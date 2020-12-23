@@ -24,7 +24,6 @@ def remove_dead_nodes(graph, in_list, out_list):
     return opt_graph
 
 def convert_consts_to_var(graph, const_names_list):
-
   const_var_names_pairs = []
   ops_to_delete = []
   with graph.as_default():

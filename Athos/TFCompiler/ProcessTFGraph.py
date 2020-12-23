@@ -23,7 +23,8 @@ SOFTWARE.
 '''
 
 import os, sys
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'SeeDot')) #Add SeeDot directory to path
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'SeeDot')) #Add SeeDot directory to path
 
 import Graph, AST.AST as AST, _pickle as pickle, os
 from TFNodesAST import TFNodesAST
@@ -50,7 +51,7 @@ def generateIRCode(graph, extraInfoDict):
 	mtdAST = MtdAST()
 	for curNode in graph.getAllNodesRef():
 		for curInp in curNode.getInputsRef():
-			assert(curInp in dictNodeNameToOutVarStr) #Consequence of topological sorting of the TF graph
+			assert(curInp in dictNodeNameToOutVarStr), "input={} expected as input but not yet processed".format(curInp) #Consequence of topological sorting of the TF graph
 		(assignedVarAST, curAsts) = generateASTForNode(graph, curNode, dictNodeNameToOutVarStr, extraInfoDict)
 		for outputName, curAst in curAsts.items():
 			mtdForCurAST = {AST.ASTNode.mtdKeyTFOpName : curNode.getOp(),
@@ -112,7 +113,6 @@ def prefixAllPlaceHolderNodes(graph):
 			remNodes.append(curNode)
 	graph.setNodesList(placeHolderNodes + remNodes)
 
-
 # List of Optimisations
 # 1. Split squared difference into (a-b)*(a-b)
 def simplifyGraph(graph):
@@ -138,15 +138,9 @@ def simplifyGraph(graph):
 			newNodes.append(curNode)
 	graph.setNodesList(newNodes)
 
-def main():
+def process_tf_graph(filename):
 	sys.setrecursionlimit(10000)
 
-	# First read the graph file
-	if (len(sys.argv) < 2):
-		print("TF python file unspecified.", file=sys.stderr)
-		exit(1)
-
-	filename = sys.argv[1]
 	folderName = os.path.dirname(filename)
 	graphFileName = os.path.join(folderName, 'graphDef.mtdata')
 	graph = Graph.Graph()
@@ -191,4 +185,9 @@ def main():
 		pickle.dump(program, f)
 
 if __name__ == "__main__":
-	main()
+	if (len(sys.argv) < 2):
+		print("TF python file unspecified.", file=sys.stderr)
+		exit(1)
+
+	filename = sys.argv[1]
+	process_tf_graph(filename)

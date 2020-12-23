@@ -26,20 +26,46 @@ import numpy
 import tensorflow as tf
 from tensorflow.tools.graph_transforms import TransformGraph
 
-def get_optimized_graph_def(output_tensor):
-  #First save the graph def
-  graph_def = tf.get_default_graph().as_graph_def()
+def strip_variable_init_constants(graph_def, input_tensor_names, output_tensor_names):
   transforms = [
    'remove_nodes(op=Identity)', 
    'strip_unused_nodes',
-   'fold_batch_norms',
-   'fold_constants(ignore_errors=true)'
   ]
-  optimized_graph_def = TransformGraph(graph_def, [], [output_tensor.name], transforms)
+  optimized_graph_def = TransformGraph(graph_def, input_tensor_names, output_tensor_names, transforms)
   return optimized_graph_def
 
+def save_graphdef(graph_def):
+  with open('./graphDef.mtdata', 'w') as f:
+    f.write(str(graph_def))
+
+def save_sizeinfo(optimized_graph_def, sess, feed_dict):
+  # Save size information for tensors on which output depends
+  tensors_to_evaluate = []
+  tensors_to_evaluate_names = []
+  graph = sess.graph
+  for node in optimized_graph_def.node:
+    output_number = 0
+    for cur_output in graph.get_operation_by_name(node.name).outputs:
+      tensors_to_evaluate.append(cur_output)
+      if output_number == 0:
+        tensor_name = node.name
+      else:
+        tensor_name = cur_output.name
+      tensors_to_evaluate_names.append(tensor_name)
+      output_number += 1
+  tensors_evaluated = sess.run(tensors_to_evaluate, feed_dict)
+  tensors_shape = list(map(lambda x : x.shape, tensors_evaluated))
+
+  # Write size info in a file
+  with open('./sizeInfo.mtdata','w') as f:
+    for ii, curr in enumerate(tensors_to_evaluate_names):
+      curShape = tensors_shape[ii]
+      f.write(tensors_to_evaluate_names[ii] + ' ')
+      for dim in curShape:
+        f.write(str(dim)+' ')
+      f.write('\n')
+ 
 def save_graph_metadata(output_tensor, sess, feed_dict):
-  #First save the graph def
   graph_def = sess.graph_def
   transforms = [
    'remove_nodes(op=Identity)', 
@@ -80,33 +106,23 @@ def save_graph_metadata(output_tensor, sess, feed_dict):
   return optimized_graph_def
 
 def updateWeightsForBN(optimized_graph_def, sess, feed_dict={}):
-  def findNodeInGraphDefWithName(graphDef, curName):
-    for curNode in graphDef.node:
-      if curNode.name == curName:
-        return curNode
-    return None
-
-  print("Updating weights for BN...")
-
   graph = sess.graph 
   graphDef = optimized_graph_def
 
   for node in graphDef.node:
-      if (node.op == 'FusedBatchNorm' or node.op == 'FusedBatchNormV3'):
-        gamma = graph.get_operation_by_name(node.input[1]).outputs[0]
-        beta = graph.get_operation_by_name(node.input[2]).outputs[0]
-        mu = graph.get_operation_by_name(node.input[3]).outputs[0]
-        variance = graph.get_operation_by_name(node.input[4]).outputs[0]
+    if (node.op == 'FusedBatchNorm' or node.op == 'FusedBatchNormV3'):
+      gamma = graph.get_operation_by_name(node.input[1]).outputs[0]
+      beta = graph.get_operation_by_name(node.input[2]).outputs[0]
+      mu = graph.get_operation_by_name(node.input[3]).outputs[0]
+      variance = graph.get_operation_by_name(node.input[4]).outputs[0]
 
-        epsilon = node.attr['epsilon'].f
-        rsigma = tf.rsqrt(variance + epsilon)
+      epsilon = node.attr['epsilon'].f
+      rsigma = tf.rsqrt(variance + epsilon)
 
-        sess.run(tf.assign(gamma, gamma*rsigma))
-        sess.run(tf.assign(beta, beta - gamma*mu))
-        sess.run(tf.assign(mu, tf.zeros(tf.shape(mu))))
-        sess.run(tf.assign(variance, tf.fill(tf.shape(variance), 1-epsilon)))
-
-  print("BN weight updation done. Continuing...")
+      sess.run(tf.assign(gamma, gamma*rsigma), feed_dict)
+      sess.run(tf.assign(beta, beta - gamma*mu), feed_dict)
+      sess.run(tf.assign(mu, tf.zeros(tf.shape(mu))), feed_dict)
+      sess.run(tf.assign(variance, tf.fill(tf.shape(variance), 1-epsilon)), feed_dict)
 
 def dumpImageDataInt(imgData, filename, scalingFac, writeMode):
   print("Dumping image data...")
@@ -150,3 +166,19 @@ def numpy_float_array_to_float_val_str(input_array):
   for val in numpy.nditer(input_array):
     chunk += str(val) + '\n'
   return chunk
+
+def save_weights(optimized_graph_def, sess, feed_dict, filename, scaling_factor):
+  graph = sess.graph
+  varNames = [
+    node.name
+    for node in optimized_graph_def.node
+    if node.op in ["VariableV2", "Variable"]
+  ]
+  graph_vars = [graph.get_operation_by_name(i).outputs[0] for i in varNames]
+  updateWeightsForBN(optimized_graph_def, sess, feed_dict)
+  values = sess.run(graph_vars, feed_dict)
+  with open(filename, "w") as ff:
+    for val in values:
+      for xx in numpy.nditer(val, order="C"):
+        ff.write(str(int(xx * (1 << scaling_factor))) + " ")
+      ff.write("\n")

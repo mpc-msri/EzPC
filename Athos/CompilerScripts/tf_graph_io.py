@@ -18,6 +18,18 @@ def dump_pb(graph, filename):
     graph_def = graph.as_graph_def()
     f.write(graph_def.SerializeToString())
 
+def dump_graph_def_pb(graph_def, filename):
+  with tf.io.gfile.GFile(filename, 'wb') as f:
+    f.write(graph_def.SerializeToString())
+
+def dump_pb_without_vars(graph, output_names, filename):
+  with tf.io.gfile.GFile(filename, 'wb') as f:
+    with tf.Session(graph=graph) as sess:
+      sess.run(tf.global_variables_initializer())
+      graph_def = tf.compat.v1.graph_util.convert_variables_to_constants(sess,
+                    graph.as_graph_def(), output_names)
+    f.write(graph_def.SerializeToString())
+
 def save_model(graph, model_name):
   with graph.as_default():
     with tf.Session() as sess:
