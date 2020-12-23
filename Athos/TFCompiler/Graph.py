@@ -579,7 +579,12 @@ class Node:
                 self.__op = tokens[1][1:-1]
             elif (curToken == "input:"):
                 if (errIfTokensNotMinLen(tokens, 2, cnt, "node")): return (False, cnt)
-                self.__inputs.append(tokens[1][1:-1])
+                input_name = tokens[1][1:-1]
+                # Sometimes graph defs generated specify 0'th output explicitly whereas the node names do not
+                # contain that. So we strip it
+                if input_name.endswith(":0"):
+                    input_name = input_name[:-2]
+                self.__inputs.append(input_name)
             elif (curToken == "attr"):
                 (noParseError, cnt) = self.readAttrFromFilePointer(fileP, cnt)
                 if (not(noParseError)):
