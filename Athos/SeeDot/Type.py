@@ -222,7 +222,7 @@ class InferType(ASTVisitor):
 
 		assert(len(shape) == len(exprType.shape))
 		for i in range(0,len(shape)):
-			assert(shape[i] <= exprType.shape[i])
+			assert shape[i] <= exprType.shape[i], " for {}".format(node.metadata)
 
 		node.type = Tensor(shape, exprType.bitlen, exprType.isSecret, exprType.taint)
 		return node.type
