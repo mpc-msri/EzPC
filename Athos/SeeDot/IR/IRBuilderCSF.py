@@ -942,7 +942,7 @@ class IRBuilderCSF(IRBuilderAST):
 			assert(AST.Operators.findConvOutputImgSize(d_prime_tilde, pad_d_tr_total, FD, stride_d_tr) == D)
 
 		returnExpr = self.getTempVar()
-		comment = IR.Comment(expr_1.idf + ' #T ' + expr2.idf + ', convDim = ' + str(convDim))
+		comment = IR.Comment(expr_1.idf + ' #T ' + expr_2.idf + ', convDim = ' + str(convDim))
 		funcCallArgsDict = OrderedDict()
 		funcCallArgsDict[IR.Int(N, 32)] = "N"
 		if convDim==3:
