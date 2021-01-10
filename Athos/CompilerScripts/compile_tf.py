@@ -120,11 +120,12 @@ def compile(model_fname, input_t_info, output_t_names, scaling_factor, save_weig
       )
 
       tf_graph_io.dump_graph_def_pb(
-        optimized_graph_def, "optimised_" + model_fname
+        optimized_graph_def, "optimised_" + model_name + ".pb"
       )
       DumpTFMtData.save_graphdef(optimized_graph_def)
       DumpTFMtData.save_sizeinfo(optimized_graph_def, sess, feed_dict)
       print("Model compilation done.")
+      weights_path = ""
       if save_weights:
         weights_fname = (
           model_name
@@ -140,8 +141,9 @@ def compile(model_fname, input_t_info, output_t_names, scaling_factor, save_weig
         DumpTFMtData.save_weights(
           optimized_graph_def, sess, feed_dict, weights_fname, scaling_factor
         )
+        weights_path = os.path.join(model_dir, weights_fname)
   os.chdir(cwd)
-  return
+  return weights_path
 
 
 def parse_args():

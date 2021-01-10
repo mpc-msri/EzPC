@@ -61,6 +61,9 @@ def get_white_list(graph):
   mean_axes_ops = set(
     i.inputs[1].op.name for i in graph.get_operations() if i.type == "Mean"
   )
+  sum_axes_ops = set(
+    i.inputs[1].op.name for i in graph.get_operations() if i.type == "Sum"
+  )
   split_dim_ops = set(
     i.inputs[0].op.name for i in graph.get_operations() if i.type == "Split"
   )
@@ -69,14 +72,24 @@ def get_white_list(graph):
     for i in graph.get_operations()
     if i.type == "ConcatV2" or i.type == "Concat"
   )
+  argmax_axes_ops = set(
+    i.inputs[1].op.name for i in graph.get_operations() if i.type == "ArgMax"
+  )
+  divisor_ops = set(
+    i.inputs[1].op.name for i in graph.get_operations() if i.type in ["FloorDiv", "RealDiv"]
+  )
+
   white_list = (
     transp_perm_ops
     | padding_ops
     | slice_begin_ops
     | slice_size_ops
     | mean_axes_ops
+    | sum_axes_ops
     | split_dim_ops
     | concat_axes_ops
+    | argmax_axes_ops
+    | divisor_ops
   )
   return list(white_list)
 

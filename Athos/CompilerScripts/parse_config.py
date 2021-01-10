@@ -115,7 +115,7 @@ def get_shape_list(shape_string):
   if shape_string == "":
     return shape
   for i in shape_string.split(","):
-    assert i.isnumeric(), "Given input shape has non-integer values"
+    assert i.isnumeric(), "Given input shape has non-integer value : {}".format(i)
     shape.append(int(i))
   return shape
 
