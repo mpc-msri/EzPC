@@ -53,6 +53,7 @@ return os;
 #include "ezpc.h"
 
 extern int partyNum;
+extern string key_directory;
 vector<uint64_t*> toFreeMemoryLaterArr;
 int NUM_OF_PARTIES;
 
@@ -1832,37 +1833,37 @@ string whichNetwork = "Your Network";
 show_porthos_mode();
 string indep_key_location, common_key_location;
 if(partyNum == PARTY_A){
-indep_key_location = "files/keyA";
-common_key_location = "files/keyAB";
+indep_key_location = key_directory + "/keyA";
+common_key_location = key_directory + "/keyAB";
 }
 else if(partyNum == PARTY_B){
-indep_key_location = "files/keyB";
-common_key_location = "files/keyAB";
+indep_key_location = key_directory + "/keyB";
+common_key_location = key_directory + "/keyAB";
 }
 else{
-indep_key_location = "files/keyB";
-common_key_location = "files/keyAB";
+indep_key_location = key_directory + "/keyB";
+common_key_location = key_directory + "/keyAB";
 }
 aes_indep = new AESObject(indep_key_location);
 aes_common = new AESObject(common_key_location);
-aes_a_1 = new AESObject("files/keyD");
-aes_a_2 = new AESObject("files/keyD");
-aes_b_1 = new AESObject("files/keyD");
-aes_b_2 = new AESObject("files/keyD");
-aes_c_1 = new AESObject("files/keyD");
-aes_share_conv_bit_shares_p0_p2 = new AESObject("files/keyD");
-aes_share_conv_bit_shares_p1_p2 = new AESObject("files/keyD");
-aes_share_conv_shares_mod_odd_p0_p2 = new AESObject("files/keyD");
-aes_share_conv_shares_mod_odd_p1_p2 = new AESObject("files/keyD");
-aes_comp_msb_shares_lsb_p0_p2 = new AESObject("files/keyD");
-aes_comp_msb_shares_lsb_p1_p2 = new AESObject("files/keyD");
-aes_comp_msb_shares_bit_vec_p0_p2 = new AESObject("files/keyD");
-aes_comp_msb_shares_bit_vec_p1_p2 = new AESObject("files/keyD");
-aes_conv_opti_a_1 = new AESObject("files/keyD");
-aes_conv_opti_a_2 = new AESObject("files/keyD");
-aes_conv_opti_b_1 = new AESObject("files/keyD");
-aes_conv_opti_b_2 = new AESObject("files/keyD");
-aes_conv_opti_c_1 = new AESObject("files/keyD");
+aes_a_1 = new AESObject(key_directory + "/keyD");
+aes_a_2 = new AESObject(key_directory + "/keyD");
+aes_b_1 = new AESObject(key_directory + "/keyD");
+aes_b_2 = new AESObject(key_directory + "/keyD");
+aes_c_1 = new AESObject(key_directory + "/keyD");
+aes_share_conv_bit_shares_p0_p2 = new AESObject(key_directory + "/keyD");
+aes_share_conv_bit_shares_p1_p2 = new AESObject(key_directory + "/keyD");
+aes_share_conv_shares_mod_odd_p0_p2 = new AESObject(key_directory + "/keyD");
+aes_share_conv_shares_mod_odd_p1_p2 = new AESObject(key_directory + "/keyD");
+aes_comp_msb_shares_lsb_p0_p2 = new AESObject(key_directory + "/keyD");
+aes_comp_msb_shares_lsb_p1_p2 = new AESObject(key_directory + "/keyD");
+aes_comp_msb_shares_bit_vec_p0_p2 = new AESObject(key_directory + "/keyD");
+aes_comp_msb_shares_bit_vec_p1_p2 = new AESObject(key_directory + "/keyD");
+aes_conv_opti_a_1 = new AESObject(key_directory + "/keyD");
+aes_conv_opti_a_2 = new AESObject(key_directory + "/keyD");
+aes_conv_opti_b_1 = new AESObject(key_directory + "/keyD");
+aes_conv_opti_b_2 = new AESObject(key_directory + "/keyD");
+aes_conv_opti_c_1 = new AESObject(key_directory + "/keyD");
 aes_parallel = new ParallelAESObject(common_key_location);
 
 if (MPC)
