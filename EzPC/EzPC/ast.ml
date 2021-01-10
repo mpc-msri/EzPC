@@ -155,7 +155,16 @@ let unop_to_string (u:unop) :string =
   | U_minus -> "-"
   | Bitwise_neg -> "~"
   | Not -> "!"
-            
+
+let bt_to_string (bt:base_type) :string =
+  match bt with
+  | UInt32 ->  "uint32_t"
+  | UInt64 -> "uint64_t"
+  | Int32  ->  "int32_t"
+  | Int64  ->  "int64_t"
+  | Bool   ->  "uint32_t"
+
+
 let binop_to_string (b:binop) :string =
   match b with
   | Sum -> "+"
