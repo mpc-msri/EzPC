@@ -115,7 +115,7 @@ class TypeCast(IntExpr):
 			
 class IntBop(IntExpr):
 	def __init__(self, e1:IntExpr, op:Op.Op, e2:IntExpr):
-		assert(op in Op.Op.op_list('+ - * / << >> & | ^'))
+		assert(op in Op.Op.op_list('+ - * / << >> & | ^ =='))
 		self.e1 = e1
 		self.op = op
 		self.e2 = e2

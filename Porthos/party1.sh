@@ -13,5 +13,5 @@ then
 	exit 1
 fi
 
-./src/build/bin/$1 1 files/addresses
+./src/build/bin/$1 1 files/addresses files/keys
 

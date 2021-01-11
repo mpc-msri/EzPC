@@ -28,6 +28,7 @@ using namespace std;
 
 //this player number
 int partyNum;
+string key_directory;
 //aes_key of the party
 char *party_aes_key;
 
@@ -48,18 +49,19 @@ void parseInputs(int argc,
 		char* argv[])
 {	
 	assert((sizeof(double) == sizeof(porthosSecretType)) && "sizeof(double) != sizeof(porthosSecretType)");
-	if(argc == 3){
+	if(argc == 4){
 		instanceID = 0;
 	}
-	else if(argc == 4){
+	else if(argc == 5){
 		instanceID = atoi(argv[3]);
 	}
 	else{
 		porthos_throw_error(PARSE_ERROR);
-		cout<<"Porthos expects either 3 or 4 CLI arguments!"<<endl;
+		cout<<"Porthos expects either 4 or 5 CLI arguments!"<<endl;
 	}
 	NUM_OF_PARTIES = 3;
 	partyNum = atoi(argv[1]);
+	key_directory = argv[3];
 }
 
 

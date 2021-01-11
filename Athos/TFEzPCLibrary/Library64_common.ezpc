@@ -136,13 +136,13 @@ def void MatAdd5(int32_pl a1, int32_pl a2, int32_pl a3, int32_pl a4, int32_pl a5
 	};
 }
 (**************************)
-def void CreateTensor1(int32_pl s1, int32_pl val, int32_pl[s1] arr){
+def void CreateTensor1(int32_pl s1, int64_pl val, int64_pl[s1] arr){
 	for i1=[0:s1]{
 		arr[i1] = val;
 	};
 }
 
-def void CreateTensor2(int32_pl s1, int32_pl s2, int32_pl val, int32_pl[s1][s2] arr){
+def void CreateTensor2(int32_pl s1, int32_pl s2, int64_pl val, int64_pl[s1][s2] arr){
 	for i1=[0:s1]{
 		for i2=[0:s2]{
 			arr[i1][i2] = val;
@@ -150,7 +150,7 @@ def void CreateTensor2(int32_pl s1, int32_pl s2, int32_pl val, int32_pl[s1][s2] 
 	};
 }
 
-def void CreateTensor3(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl val, int32_pl[s1][s2][s3] arr){
+def void CreateTensor3(int32_pl s1, int32_pl s2, int32_pl s3, int64_pl val, int64_pl[s1][s2][s3] arr){
 	for i1=[0:s1]{
 		for i2=[0:s2]{
 			for i3=[0:s3]{
@@ -160,7 +160,7 @@ def void CreateTensor3(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl val, int3
 	};
 }
 
-def void CreateTensor4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl val, int32_pl[s1][s2][s3][s4] arr){
+def void CreateTensor4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int64_pl val, int64_pl[s1][s2][s3][s4] arr){
 	for i1=[0:s1]{
 		for i2=[0:s2]{
 			for i3=[0:s3]{
@@ -172,7 +172,7 @@ def void CreateTensor4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32
 	};
 }
 
-def void CreateTensor5(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int32_pl val, int32_pl[s1][s2][s3][s4][s5] arr){
+def void CreateTensor5(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int64_pl val, int64_pl[s1][s2][s3][s4][s5] arr){
 	for i1=[0:s1]{
 		for i2=[0:s2]{
 			for i3=[0:s3]{
