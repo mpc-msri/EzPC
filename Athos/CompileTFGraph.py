@@ -79,7 +79,7 @@ Config file should be a json in the following format:
   args = parser.parse_args()
   return args
 
-def generate_code(params):
+def generate_code(params, debug=False):
   # Mandatory
   model_name = params["model_name"]
   input_tensor_info = params["input_tensors"]
@@ -201,8 +201,9 @@ def generate_code(params):
     "eval `opam config env`; ./ezpc.sh {} ".format(ezpc_file_name) + ezpc_args
   )
   os.system(
-    "cp {output} {model_dir} ".format(output=output_name, model_dir=model_abs_dir)
+    "mv {output} {model_dir} ".format(output=output_name, model_dir=model_abs_dir)
   )
+  os.system("rm {}".format(ezpc_file_name))
   output_file = os.path.join(model_abs_dir, output_name)
 
   if target == "PORTHOS2PC":
@@ -211,20 +212,24 @@ def generate_code(params):
     program_name = model_base_name + "_" + target + ".out"
   program_path = os.path.join(model_abs_dir, program_name)
   os.chdir(model_abs_dir)
+  if debug:
+    opt_flag = "-O0 -g"
+  else:
+    opt_flag = "-O3"
   if target in [ "CPP", "CPPRING"]:
     os.system(
-      "g++ -O3 -w {file} -o {output}".format(file=output_file, output=program_path)
+      "g++ {opt_flag} -w {file} -o {output}".format(file=output_file, output=program_path, opt_flag=opt_flag)
     )
   elif target == "PORTHOS":
     porthos_src = os.path.join(athos_dir, "..", "Porthos", "src")
     porthos_lib = os.path.join(porthos_src, "build", "lib")
     if os.path.exists(porthos_lib):
       os.system(
-        """g++ -O3 -fopenmp -pthread -w -march=native -msse4.1 -maes -mpclmul \
+        """g++ {opt_flag} -fopenmp -pthread -w -march=native -msse4.1 -maes -mpclmul \
         -mrdseed -fpermissive -fpic -std=c++17 -L {porthos_lib} -I {porthos_headers} {file} \
         -lPorthos-Protocols -lssl -lcrypto -lrt -lboost_system \
         -o {output}""".format(porthos_lib=porthos_lib, porthos_headers=porthos_src,
-          file=output_file, output=program_path)
+          file=output_file, output=program_path, opt_flag=opt_flag)
       )
     else:
       print("Not compiling generated code. Please follow the readme and build Porthos.")
@@ -236,11 +241,11 @@ def generate_code(params):
     seal_lib_path = os.path.join(sci, "extern", "SEAL", "native", "lib")
     if os.path.exists(sci_lib):
       os.system(
-        """g++ -O3 -fpermissive -pthread -w -maes -msse4.1 -mavx -mavx2 -mrdseed \
+        """g++ {opt_flag} -fpermissive -pthread -w -maes -msse4.1 -mavx -mavx2 -mrdseed \
         -faligned-new -std=c++17 -fopenmp -I {eigen} -I {sci_src} {file} \
         -L {sci_lib} -lSCI-LinearHE -L {seal} -lseal -lssl -lcrypto \
         -o {output}""".format(eigen=eigen_path, sci_src=sci_src,
-          file=output_file,sci_lib=sci_lib,seal=seal_lib_path, output=program_path)
+          file=output_file,sci_lib=sci_lib,seal=seal_lib_path, output=program_path, opt_flag=opt_flag)
       )
     else:
       print("Not compiling generated code. Please follow the readme and build SCI.")
