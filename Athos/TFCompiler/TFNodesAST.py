@@ -589,7 +589,11 @@ class TFNodesAST:
 		reductionAxesNodeName = inputsRef[1]
 		redAxesN = graph.__getitem__(reductionAxesNodeName)
 		redAxesT = redAxesN.getAttrVal("value").getTensor()
-		reductionAxesList = redAxesT.getContentAsValArr()
+		rank = redAxesT.getShapeRef().getRank()
+		if rank != 0:
+			reductionAxesList = redAxesT.getContentAsValArr()
+		else:
+			reductionAxesList = [redAxesT.getConstantVal()]
 
 		curNodeShapeLi = extraNodeInfoDict[curNode.getName()][0]
 		return (None, { curNode.getName() : AST.Reduce(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]), 
@@ -609,7 +613,11 @@ class TFNodesAST:
 		reductionAxesNodeName = inputsRef[1]
 		redAxesN = graph.__getitem__(reductionAxesNodeName)
 		redAxesT = redAxesN.getAttrVal("value").getTensor()
-		reductionAxesList = redAxesT.getContentAsValArr()
+		rank = redAxesT.getShapeRef().getRank()
+		if rank != 0:
+			reductionAxesList = redAxesT.getContentAsValArr()
+		else:
+			reductionAxesList = [redAxesT.getConstantVal()]
 
 		curNodeShapeLi = extraNodeInfoDict[curNode.getName()][0]
 		return (None, { curNode.getName() : AST.Reduce(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]),  

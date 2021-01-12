@@ -1289,11 +1289,14 @@ class IRBuilderCSF(IRBuilderAST):
 				if node.keepdims == 1:
 					calculated_shape.append(1)
 					outputiters.append(IR.Int(0,32))
+		if calculated_shape == []:
+			calculated_shape = [1]
+			outputiters.append(IR.Int(0,32))
 		# perm will now be [ 1 ,2 ] + [ 0, 3]
 		perm.extend(reduced_dims)
 		loop_shape = [inputShape[perm[i]] for i in range(len(inputShape))]
 		outputShape = node.type.shape
-		assert(calculated_shape == outputShape)
+		assert calculated_shape == outputShape, "calculate shape:{} - real_shape: {}".format(calculated_shape, outputShape)
 
 		sumExpr = self.getTempVar()
 		sumExpr_decl = IR.Decl(sumExpr.idf, Type.Int())
