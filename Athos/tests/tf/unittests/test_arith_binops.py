@@ -164,7 +164,6 @@ def test_matmul(
     config = Config(backend).add_input(a).add_output(output)
     if not bisModel:
         config.add_input(b)
-    config.config["scale"] = 12
     compiler = Compiler(graph, config, test_dir)
     mpc_output = compiler.compile_and_run([a_inp])
     assert_almost_equal(tf_output=expected_output, mpc_tensor=mpc_output, precision=2)

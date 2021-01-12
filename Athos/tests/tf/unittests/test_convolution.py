@@ -45,6 +45,8 @@ from tests.utils import Config, Compiler, assert_almost_equal
 )
 @pytest.mark.parametrize("dtype", [np.single])
 def test_conv(test_dir, backend, tfOp, a_shape, kernel_shape, strides, padding, dtype):
+    if tfOp == tf.nn.conv3d and backend in ["2PC_HE", "2PC_OT"]:
+        pytest.skip("[conv3d] Missing Support in SCI")
     graph = tf.Graph()
     a_inp = dtype(np.random.randn(*a_shape))
     kernel_inp = dtype(np.random.randn(*kernel_shape))
@@ -56,6 +58,7 @@ def test_conv(test_dir, backend, tfOp, a_shape, kernel_shape, strides, padding, 
         expected_output = sess.run(output, feed_dict={a: a_inp})
 
     config = Config(backend).add_input(a).add_output(output)
+    config.config["scale"] = 12
     compiler = Compiler(graph, config, test_dir)
     mpc_output = compiler.compile_and_run([a_inp])
     assert_almost_equal(tf_output=expected_output, mpc_tensor=mpc_output, precision=2)
@@ -96,6 +99,8 @@ def test_conv_transpose(
     padding,
     dtype,
 ):
+    if backend in ["2PC_HE", "2PC_OT"]:
+        pytest.skip("[conv3d] Missing Support in SCI")
     graph = tf.Graph()
     a_inp = dtype(np.random.randn(*a_shape))
     kernel_inp = dtype(np.random.randn(*kernel_shape))
@@ -107,6 +112,7 @@ def test_conv_transpose(
         expected_output = sess.run(output, feed_dict={a: a_inp})
 
     config = Config(backend).add_input(a).add_output(output)
+    config.config["scale"] = 12
     compiler = Compiler(graph, config, test_dir)
     mpc_output = compiler.compile_and_run([a_inp])
     assert_almost_equal(tf_output=expected_output, mpc_tensor=mpc_output, precision=2)

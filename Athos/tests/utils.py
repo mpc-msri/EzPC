@@ -1,4 +1,4 @@
-'''
+"""
 
 Authors: Pratik Bhatu.
 
@@ -20,7 +20,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-'''
+"""
 import tempfile
 import sys
 import os
@@ -51,11 +51,13 @@ class Config:
         elif mode == "2PC_OT":
             self.config["target"] = "PORTHOS2PC"
             self.config["bitlength"] = 41
+            self.config["scale"] = 12
             self.config["backend"] = "OT"
 
         elif mode == "2PC_HE":
             self.config["target"] = "PORTHOS2PC"
             self.config["bitlength"] = 41
+            self.config["scale"] = 12
             self.config["backend"] = "HE"
         else:
             assert False, "Mode has to be one of CPP/3PC/2PC_OT/2PC_HE"
@@ -129,7 +131,7 @@ class Program:
         self.target = params["target"]
         self.test_dir = test_dir
 
-    def run(self, inputs):
+    def run(self, inputs, timeoutSeconds):
         # scale input and dump to file
         inputs_scaled = os.path.join(
             self.test_dir, "input_fixedpt_scale_" + str(self.scale) + ".inp"
@@ -175,7 +177,10 @@ class Program:
             commands = [client_cmd, server_cmd, party2_cmd]
             procs = [subprocess.Popen(i, shell=True) for i in commands]
             for p in procs:
-                p.wait()
+                try:
+                    p.wait(timeoutSeconds)
+                except subprocess.TimeoutExpired:
+                    p.kill()
         elif self.target == "PORTHOS2PC":
             util_dir = os.path.dirname(os.path.abspath(__file__))
             sci_dir = os.path.join(util_dir, "..", "..", "SCI")
@@ -195,7 +200,10 @@ class Program:
             commands = [client_cmd, server_cmd]
             procs = [subprocess.Popen(i, shell=True) for i in commands]
             for p in procs:
-                p.wait()
+                try:
+                    p.wait(timeoutSeconds)
+                except subprocess.TimeoutExpired:
+                    p.kill()
         return convert_raw_output_to_np(raw_output, self.bitlength, self.scale)
 
 
@@ -205,13 +213,15 @@ class Compiler:
         self.config = config.config
         self.test_dir = test_dir
 
-    def compile_and_run(self, inputs):
+    def compile_and_run(self, inputs, timeoutSeconds=40):
         save_graph(self.graph_def, self.config, self.test_dir)
         params = get_params(self.config)
         print(params)
-        (output_program, model_weight_file) = CompileTFGraph.generate_code(params)
+        (output_program, model_weight_file) = CompileTFGraph.generate_code(
+            params, debug=False
+        )
         prog = Program(output_program, model_weight_file, params, self.test_dir)
-        output = prog.run(inputs)
+        output = prog.run(inputs, timeoutSeconds)
         return output
 
 

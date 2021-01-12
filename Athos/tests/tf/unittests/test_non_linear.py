@@ -35,7 +35,7 @@ from tests.utils import Config, Compiler, assert_almost_equal
 
 
 @pytest.mark.skip(reason="[non-linear] Haven't made non-linear functionalities public")
-@pytest.mark.parametrize("a_shape", [(4, 4), (1,), ()])
+@pytest.mark.parametrize("a_shape", [[4, 4], [1], []])
 @pytest.mark.parametrize("dtype", [np.single])
 @pytest.mark.parametrize(
     "tfOp",
@@ -63,7 +63,7 @@ def test_non_linear(test_dir, backend, tfOp, a_shape, dtype):
     return
 
 @pytest.mark.skip(reason="[softmax] Haven't made non-linear functionalities public")
-@pytest.mark.parametrize("a_shape, axis", [((2, 3), 1), ((1,), 0)])
+@pytest.mark.parametrize("a_shape, axis", [([2, 3], 1), ([1], 0)])
 @pytest.mark.parametrize("dtype", [np.single])
 def test_softmax(test_dir, backend, a_shape, axis, dtype):
     graph = tf.Graph()

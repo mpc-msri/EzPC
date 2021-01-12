@@ -40,11 +40,9 @@ from tests.utils import Config, Compiler, assert_almost_equal
         ([2, 3], [6]),
         ([6], [2, 3]),
         ([2, 3], [3, 2]),
-        ([2, 3], [-1]),  # Flatten 1-D
-        pytest.param(
-            [1], [], marks=pytest.mark.skip(reason="[reshape] dumping weights error")
-        ),  # convert to scalar
-        ([3, 2, 3], [2, -1]),  # infer -1 as 9
+        ([2, 3], [-1]),        # Flatten 1-D,
+        ([1], []),              # convert to scalar,
+        ([3, 2, 3], [2, -1]),  # infer -1 as 9,
         ([3, 2, 3], [-1, 9]),  # infer -1 as 2
     ],
 )
@@ -126,7 +124,6 @@ def test_split(test_dir, backend, a_shape, num_or_size_splits, axis, dtype):
 
 
 # Squeeze
-# TODO: also add a squeeze dim example.
 @pytest.mark.parametrize(
     "a_shape, axis",
     [

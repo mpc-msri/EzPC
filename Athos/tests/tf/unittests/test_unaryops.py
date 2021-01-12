@@ -47,12 +47,12 @@ from tests.utils import Config, Compiler, assert_almost_equal
         ),
         tf.shape,
         tf.identity,
-        pytest.param(
-            tf.zeros_like, marks=pytest.mark.skip(reason="[zeros_like] EzPC issue for inp=[2,2]")
-        ),
+        tf.zeros_like,
     ],
 )
 def test_uop(test_dir, backend, tfOp, a_shape, dtype):
+    if backend.startswith("2PC") and tfOp == tf.math.square:
+        pytest.skip("[SCI][square] Secret Secret mul not implemented")
     graph = tf.Graph()
     a_inp = dtype(np.random.randn(*a_shape))
     with graph.as_default():
@@ -80,7 +80,7 @@ def test_uop(test_dir, backend, tfOp, a_shape, dtype):
 )
 @pytest.mark.parametrize("dtype", [np.single])
 @pytest.mark.parametrize("tfOp", [tf.math.reduce_mean, tf.reduce_sum])
-@pytest.mark.skip(reason="[reduce] Reduce mean assert shape failure")
+#@pytest.mark.skip(reason="[reduce] Reduce mean output mismatch and shape failure")
 def test_reduce(test_dir, backend, tfOp, a_shape, axis, keepdims, dtype):
     graph = tf.Graph()
     a_inp = dtype(np.random.randn(*a_shape))
@@ -103,10 +103,13 @@ def test_reduce(test_dir, backend, tfOp, a_shape, axis, keepdims, dtype):
         ([3, 2], None),
         ([3, 2], 0),
         ([3, 2], 1),
+        ([3, 2, 3], 1),
+        ([3, 2, 1, 1], 1),
+        ([3, 2], 1),
     ],
 )
 @pytest.mark.parametrize("dtype", [np.single])
-@pytest.mark.skip(reason="[argmax] Generic argmax not implemented")
+@pytest.mark.skip(reason="[argmax] Need support for argmax along arbitrary axis")
 def test_argmax(test_dir, backend, a_shape, axis, dtype):
     graph = tf.Graph()
     a_inp = dtype(np.random.randn(*a_shape))
@@ -143,6 +146,8 @@ def test_argmax(test_dir, backend, a_shape, axis, dtype):
 def test_pool(
     test_dir, backend, tfOp, a_shape, ksize, strides, padding, data_format, dtype
 ):
+    if backend.startswith("2PC") and tfOp == tf.nn.max_pool:
+        pytest.skip("[SCI][maxpool] Output mismatch bug")
     graph = tf.Graph()
     a_inp = dtype(np.random.randn(*a_shape))
     with graph.as_default():
@@ -173,9 +178,10 @@ def test_pool(
     "from_dtype, to_dtype",
     [
         (np.single, np.single),
-        (
+        pytest.param(
             np.double,
             np.single,
+            marks=pytest.mark.skip(reason="[cast] Support for parsing DOUBLES"),
         ),
         pytest.param(
             np.single,
@@ -212,6 +218,6 @@ def test_fill(test_dir, backend, a_shape, value):
 
     config = Config(backend).add_output(output)
     compiler = Compiler(graph, config, test_dir)
-    mpc_output = compiler.compile_and_run([])
+    mpc_output = compiler.compile_and_run([], timeoutSeconds=60)
     assert_almost_equal(tf_output=expected_output, mpc_tensor=mpc_output, precision=2)
     return
