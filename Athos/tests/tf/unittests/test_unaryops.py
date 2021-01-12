@@ -75,6 +75,9 @@ def test_uop(test_dir, backend, tfOp, a_shape, dtype):
         ([3, 2], [0, 1], False),
         ([3, 2], 0, False),
         ([3, 2], 1, False),
+        ([3, 2, 4], 1, False),
+        ([3, 2, 4], [1, 2], False),
+        ([3, 2, 4], [2, 1], False),
         ([3, 2], 0, True),
     ],
 )
