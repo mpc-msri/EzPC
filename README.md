@@ -37,8 +37,6 @@ Please do ``source mpc_venv/bin/activate`` before using the toolchain.
 
 We plan to release a docker version of the system as well which will make the system easier to setup.
 
-We plan to release a docker version of the system as well which will make the system easier to setup.
-
 ## Wiki
 Wiki section of this repository provides coding practices and examples to get started with EzPC.
 
