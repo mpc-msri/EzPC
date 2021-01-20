@@ -141,7 +141,10 @@ def simplifyGraph(graph):
 def process_tf_graph(filename):
 	sys.setrecursionlimit(10000)
 
-	folderName = os.path.dirname(filename)
+	if os.path.isfile(filename):
+		folderName = os.path.dirname(filename)
+	elif os.path.isdir(filename):
+		folderName = filename
 	graphFileName = os.path.join(folderName, 'graphDef.mtdata')
 	graph = Graph.Graph()
 	with open(graphFileName) as file:

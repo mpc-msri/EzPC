@@ -38,6 +38,18 @@ import time
 import numpy
 import matplotlib
 import tensorflow as tf
+
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
+from tensorflow.python.util import deprecation
+deprecation._PRINT_DEPRECATION_WARNINGS = False
+try:
+	from tensorflow.python.util import module_wrapper as deprecation
+except ImportError:
+	from tensorflow.python.util import deprecation_wrapper as deprecation
+deprecation._PER_MODULE_WARNING_LIMIT = 0
+
+
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'TFCompiler'))
 import DumpTFMtData
 from argparse import ArgumentParser
@@ -487,6 +499,10 @@ def infer(sqn, sess, images, labels, restoreModelPath, findAccOrArgMaxOrPredVal=
 	print("Time taken in prediction : ", duration)
 
 	print("Inference result = ", predictions)
+	with open('tf_pred.float','w+') as f:
+		f.write(DumpTFMtData.numpy_float_array_to_float_val_str(predictions))
+	with open('tf_pred.time','w') as f:
+		f.write(str(round(duration, 2))) 
 	return predictions
 
 def getTrainedWeightsStrForm(sess, evalTensors, scalingFac):
@@ -600,8 +616,8 @@ def main():
 				findAndSaveCorrectTestImg(pred, testing_features, testing_labels, './testPred/CorrectImg/', './testPred/IncorrectImg/', './testPred/TestInputs/', sess, sqn, scalingFac)
 
 			if (inp == 'savegraphAndDataBatch' or inp=='testSingleTestInpAndSaveData'):
-				imgFileName = 'SqNet_CIFAR_img.inp'
-				weightsFileName = 'SqNet_CIFAR_weights.inp'
+				imgFileName = "model_input_scale_{}.inp".format(scalingFac)
+				weightsFileName = "model_weights_scale_{}.inp".format(scalingFac)
 				for ii,curFeature in enumerate(testing_features):
 					if ii == 0 :
 						DumpTFMtData.dumpImageDataInt(curFeature, imgFileName, scalingFac, 'w')

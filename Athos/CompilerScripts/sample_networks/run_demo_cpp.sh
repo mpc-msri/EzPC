@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Authors: Nishant Kumar.
+# Authors: Pratik Bhatu.
 
 # Copyright:
-# Copyright (c) 2020 Microsoft Research
+# Copyright (c) 2021 Microsoft Research
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
@@ -20,8 +20,31 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-if [ ! -f "CIFAR10/cifar-10-python.tar.gz" ]; then
-	wget "https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz" -P ./CIFAR10
-	cd CIFAR10
-	tar -xvzf cifar-10-python.tar.gz --directory=.
+MODEL_DIR=$1
+MODEL_BINARY_PATH=$2
+MODEL_INPUT_PATH=$3
+MODEL_WEIGHT_PATH=$4
+
+MODEL_NAME=$(basename ${MODEL_DIR})
+SESSION_NAME=${MODEL_NAME}
+
+tmux has-session -t "${SESSION_NAME}" > /dev/null 2>&1
+if [ "$?" -eq 0 ]; then
+	echo "Killing existing tmux ${SESSION_NAME} session"
+    tmux kill-session -t "${SESSION_NAME}"
 fi
+
+tmux new-session -s "${SESSION_NAME}" -d
+tmux send-keys -t "${SESSION_NAME}:0.0" "clear" Enter
+
+TIME_CMD="/usr/bin/time --format \"%M %U %S %e\""
+RUN_CMD="${MODEL_BINARY_PATH} < <(cat ${MODEL_INPUT_PATH} ${MODEL_WEIGHT_PATH})"
+DUMP_CMD="> ${MODEL_DIR}/mpc_output.out 2> ${MODEL_DIR}/party0_stats"
+FINAL_CMD="${TIME_CMD} ${RUN_CMD} ${DUMP_CMD}"
+
+tmux send-keys -t "${SESSION_NAME}:0.0" "${FINAL_CMD}" Enter
+
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+FINAL_CMD="clear; ${SCRIPT_DIR}/print_stats_cpp.sh ${MODEL_DIR}"
+
+tmux send-keys -t "${SESSION_NAME}:0.0" "${FINAL_CMD}" Enter

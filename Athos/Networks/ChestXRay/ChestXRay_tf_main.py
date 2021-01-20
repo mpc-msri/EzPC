@@ -24,6 +24,18 @@ SOFTWARE.
 
 import cv2, numpy, sys, os, argparse, time
 import tensorflow as tf
+
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
+from tensorflow.python.util import deprecation
+deprecation._PRINT_DEPRECATION_WARNINGS = False
+try:
+    from tensorflow.python.util import module_wrapper as deprecation
+except ImportError:
+    from tensorflow.python.util import deprecation_wrapper as deprecation
+deprecation._PER_MODULE_WARNING_LIMIT = 0
+
+
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'TFCompiler'))
 import DumpTFMtData
 
@@ -83,7 +95,13 @@ with tf.Session() as sess:
     predictions = sess.run(output_tensor, feed_dict=feed_dict)
     end_time = time.time()
     print("*************** Done Prediction****************")
+    duration = end_time - start_time
+    print("Time taken in inference : ", duration)
     print(predictions)
+    with open('tf_pred.float','w+') as f:
+      f.write(DumpTFMtData.numpy_float_array_to_float_val_str(predictions))
+    with open('tf_pred.time','w') as f:
+      f.write(str(round(duration, 2))) 
 
   trainVarsName = []
   for node in optimized_graph_def.node:
@@ -91,9 +109,10 @@ with tf.Session() as sess:
       trainVarsName.append(node.name)
   trainVars = list(map(lambda x : tf.get_default_graph().get_operation_by_name(x).outputs[0] , trainVarsName))
   if args.savePreTrainedWeightsInt:
-    DumpTFMtData.dumpTrainedWeights(sess, trainVars, 'ChestXRay_weights_{0}.inp'.format(args.scalingFac), args.scalingFac, 'w')
+    DumpTFMtData.dumpTrainedWeights(sess, trainVars, "model_weights_scale_{}.inp".format(args.scalingFac), args.scalingFac, 'w')
   if args.savePreTrainedWeightsFloat:
-    DumpTFMtData.dumpTrainedWeightsFloat(sess, trainVars, 'ChestXRay_weights_float.inp', 'w')
+    DumpTFMtData.dumpTrainedWeightsFloat(sess, trainVars, 'model_weights_float.inp', 'w')
   if args.saveImgAndWtData:
-    DumpTFMtData.dumpImgAndWeightsDataSeparate(sess, images[0], trainVars, 'ChestXRay_img_{0}.inp'.format(args.scalingFac), 'ChestXRay_weights_{0}.inp'.format(args.scalingFac), args.scalingFac)
+    DumpTFMtData.dumpImgAndWeightsDataSeparate(sess, images[0], trainVars, "model_input_scale_{}.inp".format(args.scalingFac),
+                                                        "model_weights_scale_{}.inp".format(args.scalingFac), args.scalingFac)
     

@@ -31,7 +31,6 @@ import sys
 
 import TFCompiler.ProcessTFGraph as Athos
 import CompilerScripts.parse_config as parse_config
-import CompilerScripts.compile_tf as compile_tf
 
 
 def parse_args():
@@ -45,36 +44,28 @@ Config file should be a json in the following format:
 {
   //--------------------------- Mandatory options ---------------------------
 
-  "model_name":"model.pb",  // Tensorflow protobuf file to compile.
-  "output_tensors":[
-    "output1",
-    "output2"
-  ],
-  "target":"PORTHOS2PC",  // Compilation target. ABY/CPP/CPPRING/PORTHOS/PORTHOS2PC
+  "network_name":"ResNet",  // Any network name from Athos/Networks directory (ResNet/DenseNet/ChestXRay/..)
+  "target":"PORTHOS2PC",    // Compilation target. ABY/CPP/CPPRING/PORTHOS/PORTHOS2PC
 
 
   
   //--------------------------- Optional options ---------------------------
-  "scale":10,             // Scaling factor to compile for. DEFAULT=12.
-  "bitlength":64,         // Bit length to compile for. DEFAULT=12.
-  "save_weights" : true,  // Save model scaled weights in fixed point. DEFAULT=false.
+  "scale":10,           // Scaling factor to compile for. DEFAULT=12.
+  "bitlength":64,       // Bit length to compile for. DEFAULT=64.
 
-  "input_tensors":{               // Name and shape of the input tensors
-    "actual_input_1":"224,244,3", // for the model. Not required if the
-    "input2":"2,245,234,3"        // placeholder nodes have shape info in the .pb file.
-  },
   "modulo" : 32,      // Modulo to be used for shares. Applicable for 
                       // CPPRING/PORTHOS2PC backend. For 
                       // PORTHOS2PC + backend=OT => Power of 2 
                       // PORTHOS2PC + backend=HE => Prime value."
 
-  "backend" : "OT",   // Backend to be used - OT/HE (default OT). 
+  "backend" : "OT",   // Backend to be used - OT/HE (DEFAULT=OT). 
                       // Only applicable for PORTHOS2PC backend
 
   "disable_all_hlil_opts" : false,      // Disable all optimizations in HLIL. DEFAULT=false
   "disable_relu_maxpool_opts" : false,  // Disable Relu-Maxpool optimization. DEFAULT=false
   "disable_garbage_collection" : false, // Disable Garbage Collection optimization. DEFAULT=false
   "disable_trunc_opts" : false          // Disable truncation placement optimization. DEFAULT=false
+  "run_in_tmux" : false                 // Also run the compiled program in a new tmux session
 }
 """,
     )
@@ -83,13 +74,16 @@ Config file should be a json in the following format:
 
 
 def generate_code(params, debug=False):
-    model_name = params["model_name"]
-    input_tensor_info = params["input_tensors"]
-    output_tensors = params["output_tensors"]
+    network_name = params["network_name"]
+    assert network_name in [
+        "ResNet",
+        "DenseNet",
+        "SqueezeNetImgNet",
+        "SqueezeNetCIFAR10"
+    ], "Network must be any of ResNet/DenseNet/SqueezeNetImgNet/SqueezeNetCIFAR10"
     scale = 12 if params["scale"] is None else params["scale"]
     bitlength = 64 if params["bitlength"] is None else params["bitlength"]
     target = params["target"]
-    save_weights = False if params["save_weights"] is None else params["save_weights"]
     disable_all_hlil_opts = (
         False
         if params["disable_all_hlil_opts"] is None
@@ -110,6 +104,8 @@ def generate_code(params, debug=False):
     )
     modulo = params["modulo"]
     backend = "OT" if params["backend"] is None else params["backend"]
+    run_in_tmux = False if params["run_in_tmux"] is None else params["run_in_tmux"]
+
     assert bitlength <= 64 and bitlength >= 1, "Bitlen must be >= 1 and <= 64"
     assert target in [
         "PORTHOS",
@@ -121,18 +117,28 @@ def generate_code(params, debug=False):
 
     cwd = os.getcwd()
     athos_dir = os.path.dirname(os.path.abspath(__file__))
-    model_abs_path = os.path.abspath(model_name)
-    model_abs_dir = os.path.dirname(model_abs_path)
-    # Generate graphdef and sizeInfo metadata
-    weights_path = compile_tf.compile(
-        model_name, input_tensor_info, output_tensors, scale, save_weights
+    model_abs_dir = os.path.join(athos_dir, "Networks", network_name)
+    if not os.path.exists(model_abs_dir):
+        sys.exit("Model directory {} does not exist".format(model_abs_dir))
+
+    # Generate graphdef and sizeInfo metadata, and dump model weights
+    os.chdir(model_abs_dir)
+    os.system("./setup_and_run.sh {scale}".format(scale=scale))
+    os.chdir(cwd)
+    print(
+        "--------------------------------------------------------------------------------"
+    )
+    print("Compiling model to EzPC")
+    print(
+        "--------------------------------------------------------------------------------"
     )
 
     # Compile to seedot. Generate AST in model directory
-    Athos.process_tf_graph(model_abs_path)
+    print("model_dir = ", model_abs_dir)
+    Athos.process_tf_graph(model_abs_dir)
 
     # Compile to ezpc
-    model_base_name = os.path.basename(model_abs_path)[:-3]
+    model_base_name = network_name
     ezpc_file_name = "{mname}_{bl}_{target}.ezpc".format(
         mname=model_base_name, bl=bitlength, target=target.lower()
     )
@@ -207,17 +213,26 @@ def generate_code(params, debug=False):
     os.system("rm {}".format(ezpc_file_name))
     output_file = os.path.join(model_abs_dir, output_name)
 
-    print("Compiling generated code to {target} target".format(target))
+    print(
+        "--------------------------------------------------------------------------------"
+    )
+    print("Compiling generated {} code".format(target))
+    print(
+        "--------------------------------------------------------------------------------"
+    )
     if target == "PORTHOS2PC":
         program_name = model_base_name + "_" + target + "_" + backend + ".out"
     else:
         program_name = model_base_name + "_" + target + ".out"
+
     program_path = os.path.join(model_abs_dir, program_name)
     os.chdir(model_abs_dir)
+
     if debug:
         opt_flag = "-O0 -g"
     else:
         opt_flag = "-O3"
+
     if target in ["CPP", "CPPRING"]:
         os.system(
             "g++ {opt_flag} -w {file} -o {output}".format(
@@ -267,14 +282,60 @@ def generate_code(params, debug=False):
             )
         else:
             print(
-                "Not compiling generated code. Please follow the readme and build SCI."
+                "Not compiling generated code. Please follow the readme and build SCI before running this script."
             )
 
     os.chdir(cwd)
-    return (program_path, weights_path)
+
+    input_path = os.path.join(model_abs_dir, "model_input_scale_{}.inp".format(scale))
+    weights_path = os.path.join(
+        model_abs_dir, "model_weights_scale_{}.inp".format(scale)
+    )
+    # program_path
+    if run_in_tmux:
+        is_tmux_installed = os.system("type tmux > /dev/null")
+        if is_tmux_installed != 0:
+            print(
+                "Not running the program. Tmux is not installed. Please install tmux and run or do the following manually to run."
+            )
+            return
+
+        print(
+            "--------------------------------------------------------------------------------"
+        )
+        mode = target + " - " + backend if target == "PORTHOS2PC" else target
+        print("Running program securely in {} mode".format(mode))
+        print(
+            "--------------------------------------------------------------------------------"
+        )
+
+        sample_networks_dir = os.path.join(
+            athos_dir, "CompilerScripts", "sample_networks"
+        )
+        if target in ["CPP", "CPPRING"]:
+            run_script_path = os.path.join(sample_networks_dir, "run_demo_cpp.sh")
+        elif target == "PORTHOS":
+            run_script_path = os.path.join(sample_networks_dir, "run_demo_3pc.sh")
+        elif target == "PORTHOS2PC":
+            run_script_path = os.path.join(sample_networks_dir, "run_demo_2pc.sh")
+        os.system(
+            "{script} {model_dir} {model_binary} {model_input} {model_weight}".format(
+                script=run_script_path,
+                model_dir=model_abs_dir,
+                model_binary=program_path,
+                model_input=input_path,
+                model_weight=weights_path,
+            )
+        )
+        print(
+            "\nAttach to tmux session named {model} to see results (tmux a -t {model})".format(
+                model=network_name
+            )
+        )
+    return
 
 
 if __name__ == "__main__":
     args = parse_args()
-    params = parse_config.get_params(args.config)
+    params = parse_config.get_params(args.config, sample_network=True)
     generate_code(params)

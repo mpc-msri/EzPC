@@ -1,9 +1,8 @@
 #!/bin/bash
-
-# Authors: Nishant Kumar.
+# Authors: Pratik Bhatu.
 
 # Copyright:
-# Copyright (c) 2020 Microsoft Research
+# Copyright (c) 2021 Microsoft Research
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
@@ -20,8 +19,25 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-if [ ! -f "CIFAR10/cifar-10-python.tar.gz" ]; then
-	wget "https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz" -P ./CIFAR10
-	cd CIFAR10
-	tar -xvzf cifar-10-python.tar.gz --directory=.
+if [ -z "$1" ]; then
+	scale=12
+else
+	scale=$1
 fi
+filename=sqz_full.mat
+if [ ! -f "PreTrainedModel/${filename}" ]; then
+  echo "--------------------------------"
+  echo "Downloading trained SqueezeNet Model"
+  echo "--------------------------------"
+  wget "https://github.com/avoroshilov/tf-squeezenet/raw/master/sqz_full.mat" -P ./PreTrainedModel
+fi
+
+echo -e "\n\n"
+echo "--------------------------------------------------------------------------------"
+echo "Running SqueezeNetImgNet network and dumping computation graph, inputs and model weights"
+echo "This will take some time"
+echo "--------------------------------------------------------------------------------"
+echo -e "\n\n"
+python3 squeezenet_main.py --in ./SampleImages/n02109961_36.JPEG --saveTFMetadata True
+python3 squeezenet_main.py --in ./SampleImages/n02109961_36.JPEG --scalingFac $scale --saveImgAndWtData True
+echo -e "\n\n"
