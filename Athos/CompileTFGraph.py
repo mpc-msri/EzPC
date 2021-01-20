@@ -57,7 +57,7 @@ Config file should be a json in the following format:
   //--------------------------- Optional options ---------------------------
   "scale":10,             // Scaling factor to compile for. DEFAULT=12.
   "bitlength":64,         // Bit length to compile for. DEFAULT=12.
-  "save_weights" : true,  // Save model scaled weights in fixed point. DEFAULT=false.
+  "save_weights" : true,  // Save model scaled weights in fixed point. DEFAULT=true.
 
   "input_tensors":{               // Name and shape of the input tensors
     "actual_input_1":"224,244,3", // for the model. Not required if the
@@ -89,7 +89,7 @@ def generate_code(params, debug=False):
     scale = 12 if params["scale"] is None else params["scale"]
     bitlength = 64 if params["bitlength"] is None else params["bitlength"]
     target = params["target"]
-    save_weights = False if params["save_weights"] is None else params["save_weights"]
+    save_weights = True if params["save_weights"] is None else params["save_weights"]
     disable_all_hlil_opts = (
         False
         if params["disable_all_hlil_opts"] is None
