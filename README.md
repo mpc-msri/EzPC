@@ -29,6 +29,7 @@ Each one of the above is independent and usable in their own right and more info
 
 With these components in place, we are able to run for the first time secure inference on the [ImageNet dataset]([http://www.image-net.org) with the pre-trained models of the following deep neural nets: ResNet-50, DenseNet-121 and SqueezeNet for ImageNet.
 
+## Setup
 For setup instructions, please refer to each of the components' readme.
 
 Alternatively you can use the **setup_env_and_build.sh** script. It installs dependencies and builds each component. It also creates a virtual environment in a *mpc_venv* folder with all the required packages.
