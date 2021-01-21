@@ -93,7 +93,7 @@ def infer_input_info(graph):
       inp_shape = []
     else:
       inp_shape = input_t.shape.as_list()
-      assert None not in inp_shape, "Placeholder node " + i.name + "has unknown shape. Please specify name and shape in config"
+      assert None not in inp_shape, "Placeholder node " + i.name + " has unknown shape. Please specify name and shape in config"
     input_t_info[i.name] = inp_shape
   return input_t_info
 
