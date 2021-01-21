@@ -1,4 +1,4 @@
-'''
+"""
 
 Authors: Pratik Bhatu.
 
@@ -20,7 +20,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-'''
+"""
 import tensorflow as tf
 import numpy as np
 
@@ -47,6 +47,36 @@ from tests.utils import Config, Compiler, assert_almost_equal
 def test_conv(test_dir, backend, tfOp, a_shape, kernel_shape, strides, padding, dtype):
     if tfOp == tf.nn.conv3d and backend in ["2PC_HE", "2PC_OT"]:
         pytest.skip("[conv3d] Missing Support in SCI")
+    graph = tf.Graph()
+    a_inp = dtype(np.random.randn(*a_shape))
+    kernel_inp = dtype(np.random.randn(*kernel_shape))
+    with graph.as_default():
+        a = tf.compat.v1.placeholder(tf.as_dtype(dtype), shape=a_inp.shape, name="a")
+        filters = tf.constant(kernel_inp, name="filter")
+        output = tfOp(a, filters, strides, padding, name="output")
+    with tf.compat.v1.Session(graph=graph) as sess:
+        expected_output = sess.run(output, feed_dict={a: a_inp})
+
+    config = Config(backend).add_input(a).add_output(output)
+    config.config["scale"] = 12
+    compiler = Compiler(graph, config, test_dir)
+    mpc_output = compiler.compile_and_run([a_inp])
+    assert_almost_equal(tf_output=expected_output, mpc_tensor=mpc_output, precision=2)
+    return
+
+
+@pytest.mark.parametrize(
+    "tfOp, a_shape, kernel_shape, strides, padding",
+    [
+        (tf.nn.depthwise_conv2d, [1, 5, 5, 1], [2, 2, 1, 3], [1, 1, 1, 1], "VALID"),
+        (tf.nn.depthwise_conv2d, [1, 5, 5, 1], [2, 2, 1, 3], [1, 1, 1, 1], "SAME"),
+        (tf.nn.depthwise_conv2d, [1, 5, 5, 3], [2, 2, 3, 2], [1, 1, 1, 1], "VALID"),
+    ],
+)
+@pytest.mark.parametrize("dtype", [np.single])
+def test_depthwise_conv(
+    test_dir, backend, tfOp, a_shape, kernel_shape, strides, padding, dtype
+):
     graph = tf.Graph()
     a_inp = dtype(np.random.randn(*a_shape))
     kernel_inp = dtype(np.random.randn(*kernel_shape))

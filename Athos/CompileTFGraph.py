@@ -207,7 +207,7 @@ def generate_code(params, debug=False):
     os.system("rm {}".format(ezpc_file_name))
     output_file = os.path.join(model_abs_dir, output_name)
 
-    print("Compiling generated code to {target} target".format(target))
+    print("Compiling generated code to {target} target".format(target=target))
     if target == "PORTHOS2PC":
         program_name = model_base_name + "_" + target + "_" + backend + ".out"
     else:

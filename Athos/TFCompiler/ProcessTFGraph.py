@@ -115,7 +115,8 @@ def prefixAllPlaceHolderNodes(graph):
 
 # List of Optimisations
 # 1. Split squared difference into (a-b)*(a-b)
-def simplifyGraph(graph):
+# 2. Reshape filter of depth separable convolution to convert it to a grouped convolution
+def simplifyGraph(graph, sizeInfo):
 	allNodes = graph.getAllNodesRef()
 	nodesMap = graph.getAllNodes()
 	newNodes = []
@@ -134,6 +135,19 @@ def simplifyGraph(graph):
 			nodesMap[mul.getName()] = mul
 			inputsFixup[curNode.getName()] = mul.getName()
 			nodesMap.pop(curNode.getName())
+		elif (curNode.getOp() == "DepthwiseConv2dNative"):
+			filter_shape = sizeInfo[inputs[1]]
+			in_channels = filter_shape[2]
+			channel_multiplier = filter_shape[3]
+			output_channels = in_channels * channel_multiplier
+			# new filter shape = [FH, FW, 1, CI*CM]
+			new_filter_shape = filter_shape[0:2] + [1, output_channels]
+			reshape = Graph.Node("Reshape", [inputs[1]], curNode.getName() + "__reshape")
+			newNodes.append(reshape)
+			newNodes.append(curNode)
+			nodesMap[reshape.getName()] = reshape
+			inputs[1] = reshape.getName()
+			sizeInfo[reshape.getName()] = new_filter_shape
 		else:
 			newNodes.append(curNode)
 	graph.setNodesList(newNodes)
@@ -155,7 +169,7 @@ def process_tf_graph(filename):
 	sizeInfo = readSizeInfo(sizeInfoFileName)
 
 	# Tensorflow graph level optimisations
-	simplifyGraph(graph)
+	simplifyGraph(graph, sizeInfo)
 	# Place all PlaceHolder nodes together at the beginning
 	prefixAllPlaceHolderNodes(graph)
 

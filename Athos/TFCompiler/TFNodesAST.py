@@ -292,7 +292,7 @@ class TFNodesAST:
 
 	def Reshape(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
-		assert(len(inputsRef) == 2)
+		#assert(len(inputsRef) == 2)
 		return (None, { curNode.getName() : AST.Reshape(AST.ID(dictNodeNameToOutVarStr[inputsRef[0]]), extraNodeInfoDict[curNode.getName()][0], None)})
 
 	def helper_findPadding(imgH, imgW, FH, FW, strideH, strideW, paddingUsedStr, imgD = None, FD = None, strideD = None):
@@ -378,6 +378,24 @@ class TFNodesAST:
 								TFNodesAST.getOperatorsIdx('#'),
 								AST.ID(dictNodeNameToOutVarStr[inputsRef[1]]), 
 								options)})
+
+	# A depthwise separable convolution is equivalent to a grouped convolution 
+	# with no. of groups = the no. of input channels (G=CI)
+	# This however requires a reshape of the filter.
+	# Regular filter is [ FH, FW, CI, CM (channel_multiplier)]
+	# Doing depthwise conv results in CO = CI * CM
+	# Grouped conv expects [FH, FW, CI/G, (CO/G)*G]
+	# So we reshape to [FH, FW, 1, CI * CM]
+	def DepthwiseConv2dNative(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
+		inputsRef = curNode.getInputsRef()
+		assert(len(inputsRef)==2)
+		# Reshape of filter is done in simplifyGraph
+		img_shape = extraNodeInfoDict[inputsRef[0]][0]
+		in_channels = img_shape[3] #NHWC
+		groups = in_channels
+		_ , nodeToAST = TFNodesAST.Conv2D(graph, curNode, dictNodeNameToOutVarStr, extraNodeInfoDict)
+		nodeToAST[curNode.getName()].options[AST.PaddingKeysDict.group] = groups
+		return (None, nodeToAST)
 
 	def Conv3D(graph : Graph.Graph, curNode : Graph.Node, dictNodeNameToOutVarStr : dict, extraNodeInfoDict : dict):
 		inputsRef = curNode.getInputsRef()
