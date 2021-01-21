@@ -51,7 +51,7 @@ def generateIRCode(graph, extraInfoDict):
 	mtdAST = MtdAST()
 	for curNode in graph.getAllNodesRef():
 		for curInp in curNode.getInputsRef():
-			assert(curInp in dictNodeNameToOutVarStr), "input={} expected as input but not yet processed".format(curInp) #Consequence of topological sorting of the TF graph
+			assert(curInp in dictNodeNameToOutVarStr), "input={} expected as input for node={} but not yet processed".format(curInp, curNode.getName()) #Consequence of topological sorting of the TF graph
 		(assignedVarAST, curAsts) = generateASTForNode(graph, curNode, dictNodeNameToOutVarStr, extraInfoDict)
 		for outputName, curAst in curAsts.items():
 			mtdForCurAST = {AST.ASTNode.mtdKeyTFOpName : curNode.getOp(),
@@ -152,6 +152,48 @@ def simplifyGraph(graph, sizeInfo):
 			newNodes.append(curNode)
 	graph.setNodesList(newNodes)
 
+def arrange_input_before_output(graph):
+	allNodes = graph.getAllNodesRef()
+	visited = set()
+	already_sorted = True
+	for curNode in allNodes:
+		visited.add(curNode.getName())
+		for inp in curNode.getInputsRef():
+			if inp not in visited:
+				already_sorted = False
+				break
+
+	if already_sorted:
+		return
+
+	adjList = { i : [] for i in range(len(allNodes))}
+	position = { node.getName() : i  for i,node in enumerate(allNodes)}
+	for i, curNode in enumerate(allNodes):
+		inputs = curNode.getInputsRef()
+		for inp in inputs:
+			adjList[position[inp]].append(i)
+
+	no_nodes = len(allNodes)
+	visited = [False] * no_nodes
+	final_order = []
+
+	def topo_sort(v):
+		visited[v] = True
+		for i in adjList[v]:
+			if visited[i] == False:
+				topo_sort(i)
+		final_order.insert(0,v)
+
+	for i in range(no_nodes):
+		if visited[i] == False:
+			topo_sort(i)
+
+	assert len(final_order) == no_nodes, "Lost some nodes while sorting"
+	newNodes = [allNodes[i] for i in final_order]
+	graph.setNodesList(newNodes)
+	return
+
+
 def process_tf_graph(filename):
 	sys.setrecursionlimit(10000)
 
@@ -163,6 +205,8 @@ def process_tf_graph(filename):
 	graph = Graph.Graph()
 	with open(graphFileName) as file:
 		graph.readFromFilePointer(file)
+
+	arrange_input_before_output(graph)
 
 	# Read the sizeInfo also
 	sizeInfoFileName = os.path.join(folderName, 'sizeInfo.mtdata')
