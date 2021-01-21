@@ -118,7 +118,7 @@ class Compiler:
 				print("Relu-maxpool optimization done.")
 		
 			if not(Util.Config.disableLivenessOpti):
-				print("Performing Garbage colelction...")
+				print("Performing Garbage collection...")
 				mtdAST = MtdAST()
 				GC = GarbageCollector.GarbageCollector(ast)
 				GC.run([mtdAST])

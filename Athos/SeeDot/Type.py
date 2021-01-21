@@ -370,7 +370,7 @@ class InferType(ASTVisitor):
 
 		assert(FH == node.options[AST.PaddingKeysDict.FH])
 		assert(FW == node.options[AST.PaddingKeysDict.FW])
-		assert(CI1*group == CI)
+		assert CI1*group == CI, "FCI={} group={} CI={}".format(CI1, group, CI)
 		zPadHLeft = node.options[AST.PaddingKeysDict.zPadHLeft]
 		zPadHRight = node.options[AST.PaddingKeysDict.zPadHRight]
 		zPadWLeft = node.options[AST.PaddingKeysDict.zPadWLeft]

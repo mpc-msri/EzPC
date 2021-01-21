@@ -33,6 +33,16 @@ import tensorflow as tf
 import _pickle as pickle
 import Resnet_Model
 
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
+from tensorflow.python.util import deprecation
+deprecation._PRINT_DEPRECATION_WARNINGS = False
+try:
+    from tensorflow.python.util import module_wrapper as deprecation
+except ImportError:
+    from tensorflow.python.util import deprecation_wrapper as deprecation
+deprecation._PER_MODULE_WARNING_LIMIT = 0
+
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'TFCompiler'))
 import DumpTFMtData
 
@@ -162,10 +172,10 @@ def infer(savePreTrainedWeightsInt, savePreTrainedWeightsFloat, scalingFac, runP
       end_time = time.time()
       print("*************** Done Prediction****************")
       duration = end_time - start_time
-      print("Time taken in prediction : ", duration)
-      with open('ResNet_tf_pred.float','w+') as f:
+      print("Time taken in inference : ", duration)
+      with open('tf_pred.float','w+') as f:
         f.write(DumpTFMtData.numpy_float_array_to_float_val_str(predictions))
-      with open('ResNet_tf_pred.time','w') as f:
+      with open('tf_pred.time','w') as f:
         f.write(str(round(duration, 2))) 
 
     trainVarsName = []
@@ -174,11 +184,12 @@ def infer(savePreTrainedWeightsInt, savePreTrainedWeightsFloat, scalingFac, runP
         trainVarsName.append(node.name)
     trainVars = list(map(lambda x : tf.get_default_graph().get_operation_by_name(x).outputs[0] , trainVarsName))
     if savePreTrainedWeightsInt:
-      DumpTFMtData.dumpTrainedWeights(sess, trainVars, 'ResNet_weights.inp', scalingFac, 'w')
+      DumpTFMtData.dumpTrainedWeights(sess, trainVars, "model_weights_scale_{}.inp".format(scalingFac), scalingFac, 'w')
     if savePreTrainedWeightsFloat:
-      DumpTFMtData.dumpTrainedWeightsFloat(sess, trainVars, 'ResNet_weights_float.inp', 'w')
+      DumpTFMtData.dumpTrainedWeightsFloat(sess, trainVars, 'model_weights_float.inp', 'w')
     if saveImgAndWtData:
-      DumpTFMtData.dumpImgAndWeightsDataSeparate(sess, images[0], trainVars, 'ResNet_img.inp', 'ResNet_weights.inp', scalingFac)
+      DumpTFMtData.dumpImgAndWeightsDataSeparate(sess, images[0], trainVars, "model_input_scale_{}.inp".format(scalingFac),
+                                                               "model_weights_scale_{}.inp".format(scalingFac), scalingFac)
     return predictions
 
 def parseArgs():
@@ -201,7 +212,7 @@ def main():
                args.scalingFac,
                args.runPrediction,
                args.saveImgAndWtData)
-  print(pred)
+  print("Prediction = ", pred)
   return pred
 
 if __name__=='__main__':

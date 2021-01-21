@@ -127,6 +127,15 @@ def get_str_list_param(config, p_name):
     assert type(i) == str, p_name + "is not a list of strings"
   return p
 
+def get_opt_str_list_param(config, p_name):
+  p = config.get(p_name)
+  if p is None:
+    return p
+  assert type(p) == list, p_name + "is not a list of strings"
+  for i in p:
+    assert type(i) == str, p_name + "is not a list of strings"
+  return p
+
 
 def get_opt_param(config, p_name):
   p = config.get(p_name)
@@ -154,18 +163,24 @@ def parse_input_tensors(config):
   return input_t_info
 
 
-def parse_config(config):
-  model_fname = get_str_param(config, "model_name")
-  if not model_fname.endswith(".pb"):
-    sys.exit(
-      model_fname
-      + " is not a tensorflow protobuf file. Please supply "
-      + "a valid tensorflow protobuf model (.pb extension)"
-    )
-  if not os.path.isfile(model_fname):
-    sys.exit(model_fname + " file does not exist")
+def parse_config(config, sample_network=False):
+  if not sample_network:
+    model_fname = get_str_param(config, "model_name")
+    if not model_fname.endswith(".pb"):
+      sys.exit(
+        model_fname
+        + " is not a tensorflow protobuf file. Please supply "
+        + "a valid tensorflow protobuf model (.pb extension)"
+      )
+    if not os.path.isfile(model_fname):
+      sys.exit(model_fname + " file does not exist")
+  else:
+    network_name = get_str_param(config, "network_name")
+    run_in_tmux = get_opt_bool_param(config, "run_in_tmux")
+
   target = get_str_param(config, "target").upper()
-  output_tensors = get_str_list_param(config, "output_tensors")
+
+  output_tensors = get_opt_str_list_param(config, "output_tensors")
   input_t_info = parse_input_tensors(config)
 
   save_weights = get_opt_bool_param(config, "save_weights")
@@ -181,7 +196,6 @@ def parse_config(config):
   disable_trunc = get_opt_bool_param(config, "disable_trunc_opts")
 
   params = {
-    "model_name": model_fname,
     "input_tensors": input_t_info,
     "output_tensors": output_tensors,
     "scale": scale,
@@ -195,10 +209,15 @@ def parse_config(config):
     "disable_garbage_collection": disable_garbage_collection,
     "disable_trunc_opts": disable_trunc,
   }
+  if sample_network:
+    params["network_name"] = network_name
+    params["run_in_tmux"] = run_in_tmux
+  else:
+    params["model_name"] = model_fname
   return params
 
 
-def get_params(config_fname):
+def get_params(config_fname, sample_network=False):
   config = get_config(config_fname)
-  params = parse_config(config)
+  params = parse_config(config, sample_network)
   return params

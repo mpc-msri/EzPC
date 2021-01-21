@@ -9,6 +9,16 @@ import tensorflow as tf
 from PIL import Image
 from argparse import ArgumentParser
 
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
+from tensorflow.python.util import deprecation
+deprecation._PRINT_DEPRECATION_WARNINGS = False
+try:
+    from tensorflow.python.util import module_wrapper as deprecation
+except ImportError:
+    from tensorflow.python.util import deprecation_wrapper as deprecation
+deprecation._PER_MODULE_WARNING_LIMIT = 0
+
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'TFCompiler'))
 import DumpTFMtData
 
@@ -258,18 +268,27 @@ def main():
             optimized_graph_def = DumpTFMtData.save_graph_metadata(output_tensor, sess, feed_dict)
         else:
             # Classifying
+            print("*************** Starting Prediction****************")
+            start_time = time.time()
             sqz_class = final_class.eval(feed_dict)[0][0][0]
+            end_time = time.time()
+            print("*************** Done Prediction****************")
+            duration = end_time - start_time
+            print("Time taken in inference : ", duration)
+            with open('tf_pred.float','w+') as f:
+                f.write(DumpTFMtData.numpy_float_array_to_float_val_str(sqz_class))
+            with open('tf_pred.time','w') as f:
+                f.write(str(round(duration, 2))) 
 
-            print(sqz_class)
             # Outputting result
             print("\nclass: [%d] '%s'" % (sqz_class, classes[sqz_class]))
 
             if options.savePreTrainedWeightsInt:
-                DumpTFMtData.dumpTrainedWeightsInt(sess, all_weights, 'SqNet_weights.inp', options.scalingFac, 'w', alreadyEvaluated=True)
+                DumpTFMtData.dumpTrainedWeightsInt(sess, all_weights, "model_weights_scale_{}.inp".format(options.scalingFac), options.scalingFac, 'w', alreadyEvaluated=True)
             if options.savePreTrainedWeightsFloat:
-                DumpTFMtData.dumpTrainedWeightsFloat(sess, all_weights, 'SqNet_weights_float.inp', 'w', alreadyEvaluated=True)
+                DumpTFMtData.dumpTrainedWeightsFloat(sess, all_weights, 'model_weights_float.inp', 'w', alreadyEvaluated=True)
             if options.saveImgAndWtData:
-                DumpTFMtData.dumpImgAndWeightsDataSeparate(sess, imageData, all_weights, 'SqNet_img.inp', 'SqNet_weights.inp', options.scalingFac, alreadyEvaluated=True)
+                DumpTFMtData.dumpImgAndWeightsDataSeparate(sess, imageData, all_weights, "model_input_scale_{}.inp".format(options.scalingFac), "model_weights_scale_{}.inp".format(options.scalingFac), options.scalingFac, alreadyEvaluated=True)
 
 if __name__ == '__main__':
     main()
