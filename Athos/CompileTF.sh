@@ -38,10 +38,10 @@ usage() {
 	echo -e "CrypTFlow compilation script. Options:";
 	echo -e "<-b|--bitlen> <bitlen> :: Bit length to compile for. Defaults to 64";
 	echo -e "<-s|--scaling-fac> <sf> :: Scaling factor to compile for. Defaults to 12.";
-	echo -e "<-t|--target> <target> :: Compilation target. Possible options: ABY/CPP/CPPRING/PORTHOS/PORTHOS2PC. Defaults to CPP.";
+	echo -e "<-t|--target> <target> :: Compilation target. Possible options: ABY/CPP/CPPRING/PORTHOS/SCI. Defaults to CPP.";
 	echo -e "<-f|--filename> :: Python tensorflow file to compile."
-	echo -e "<--modulo> :: Modulo to be used for shares. Applicable for CPPRING/PORTHOS2PC backend. For PORTHOS2PC, for backend type OT, this should be power of 2 and for backend type HE, this should be a prime."
-	echo -e "<--backend> :: Backend to be used - OT/HE (default OT). Applicable for PORTHOS2PC backend."
+	echo -e "<--modulo> :: Modulo to be used for shares. Applicable for CPPRING/SCI backend. For SCI, for backend type OT, this should be power of 2 and for backend type HE, this should be a prime."
+	echo -e "<--backend> :: Backend to be used - OT/HE (default OT). Applicable for SCI backend."
 	echo -e "<--disable-hlil-all-opti> :: Disable all optimizations in HLIL."
 	echo -e "<--disable-rmo> :: Disable Relu-Maxpool optimization."
 	echo -e "<--disable-liveness-opti> :: Disable Liveness Optimization."

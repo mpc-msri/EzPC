@@ -50,7 +50,7 @@ Config file should be a json in the following format:
     "output1",
     "output2"
   ],
-  "target":"PORTHOS2PC",  // Compilation target. ABY/CPP/CPPRING/PORTHOS/PORTHOS2PC
+  "target":"SCI",  // Compilation target. ABY/CPP/CPPRING/PORTHOS/SCI
 
 
   
@@ -64,12 +64,12 @@ Config file should be a json in the following format:
     "input2":"2,245,234,3"        // placeholder nodes have shape info in the .pb file.
   },
   "modulo" : 32,      // Modulo to be used for shares. Applicable for 
-                      // CPPRING/PORTHOS2PC backend. For 
-                      // PORTHOS2PC + backend=OT => Power of 2 
-                      // PORTHOS2PC + backend=HE => Prime value."
+                      // CPPRING/SCI backend. For 
+                      // SCI + backend=OT => Power of 2 
+                      // SCI + backend=HE => Prime value."
 
   "backend" : "OT",   // Backend to be used - OT/HE (default OT). 
-                      // Only applicable for PORTHOS2PC backend
+                      // Only applicable for SCI backend
 
   "disable_all_hlil_opts" : false,      // Disable all optimizations in HLIL. DEFAULT=false
   "disable_relu_maxpool_opts" : false,  // Disable Relu-Maxpool optimization. DEFAULT=false
@@ -113,11 +113,11 @@ def generate_code(params, debug=False):
     assert bitlength <= 64 and bitlength >= 1, "Bitlen must be >= 1 and <= 64"
     assert target in [
         "PORTHOS",
-        "PORTHOS2PC",
+        "SCI",
         "ABY",
         "CPP",
         "CPPRING",
-    ], "Target must be any of ABY/CPP/CPPRING/PORTHOS/PORTHOS2PC"
+    ], "Target must be any of ABY/CPP/CPPRING/PORTHOS/SCI"
 
     cwd = os.getcwd()
     athos_dir = os.path.dirname(os.path.abspath(__file__))
@@ -192,7 +192,7 @@ def generate_code(params, debug=False):
     output_name = ezpc_file_name[:-5] + "0.cpp"
     if modulo is not None:
         ezpc_args += "--modulo {} ".format(modulo)
-    if target == "PORTHOS2PC":
+    if target == "SCI":
         ezpc_args += "--backend {} ".format(backend.upper())
         output_name = ezpc_file_name[:-5] + "_{}0.cpp".format(backend.upper())
     if target in ["PORTHOS"]:
@@ -210,7 +210,7 @@ def generate_code(params, debug=False):
     output_file = os.path.join(model_abs_dir, output_name)
 
     print("Compiling generated code to {target} target".format(target=target))
-    if target == "PORTHOS2PC":
+    if target == "SCI":
         program_name = model_base_name + "_" + target + "_" + backend + ".out"
     else:
         program_name = model_base_name + "_" + target + ".out"
@@ -246,7 +246,7 @@ def generate_code(params, debug=False):
             print(
                 "Not compiling generated code. Please follow the readme and build Porthos."
             )
-    elif target == "PORTHOS2PC":
+    elif target == "SCI":
         sci = os.path.join(athos_dir, "..", "SCI")
         sci_src = os.path.join(sci, "src")
         sci_lib = os.path.join(sci, "build", "lib")

@@ -38,7 +38,7 @@ echo "-------------------------------------------------------"
 if [ $PARTY -eq 1 ];
 then
 	echo "Model outputs:"
-	echo -e "MPC PORTHOS (2PC) output:\t $(awk '$0==($0+0)' ${MODEL_DIR}/party${PARTY}_mpc_output.out)"
+	echo -e "MPC SCI (2PC) output:\t $(awk '$0==($0+0)' ${MODEL_DIR}/party${PARTY}_mpc_output.out)"
 	echo -e "Tensorflow output:\t\t $(cat ${MODEL_DIR}/tf_pred.float)"
 	echo ""
 fi

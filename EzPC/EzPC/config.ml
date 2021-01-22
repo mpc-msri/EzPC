@@ -29,14 +29,14 @@ type codegen =
   | CPP
   | OBLIVC
   | PORTHOS
-  | PORTHOS2PC
+  | SCI
   | CPPRING
 
 type bool_sharing_mode =
   | Yao
   | GMW
 
-type porthos2PC_backend_type = 
+type sci_backend_type = 
   | OT
   | HE
   
@@ -51,7 +51,7 @@ type configuration = {
     debug_partitions: bool;
     actual_bitlen: int;
     modulo: uint64;
-    porthos2PC_backend: porthos2PC_backend_type; 
+    sci_backend: sci_backend_type; 
     sf: int;
   }
 
@@ -66,7 +66,7 @@ let c_private :configuration ref = ref {
                                        debug_partitions = false;
                                        actual_bitlen = 32;
                                        modulo = Uint64.of_int 0;
-                                       porthos2PC_backend = OT;
+                                       sci_backend = OT;
                                        sf = 0;
                                        }
 
@@ -88,9 +88,9 @@ let set_codegen (g:codegen) :unit = c_private := { !c_private with out_mode = g 
 
 let get_codegen () :codegen = !c_private.out_mode
 
-let set_porthos2pc_backend (b:porthos2PC_backend_type) :unit = c_private := { !c_private with porthos2PC_backend = b }
+let set_sci_backend (b:sci_backend_type) :unit = c_private := { !c_private with sci_backend = b }
 
-let get_porthos2pc_backend () :porthos2PC_backend_type = !c_private.porthos2PC_backend
+let get_sci_backend () :sci_backend_type = !c_private.sci_backend
 
 let set_sf (m:int) :unit = c_private := { !c_private with sf = m }
 

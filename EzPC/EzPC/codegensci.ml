@@ -124,8 +124,8 @@ let o_subsumption (src:label) (tgt:secret_label) (t:typ) (arg:comp) :comp =
     | Secret Boolean -> failwith "Codegen: Subsumption from secrets is not allowed for this backend."
 
 let o_basetyp (t:base_type) :comp =
-  let uint32_basetype_str :string = if Config.get_porthos2pc_backend () = OT then "uint32_t" else "uint64_t" in
-  let int32_basetype_str :string = if Config.get_porthos2pc_backend () = OT then "int32_t" else "int64_t" in
+  let uint32_basetype_str :string = if Config.get_sci_backend () = OT then "uint32_t" else "uint64_t" in
+  let int32_basetype_str :string = if Config.get_sci_backend () = OT then "int32_t" else "int64_t" in
   match t with
   | UInt32 -> o_str uint32_basetype_str
   | UInt64 -> o_str "uint64_t"
@@ -165,7 +165,7 @@ let rec o_secret_binop (g:gamma) (op:binop) (sl:secret_label) (e1:expr) (e2:expr
 and o_expr (g:gamma) (e:expr) :comp =
   let o_expr = o_expr g in
   let o_codegen_expr = o_codegen_expr g in
-  let uint32_basetype_str :string = if Config.get_porthos2pc_backend () = OT then "uint32_t" else "uint64_t" in
+  let uint32_basetype_str :string = if Config.get_sci_backend () = OT then "uint32_t" else "uint64_t" in
   let rec o_array_read_rec (ga:gamma) (ea:expr) : (comp*comp*int) =
     match ea.data with
     | Array_read (e1,e2) -> 
@@ -246,7 +246,7 @@ and o_codegen_expr (g:gamma) (e:codegen_expr) :comp =
   | Clear_val _ -> failwith ("Codegen_expr Clear_val is unsupported by this backend.") 
 
 let rec o_typ_rec (t:typ) :comp =
-  let uint32_basetype_str :string = if Config.get_porthos2pc_backend () = OT then "uint32_t" else "uint64_t" in
+  let uint32_basetype_str :string = if Config.get_sci_backend () = OT then "uint32_t" else "uint64_t" in
   match t.data with
   | Base (Int64, Some (Secret _)) -> o_str "uint64_t"
   | Base (Int32, Some (Secret _)) -> o_str uint32_basetype_str
@@ -270,7 +270,7 @@ let o_array_init (g:gamma) (t:typ) :comp =
   o_app s (List.map (o_expr g) l)
 
 let o_for (index:comp) (lower:comp) (upper:comp) (body:comp) :comp =
-  let uint32_basetype_str :string = if Config.get_porthos2pc_backend () = OT then "uint32_t" else "uint64_t" in
+  let uint32_basetype_str :string = if Config.get_sci_backend () = OT then "uint32_t" else "uint64_t" in
   let init = seq (o_str ("for (" ^ uint32_basetype_str ^ " ")) (seq index (seq (o_str " = ") lower)) in
   let term = seq index (seq (o_str " < ") upper) in
   let incr = seq index (o_str "++)") in
@@ -685,14 +685,14 @@ let o_one_program ((globals, main):global list * codegen_stmt) (ofname:string) :
   let (hash_define_str, main_prelude) = 
     let modulo_str = Config.get_modulo () |> Uint64.to_string in
     let hash_define_str = 
-      if (Config.get_porthos2pc_backend () = OT) then "SCI_OT"
+      if (Config.get_sci_backend () = OT) then "SCI_OT"
       else "SCI_HE"
     in
     let main_prelude = 
-      if (Config.get_porthos2pc_backend () = OT) then begin
+      if (Config.get_sci_backend () = OT) then begin
         (* OT case *)
         if Config.get_modulo () = Uint64.shift_left (Uint64.of_int 1) (Config.get_actual_bitlen ()) then ""
-        else failwith "Modulo can only be (1<<bitlen) for OT case for Porthos2PC backend."
+        else failwith "Modulo can only be (1<<bitlen) for OT case for SCI backend."
       end
       else begin
         (* HE case *)

@@ -42,7 +42,7 @@ The script takes a config file as input. The contents of the config are:
 - *network_name*: Can be any network in the Networks directory. 
 - *target*: This is the secure protocol the model will run in. The possible values are:
 	- **PORTHOS**: The semi-honest 3PC protocol.
-	- **PORTHOS2PC**: The semi-honest 2PC protocol in SCI.
+	- **SCI**: The semi-honest 2PC protocol in SCI.
 	- **CPP**: A non-secure debug backend which outputs plain C++ to test for correctness.
 - *run_in_tmux*: If true, the script spawns a tmux session to run the network. There is a terminal pane for each party.
 You can modify the config file according to which network and backend you want to compile for. See ```python CompileSampleNetworks.py --help``` for more information about the parameters of the config file.
@@ -80,10 +80,10 @@ To run the network in **2PC mode (SCI)**, open 2 terminals and do the following 
 
 - Party 0 [Server]:
 	
-	``` ./Networks/ResNet/ResNet_PORTHOS2PC_OT.out r=1 p=12345 < model_weights_scale_12.inp" ```
+	``` ./Networks/ResNet/ResNet_SCI_OT.out r=1 p=12345 < model_weights_scale_12.inp" ```
 - Party 1 [Client]:
 	
-	``` ./Networks/ResNet/ResNet_PORTHOS2PC_OT.out r=2 ip=127.0.0.1 p=12345 < model_input_scale_12.inp" ```
+	``` ./Networks/ResNet/ResNet_SCI_OT.out r=2 ip=127.0.0.1 p=12345 < model_input_scale_12.inp" ```
 
 To run the network in **CPP mode (1PC-debug-non-secure)**, open a terminal and do the following:
 - ``` ./Networks/ResNet/ResNet_CPP.out < <(cat model_input_scale_12.inp model_weights_scale_12.inp) ```

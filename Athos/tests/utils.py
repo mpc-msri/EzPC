@@ -49,13 +49,13 @@ class Config:
         elif mode == "3PC":
             self.config["target"] = "PORTHOS"
         elif mode == "2PC_OT":
-            self.config["target"] = "PORTHOS2PC"
+            self.config["target"] = "SCI"
             self.config["bitlength"] = 41
             self.config["scale"] = 12
             self.config["backend"] = "OT"
 
         elif mode == "2PC_HE":
-            self.config["target"] = "PORTHOS2PC"
+            self.config["target"] = "SCI"
             self.config["bitlength"] = 41
             self.config["scale"] = 12
             self.config["backend"] = "HE"
@@ -181,7 +181,7 @@ class Program:
                     p.wait(timeoutSeconds)
                 except subprocess.TimeoutExpired:
                     p.kill()
-        elif self.target == "PORTHOS2PC":
+        elif self.target == "SCI":
             util_dir = os.path.dirname(os.path.abspath(__file__))
             sci_dir = os.path.join(util_dir, "..", "..", "SCI")
             port = 1234
