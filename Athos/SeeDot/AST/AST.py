@@ -26,23 +26,23 @@ from enum import Enum, auto
 
 OperatorsSymbolDict = {
 		"ADD": '+',
-		"SUB": '-',
-		"MUL": '*',
+		"ClearMemPublic": 'clearmempublic'
+		"ClearMemSecret": 'clearmemsecret',
 		"CONV": '#',
 		"CONVTRANSPOSE": "#T", #ConvTranspose
+		"ElemWiseDiv": './',
+		"ElemWiseMul":'.*',
+		"Equal": '==',
+		"Floor": 'floor',
+		"Mean": 'mean',
+		"MUL": '*',
 		"RELU": 'relu',
-		"TANH": 'tanh',
+		"RSQRT": 'rsqrt',
+		"Shape": 'shape',
 		"SIGMOID": 'sigmoid',
 		"SQRT": 'sqrt',
-		"RSQRT": 'rsqrt',
-		"Equal": '==',
-		"ElemWiseMul":'.*',
-		"ElemWiseDiv": './',
-		"Floor": 'floor',
-		"Shape": 'shape',
-		"Mean": 'mean',
-		"ClearMemSecret": 'clearmemsecret',
-		"ClearMemPublic": 'clearmempublic'
+		"SUB": '-',
+		"TANH": 'tanh',
 }
 
 class Party(Enum):
