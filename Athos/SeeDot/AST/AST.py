@@ -26,7 +26,7 @@ from enum import Enum, auto
 
 OperatorsSymbolDict = {
 		"ADD": '+',
-		"ClearMemPublic": 'clearmempublic'
+		"ClearMemPublic": 'clearmempublic',
 		"ClearMemSecret": 'clearmemsecret',
 		"CONV": '#',
 		"CONVTRANSPOSE": "#T", #ConvTranspose

@@ -656,5 +656,5 @@ class Graph:
         return self.__Nodes[opName]
 
     def print(self):
-        for _, curNode in self.__Nodes.items():
+        for curNode in self.__NodesLi:
             curNode.print()

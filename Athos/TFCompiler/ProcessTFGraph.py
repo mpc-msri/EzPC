@@ -97,17 +97,19 @@ def readSizeInfo(fileName):
 	return sizeInfo
 
 # Since later on in the pipeline, the placeholder nodes which come up as cin statements
-# 	are to be excluded from the timing calculation, output all such PlaceHolder nodes together first.
-#	This doesn't violate the topological ordering because all such PlaceHolder nodes are leaf nodes 
-# 	in the graph.
+# are to be excluded from the timing calculation, output all such PlaceHolder nodes together first.
+# This doesn't violate the topological ordering because all such PlaceHolder nodes are leaf nodes 
+# in the graph.
+# This however extends live ranges of inputs and increases peak memory usage.
+# This also maintains the partial order between placeholder/variable nodes
 def prefixAllPlaceHolderNodes(graph):
 	allNodes = graph.getAllNodesRef()
 	placeHolderNodes = []
+	variableNodes = []
 	remNodes = []
 	for curNode in allNodes:
-		if (curNode.getOp() == "Placeholder" or curNode.getOp() == "VariableV2"):
-			# Assert this is indeed a leaf node
-			assert(len(curNode.getInputsRef()) == 0)
+		if curNode.getOp() in ["Placeholder", "VariableV2"]:
+			assert(len(curNode.getInputsRef()) == 0) # Assert this is indeed a leaf node
 			placeHolderNodes.append(curNode)
 		else:
 			remNodes.append(curNode)
@@ -152,6 +154,10 @@ def simplifyGraph(graph, sizeInfo):
 			newNodes.append(curNode)
 	graph.setNodesList(newNodes)
 
+# We have to process all input nodes before output nodes.
+# However we cannot change the partial order of the placeholder and variable nodes.
+# The model weights are dumped from tensorflow in the original graphdef order and if
+# we don't adhere to that, different inputs will be read by the program.
 def arrange_input_before_output(graph):
 	allNodes = graph.getAllNodesRef()
 	visited = set()
@@ -163,6 +169,7 @@ def arrange_input_before_output(graph):
 				already_sorted = False
 				break
 
+	# True almost all the time
 	if already_sorted:
 		return
 
@@ -172,6 +179,13 @@ def arrange_input_before_output(graph):
 		inputs = curNode.getInputsRef()
 		for inp in inputs:
 			adjList[position[inp]].append(i)
+
+	# Additionally create edges between all placeholder and variable nodes
+	nodes_seen = []
+	for i, curNode in reversed(list(enumerate(allNodes))):
+		if curNode.getOp() in ["Placeholder", "VariableV2"]:
+			adjList[i].extend(nodes_seen)
+			nodes_seen.append(i)
 
 	no_nodes = len(allNodes)
 	visited = [False] * no_nodes
@@ -214,7 +228,7 @@ def process_tf_graph(filename):
 
 	# Tensorflow graph level optimisations
 	simplifyGraph(graph, sizeInfo)
-	# Place all PlaceHolder nodes together at the beginning
+	# Place all PlaceHolder and variable nodes together at the beginning
 	prefixAllPlaceHolderNodes(graph)
 
 	# Re-format the input names of nodes
