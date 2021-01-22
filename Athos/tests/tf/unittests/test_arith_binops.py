@@ -1,4 +1,4 @@
-'''
+"""
 
 Authors: Pratik Bhatu.
 
@@ -20,7 +20,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-'''
+"""
 
 import tensorflow as tf
 import numpy as np
@@ -33,6 +33,7 @@ import os
 # Athos DIR
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 from tests.utils import Config, Compiler, assert_almost_equal
+
 
 @pytest.mark.parametrize(
     "a_shape,b_shape,dtype",
@@ -63,12 +64,19 @@ def test_arith_binop(test_dir, backend, tfOp, a_shape, b_shape, dtype):
     assert_almost_equal(tf_output=expected_output, mpc_tensor=mpc_output, precision=2)
     return
 
+
 @pytest.mark.parametrize(
     "a_shape, b_shape, data_format, dtype",
     [
         ([4, 1, 4], [4], None, np.single),  # Normal
-        ([4, 1, 4], [4], 'N..C', np.single),  # Same as above
-        pytest.param([4, 4, 1], [4], 'NC..', np.single, marks=pytest.mark.skip(reason="[bias_add] NC.. not supported")),  # Normal
+        ([4, 1, 4], [4], "N..C", np.single),  # Same as above
+        pytest.param(
+            [4, 4, 1],
+            [4],
+            "NC..",
+            np.single,
+            marks=pytest.mark.skip(reason="[bias_add] NC.. not supported"),
+        ),  # Normal
     ],
 )
 def test_bias_add(test_dir, backend, a_shape, b_shape, data_format, dtype):
@@ -93,14 +101,43 @@ def test_bias_add(test_dir, backend, a_shape, b_shape, data_format, dtype):
 @pytest.mark.parametrize(
     "tfOp, a_val, divisor",
     [
-        pytest.param(tf.divide, [7, -7], 5, marks=pytest.mark.skip(reason="[divide] Support for parsing DOUBLES")),  # [1, -2]
+        pytest.param(
+            tf.divide,
+            [7, -7],
+            5,
+            marks=pytest.mark.skip(reason="[divide] Support for parsing DOUBLES"),
+        ),  # [1, -2]
         (tf.divide, [7.0, -7.0], 5.0),  # [1.4, -1.4]
-        pytest.param(tf.truediv, [7, -7], 5, marks=pytest.mark.skip(reason="[divide] Support for parsing DOUBLES")),  # [1.4, -1.4]
+        pytest.param(
+            tf.truediv,
+            [7, -7],
+            5,
+            marks=pytest.mark.skip(reason="[divide] Support for parsing DOUBLES"),
+        ),  # [1.4, -1.4]
         (tf.truediv, [7.0], 5.0),  # [1.4]
         (tf.divide, 7.0, 5.0),  # 1.4
-        pytest.param(tf.floordiv, [7, -7], 5, marks=pytest.mark.skip(reason="[divide] Add support for converting div by constant into a mul")),  # [1, -2]
-        pytest.param(tf.floordiv, [7.0, -7.0], 5.0, marks=pytest.mark.skip(reason="[divide] Add support for converting div by constant into a mul")),  # [1.0, -2.0]
-        pytest.param(tf.truncatediv, -7, 5, marks=pytest.mark.skip(reason="[divide] Truncated div not supported")),  # -1
+        pytest.param(
+            tf.floordiv,
+            [7, -7],
+            5,
+            marks=pytest.mark.skip(
+                reason="[divide] Add support for converting div by constant into a mul"
+            ),
+        ),  # [1, -2]
+        pytest.param(
+            tf.floordiv,
+            [7.0, -7.0],
+            5.0,
+            marks=pytest.mark.skip(
+                reason="[divide] Add support for converting div by constant into a mul"
+            ),
+        ),  # [1.0, -2.0]
+        pytest.param(
+            tf.truncatediv,
+            -7,
+            5,
+            marks=pytest.mark.skip(reason="[divide] Truncated div not supported"),
+        ),  # -1
     ],
 )
 def test_div(test_dir, backend, tfOp, a_val, divisor, dtype):

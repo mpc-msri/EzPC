@@ -1,4 +1,4 @@
-'''
+"""
 
 Authors: Pratik Bhatu.
 
@@ -20,7 +20,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-'''
+"""
 import tensorflow as tf
 import numpy as np
 
@@ -36,14 +36,13 @@ from tests.utils import Config, Compiler, assert_almost_equal
 
 @pytest.mark.parametrize(
     "a_shape, scale, offset, mean, variance",
-    [([1, 2, 2, 1], [1.5], [2.3], [0.5], [0.2]), 
-    #([1], 1.5, 2.3, 0.5, 0.2), ([], 1.5, 2.3, 0.5, 0.2)
+    [
+        ([1, 2, 2, 1], [1.5], [2.3], [0.5], [0.2]),
+        # ([1], 1.5, 2.3, 0.5, 0.2), ([], 1.5, 2.3, 0.5, 0.2)
     ],
 )
 @pytest.mark.parametrize("dtype", [np.single])
-@pytest.mark.parametrize(
-    "tfOp", [tf.raw_ops.FusedBatchNorm]
-)
+@pytest.mark.parametrize("tfOp", [tf.raw_ops.FusedBatchNorm])
 @pytest.mark.skip(reason="[batch_norm] Test not complete")
 def test_fused_batch_norm(
     test_dir, backend, tfOp, a_shape, scale, offset, mean, variance, dtype

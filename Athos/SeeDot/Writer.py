@@ -1,4 +1,4 @@
-'''
+"""
 
 Authors: Sridhar Gopinath, Nishant Kumar.
 
@@ -20,23 +20,24 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-'''
+"""
+
 
 class Writer:
-	def __init__(self, fileName):
-		self.file = open(fileName, 'w')
-		self.indentLevel = 0
+    def __init__(self, fileName):
+        self.file = open(fileName, "w")
+        self.indentLevel = 0
 
-	def printf(self, str, *args, indent=False):
-		if indent:
-			self.file.write('\t' * self.indentLevel)
-		self.file.write(str % args)
+    def printf(self, str, *args, indent=False):
+        if indent:
+            self.file.write("\t" * self.indentLevel)
+        self.file.write(str % args)
 
-	def increaseIndent(self):
-		self.indentLevel += 1
+    def increaseIndent(self):
+        self.indentLevel += 1
 
-	def decreaseIndent(self):
-		self.indentLevel -= 1
+    def decreaseIndent(self):
+        self.indentLevel -= 1
 
-	def close(self):
-		self.file.close()
+    def close(self):
+        self.file.close()

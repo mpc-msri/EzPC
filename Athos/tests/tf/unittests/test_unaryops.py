@@ -1,4 +1,4 @@
-'''
+"""
 
 Authors: Pratik Bhatu.
 
@@ -20,7 +20,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-'''
+"""
 import tensorflow as tf
 import numpy as np
 
@@ -83,7 +83,7 @@ def test_uop(test_dir, backend, tfOp, a_shape, dtype):
 )
 @pytest.mark.parametrize("dtype", [np.single])
 @pytest.mark.parametrize("tfOp", [tf.math.reduce_mean, tf.reduce_sum])
-#@pytest.mark.skip(reason="[reduce] Reduce mean output mismatch and shape failure")
+# @pytest.mark.skip(reason="[reduce] Reduce mean output mismatch and shape failure")
 def test_reduce(test_dir, backend, tfOp, a_shape, axis, keepdims, dtype):
     graph = tf.Graph()
     a_inp = dtype(np.random.randn(*a_shape))

@@ -79,7 +79,7 @@ def generate_code(params, debug=False):
         "ResNet",
         "DenseNet",
         "SqueezeNetImgNet",
-        "SqueezeNetCIFAR10"
+        "SqueezeNetCIFAR10",
     ], "Network must be any of ResNet/DenseNet/SqueezeNetImgNet/SqueezeNetCIFAR10"
     scale = 12 if params["scale"] is None else params["scale"]
     bitlength = 64 if params["bitlength"] is None else params["bitlength"]
@@ -145,10 +145,10 @@ def generate_code(params, debug=False):
     ezpc_abs_path = os.path.join(model_abs_dir, ezpc_file_name)
 
     seedot_args = ""
-    seedot_args += "--astFile \"{}/astOutput.pkl\" --consSF {} ".format(
+    seedot_args += '--astFile "{}/astOutput.pkl" --consSF {} '.format(
         model_abs_dir, scale
     )
-    seedot_args += "--bitlen {} --outputFileName \"{}\" ".format(bitlength, ezpc_abs_path)
+    seedot_args += '--bitlen {} --outputFileName "{}" '.format(bitlength, ezpc_abs_path)
     seedot_args += "--disableAllOpti {} ".format(disable_all_hlil_opts)
     seedot_args += "--disableRMO {} ".format(disable_relu_maxpool_opts)
     seedot_args += "--disableLivenessOpti {} ".format(disable_garbage_collection)
@@ -181,15 +181,15 @@ def generate_code(params, debug=False):
         post = ""
     temp = os.path.join(model_abs_dir, "temp.ezpc")
     os.system(
-        "cat \"{pre}\" \"{common}\" \"{post}\" \"{ezpc}\"> \"{temp}\"".format(
+        'cat "{pre}" "{common}" "{post}" "{ezpc}"> "{temp}"'.format(
             pre=pre, common=common, post=post, ezpc=ezpc_abs_path, temp=temp
         )
     )
-    os.system("mv \"{temp}\" \"{ezpc}\"".format(temp=temp, ezpc=ezpc_abs_path))
+    os.system('mv "{temp}" "{ezpc}"'.format(temp=temp, ezpc=ezpc_abs_path))
 
     ezpc_dir = os.path.join(athos_dir, "../EzPC/EzPC/")
     # Copy generated code to the ezpc directory
-    os.system("cp \"{ezpc}\" \"{ezpc_dir}\"".format(ezpc=ezpc_abs_path, ezpc_dir=ezpc_dir))
+    os.system('cp "{ezpc}" "{ezpc_dir}"'.format(ezpc=ezpc_abs_path, ezpc_dir=ezpc_dir))
     os.chdir(ezpc_dir)
     ezpc_args = ""
     ezpc_args += "--bitlen {bl} --codegen {target} --disable-tac ".format(
@@ -205,12 +205,14 @@ def generate_code(params, debug=False):
         ezpc_args += "--sf {} ".format(scale)
 
     os.system(
-        "eval `opam config env`; ./ezpc.sh \"{}\" ".format(ezpc_file_name) + ezpc_args
+        'eval `opam config env`; ./ezpc.sh "{}" '.format(ezpc_file_name) + ezpc_args
     )
     os.system(
-        "mv \"{output}\" \"{model_dir}\" ".format(output=output_name, model_dir=model_abs_dir)
+        'mv "{output}" "{model_dir}" '.format(
+            output=output_name, model_dir=model_abs_dir
+        )
     )
-    os.system("rm \"{}\"".format(ezpc_file_name))
+    os.system('rm "{}"'.format(ezpc_file_name))
     output_file = os.path.join(model_abs_dir, output_name)
 
     print(
@@ -235,7 +237,7 @@ def generate_code(params, debug=False):
 
     if target in ["CPP", "CPPRING"]:
         os.system(
-            "g++ {opt_flag} -w \"{file}\" -o \"{output}\"".format(
+            'g++ {opt_flag} -w "{file}" -o "{output}"'.format(
                 file=output_file, output=program_path, opt_flag=opt_flag
             )
         )

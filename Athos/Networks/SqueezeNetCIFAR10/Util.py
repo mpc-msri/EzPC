@@ -1,4 +1,4 @@
-'''
+"""
 
 Authors: Nishant Kumar.
 
@@ -25,7 +25,7 @@ Original code from https://github.com/deep-diver/CIFAR10-img-classification-tens
 Modified for our purposes.
 **
 
-'''
+"""
 
 import os, sys
 import pickle
@@ -34,70 +34,104 @@ import numpy as np
 import tensorflow as tf
 from matplotlib import pyplot as plt
 
-preProcessedImgSaveFolderConst = './PreProcessedImages'
+preProcessedImgSaveFolderConst = "./PreProcessedImages"
+
 
 def load_label_names():
-    return ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
+    return [
+        "airplane",
+        "automobile",
+        "bird",
+        "cat",
+        "deer",
+        "dog",
+        "frog",
+        "horse",
+        "ship",
+        "truck",
+    ]
+
 
 def load_cfar10_batch(cifar10_dataset_folder_path, batch_id):
-    with open(cifar10_dataset_folder_path + '/data_batch_' + str(batch_id), mode='rb') as file:
+    with open(
+        cifar10_dataset_folder_path + "/data_batch_" + str(batch_id), mode="rb"
+    ) as file:
         # note the encoding type is 'latin1'
-        batch = pickle.load(file, encoding='latin1')
+        batch = pickle.load(file, encoding="latin1")
 
-    features = batch['data'].reshape((len(batch['data']), 3, 32, 32)).transpose(0, 2, 3, 1)
-    labels = batch['labels']
+    features = (
+        batch["data"].reshape((len(batch["data"]), 3, 32, 32)).transpose(0, 2, 3, 1)
+    )
+    labels = batch["labels"]
 
     return features, labels
 
-def display_stats(cifar10_dataset_folder_path, batch_id, sample_id, savepng=False, showfig=False):
+
+def display_stats(
+    cifar10_dataset_folder_path, batch_id, sample_id, savepng=False, showfig=False
+):
     features, labels = load_cfar10_batch(cifar10_dataset_folder_path, batch_id)
 
     if not (0 <= sample_id < len(features)):
-        print('{} samples in batch {}.  {} is out of range.'.format(len(features), batch_id, sample_id))
+        print(
+            "{} samples in batch {}.  {} is out of range.".format(
+                len(features), batch_id, sample_id
+            )
+        )
         return None
 
-    print('\nStats of batch #{}:'.format(batch_id))
-    print('# of Samples: {}\n'.format(len(features)))
+    print("\nStats of batch #{}:".format(batch_id))
+    print("# of Samples: {}\n".format(len(features)))
 
     label_names = load_label_names()
     label_counts = dict(zip(*np.unique(labels, return_counts=True)))
     for key, value in label_counts.items():
-        print('Label Counts of [{}]({}) : {}'.format(key, label_names[key].upper(), value))
+        print(
+            "Label Counts of [{}]({}) : {}".format(key, label_names[key].upper(), value)
+        )
 
     sample_image = features[sample_id]
     sample_label = labels[sample_id]
 
-    print('\nExample of Image {}:'.format(sample_id))
-    print('Image - Min Value: {} Max Value: {}'.format(sample_image.min(), sample_image.max()))
-    print('Image - Shape: {}'.format(sample_image.shape))
-    print('Label - Label Id: {} Name: {}'.format(sample_label, label_names[sample_label]))
+    print("\nExample of Image {}:".format(sample_id))
+    print(
+        "Image - Min Value: {} Max Value: {}".format(
+            sample_image.min(), sample_image.max()
+        )
+    )
+    print("Image - Shape: {}".format(sample_image.shape))
+    print(
+        "Label - Label Id: {} Name: {}".format(sample_label, label_names[sample_label])
+    )
 
     if savepng or showfig:
         # Save/show a .png file for the current image
         plt.imshow(sample_image)
         if savepng:
-            plt.savefig('foo.png')
+            plt.savefig("foo.png")
         elif showfig:
             plt.show()
 
+
 def normalize(x):
     """
-        argument
-            - x: input image data in numpy array [32, 32, 3]
-        return
-            - normalized x
+    argument
+        - x: input image data in numpy array [32, 32, 3]
+    return
+        - normalized x
     """
     min_val = np.min(x)
     max_val = np.max(x)
-    x = (x-min_val) / (max_val-min_val)
+    x = (x - min_val) / (max_val - min_val)
     return x
+
 
 def one_hot_encode(x):
     """
-        argument
-            - x: a list of labels
-        return
-            - one hot encoding matrix (number of labels, number of class)
+    argument
+        - x: a list of labels
+    return
+        - one hot encoding matrix (number of labels, number of class)
     """
     encoded = np.zeros((len(x), 10))
 
@@ -106,16 +140,23 @@ def one_hot_encode(x):
 
     return encoded
 
+
 def _preprocess_and_save(normalize, one_hot_encode, features, labels, filename):
     features = normalize(features)
     labels = one_hot_encode(labels)
 
-    pickle.dump((features, labels), open(filename, 'wb'))
+    pickle.dump((features, labels), open(filename, "wb"))
+
 
 # Saved files are 'preprocess_batch_' + str(batch_i) + '.p',
 #                 'preprocess_validation.p',
 #                 'preprocess_testing.p'
-def preprocess_and_save_data(cifar10_dataset_folder_path, normalize, one_hot_encode, preProcessedImgSaveFolder = preProcessedImgSaveFolderConst):
+def preprocess_and_save_data(
+    cifar10_dataset_folder_path,
+    normalize,
+    one_hot_encode,
+    preProcessedImgSaveFolder=preProcessedImgSaveFolderConst,
+):
     n_batches = 5
     valid_features = []
     valid_labels = []
@@ -131,9 +172,15 @@ def preprocess_and_save_data(cifar10_dataset_folder_path, normalize, one_hot_enc
         # - one_hot_encode the lables
         # - save in a new file named, "preprocess_batch_" + batch_number
         # - each file for each batch
-        _preprocess_and_save(normalize, one_hot_encode,
-                             features[:-index_of_validation], labels[:-index_of_validation],
-                             os.path.join(preProcessedImgSaveFolder, 'preprocess_batch_' + str(batch_i) + '.p'))
+        _preprocess_and_save(
+            normalize,
+            one_hot_encode,
+            features[:-index_of_validation],
+            labels[:-index_of_validation],
+            os.path.join(
+                preProcessedImgSaveFolder, "preprocess_batch_" + str(batch_i) + ".p"
+            ),
+        )
 
         # unlike the training dataset, validation dataset will be added through all batch dataset
         # - take 10% of the whold dataset of the batch
@@ -144,30 +191,61 @@ def preprocess_and_save_data(cifar10_dataset_folder_path, normalize, one_hot_enc
         valid_labels.extend(labels[-index_of_validation:])
 
     # preprocess the all stacked validation dataset
-    _preprocess_and_save(normalize, one_hot_encode,
-                         np.array(valid_features), np.array(valid_labels),
-                         os.path.join(preProcessedImgSaveFolder, 'preprocess_validation.p'))
+    _preprocess_and_save(
+        normalize,
+        one_hot_encode,
+        np.array(valid_features),
+        np.array(valid_labels),
+        os.path.join(preProcessedImgSaveFolder, "preprocess_validation.p"),
+    )
 
     # load the test dataset
-    with open(cifar10_dataset_folder_path + '/test_batch', mode='rb') as file:
-        batch = pickle.load(file, encoding='latin1')
+    with open(cifar10_dataset_folder_path + "/test_batch", mode="rb") as file:
+        batch = pickle.load(file, encoding="latin1")
 
     # preprocess the testing data
-    test_features = batch['data'].reshape((len(batch['data']), 3, 32, 32)).transpose(0, 2, 3, 1)
-    test_labels = batch['labels']
+    test_features = (
+        batch["data"].reshape((len(batch["data"]), 3, 32, 32)).transpose(0, 2, 3, 1)
+    )
+    test_labels = batch["labels"]
 
     # Preprocess and Save all testing data
-    _preprocess_and_save(normalize, one_hot_encode,
-                         np.array(test_features), np.array(test_labels),
-                         os.path.join(preProcessedImgSaveFolder, 'preprocess_testing.p'))
+    _preprocess_and_save(
+        normalize,
+        one_hot_encode,
+        np.array(test_features),
+        np.array(test_labels),
+        os.path.join(preProcessedImgSaveFolder, "preprocess_testing.p"),
+    )
 
-def get_one_sample_point(batch_id, sample_id, preProcessedImgSaveFolder = preProcessedImgSaveFolderConst):
-    features, labels = pickle.load(open(os.path.join(preProcessedImgSaveFolder, 'preprocess_batch_' + str(batch_id) + '.p'), mode='rb'))
+
+def get_one_sample_point(
+    batch_id, sample_id, preProcessedImgSaveFolder=preProcessedImgSaveFolderConst
+):
+    features, labels = pickle.load(
+        open(
+            os.path.join(
+                preProcessedImgSaveFolder, "preprocess_batch_" + str(batch_id) + ".p"
+            ),
+            mode="rb",
+        )
+    )
     return (features[sample_id], labels[sample_id])
 
-def get_sample_points(batch_id, start_id, end_id, preProcessedImgSaveFolder = preProcessedImgSaveFolderConst):
-    features, labels = pickle.load(open(os.path.join(preProcessedImgSaveFolder, 'preprocess_batch_' + str(batch_id) + '.p'), mode='rb'))
+
+def get_sample_points(
+    batch_id, start_id, end_id, preProcessedImgSaveFolder=preProcessedImgSaveFolderConst
+):
+    features, labels = pickle.load(
+        open(
+            os.path.join(
+                preProcessedImgSaveFolder, "preprocess_batch_" + str(batch_id) + ".p"
+            ),
+            mode="rb",
+        )
+    )
     return (features[start_id:end_id], labels[start_id:end_id])
+
 
 def batch_features_labels(features, labels, batch_size):
     """
@@ -177,35 +255,60 @@ def batch_features_labels(features, labels, batch_size):
         end = min(start + batch_size, len(features))
         yield features[start:end], labels[start:end]
 
-def load_preprocess_training_batch(batch_id, batch_size, preProcessedImgSaveFolder = preProcessedImgSaveFolderConst):
+
+def load_preprocess_training_batch(
+    batch_id, batch_size, preProcessedImgSaveFolder=preProcessedImgSaveFolderConst
+):
     """
     Load the Preprocessed Training data and return them in batches of <batch_size> or less
     """
-    filename = os.path.join(preProcessedImgSaveFolder, 'preprocess_batch_' + str(batch_id) + '.p')
-    features, labels = pickle.load(open(filename, mode='rb'))
+    filename = os.path.join(
+        preProcessedImgSaveFolder, "preprocess_batch_" + str(batch_id) + ".p"
+    )
+    features, labels = pickle.load(open(filename, mode="rb"))
 
     # Return the training data in batches of size <batch_size> or less
     return batch_features_labels(features, labels, batch_size)
 
-def load_preprocess_training_data(batch_id, preProcessedImgSaveFolder = preProcessedImgSaveFolderConst):
-    filename = os.path.join(preProcessedImgSaveFolder, 'preprocess_batch_' + str(batch_id) + '.p')
-    features, labels = pickle.load(open(filename, mode='rb'))
+
+def load_preprocess_training_data(
+    batch_id, preProcessedImgSaveFolder=preProcessedImgSaveFolderConst
+):
+    filename = os.path.join(
+        preProcessedImgSaveFolder, "preprocess_batch_" + str(batch_id) + ".p"
+    )
+    features, labels = pickle.load(open(filename, mode="rb"))
     return features, labels
 
-def load_preprocess_validation_data(preProcessedImgSaveFolder = preProcessedImgSaveFolderConst):
-    valid_features, valid_labels = pickle.load(open(os.path.join(preProcessedImgSaveFolder, 'preprocess_validation.p'), mode='rb'))
+
+def load_preprocess_validation_data(
+    preProcessedImgSaveFolder=preProcessedImgSaveFolderConst,
+):
+    valid_features, valid_labels = pickle.load(
+        open(
+            os.path.join(preProcessedImgSaveFolder, "preprocess_validation.p"),
+            mode="rb",
+        )
+    )
     return valid_features, valid_labels
 
-def load_preprocess_testing_data(preProcessedImgSaveFolder = preProcessedImgSaveFolderConst):
-    testing_features, testing_labels = pickle.load(open(os.path.join(preProcessedImgSaveFolder, 'preprocess_testing.p'), mode='rb'))
+
+def load_preprocess_testing_data(
+    preProcessedImgSaveFolder=preProcessedImgSaveFolderConst,
+):
+    testing_features, testing_labels = pickle.load(
+        open(os.path.join(preProcessedImgSaveFolder, "preprocess_testing.p"), mode="rb")
+    )
     return testing_features, testing_labels
 
+
 def main():
-    cifar10_dataset_folder_path = '../../HelperScripts/CIFAR10/cifar-10-batches-py'
-    preProcessedImgSaveFolder = './PreProcessedImages'
+    cifar10_dataset_folder_path = "../../HelperScripts/CIFAR10/cifar-10-batches-py"
+    preProcessedImgSaveFolder = "./PreProcessedImages"
     preprocess_and_save_data(cifar10_dataset_folder_path, normalize, one_hot_encode)
     display_stats(cifar10_dataset_folder_path, 2, 4555)
     print(get_one_sample_point(2, 4555))
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
