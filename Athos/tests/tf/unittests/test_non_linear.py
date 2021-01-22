@@ -1,4 +1,4 @@
-'''
+"""
 
 Authors: Pratik Bhatu.
 
@@ -20,7 +20,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-'''
+"""
 import tensorflow as tf
 import numpy as np
 
@@ -61,6 +61,7 @@ def test_non_linear(test_dir, backend, tfOp, a_shape, dtype):
     mpc_output = compiler.compile_and_run([a_inp])
     assert_almost_equal(tf_output=expected_output, mpc_tensor=mpc_output, precision=2)
     return
+
 
 @pytest.mark.skip(reason="[softmax] Haven't made non-linear functionalities public")
 @pytest.mark.parametrize("a_shape, axis", [([2, 3], 1), ([1], 0)])

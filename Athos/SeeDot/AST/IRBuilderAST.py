@@ -1,4 +1,4 @@
-'''
+"""
 
 Authors: Pratik Bhatu.
 
@@ -20,16 +20,18 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-'''
+"""
 
 import AST.AST as AST
 from AST.ASTVisitor import ASTVisitor
 
+
 class IRBuilderAST(ASTVisitor):
-	typeInfo = {}
-	def visit(self, node, args=None):
-		ret = super().visit( node, args)
-		if type(ret) is tuple:
-			if ret[1].idf not in self.typeInfo:
-				self.typeInfo[ret[1].idf] = node.type
-		return ret
+    typeInfo = {}
+
+    def visit(self, node, args=None):
+        ret = super().visit(node, args)
+        if type(ret) is tuple:
+            if ret[1].idf not in self.typeInfo:
+                self.typeInfo[ret[1].idf] = node.type
+        return ret

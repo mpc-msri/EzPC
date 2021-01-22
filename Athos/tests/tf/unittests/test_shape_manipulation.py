@@ -1,4 +1,4 @@
-'''
+"""
 
 Authors: Pratik Bhatu.
 
@@ -20,7 +20,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-'''
+"""
 import tensorflow as tf
 import numpy as np
 
@@ -40,8 +40,8 @@ from tests.utils import Config, Compiler, assert_almost_equal
         ([2, 3], [6]),
         ([6], [2, 3]),
         ([2, 3], [3, 2]),
-        ([2, 3], [-1]),        # Flatten 1-D,
-        ([1], []),              # convert to scalar,
+        ([2, 3], [-1]),  # Flatten 1-D,
+        ([1], []),  # convert to scalar,
         ([3, 2, 3], [2, -1]),  # infer -1 as 9,
         ([3, 2, 3], [-1, 9]),  # infer -1 as 2
     ],

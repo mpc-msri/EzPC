@@ -1,5 +1,3 @@
-
-
 # Copyright 2018 The TensorFlow Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,11 +30,22 @@ import tensorflow as tf
 
 from tensorflow.keras import backend
 from tensorflow.keras import layers
-from tensorflow.keras.layers import Conv2D, BatchNormalization, Activation, add, ZeroPadding2D, GlobalAveragePooling2D, AveragePooling2D, Dense, Reshape, Lambda
+from tensorflow.keras.layers import (
+    Conv2D,
+    BatchNormalization,
+    Activation,
+    add,
+    ZeroPadding2D,
+    GlobalAveragePooling2D,
+    AveragePooling2D,
+    Dense,
+    Reshape,
+    Lambda,
+)
 from tensorflow.keras.regularizers import l2
 from tensorflow.keras.utils import get_custom_objects
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'TFCompiler'))
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "TFCompiler"))
 import DumpTFMtData
 
 BATCH_NORM_DECAY = 0.997
@@ -44,7 +53,9 @@ BATCH_NORM_EPSILON = 1e-5
 L2_WEIGHT_DECAY = 2e-4
 
 
-def identity_building_block(input_tensor, kernel_size, filters, stage, block, training=None):
+def identity_building_block(
+    input_tensor, kernel_size, filters, stage, block, training=None
+):
     """The identity block is the block that has no conv layer at shortcut.
 
     Arguments:
@@ -61,44 +72,45 @@ def identity_building_block(input_tensor, kernel_size, filters, stage, block, tr
         Output tensor for the block.
     """
     filters1, filters2 = filters
-    bn_axis=1
-    if tf.keras.backend.image_data_format() == 'channels_last':
-       bn_axis = 3
+    bn_axis = 1
+    if tf.keras.backend.image_data_format() == "channels_last":
+        bn_axis = 3
     else:
-       bn_axis = 1
+        bn_axis = 1
 
+    x = Conv2D(
+        filters1,
+        kernel_size,
+        padding="same",
+        kernel_initializer="he_normal",
+        kernel_regularizer=l2(L2_WEIGHT_DECAY),
+        bias_regularizer=l2(L2_WEIGHT_DECAY),
+    )(input_tensor)
+    x = BatchNormalization(
+        axis=bn_axis, momentum=BATCH_NORM_DECAY, epsilon=BATCH_NORM_EPSILON, fused=True
+    )(x, training=training)
 
-    x = Conv2D(filters1, kernel_size,
-                            padding='same',
-                            kernel_initializer='he_normal',
-                            kernel_regularizer=
-                            l2(L2_WEIGHT_DECAY),
-                            bias_regularizer=
-                            l2(L2_WEIGHT_DECAY))(input_tensor)
-    x = BatchNormalization(axis=bn_axis,
-                                        momentum=BATCH_NORM_DECAY,
-                                        epsilon=BATCH_NORM_EPSILON,fused=True)(
-                                                x, training=training)
+    x = Activation("approx_activation")(x)
 
-    x = Activation('approx_activation')(x)
-
-    x = Conv2D(filters2, kernel_size,
-                            padding='same',
-                            kernel_initializer='he_normal',
-                            kernel_regularizer=
-                            l2(L2_WEIGHT_DECAY),
-                            bias_regularizer=
-                            l2(L2_WEIGHT_DECAY))(x)
-    x = BatchNormalization(axis=bn_axis,
-                                        momentum=BATCH_NORM_DECAY,
-                                        epsilon=BATCH_NORM_EPSILON,fused=True)(
-                                                x, training=training)
+    x = Conv2D(
+        filters2,
+        kernel_size,
+        padding="same",
+        kernel_initializer="he_normal",
+        kernel_regularizer=l2(L2_WEIGHT_DECAY),
+        bias_regularizer=l2(L2_WEIGHT_DECAY),
+    )(x)
+    x = BatchNormalization(
+        axis=bn_axis, momentum=BATCH_NORM_DECAY, epsilon=BATCH_NORM_EPSILON, fused=True
+    )(x, training=training)
     x = add([x, input_tensor])
-    x = Activation('approx_activation')(x)
+    x = Activation("approx_activation")(x)
     return x
 
 
-def conv_building_block(input_tensor, kernel_size, filters, stage, block, strides=(2, 2), training=None):
+def conv_building_block(
+    input_tensor, kernel_size, filters, stage, block, strides=(2, 2), training=None
+):
     """A block that has a conv layer at shortcut.
 
     Arguments:
@@ -120,53 +132,58 @@ def conv_building_block(input_tensor, kernel_size, filters, stage, block, stride
     And the shortcut should have strides=(2, 2) as well
     """
     filters1, filters2 = filters
-    bn_axis=1
-    if tf.keras.backend.image_data_format() == 'channels_last':
-       bn_axis = 3
+    bn_axis = 1
+    if tf.keras.backend.image_data_format() == "channels_last":
+        bn_axis = 3
     else:
-       bn_axis = 1
+        bn_axis = 1
 
-    x = Conv2D(filters1, kernel_size, strides=strides,
-                            padding='same',
-                            kernel_initializer='he_normal',
-                            kernel_regularizer=
-                            l2(L2_WEIGHT_DECAY),
-                            bias_regularizer=
-                            l2(L2_WEIGHT_DECAY))(input_tensor)
-    x = BatchNormalization(axis=bn_axis,
-                                        momentum=BATCH_NORM_DECAY,
-                                        epsilon=BATCH_NORM_EPSILON,fused=True)(
-                                                x, training=training)
-    x = Activation('approx_activation')(x)
+    x = Conv2D(
+        filters1,
+        kernel_size,
+        strides=strides,
+        padding="same",
+        kernel_initializer="he_normal",
+        kernel_regularizer=l2(L2_WEIGHT_DECAY),
+        bias_regularizer=l2(L2_WEIGHT_DECAY),
+    )(input_tensor)
+    x = BatchNormalization(
+        axis=bn_axis, momentum=BATCH_NORM_DECAY, epsilon=BATCH_NORM_EPSILON, fused=True
+    )(x, training=training)
+    x = Activation("approx_activation")(x)
 
-    x = Conv2D(filters2, kernel_size, padding='same',
-                            kernel_initializer='he_normal',
-                            kernel_regularizer=
-                            l2(L2_WEIGHT_DECAY),
-                            bias_regularizer=
-                            l2(L2_WEIGHT_DECAY))(x)
-    x = BatchNormalization(axis=bn_axis,
-                                        momentum=BATCH_NORM_DECAY,
-                                        epsilon=BATCH_NORM_EPSILON,fused=True)(
-                                                x, training=training)
+    x = Conv2D(
+        filters2,
+        kernel_size,
+        padding="same",
+        kernel_initializer="he_normal",
+        kernel_regularizer=l2(L2_WEIGHT_DECAY),
+        bias_regularizer=l2(L2_WEIGHT_DECAY),
+    )(x)
+    x = BatchNormalization(
+        axis=bn_axis, momentum=BATCH_NORM_DECAY, epsilon=BATCH_NORM_EPSILON, fused=True
+    )(x, training=training)
 
-    shortcut = Conv2D(filters2, (1, 1), strides=strides,
-                                   kernel_initializer='he_normal',
-                                   kernel_regularizer=
-                                   l2(L2_WEIGHT_DECAY),
-                                   bias_regularizer=
-                                   l2(L2_WEIGHT_DECAY))(input_tensor)
+    shortcut = Conv2D(
+        filters2,
+        (1, 1),
+        strides=strides,
+        kernel_initializer="he_normal",
+        kernel_regularizer=l2(L2_WEIGHT_DECAY),
+        bias_regularizer=l2(L2_WEIGHT_DECAY),
+    )(input_tensor)
     shortcut = BatchNormalization(
-            axis=bn_axis,
-            momentum=BATCH_NORM_DECAY, epsilon=BATCH_NORM_EPSILON,fused=True)(
-                    shortcut, training=training)
+        axis=bn_axis, momentum=BATCH_NORM_DECAY, epsilon=BATCH_NORM_EPSILON, fused=True
+    )(shortcut, training=training)
 
     x = add([x, shortcut])
-    x = Activation('approx_activation')(x)
+    x = Activation("approx_activation")(x)
     return x
 
 
-def resnet_block(input_tensor, size, kernel_size, filters, stage, conv_strides=(2, 2), training=None):
+def resnet_block(
+    input_tensor, size, kernel_size, filters, stage, conv_strides=(2, 2), training=None
+):
     """A block which applies conv followed by multiple identity blocks.
 
     Arguments:
@@ -185,13 +202,26 @@ def resnet_block(input_tensor, size, kernel_size, filters, stage, conv_strides=(
         Output tensor after applying conv and identity blocks.
     """
 
-    x = conv_building_block(input_tensor, kernel_size, filters, stage=stage,
-                            strides=conv_strides, block='block_0',
-                            training=training)
+    x = conv_building_block(
+        input_tensor,
+        kernel_size,
+        filters,
+        stage=stage,
+        strides=conv_strides,
+        block="block_0",
+        training=training,
+    )
     for i in range(size - 1):
-        x = identity_building_block(x, kernel_size, filters, stage=stage,
-                                    block='block_%d' % (i + 1), training=training)
+        x = identity_building_block(
+            x,
+            kernel_size,
+            filters,
+            stage=stage,
+            block="block_%d" % (i + 1),
+            training=training,
+        )
     return x
+
 
 def build():
     """Instantiates ResNet32 model """
@@ -204,44 +234,66 @@ def build():
     img_input = layers.Input(shape=input_shape)
     x = img_input
     bn_axis = 1
-    if tf.keras.backend.image_data_format() == 'channels_last':
-       bn_axis = 3
+    if tf.keras.backend.image_data_format() == "channels_last":
+        bn_axis = 3
     else:
-       bn_axis = 1
+        bn_axis = 1
 
     x = ZeroPadding2D(padding=(1, 1))(x)
-    x = Conv2D(16, (3, 3),
-                            strides=(1, 1),
-                            padding='valid',
-                            kernel_initializer='he_normal',
-                            kernel_regularizer=
-                            l2(L2_WEIGHT_DECAY),
-                            bias_regularizer=
-                            l2(L2_WEIGHT_DECAY))(x)
-    x = BatchNormalization(axis=bn_axis,
-                                        momentum=BATCH_NORM_DECAY,
-                                        epsilon=BATCH_NORM_EPSILON,fused=True)(
-                                                x, training=training)
-    x = Activation('approx_activation')(x)
+    x = Conv2D(
+        16,
+        (3, 3),
+        strides=(1, 1),
+        padding="valid",
+        kernel_initializer="he_normal",
+        kernel_regularizer=l2(L2_WEIGHT_DECAY),
+        bias_regularizer=l2(L2_WEIGHT_DECAY),
+    )(x)
+    x = BatchNormalization(
+        axis=bn_axis, momentum=BATCH_NORM_DECAY, epsilon=BATCH_NORM_EPSILON, fused=True
+    )(x, training=training)
+    x = Activation("approx_activation")(x)
 
-    x = resnet_block(x, size=num_blocks, kernel_size=3, filters=[16, 16],
-                                      stage=2, conv_strides=(1, 1), training=training)
+    x = resnet_block(
+        x,
+        size=num_blocks,
+        kernel_size=3,
+        filters=[16, 16],
+        stage=2,
+        conv_strides=(1, 1),
+        training=training,
+    )
 
-    x = resnet_block(x, size=num_blocks, kernel_size=3, filters=[32, 32],
-                                      stage=3, conv_strides=(2, 2), training=training)
+    x = resnet_block(
+        x,
+        size=num_blocks,
+        kernel_size=3,
+        filters=[32, 32],
+        stage=3,
+        conv_strides=(2, 2),
+        training=training,
+    )
 
-    x = resnet_block(x, size=num_blocks, kernel_size=3, filters=[64, 64],
-                                      stage=4, conv_strides=(2, 2), training=training)
+    x = resnet_block(
+        x,
+        size=num_blocks,
+        kernel_size=3,
+        filters=[64, 64],
+        stage=4,
+        conv_strides=(2, 2),
+        training=training,
+    )
 
-    x = AveragePooling2D(pool_size=(8,8),strides=(1,1),padding="VALID")(x)
-    x = Lambda(lambda w: tf.keras.backend.squeeze(w,1))(x)
-    x = Lambda(lambda w: tf.keras.backend.squeeze(w,1))(x)
-    x = Dense(classes,activation='softmax',
-                       kernel_initializer='he_normal',
-                       kernel_regularizer=
-                       l2(L2_WEIGHT_DECAY),
-                       bias_regularizer=
-                       l2(L2_WEIGHT_DECAY))(x)
+    x = AveragePooling2D(pool_size=(8, 8), strides=(1, 1), padding="VALID")(x)
+    x = Lambda(lambda w: tf.keras.backend.squeeze(w, 1))(x)
+    x = Lambda(lambda w: tf.keras.backend.squeeze(w, 1))(x)
+    x = Dense(
+        classes,
+        activation="softmax",
+        kernel_initializer="he_normal",
+        kernel_regularizer=l2(L2_WEIGHT_DECAY),
+        bias_regularizer=l2(L2_WEIGHT_DECAY),
+    )(x)
 
     inputs = img_input
     # Create model.
@@ -249,25 +301,31 @@ def build():
 
     return model
 
+
 def main():
-    get_custom_objects().update({'approx_activation': Activation(tf.keras.activations.relu)})
+    get_custom_objects().update(
+        {"approx_activation": Activation(tf.keras.activations.relu)}
+    )
     model = build()
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
-        imgData = np.full((1,32,32,3), 2.3)
-        feed_dict={'input_1:0':imgData}
-        
+        imgData = np.full((1, 32, 32, 3), 2.3)
+        feed_dict = {"input_1:0": imgData}
+
         ans = model.predict(imgData)
         print(ans)
-        
+
         output_tensor = None
         gg = tf.get_default_graph()
         for node in gg.as_graph_def().node:
-            if node.name == 'dense/Softmax':
+            if node.name == "dense/Softmax":
                 output_tensor = gg.get_operation_by_name(node.name).outputs[0]
 
-        assert(output_tensor is not None)
-        optimized_graph_def = DumpTFMtData.save_graph_metadata(output_tensor, sess, feed_dict=feed_dict)
+        assert output_tensor is not None
+        optimized_graph_def = DumpTFMtData.save_graph_metadata(
+            output_tensor, sess, feed_dict=feed_dict
+        )
+
 
 if __name__ == "__main__":
     main()
