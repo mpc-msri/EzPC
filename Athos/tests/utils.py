@@ -28,8 +28,9 @@ import shutil
 import re
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
-import CompilerScripts.parse_config as parse_config
 import CompileTFGraph
+import CompilerScripts.parse_config as parse_config
+from CompilerScripts.get_output import convert_raw_output_to_np
 
 import numpy as np
 import subprocess
@@ -103,23 +104,6 @@ def save_graph(graph_def, config, test_dir):
         print("\n\nfile  name: ", f.name, "\n\n\n")
     config["model_name"] = fpath
     return
-
-
-def convert_raw_output_to_np(filename, bitlength, scale):
-    matcher = re.compile(r"[-]?[0-9]+")
-    scaled_array = []
-    with open(filename, "r") as f:
-        for line in f:
-            match = matcher.fullmatch(line.rstrip())
-            if match:
-                unsigned_number = int(match.group(0))
-                number = (
-                    unsigned_number
-                    if (unsigned_number < 2 ** (bitlength - 1))
-                    else unsigned_number - 2 ** bitlength
-                )
-                scaled_array.append(float(number) / (2 ** scale))
-    return np.array(scaled_array)
 
 
 class Program:

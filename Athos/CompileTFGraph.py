@@ -273,6 +273,8 @@ def generate_code(params, debug=False):
             )
 
     os.chdir(cwd)
+    print("Generated binary: {}".format(program_path))
+    print("Use as input to server (model weights): {}".format(weights_path))
     return (program_path, weights_path)
 
 
