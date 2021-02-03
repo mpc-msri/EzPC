@@ -77,6 +77,8 @@ def test_conv(test_dir, backend, tfOp, a_shape, kernel_shape, strides, padding, 
 def test_depthwise_conv(
     test_dir, backend, tfOp, a_shape, kernel_shape, strides, padding, dtype
 ):
+    if backend in ["2PC_HE"]:
+        pytest.skip("[SCI][grouped_conv] Missing Support in SCI")
     graph = tf.Graph()
     a_inp = dtype(np.random.randn(*a_shape))
     kernel_inp = dtype(np.random.randn(*kernel_shape))

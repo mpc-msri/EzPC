@@ -42,6 +42,14 @@ void Conv2D(int32_t N, int32_t H, int32_t W, int32_t CI,
         intType* inputArr, intType* filterArr, 
         intType* outArr);
 
+void Conv2DGroup(int32_t N, int32_t H, int32_t W, int32_t CI, 
+        int32_t FH, int32_t FW, int32_t CO, 
+        int32_t zPadHLeft, int32_t zPadHRight, 
+        int32_t zPadWLeft, int32_t zPadWRight, 
+        int32_t strideH, int32_t strideW, int32_t G,
+        intType* inputArr, intType* filterArr, 
+        intType* outArr);
+
 void MatMul2D(int32_t s1, int32_t s2, int32_t s3, const intType* A, const intType* B, intType* C, bool modelIsA)
 {
 #ifdef LOG_LAYERWISE
@@ -946,6 +954,42 @@ void Conv2DWrapper(signedIntType N, signedIntType H, signedIntType W, signedIntT
         delete[] VoutputArr;
     }
 #endif
+}
+
+void Conv2DGroupWrapper(signedIntType N, signedIntType H, signedIntType W, signedIntType CI, 
+        signedIntType FH, signedIntType FW, signedIntType CO, 
+        signedIntType zPadHLeft, signedIntType zPadHRight, 
+        signedIntType zPadWLeft, signedIntType zPadWRight, 
+        signedIntType strideH, signedIntType strideW, signedIntType G,
+        intType* inputArr, 
+        intType* filterArr, 
+        intType* outArr)
+{
+#ifdef LOG_LAYERWISE
+    INIT_ALL_IO_DATA_SENT;
+    INIT_TIMER;
+#endif
+
+    static int ctr = 1;
+    std::cout<<"Conv2DGroupCSF "<<ctr<<" called N="<<N<<", H="<<H<<", W="<<W<<", CI="<<CI<<", FH="<<FH<<", FW="<<FW<<", CO="<<CO<<", S="<<strideH<<",G="<<G<<std::endl;
+    ctr++;
+
+#ifdef SCI_OT
+    // If its a ring, then its a OT based -- use the default Conv2DGroupCSF implementation that comes from the EzPC library
+    Conv2DGroup(N,H,W,CI,FH,FW,CO,zPadHLeft,zPadHRight,zPadWLeft,zPadWRight,strideH,strideW,G,inputArr,filterArr,outArr);
+#else
+    assert(false && "Grouped conv not implemented in HE");
+#endif
+
+#ifdef LOG_LAYERWISE
+    auto temp = TIMER_TILL_NOW;
+    ConvTimeInMilliSec += temp;
+    std::cout<<"Time in sec for current conv = "<<(temp/1000.0)<<std::endl; 
+    uint64_t curComm;
+    FIND_ALL_IO_TILL_NOW(curComm);
+    ConvCommSent += curComm;
+#endif
+
 }
 
 void ElemWiseActModelVectorMult(int32_t size, intType* inArr, intType* multArrVec, intType* outputArr)
