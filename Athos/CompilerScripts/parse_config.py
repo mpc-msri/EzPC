@@ -24,6 +24,7 @@ SOFTWARE.
 import argparse
 import os.path
 import json
+from json import JSONDecodeError
 import sys
 
 """

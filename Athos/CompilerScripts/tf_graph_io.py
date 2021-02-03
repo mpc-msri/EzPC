@@ -29,11 +29,14 @@ def display_graph(graph, tensorboard_log_dir):
     writer = tf.summary.FileWriter(tensorboard_log_dir, graph)
     writer.close()
 
-
-def load_pb(path_to_pb):
+def load_graph_def_pb(path_to_pb):
     with tf.io.gfile.GFile(path_to_pb, "rb") as f:
         graph_def = tf.compat.v1.GraphDef()
         graph_def.ParseFromString(f.read())
+        return graph_def
+
+def load_pb(path_to_pb):
+    graph_def = load_graph_def_pb(path_to_pb)
     with tf.Graph().as_default() as graph:
         tf.import_graph_def(graph_def, name="")
         return graph
