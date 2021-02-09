@@ -90,6 +90,9 @@ class MtdAST(ASTVisitor):
     def visitInput(self, node: AST.Input, mtd: dict):
         node.metadata.update(mtd)
 
+    def visitOutput(self, node: AST.Output, mtd: dict):
+        node.metadata.update(mtd)
+
     def visitFusedBatchNorm(self, node: AST.FusedBatchNorm, mtd: dict):
         node.metadata.update(mtd)
         self.visit(node.expr, mtd)

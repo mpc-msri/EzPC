@@ -82,7 +82,7 @@ def generateIRCode(graph, extraInfoDict):
             )
             if program:
                 assert type(innerMostLetASTNode) is AST.Let
-                newNode = AST.Let(curOutVarAstNode, curAst, curOutVarAstNode)
+                newNode = AST.Let(curOutVarAstNode, curAst, AST.ASTNode())
                 mtdAST.visit(newNode, mtdForCurAST)
                 innerMostLetASTNode.expr = newNode
                 innerMostLetASTNode = newNode
@@ -96,6 +96,51 @@ def generateIRCode(graph, extraInfoDict):
             dictNodeNameToOutVarStr[outputName] = curOutVarStr
             outVarCt += 1
     return (program, dictNodeNameToOutVarStr)
+
+
+
+def addOutputs(program, dictNodeNameToOutVarStr, output_tensors):
+    mtdAST = MtdAST()
+    assert (type(program) is AST.Let)
+    lastLetASTNode = program
+    while True:
+        if type(lastLetASTNode.expr) is AST.Let:
+            lastLetASTNode = lastLetASTNode.expr
+        else:
+            break
+    assert lastLetASTNode is not None
+    if output_tensors is None:
+        output_name = lastLetASTNode.name
+        print(output_name.name)
+        output = AST.Output(output_name, AST.Party.CLIENT)
+        lastLetASTNode.expr = output
+    else:
+        outVarCt = 0
+        outVarPrefix = "O"
+        for i in range(0, len(output_tensors)): # name, decl, expr
+            t_name = output_tensors[i]
+            if i == len(output_tensors) - 1:
+                output_name = AST.ID(dictNodeNameToOutVarStr[t_name])
+                output = AST.Output(output_name, AST.Party.CLIENT)
+                newNode = output
+            else:
+                output_name = AST.ID(dictNodeNameToOutVarStr[t_name])
+                output = AST.Output(output_name, AST.Party.CLIENT)
+                let_name_id = AST.ID(outVarPrefix + str(outVarCt))
+                newNode = AST.Let(let_name_id, output, AST.ASTNode())
+                mtdForCurAST = {
+                    AST.ASTNode.mtdKeyTFOpName: "Output",
+                    AST.ASTNode.mtdKeyTFNodeName: t_name,
+                }
+                mtdAST.visit(newNode, mtdForCurAST)
+            lastLetASTNode.expr = newNode
+            lastLetASTNode = newNode
+            outVarCt += 1
+
+
+        print("Wooooo!")
+        #TODO
+    return program
 
 
 def readSizeInfo(fileName):
@@ -237,7 +282,7 @@ def arrange_input_before_output(graph):
     return
 
 
-def process_tf_graph(filename):
+def process_tf_graph(filename, output_tensors=None):
     sys.setrecursionlimit(10000)
 
     if os.path.isfile(filename):
@@ -283,6 +328,8 @@ def process_tf_graph(filename):
 
     print("Generating code from TF graph def : ", graphFileName, " ...")
     (program, dictNodeNameToOutVarStr) = generateIRCode(graph, extraInfoDict)
+    program = addOutputs(program, dictNodeNameToOutVarStr, output_tensors)
+
 
     print("SeeDot AST generation done. Pickling the AST.")
     with open(os.path.join(folderName, "astOutput.pkl"), "wb") as f:

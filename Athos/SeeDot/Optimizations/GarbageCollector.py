@@ -45,6 +45,9 @@ class SecretFlowAnalysis(ASTVisitor):
     def visitInput(self, node: AST.Input, args):
         self.node_to_secret[node] = node.isSecret
 
+    def visitOutput(self, node: AST.Output, args):
+        self.node_to_secret[node] = self.idf_to_secret[node.expr.name]
+
     def visitId(self, node: AST.ID, args):
         self.node_to_secret[node] = self.idf_to_secret[node.name]
 
@@ -237,6 +240,9 @@ class GarbageCollector(ASTVisitor):
         return set()
 
     def visitInput(self, node: AST.Input, args):
+        return set()
+
+    def visitOutput(self, node: AST.Input, args):
         return set()
 
     def visitId(self, node: AST.ID, args):

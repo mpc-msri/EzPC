@@ -222,6 +222,8 @@ class CodegenBase:
             return self.printOp(ir)
         elif isinstance(ir, IR.Input):
             return self.printInput(ir)
+        elif isinstance(ir, IR.Output):
+            return self.printOutput(ir)
         elif isinstance(ir, IR.Decl):
             return self.printDecl(ir)
         else:

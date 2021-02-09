@@ -129,7 +129,7 @@ def generate_code(params, debug=False):
     )
 
     # Compile to seedot. Generate AST in model directory
-    Athos.process_tf_graph(model_abs_path)
+    Athos.process_tf_graph(model_abs_path, output_tensors)
 
     # Compile to ezpc
     model_base_name = os.path.basename(model_abs_path)[:-3]

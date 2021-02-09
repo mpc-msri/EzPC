@@ -109,8 +109,8 @@ class EzPC(CodegenBase):
     def printInput(self, ir: IR.Input):
         inputByPartyStr = ir.inputByParty.name
         assert (
-            inputByPartyStr == "SERVER" or inputByPartyStr == "CLIENT"
-        )  # For now the only supported values of party to input is 0 or 1
+            inputByPartyStr in ["SERVER",  "CLIENT"]
+        )
         self.out.printf(
             "input({0}, {1}, ".format(inputByPartyStr, ir.expr.idf), indent=True
         )
@@ -128,6 +128,15 @@ class EzPC(CodegenBase):
         for curDim in ir.shape:
             self.out.printf("[" + str(curDim) + "]")
         self.out.printf(");\n\n")
+
+    def printOutput(self, ir: IR.Output):
+        outputByPartyStr = ir.outputToParty.name
+        assert (
+            outputByPartyStr in ["SERVER",  "CLIENT"]
+        )
+        self.out.printf(
+            "output({0}, {1});\n\n".format(outputByPartyStr, ir.expr.idf), indent=True
+        )
 
     def printComment(self, ir):
         self.out.printf("(* " + ir.msg + " *)\n", indent=True)
@@ -151,9 +160,5 @@ class EzPC(CodegenBase):
         self.out.printf(";\n\n")
 
     def _out_suffix(self, expr: IR.Expr):
-        if self.debugVar is None:
-            self.out.printf("output(CLIENT, " + expr.idf + ");\n", indent=True)
-        else:
-            self.out.printf("output(CLIENT, " + self.debugVar + ");\n", indent=True)
         self.out.decreaseIndent()
         self.out.printf("}\n", indent=True)

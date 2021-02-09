@@ -26,6 +26,9 @@ import AST.AST as AST
 
 
 class ASTVisitor:
+    def visitASTNode(self, node: AST.ASTNode, args=None):
+        pass
+
     def visitInt(self, node: AST.Int, args=None):
         pass
 
@@ -81,6 +84,9 @@ class ASTVisitor:
     def visitInput(self, node: AST.Input, args=None):
         pass
 
+    def visitOutput(self, node: AST.Output, args=None):
+        pass
+
     def visitFusedBatchNorm(self, node: AST.FusedBatchNorm, args=None):
         self.visit(node.expr, args)
         self.visit(node.multExpr, args)
@@ -121,8 +127,12 @@ class ASTVisitor:
             return self.visitReduce(node, args)
         elif isinstance(node, AST.Input):
             return self.visitInput(node, args)
+        elif isinstance(node, AST.Output):
+            return self.visitOutput(node, args)
         elif isinstance(node, AST.FusedBatchNorm):
             return self.visitFusedBatchNorm(node, args)
+        elif isinstance(node, AST.ASTNode):
+            return self.visitASTNode(node, args)
         elif node:
             raise Exception("Node instance not matched.")
         else:
