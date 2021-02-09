@@ -21,8 +21,10 @@
 # SOFTWARE.
 
 sudo add-apt-repository ppa:deadsnakes/ppa
+sudo add-apt-repository ppa:avsm/ppa
 sudo apt update
-sudo apt install -y build-essential make cmake libgmp-dev libglib2.0-dev libssl-dev libboost-all-dev m4 python3.7
+sudo apt install -y build-essential make cmake libgmp-dev libglib2.0-dev libssl-dev libboost-all-dev m4 python3.7 opam
+
 
 sudo apt install unzip bubblewrap
 sh <(curl -sL https://raw.githubusercontent.com/ocaml/opam/master/shell/install.sh)
