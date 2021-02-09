@@ -21,26 +21,46 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 """
-import sys
-import tensorflow as tf
-from tensorflow.python.framework.convert_to_constants import (
-    convert_variables_to_constants_v2,
-)
 
-tf.enable_eager_execution()
+import tensorflow as tf
+import sys
+import json
+from json import JSONDecodeError
+from tf_graph_io import load_graph_def_pb, dump_graph_def_pb
+
 
 if __name__ == "__main__":
-    if (len(sys.argv) != 2):
-        sys.exit("Usage: python convert_saved_model_to_frozen_graph.py saved_model_directory")
-    model_dir = sys.argv[1]
-    saved_model = tf.saved_model.load_v2(model_dir)
-    model = saved_model.signatures["serving_default"]
-    full_model = tf.function(lambda x: model(x))
-    full_model = full_model.get_concrete_function(
-        tf.TensorSpec(model.inputs[0].shape, model.inputs[0].dtype)
-    )
-    frozen_function = convert_variables_to_constants_v2(full_model)
-    gd = frozen_function.graph.as_graph_def()
-    with tf.io.gfile.GFile(model_dir + "/frozen_graph.pb", "wb") as f:
-        f.write(gd.SerializeToString())
-    print("Frozen graph saved in " + model_dir + "/frozen_graph.pb")
+    if len(sys.argv) != 2:
+        print(
+            """Usage: python remove_node.py config.json
+config.json should have the following fields.
+{
+  "model_name" : "model.pb",
+  "nodes_to_replace" : ["loss", "model_outputs"]
+}
+
+"""
+        )
+        sys.exit()
+    config_path = sys.argv[1]
+    with open(config_path) as f:
+        try:
+            config = json.load(f)
+        except JSONDecodeError as e:
+            sys.exit(
+                "Error while parsing the config json:\n"
+                + e.msg
+                + " at line no. "
+                + str(e.lineno)
+            )
+    model_name = config["model_name"]
+    nodes_to_replace = config["nodes_to_remove"]
+    gd = load_graph_def_pb(model_name)
+    to_replace = [n for n in gd.node if n.name in nodes_to_replace]
+    for n in gd.node:
+        if n.name in nodes_to_replace:
+            n.op = "Identity"
+
+    new_graph_name = "processed_" + model_name
+    dump_graph_def_pb(gd, new_graph_name)
+    print("Pruned graph is dumped in {}".format(new_graph_name))
