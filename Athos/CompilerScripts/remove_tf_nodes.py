@@ -59,6 +59,16 @@ config.json should have the following fields.
     to_remove = [n for n in gd.node if n.name in nodes_to_remove]
     for i in to_remove:
         gd.node.remove(i)
+    removed = nodes_to_remove
+
+    while removed:
+        removed, prev_removed = set(), removed
+        nodes = list(gd.node)
+        for node in nodes:
+            if any(inp in prev_removed for inp in node.input):
+                gd.node.remove(node)
+                removed.add(node.name)
+
     new_graph_name = "processed_" + model_name
     dump_graph_def_pb(gd, new_graph_name)
     print("Pruned graph is dumped in {}".format(new_graph_name))
