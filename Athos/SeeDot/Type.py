@@ -31,6 +31,7 @@ from enum import Enum, auto
 import copy
 import sys
 
+
 class Type:
     pass
 

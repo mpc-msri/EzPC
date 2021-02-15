@@ -30,8 +30,10 @@ from tensorflow.python.framework.convert_to_constants import (
 tf.enable_eager_execution()
 
 if __name__ == "__main__":
-    if (len(sys.argv) != 2):
-        sys.exit("Usage: python convert_saved_model_to_frozen_graph.py saved_model_directory")
+    if len(sys.argv) != 2:
+        sys.exit(
+            "Usage: python convert_saved_model_to_frozen_graph.py saved_model_directory"
+        )
     model_dir = sys.argv[1]
     saved_model = tf.saved_model.load_v2(model_dir)
     model = saved_model.signatures["serving_default"]

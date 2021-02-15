@@ -98,10 +98,9 @@ def generateIRCode(graph, extraInfoDict):
     return (program, dictNodeNameToOutVarStr)
 
 
-
 def addOutputs(program, dictNodeNameToOutVarStr, output_tensors):
     mtdAST = MtdAST()
-    assert (type(program) is AST.Let)
+    assert type(program) is AST.Let
     lastLetASTNode = program
     while True:
         if type(lastLetASTNode.expr) is AST.Let:
@@ -117,7 +116,7 @@ def addOutputs(program, dictNodeNameToOutVarStr, output_tensors):
     else:
         outVarCt = 0
         outVarPrefix = "O"
-        for i in range(0, len(output_tensors)): # name, decl, expr
+        for i in range(0, len(output_tensors)):  # name, decl, expr
             t_name = output_tensors[i]
             if i == len(output_tensors) - 1:
                 output_name = AST.ID(dictNodeNameToOutVarStr[t_name])
@@ -137,9 +136,6 @@ def addOutputs(program, dictNodeNameToOutVarStr, output_tensors):
             lastLetASTNode = newNode
             outVarCt += 1
 
-
-        print("Wooooo!")
-        #TODO
     return program
 
 
@@ -329,7 +325,6 @@ def process_tf_graph(filename, output_tensors=None):
     print("Generating code from TF graph def : ", graphFileName, " ...")
     (program, dictNodeNameToOutVarStr) = generateIRCode(graph, extraInfoDict)
     program = addOutputs(program, dictNodeNameToOutVarStr, output_tensors)
-
 
     print("SeeDot AST generation done. Pickling the AST.")
     with open(os.path.join(folderName, "astOutput.pkl"), "wb") as f:

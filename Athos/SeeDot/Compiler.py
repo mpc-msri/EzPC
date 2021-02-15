@@ -137,11 +137,14 @@ class Compiler:
                     ), "Scale up shouldnt be required of final output {} -> {}. We lost precision somewhere".format(
                         output_scale, Util.Config.consSF
                     )
-            i+=1
-        final_cmd_list = prog.cmd_l[0:first_output_pos] + scaledown_cmd_list + prog.cmd_l[first_output_pos:]
+            i += 1
+        final_cmd_list = (
+            prog.cmd_l[0:first_output_pos]
+            + scaledown_cmd_list
+            + prog.cmd_l[first_output_pos:]
+        )
         prog = IR.Prog(final_cmd_list)
         return (prog, expr)
-
 
     def run(self):
         with open(Util.Config.astFile, "rb") as ff:
@@ -159,7 +162,6 @@ class Compiler:
                 GC = GarbageCollector.GarbageCollector(ast)
                 GC.run([mtdAST])
                 print("Garbage collection done.")
-
 
         # Perform type inference and annotate nodes with type information
         InferType().visit(ast)

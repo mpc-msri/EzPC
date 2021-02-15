@@ -108,9 +108,7 @@ class EzPC(CodegenBase):
 
     def printInput(self, ir: IR.Input):
         inputByPartyStr = ir.inputByParty.name
-        assert (
-            inputByPartyStr in ["SERVER",  "CLIENT"]
-        )
+        assert inputByPartyStr in ["SERVER", "CLIENT"]
         self.out.printf(
             "input({0}, {1}, ".format(inputByPartyStr, ir.expr.idf), indent=True
         )
@@ -131,9 +129,7 @@ class EzPC(CodegenBase):
 
     def printOutput(self, ir: IR.Output):
         outputByPartyStr = ir.outputToParty.name
-        assert (
-            outputByPartyStr in ["SERVER",  "CLIENT"]
-        )
+        assert outputByPartyStr in ["SERVER", "CLIENT"]
         self.out.printf(
             "output({0}, {1});\n\n".format(outputByPartyStr, ir.expr.idf), indent=True
         )

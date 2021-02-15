@@ -4,6 +4,7 @@ import sys
 import os
 import parse_config
 
+
 def convert_raw_output_to_np(filename, bitlength, scale):
     matcher = re.compile(r"[-]?[0-9]+")
     scaled_array = []
