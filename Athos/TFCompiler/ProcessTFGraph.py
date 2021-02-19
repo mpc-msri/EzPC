@@ -283,7 +283,7 @@ def process_tf_graph(filename, output_tensors=None):
 
     if os.path.isfile(filename):
         folderName = os.path.dirname(filename)
-    elif os.path.isdir(filename):
+    else:
         folderName = filename
     graphFileName = os.path.join(folderName, "graphDef.mtdata")
     graph = Graph.Graph()

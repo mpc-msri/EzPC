@@ -23,6 +23,8 @@ SOFTWARE.
 """
 import tensorflow as tf
 from tensorflow.python.platform import gfile
+import os.path
+import sys
 
 
 def display_graph(graph, tensorboard_log_dir):
@@ -31,6 +33,8 @@ def display_graph(graph, tensorboard_log_dir):
 
 
 def load_graph_def_pb(path_to_pb):
+    if not os.path.isfile(path_to_pb):
+        sys.exit(path_to_pb + " file does not exist")
     with tf.io.gfile.GFile(path_to_pb, "rb") as f:
         graph_def = tf.compat.v1.GraphDef()
         graph_def.ParseFromString(f.read())
@@ -38,6 +42,8 @@ def load_graph_def_pb(path_to_pb):
 
 
 def load_pb(path_to_pb):
+    if not os.path.isfile(path_to_pb):
+        sys.exit(path_to_pb + " file does not exist")
     graph_def = load_graph_def_pb(path_to_pb)
     with tf.Graph().as_default() as graph:
         tf.import_graph_def(graph_def, name="")

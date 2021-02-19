@@ -28,6 +28,7 @@ import os
 import os.path
 import json
 import sys
+from zipfile import ZipFile
 
 import TFCompiler.ProcessTFGraph as Athos
 import CompilerScripts.parse_config as parse_config
@@ -36,6 +37,16 @@ import CompilerScripts.compile_tf as compile_tf
 
 def parse_args():
     parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter)
+    parser.add_argument(
+        "--role",
+        required=True,
+        type=str,
+        choices=["server", "client"],
+        help="""
+Choose server if you are the model owner.
+Choose client if you are the data owner.
+""",
+    )
     parser.add_argument(
         "--config",
         required=True,
@@ -56,7 +67,7 @@ Config file should be a json in the following format:
   
   //--------------------------- Optional options ---------------------------
   "scale":10,             // Scaling factor to compile for. DEFAULT=12.
-  "bitlength":64,         // Bit length to compile for. DEFAULT=12.
+  "bitlength":64,         // Bit length to compile for. DEFAULT=64.
   "save_weights" : true,  // Save model scaled weights in fixed point. DEFAULT=true.
 
   "input_tensors":{               // Name and shape of the input tensors
@@ -82,13 +93,19 @@ Config file should be a json in the following format:
     return args
 
 
-def generate_code(params, debug=False):
+def generate_code(params, role, debug=False):
     model_name = params["model_name"]
     input_tensor_info = params["input_tensors"]
     output_tensors = params["output_tensors"]
     scale = 12 if params["scale"] is None else params["scale"]
-    bitlength = 64 if params["bitlength"] is None else params["bitlength"]
     target = params["target"]
+    if params["bitlength"] is None:
+        if target == "SCI":
+            bitlength = 63
+        else:
+            bitlength = 64
+    else:
+        bitlength = params["bitlength"]
     save_weights = True if params["save_weights"] is None else params["save_weights"]
     disable_all_hlil_opts = (
         False
@@ -123,13 +140,29 @@ def generate_code(params, debug=False):
     athos_dir = os.path.dirname(os.path.abspath(__file__))
     model_abs_path = os.path.abspath(model_name)
     model_abs_dir = os.path.dirname(model_abs_path)
-    # Generate graphdef and sizeInfo metadata
-    weights_path = compile_tf.compile(
-        model_name, input_tensor_info, output_tensors, scale, save_weights
-    )
+
+    pruned_model_path = os.path.join(model_abs_dir, "optimised_" + model_name)
+    if role == "server":
+        # Generate graphdef and sizeInfo metadata
+        weights_path = compile_tf.compile(
+            model_name, input_tensor_info, output_tensors, scale, save_weights
+        )
+        # Zip the pruned model, sizeInfo to send to client
+        file_list = [
+            pruned_model_path,
+            os.path.join(model_abs_dir, "sizeInfo.mtdata"),
+        ]
+        if "config_name" in params:
+            file_list.append(params["config_name"])
+        zip_path = os.path.join(model_abs_dir, "client.zip")
+        with ZipFile(zip_path, "w") as zip:
+            for file in file_list:
+                zip.write(file, os.path.basename(file))
+    elif role == "client":
+        compile_tf.save_graph_def(pruned_model_path)
 
     # Compile to seedot. Generate AST in model directory
-    Athos.process_tf_graph(model_abs_path, output_tensors)
+    Athos.process_tf_graph(model_abs_dir, output_tensors)
 
     # Compile to ezpc
     model_base_name = os.path.basename(model_abs_path)[:-3]
@@ -275,12 +308,17 @@ def generate_code(params, debug=False):
             )
 
     os.chdir(cwd)
-    print("Generated binary: {}".format(program_path))
-    print("Use as input to server (model weights): {}".format(weights_path))
+    print("\n\nGenerated binary: {}".format(program_path))
+    if role == "server":
+        print("\n\nUse as input to server (model weights): {}".format(weights_path))
+        print("Share {} file with the client".format(zip_path))
+    if role == "client":
+        weights_path = ""
     return (program_path, weights_path)
 
 
 if __name__ == "__main__":
     args = parse_args()
     params = parse_config.get_params(args.config)
-    generate_code(params)
+    params["config_name"] = args.config
+    generate_code(params, args.role)

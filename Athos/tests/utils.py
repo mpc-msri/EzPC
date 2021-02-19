@@ -202,7 +202,7 @@ class Compiler:
         params = get_params(self.config)
         print(params)
         (output_program, model_weight_file) = CompileTFGraph.generate_code(
-            params, debug=False
+            params, role="server", debug=False
         )
         prog = Program(output_program, model_weight_file, params, self.test_dir)
         output = prog.run(inputs, timeoutSeconds)

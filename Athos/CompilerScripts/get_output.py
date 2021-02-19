@@ -28,9 +28,14 @@ if __name__ == "__main__":
     output_fname = sys.argv[1]
     config_name = sys.argv[2]
     params = parse_config.get_params(config_name)
-    scale = params["scale"]
-    bitlength = params["bitlength"]
-    bitlength = 64 if bitlength is None else bitlength
+    scale = 12 if params["scale"] is None else params["scale"]
+    if params["bitlength"] is None:
+        if target == "SCI":
+            bitlength = 63
+        else:
+            bitlength = 64
+    else:
+        bitlength = params["bitlength"]
     model_name = os.path.splitext(params["model_name"])[0]
     np_arr = convert_raw_output_to_np(output_fname, bitlength, scale)
     np.save(model_name + "_output", np_arr)
