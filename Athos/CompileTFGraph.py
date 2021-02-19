@@ -263,6 +263,7 @@ def generate_code(params, debug=False):
                     sci_src=sci_src,
                     file=output_file,
                     sci_lib=sci_lib,
+                    seal_inc_path=seal_inc_path,
                     seal=seal_lib_path,
                     output=program_path,
                     opt_flag=opt_flag,
