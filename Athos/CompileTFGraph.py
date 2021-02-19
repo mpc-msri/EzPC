@@ -252,10 +252,11 @@ def generate_code(params, debug=False):
         sci_lib = os.path.join(sci, "build", "lib")
         eigen_path = os.path.join(sci, "extern", "eigen")
         seal_lib_path = os.path.join(sci, "extern", "SEAL", "native", "lib")
+        seal_inc_path = os.path.join(sci, "extern", "SEAL", "native", "src")
         if os.path.exists(sci_lib):
             os.system(
                 """g++ {opt_flag} -fpermissive -pthread -w -maes -msse4.1 -mavx -mavx2 -mrdseed \
-        -faligned-new -std=c++17 -fopenmp -I \"{eigen}\" -I \"{sci_src}\" \"{file}\" \
+        -faligned-new -std=c++17 -fopenmp -I \"{eigen}\" -I \"{seal_inc_path}\" -I \"{sci_src}\" \"{file}\" \
         -L \"{sci_lib}\" -lSCI-LinearHE -L \"{seal}\" -lseal -lssl -lcrypto \
         -o \"{output}\"""".format(
                     eigen=eigen_path,
