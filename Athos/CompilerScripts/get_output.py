@@ -30,7 +30,7 @@ if __name__ == "__main__":
     params = parse_config.get_params(config_name)
     scale = 12 if params["scale"] is None else params["scale"]
     if params["bitlength"] is None:
-        if target == "SCI":
+        if params["target"] == "SCI":
             bitlength = 63
         else:
             bitlength = 64
