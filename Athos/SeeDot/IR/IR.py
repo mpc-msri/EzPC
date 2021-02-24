@@ -375,6 +375,18 @@ class Input(Cmd):
         )
 
 
+class Output(Cmd):
+    def __init__(self, expr: Expr, outputToParty: AST.Party):
+        self.expr = expr
+        self.outputToParty = outputToParty
+
+    def subst(self, from_idf: str, to_e: Expr):
+        return self.__class__(
+            self.expr.subst(from_idf, to_e),
+            self.outputToParty,
+        )
+
+
 class Decl(Cmd):
     def __init__(
         self,

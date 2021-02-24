@@ -90,7 +90,7 @@ let tc_and_codegen (p:program) (file:string) :unit =
            print_msg ("Split the program into " ^ string_of_int (p |> snd |> List.length) ^ " partition(s), generating .cpp files");
            if Config.get_codegen () = OBLIVC then Codegenoblivc.o_program p file
            else if Config.get_codegen () = PORTHOS then Codegenporthos.o_program p file
-           else if Config.get_codegen () = PORTHOS2PC then Codegenporthos2pc.o_program p file
+           else if Config.get_codegen () = SCI then Codegensci.o_program p file
            else if Config.get_codegen () = CPPRING then Codegencppring.o_program p file
            else Codegen.o_program p file;
            Well_typed ()) in
@@ -119,10 +119,10 @@ let specs = Arg.align [
                                                    | "CPP" -> CPP |> Config.set_codegen
                                                    | "OBLIVC" -> OBLIVC |> Config.set_codegen
                                                    | "PORTHOS" -> PORTHOS |> Config.set_codegen
-                                                   | "PORTHOS2PC" -> PORTHOS2PC |> Config.set_codegen
+                                                   | "SCI" -> SCI |> Config.set_codegen
                                                    | "CPPRING" -> CPPRING |> Config.set_codegen
                                                    | _ -> failwith "Invalid codegen mode"),
-                 " Codegen mode (ABY or CPP or OBLIVC or PORTHOS or PORTHOS2PC or CPPRING, default ABY)");
+                 " Codegen mode (ABY or CPP or OBLIVC or PORTHOS or SCI or CPPRING, default ABY)");
                 ("--o_prefix", Arg.String (fun s -> o_prefix := s), " Prefix for output files, default is the input file prefix");
                 ("--disable-tac", Arg.Unit Config.disable_tac, " Disable 3-address code transformation (also disables the CSE optimization)");
                 ("--disable-cse", Arg.Unit Config.disable_cse, " Disable Common Subexpression Elimination optimization");
@@ -135,13 +135,13 @@ let specs = Arg.align [
                 ("--shares_dir", Arg.String (fun s -> Config.set_shares_dir s), " Directory where share files should be created");
                 ("--debug_partitions", Arg.Unit Config.set_debug_partitions, " Debug partitions (if codegen is ABY then dump shares in clear, if codegen is CPP then generate partitions)");
                 ("--modulo", Arg.String Config.set_modulo, 
-                  "Modulo to be used for shares. Applicable for CPPRING/PORTHOS2PC backend. 
-                  For PORTHOS2PC, for backend type OT, this should be power of 2 and for backend type HE, this should be a prime.");
+                  "Modulo to be used for shares. Applicable for CPPRING/SCI backend. 
+                  For SCI, for backend type OT, this should be power of 2 and for backend type HE, this should be a prime.");
                 ("--backend", Arg.String (fun s -> match s with
-                                                   | "OT" -> OT |> Config.set_porthos2pc_backend
-                                                   | "HE" -> HE |> Config.set_porthos2pc_backend
+                                                   | "OT" -> OT |> Config.set_sci_backend
+                                                   | "HE" -> HE |> Config.set_sci_backend
                                                    | _ -> failwith "Invalid backend type"),
-                 "Porthos2PC Backend Type (OT or HE, default OT).");
+                 "SCI Backend Type (OT or HE, default OT).");
                 ("--sf", Arg.Int Config.set_sf, "Scale factor to be used in compilation. Valid only for PORTHOS.");
               ]
 let _ =
@@ -156,9 +156,9 @@ let _ =
     if Config.get_codegen () <> PORTHOS && Config.get_sf () <> 0
     then failwith "sf only valid for PORTHOS.";
 
-    if Config.get_codegen () <> CPPRING && Config.get_codegen () <> PORTHOS2PC 
+    if Config.get_codegen () <> CPPRING && Config.get_codegen () <> SCI 
       && (Config.get_modulo () <> (Uint64.shift_left (Uint64.of_int 1) (Config.get_bitlen ())) || (Config.get_bitlen () <> 32 && Config.get_bitlen () <> 64)) 
-    then failwith "Modulo and {bitlen not equal to 32/64} only supported for CPPRING/PORTHOS2PC backend.";
+    then failwith "Modulo and {bitlen not equal to 32/64} only supported for CPPRING/SCI backend.";
 
     if Config.get_codegen () = CPPRING && (Config.get_bitlen () = 64 || Config.get_bitlen () = 32) 
       && Config.get_modulo () = (Uint64.shift_left (Uint64.of_int 1) (Config.get_bitlen ()))
@@ -176,8 +176,8 @@ let _ =
   if !o_prefix = "" then o_prefix := prefix;
 
   let _ = 
-    if Config.get_codegen () = PORTHOS2PC then begin
-      let backend_type = if Config.get_porthos2pc_backend () = OT then "OT" else "HE" in
+    if Config.get_codegen () = SCI then begin
+      let backend_type = if Config.get_sci_backend () = OT then "OT" else "HE" in
       o_prefix := !o_prefix ^ "_" ^ backend_type;
     end
   in

@@ -93,40 +93,58 @@ class Compiler:
             ):
                 prog.cmd_l.insert(ii, IR.FuncCall("StartComputation", []))
                 break
-        prog.cmd_l.append(IR.FuncCall("EndComputation", []))
+
+        first_output_pos = None
+        for ii in range(len(prog.cmd_l)):
+            if isinstance(prog.cmd_l[ii], IR.Output):
+                first_output_pos = ii
+                break
+        prog.cmd_l.insert(first_output_pos, IR.FuncCall("EndComputation", []))
         return (prog, expr)
 
     def fixOuputScale(self, res: (IR.Prog, IR.Expr), compiler: IRBuilderCSF):
-        prog = res[0]
-        expr = res[1]
-        output_scale = compiler.scaleFacMapping[expr.idf]
-        if output_scale == -1 or output_scale == Util.Config.consSF:
-            return (prog, expr)
-        elif output_scale > Util.Config.consSF:
-            scale_down = output_scale - Util.Config.consSF
-            type = compiler.typeInfo[expr.idf]
-            if Type.isInt(type):
-                output_shape = []
-            if Type.isTensor(type):
-                output_shape = type.shape
+        (prog, expr) = res
+        scaledown_cmd_list = []
 
-            argsDict = OrderedDict()
-            funcName = "ScaleDown"
-            for ii, curDimSize in enumerate(output_shape):
-                argsDict[IR.Int(curDimSize, 32)] = "size_" + str(ii)
-            funcName = funcName + str(len(output_shape))
-            argsDict[expr] = "expr"
-            argsDict[IR.Int(scale_down, 32)] = "consSF"
-            funcCall = IR.FuncCall(funcName, argsDict)
-            new_prog = IR.Prog([funcCall])
-            prog = IRUtil.prog_merge(prog, new_prog)
-            return (prog, expr)
-        else:
-            assert (
-                False
-            ), "Scale up shouldnt be required of final output {} -> {}. We lost precision somewhere".format(
-                output_scale, Util.Config.consSF
-            )
+        first_output_pos = None
+        i = 0
+        for cmd in prog.cmd_l:
+            if type(cmd) == IR.Output:
+                if first_output_pos is None:
+                    first_output_pos = i
+                var = cmd.expr
+                assert type(var) == IR.Var
+                output_scale = compiler.scaleFacMapping[var.idf]
+                if output_scale > Util.Config.consSF:
+                    scale_down = output_scale - Util.Config.consSF
+                    var_type = compiler.typeInfo[var.idf]
+                    if Type.isInt(var_type):
+                        output_shape = []
+                    if Type.isTensor(var_type):
+                        output_shape = var_type.shape
+                    argsDict = OrderedDict()
+                    funcName = "ScaleDown"
+                    for ii, curDimSize in enumerate(output_shape):
+                        argsDict[IR.Int(curDimSize, 32)] = "size_" + str(ii)
+                    funcName = funcName + str(len(output_shape))
+                    argsDict[var] = "expr"
+                    argsDict[IR.Int(scale_down, 32)] = "consSF"
+                    funcCall = IR.FuncCall(funcName, argsDict)
+                    scaledown_cmd_list.append(funcCall)
+                if output_scale < Util.Config.consSF:
+                    assert (
+                        False
+                    ), "Scale up shouldnt be required of final output {} -> {}. We lost precision somewhere".format(
+                        output_scale, Util.Config.consSF
+                    )
+            i += 1
+        final_cmd_list = (
+            prog.cmd_l[0:first_output_pos]
+            + scaledown_cmd_list
+            + prog.cmd_l[first_output_pos:]
+        )
+        prog = IR.Prog(final_cmd_list)
+        return (prog, expr)
 
     def run(self):
         with open(Util.Config.astFile, "rb") as ff:

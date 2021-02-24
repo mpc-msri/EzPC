@@ -450,6 +450,15 @@ class Input(ASTNode):
         self.inputByParty = inputByParty
 
 
+class Output(ASTNode):
+    def __init__(self, expr: ASTNode, outputToParty=Party.CLIENT):
+        if assertInputTypes:
+            assert outputToParty in [Party.CLIENT, Party.SERVER]
+        super().__init__()
+        self.expr = expr
+        self.outputToParty = outputToParty
+
+
 # Since some optimizations are possible around batchnorm, keep this as an interpreted node
 class FusedBatchNorm(ASTNode):
     def __init__(self, expr: ID, multExpr: ID, addExpr: ID):

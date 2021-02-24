@@ -76,43 +76,83 @@ inline std::string get_network_label(NetworkName network_name) {
         typedef uint64_t intType;
         typedef int64_t signedIntType;
         static const bool isNativeRing = true;
-    #elif defined(BITLEN_33)
+    #elif defined(BITLEN_63)
         typedef uint64_t intType;
         typedef int64_t signedIntType;
         static const bool isNativeRing = true;
-    #elif defined(BITLEN_34)
+    #elif defined(BITLEN_62)
         typedef uint64_t intType;
         typedef int64_t signedIntType;
         static const bool isNativeRing = true;
-    #elif defined(BITLEN_35)
+    #elif defined(BITLEN_61)
         typedef uint64_t intType;
         typedef int64_t signedIntType;
         static const bool isNativeRing = true;
-    #elif defined(BITLEN_36)
+    #elif defined(BITLEN_60)
         typedef uint64_t intType;
         typedef int64_t signedIntType;
         static const bool isNativeRing = true;
-    #elif defined(BITLEN_37)
+    #elif defined(BITLEN_59)
         typedef uint64_t intType;
         typedef int64_t signedIntType;
         static const bool isNativeRing = true;
-    #elif defined(BITLEN_38)
+    #elif defined(BITLEN_58)
         typedef uint64_t intType;
         typedef int64_t signedIntType;
         static const bool isNativeRing = true;
-    #elif defined(BITLEN_39)
+    #elif defined(BITLEN_57)
         typedef uint64_t intType;
         typedef int64_t signedIntType;
         static const bool isNativeRing = true;
-    #elif defined(BITLEN_40)
+    #elif defined(BITLEN_56)
         typedef uint64_t intType;
         typedef int64_t signedIntType;
         static const bool isNativeRing = true;
-    #elif defined(BITLEN_41)
+    #elif defined(BITLEN_55)
         typedef uint64_t intType;
         typedef int64_t signedIntType;
         static const bool isNativeRing = true;
-    #elif defined(BITLEN_42)
+    #elif defined(BITLEN_54)
+        typedef uint64_t intType;
+        typedef int64_t signedIntType;
+        static const bool isNativeRing = true;
+    #elif defined(BITLEN_53)
+        typedef uint64_t intType;
+        typedef int64_t signedIntType;
+        static const bool isNativeRing = true;
+    #elif defined(BITLEN_52)
+        typedef uint64_t intType;
+        typedef int64_t signedIntType;
+        static const bool isNativeRing = true;
+    #elif defined(BITLEN_51)
+        typedef uint64_t intType;
+        typedef int64_t signedIntType;
+        static const bool isNativeRing = true;
+    #elif defined(BITLEN_50)
+        typedef uint64_t intType;
+        typedef int64_t signedIntType;
+        static const bool isNativeRing = true;
+    #elif defined(BITLEN_49)
+        typedef uint64_t intType;
+        typedef int64_t signedIntType;
+        static const bool isNativeRing = true;
+    #elif defined(BITLEN_48)
+        typedef uint64_t intType;
+        typedef int64_t signedIntType;
+        static const bool isNativeRing = true;
+    #elif defined(BITLEN_47)
+        typedef uint64_t intType;
+        typedef int64_t signedIntType;
+        static const bool isNativeRing = true;
+    #elif defined(BITLEN_46)
+        typedef uint64_t intType;
+        typedef int64_t signedIntType;
+        static const bool isNativeRing = true;
+    #elif defined(BITLEN_45)
+        typedef uint64_t intType;
+        typedef int64_t signedIntType;
+        static const bool isNativeRing = true;
+    #elif defined(BITLEN_44)
         typedef uint64_t intType;
         typedef int64_t signedIntType;
         static const bool isNativeRing = true;
@@ -120,7 +160,43 @@ inline std::string get_network_label(NetworkName network_name) {
         typedef uint64_t intType;
         typedef int64_t signedIntType;
         static const bool isNativeRing = true;
-    #elif defined(BITLEN_44)
+    #elif defined(BITLEN_42)
+        typedef uint64_t intType;
+        typedef int64_t signedIntType;
+        static const bool isNativeRing = true;
+    #elif defined(BITLEN_41)
+        typedef uint64_t intType;
+        typedef int64_t signedIntType;
+        static const bool isNativeRing = true;
+    #elif defined(BITLEN_40)
+        typedef uint64_t intType;
+        typedef int64_t signedIntType;
+        static const bool isNativeRing = true;
+    #elif defined(BITLEN_39)
+        typedef uint64_t intType;
+        typedef int64_t signedIntType;
+        static const bool isNativeRing = true;
+    #elif defined(BITLEN_38)
+        typedef uint64_t intType;
+        typedef int64_t signedIntType;
+        static const bool isNativeRing = true;
+    #elif defined(BITLEN_37)
+        typedef uint64_t intType;
+        typedef int64_t signedIntType;
+        static const bool isNativeRing = true;
+    #elif defined(BITLEN_36)
+        typedef uint64_t intType;
+        typedef int64_t signedIntType;
+        static const bool isNativeRing = true;
+    #elif defined(BITLEN_35)
+        typedef uint64_t intType;
+        typedef int64_t signedIntType;
+        static const bool isNativeRing = true;
+    #elif defined(BITLEN_34)
+        typedef uint64_t intType;
+        typedef int64_t signedIntType;
+        static const bool isNativeRing = true;
+    #elif defined(BITLEN_33)
         typedef uint64_t intType;
         typedef int64_t signedIntType;
         static const bool isNativeRing = true;
@@ -133,32 +209,70 @@ inline std::string get_network_label(NetworkName network_name) {
 
 #if defined(BITLEN_64)
     int32_t bitlength = 64;
-#elif defined(BITLEN_32)
-    int32_t bitlength = 32;
-#elif defined(BITLEN_33)
-    int32_t bitlength = 33;
-#elif defined(BITLEN_34)
-    int32_t bitlength = 34;
-#elif defined(BITLEN_35)
-    int32_t bitlength = 35;
-#elif defined(BITLEN_36)
-    int32_t bitlength = 36;
-#elif defined(BITLEN_37)
-    int32_t bitlength = 37;
-#elif defined(BITLEN_38)
-    int32_t bitlength = 38;
-#elif defined(BITLEN_39)
-    int32_t bitlength = 39;
-#elif defined(BITLEN_40)
-    int32_t bitlength = 40;
-#elif defined(BITLEN_41)
-    int32_t bitlength = 41;
-#elif defined(BITLEN_42)
-    int32_t bitlength = 42;
-#elif defined(BITLEN_43)
-    int32_t bitlength = 43;
+#elif defined(BITLEN_63)
+    int32_t bitlength = 63;
+#elif defined(BITLEN_62)
+    int32_t bitlength = 62;
+#elif defined(BITLEN_61)
+    int32_t bitlength = 61;
+#elif defined(BITLEN_60)
+    int32_t bitlength = 60;
+#elif defined(BITLEN_59)
+    int32_t bitlength = 59;
+#elif defined(BITLEN_58)
+    int32_t bitlength = 58;
+#elif defined(BITLEN_57)
+    int32_t bitlength = 57;
+#elif defined(BITLEN_56)
+    int32_t bitlength = 56;
+#elif defined(BITLEN_55)
+    int32_t bitlength = 55;
+#elif defined(BITLEN_54)
+    int32_t bitlength = 54;
+#elif defined(BITLEN_53)
+    int32_t bitlength = 53;
+#elif defined(BITLEN_52)
+    int32_t bitlength = 52;
+#elif defined(BITLEN_51)
+    int32_t bitlength = 51;
+#elif defined(BITLEN_50)
+    int32_t bitlength = 50;
+#elif defined(BITLEN_49)
+    int32_t bitlength = 49;
+#elif defined(BITLEN_48)
+    int32_t bitlength = 48;
+#elif defined(BITLEN_47)
+    int32_t bitlength = 47;
+#elif defined(BITLEN_46)
+    int32_t bitlength = 46;
+#elif defined(BITLEN_45)
+    int32_t bitlength = 45;
 #elif defined(BITLEN_44)
     int32_t bitlength = 44;
+#elif defined(BITLEN_43)
+    int32_t bitlength = 43;
+#elif defined(BITLEN_42)
+    int32_t bitlength = 42;
+#elif defined(BITLEN_41)
+    int32_t bitlength = 41;
+#elif defined(BITLEN_40)
+    int32_t bitlength = 40;
+#elif defined(BITLEN_39)
+    int32_t bitlength = 39;
+#elif defined(BITLEN_38)
+    int32_t bitlength = 38;
+#elif defined(BITLEN_37)
+    int32_t bitlength = 37;
+#elif defined(BITLEN_36)
+    int32_t bitlength = 36;
+#elif defined(BITLEN_35)
+    int32_t bitlength = 35;
+#elif defined(BITLEN_34)
+    int32_t bitlength = 34;
+#elif defined(BITLEN_33)
+    int32_t bitlength = 33;
+#elif defined(BITLEN_32)
+    int32_t bitlength = 32;
 #else
     #if defined(SCI_OT)
         int32_t bitlength = 32; //In ring case, default to 32

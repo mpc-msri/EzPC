@@ -240,7 +240,7 @@ def save_weights(optimized_graph_def, sess, feed_dict, filename, scaling_factor)
     values = sess.run(graph_vars, feed_dict)
     with open(filename, "w") as ff:
         for val in values:
-            if val.shape == (0,):  # Empty array, nothing to dump.
+            if val.shape.count(0) > 0:  # Empty array, nothing to dump.
                 continue
             for xx in numpy.nditer(val, order="C"):
                 ff.write(str(int(xx * (1 << scaling_factor))) + " ")

@@ -148,6 +148,12 @@ class PrintAST(ASTVisitor):
         )
         print(" )", end="")
 
+    def visitOutput(self, node: AST.Output, args=None):
+        print(indent * node.depth, "output( ", end="")
+        node.expr.depth = node.depth + 1
+        self.visit(node.expr)
+        print(indent * node.depth, " )", end="")
+
     def visitFusedBatchNorm(self, node: AST.FusedBatchNorm, args=None):
         node.expr.depth = node.multExpr.depth = node.addExpr.depth = node.depth + 1
         print(indent * node.depth, "FusedBatchNorm", end=" ")

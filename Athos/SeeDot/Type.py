@@ -29,6 +29,7 @@ import AST.AST as AST
 from AST.ASTVisitor import ASTVisitor
 from enum import Enum, auto
 import copy
+import sys
 
 
 class Type:
@@ -196,6 +197,7 @@ class InferType(ASTVisitor):
         if node.name not in node.gamma:
             print(
                 "Error in type checking: Found id which is not contained in gamma.",
+                node.name,
                 file=sys.stderr,
             )
             assert False
@@ -570,6 +572,12 @@ class InferType(ASTVisitor):
         node.type = Tensor(
             node.shape, isSecret=node.isSecret, taint=Taints[node.inputByParty.name]
         )
+        return node.type
+
+    def visitOutput(self, node: AST.Output, args=None):
+        node.expr.gamma = dict(node.gamma)
+        self.visit(node.expr)
+        node.type = Unit()
         return node.type
 
     def visitFusedBatchNorm(self, node: AST.FusedBatchNorm, args=None):

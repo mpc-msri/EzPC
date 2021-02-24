@@ -28,8 +28,9 @@ import shutil
 import re
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
-import CompilerScripts.parse_config as parse_config
 import CompileTFGraph
+import CompilerScripts.parse_config as parse_config
+from CompilerScripts.get_output import convert_raw_output_to_np
 
 import numpy as np
 import subprocess
@@ -49,13 +50,13 @@ class Config:
         elif mode == "3PC":
             self.config["target"] = "PORTHOS"
         elif mode == "2PC_OT":
-            self.config["target"] = "PORTHOS2PC"
+            self.config["target"] = "SCI"
             self.config["bitlength"] = 41
             self.config["scale"] = 12
             self.config["backend"] = "OT"
 
         elif mode == "2PC_HE":
-            self.config["target"] = "PORTHOS2PC"
+            self.config["target"] = "SCI"
             self.config["bitlength"] = 41
             self.config["scale"] = 12
             self.config["backend"] = "HE"
@@ -103,23 +104,6 @@ def save_graph(graph_def, config, test_dir):
         print("\n\nfile  name: ", f.name, "\n\n\n")
     config["model_name"] = fpath
     return
-
-
-def convert_raw_output_to_np(filename, bitlength, scale):
-    matcher = re.compile(r"[-]?[0-9]+")
-    scaled_array = []
-    with open(filename, "r") as f:
-        for line in f:
-            match = matcher.fullmatch(line.rstrip())
-            if match:
-                unsigned_number = int(match.group(0))
-                number = (
-                    unsigned_number
-                    if (unsigned_number < 2 ** (bitlength - 1))
-                    else unsigned_number - 2 ** bitlength
-                )
-                scaled_array.append(float(number) / (2 ** scale))
-    return np.array(scaled_array)
 
 
 class Program:
@@ -181,7 +165,7 @@ class Program:
                     p.wait(timeoutSeconds)
                 except subprocess.TimeoutExpired:
                     p.kill()
-        elif self.target == "PORTHOS2PC":
+        elif self.target == "SCI":
             util_dir = os.path.dirname(os.path.abspath(__file__))
             sci_dir = os.path.join(util_dir, "..", "..", "SCI")
             port = 1234
@@ -218,7 +202,7 @@ class Compiler:
         params = get_params(self.config)
         print(params)
         (output_program, model_weight_file) = CompileTFGraph.generate_code(
-            params, debug=False
+            params, role="server", debug=False
         )
         prog = Program(output_program, model_weight_file, params, self.test_dir)
         output = prog.run(inputs, timeoutSeconds)

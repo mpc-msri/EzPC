@@ -74,9 +74,7 @@ def gen_random_input(
     f.write(chunk_inp)
     f.close()
     if dump_numpy:
-        rand_inp_t.dump(
-            model_name + "_input_fixedpt_scale_" + str(scaling_factor) + ".npy"
-        )
+        np.save(model_name + "_input_fixedpt_scale_" + str(scaling_factor), rand_inp_t)
     return
 
 

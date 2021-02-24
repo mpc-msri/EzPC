@@ -1414,8 +1414,8 @@ class IRBuilderCSF(IRBuilderAST):
                 AST.Operators.RSQRT,
             ]:
                 # Since these class of fucntions can only handle input of 32 bitlength, we have to scale down
-                # inputs before calling them.
-                if final_sf > 32:
+                # inputs before calling them. 23 bit mantissa
+                if final_sf > 23:
                     assert (
                         final_sf > self.scaleFac
                     ), "The program scaling factor is invalid. Should be lesser than 32 if network has tan/sig/sqrt"
@@ -1621,6 +1621,15 @@ class IRBuilderCSF(IRBuilderAST):
             ),
             returnExpr,
         )
+
+    def visitOutput(self, node: AST.Output, args=None):
+        (prog_0, expr_0) = self.visit(node.expr)
+        output = IR.Output(expr_0, node.outputToParty)
+        prog = IRUtil.prog_merge(prog_0, IR.Prog([output]))
+        expr = self.getTempVar()
+        if not (Util.Config.disableTruncOpti):
+            self.scaleFacMapping[expr.idf] = self.scaleFac
+        return (prog, expr)
 
     def visitReduce(self, node: AST.Reduce, args=None):
         (prog_1, expr1) = self.visit(node.expr)

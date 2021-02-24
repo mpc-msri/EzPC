@@ -28,6 +28,7 @@ import os
 import os.path
 import json
 import sys
+from zipfile import ZipFile
 
 import TFCompiler.ProcessTFGraph as Athos
 import CompilerScripts.parse_config as parse_config
@@ -36,6 +37,16 @@ import CompilerScripts.compile_tf as compile_tf
 
 def parse_args():
     parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter)
+    parser.add_argument(
+        "--role",
+        required=True,
+        type=str,
+        choices=["server", "client"],
+        help="""
+Choose server if you are the model owner.
+Choose client if you are the data owner.
+""",
+    )
     parser.add_argument(
         "--config",
         required=True,
@@ -50,13 +61,13 @@ Config file should be a json in the following format:
     "output1",
     "output2"
   ],
-  "target":"PORTHOS2PC",  // Compilation target. ABY/CPP/CPPRING/PORTHOS/PORTHOS2PC
+  "target":"SCI",  // Compilation target. ABY/CPP/CPPRING/PORTHOS/SCI
 
 
   
   //--------------------------- Optional options ---------------------------
   "scale":10,             // Scaling factor to compile for. DEFAULT=12.
-  "bitlength":64,         // Bit length to compile for. DEFAULT=12.
+  "bitlength":64,         // Bit length to compile for. DEFAULT=64.
   "save_weights" : true,  // Save model scaled weights in fixed point. DEFAULT=true.
 
   "input_tensors":{               // Name and shape of the input tensors
@@ -64,12 +75,12 @@ Config file should be a json in the following format:
     "input2":"2,245,234,3"        // placeholder nodes have shape info in the .pb file.
   },
   "modulo" : 32,      // Modulo to be used for shares. Applicable for 
-                      // CPPRING/PORTHOS2PC backend. For 
-                      // PORTHOS2PC + backend=OT => Power of 2 
-                      // PORTHOS2PC + backend=HE => Prime value."
+                      // CPPRING/SCI backend. For 
+                      // SCI + backend=OT => Power of 2 
+                      // SCI + backend=HE => Prime value."
 
   "backend" : "OT",   // Backend to be used - OT/HE (default OT). 
-                      // Only applicable for PORTHOS2PC backend
+                      // Only applicable for SCI backend
 
   "disable_all_hlil_opts" : false,      // Disable all optimizations in HLIL. DEFAULT=false
   "disable_relu_maxpool_opts" : false,  // Disable Relu-Maxpool optimization. DEFAULT=false
@@ -82,13 +93,19 @@ Config file should be a json in the following format:
     return args
 
 
-def generate_code(params, debug=False):
+def generate_code(params, role, debug=False):
     model_name = params["model_name"]
     input_tensor_info = params["input_tensors"]
     output_tensors = params["output_tensors"]
     scale = 12 if params["scale"] is None else params["scale"]
-    bitlength = 64 if params["bitlength"] is None else params["bitlength"]
     target = params["target"]
+    if params["bitlength"] is None:
+        if target == "SCI":
+            bitlength = 63
+        else:
+            bitlength = 64
+    else:
+        bitlength = params["bitlength"]
     save_weights = True if params["save_weights"] is None else params["save_weights"]
     disable_all_hlil_opts = (
         False
@@ -113,23 +130,39 @@ def generate_code(params, debug=False):
     assert bitlength <= 64 and bitlength >= 1, "Bitlen must be >= 1 and <= 64"
     assert target in [
         "PORTHOS",
-        "PORTHOS2PC",
+        "SCI",
         "ABY",
         "CPP",
         "CPPRING",
-    ], "Target must be any of ABY/CPP/CPPRING/PORTHOS/PORTHOS2PC"
+    ], "Target must be any of ABY/CPP/CPPRING/PORTHOS/SCI"
 
     cwd = os.getcwd()
     athos_dir = os.path.dirname(os.path.abspath(__file__))
     model_abs_path = os.path.abspath(model_name)
     model_abs_dir = os.path.dirname(model_abs_path)
-    # Generate graphdef and sizeInfo metadata
-    weights_path = compile_tf.compile(
-        model_name, input_tensor_info, output_tensors, scale, save_weights
-    )
+
+    pruned_model_path = os.path.join(model_abs_dir, "optimised_" + model_name)
+    if role == "server":
+        # Generate graphdef and sizeInfo metadata
+        weights_path = compile_tf.compile(
+            model_name, input_tensor_info, output_tensors, scale, save_weights
+        )
+        # Zip the pruned model, sizeInfo to send to client
+        file_list = [
+            pruned_model_path,
+            os.path.join(model_abs_dir, "sizeInfo.mtdata"),
+        ]
+        if "config_name" in params:
+            file_list.append(params["config_name"])
+        zip_path = os.path.join(model_abs_dir, "client.zip")
+        with ZipFile(zip_path, "w") as zip:
+            for file in file_list:
+                zip.write(file, os.path.basename(file))
+    elif role == "client":
+        compile_tf.save_graph_def(pruned_model_path)
 
     # Compile to seedot. Generate AST in model directory
-    Athos.process_tf_graph(model_abs_path)
+    Athos.process_tf_graph(model_abs_dir, output_tensors)
 
     # Compile to ezpc
     model_base_name = os.path.basename(model_abs_path)[:-3]
@@ -192,7 +225,7 @@ def generate_code(params, debug=False):
     output_name = ezpc_file_name[:-5] + "0.cpp"
     if modulo is not None:
         ezpc_args += "--modulo {} ".format(modulo)
-    if target == "PORTHOS2PC":
+    if target == "SCI":
         ezpc_args += "--backend {} ".format(backend.upper())
         output_name = ezpc_file_name[:-5] + "_{}0.cpp".format(backend.upper())
     if target in ["PORTHOS"]:
@@ -210,7 +243,7 @@ def generate_code(params, debug=False):
     output_file = os.path.join(model_abs_dir, output_name)
 
     print("Compiling generated code to {target} target".format(target=target))
-    if target == "PORTHOS2PC":
+    if target == "SCI":
         program_name = model_base_name + "_" + target + "_" + backend + ".out"
     else:
         program_name = model_base_name + "_" + target + ".out"
@@ -246,22 +279,24 @@ def generate_code(params, debug=False):
             print(
                 "Not compiling generated code. Please follow the readme and build Porthos."
             )
-    elif target == "PORTHOS2PC":
+    elif target == "SCI":
         sci = os.path.join(athos_dir, "..", "SCI")
         sci_src = os.path.join(sci, "src")
         sci_lib = os.path.join(sci, "build", "lib")
         eigen_path = os.path.join(sci, "extern", "eigen")
         seal_lib_path = os.path.join(sci, "extern", "SEAL", "native", "lib")
+        seal_inc_path = os.path.join(sci, "extern", "SEAL", "native", "src")
         if os.path.exists(sci_lib):
             os.system(
                 """g++ {opt_flag} -fpermissive -pthread -w -maes -msse4.1 -mavx -mavx2 -mrdseed \
-        -faligned-new -std=c++17 -fopenmp -I \"{eigen}\" -I \"{sci_src}\" \"{file}\" \
+        -faligned-new -std=c++17 -fopenmp -I \"{eigen}\" -I \"{seal_inc_path}\" -I \"{sci_src}\" \"{file}\" \
         -L \"{sci_lib}\" -lSCI-LinearHE -L \"{seal}\" -lseal -lssl -lcrypto \
         -o \"{output}\"""".format(
                     eigen=eigen_path,
                     sci_src=sci_src,
                     file=output_file,
                     sci_lib=sci_lib,
+                    seal_inc_path=seal_inc_path,
                     seal=seal_lib_path,
                     output=program_path,
                     opt_flag=opt_flag,
@@ -273,10 +308,17 @@ def generate_code(params, debug=False):
             )
 
     os.chdir(cwd)
+    print("\n\nGenerated binary: {}".format(program_path))
+    if role == "server":
+        print("\n\nUse as input to server (model weights): {}".format(weights_path))
+        print("Share {} file with the client".format(zip_path))
+    if role == "client":
+        weights_path = ""
     return (program_path, weights_path)
 
 
 if __name__ == "__main__":
     args = parse_args()
     params = parse_config.get_params(args.config)
-    generate_code(params)
+    params["config_name"] = args.config
+    generate_code(params, args.role)

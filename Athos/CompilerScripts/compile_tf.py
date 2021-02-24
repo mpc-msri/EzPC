@@ -30,6 +30,7 @@ import os
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
+
 import tensorflow as tf
 import numpy as np
 
@@ -40,6 +41,15 @@ import grappler
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "TFCompiler"))
 import DumpTFMtData
+from TFNodesAST import TFNodesAST
+
+
+def save_graph_def(path_to_pb):
+    if not os.path.exists(path_to_pb):
+        sys.exit("Cannot find " + path_to_pb)
+    gd = tf_graph_io.load_graph_def_pb(path_to_pb)
+    DumpTFMtData.save_graphdef(gd)
+    return
 
 
 def get_graph_from(graph_def):
@@ -102,6 +112,15 @@ def infer_input_info(graph):
     return input_t_info
 
 
+def get_unsupported_ops(graph):
+    ops = set([i.type for i in graph.get_operations()])
+    unsupported_ops = []
+    for op in ops:
+        if not hasattr(TFNodesAST, op):
+            unsupported_ops.append(op)
+    return unsupported_ops
+
+
 # Generates the computation graph and tensor size metadata and saves them in
 # the model directory.
 # Optionaly dumps model weights as fixedpt in specified scaling factor
@@ -110,6 +129,15 @@ def compile(model_fname, input_t_info, output_t_names, scaling_factor, save_weig
     print("Loading tf graph ", model_fname)
     graph = tf_graph_io.load_pb(model_fname)
     assert tensors_exist(graph, output_t_names)
+
+    unsupported_ops = get_unsupported_ops(graph)
+    if len(unsupported_ops) != 0:
+        msg = (
+            "Exiting compilation...\nCurrently we do not support the following ops: \n"
+        )
+        for i in unsupported_ops:
+            msg = msg + "    " + i + "\n"
+        sys.exit(msg)
 
     if input_t_info == {}:
         input_t_info = infer_input_info(graph)

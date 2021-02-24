@@ -24,6 +24,7 @@ SOFTWARE.
 import argparse
 import os.path
 import json
+from json import JSONDecodeError
 import sys
 
 """
@@ -173,8 +174,6 @@ def parse_config(config, sample_network=False):
                 + " is not a tensorflow protobuf file. Please supply "
                 + "a valid tensorflow protobuf model (.pb extension)"
             )
-        if not os.path.isfile(model_fname):
-            sys.exit(model_fname + " file does not exist")
     else:
         network_name = get_str_param(config, "network_name")
         run_in_tmux = get_opt_bool_param(config, "run_in_tmux")

@@ -43,6 +43,7 @@ SOFTWARE.
     }
 
     inline int64_t getSignedVal(uint64_t x){
+        x = x & moduloMask;
         assert(x < modulo);
         int64_t sx = x;
         if (x >= moduloMidPt) sx = x - modulo;
