@@ -1,4 +1,4 @@
-'''
+"""
 
 Authors: Nishant Kumar.
 
@@ -22,57 +22,81 @@ SOFTWARE.
 
 Ack: A prelim version of this file was written by Aayan Kumar.
 
-'''
+"""
 
 import sys, enum, numpy
 
-#Util functions
+# Util functions
 def errIfTokensNotMinLen(tokens, minlen, lineNum, entity):
-    errCond = (len(tokens) < minlen)
-    if (errCond):
-        print("Less than expected number of tokens found while parsing", entity, " at line =", lineNum, file=sys.stderr)
+    errCond = len(tokens) < minlen
+    if errCond:
+        print(
+            "Less than expected number of tokens found while parsing",
+            entity,
+            " at line =",
+            lineNum,
+            file=sys.stderr,
+        )
     return errCond
+
 
 class DataTypeEnum(enum.Enum):
     DT_INVALID = 0
     DT_FLOAT = 1
-    DT_BOOL = 2
-    DT_INT32 = 3
-    DT_INT64 = 4
+    DT_FLOAT16 = 2
+    DT_BOOL = 3
+    DT_INT32 = 4
+    DT_INT64 = 5
 
     def Parse(str):
-        if (str == "DT_FLOAT"): return DataTypeEnum.DT_FLOAT
-        elif (str == "DT_BOOL"): return DataTypeEnum.DT_BOOL
-        elif (str == "DT_INT32"): return DataTypeEnum.DT_INT32
-        elif (str == "DT_INT64"): return DataTypeEnum.DT_INT64
-        else: return DataTypeEnum.DT_INVALID
+        if str == "DT_FLOAT":
+            return DataTypeEnum.DT_FLOAT
+        elif str == "DT_HALF":
+            return DataTypeEnum.DT_FLOAT16
+        elif str == "DT_BOOL":
+            return DataTypeEnum.DT_BOOL
+        elif str == "DT_INT32":
+            return DataTypeEnum.DT_INT32
+        elif str == "DT_INT64":
+            return DataTypeEnum.DT_INT64
+        else:
+            return DataTypeEnum.DT_INVALID
 
-    #TODO : The size given below is for c++ .. for python the sizes are different
+    # TODO : The size given below is for c++ .. for python the sizes are different
     def Size(dt):
-        if (dt == DataTypeEnum.DT_INVALID): return 0
-        elif (dt == DataTypeEnum.DT_FLOAT): return 4
-        elif (dt == DataTypeEnum.DT_BOOL): return 1
-        elif (dt == DataTypeEnum.DT_INT32): return 4
-        elif (dt == DataTypeEnum.DT_INT64): return 8
-        else: raise Exception('Invalid dataTypeEnum value.')
+        if dt == DataTypeEnum.DT_INVALID:
+            return 0
+        elif dt == DataTypeEnum.DT_FLOAT:
+            return 4
+        elif dt == DataTypeEnum.DT_FLOAT16:
+            return 2
+        elif dt == DataTypeEnum.DT_BOOL:
+            return 1
+        elif dt == DataTypeEnum.DT_INT32:
+            return 4
+        elif dt == DataTypeEnum.DT_INT64:
+            return 8
+        else:
+            raise Exception("Invalid dataTypeEnum value.")
+
 
 class Shape:
-    def __init__(self, dimList = None):
-        if (dimList is None):
+    def __init__(self, dimList=None):
+        if dimList is None:
             self.__dimList = []
         else:
             self.__dimList = dimList
         self.__unknownRank = False
-    
+
     def getNumElements(self):
         if self.__dimList:
-            #list is non-empty
+            # list is non-empty
             ans = 1
             for curDim in self.__dimList:
                 ans *= curDim
             return ans
         else:
-            #list is empty
+            # list is empty
             return 0
 
     def getRank(self):
@@ -80,38 +104,38 @@ class Shape:
 
     def getDimRef(self):
         return self.__dimList
-   
+
     def shapeUnknown(self):
         for curDim in self.__dimList:
-            if (curDim == -1):
+            if curDim == -1:
                 return True
         return False
 
     def equalButOneDim(self, other, ignore_dim):
-        if(self.__unknownRank != other.__unknownRank):
+        if self.__unknownRank != other.__unknownRank:
             return False
-        if(self.__unknownRank == other.__unknownRank and self.__unknownRank == True):
+        if self.__unknownRank == other.__unknownRank and self.__unknownRank == True:
             return True
-        if (len(self.__dimList) != len(other.__dimList)):
+        if len(self.__dimList) != len(other.__dimList):
             return False
-        for i,curDim in enumerate(self.__dimList):
-            if (i != ignore_dim and curDim != other.__dimList[i]):
+        for i, curDim in enumerate(self.__dimList):
+            if i != ignore_dim and curDim != other.__dimList[i]:
                 return False
         return True
 
     def __eq__(self, other):
-        if (self.__unknownRank != other.__unknownRank):
+        if self.__unknownRank != other.__unknownRank:
             return False
-        if ((self.__unknownRank == other.__unknownRank) and (self.__unknownRank == True)):
+        if (self.__unknownRank == other.__unknownRank) and (self.__unknownRank == True):
             return True
-        if (len(self.__dimList) != len(other.__dimList)):
+        if len(self.__dimList) != len(other.__dimList):
             return False
-        for i,dimVal in enumerate(self.__dimList):
-            if (other.__dimList[i] != dimVal):
+        for i, dimVal in enumerate(self.__dimList):
+            if other.__dimList[i] != dimVal:
                 return False
         return True
-    
-    def __getitem__(self,index):
+
+    def __getitem__(self, index):
         return self.__dimList[index]
 
     def readFromFilePointer(self, fileP, cnt):
@@ -119,49 +143,66 @@ class Shape:
         cnt += 1
         while line:
             tokens = line.split()
-            if (errIfTokensNotMinLen(tokens, 1, cnt, "Shape")) : return (False, cnt)
+            if errIfTokensNotMinLen(tokens, 1, cnt, "Shape"):
+                return (False, cnt)
             curToken = tokens[0]
-            if (curToken == "}"):
+            if curToken == "}":
                 return (True, cnt)
-            elif (curToken == "dim"):
+            elif curToken == "dim":
                 nline = fileP.readline()
                 cnt += 1
                 nlineTokens = nline.split()
-                if (nlineTokens[0] == "}"):
+                if nlineTokens[0] == "}":
                     return (True, cnt)
-                elif (len(nlineTokens) != 2 or nlineTokens[0] != "size:"):
-                    print("Error while parsing dim in shape at line =", cnt, file=sys.stderr)
+                elif len(nlineTokens) != 2 or nlineTokens[0] != "size:":
+                    print(
+                        "Error while parsing dim in shape at line =",
+                        cnt,
+                        file=sys.stderr,
+                    )
                     return (False, cnt)
-                
+
                 nnline = fileP.readline()
                 cnt += 1
                 nnlineTokens = nnline.split()
-                if (len(nnlineTokens) != 1 or nnlineTokens[0] != "}"):
-                    print("Error while parsing dim in shape at line =", cnt, file=sys.stderr)
+                if len(nnlineTokens) != 1 or nnlineTokens[0] != "}":
+                    print(
+                        "Error while parsing dim in shape at line =",
+                        cnt,
+                        file=sys.stderr,
+                    )
                     return (False, cnt)
 
                 self.__dimList.append(int(nlineTokens[1]))
-            elif (curToken == "unknown_rank:"):
-                if (errIfTokensNotMinLen(tokens, 2, cnt, "Shape")): return (False, cnt)
+            elif curToken == "unknown_rank:":
+                if errIfTokensNotMinLen(tokens, 2, cnt, "Shape"):
+                    return (False, cnt)
                 self.__unknownRank = bool(tokens[1])
-            else: 
-                print("Unknown token found while parsing shape at line =", cnt, ", token =", curToken, file=sys.stderr)
+            else:
+                print(
+                    "Unknown token found while parsing shape at line =",
+                    cnt,
+                    ", token =",
+                    curToken,
+                    file=sys.stderr,
+                )
                 return (False, cnt)
             line = fileP.readline()
             cnt += 1
         return (False, cnt)
 
     def print(self):
-        if (self.__unknownRank):
+        if self.__unknownRank:
             print("Unknown rank")
         else:
-            print("Size:", ",".join(list(map(str,self.__dimList))))
+            print("Size:", ",".join(list(map(str, self.__dimList))))
+
 
 class Tensor:
-    #TODO : Not impelemented operator Shape() from the c++ implementation.
+    # TODO : Not impelemented operator Shape() from the c++ implementation.
 
     def __init__(self):
-        #In the input, either tensor content in the form of a binary string is provided
+        # In the input, either tensor content in the form of a binary string is provided
         #   or an int/float/bool value is provided and the tensor shape is provided
         #   The corresponding C++ code converts the int/float/bool array into byte array.
         #   Right now I don't see any use of doing this in python implementation.
@@ -181,42 +222,64 @@ class Tensor:
     def __convToBytes(self):
         numElements = self.__tensorShape.getNumElements()
 
-        #TODO : The totalSize calculated below seems inaccurate because empty list in python is itself 64 bytes 
+        # TODO : The totalSize calculated below seems inaccurate because empty list in python is itself 64 bytes
         #       Meaning the actual size on a python system will be much more.
 
         self.__totalSize = DataTypeEnum.Size(self.__dtype)
         self.__totalSize *= numElements
-        
-        if ((self.__dtype == DataTypeEnum.DT_BOOL) and (self.__valInput is not None)):
-            self.__valArr = [self.__valInput]*numElements
-        elif ((self.__dtype == DataTypeEnum.DT_FLOAT) and (self.__valInput is not None)):
-            self.__valArr = [self.__valInput]*numElements
-        elif ((self.__dtype == DataTypeEnum.DT_INT32 or self.__dtype == DataTypeEnum.DT_INT64)
-                and (self.__valInput is not None)):
-            self.__valArr = [self.__valInput]*numElements
+
+        if (self.__dtype == DataTypeEnum.DT_BOOL) and (self.__valInput is not None):
+            self.__valArr = [self.__valInput] * numElements
+        elif (self.__dtype == DataTypeEnum.DT_FLOAT) and (self.__valInput is not None):
+            self.__valArr = [self.__valInput] * numElements
+        elif (self.__dtype == DataTypeEnum.DT_FLOAT16) and (
+            self.__valInput is not None
+        ):
+            self.__valArr = [self.__valInput] * numElements
+        elif (
+            self.__dtype == DataTypeEnum.DT_INT32
+            or self.__dtype == DataTypeEnum.DT_INT64
+        ) and (self.__valInput is not None):
+            self.__valArr = [self.__valInput] * numElements
         else:
-            assert(self.__tensorContentInput) #By virtue of how this function is called from below
-            #Parse the tensorcontent and fill the tensorbytes
-            
+            assert (
+                self.__tensorContentInput
+            )  # By virtue of how this function is called from below
+            # Parse the tensorcontent and fill the tensorbytes
+
             self.__tensorBytes = bytearray(self.__totalSize)
 
             byteArrIdx = 0
             tsCtnIdx = 0
-            while(self.__tensorContentInput[tsCtnIdx] != '\"'): tsCtnIdx += 1
+            while self.__tensorContentInput[tsCtnIdx] != '"':
+                tsCtnIdx += 1
             tsCtnIdx += 1
-            while(tsCtnIdx + 1 < len(self.__tensorContentInput)):
-                if (self.__tensorContentInput[tsCtnIdx] != '\\'):
-                    self.__tensorBytes[byteArrIdx] = ord(self.__tensorContentInput[tsCtnIdx])
+            while tsCtnIdx + 1 < len(self.__tensorContentInput):
+                if self.__tensorContentInput[tsCtnIdx] != "\\":
+                    self.__tensorBytes[byteArrIdx] = ord(
+                        self.__tensorContentInput[tsCtnIdx]
+                    )
                 else:
-                    n1 = ord(self.__tensorContentInput[tsCtnIdx+1])-ord('0')
-                    n2 = ord(self.__tensorContentInput[tsCtnIdx+2])-ord('0')
-                    n3 = ord(self.__tensorContentInput[tsCtnIdx+3])-ord('0')
-                    if (n1>=0 and n1<=9 and n2>=0 and n2<=9 and n3>=0 and n3<=9):
-                        self.__tensorBytes[byteArrIdx] = (n1)*64 + (n2)*8 + (n3)
+                    n1 = ord(self.__tensorContentInput[tsCtnIdx + 1]) - ord("0")
+                    n2 = ord(self.__tensorContentInput[tsCtnIdx + 2]) - ord("0")
+                    n3 = ord(self.__tensorContentInput[tsCtnIdx + 3]) - ord("0")
+                    if (
+                        n1 >= 0
+                        and n1 <= 9
+                        and n2 >= 0
+                        and n2 <= 9
+                        and n3 >= 0
+                        and n3 <= 9
+                    ):
+                        self.__tensorBytes[byteArrIdx] = (n1) * 64 + (n2) * 8 + (n3)
                         tsCtnIdx += 3
                     else:
-                        self.__tensorBytes[byteArrIdx] = ord(self.__tensorContentInput[tsCtnIdx:tsCtnIdx+2].encode('latin-1').decode('unicode_escape'))
-                        tsCtnIdx += 1                        
+                        self.__tensorBytes[byteArrIdx] = ord(
+                            self.__tensorContentInput[tsCtnIdx : tsCtnIdx + 2]
+                            .encode("latin-1")
+                            .decode("unicode_escape")
+                        )
+                        tsCtnIdx += 1
                 byteArrIdx += 1
                 tsCtnIdx += 1
 
@@ -225,45 +288,65 @@ class Tensor:
         cnt += 1
         while line:
             tokens = line.split()
-            if (errIfTokensNotMinLen(tokens, 1, cnt, "Tensor")): return (False, cnt)
+            if errIfTokensNotMinLen(tokens, 1, cnt, "Tensor"):
+                return (False, cnt)
             curToken = tokens[0]
-            if (curToken == "}"):
+            if curToken == "}":
                 return (True, cnt)
-            elif (curToken == "tensor_shape"):
+            elif curToken == "tensor_shape":
                 sh = Shape()
                 (noParseErr, cnt) = sh.readFromFilePointer(fileP, cnt)
-                if not(noParseErr):
-                    print("Error in reading shape while parsing tensor at line =", cnt, file=sys.stderr)
+                if not (noParseErr):
+                    print(
+                        "Error in reading shape while parsing tensor at line =",
+                        cnt,
+                        file=sys.stderr,
+                    )
                     return (False, cnt)
                 self.__tensorShape = sh
-                if (len(self.__tensorShape.getDimRef()) == 0):
+                if len(self.__tensorShape.getDimRef()) == 0:
                     self.__totalSize = 0
-            elif (curToken == "dtype:"):
-                if (errIfTokensNotMinLen(tokens, 2, cnt, "Tensor")): return (False, cnt)
+            elif curToken == "dtype:":
+                if errIfTokensNotMinLen(tokens, 2, cnt, "Tensor"):
+                    return (False, cnt)
                 dtype = DataTypeEnum.Parse(tokens[1])
-                if (dtype == DataTypeEnum.DT_INVALID):
-                    print("Unknown dtype found while parsing Tensor at line =", cnt, file=sys.stderr)
+                if dtype == DataTypeEnum.DT_INVALID:
+                    print(
+                        "Unknown dtype found while parsing Tensor at line =",
+                        cnt,
+                        file=sys.stderr,
+                    )
                     return (False, cnt)
                 else:
                     self.__dtype = dtype
-            elif (curToken == "tensor_content:"):
-                if (errIfTokensNotMinLen(tokens, 2, cnt, "Tensor")): return (False, cnt)
-                self.__tensorContentInput = tokens[1]
+            elif curToken == "tensor_content:":
+                if errIfTokensNotMinLen(tokens, 2, cnt, "Tensor"):
+                    return (False, cnt)
+                self.__tensorContentInput = " ".join(tokens[1:])
                 self.__convToBytes()
-            elif (curToken == "float_val:"):
-                if (errIfTokensNotMinLen(tokens, 2, cnt, "Tensor")): return (False, cnt)
+            elif curToken == "float_val:":
+                if errIfTokensNotMinLen(tokens, 2, cnt, "Tensor"):
+                    return (False, cnt)
                 self.__valInput = float(tokens[1])
                 self.__convToBytes()
-            elif (curToken == "bool_val:"):
-                if (errIfTokensNotMinLen(tokens, 2, cnt, "Tensor")): return (False, cnt)
+            elif curToken == "bool_val:":
+                if errIfTokensNotMinLen(tokens, 2, cnt, "Tensor"):
+                    return (False, cnt)
                 self.__valInput = bool(tokens[1])
                 self.__convToBytes()
-            elif (curToken == "int_val:"):
-                if (errIfTokensNotMinLen(tokens, 2, cnt, "Tensor")): return (False, cnt)
+            elif curToken == "int_val:":
+                if errIfTokensNotMinLen(tokens, 2, cnt, "Tensor"):
+                    return (False, cnt)
                 self.__valInput = int(tokens[1])
                 self.__convToBytes()
             else:
-                print("Unknown token found while parsing Tensor at line =", cnt, ", token =", curToken, file=sys.stderr)
+                print(
+                    "Unknown token found while parsing Tensor at line =",
+                    cnt,
+                    ", token =",
+                    curToken,
+                    file=sys.stderr,
+                )
                 return (False, cnt)
             line = fileP.readline()
             cnt += 1
@@ -276,7 +359,7 @@ class Tensor:
         print("Content:", self.__tensorContentInput)
         print("ShapeRank:", self.__tensorShape.getRank())
         print("TotalSizeBytes:", self.__totalSize)
-        if (self.__tensorBytes):
+        if self.__tensorBytes:
             print("ActualContentBytes:", self.__tensorBytes)
         else:
             print("ValArr:", self.__valArr)
@@ -297,7 +380,7 @@ class Tensor:
             # else:
             #     # Right now the CNN tensorflow benchmark i am dealing with only has int32 case when tensorContents are given as bytes.
             #     # If in future, we encounter this case for float/bool, deal with it accordingly here
-            #     # Plus, also from empirical observation, byteorder is little and its a signed value for ints. 
+            #     # Plus, also from empirical observation, byteorder is little and its a signed value for ints.
             #     # Figure out for others when the time comes.
             #     print(self.__dtype)
             #     assert False
@@ -309,30 +392,35 @@ class Tensor:
             #     it += numOfBytesPerVal
             # self.__valArr = returnArr
             if self.__dtype == DataTypeEnum.DT_FLOAT:
-                dtype = numpy.dtype('<f4')
+                dtype = numpy.dtype("<f4")
+            elif self.__dtype == DataTypeEnum.DT_FLOAT16:
+                dtype = numpy.dtype("<f2")
             elif self.__dtype == DataTypeEnum.DT_BOOL:
-                dtype = numpy.dtype('bool')
+                dtype = numpy.dtype("bool")
             elif self.__dtype == DataTypeEnum.DT_INT32:
-                dtype = numpy.dtype('int32')
+                dtype = numpy.dtype("int32")
             elif self.__dtype == DataTypeEnum.DT_INT64:
-                dtype = numpy.dtype('int64')
+                dtype = numpy.dtype("int64")
             else:
-                assert(False)
+                assert False
             self.__valArr = numpy.fromstring(bytes(self.__tensorBytes), dtype).tolist()
         return self.__valArr
- 
+
     def getDType(self):
         if self.__dtype == DataTypeEnum.DT_FLOAT:
-            dtype = numpy.dtype('<f4')
+            dtype = numpy.dtype("<f4")
+        elif self.__dtype == DataTypeEnum.DT_FLOAT16:
+            dtype = numpy.dtype("<f2")
         elif self.__dtype == DataTypeEnum.DT_BOOL:
-            dtype = numpy.dtype('bool')
+            dtype = numpy.dtype("bool")
         elif self.__dtype == DataTypeEnum.DT_INT32:
-            dtype = numpy.dtype('int32')
+            dtype = numpy.dtype("int32")
         elif self.__dtype == DataTypeEnum.DT_INT64:
-            dtype = numpy.dtype('int64')
+            dtype = numpy.dtype("int64")
         else:
-            assert(False)
+            assert False
         return dtype
+
 
 class MultiValue:
     def __init__(self):
@@ -346,29 +434,40 @@ class MultiValue:
         cnt += 1
         while line:
             tokens = line.split()
-            if (errIfTokensNotMinLen(tokens, 1, cnt, "Multivalue")): return (False, cnt)
+            if errIfTokensNotMinLen(tokens, 1, cnt, "Multivalue"):
+                return (False, cnt)
             curToken = tokens[0]
-            if (curToken == "}"):
+            if curToken == "}":
                 return (True, cnt)
-            elif (curToken == "s:"):
-                if (errIfTokensNotMinLen(tokens, 2, cnt, "Multivalue")): return (False, cnt)
+            elif curToken == "s:":
+                if errIfTokensNotMinLen(tokens, 2, cnt, "Multivalue"):
+                    return (False, cnt)
                 self.__valStrLi.append(tokens[1])
-            elif (curToken == "f:"):
-                if (errIfTokensNotMinLen(tokens, 2, cnt, "Multivalue")): return (False, cnt)
+            elif curToken == "f:":
+                if errIfTokensNotMinLen(tokens, 2, cnt, "Multivalue"):
+                    return (False, cnt)
                 self.__valFloatLi.append(float(tokens[1]))
-            elif (curToken == "i:"):
-                if (errIfTokensNotMinLen(tokens, 2, cnt, "Multivalue")): return (False, cnt)
+            elif curToken == "i:":
+                if errIfTokensNotMinLen(tokens, 2, cnt, "Multivalue"):
+                    return (False, cnt)
                 self.__valIntLi.append(int(tokens[1]))
-            elif (curToken == "b:"):
-                if (errIfTokensNotMinLen(tokens, 2, cnt, "Multivalue")): return (False, cnt)
+            elif curToken == "b:":
+                if errIfTokensNotMinLen(tokens, 2, cnt, "Multivalue"):
+                    return (False, cnt)
                 self.__valBoolLi.append(bool(tokens[1]))
             else:
-                print("Unknown token found while parsing Mutlivalue, line =", cnt, ", Token =", curToken, file=sys.stderr)
+                print(
+                    "Unknown token found while parsing Mutlivalue, line =",
+                    cnt,
+                    ", Token =",
+                    curToken,
+                    file=sys.stderr,
+                )
                 return (False, cnt)
             line = fileP.readline()
             cnt += 1
         return (False, cnt)
-    
+
     def print(self):
         print("sses:", ",".join(self.__valStrLi))
         print("is:", ",".join(list(map(str, self.__valIntLi))))
@@ -376,9 +475,10 @@ class MultiValue:
         print("bs:", ",".join(list(map(str, self.__valBoolLi))))
 
     def getILi(self):
-        if len(self.__valIntLi)>0:
-            assert(all((type(x) is int) for x in self.__valIntLi))
+        if len(self.__valIntLi) > 0:
+            assert all((type(x) is int) for x in self.__valIntLi)
         return self.__valIntLi
+
 
 class Value:
     def __init__(self):
@@ -389,114 +489,141 @@ class Value:
         cnt += 1
         while line:
             tokens = line.split()
-            if (errIfTokensNotMinLen(tokens, 1, cnt, "Value")): return (False, cnt)
+            if errIfTokensNotMinLen(tokens, 1, cnt, "Value"):
+                return (False, cnt)
             curToken = tokens[0]
-            if (curToken == "}"):
+            if curToken == "}":
                 return (True, cnt)
-            elif (curToken == "s:"):
-                if (errIfTokensNotMinLen(tokens, 2, cnt, "Value")): return (False, cnt)
-                self.__val = tokens[1]
-            elif (curToken == "i:"):
-                if (errIfTokensNotMinLen(tokens, 2, cnt, "Value")): return (False, cnt)
+            elif curToken == "s:":
+                if errIfTokensNotMinLen(tokens, 2, cnt, "Value"):
+                    return (False, cnt)
+                self.__val = tokens[1][1:-1]
+            elif curToken == "i:":
+                if errIfTokensNotMinLen(tokens, 2, cnt, "Value"):
+                    return (False, cnt)
                 self.__val = int(tokens[1])
-            elif (curToken == "f:"):
-                if (errIfTokensNotMinLen(tokens, 2, cnt, "Value")): return (False, cnt)
+            elif curToken == "f:":
+                if errIfTokensNotMinLen(tokens, 2, cnt, "Value"):
+                    return (False, cnt)
                 self.__val = float(tokens[1])
-            elif (curToken == "b:"):
-                if (errIfTokensNotMinLen(tokens, 2, cnt, "Value")): return (False, cnt)
+            elif curToken == "b:":
+                if errIfTokensNotMinLen(tokens, 2, cnt, "Value"):
+                    return (False, cnt)
                 self.__val = bool(tokens[1] == "true")
-            elif (curToken == "type:"):
-                if (errIfTokensNotMinLen(tokens, 2, cnt, "Value")): return (False, cnt)
+            elif curToken == "type:":
+                if errIfTokensNotMinLen(tokens, 2, cnt, "Value"):
+                    return (False, cnt)
                 dtype = DataTypeEnum.Parse(tokens[1])
-                if (dtype == DataTypeEnum.DT_INVALID):
-                    print("Invalid dtype found while parsing Value at line =", cnt, file=sys.stderr)
+                if dtype == DataTypeEnum.DT_INVALID:
+                    print(
+                        "Invalid dtype found while parsing Value at line =",
+                        cnt,
+                        file=sys.stderr,
+                    )
                     return (False, cnt)
                 else:
                     self.__val = dtype
-            elif (curToken == "shape"):
+            elif curToken == "shape":
                 sh = Shape()
                 (noParseError, cnt) = sh.readFromFilePointer(fileP, cnt)
-                if (not(noParseError)):
+                if not (noParseError):
                     print("Error in parsing Value at line =", cnt, file=sys.stderr)
                     return (False, cnt)
                 self.__val = sh
-            elif (curToken == "list"):
+            elif curToken == "list":
                 mv = MultiValue()
                 (noParseError, cnt) = mv.readFromFilePointer(fileP, cnt)
-                if (not(noParseError)):
+                if not (noParseError):
                     print("Error in parsing Value at line =", cnt, file=sys.stderr)
                     return (False, cnt)
                 self.__val = mv
-            elif (curToken == "tensor"):
+            elif curToken == "tensor":
                 ts = Tensor()
                 (noParseError, cnt) = ts.readFromFilePointer(fileP, cnt)
-                if (not(noParseError)):
+                if not (noParseError):
                     print("Error in parsing Value at line =", cnt, file=sys.stderr)
                     return (False, cnt)
                 self.__val = ts
             else:
-                print("Unknown token while parsing Value at line =", cnt, ", token =", curToken, file=sys.stderr)
+                print(
+                    "Unknown token while parsing Value at line =",
+                    cnt,
+                    ", token =",
+                    curToken,
+                    file=sys.stderr,
+                )
                 return (False, cnt)
             line = fileP.readline()
             cnt += 1
         return (False, cnt)
 
     def print(self):
-        if (type(self.__val) is str): print("s:", self.__val)
-        elif (type(self.__val) is int): print("i:", self.__val)
-        elif (type(self.__val) is float): print("f:", self.__val)
-        elif (type(self.__val) is bool): print("b:", self.__val)
-        elif (type(self.__val) is DataTypeEnum): print("Type:", self.__val)
-        elif (type(self.__val) is Shape): 
+        if type(self.__val) is str:
+            print("s:", self.__val)
+        elif type(self.__val) is int:
+            print("i:", self.__val)
+        elif type(self.__val) is float:
+            print("f:", self.__val)
+        elif type(self.__val) is bool:
+            print("b:", self.__val)
+        elif type(self.__val) is DataTypeEnum:
+            print("Type:", self.__val)
+        elif type(self.__val) is Shape:
             print("Shape: ", end="")
             self.__val.print()
-        elif (type(self.__val) is Tensor):
+        elif type(self.__val) is Tensor:
             print("Tensor: ", end="")
             self.__val.print()
-        elif (type(self.__val) is MultiValue):
+        elif type(self.__val) is MultiValue:
             print("List: ", end="")
             self.__val.print()
         else:
-            assert(False)
+            assert False
 
     def getS(self):
-        assert(type(self.__val) is str)
+        assert type(self.__val) is str
         return self.__val
 
     def getI(self):
-        assert(type(self.__val) is int)
+        assert type(self.__val) is int
         return self.__val
 
     def getF(self):
-        assert(type(self.__val) is float)
+        assert type(self.__val) is float
         return self.__val
 
     def getB(self):
-        assert(type(self.__val) is bool)
+        assert type(self.__val) is bool
         return self.__val
 
     def getDataType(self):
-        assert(type(self.__val) is DataTypeEnum)
+        assert type(self.__val) is DataTypeEnum
         return self.__val
 
     def getShape(self):
-        assert(type(self.__val) is Shape)
+        assert type(self.__val) is Shape
         return self.__val
 
     def getTensor(self):
-        assert(type(self.__val) is Tensor)
+        assert type(self.__val) is Tensor
         return self.__val
 
     def getList(self):
-        assert(type(self.__val) is MultiValue)
+        assert type(self.__val) is MultiValue
         return self.__val
 
+
 class Node:
-    def __init__(self):
-        self.__name = ""        #Name of node
-        self.__op = ""          #Name of operation carried out by node
-        self.__inputs = []      #List of all inputs to the current node
-        self.__attr = {}        #Map of (attrName, Value) of all attributes for the current node
+    def __init__(self, op="", inputs=None, name=""):
+        self.__name = name  # Name of node
+        self.__op = op  # Name of operation carried out by node
+        if inputs is None:
+            self.__inputs = []  # List of all inputs to the current node
+        else:
+            self.__inputs = inputs
+        self.__attr = (
+            {}
+        )  # Map of (attrName, Value) of all attributes for the current node
 
     def getName(self):
         return self.__name
@@ -511,7 +638,7 @@ class Node:
         return self.__attr
 
     def getAttrVal(self, attrName):
-        qName = '"' + attrName + '"'
+        qName = attrName
         if not qName in self.__attr:
             return None
         return self.__attr[qName]
@@ -522,29 +649,49 @@ class Node:
         keyStr = None
         while line:
             tokens = line.split()
-            if (errIfTokensNotMinLen(tokens, 1, cnt, "attr from node")): return (False, cnt)
+            if errIfTokensNotMinLen(tokens, 1, cnt, "attr from node"):
+                return (False, cnt)
             curToken = tokens[0]
-            if (curToken == "}"):
+            if curToken == "}":
                 return (True, cnt)
-            elif (curToken == "key:"):
-                if (errIfTokensNotMinLen(tokens, 2, cnt, "attr from node")): return (False, cnt)
-                if (keyStr):
-                    #keyStr is already non-None .. there is then probably some error
-                    print("Too many keys found while parsing attr for node at line =", cnt, file=sys.stderr)
+            elif curToken == "key:":
+                if errIfTokensNotMinLen(tokens, 2, cnt, "attr from node"):
                     return (False, cnt)
-                keyStr = tokens[1]
-            elif (curToken == "value"):
+                if keyStr:
+                    # keyStr is already non-None .. there is then probably some error
+                    print(
+                        "Too many keys found while parsing attr for node at line =",
+                        cnt,
+                        file=sys.stderr,
+                    )
+                    return (False, cnt)
+                keyStr = tokens[1][1:-1]
+            elif curToken == "value":
                 curVal = Value()
                 (noParseError, cnt) = curVal.readFromFilePointer(fileP, cnt)
-                if not(noParseError):
-                    print("Error while parsing value of attr for node at line =", cnt, file=sys.stderr)
+                if not (noParseError):
+                    print(
+                        "Error while parsing value of attr for node at line =",
+                        cnt,
+                        file=sys.stderr,
+                    )
                     return (False, cnt)
-                if not(keyStr):
-                    print("Value found - but no key found for attr in node at line =", cnt, file=sys.stderr)
+                if not (keyStr):
+                    print(
+                        "Value found - but no key found for attr in node at line =",
+                        cnt,
+                        file=sys.stderr,
+                    )
                     return (False, cnt)
                 self.__attr[keyStr] = curVal
             else:
-                print("Unrecognized token found while parsing attribute for node at line =", cnt, ", token =", curToken, file=sys.stderr)
+                print(
+                    "Unrecognized token found while parsing attribute for node at line =",
+                    cnt,
+                    ", token =",
+                    curToken,
+                    file=sys.stderr,
+                )
                 return (False, cnt)
             line = fileP.readline()
             cnt += 1
@@ -555,31 +702,46 @@ class Node:
         cnt += 1
         while line:
             tokens = line.split()
-            if (errIfTokensNotMinLen(tokens, 1, cnt, "node")): return (False, cnt)
+            if errIfTokensNotMinLen(tokens, 1, cnt, "node"):
+                return (False, cnt)
             curToken = tokens[0]
-            if (curToken == "}"):
+            if curToken == "}":
                 return (True, cnt)
-            elif (curToken == "name:"):
-                if (errIfTokensNotMinLen(tokens, 2, cnt, "node")): return (False, cnt)
-                self.__name = tokens[1]
-            elif (curToken == "op:"):
-                if (errIfTokensNotMinLen(tokens, 2, cnt, "node")): return (False, cnt)
-                self.__op = tokens[1]
-            elif (curToken == "input:"):
-                if (errIfTokensNotMinLen(tokens, 2, cnt, "node")): return (False, cnt)
-                self.__inputs.append(tokens[1])
-            elif (curToken == "attr"):
+            elif curToken == "name:":
+                if errIfTokensNotMinLen(tokens, 2, cnt, "node"):
+                    return (False, cnt)
+                self.__name = tokens[1][1:-1]
+            elif curToken == "op:":
+                if errIfTokensNotMinLen(tokens, 2, cnt, "node"):
+                    return (False, cnt)
+                self.__op = tokens[1][1:-1]
+            elif curToken == "input:":
+                if errIfTokensNotMinLen(tokens, 2, cnt, "node"):
+                    return (False, cnt)
+                input_name = tokens[1][1:-1]
+                # Sometimes graph defs generated specify 0'th output explicitly whereas the node names do not
+                # contain that. So we strip it
+                if input_name.endswith(":0"):
+                    input_name = input_name[:-2]
+                self.__inputs.append(input_name)
+            elif curToken == "attr":
                 (noParseError, cnt) = self.readAttrFromFilePointer(fileP, cnt)
-                if (not(noParseError)):
+                if not (noParseError):
                     print("Error parsing node data at line =", cnt, file=sys.stderr)
                     return (False, cnt)
             else:
-                print("Unrecognized token found while parsing node data at line =", cnt, ", token =", curToken, file=sys.stderr)
+                print(
+                    "Unrecognized token found while parsing node data at line =",
+                    cnt,
+                    ", token =",
+                    curToken,
+                    file=sys.stderr,
+                )
                 return (False, cnt)
             line = fileP.readline()
             cnt += 1
         return (False, cnt)
-    
+
     def print(self):
         print("NODE::")
         print(self.__name, ",", self.__op)
@@ -590,10 +752,13 @@ class Node:
             print("Attr:", attrKey)
             attrVal.print()
 
+
 class Graph:
     def __init__(self):
-        self.__Nodes = {} # Map of (op, Node)
-        self.__NodesLi = [] # Sequential list of nodes in the order in which its specified in graph_def.
+        self.__Nodes = {}  # Map of (op, Node)
+        self.__NodesLi = (
+            []
+        )  # Sequential list of nodes in the order in which its specified in graph_def.
 
     def getAllNodes(self):
         return self.__Nodes
@@ -609,28 +774,44 @@ class Graph:
         cnt = 1
         while line:
             tokens = line.split()
-            if (errIfTokensNotMinLen(tokens, 1, cnt, "graph")): return False
+            if errIfTokensNotMinLen(tokens, 1, cnt, "graph"):
+                return False
             curToken = tokens[0]
-            if (curToken == "node"):
+            if curToken == "node":
                 curNode = Node()
                 (noPaseError, cnt) = curNode.readFromFilePointer(fileP, cnt)
-                if (noPaseError):
+                if noPaseError:
                     self.__Nodes[curNode.getName()] = curNode
                     self.__NodesLi.append(curNode)
                 else:
-                    print("Error parsing graph dump for node at line =", cnt, file=sys.stderr)
+                    print(
+                        "Error parsing graph dump for node at line =",
+                        cnt,
+                        file=sys.stderr,
+                    )
                     return False
-            elif (curToken == "}"):
-                #CurNode ended
+            elif curToken == "}":
+                # CurNode ended
                 pass
-            elif (curToken == "versions" or curToken == "library"):
-                print("Versions/Library node found. Ignoring remainder graph. Line =", cnt, file=sys.stderr)
+            elif curToken == "versions" or curToken == "library":
+                print(
+                    "Versions/Library node found. Ignoring remainder graph. Line =",
+                    cnt,
+                    file=sys.stderr,
+                )
+                print("Graph parsing successful.", file=sys.stderr)
                 return True
             else:
-                print("Unrecognized token in graph dump at line =", cnt, ", token =", curToken, file=sys.stderr)
+                print(
+                    "Unrecognized token in graph dump at line =",
+                    cnt,
+                    ", token =",
+                    curToken,
+                    file=sys.stderr,
+                )
                 return False
             line = fileP.readline()
-            cnt+=1
+            cnt += 1
         print("Graph parsing successful.")
         return True
 
@@ -638,5 +819,5 @@ class Graph:
         return self.__Nodes[opName]
 
     def print(self):
-        for _, curNode in self.__Nodes.items():
+        for curNode in self.__NodesLi:
             curNode.print()

@@ -29,7 +29,14 @@ Each one of the above is independent and usable in their own right and more info
 
 With these components in place, we are able to run for the first time secure inference on the [ImageNet dataset]([http://www.image-net.org) with the pre-trained models of the following deep neural nets: ResNet-50, DenseNet-121 and SqueezeNet for ImageNet.
 
-For setup instructions, please refer to each of the components' readme. We plan to release a docker version of the system as well which will make the system easier to setup.
+## Setup
+For setup instructions, please refer to each of the components' readme.
+
+Alternatively you can use the **setup_env_and_build.sh** script. It installs dependencies and builds each component. It also creates a virtual environment in a *mpc_venv* folder with all the required packages. If you want to do setup with default paths and settings do ``./setup_env_and_build.sh quick``, otherwise if you want to manually choose paths you can use ``./setup_env_and_build.sh``.
+
+Please do ``source mpc_venv/bin/activate`` before using the toolchain.
+
+We plan to release a docker version of the system as well which will make the system easier to setup.
 
 ## Wiki
 Wiki section of this repository provides coding practices and examples to get started with EzPC.

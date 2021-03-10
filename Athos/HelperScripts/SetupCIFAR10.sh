@@ -20,7 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-cifar10DownloadLink="https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz"
-axel -a -n 3 -c --output CIFAR10 "$cifar10DownloadLink"
-cd CIFAR10
-tar -xvzf cifar-10-python.tar.gz --directory=.
+if [ ! -f "CIFAR10/cifar-10-python.tar.gz" ]; then
+	wget "https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz" -P ./CIFAR10
+	cd CIFAR10
+	tar -xvzf cifar-10-python.tar.gz --directory=.
+fi
