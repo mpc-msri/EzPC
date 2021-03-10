@@ -149,8 +149,6 @@ def test_argmax(test_dir, backend, a_shape, axis, dtype):
 def test_pool(
     test_dir, backend, tfOp, a_shape, ksize, strides, padding, data_format, dtype
 ):
-    if backend.startswith("2PC") and tfOp == tf.nn.max_pool:
-        pytest.skip("[SCI][maxpool] Output mismatch bug")
     graph = tf.Graph()
     a_inp = dtype(np.random.randn(*a_shape))
     with graph.as_default():

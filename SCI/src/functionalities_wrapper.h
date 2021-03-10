@@ -30,8 +30,10 @@ SOFTWARE.
 #include <cstdlib>
 #include <fstream>
 
+
 #ifdef VERIFY_LAYERWISE
 #include "functionalities_pt.h"
+
 #endif
 
 void Conv2D(int32_t N, int32_t H, int32_t W, int32_t CI, 
@@ -524,7 +526,9 @@ void MaxPool(int32_t N, int32_t H, int32_t W, int32_t C,
     }
 
     for(int i=rowsOrig;i<rows;i++){
-        reInpArr[i] = 0; //The extra padded values
+        for(int j=0;j<cols;j++){
+            reInpArr[i*cols + j] = 0; //The extra padded values
+        }
     }
 
 #ifndef MULTITHREADED_NONLIN
