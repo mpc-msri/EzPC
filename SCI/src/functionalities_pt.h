@@ -406,7 +406,7 @@ temp =  (int64_t)0;
 } else {
 temp = inArr[n][curPosH][curPosW][c];
 }
-maxi = (PublicLT(maxi, temp)) ? temp : maxi;
+maxi = (getSignedVal(PublicSub(maxi, temp)) < 0) ? temp : maxi;
 }
 }
 outArr[n][ctH][ctW][c] = maxi;

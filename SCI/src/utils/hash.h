@@ -78,14 +78,15 @@ class Hash { public:
 	}
 	__attribute__((target("sse2")))
 	static block128 hash_for_block128(const void * data, int nbyte) {
-		char digest[DIGEST_SIZE];
+		// even though stack is aligned to 16 byte, we don't know the order of locals.
+		char digest[DIGEST_SIZE] __attribute__ ((aligned (16)));
 		hash_once(digest, data, nbyte);
 		return _mm_load_si128((__m128i*)&digest[0]);
 	}
 
 	__attribute__((target("avx")))
 	static block256 hash_for_block256(const void * data, int nbyte) {
-		char digest[DIGEST_SIZE];
+		char digest[DIGEST_SIZE] __attribute__ ((aligned (32)));
 		hash_once(digest, data, nbyte);
 		return _mm256_load_si256((__m256i*)&digest[0]);
 	}

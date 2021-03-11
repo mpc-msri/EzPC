@@ -94,7 +94,7 @@ Config file should be a json in the following format:
 
 
 def generate_code(params, role, debug=False):
-    model_name = params["model_name"]
+    model_path = params["model_name"]
     input_tensor_info = params["input_tensors"]
     output_tensors = params["output_tensors"]
     scale = 12 if params["scale"] is None else params["scale"]
@@ -138,14 +138,15 @@ def generate_code(params, role, debug=False):
 
     cwd = os.getcwd()
     athos_dir = os.path.dirname(os.path.abspath(__file__))
-    model_abs_path = os.path.abspath(model_name)
+    model_name = os.path.basename(model_path)
+    model_abs_path = os.path.abspath(model_path)
     model_abs_dir = os.path.dirname(model_abs_path)
 
     pruned_model_path = os.path.join(model_abs_dir, "optimised_" + model_name)
     if role == "server":
         # Generate graphdef and sizeInfo metadata
         weights_path = compile_tf.compile(
-            model_name, input_tensor_info, output_tensors, scale, save_weights
+            model_path, input_tensor_info, output_tensors, scale, save_weights
         )
         # Zip the pruned model, sizeInfo to send to client
         file_list = [
@@ -165,7 +166,7 @@ def generate_code(params, role, debug=False):
     Athos.process_tf_graph(model_abs_dir, output_tensors)
 
     # Compile to ezpc
-    model_base_name = os.path.basename(model_abs_path)[:-3]
+    model_base_name = model_name[:-3]
     ezpc_file_name = "{mname}_{bl}_{target}.ezpc".format(
         mname=model_base_name, bl=bitlength, target=target.lower()
     )

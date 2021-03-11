@@ -322,7 +322,7 @@ class Tensor:
             elif curToken == "tensor_content:":
                 if errIfTokensNotMinLen(tokens, 2, cnt, "Tensor"):
                     return (False, cnt)
-                self.__tensorContentInput = tokens[1]
+                self.__tensorContentInput = " ".join(tokens[1:])
                 self.__convToBytes()
             elif curToken == "float_val:":
                 if errIfTokensNotMinLen(tokens, 2, cnt, "Tensor"):

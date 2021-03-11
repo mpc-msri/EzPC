@@ -23,13 +23,34 @@ SOFTWARE.
 """
 import numpy as np
 import sys
+import argparse
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-i",
+        "--inputs",
+        help="Paths of the two numpy arrays to compare. -i arr1.npy arr2.npy ",
+        required=True,
+        type=str,
+        nargs=2,
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        help="Verbose mode. Prints arrays.",
+        action="store_true",
+    )
+    args = parser.parse_args()
+    return args
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        sys.exit("Usage: compare_np_arrs.py arr1.npy arr2.npy")
-    arr1 = np.load(sys.argv[1], allow_pickle=True).flatten()
-    arr2 = np.load(sys.argv[2], allow_pickle=True).flatten()
+    args = parse_args()
+
+    arr1 = np.load(args.inputs[0], allow_pickle=True).flatten()
+    arr2 = np.load(args.inputs[1], allow_pickle=True).flatten()
 
     matching_prec = -1
     for prec in range(1, 10):
@@ -43,3 +64,7 @@ if __name__ == "__main__":
         print("Output mismatch")
     else:
         print("Arrays matched upto {} decimal points".format(matching_prec))
+
+    if args.verbose:
+        print(args.inputs[0], ": ", arr1)
+        print(args.inputs[1], ": ", arr2)
