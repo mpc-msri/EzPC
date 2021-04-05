@@ -1,14 +1,109 @@
+include_directories(${CMAKE_CURRENT_LIST_DIR})
+
+find_package(Eigen3 3.3 NO_MODULE QUIET)
+if (NOT Eigen3_FOUND)
+    message(STATUS "Eigen 3.3 was not found: clone and install Eigen3 locally")
+    if (NOT EXISTS "${PROJECT_SOURCE_DIR}/extern/eigen/CMakeLists.txt")
+        find_package(Git REQUIRED)
+        message(STATUS "initialize Git submodule: extern/eigen")
+        execute_process(COMMAND git submodule update --init --recursive extern/eigen
+                WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
+    endif ()
+    execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory build
+        WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/extern/eigen/")
+    execute_process(COMMAND ${CMAKE_COMMAND} -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} ..
+        WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/extern/eigen/build")
+    execute_process(COMMAND ${CMAKE_COMMAND} --build .. --target install
+        WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/extern/eigen/build")
+    message(STATUS "${PROJECT_SOURCE_DIR}")
+    find_package(Eigen3 3.3 REQUIRED NO_MODULE PATHS "${CMAKE_INSTALL_PREFIX}")
+endif ()
+
 add_subdirectory(utils)
 add_subdirectory(OT)
 add_subdirectory(Millionaire)
-add_subdirectory(NonLinear)
+add_subdirectory(BuildingBlocks)
+add_subdirectory(LinearOT)
 add_subdirectory(LinearHE)
+add_subdirectory(NonLinear)
+add_subdirectory(Math)
 
-add_library(SCI-Protocols INTERFACE)
+add_library(SCI-common INTERFACE)
 
-target_link_libraries(SCI-Protocols
+find_package(Threads REQUIRED)
+find_package(Eigen3 REQUIRED)
+
+target_link_libraries(SCI-common
     INTERFACE
-    SCI-OT
     SCI-NonLinear
-    SCI-LinearHE
+    Threads::Threads
 )
+
+target_include_directories(SCI-common
+    INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<INSTALL_INTERFACE:./>
+)
+
+add_library(SCI-OT library_fixed_uniform.cpp library_fixed.cpp
+    globals.cpp cleartext_library_fixed.cpp)
+add_library(SCI-HE library_fixed_uniform.cpp globals.cpp)
+
+target_link_libraries(SCI-OT PUBLIC SCI-common SCI-LinearOT
+    SCI-BuildingBlocks SCI-Math Eigen3::Eigen)
+target_link_libraries(SCI-HE PUBLIC SCI-common SCI-LinearHE)
+
+target_compile_definitions(SCI-OT PUBLIC SCI_OT=1)
+target_compile_definitions(SCI-HE PUBLIC SCI_HE=1)
+
+install(TARGETS
+        SCI-OT
+        SCI-HE
+        SCI-common
+        SCI-BuildingBlocks
+        SCI-LinearOT
+        SCI-LinearHE
+        SCI-NonLinear
+        SCI-Math
+        SCI-Millionaire
+        SCI-OTPrimitive
+        SCI-utils
+        EXPORT SCITargets
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
+        RUNTIME DESTINATION bin
+        INCLUDES DESTINATION include)
+
+install(EXPORT SCITargets
+        FILE SCITargets.cmake
+        NAMESPACE SCI::
+        DESTINATION lib/cmake/SCI)
+
+install(DIRECTORY
+        utils
+        OT
+        Millionaire
+        NonLinear
+        BuildingBlocks
+        LinearOT
+        LinearHE
+        Math
+        DESTINATION include
+        FILES_MATCHING
+        PATTERN "*.h"
+        PATTERN "*.hpp")
+
+install(FILES
+        "defines.h"
+        "defines_uniform.h"
+        "globals.h"
+        "library_fixed.h"
+        "library_fixed_uniform.h"
+        "cleartext_library_fixed.h"
+        "cleartext_library_fixed_uniform.h"
+        DESTINATION include)
+
+install(FILES
+        "${CMAKE_CURRENT_SOURCE_DIR}/utils/cmake/FindGMP.cmake"
+        "${CMAKE_CURRENT_SOURCE_DIR}/utils/cmake/source_of_randomness.cmake"
+        DESTINATION lib/cmake/SCI)

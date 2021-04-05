@@ -171,16 +171,15 @@ def test_div(test_dir, backend, tfOp, a_val, divisor, dtype):
                 reason="[matmul] expect atleast one param to belong to model"
             ),
         ),
+        ([1, 2], [2, 3], False, False, True),
     ],
 )
 @pytest.mark.parametrize("dtype", [np.single])
 def test_matmul(
     test_dir, backend, a_shape, b_shape, transpose_a, transpose_b, bisModel, dtype
 ):
-    if backend == "2PC_HE":
-        pytest.skip(
-            "Assertion error in 2PC_HE FCField::matrix_multiplication Assertion `num_cols == 1' failed."
-        )
+    if backend == "2PC_HE" and a_shape[0] != 1:
+        pytest.skip("HE only supports vector matrix multiplication")
     graph = tf.Graph()
     a_inp = dtype(np.random.randn(*a_shape))
     b_inp = dtype(np.random.randn(*b_shape))

@@ -126,3 +126,12 @@ extern void ConvTranspose3DWrapper(int32_pl N, int32_pl DPrime, int32_pl HPrime,
 				   int64_al[FD][FH][FW][CO][CI] filterArr, 
 				   int32_pl consSF,
 				   int64_al[N][D][H][W][CO] outArr);
+
+def void TanhImpl(int32_pl LUTBITS, int32_pl size, int32_pl sA, int32_pl sB, int32_pl bwA, int32_pl bwB, int64_al[size] A, int64_al[size] B) {
+}
+
+def void SigmoidImpl(int32_pl LUTBITS, int32_pl size, int32_pl sA, int32_pl sB, int32_pl bwA, int32_pl bwB, int64_al[size] A, int64_al[size] B) {
+}
+
+def void SqrtImpl(int32_pl LUTBITS, int32_pl size, int32_pl sA, int32_pl sB, int32_pl bwA, int32_pl bwB, bool_pl inverse, int64_al[size] A, int64_al[size] B) {
+}

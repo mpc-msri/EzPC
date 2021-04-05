@@ -25,22 +25,22 @@ import pytest
 import tempfile
 import shutil
 import os
+import sys
 
 
 def pytest_addoption(parser):
     parser.addoption(
         "--backend",
         action="store",
-        default="CPP",
+        choices=["CPP", "3PC", "2PC_HE", "2PC_OT"],
         help="backend : CPP | 2PC_HE | 2PC_OT | 3PC",
+        required=True,
     )
 
 
 @pytest.fixture(scope="session")
 def backend(request):
     opt = request.config.getoption("--backend")
-    if opt not in ["CPP", "3PC", "2PC_HE", "2PC_OT"]:
-        opt = "CPP"
     return opt
 
 

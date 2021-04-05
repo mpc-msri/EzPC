@@ -75,7 +75,7 @@ class Config:
         return self
 
     def add_output(self, tensor_op):
-        output_name = tensor_op.op.name
+        output_name = tensor_op.name
         outputs = self.config.get("output_tensors")
         if outputs == None:
             self.config["output_tensors"] = [output_name]
@@ -169,13 +169,13 @@ class Program:
             util_dir = os.path.dirname(os.path.abspath(__file__))
             sci_dir = os.path.join(util_dir, "..", "..", "SCI")
             port = 1234
-            client_cmd = "{program} r=2 p={port} < {input} > {output}".format(
+            client_cmd = "{program} r=2 port={port} < {input} > {output}".format(
                 program=self.program_path,
                 port=port,
                 input=inputs_scaled,
                 output=raw_output,
             )
-            server_cmd = "{program} r=1 p={port} < {input} > /dev/null".format(
+            server_cmd = "{program} r=1 port={port} < {input} > /dev/null".format(
                 program=self.program_path,
                 port=port,
                 input=self.model_weight_path,

@@ -131,6 +131,9 @@ class Compiler:
                     argsDict[IR.Int(scale_down, 32)] = "consSF"
                     funcCall = IR.FuncCall(funcName, argsDict)
                     scaledown_cmd_list.append(funcCall)
+                # ArgMax sets scale to -1
+                if output_scale == -1:
+                    continue
                 if output_scale < Util.Config.consSF:
                     assert (
                         False

@@ -1596,6 +1596,11 @@ def void ArgMax3(int32_pl outs1, int32_pl outs2, int32_pl outs3,
 }
 
 (**************************)
+def void Relu1(int32_pl s1, int32_al[s1] inArr, int32_al[s1] outArr, int32_pl sf, bool_pl doTruncation)
+{
+	Relu(s1, inArr, outArr, sf, doTruncation);
+}
+
 def void Relu2(int32_pl s1, int32_pl s2, int32_al[s1][s2] inArr, int32_al[s1][s2] outArr, int32_pl sf, bool_pl doTruncation)
 {
 	int32_pl size = s1*s2;
@@ -1936,4 +1941,223 @@ def void ScaleDown5(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl
         };
 
         ClearMemSecret1(size, reshapedArr);
+}
+
+
+def void Tanh1(int32_pl s1, int32_al[s1] inp, int32_al[s1] out, int32_pl sA, int32_pl sB, int32_pl bwA, int32_pl bwB, int32_pl LUTBITS) {
+  TanhImpl(LUTBITS, s1, sA, sB, bwA, bwB, inp, out);
+}
+
+def void Tanh2(int32_pl s1, int32_pl s2, int32_al[s1][s2] inp, int32_al[s1][s2] out, int32_pl sA, int32_pl sB, int32_pl bwA, int32_pl bwB, int32_pl LUTBITS) {
+  int32_pl size = s1 * s2;
+  int32_al[size] inpCopy;
+  int32_al[size] outCopy;
+  for i=[0:s1] {
+    for j=[0:s2] {
+      inpCopy[i*s1 + j] = inp[i][j];
+    };
+  };
+
+  TanhImpl(LUTBITS, size, sA, sB, bwA, bwB, inpCopy, outCopy);
+
+  for i=[0:s1] {
+    for j=[0:s2] {
+      out[i][j] = outCopy[i*s2 + j]; 
+    };
+  };
+}
+
+def void Tanh3(int32_pl s1, int32_pl s2, int32_pl s3, int32_al[s1][s2][s3] inp, int32_al[s1][s2][s3] out, int32_pl sA, int32_pl sB, int32_pl bwA, int32_pl bwB, int32_pl LUTBITS) {
+  int32_pl size = s1 * s2 * s3;
+  int32_al[size] inpCopy;
+  int32_al[size] outCopy;
+  for i=[0:s1] {
+    for j=[0:s2] {
+      for k=[0:s3] {
+        inpCopy[i*s2*s3 + j*s3 + k] = inp[i][j][k];
+      };
+    };
+  };
+
+  TanhImpl(LUTBITS, size, sA, sB, bwA, bwB, inpCopy, outCopy);
+
+  for i=[0:s1] {
+    for j=[0:s2] {
+      for k=[0:s3] {
+        out[i][j][k] = outCopy[i*s2*s3 + j*s3 + k];
+      };
+    };
+  };
+}
+
+def void Tanh4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_al[s1][s2][s3][s4] inp, int32_al[s1][s2][s3][s4] out, int32_pl sA, int32_pl sB, int32_pl bwA, int32_pl bwB, int32_pl LUTBITS) {
+  int32_pl size = s1 * s2 * s3 * s4;
+  int32_al[size] inpCopy;
+  int32_al[size] outCopy;
+  for i=[0:s1] {
+    for j=[0:s2] {
+      for k=[0:s3] {
+        for l=[0:s4] {
+          inpCopy[i*s2*s3*s4 + j*s3*s4 + k*s4 + l] = inp[i][j][k][l];
+        };
+      };
+    };
+  };
+
+  TanhImpl(LUTBITS, size, sA, sB, bwA, bwB, inpCopy, outCopy);
+
+  for i=[0:s1] {
+    for j=[0:s2] {
+      for k=[0:s3] {
+        for l=[0:s4] {
+          out[i][j][k][l] = inpCopy[i*s2*s3*s4 + j*s3*s4 + k*s4 + l];
+        };
+      };
+    };
+  };
+}
+def void Sigmoid1(int32_pl s1, int32_al[s1] inp, int32_al[s1] out, int32_pl sA, int32_pl sB, int32_pl bwA, int32_pl bwB, int32_pl LUTBITS) {
+  SigmoidImpl(LUTBITS, s1, sA, sB, bwA, bwB, inp, out);
+}
+
+def void Sigmoid2(int32_pl s1, int32_pl s2, int32_al[s1][s2] inp, int32_al[s1][s2] out, int32_pl sA, int32_pl sB, int32_pl bwA, int32_pl bwB, int32_pl LUTBITS) {
+  int32_pl size = s1 * s2;
+  int32_al[size] inpCopy;
+  int32_al[size] outCopy;
+  for i=[0:s1] {
+    for j=[0:s2] {
+      inpCopy[i*s1 + j] = inp[i][j];
+    };
+  };
+
+  SigmoidImpl(LUTBITS, size, sA, sB, bwA, bwB, inpCopy, outCopy);
+
+  for i=[0:s1] {
+    for j=[0:s2] {
+      out[i][j] = outCopy[i*s2 + j]; 
+    };
+  };
+}
+
+def void Sigmoid3(int32_pl s1, int32_pl s2, int32_pl s3, int32_al[s1][s2][s3] inp, int32_al[s1][s2][s3] out, int32_pl sA, int32_pl sB, int32_pl bwA, int32_pl bwB, int32_pl LUTBITS) {
+  int32_pl size = s1 * s2 * s3;
+  int32_al[size] inpCopy;
+  int32_al[size] outCopy;
+  for i=[0:s1] {
+    for j=[0:s2] {
+      for k=[0:s3] {
+        inpCopy[i*s2*s3 + j*s3 + k] = inp[i][j][k];
+      };
+    };
+  };
+
+  SigmoidImpl(LUTBITS, size, sA, sB, bwA, bwB, inpCopy, outCopy);
+
+  for i=[0:s1] {
+    for j=[0:s2] {
+      for k=[0:s3] {
+        out[i][j][k] = outCopy[i*s2*s3 + j*s3 + k];
+      };
+    };
+  };
+}
+
+def void Sigmoid4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_al[s1][s2][s3][s4] inp, int32_al[s1][s2][s3][s4] out, int32_pl sA, int32_pl sB, int32_pl bwA, int32_pl bwB, int32_pl LUTBITS) {
+  int32_pl size = s1 * s2 * s3 * s4;
+  int32_al[size] inpCopy;
+  int32_al[size] outCopy;
+  for i=[0:s1] {
+    for j=[0:s2] {
+      for k=[0:s3] {
+        for l=[0:s4] {
+          inpCopy[i*s2*s3*s4 + j*s3*s4 + k*s4 + l] = inp[i][j][k][l];
+        };
+      };
+    };
+  };
+
+  SigmoidImpl(LUTBITS, size, sA, sB, bwA, bwB, inpCopy, outCopy);
+
+  for i=[0:s1] {
+    for j=[0:s2] {
+      for k=[0:s3] {
+        for l=[0:s4] {
+          out[i][j][k][l] = inpCopy[i*s2*s3*s4 + j*s3*s4 + k*s4 + l];
+        };
+      };
+    };
+  };
+}
+
+def void Sqrt1(int32_pl s1, int32_al[s1] inp, int32_al[s1] out, int32_pl sA, int32_pl sB, int32_pl bwA, int32_pl bwB, bool_pl inverse, int32_pl LUTBITS) {
+  SqrtImpl(LUTBITS, s1, sA, sB, bwA, bwB, inverse, inp, out);
+}
+
+def void Sqrt2(int32_pl s1, int32_pl s2, int32_al[s1][s2] inp, int32_al[s1][s2] out, int32_pl sA, int32_pl sB, int32_pl bwA, int32_pl bwB, bool_pl inverse, int32_pl LUTBITS) {
+  int32_pl size = s1 * s2;
+  int32_al[size] inpCopy;
+  int32_al[size] outCopy;
+  for i=[0:s1] {
+    for j=[0:s2] {
+      inpCopy[i*s1 + j] = inp[i][j];
+    };
+  };
+
+  SqrtImpl(LUTBITS, size, sA, sB, bwA, bwB, inverse, inpCopy, outCopy);
+
+  for i=[0:s1] {
+    for j=[0:s2] {
+      out[i][j] = outCopy[i*s2 + j]; 
+    };
+  };
+}
+
+def void Sqrt3(int32_pl s1, int32_pl s2, int32_pl s3, int32_al[s1][s2][s3] inp, int32_al[s1][s2][s3] out, int32_pl sA, int32_pl sB, int32_pl bwA, int32_pl bwB, bool_pl inverse, int32_pl LUTBITS) {
+  int32_pl size = s1 * s2 * s3;
+  int32_al[size] inpCopy;
+  int32_al[size] outCopy;
+  for i=[0:s1] {
+    for j=[0:s2] {
+      for k=[0:s3] {
+        inpCopy[i*s2*s3 + j*s3 + k] = inp[i][j][k];
+      };
+    };
+  };
+
+  SqrtImpl(LUTBITS, size, sA, sB, bwA, bwB, inverse, inpCopy, outCopy);
+
+  for i=[0:s1] {
+    for j=[0:s2] {
+      for k=[0:s3] {
+        out[i][j][k] = outCopy[i*s2*s3 + j*s3 + k];
+      };
+    };
+  };
+}
+
+def void Sqrt4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_al[s1][s2][s3][s4] inp, int32_al[s1][s2][s3][s4] out, int32_pl sA, int32_pl sB, int32_pl bwA, int32_pl bwB, bool_pl inverse, int32_pl LUTBITS) {
+  int32_pl size = s1 * s2 * s3 * s4;
+  int32_al[size] inpCopy;
+  int32_al[size] outCopy;
+  for i=[0:s1] {
+    for j=[0:s2] {
+      for k=[0:s3] {
+        for l=[0:s4] {
+          inpCopy[i*s2*s3*s4 + j*s3*s4 + k*s4 + l] = inp[i][j][k][l];
+        };
+      };
+    };
+  };
+
+  SqrtImpl(LUTBITS, size, sA, sB, bwA, bwB, inverse, inpCopy, outCopy);
+
+  for i=[0:s1] {
+    for j=[0:s2] {
+      for k=[0:s3] {
+        for l=[0:s4] {
+          out[i][j][k][l] = inpCopy[i*s2*s3*s4 + j*s3*s4 + k*s4 + l];
+        };
+      };
+    };
+  };
 }

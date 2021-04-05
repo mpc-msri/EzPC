@@ -37,7 +37,7 @@ if [[  ! -d "PreTrainedModel/resnet_v2_fp32_savedmodel_NHWC" ]]; then
   tar -xvzf ${filename}
   cd -
 fi
-exit 
+#exit
 echo -e "\n\n"
 echo "--------------------------------------------------------------------------------"
 echo "Running ResNet network and dumping computation graph, inputs and model weights"

@@ -1,4 +1,4 @@
-add_library(SCI-OT INTERFACE)
-target_link_libraries(SCI-OT
+add_library(SCI-OTPrimitive INTERFACE)
+target_link_libraries(SCI-OTPrimitive
     INTERFACE SCI-utils
 )

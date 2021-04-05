@@ -40,7 +40,7 @@ if [[  ! -f "PreTrainedModel/tf-densenet121.ckpt.data-00000-of-00001"  ||  ! -f 
   tar -xvzf ${filename}
   cd -
 fi
-exit
+#exit
 echo -e "\n\n"
 echo "--------------------------------------------------------------------------------"
 echo "Running DenseNet network and dumping computation graph, inputs and model weights"

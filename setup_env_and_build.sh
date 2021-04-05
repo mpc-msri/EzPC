@@ -100,5 +100,5 @@ make -j
 cd $ROOT/SCI
 mkdir -p build
 cd build
-cmake -DBUILD_NETWORKS=ON ../
-make -j
+cmake -DCMAKE_INSTALL_PREFIX=./install ../
+cmake --build . --target install --parallel
