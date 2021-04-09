@@ -2,7 +2,7 @@
 
 **Reference Papers:**  
 
-[SIRNN: A Math Library for Secure RNN Inference](https://github.com/mpc-msri/EzPC/)  
+[SIRNN: A Math Library for Secure RNN Inference](https://eprint.iacr.org/2021/459)  
 Deevashwer Rathee, Mayank Rathee, Rahul Kranti Kiran Goli, Divya Gupta, Rahul Sharma, Nishanth Chandran, Aseem Rastogi  
 *IEEE S&P 2021*
 
