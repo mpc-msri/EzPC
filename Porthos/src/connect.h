@@ -147,7 +147,7 @@ void sendVector(const vector<T> &vec,
 		cout << "porthosSecretType";
 	else 
 		cout << "smallType";
-	cout<<" in time "<<tt<<" seconds at speed = "<<(bytesSent/(1.0*tt*1000000))<<" MBps."<<endl;
+	cout<<" in time "<<tt<<" seconds at speed = "<<(bytesSent/(1.0*tt* (1024 *1024) ))<<" MiBps."<<endl;
 #endif
 }
 
@@ -182,7 +182,7 @@ void sendArr(T* arr,
 		cout << "porthosSecretType";
 	else 
 		cout << "smallType";
-	cout<<" in time "<<tt<<" seconds at speed = "<<(bytesSent/(1.0*tt*1000000))<<" MBps."<<endl;
+	cout<<" in time "<<tt<<" seconds at speed = "<<(bytesSent/(1.0*tt*(1024 *1024)))<<" MiBps."<<endl;
 #endif
 }
 
@@ -216,7 +216,7 @@ void receiveVector(vector<T> &vec,
 		cout << "porthosSecretType";
 	else 
 		cout << "smallType";
-	cout<<" in time "<<tt<<" seconds at speed = "<<(bytesReceived/(1.0*tt*1000000))<<" MBps."<<endl;
+	cout<<" in time "<<tt<<" seconds at speed = "<<(bytesReceived/(1.0*tt*(1024 *1024)))<<" MiBps."<<endl;
 #endif
 
 }
@@ -251,7 +251,7 @@ void receiveArr(T* arr,
 		cout << "porthosSecretType";
 	else 
 		cout << "smallType";
-	cout<<" in time "<<tt<<" seconds at speed = "<<(bytesReceived/(1.0*tt*1000000))<<" MBps."<<endl;
+	cout<<" in time "<<tt<<" seconds at speed = "<<(bytesReceived/(1.0*tt*(1024 *1024)))<<" MiBps."<<endl;
 #endif
 }
 

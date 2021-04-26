@@ -195,7 +195,7 @@ void aggregateCommunication()
 	if (partyNum == PARTY_A)
 	{
 		cout << "------------------------------------" << endl;
-		cout << "Total communication: " << (double)vec[0]/1000000 << "MB (sent) and " << (double)vec[1]/1000000 << "MB (recv)\n";
+		cout << "Total communication: " << (double)vec[0]/(1024 * 1024) << "MiB (sent) and " << (double)vec[1]/(1024 * 1024) << "MiB (recv)\n";
 		cout << "Total #calls: " << vec[2] << " (sends) and " << vec[3] << " (recvs)" << endl;
 		cout << "------------------------------------" << endl;
 	}
