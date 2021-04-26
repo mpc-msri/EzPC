@@ -206,10 +206,15 @@ void funcMaxpoolThread(int tid, int rows, int cols, intType *inpArr,
 void funcMatmulThread(int tid, int N, int s1, int s2, int s3, intType *A,
                       intType *B, intType *C, int partyWithAInAB_mul) {
   assert(tid >= 0);
-  int s2StartIdx = tid * ceil(s2 / double(N));       // Inclusive
-  int s2EndIdx = ((tid + 1) * ceil(s2 / double(N))); // Exclusive
-  s2StartIdx = std::min(s2StartIdx, s2);
-  s2EndIdx = std::min(s2EndIdx, s2);
+  int bucket_size = std::ceil(s2 / (double)N);
+  int s2StartIdx = tid * bucket_size;                   // Inclusive
+  int s2EndIdx = std::min((tid + 1) * bucket_size, s2); // Exclusive
+
+  if(s2StartIdx == s2EndIdx){
+    memset(C, 0, s1 * s3 * sizeof(intType));
+    return;
+  }
+
   intType *APtr = new intType[s1 * (s2EndIdx - s2StartIdx)];
   for (int i = 0; i < s1; i++) {
     for (int j = s2StartIdx; j < s2EndIdx; j++) {
@@ -219,18 +224,22 @@ void funcMatmulThread(int tid, int N, int s1, int s2, int s3, intType *A,
   }
   intType *BPtr = B + s2StartIdx * s3;
   /*
-              Case 1: If Alice has A and Bob has B
-              Then for even threads, Bob (holding B) acts as receiver and Alice
+    Case 1: If Alice has A and Bob has B
+    Then for even threads, Bob (holding B) acts as receiver and Alice
      (holding A) acts as sender For odd threads, Bob (holding B) acts as sender
-     and Alice (holding A) acts as receiver Case 2: If Alice has B and Bob has A
-              Then for even threads, Bob (holding A) acts as receiver and Alice
-     (holding B) as sender For odd threads, Bob (holding A) acts as sender and
-     Alice (holding B) as receiver Note that for even threads, Bob is always the
-     receiver and Alice is always the sender and for odd threads, Bob is always
-     the sender and Alice the receiver This makes sure that the matmul and
-     otinstances (indexed by tid) are always used by with the same
-     sender-receiver pair.
-      */
+     and Alice (holding A) acts as receiver.
+
+    Case 2: If Alice has B and Bob has A
+    Then for even threads, Bob (holding A) acts as receiver and Alice
+    (holding B) as sender For odd threads, Bob (holding A) acts as sender and
+    Alice (holding B) as receiver.
+
+    Note that for even threads, Bob is always the
+    receiver and Alice is always the sender and for odd threads, Bob is always
+    the sender and Alice the receiver This makes sure that the matmul and
+    otinstances (indexed by tid) are always used by with the same
+    sender-receiver pair.
+  */
 
 #ifdef USE_LINEAR_UNIFORM
   assert(s2EndIdx > s2StartIdx);

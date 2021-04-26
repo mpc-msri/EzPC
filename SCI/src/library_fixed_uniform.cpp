@@ -41,10 +41,10 @@ void MatMul2D(int32_t s1, int32_t s2, int32_t s3, const intType *A,
 
   std::cout << "Matmul called s1,s2,s3 = " << s1 << " " << s2 << " " << s3
             << std::endl;
-  int partyWithAInAB_mul =
-      sci::ALICE; // By default, the model is A and server/Alice has it
-                  // So, in the AB mult, party with A = server and party with B
-                  // = client.
+
+  // By default, the model is A and server/Alice has it
+  // So, in the AB mult, party with A = server and party with B = client.
+  int partyWithAInAB_mul = sci::ALICE; 
   int partyWithBInAB_mul = sci::BOB;
   if (!modelIsA) {
     // Model is B
