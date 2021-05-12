@@ -32,7 +32,7 @@ This repository has the following components:
 
 Each one of the above is independent and usable in their own right and more information can be found in the readme of each of the components. But together these combine to make **CrypTFlow** a powerful system for end-to-end secure inference of deep neural networks written in TensorFlow.
 
-With these components in place, we are able to run for the first time secure inference on the [ImageNet dataset]([http://www.image-net.org) with the pre-trained models of the following deep neural nets: ResNet-50, DenseNet-121 and SqueezeNet for ImageNet.
+With these components in place, we are able to run for the first time secure inference on the [ImageNet dataset]([http://www.image-net.org) with the pre-trained models of the following deep neural nets: ResNet-50, DenseNet-121 and SqueezeNet for ImageNet. For an end-to-end tutorial on running models with CrypTFlow please refer to this [blog post](https://pratik-bhatu.medium.com/privacy-preserving-machine-learning-for-healthcare-using-cryptflow-cc6c379fbab7).
 
 ## Setup
 For setup instructions, please refer to each of the components' readme.
