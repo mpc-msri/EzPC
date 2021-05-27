@@ -37,6 +37,8 @@ class OnnxNode(object):
     more convenient to work with from Python.
     """
 
+    opset_version = -1
+
     def __init__(self, node):
         self.name = str(node.name)
         self.op_type = str(node.op_type)
@@ -265,7 +267,7 @@ class ONNXNodesAST:
             if hasattr(node, "data_type")
             else node.type.tensor_type.elem_type
         )
-        return AST.Input(dims, onnx2seedot(data_type), inputByParty=party)
+        return AST.Input(dims, onnx2seedot(data_type), inputByParty=AST.Party(party))
 
     def Cast(
         node,
@@ -306,17 +308,39 @@ class ONNXNodesAST:
         node = OnnxNode(node)
         if DEBUG:
             print(node)
+
+        assert node.attrs["mode"] == "constant"
+
         inputsRef = node.inputs
-        # Skip constant_val input (last input)
-        inpLen = len(inputsRef) - 1
-        assert inpLen == 2
-        inputs = [
-            AST.ID(node_name_to_out_var_dict[inputsRef[x]]) for x in range(0, inpLen)
-        ]
-        mode = node.attrs["mode"]
-        assert mode == "constant"
+        if node.opset_version >= 11:
+            # input: data, pads, constant_value
+            # attrs: mode
+
+            # Skip constant_val input (last input)
+            inpLen = len(inputsRef) - 1
+            assert inpLen == 2
+            inputs = [
+                AST.ID(node_name_to_out_var_dict[inputsRef[x]])
+                for x in range(0, inpLen)
+            ]
+        else:
+            # input: data
+            # attrs: mode, pads, value
+            assert node.attrs["value"] == 0
+            assert len(inputsRef) == 1
+            data_input = AST.ID(node_name_to_out_var_dict[inputsRef[0]])
+            pads = node.attrs["pads"]
+            print(pads, type(pads))
+            pad_input = AST.Decl(
+                [len(pads)],
+                None,
+                [AST.Int(i, bitLen=32, isSecret=False) for i in pads],
+                isSecret=False,
+            )
+            inputs = [data_input, pad_input]
+
         seedot_output_ast = AST.UninterpFuncCall(
-            list(value_info[node.outputs[0]][1]), "PadONNX", inputs
+            list(value_info[node.outputs[0]][1]), "PadONNX", inputs, outputDiffInpDims=1
         )
 
         output_name = get_new_var_name(out_var_count)
@@ -1006,6 +1030,24 @@ class ONNXNodesAST:
         )
 
     def AvgPool(
+        node,
+        value_info,
+        node_name_to_out_var_dict,
+        innermost_let_ast_node,
+        out_var_count,
+        mtdAST,
+    ):
+        return ONNXNodesAST.helper_processPool(
+            node,
+            value_info,
+            node_name_to_out_var_dict,
+            innermost_let_ast_node,
+            out_var_count,
+            mtdAST,
+            "AVGPOOL",
+        )
+
+    def AveragePool(
         node,
         value_info,
         node_name_to_out_var_dict,

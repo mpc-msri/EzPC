@@ -31,7 +31,7 @@ import _pickle as pickle
 import onnx
 import onnx.shape_inference
 import AST.AST as AST
-from ONNXNodesAST import ONNXNodesAST
+from ONNXNodesAST import ONNXNodesAST, OnnxNode
 from onnx.helper import make_tensor_value_info
 from onnx import TensorProto
 from AST.PrintAST import PrintAST
@@ -59,6 +59,7 @@ def main():
 
     # load the model and extract the graph
     model = onnx.load(file_path)
+    OnnxNode.opset_version = model.opset_import[0].version
     graph_def = model.graph
 
     print(model.graph.value_info)
@@ -132,12 +133,61 @@ def main():
         value_info,
     )
 
+    output_tensors = [i.name for i in graph_def.output]
+    addOutputs(
+        output_tensors,
+        innermost_let_ast_node,
+        node_name_to_out_var_dict,
+        mtdAST,
+        value_info,
+    )
+
     PrintAST().visit(program)
 
     common.write_debug_info(node_name_to_out_var_dict)
 
     with open("debug/" + model_name + "/" + model_name + ".pkl", "wb") as f:
         pickle.dump(program, f)
+
+
+def addOutputs(
+    output_tensors,
+    innermost_let_ast_node,
+    node_name_to_out_var_dict,
+    mtdAST,
+    value_info,
+):
+    lastLetASTNode = innermost_let_ast_node
+    while True:
+        if type(lastLetASTNode.expr) is AST.Let:
+            lastLetASTNode = lastLetASTNode.expr
+        else:
+            break
+    assert lastLetASTNode is not None
+    if output_tensors is None or len(output_tensors) == 0:
+        assert False, "Onnx model has no outputs specified"
+    else:
+        outVarCt = 0
+        outVarPrefix = "O"
+        for i in range(0, len(output_tensors)):  # name, decl, expr
+            t_name = output_tensors[i]
+            if i == len(output_tensors) - 1:
+                output_name = AST.ID(node_name_to_out_var_dict[t_name])
+                output = AST.Output(output_name, AST.Party.CLIENT)
+                newNode = output
+            else:
+                output_name = AST.ID(node_name_to_out_var_dict[t_name])
+                output = AST.Output(output_name, AST.Party.CLIENT)
+                let_name_id = AST.ID(outVarPrefix + str(outVarCt))
+                newNode = AST.Let(let_name_id, output, AST.ASTNode())
+                mtdForCurAST = {
+                    AST.ASTNode.mtdKeyTFOpName: "Output",
+                    AST.ASTNode.mtdKeyTFNodeName: t_name,
+                }
+                mtdAST.visit(newNode, mtdForCurAST)
+            lastLetASTNode.expr = newNode
+            lastLetASTNode = newNode
+            outVarCt += 1
 
 
 def process_input_variables(
