@@ -1,4 +1,4 @@
-# CrypTFlow: An End-to-end System for Secure TensorFlow Inference [![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/mpc-msri/EzPC/issues) [![HitCount](http://hits.dwyl.com/mpc-msri/EzPC.svg)](http://hits.dwyl.com/mpc-msri/EzPC)
+# CrypTFlow: An End-to-end System for Secure TensorFlow Inference [![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/mpc-msri/EzPC/issues)
 
 **Reference Papers:**  
 
