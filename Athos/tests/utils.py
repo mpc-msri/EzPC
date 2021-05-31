@@ -52,7 +52,7 @@ class Config:
         elif mode == "2PC_OT":
             self.config["target"] = "SCI"
             self.config["bitlength"] = 41
-            self.config["scale"] = 12
+            self.config["scale"] = 15
             self.config["backend"] = "OT"
 
         elif mode == "2PC_HE":

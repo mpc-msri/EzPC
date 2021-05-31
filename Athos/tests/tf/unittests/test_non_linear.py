@@ -82,7 +82,7 @@ def test_non_linear(test_dir, backend, tfOp, a_shape, dtype):
     return
 
 
-@pytest.mark.skip(reason="[softmax] Haven't made non-linear functionalities public")
+@pytest.mark.skip(reason="[softmax] Haven't implemented softmax")
 @pytest.mark.parametrize("a_shape, axis", [([2, 3], 1), ([1], 0)])
 @pytest.mark.parametrize("dtype", [np.single])
 def test_softmax(test_dir, backend, a_shape, axis, dtype):
