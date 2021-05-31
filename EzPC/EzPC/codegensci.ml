@@ -117,11 +117,11 @@ let o_sbinop (l:secret_label) (op:binop) (c1:comp) (c2:comp) :comp =
 let o_pconditional (c1:comp) (c2:comp) (c3:comp) :comp =
   seq c1 (seq (o_str " ? ") (seq c2 (seq (o_str " : ") c3)))
 
-let o_subsumption (src:label) (tgt:secret_label) (t:typ) (arg:comp) :comp =
+let o_subsumption (src:label) (tgt:secret_label) (e:expr) (t:typ) (arg:comp) :comp =
   match src with
     | Public -> o_app (o_str "funcSSCons") [arg]
     | Secret Arithmetic
-    | Secret Boolean -> failwith "Codegen: Subsumption from secrets is not allowed for this backend."
+    | Secret Boolean -> failwith ("Codegen: Subsumption from secrets is not allowed for this backend. Expr: " ^ expr_to_string e ^ " line:" ^ (Global.Metadata.sprint_metadata "" e.metadata))
 
 let o_basetyp (t:base_type) :comp =
   let uint32_basetype_str :string = if Config.get_sci_backend () = OT then "uint32_t" else "uint64_t" in
@@ -213,7 +213,7 @@ and o_expr (g:gamma) (e:expr) :comp =
 
   | App (f, args) -> o_app (o_str f) (List.map o_expr args)
 
-  | Subsumption (e, l1, Secret l2) -> o_subsumption l1 l2 (typeof_expr g e |> get_opt) (o_expr e)
+  | Subsumption (e, l1, Secret l2) -> o_subsumption l1 l2 e (typeof_expr g e |> get_opt) (o_expr e)
 
   | _ -> failwith "o_expr: impossible branch"
 
