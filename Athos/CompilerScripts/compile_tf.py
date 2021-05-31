@@ -114,6 +114,7 @@ def infer_input_info(graph):
 
 def get_unsupported_ops(graph):
     ops = set([i.type for i in graph.get_operations()])
+    ops.discard("Assign")
     unsupported_ops = []
     for op in ops:
         if not hasattr(TFNodesAST, op):
@@ -150,15 +151,6 @@ def compile(model_fname, input_t_info, output_t_names, scaling_factor, save_weig
     output_op_names = get_op_names_from_tensors(output_t_names)
     assert tensors_exist(graph, output_op_names)
 
-    unsupported_ops = get_unsupported_ops(graph)
-    if len(unsupported_ops) != 0:
-        msg = (
-            "Exiting compilation...\nCurrently we do not support the following ops: \n"
-        )
-        for i in unsupported_ops:
-            msg = msg + "    " + i + "\n"
-        sys.exit(msg)
-
     if input_t_info == {}:
         input_t_info = infer_input_info(graph)
     else:
@@ -168,6 +160,15 @@ def compile(model_fname, input_t_info, output_t_names, scaling_factor, save_weig
     graph_def = grappler.optimize(graph, input_t_names, output_op_names)
     graph_def = grappler.convert_consts_to_var(graph_def)
     graph = get_graph_from(graph_def)
+
+    unsupported_ops = get_unsupported_ops(graph)
+    if len(unsupported_ops) != 0:
+        msg = (
+            "Exiting compilation...\nCurrently we do not support the following ops: \n"
+        )
+        for i in unsupported_ops:
+            msg = msg + "    " + i + "\n"
+        sys.exit(msg)
 
     feed_dict = {}
     for name, shape in input_t_info.items():
