@@ -8,11 +8,13 @@ add_library(SCI-utils INTERFACE)
 
 target_compile_options(SCI-utils
     INTERFACE
-    "-pthread;-maes;-msse4.1;-mavx;-mavx2;-mrdseed;-faligned-new;-std=c++17;-O3")
-#     "-pthread;-Wall;-maes;-msse4.1;-mavx;-mavx2;-mrdseed;-faligned-new;-std=c++17;-w;-g;-ggdb;-O0")
+    "-pthread;-maes;-msse4.1;-mavx;-mavx2;-faligned-new;-std=c++17;-O3")
+#     "-pthread;-Wall;-maes;-msse4.1;-mavx;-mavx2;-faligned-new;-std=c++17;-w;-g;-ggdb;-O0")
 
 if(USE_RANDOM_DEVICE)
     target_compile_definitions(SCI-utils INTERFACE EMP_USE_RANDOM_DEVICE=1)
+else(USE_RANDOM_DEVICE)
+    target_compile_options(SCI-utils INTERFACE "-mrdseed")
 endif(USE_RANDOM_DEVICE)
 
 target_include_directories(SCI-utils
