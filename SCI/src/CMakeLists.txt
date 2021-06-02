@@ -1,6 +1,7 @@
+set(CMAKE_FIND_DEBUG_MODE 1)
 include_directories(${CMAKE_CURRENT_LIST_DIR})
 
-find_package(Eigen3 3.3 NO_MODULE QUIET)
+find_package(Eigen3 3.3 QUIET NO_MODULE PATHS "${PROJECT_SOURCE_DIR}/extern/eigen/build" NO_DEFAULT_PATH)
 if (NOT Eigen3_FOUND)
     message(STATUS "Eigen 3.3 was not found: clone and install Eigen3 locally")
     if (NOT EXISTS "${PROJECT_SOURCE_DIR}/extern/eigen/CMakeLists.txt")
@@ -11,13 +12,10 @@ if (NOT Eigen3_FOUND)
     endif ()
     execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory build
         WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/extern/eigen/")
-    execute_process(COMMAND ${CMAKE_COMMAND} -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} ..
+    execute_process(COMMAND ${CMAKE_COMMAND} -DCMAKE_INSTALL_PREFIX=${PROJECT_SOURCE_DIR}/build ..
         WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/extern/eigen/build")
-    execute_process(COMMAND ${CMAKE_COMMAND} --build .. --target install
-        WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/extern/eigen/build")
-    message(STATUS "${PROJECT_SOURCE_DIR}")
-    find_package(Eigen3 3.3 REQUIRED NO_MODULE PATHS "${CMAKE_INSTALL_PREFIX}")
-endif ()
+    find_package(Eigen3 3.3 REQUIRED NO_MODULE PATHS "${PROJECT_SOURCE_DIR}/extern/eigen/build" NO_DEFAULT_PATH)
+endif()
 
 add_subdirectory(utils)
 add_subdirectory(OT)
@@ -31,7 +29,6 @@ add_subdirectory(Math)
 add_library(SCI-common INTERFACE)
 
 find_package(Threads REQUIRED)
-find_package(Eigen3 REQUIRED)
 
 target_link_libraries(SCI-common
     INTERFACE

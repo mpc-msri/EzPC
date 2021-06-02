@@ -31,8 +31,8 @@ extern int32_t bitlength;
 extern int32_t num_threads;
 
 const uint64_t POLY_MOD_DEGREE = 8192;
-const uint64_t POLY_MOD_DEGREE_LARGE = 32768;
-const int32_t SMUDGING_BITLEN = 108 - bitlength;
+const uint64_t POLY_MOD_DEGREE_LARGE = 65536;
+const int32_t SMUDGING_BITLEN = 100 - bitlength;
 
 /* Helper function for rounding to the next power of 2
  * Credit:
