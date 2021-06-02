@@ -514,7 +514,11 @@ void Conv2DGroupWrapper(signedIntType N, signedIntType H, signedIntType W,
 #endif
 
 #ifdef SCI_HE
-  assert(false && "Grouped conv not implemented in HE");
+  if (G == 1)
+    Conv2DWrapper(N, H, W, CI, FH, FW, CO, zPadHLeft, zPadHRight, zPadWLeft,
+                  zPadWRight, strideH, strideW, inputArr, filterArr, outArr);
+  else
+    assert(false && "Grouped conv not implemented in HE");
 #endif
 
 #ifdef LOG_LAYERWISE
