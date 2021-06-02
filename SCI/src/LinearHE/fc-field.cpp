@@ -275,7 +275,11 @@ void FCField::matrix_multiplication(int32_t num_rows, int32_t common_dim,
       matrix[i] = new uint64_t[common_dim];
       for (int j = 0; j < common_dim; j++) {
         matrix_mod_p[i][j] = neg_mod((int64_t)A[i][j], (int64_t)prime_mod);
-        matrix[i][j] = A[i][j];
+        int64_t val = (int64_t)A[i][j];
+        if (val > int64_t(prime_mod/2)) {
+          val = val - prime_mod;
+        }
+        matrix[i][j] = val;
       }
     }
     if (verbose)

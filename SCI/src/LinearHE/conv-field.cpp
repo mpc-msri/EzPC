@@ -799,8 +799,11 @@ void ConvField::convolution(int32_t N, int32_t H, int32_t W, int32_t CI,
       for (int inp_c = 0; inp_c < CI; inp_c++) {
         Channel tmp_chan(FH, FW);
         for (int idx = 0; idx < FH * FW; idx++) {
-          tmp_chan(idx / FW, idx % FW) =
-              (int64_t)filterArr[idx / FW][idx % FW][inp_c][out_c];
+          int64_t val = (int64_t)filterArr[idx / FW][idx % FW][inp_c][out_c];
+          if (val > int64_t(prime_mod/2)) {
+            val = val - prime_mod;
+          }
+          tmp_chan(idx / FW, idx % FW) = val;
         }
         tmp_img[inp_c] = tmp_chan;
       }

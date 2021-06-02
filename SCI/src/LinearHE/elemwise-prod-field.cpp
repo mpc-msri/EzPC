@@ -153,7 +153,15 @@ void ElemWiseProdField::elemwise_product(int32_t size, vector<uint64_t> &inArr,
     }
     send_encrypted_vector(io, enc_result);
 
-    auto result = ideal_functionality(inArr, multArr);
+    vector<uint64_t> multArr_lifted(size, 0);
+    for (int i = 0; i < size; i++) {
+        int64_t val = (int64_t)multArr[i];
+        if (val > int64_t(prime_mod/2)) {
+          val = val - prime_mod;
+        }
+        multArr_lifted[i] = val;
+    }
+    auto result = ideal_functionality(inArr, multArr_lifted);
 
     for (int i = 0; i < num_ct; i++) {
       int offset = i * slot_count;
@@ -164,7 +172,7 @@ void ElemWiseProdField::elemwise_product(int32_t size, vector<uint64_t> &inArr,
       }
     }
     if (verify_output)
-      verify(inArr, &multArr, outputArr);
+      verify(inArr, &multArr_lifted, outputArr);
   }
 }
 
