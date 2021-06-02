@@ -26,6 +26,14 @@ SOFTWARE.
 
 #define KKOT_TYPES 8
 
+/*
+ * DISCLAIMER:
+ * OTPack avoids computing PRG keys for each OT instance by reusing the keys generated
+ * (through base OTs) for another OT instance. Ideally, the PRGs within OT instances,
+ * using the same keys, should use mutually exclusive counters for security. However,
+ * the current implementation does not support this.
+ */
+
 namespace sci {
 template <typename T> class OTPack {
 public:
