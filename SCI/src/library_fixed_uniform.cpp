@@ -1385,16 +1385,10 @@ void StartComputation() {
         new MatMulUniform<sci::NetIO, intType, sci::IKNP<sci::NetIO>>(
             party, bitlength, ioArr[i], otInstanceArr[i], nullptr);
 #endif
-    if (i == 0) {
-      otpackArr[i] = new sci::OTPack<sci::NetIO>(ioArr[i], party);
-    } else if (i == 1) {
+    if (i & 1) {
       otpackArr[i] = new sci::OTPack<sci::NetIO>(ioArr[i], 3 - party);
-    } else if (i & 1) {
-      otpackArr[i] = new sci::OTPack<sci::NetIO>(ioArr[i], 3 - party, false);
-      otpackArr[i]->copy(otpackArr[1]);
     } else {
-      otpackArr[i] = new sci::OTPack<sci::NetIO>(ioArr[i], party, false);
-      otpackArr[i]->copy(otpackArr[0]);
+      otpackArr[i] = new sci::OTPack<sci::NetIO>(ioArr[i], party);
     }
   }
 

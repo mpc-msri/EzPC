@@ -76,7 +76,7 @@ public:
       int reuse = 1;
       setsockopt(mysocket, SOL_SOCKET, SO_REUSEADDR, (const char *)&reuse,
                  sizeof(reuse));
-      if (bind(mysocket, (struct sockaddr *)&serv, sizeof(struct sockaddr)) <
+      if (::bind(mysocket, (struct sockaddr *)&serv, sizeof(struct sockaddr)) <
           0) {
         perror("error: bind");
         exit(1);

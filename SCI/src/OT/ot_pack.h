@@ -26,14 +26,6 @@ SOFTWARE.
 
 #define KKOT_TYPES 8
 
-/*
- * DISCLAIMER:
- * OTPack avoids computing PRG keys for each OT instance by reusing the keys generated
- * (through base OTs) for another OT instance. Ideally, the PRGs within OT instances,
- * using the same keys, should use mutually exclusive counters for security. However,
- * the current implementation does not support this.
- */
-
 namespace sci {
 template <typename T> class OTPack {
 public:
@@ -79,7 +71,7 @@ public:
       iknp_straight->setup_send();
       iknp_reversed->setup_recv();
       for (int i = 1; i < KKOT_TYPES; i++) {
-        kkot[i]->setup_send(kkot[0]->k0, kkot[0]->s);
+        kkot[i]->setup_send();
       }
       break;
     case 2:
@@ -87,38 +79,19 @@ public:
       iknp_straight->setup_recv();
       iknp_reversed->setup_send();
       for (int i = 1; i < KKOT_TYPES; i++) {
-        kkot[i]->setup_recv(kkot[0]->k0, kkot[0]->k1);
+        kkot[i]->setup_recv();
       }
       break;
     }
   }
 
-  OTPack<T> *operator=(OTPack<T> *copy_from) {
-    assert(this->do_setup == false && copy_from->do_setup == true);
-    OTPack<T> *temp = new OTPack<T>(this->io, copy_from->party, false);
-    SplitKKOT<T> *kkot_base = copy_from->kkot[0];
-    SplitIKNP<T> *iknp_s_base = copy_from->iknp_straight;
-    SplitIKNP<T> *iknp_r_base = copy_from->iknp_reversed;
-
-    switch (party) {
-    case 1:
-      for (int i = 0; i < KKOT_TYPES; i++) {
-        temp->kkot[i]->setup_send(kkot_base->k0, kkot_base->s);
-      }
-      temp->iknp_straight->setup_send(iknp_s_base->k0, iknp_s_base->s);
-      temp->iknp_reversed->setup_recv(iknp_r_base->k0, iknp_r_base->k1);
-      break;
-    case 2:
-      for (int i = 0; i < KKOT_TYPES; i++) {
-        temp->kkot[i]->setup_recv(kkot_base->k0, kkot_base->k1);
-      }
-      temp->iknp_straight->setup_recv(iknp_s_base->k0, iknp_s_base->k1);
-      temp->iknp_reversed->setup_send(iknp_s_base->k0, iknp_s_base->s);
-      break;
-    }
-    temp->do_setup = true;
-    return temp;
-  }
+/*
+ * DISCLAIMER:
+ * OTPack copy method avoids computing setup keys for each OT instance by reusing the keys
+ * generated (through base OTs) for another OT instance. Ideally, the PRGs within OT
+ * instances, using the same keys, should use mutually exclusive counters for security.
+ * However, the current implementation does not support this.
+ */
 
   void copy(OTPack<T> *copy_from) {
     assert(this->do_setup == false && copy_from->do_setup == true);

@@ -32,16 +32,10 @@ void initialize() {
   for (int i = 0; i < num_threads; i++) {
     ioArr[i] =
         new sci::NetIO(party == ALICE ? nullptr : address.c_str(), port + i);
-    if (i == 0) {
-      otpackArr[i] = new OTPack<NetIO>(ioArr[i], party);
-    } else if (i == 1) {
+    if (i & 1) {
       otpackArr[i] = new OTPack<NetIO>(ioArr[i], 3 - party);
-    } else if (i & 1) {
-      otpackArr[i] = new OTPack<NetIO>(ioArr[i], 3 - party, false);
-      otpackArr[i]->copy(otpackArr[1]);
     } else {
-      otpackArr[i] = new OTPack<NetIO>(ioArr[i], party, false);
-      otpackArr[i]->copy(otpackArr[0]);
+      otpackArr[i] = new OTPack<NetIO>(ioArr[i], party);
     }
   }
   io = ioArr[0];
