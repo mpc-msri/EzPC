@@ -330,7 +330,6 @@ class ONNXNodesAST:
             assert len(inputsRef) == 1
             data_input = AST.ID(node_name_to_out_var_dict[inputsRef[0]])
             pads = node.attrs["pads"]
-            print(pads, type(pads))
             pad_input = AST.Decl(
                 [len(pads)],
                 None,
