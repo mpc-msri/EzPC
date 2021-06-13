@@ -251,23 +251,10 @@ def update_program_with_new_node(
 
 
 class ONNXNodesAST:
-
-    # value_info: dictionary of name -> (type, dimension tuple)
-    def Input(node, value_info, node_name_to_out_var_dict, party=0):
-        if DEBUG:
-            print(node.outputs[0])
-        # There are two types of inputs
-        dims = list(
-            node.dims
-            if hasattr(node, "dims")
-            else ([val.dim_value for val in node.type.tensor_type.shape.dim])
+    def Input(node, value_info, node_name_to_out_var_dict):
+        return AST.Input(
+            node.shape, onnx2seedot(node.data_type), inputByParty=node.party
         )
-        data_type = (
-            node.data_type
-            if hasattr(node, "data_type")
-            else node.type.tensor_type.elem_type
-        )
-        return AST.Input(dims, onnx2seedot(data_type), inputByParty=AST.Party(party))
 
     def Cast(
         node,

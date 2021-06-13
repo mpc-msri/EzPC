@@ -23,6 +23,7 @@ import os, sys
 
 # Add SeeDot directory to path
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "SeeDot"))
+sys.path.append(os.path.dirname(__file__))
 
 # For this warning: https://stackoverflow.com/questions/47068709/your-cpu-supports-instructions-that-this-tensorflow-binary-was-not-compiled-to-u
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
@@ -34,13 +35,15 @@ from onnx import numpy_helper
 from onnxsim import simplify
 
 import AST.AST as AST
-from .ONNXNodesAST import ONNXNodesAST, OnnxNode
+
+from ONNXNodesAST import ONNXNodesAST, OnnxNode
 from onnx.helper import make_tensor_value_info
-from onnx import TensorProto
+from onnx import TensorProto, ValueInfoProto
 from AST.PrintAST import PrintAST
 from AST.MtdAST import MtdAST
 import numpy
-from . import common
+
+import common
 import math
 
 import numpy as np
@@ -83,8 +86,6 @@ def optimise(model):
 def inferShapes(model):
     if DEBUG:
         print(model.graph.value_info)
-
-    # TODO: Iterate over all inputs and outputs and add them here.
 
     for input in model.graph.input:
         model.graph.value_info.append(
@@ -256,6 +257,9 @@ def dump_model_weights(model, scaling_factor, model_dir, model_name):
 # Optionaly dumps model weights as fixedpt in specified scaling factor
 def compile(model_fname, input_t_info, output_t_names, scaling_factor, save_weights):
     sys.setrecursionlimit(10000)
+    if not model_fname.endswith(".onnx"):
+        sys.exit("Please supply a valid ONNX model (.onnx extension)")
+
     model_name = os.path.basename(model_fname)[:-5]
     model_abs_dir = os.path.dirname(os.path.abspath(model_fname))
     print("Loading onnx graph: ", model_fname)
@@ -274,11 +278,9 @@ def compile(model_fname, input_t_info, output_t_names, scaling_factor, save_weig
         print(model.graph.value_info)
         print("Done ******************")
 
-    # value_info: {name : (type, dimension tuple) }
+    # value_info: { name : (type, dimension tuple) }
     value_info = get_node_metadata(model)
 
-    # Assumption:
-    # Topological order of input nodes is same as that in graph.initializer
     generate_seedot_ast(model, value_info, model_abs_dir)
 
     if save_weights:
@@ -387,6 +389,7 @@ def main():
 
     with open("debug/" + model_name + "/" + model_name + ".pkl", "wb") as f:
         pickle.dump(program, f)
+        print("Dumped SeeDot AST")
 
 
 def addOutputs(
@@ -438,32 +441,30 @@ def process_input_variables(
     graph_def,
     value_info,
 ):
-    node = graph_def.input[0]
-    curAst = ONNXNodesAST.Input(node, value_info, node_name_to_out_var_dict, 1)
-    mtdForCurAST = {
-        AST.ASTNode.mtdKeyTFOpName: "Input",
-        AST.ASTNode.mtdKeyTFNodeName: node.name,
-    }
-    cur_out_var_ast_node = AST.ID(node.name)
+    class Input:
+        def __init__(self, node):
+            self.name = node.name
+            if isinstance(node, ValueInfoProto):  # input
+                self.shape = list(common.proto_val_to_dimension_tuple(node))
+                self.data_type = node.type.tensor_type.elem_type
+                self.party = AST.Party.CLIENT
+            elif isinstance(node, TensorProto):  # initializers
+                self.shape = list(node.dims)
+                self.data_type = node.data_type
+                self.party = AST.Party.SERVER
+            else:
+                assert False, "Unexpected input type"
 
-    if program:
-        assert type(innermost_let_ast_node) is AST.Let
-        newNode = AST.Let(cur_out_var_ast_node, curAst, cur_out_var_ast_node)
-        mtdAST.visit(newNode, mtdForCurAST)
-        # Updating the innermost Let AST node and the expression for previous Let Node
-        innermost_let_ast_node.expr = newNode
-        innermost_let_ast_node = newNode
-    else:
-        innermost_let_ast_node = AST.Let(
-            cur_out_var_ast_node, curAst, cur_out_var_ast_node
-        )
-        mtdAST.visit(innermost_let_ast_node, mtdForCurAST)
-        innermost_let_ast_node.depth = 0
-        program = innermost_let_ast_node
+        def __str__(self):
+            return "Name: {n}, Shape: {s}, DataType: {dt}, Party: {p}".format(
+                n=self.name, s=self.shape, dt=self.data_type, p=self.party
+            )
 
-    node_name_to_out_var_dict[node.name] = node.name
+    input_nodes = [Input(i) for i in graph_def.input] + [
+        Input(i) for i in graph_def.initializer
+    ]
 
-    for node in graph_def.initializer:
+    for node in input_nodes:
         if DEBUG:
             print("Node information")
             print(node)
