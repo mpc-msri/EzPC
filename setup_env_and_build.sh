@@ -81,6 +81,7 @@ python3.7 -m venv mpc_venv
 source mpc_venv/bin/activate
 pip install -U pip
 pip install tensorflow==1.15.0 keras==2.3.0 scipy==1.1.0 matplotlib
+pip install onnx onnx-simplifier onnxruntime
 pip install pytest pytest-cov 
 
 # Now we build all the components.

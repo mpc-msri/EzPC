@@ -31,6 +31,8 @@ import _pickle as pickle
 import onnx
 import onnx.shape_inference
 from onnx import numpy_helper
+from onnxsim import simplify
+
 import AST.AST as AST
 from .ONNXNodesAST import ONNXNodesAST, OnnxNode
 from onnx.helper import make_tensor_value_info
@@ -49,27 +51,58 @@ DEBUG = False
 out_var_prefix = "J"
 
 
-def doShapeInference(model):
+def get_unsupported_ops(model):
+    ops = set([i.op_type for i in model.graph.node])
+    # ops.discard("Assign")
+    unsupported_ops = []
+    for op in ops:
+        if not hasattr(ONNXNodesAST, op):
+            unsupported_ops.append(op)
+    return unsupported_ops
+
+
+def exitIfUnsupportedOps(model):
+    unsupported_ops = get_unsupported_ops(model)
+    if len(unsupported_ops) != 0:
+        msg = (
+            "Exiting compilation...\nCurrently we do not support the following ops: \n"
+        )
+        for i in unsupported_ops:
+            msg = msg + "    " + i + "\n"
+        sys.exit(msg)
+
+
+# This does constant folding and eliminates nodes like Shape.
+# Also annotates each node with shape information.
+def optimise(model):
+    optimized_model, check = simplify(model)
+    assert check, "Optimised ONNX model failed validation"
+    return optimized_model
+
+
+def inferShapes(model):
     if DEBUG:
         print(model.graph.value_info)
 
     # TODO: Iterate over all inputs and outputs and add them here.
 
-    # Before shape inference (model.graph.value_info) should have shapes of all the variables and constants
-    model.graph.value_info.append(
-        make_tensor_value_info(
-            model.graph.input[0].name,
-            TensorProto.FLOAT,
-            common.proto_val_to_dimension_tuple(model.graph.input[0]),
+    for input in model.graph.input:
+        model.graph.value_info.append(
+            make_tensor_value_info(
+                input.name,
+                common.get_data_type(input),
+                common.proto_val_to_dimension_tuple(input),
+            )
         )
-    )
-    model.graph.value_info.append(
-        make_tensor_value_info(
-            model.graph.output[0].name,
-            TensorProto.FLOAT,
-            common.proto_val_to_dimension_tuple(model.graph.output[0]),
+
+    for output in model.graph.output:
+        model.graph.value_info.append(
+            make_tensor_value_info(
+                output.name,
+                common.get_data_type(output),
+                common.proto_val_to_dimension_tuple(output),
+            )
         )
-    )
 
     if DEBUG:
         print(model.graph.value_info)
@@ -77,7 +110,7 @@ def doShapeInference(model):
     for init_vals in model.graph.initializer:
         model.graph.value_info.append(
             make_tensor_value_info(
-                init_vals.name, TensorProto.FLOAT, tuple(init_vals.dims)
+                init_vals.name, init_vals.data_type, tuple(init_vals.dims)
             )
         )
 
@@ -225,29 +258,31 @@ def compile(model_fname, input_t_info, output_t_names, scaling_factor, save_weig
     sys.setrecursionlimit(10000)
     model_name = os.path.basename(model_fname)[:-5]
     model_abs_dir = os.path.dirname(os.path.abspath(model_fname))
-    print("Loading onnx graph ", model_fname)
+    print("Loading onnx graph: ", model_fname)
     model = onnx.load(model_fname)
     OnnxNode.opset_version = model.opset_import[0].version
     graph_def = model.graph
 
-    # Currently we ignore
-    inferred_model = doShapeInference(model)
+    model = optimise(model)
+    model = inferShapes(model)
+
+    # Check after optimisation of model removes nodes like Shape
+    exitIfUnsupportedOps(model)
+
     if DEBUG:
         print("Printing shape ******************")
-        print(inferred_model.graph.value_info)
+        print(model.graph.value_info)
         print("Done ******************")
 
     # value_info: {name : (type, dimension tuple) }
-    value_info = get_node_metadata(inferred_model)
+    value_info = get_node_metadata(model)
 
     # Assumption:
     # Topological order of input nodes is same as that in graph.initializer
     generate_seedot_ast(model, value_info, model_abs_dir)
 
     if save_weights:
-        return dump_model_weights(
-            inferred_model, scaling_factor, model_abs_dir, model_name
-        )
+        return dump_model_weights(model, scaling_factor, model_abs_dir, model_name)
     return
 
 
