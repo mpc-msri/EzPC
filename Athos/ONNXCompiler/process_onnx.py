@@ -38,7 +38,7 @@ import AST.AST as AST
 
 from ONNXNodesAST import ONNXNodesAST, OnnxNode
 from onnx.helper import make_tensor_value_info
-from onnx import TensorProto, ValueInfoProto
+from onnx import ValueInfoProto, ModelProto, TensorProto, TensorShapeProto, helper
 from AST.PrintAST import PrintAST
 from AST.MtdAST import MtdAST
 import numpy
@@ -182,6 +182,8 @@ def generate_seedot_ast(model, value_info, model_dir):
 
     with open(os.path.join(model_dir, "astOutput.pkl"), "wb") as f:
         pickle.dump(program, f)
+        print("Dumped SeeDot AST")
+        PrintAST().visit(program)
 
 
 def preprocess_batch_normalization(graph_def, model_name_to_val_dict):
@@ -252,10 +254,58 @@ def dump_model_weights(model, scaling_factor, model_dir, model_name):
     return weights_path
 
 
+def strip_weights(model):
+    graph = model.graph
+
+    # Outputs remain same
+    new_outputs = list(graph.output)
+    # Nodes remain same
+    new_nodes = list(graph.node)
+
+    # We replace all initializers with input nodes.
+    new_initializers = []
+    new_inputs = list(graph.input)
+    for node in graph.initializer:
+        input = ValueInfoProto()
+        input.name = node.name
+        # Magic keyword for input nodes belonging to server
+        input.doc_string = "MPC_MODEL_WEIGHTS"
+        input.type.tensor_type.elem_type = node.data_type
+        for size in node.dims:
+            dim = TensorShapeProto.Dimension()
+            dim.dim_value = size
+            input.type.tensor_type.shape.dim.append(dim)
+        new_inputs.append(input)
+
+    new_graph = helper.make_graph(
+        new_nodes,
+        graph.name,
+        new_inputs,
+        new_outputs,
+        initializer=new_initializers,
+        doc_string=graph.doc_string,
+        value_info=graph.value_info,
+    )
+    new_model = helper.make_model(
+        new_graph,
+        ir_version=model.ir_version,
+        doc_string=model.doc_string,
+        model_version=model.model_version,
+        domain=model.domain,
+        producer_name="MPCWeightStripper",
+    )
+    new_model.metadata_props.extend(model.metadata_props)
+    new_model.opset_import.pop()
+    new_model.opset_import.extend(model.opset_import)
+    return new_model
+
+
 # Generates the computation graph and tensor size metadata and saves them in
 # the model directory.
 # Optionaly dumps model weights as fixedpt in specified scaling factor
-def compile(model_fname, input_t_info, output_t_names, scaling_factor, save_weights):
+def compile(
+    model_fname, input_t_info, output_t_names, scaling_factor, save_weights, role
+):
     sys.setrecursionlimit(10000)
     if not model_fname.endswith(".onnx"):
         sys.exit("Please supply a valid ONNX model (.onnx extension)")
@@ -267,8 +317,15 @@ def compile(model_fname, input_t_info, output_t_names, scaling_factor, save_weig
     OnnxNode.opset_version = model.opset_import[0].version
     graph_def = model.graph
 
-    model = optimise(model)
-    model = inferShapes(model)
+    assert role == "server" or role == "client"
+    if role == "server":
+        model = optimise(model)
+        model = inferShapes(model)
+        stripped_model = strip_weights(model)
+        pruned_model_path = os.path.join(
+            model_abs_dir, "optimised_" + model_name + ".onnx"
+        )
+        onnx.save(stripped_model, pruned_model_path)
 
     # Check after optimisation of model removes nodes like Shape
     exitIfUnsupportedOps(model)
@@ -283,113 +340,9 @@ def compile(model_fname, input_t_info, output_t_names, scaling_factor, save_weig
 
     generate_seedot_ast(model, value_info, model_abs_dir)
 
-    if save_weights:
+    if role == "server" and save_weights:
         return dump_model_weights(model, scaling_factor, model_abs_dir, model_name)
     return
-
-
-def main():
-    sys.setrecursionlimit(10000)
-    # First read the ONNX file
-    if len(sys.argv) < 2:
-        print("TF python file unspecified.", file=sys.stderr)
-        exit(1)
-    file_name = sys.argv[1]
-    file_path = "models/" + file_name
-    model_name = file_name[:-5]  # name without the '.onnx' extension
-
-    # load the model and extract the graph
-    model = onnx.load(file_path)
-    OnnxNode.opset_version = model.opset_import[0].version
-    graph_def = model.graph
-
-    print(model.graph.value_info)
-    # Before shape inference (model.graph.value_info) should have shapes of all the variables and constants
-    model.graph.value_info.append(
-        make_tensor_value_info(
-            model.graph.input[0].name,
-            TensorProto.FLOAT,
-            common.proto_val_to_dimension_tuple(model.graph.input[0]),
-        )
-    )
-    model.graph.value_info.append(
-        make_tensor_value_info(
-            model.graph.output[0].name,
-            TensorProto.FLOAT,
-            common.proto_val_to_dimension_tuple(model.graph.output[0]),
-        )
-    )
-
-    print(model.graph.value_info)
-
-    for init_vals in model.graph.initializer:
-        model.graph.value_info.append(
-            make_tensor_value_info(
-                init_vals.name, TensorProto.FLOAT, tuple(init_vals.dims)
-            )
-        )
-
-    if DEBUG:
-        print("Shape inference *****************")
-        print(model.graph.value_info)
-
-    inferred_model = onnx.shape_inference.infer_shapes(model)
-
-    if DEBUG:
-        print("Printing shape ******************")
-        print(inferred_model.graph.value_info)
-        print("Done ******************")
-
-    # value_info: {name : (type, dimension tuple) }
-    value_info = {}
-    for val in inferred_model.graph.value_info:
-        value_info[val.name] = (
-            val.type.tensor_type.elem_type,
-            common.proto_val_to_dimension_tuple(val),
-        )
-
-    # Iterate through the ONNX graph nodes and translate them to SeeDot AST nodes
-    program = None
-    innermost_let_ast_node = None
-    node_name_to_out_var_dict = {}
-    out_var_count = 0
-    mtdAST = MtdAST()
-
-    (program, innermost_let_ast_node, out_var_count) = process_input_variables(
-        program,
-        innermost_let_ast_node,
-        node_name_to_out_var_dict,
-        out_var_count,
-        mtdAST,
-        graph_def,
-        value_info,
-    )
-
-    process_onnx_nodes(
-        innermost_let_ast_node,
-        node_name_to_out_var_dict,
-        out_var_count,
-        mtdAST,
-        graph_def,
-        value_info,
-    )
-
-    output_tensors = [i.name for i in graph_def.output]
-    addOutputs(
-        output_tensors,
-        innermost_let_ast_node,
-        node_name_to_out_var_dict,
-        mtdAST,
-        value_info,
-    )
-
-    PrintAST().visit(program)
-
-    common.write_debug_info(node_name_to_out_var_dict)
-
-    with open("debug/" + model_name + "/" + model_name + ".pkl", "wb") as f:
-        pickle.dump(program, f)
-        print("Dumped SeeDot AST")
 
 
 def addOutputs(
@@ -447,7 +400,13 @@ def process_input_variables(
             if isinstance(node, ValueInfoProto):  # input
                 self.shape = list(common.proto_val_to_dimension_tuple(node))
                 self.data_type = node.type.tensor_type.elem_type
-                self.party = AST.Party.CLIENT
+                # When weights are stripped from the model by the server,
+                # the doc_string field is set to this exact MPC_MODEL_WEIGHTS
+                # magic keyword
+                if node.doc_string == "MPC_MODEL_WEIGHTS":
+                    self.party = AST.Party.SERVER
+                else:
+                    self.party = AST.Party.CLIENT
             elif isinstance(node, TensorProto):  # initializers
                 self.shape = list(node.dims)
                 self.data_type = node.data_type

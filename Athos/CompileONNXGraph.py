@@ -142,13 +142,32 @@ def generate_code(params, role, debug=False):
     model_abs_path = os.path.abspath(model_path)
     model_abs_dir = os.path.dirname(model_abs_path)
 
-    # TODO: PRUNE ONNX GRAPH HERE FOR CLIENT
+    pruned_model_path = os.path.join(model_abs_dir, "optimised_" + model_name)
 
-    # Compile to seedot. Generate AST in model directory
-    weights_path = compile_onnx.compile(
-        model_path, input_tensor_info, output_tensors, scale, save_weights
-    )
+    if role == "server":
+        # Compile to seedot. Generate AST in model directory
+        weights_path = compile_onnx.compile(
+            model_path, input_tensor_info, output_tensors, scale, save_weights, role
+        )
+        # Zip the pruned model, sizeInfo to send to client
+        file_list = [pruned_model_path]
+        if "config_name" in params:
+            file_list.append(params["config_name"])
+        zip_path = os.path.join(model_abs_dir, "client.zip")
+        with ZipFile(zip_path, "w") as zip:
+            for file in file_list:
+                zip.write(file, os.path.basename(file))
+    else:
+        weights_path = compile_onnx.compile(
+            pruned_model_path,
+            input_tensor_info,
+            output_tensors,
+            scale,
+            save_weights,
+            role,
+        )
 
+    sys.exit()
     # Compile to ezpc
     model_base_name = model_name[:-5]
     ezpc_file_name = "{mname}_{bl}_{target}.ezpc".format(
@@ -306,8 +325,9 @@ def generate_code(params, role, debug=False):
 
     os.chdir(cwd)
     print("\n\nGenerated binary: {}".format(program_path))
-    if save_weights:
+    if role == "server":
         print("\n\nUse as input to server (model weights): {}".format(weights_path))
+        print("Share {} file with the client".format(zip_path))
     return (program_path, weights_path)
 
 
