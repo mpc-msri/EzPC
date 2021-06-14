@@ -106,6 +106,9 @@ def generate_code(params, role, debug=False):
             bitlength = 64
     else:
         bitlength = params["bitlength"]
+        # CPP currently only supports 32 and 64 bitwdith
+        if target == "CPP":
+            bitlength = 64 if bitlength > 32 else 32
     save_weights = True if params["save_weights"] is None else params["save_weights"]
     disable_all_hlil_opts = (
         False
