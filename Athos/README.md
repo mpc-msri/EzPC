@@ -1,10 +1,11 @@
 - [Introduction](#introduction)
 - [Requirements/Setup](#requirementssetup)
 - [Usage](#usage)
+  * [Compiling a tensorflow model](#compiling-a-tensorflow-model)
+  * [Compiling an ONNX model](#compiling-an-onnx-model)
   * [Compiling and Running Models in Networks Directory Automatically](#compiling-and-running-models-in-networks-directory-automatically)
       - [Running manually (non-tmux-mode)](#running-manually-non-tmux-mode)
   * [Compiling and Running Models in Networks Directory Manually](#compiling-and-running-models-in-networks-directory-manually)
-  * [Compiling your own tensorflow model](#compiling-your-own-tensorflow-model)
 - [Directory structure](#directory-structure)
 - [Preprocessing images and running inference on ImageNet validation dataset](#preprocessing-images-and-running-inference-on-imagenet-validation-dataset)
 
@@ -17,6 +18,7 @@ If you used the `setup_env_and_build.sh` script the below would already have bee
 - TensorFlow 1.15
 - Numpy
 - pytest, pytest-cov (For running tests)
+- onnx, onnx-simplifier
 
 Athos also makes use of the EzPC compiler internally (please check `../EzPC/README.md` for corresponding dependencies).
 
@@ -24,6 +26,34 @@ Athos also makes use of the EzPC compiler internally (please check `../EzPC/READ
 Please source the virtual environment in `mpc_venv` if you used the `setup_env_and_build.sh` script to setup and build.
 
 `source mpc_venv/bin/activate`
+
+## Compiling a tensorflow model
+The `CompileTFGraph.py` script can compile tensorflow models (v1.15). You can dump your tensorflow model as a frozen graph. Run [convert_variables_to_constants](https://www.tensorflow.org/api_docs/python/tf/compat/v1/graph_util/convert_variables_to_constants) on your model graph and then dump the output graph_def as a protobuf (see `dump_graph_def_pb` in `CompilerScripts/tf_graph_io.py`). Once you have the model.pb file simply do:
+```
+python CompileTFGraph.py --config config.json --role server
+```
+See `python CompileTFGraph.py --help` for additional details on the config.json parameters. A sample config could be:
+```
+{
+  "model_name": "model.pb",
+  "output_tensors": [ "output1" ],
+  "target": "SCI",
+  "backend": "OT",
+}
+```
+You will see the output messages of the compiler and a `model_SCI_OT.out` binary will be generated. You will also see this in the output:
+```
+Use as input to server (model weights): model_input_weights_fixedpt_scale_12.inp.
+Share client.zip file with the client
+```
+Use the `model_input_weights_fixedpt_scale_12.inp` file as input for the server party. The additional client.zip file contains a version of the model without model weights and additionally contains the config file. This zip file should be sent to the client and after unzipping, they can compile the model with:
+```
+python CompileTFGraph.py --config model.config --role client
+```
+For model input you can create a random input using `CompilerScripts/create_tf_input.py` or pass your actual input as a numpy array to the `dumpImageDataInt` function in `TFCompiler/DumpTFMtData.py`. For both scripts you need to pass the scaling factor for conversion of floating point to fixed point (we use 12 for ResNet). Refer to [Running manually (non-tmux-mode)](#running-manually-non-tmux-mode) on how to run the MPC protocol or this [blog post](https://pratik-bhatu.medium.com/privacy-preserving-machine-learning-for-healthcare-using-cryptflow-cc6c379fbab7) for a more detailed walkthrough.
+
+## Compiling an ONNX model
+Similar to how we compile tensorflow graphs, we have a `CompileONNXGraph.py` script that can compile onnx models. The usage is exactly the same as the `CompileTFGraph.py` script.
 
 ## Compiling and Running Models in Networks Directory Automatically
 The `CompileSampleNetworks.py` script can compile and optionally run models in the Networks directory like ResNet-50, DenseNet, SqueezeNet, etc..
@@ -107,38 +137,17 @@ Once the above runs, the final answer for prediction should appear in the output
 
 Instructions on how to run the particular TensorFlow model in `./Networks` can vary. Please refer to the appropriate readme in each model folder to get more insights. But once that is done, the further compilation commands are the same.
 
-## Compiling your own tensorflow model
-The `CompileTFGraph.py` script can compile tensorflow models (v1.15). You can dump your tensorflow model as a frozen graph. Run [convert_variables_to_constants](https://www.tensorflow.org/api_docs/python/tf/compat/v1/graph_util/convert_variables_to_constants) on your model graph and then dump the output graph_def as a protobuf (see `dump_graph_def_pb` in `CompilerScripts/tf_graph_io.py`). Once you have the model.pb file simply do:
-```
-python CompileTFGraph.py --config model.config
-```
-See `python CompileTFGraph.py --help` for additional details on the model.config parameters. A sample config could be:
-```
-{
-  "model_name": "model.pb",
-  "output_tensors": [ "output1" ],
-  "target": "PORTHOS"
-}
-```
-You will see the output messages of the compiler and a `model_PORTHOS.out` binary will be generated. You will also see this in the output:
-```
-Model compilation done.
-Dumping model weights in  model_input_weights_fixedpt_scale_12.inp .
-These are to be used as input for party which owns the model.
-```
-Use the `model_input_weights_fixedpt_scale_12.inp` file as input for the server party. For model input you can create random input using `CompilerScripts/create_tf_input.py` or pass your input as a numpy array to the `dumpImageDataInt` function in `TFCompiler/DumpTFMtData.py`. For both scripts you need to pass the scaling factor for conversion of floating point to fixed point (we use 12 for ResNet).
-
-
-
 # Directory structure
 The codebase is organized as follows:
 - `HelperScripts`: This folder contains numerous helper scripts which help from automated setup of ImageNet/CIFAR10 dataset to finding accuracy from output files. Please refer to each of the scripts for further instructions on how to use them.
 - `Networks`: This folder contains the code in TensorFlow of the various benchmarks/networks we run in CrypTFlow. Among other networks, it includes code for ResNet, DenseNet, SqueezeNet for ImageNet dataset, SqueezeNet for CIFAR10 dataset, Lenet, Logistic Regression, and a chest x-ray demo network.
 - `SeeDot`: This contains code for SeeDot, a high-level intermediate language on which Athos performs various optimizations before compiling to MPC protocols.
-- `TFCompiler`: This contains python modules which are called from the TensorFlow code for the dumping of TensorFlow metadata (required by Athos for compilation to MPC protocols).
+- `TFCompiler`: This contains python modules which are required by Athos for compilation of tensorflow models to MPC protocols.
+- `ONNXCompiler`: This contains python modules which are required by Athos for compilation of ONNX models to MPC protocols.
 - `TFEzPCLibrary`: This contains library code written in EzPC for the TensorFlow nodes required during compilation.
 - `CompileTF.sh`: The Athos compilation script. Try `./CompileTF.sh --help` for options.
-- `CompileTFGraph.py`: The Athos compilation script for protobuf models. Try `python CompileTFGraph.py --help` for options.
+- `CompileTFGraph.py`: The Athos compilation script for tensorflow models. Try `python CompileTFGraph.py --help` for options.
+- `CompileONNXGraph.py`: The Athos compilation script for ONNX models. Try `python CompileONNXGraph.py --help` for options.
 - `Paths.config`: This can be used to override the default folders for EzPC and Porthos.
 - `CompilerScripts`: This folder contains scripts used for processing and compiling dumped models.
 
