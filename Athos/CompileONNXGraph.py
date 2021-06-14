@@ -167,7 +167,6 @@ def generate_code(params, role, debug=False):
             role,
         )
 
-    sys.exit()
     # Compile to ezpc
     model_base_name = model_name[:-5]
     ezpc_file_name = "{mname}_{bl}_{target}.ezpc".format(

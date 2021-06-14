@@ -183,7 +183,6 @@ def generate_seedot_ast(model, value_info, model_dir):
     with open(os.path.join(model_dir, "astOutput.pkl"), "wb") as f:
         pickle.dump(program, f)
         print("Dumped SeeDot AST")
-        PrintAST().visit(program)
 
 
 def preprocess_batch_normalization(graph_def, model_name_to_val_dict):
