@@ -38,5 +38,6 @@ if __name__ == "__main__":
         bitlength = params["bitlength"]
     model_name = os.path.splitext(params["model_name"])[0]
     np_arr = convert_raw_output_to_np(output_fname, bitlength, scale)
-    np.save(model_name + "_output", np_arr)
-    print("Output dumped as np array in " + model_name + "_output.npy")
+    output_name = os.path.splitext(output_fname)[0]
+    np.save(output_name + "_output", np_arr)
+    print("Output dumped as np array in " + output_name + "_output.npy")
