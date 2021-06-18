@@ -25,8 +25,34 @@ mode=$1
 sudo add-apt-repository ppa:deadsnakes/ppa -y
 sudo add-apt-repository ppa:avsm/ppa -y
 sudo apt update
-sudo apt install -y build-essential make cmake libgmp-dev libglib2.0-dev libssl-dev libboost-all-dev m4 python3.7 opam
+sudo apt install -y build-essential cmake libgmp-dev libglib2.0-dev libssl-dev libboost-all-dev m4 python3.7 opam
 sudo apt install -y unzip bubblewrap
+
+build_cmake () {
+  echo "Building and installing cmake from source"
+  wget https://github.com/Kitware/CMake/releases/download/v3.13.4/cmake-3.13.4.tar.gz
+  tar -zxvf cmake-3.13.4.tar.gz
+  cd cmake-3.13.4
+  sudo ./bootstrap
+  sudo make
+  sudo make install
+  cd ..
+  rm -rf cmake-3.13.4 cmake-3.13.4.tar.gz
+}
+
+if which cmake >/dev/null; then
+  CMAKE_VERSION=$(cmake --version | grep -oE '[0-9]+.[0-9]+(\.)*[0-9]*')
+  LATEST_VERSION=(printf "$CMAKE_VERSION\n3.13\n" | sort | tail -n1)
+  if [[ "$CMAKE_VERSION" == "$LATEST_VERSION" ]]; then
+    echo "CMake already installed.."
+  else
+    sudo apt purge cmake
+    build_cmake
+  fi
+else
+  build_cmake
+fi
+
 
 wget "https://raw.githubusercontent.com/ocaml/opam/master/shell/install.sh"
 if [ $? -ne 0 ]; then
