@@ -42,7 +42,7 @@ build_cmake () {
 
 if which cmake >/dev/null; then
   CMAKE_VERSION=$(cmake --version | grep -oE '[0-9]+.[0-9]+(\.)*[0-9]*')
-  LATEST_VERSION=(printf "$CMAKE_VERSION\n3.13\n" | sort | tail -n1)
+  LATEST_VERSION=$(printf "$CMAKE_VERSION\n3.13\n" | sort | tail -n1)
   if [[ "$CMAKE_VERSION" == "$LATEST_VERSION" ]]; then
     echo "CMake already installed.."
   else
