@@ -1163,6 +1163,9 @@ void AvgPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t ksizeH,
   funcAvgPoolTwoPowerRingWrapper(rowsPadded, filterSum, filterAvg,
                                  ksizeH * ksizeW);
 #else
+  for (int i = 0; i < rowsPadded; i++) {
+    filterSum[i] = sci::neg_mod(filterSum[i], (int64_t)prime_mod);
+  }
   funcFieldDivWrapper<intType>(rowsPadded, filterSum, filterAvg,
                                ksizeH * ksizeW, nullptr);
 #endif
