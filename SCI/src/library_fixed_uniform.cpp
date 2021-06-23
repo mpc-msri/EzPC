@@ -1283,17 +1283,18 @@ void ScaleDown(int32_t size, intType *inArr, int32_t sf) {
   } else {
     tempInp = inArr;
   }
+  intType *outp = new intType[eightDivElemts];
+
+#ifdef SCI_OT
   uint64_t moduloMask = sci::all1Mask(bitlength);
   for (int i = 0; i < eightDivElemts; i++) {
     tempInp[i] = tempInp[i] & moduloMask;
   }
-  intType *outp = new intType[eightDivElemts];
-
-#ifdef SCI_OT
-  // funcTruncateTwoPowerRingWrapper(eightDivElemts, tempInp, outp, sf,
-  // nullptr);
   truncation->truncate(eightDivElemts, tempInp, outp, sf, bitlength, true);
 #else
+  for (int i = 0; i < eightDivElemts; i++) {
+    tempInp[i] = sci::neg_mod(tempInp[i], (int64_t)prime_mod);
+  }
   funcFieldDivWrapper<intType>(eightDivElemts, tempInp, outp, 1ULL << sf,
                                nullptr);
 #endif
