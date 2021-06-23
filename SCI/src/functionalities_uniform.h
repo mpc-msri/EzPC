@@ -210,7 +210,8 @@ void funcMatmulThread(int tid, int N, int s1, int s2, int s3, intType *A,
   int s2StartIdx = tid * bucket_size;                   // Inclusive
   int s2EndIdx = std::min((tid + 1) * bucket_size, s2); // Exclusive
 
-  if(s2StartIdx == s2EndIdx){
+
+  if(s2StartIdx == s2EndIdx || s2StartIdx > s2){
     memset(C, 0, s1 * s3 * sizeof(intType));
     return;
   }
