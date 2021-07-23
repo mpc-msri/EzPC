@@ -170,6 +170,7 @@ let o_basetyp (t:base_type) :comp =
   | UInt64 -> o_str "uint64_t"
   | Int32  -> o_str default_bitlen_str
   | Int64  -> o_str "uint64_t"
+  | Float -> o_str "double"
   | Bool   -> o_str default_bitlen_str
 
 let rec o_secret_binop (g:gamma) (op:binop) (sl:secret_label) (e1:expr) (e2:expr) :comp =
@@ -218,6 +219,8 @@ and o_expr (g:gamma) (e:expr) :comp =
   | Const (UInt32C n) -> seq (o_str (" (" ^ ("uint" ^ (Config.get_bitlen () |> string_of_int) ^ "_t") ^ ")")) (o_uint32 n)
 
   | Const (UInt64C n) -> seq (o_str (" (uint64_t)")) (o_uint64 n)
+
+  | Const (FloatC f) -> seq (o_str (" (double)")) (o_float f)
 
   | Const (BoolC b) -> o_bool b
     
@@ -359,7 +362,7 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
      let is_arr = is_array_typ t in
      
      (* bt is the base type and l label *)
-     let bt, l = get_bt_and_label t |> (fun (bt, l) -> get_unsigned bt, l) in
+     let bt, l = get_bt_and_label t |> (fun (bt, l) -> get_inp_type bt, l) in
      let l = get_opt l in
 
      (* list of dimensions, if an array else empty *)

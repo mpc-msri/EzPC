@@ -42,6 +42,8 @@ let o_int32 (n:int32) :comp = fun buf -> Buffer.add_string buf (Int32.to_string 
                                                                                   
 let o_int64 (n:int64) :comp = fun buf -> Buffer.add_string buf (Int64.to_string n)
 
+let o_float (f:float) :comp = fun buf -> Buffer.add_string buf (Float.to_string f)
+
 let o_bool (b:bool) :comp = o_uint32 (if b then Uint32.of_int 1 else Uint32.of_int 0)
 
 let o_str (s:string) :comp = fun buf -> Buffer.add_string buf s

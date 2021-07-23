@@ -34,7 +34,7 @@ def void main(){
 	input(SERVER, w, uint32_al);
 	input(SERVER, x, uint32_bl);
 	input(SERVER, z, uint32_al[10]);
-	input(CLIENT, a, uint32_al[10][100]);
+	input(CLIENT, a, uint32_al);
 	input(SERVER, b, bool_bl);
 	input(SERVER, c, bool_bl);
 }

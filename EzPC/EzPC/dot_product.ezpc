@@ -1,37 +1,50 @@
-uint32 dim = 2;
+(*
 
-def void fneffect (uint32_al[dim] x)
-{
-  x[0] = 0u;
-}
+Authors: Nishant Kumar, Aseem Rastogi.
 
-def uint32_al fn(const uint32_al[dim] x) {
-	return x[0];
-}
+Copyright:
+Copyright (c) 2020 Microsoft Research
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
-def uint32_al fnn (uint32_al x) {
-	return x;
-}
+*)
 
+(*
+	This example shows how something like logistic regression can be written in ezpc.
+	The below program calculates (<w;x> > b), where w and x are vetors of same length and b is a scalar.
+*)
 
-def void main ()
-{
-  input(SERVER, w, uint32_al[dim]);
-  input(SERVER, b, uint32_bl);
-  input(CLIENT, x, uint32_al[dim]);
-  uint32_al acc = 0u;
+uint32 dim = 2u;
 
-  uint32_pl lower = 0u;
-  uint32_pl upper = dim;
+def void main(){
+	(*
+		In the below program, server inputs the model i.e. w and b and 
+		client inputs the input x.
+		The output (<w;x> > b) is calculated and output shared with client.
+	*)
 
-  for i=[lower - lower : upper] { acc = acc + w[i] * x[i] };
-  output(CLIENT, (acc > b) ? 1 : 0);
-  output(CLIENT, w);
+	input(SERVER, w, float_al[dim]);
+	input(SERVER, b, float_bl);
+	input(CLIENT, x, float_al[dim]);
+	float_al acc = 0.0;
 
-  uint32_pl tt = 0u;
-  if(tt == 0u) { tt = 0u; };
+	uint32_pl lower = 0u;
+	uint32_pl upper = dim;
 
-  uint32_al tmp = fn (w);
-  fneffect(w);
+	for i=[lower - lower : upper] { acc = acc + (w[i] * x[i]); };
+	output(CLIENT, ((acc > b) ? 1 : 0));
 }
 

@@ -139,6 +139,14 @@ let check_subsumption_type_and_label (e:expr) (t:typ) (l1:label) (l2:label) :ere
            | Base (bt, _) -> Well_typed (Base (bt, Some l2) |> mk_syntax t.metadata)
            | _ -> failwith "check_subsumption_type_and_label: impossible branch")
 
+(* numeric -> integer or floating type *)
+let check_expected_numeric_typ (e:expr) (t:typ) (l:label) :unit result =
+  let err = Type_error ("Expression " ^ (expr_to_string e) ^ " should have an int type with label " ^ label_to_string l ^
+                          ", instead got: " ^ typ_to_string t, e.metadata) in
+  match t.data with
+  | Base (bt, Some lt) when (bt <> Bool) && lt = l -> Well_typed ()
+  | _ -> err
+
 let check_expected_int_typ (e:expr) (t:typ) (l:label) :unit result =
   let err = Type_error ("Expression " ^ (expr_to_string e) ^ " should have an int type with label " ^ label_to_string l ^
                           ", instead got: " ^ typ_to_string t, e.metadata) in
@@ -181,7 +189,13 @@ let rec tc_expr (g:gamma) (e:expr) :eresult =
                    bind (tc_expr g e1) (fun t1 ->
                           bind (tc_expr g e2) (fun t2 ->
                                  match op with
-                                 | Sum | Sub | Mul | Div | Mod | Pow | Bitwise_and | Bitwise_or | Bitwise_xor ->
+                                 | Sum | Sub | Mul | Div | Mod | Pow ->
+                                    bind (check_expected_numeric_typ e1 t1 l) (fun _ ->
+                                           bind (check_expected_numeric_typ e2 t2 l) (fun _ ->
+                                                  match join_types t1 t2 with
+                                                  | Some t -> Well_typed t
+                                                  | None -> join_types_err e1 e2 t1 t2 e.metadata))
+                                 | Bitwise_and | Bitwise_or | Bitwise_xor ->
                                     bind (check_expected_int_typ e1 t1 l) (fun _ ->
                                            bind (check_expected_int_typ e2 t2 l) (fun _ ->
                                                   match join_types t1 t2 with
@@ -191,8 +205,8 @@ let rec tc_expr (g:gamma) (e:expr) :eresult =
                                     bind (check_expected_int_typ e1 t1 l) (fun _ ->
                                            bind (check_expected_int_typ e2 t2 Public) (fun _ -> Well_typed t1))
                                  | Greater_than | Less_than | Is_equal | Greater_than_equal | Less_than_equal -> 
-                                    bind (check_expected_int_typ e1 t1 l) (fun _ ->
-                                           bind (check_expected_int_typ e2 t2 l) (fun _ ->
+                                    bind (check_expected_numeric_typ e1 t1 l) (fun _ ->
+                                           bind (check_expected_numeric_typ e2 t2 l) (fun _ ->
                                                   match join_types t1 t2 with
                                                   | Some t -> Well_typed (Base (Bool, t |> get_bt_and_label |> snd) |> mk_syntax e.metadata)
                                                   | None   -> join_types_err e1 e2 t1 t2 e.metadata))

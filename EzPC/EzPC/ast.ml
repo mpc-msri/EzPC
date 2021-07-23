@@ -46,6 +46,7 @@ type base_type =
   | UInt64
   | Int32
   | Int64
+  | Float
   | Bool
 
 type secret_label = 
@@ -62,6 +63,7 @@ type const =
   | UInt64C  of uint64
   | Int32C   of int32
   | Int64C   of int64
+  | FloatC   of float
   | BoolC    of bool
 
 type unop =
@@ -186,6 +188,7 @@ let rec expr_to_string (e:expr) :string =
   | Const (UInt64C n) -> Uint64.to_string n
   | Const (Int32C n)  -> Int32.to_string n
   | Const (Int64C n)  -> Int64.to_string n
+  | Const (FloatC f)   -> Float.to_string f 
   | Const (BoolC b)   -> string_of_bool b
   | Var x -> x.name
   | Unop (op, e, lopt) ->
@@ -218,6 +221,7 @@ let rec typ_to_string (t:typ) :string =
        | UInt64 -> "uint64"
        | Int32  -> "int32"
        | Int64  -> "int64"
+       | Float  -> "float"
        | Bool -> "bool"
      in
      prefix ^ " " ^ bt_str
@@ -321,6 +325,7 @@ let get_role (e:expr) :role =
   | Role r -> r
   | _ -> failwith "get_role: not a Role"
 
+(* 
 let is_pow_2 (e:expr) :bool =
   match e.data with
   | Binop (Pow, { data = Const (UInt32C x) }, _, _) -> Uint32.to_int x = 2
@@ -340,6 +345,7 @@ let zero_expr (r:range) :expr = Const (UInt32C Uint32.zero) |> mk_syntax r
 let one_expr (r:range) :expr = Const (UInt32C Uint32.one) |> mk_syntax r
 let true_expr (r:range) :expr = Const (BoolC true) |> mk_syntax r
 let false_expr (r:range) :expr = Const (BoolC false) |> mk_syntax r
+*)
 
 let typeof_role (r:range) :typ = Base (UInt32, Some Public) |> mk_syntax r
                                
@@ -349,8 +355,10 @@ let typeof_const (c:const) (r:range) :typ =
    | UInt64C n -> Base (UInt64, Some Public)
    | Int32C n  -> Base (Int32, Some Public)
    | Int64C n  -> Base (Int64, Some Public)
+   | FloatC f   -> Base (Float, Some Public)
    | BoolC b   -> Base (Bool, Some Public)) |> mk_syntax r
 
+(* Leave this be, because we're not considering int mixed with float operations *)
 let join_types (t1:typ) (t2:typ) :typ option =
   match t1.data, t2.data with
   | Base (UInt32, Some Public), Base (UInt64, Some Public)
@@ -654,8 +662,9 @@ let rec var_used_in_stmt (s:stmt) (x:var) :bool =
   in
   aux s.data  
 
-let get_unsigned (bt:base_type) :base_type =
+let get_inp_type (bt:base_type) :base_type =
   match bt with
   | UInt32 | UInt64 | Bool -> bt
   | Int32 -> UInt32
   | Int64 -> UInt64
+  | Float -> Float

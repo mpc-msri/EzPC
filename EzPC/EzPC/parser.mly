@@ -64,6 +64,7 @@ let match_stmt_option msg str =
 %token <Stdint.uint64> UINT64
 %token <Stdint.int32> INT32
 %token <Stdint.int64> INT64
+%token <float> FLOAT
 %token LPAREN RPAREN
 %token LBRACE RBRACE
 %token LBRACKET RBRACKET
@@ -72,6 +73,7 @@ let match_stmt_option msg str =
 %token RETURN
 %token COMMA
 %token TINT32 TINT64 TUINT32 TUINT64
+%token TFLOAT
 %token TBOOL TRUE FALSE
 %token TVOID
 %token ARITHMETIC BOOLEAN PUBLIC
@@ -136,6 +138,7 @@ base_type:
   | TUINT64 { Ast.UInt64 }
   | TINT32 { Ast.Int32 }
   | TINT64 { Ast.Int64 }
+  | TFLOAT { Ast.Float }
   | TBOOL { Ast.Bool }
   ;
 
@@ -259,6 +262,8 @@ const:
   | i = UINT64 { Ast.UInt64C i }
   | SUB; i = INT64; { Ast.Int64C (Int64.neg i) }
   | SUB; i = UINT64; { Ast.UInt64C (Uint64.neg i) }
+  | f = FLOAT { Ast.FloatC f }
+  | SUB; f = FLOAT; { Ast.FloatC (Float.neg f) }
   | TRUE { Ast.BoolC true }
   | FALSE { Ast.BoolC false }
   ;
