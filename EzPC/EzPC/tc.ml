@@ -189,13 +189,13 @@ let rec tc_expr (g:gamma) (e:expr) :eresult =
                    bind (tc_expr g e1) (fun t1 ->
                           bind (tc_expr g e2) (fun t2 ->
                                  match op with
-                                 | Sum | Sub | Mul | Div | Mod | Pow ->
+                                 | Sum | Sub | Mul | Div | Pow ->
                                     bind (check_expected_numeric_typ e1 t1 l) (fun _ ->
                                            bind (check_expected_numeric_typ e2 t2 l) (fun _ ->
                                                   match join_types t1 t2 with
                                                   | Some t -> Well_typed t
                                                   | None -> join_types_err e1 e2 t1 t2 e.metadata))
-                                 | Bitwise_and | Bitwise_or | Bitwise_xor ->
+                                 | Mod | Bitwise_and | Bitwise_or | Bitwise_xor ->
                                     bind (check_expected_int_typ e1 t1 l) (fun _ ->
                                            bind (check_expected_int_typ e2 t2 l) (fun _ ->
                                                   match join_types t1 t2 with

@@ -1,0 +1,29 @@
+def void main() {
+    float_al a = 5.0 ;
+    float_al b = 10.0 ;
+    float_al c ;
+    bool_bl e ;
+
+    float_pl d ;
+
+    c = a+b ;
+    c = a-b ;
+    c = a*b ;
+    c = b/4.0 ;
+    (* d = 10.0 % 4.0 ; *)      (* Uncomment to check that type error is reported *)
+    (* c = b >> 2u ; *)         (* Uncomment to check that type error is reported *)
+    (* c = b << 2u ; *)         (* Uncomment to check that type error is reported *)
+    (* c = a ^ b ; *)           (* Uncomment to check that type error is reported *)                
+    (* c = a & b ; *)           (* Uncomment to check that type error is reported *)
+    (* c = a | b ; *)           (* Uncomment to check that type error is reported *)
+    c = 2.0 ^^ 10.0 ;
+    (* c = b >>> 2u ; *)        (* Uncomment to check that type error is reported *)
+    e = true && false ;
+    e = false || false ;
+    e = false @ true ;
+    e = a > b ;
+    e = (a == b) ;
+    e = a >= b ;
+    e = a <= b ;
+    e = a < b ;
+}
