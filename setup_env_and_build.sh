@@ -110,12 +110,57 @@ pip install tensorflow==1.15.0 keras==2.3.0 scipy==1.1.0 matplotlib
 pip install onnx onnx-simplifier onnxruntime
 pip install pytest pytest-cov 
 
+
+build_boost () {
+  sudo apt-get install python-dev autotools-dev libicu-dev libbz2-dev
+  echo "Building and installing boost from source"
+  wget https://boostorg.jfrog.io/artifactory/main/release/1.67.0/source/boost_1_67_0.tar.gz
+  tar -zxvf boost_1_67_0.tar.gz
+  cd boost_1_67_0
+  ./bootstrap.sh
+  ./b2 -j $(nproc)
+  sudo ./b2 install
+  sudo ldconfig
+  cd ..
+  rm -rf boost_1_67_0.tar.gz boost_1_67_0
+}
+
+BOOST_REQUIRED_VERSION="1.66"
+if dpkg -s libboost-dev >/dev/null; then
+  BOOST_VERSION=$(dpkg -s libboost-dev | grep 'Version' | grep -oE '[0-9]+.[0-9]+(\.)*[0-9]*')
+  LATEST_VERSION=$(printf "$BOOST_VERSION\n$BOOST_REQUIRED_VERSION\n" | sort | tail -n1)
+  if [[ "$BOOST_VERSION" == "$LATEST_VERSION" ]]; then
+    echo "Boost already installed.."
+  else
+    sudo apt purge libboost-all-dev
+    build_boost
+  fi
+else
+  build_boost
+fi
+
 # Now we build all the components.
 ROOT="$(pwd)"
 #Build Ezpc
 cd EzPC/EzPC
 eval `opam env`
 make
+
+#Build ABY
+git clone --recursive https://github.com/encryptogroup/ABY.git
+cd ABY/
+mkdir build && cd build
+cmake -DCMAKE_INSTALL_PREFIX=./install -DABY_BUILD_EXE=On ..
+if [ $? -ne 0 ]; then
+  echo "ABY cmake command failed. Check error and refer to https://github.com/encryptogroup/ABY for help";
+  exit
+fi
+cmake --build . --target install --parallel
+if [ $? -ne 0 ]; then
+  echo "ABY build failed. Check error and refer to https://github.com/encryptogroup/ABY for help";
+  exit
+fi
+
 #Build Porthos 
 cd $ROOT/Porthos
 ./setup-eigen.sh
