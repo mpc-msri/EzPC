@@ -9,18 +9,13 @@ Refer to the repository's Wiki section for EzPC's developer guide to how to code
 # Setup
 You should have run ```setup_env_and_build.sh```. It will automatically build EzPC and also clone and build ABY.
 
-# [Developers] Manually compiling EzPC
-If you have made any change to the EzPC compiler, you can manually run make:
+# Compiling an EzPC file
+Sample compilation of ezpc program to cpp
 ```
 cd EzPC
 eval `opam config env`    # Load ocaml environment
-make
 ./ezpc.sh --help          # Shows usage
-```
-
-Sample compilation of ezpc program to cpp
-```
->> ./ezpc.sh dot_product.ezpc --bitlen 32
+./ezpc.sh dot_product.ezpc --bitlen 32
 ```
 This generates a dot_product0.cpp file.
 
@@ -51,3 +46,11 @@ This generates a dot_product0.cpp file.
 - Copy the contents of `EzPC/OBLIVC_example` folder to `obliv-c/test/oblivc/ezpc` folder
 - Change directory to `obliv-c/test/oblivc/ezpc` and do `make`
 - Run the generated `a.out` file in `obliv-c/test/oblivc/ezpc` with -r 0 and -r 1 parameters to run client and server respectively. (`./a.out -r 0` and `./a.out -r 1`)
+
+# Manually compiling EzPC [Developers]
+If you have made any change to the EzPC compiler, you can manually run make:
+```
+cd EzPC
+eval `opam config env`    # Load ocaml environment
+make
+```
