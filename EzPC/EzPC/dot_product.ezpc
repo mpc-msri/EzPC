@@ -1,4 +1,4 @@
-uint32 dim = 2;
+uint32 dim = 2u;
 
 def void fneffect (uint32_al[dim] x)
 {
@@ -24,7 +24,7 @@ def void main ()
   uint32_pl lower = 0u;
   uint32_pl upper = dim;
 
-  for i=[lower - lower : upper] { acc = acc + w[i] * x[i] };
+  for i=[lower - lower : upper] { acc = acc + w[i] * x[i]; };
   output(CLIENT, (acc > b) ? 1 : 0);
   output(CLIENT, w);
 
