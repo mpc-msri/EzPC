@@ -45,12 +45,18 @@ let o_punop :unop -> comp = function
   | U_minus -> o_str "-"
   | Bitwise_neg -> o_str "~"
   | Not -> o_str "!"
+  | Float_exp -> failwith ("Operator: FLOATEXP should not public")
+  | Float_exp2 -> failwith ("Operator: FLOAT2EXP should not public")
                         
 let o_pbinop :binop -> comp = function
   | Sum          -> o_str "+"
+  | Float_sum    -> o_str "+"
   | Sub          -> o_str "-"
+  | Float_sub    -> o_str "-"
   | Mul          -> o_str "*"
+  | Float_mul    -> o_str "*"
   | Div          -> o_str "/"
+  | Float_div    -> o_str "/"
   | Mod          -> o_str "%"
   | Pow          -> failwith "Pow is not an infix operator, so o_pbinop can't handle it"
   | Greater_than -> o_str ">"
@@ -92,28 +98,46 @@ let o_hd_and_args (head:comp) (args:comp list) :comp =
 
 let o_app (head:comp) (args:comp list) :comp = o_hd_and_args head args
 
+let o_div_app (coerce:bool) (l:secret_label) (args:comp list) :comp = 
+  o_app  (seq (o_str "put_int_div_gate") (o_slabel_maybe_coerce true l)) args
+
 let o_cbfunction_maybe_coerce (coerce:bool) (l:secret_label) (f:comp) (args:comp list) :comp =
-  o_app (seq (o_slabel_maybe_coerce coerce l) (seq (o_str "->") f)) args
+  o_app (seq (o_slabel_maybe_coerce coerce l) (seq (o_str "->") (f))) args
 
 let o_cbfunction :secret_label -> comp -> comp list -> comp = o_cbfunction_maybe_coerce false
 
+let o_flt_app (head:comp) (op_s: comp) (args:comp list) :comp = 
+  o_hd_and_args head (args @ [  (op_s);  ( o_str "bitlen");  (o_str "nvals");  (o_str "no_status")])
+
+let o_fltunfunction (l:secret_label) (s_op: comp) (args: comp list): comp = 
+  o_flt_app (seq (o_slabel_maybe_coerce true Boolean)  (o_str "->PutFPGate") ) s_op args
+
 let o_sunop (l:secret_label) (op:unop) (c:comp) :comp =
-  let c_op =
+  let aux (arg: comp) = o_cbfunction_maybe_coerce true l arg [c] in
+  let float_aux_unop (op_s:string): comp = o_fltunfunction l (o_str op_s)  [c] in
     match op with
     | U_minus -> failwith "Codegen: unary minus is not being produced by lexer or parser right now."
     | Bitwise_neg 
-    | Not -> o_str "PutINVGate"
-  in
-  o_cbfunction_maybe_coerce true l c_op [c]
+    | Not ->  aux (o_str "PutINVGate")
+    | Float_exp -> float_aux_unop "EXP"
+    | Float_exp2 -> float_aux_unop "EXP2"
   
+let o_fltfunction (l:secret_label) (s_op: comp) (args: comp list): comp = 
+  o_flt_app (seq (o_slabel_maybe_coerce true Boolean)  (o_str "->PutFPGate") ) s_op args
+
 let o_sbinop (l:secret_label) (op:binop) (c1:comp) (c2:comp) :comp =
   let aux (s:string) (coerce:bool) :comp = o_cbfunction_maybe_coerce coerce l (o_str s) [c1; c2] in
+  let float_aux (op_s:string): comp = o_fltfunction l (o_str op_s)  [c1; c2] in 
   let err (s:string) = failwith ("Operator: " ^ s ^ " should have been desugared") in
   match op with
   | Sum                -> aux "PutADDGate" false
   | Sub                -> aux "PutSUBGate" false
   | Mul                -> aux "PutMULGate" false
   | Greater_than       -> aux "PutGTGate" false
+  | Float_sum          -> float_aux "ADD" 
+  | Float_sub          -> float_aux "SUB" 
+  | Float_mul          -> float_aux "MUL" 
+  | Float_div          -> float_aux "DIV" 
   | Div                -> err "DIV"
   | Mod                -> err "MOD"
   | Less_than          -> err "LT"
@@ -137,18 +161,20 @@ let o_pconditional (c1:comp) (c2:comp) (c3:comp) :comp =
 let o_sconditional (l:secret_label) (c_cond:comp) (c_then:comp) (c_else:comp) :comp =
   o_cbfunction l (o_str "PutMUXGate") [c_then; c_else; c_cond]
 
+let o_flt_subsumption (gate: comp) (args: comp list): comp = 
+  o_app gate (args @ [(o_str "bitlen"); (o_str "role")])
+
 let o_subsumption (src:label) (tgt:secret_label) (t:typ) (arg:comp) :comp =
   match src with
     | Public -> 
-       let fn =
-         o_str (
-             match t.data with
-             | Base (UInt32, _) | Base (Int32, _) -> "put_cons32_gate"
-             | Base (UInt64, _) | Base (Int64, _) -> "put_cons64_gate"
-             | Base (Bool, _) -> "put_cons1_gate"
-             | _ -> failwith ("codegen:Subsumption node with an unexpected typ: " ^ (typ_to_string t)))
-       in
-       o_app fn [o_slabel tgt; arg]
+       (let aux (s:string) : comp = o_app (o_str s) [o_slabel tgt; arg] in
+       (let flt_aux (s:string): comp = o_flt_subsumption (o_str s) [o_slabel_maybe_coerce true tgt; arg] in
+          match t.data with
+          | Base (UInt32, _) | Base (Int32, _) -> aux "put_cons32_gate"
+          | Base (UInt64, _) | Base (Int64, _) -> aux "put_cons64_gate"
+          | Base (Bool, _) -> aux "put_cons1_gate"
+          | Base (Float32,_) -> flt_aux "put_flt_cons32_gate"
+          | _ -> failwith ("codegen:Subsumption node with an unexpected typ: " ^ (typ_to_string t))))
     | Secret Arithmetic ->
        let fn_name = if Config.get_bool_sharing_mode () = Config.Yao then "PutA2YGate" else "PutA2BGate" in
        o_cbfunction tgt (o_str fn_name) [arg]
@@ -165,6 +191,7 @@ let o_basetyp (t:base_type) :comp =
   | UInt64 -> o_str "uint64_t"
   | Int32  -> o_str "int32_t"
   | Int64  -> o_str "int64_t"
+  | Float32 -> o_str "float"
   | Bool   -> o_str "uint32_t"
 
 let rec o_secret_binop (g:gamma) (op:binop) (sl:secret_label) (e1:expr) (e2:expr) :comp =
@@ -174,7 +201,7 @@ let rec o_secret_binop (g:gamma) (op:binop) (sl:secret_label) (e1:expr) (e2:expr
   let t1 = e1 |> typeof_expr g |> get_opt in
   let is_signed =
     match t1.data with
-    | Base (Int32, _) | Base (Int64, _) -> true
+    | Base (Int32, _) | Base (Int64, _) | Base (Float32, _) -> true
     | _ -> false
   in
   let fn_name (s:string) =
@@ -215,6 +242,8 @@ and o_expr (g:gamma) (e:expr) :comp =
   | Const (UInt64C n) -> seq (o_str (" (uint64_t)")) (o_uint64 n)
 
   | Const (BoolC b) -> o_bool b
+
+  | Const (Float32C n) ->  seq (o_str (" (float)")) (o_str n)
     
   | Var s -> o_var s
 
@@ -250,6 +279,8 @@ and o_codegen_expr (g:gamma) (e:codegen_expr) :comp =
   in
   match e with
   | Base_e e -> o_expr e
+
+  | Input_Flt_g (r, sl, s, bt) -> o_flt_subsumption (o_str "put_flt_cons32_gate") [o_slabel_maybe_coerce true sl; o_str s.name]
               
   | Input_g (r, sl, s, bt) -> o_cbfunction sl (o_str "PutINGate") [o_str s.name; get_bitlen bt; o_role r]
 
@@ -300,11 +331,17 @@ let o_ite (c_if:comp) (c_then:comp) (c_else_opt:comp option) :comp =
 
 let o_assign (lhs:comp) (rhs:comp) :comp = seq lhs (seq (o_str " = ") rhs)
 
+(* let o_fltAssign (lhs:comp) (rhs:comp) :comp = seq (o_flt_decl) (seq (o_str "\n") (o_g)) *)
+
 let o_decl (c_t:comp) (c_varname:comp) (init_opt:comp option) :comp =
   let c = seq c_t (seq o_space c_varname) in
   if is_none init_opt then c
   else seq c (seq (o_str " = ") (get_opt init_opt))
                                          
+let get_fresh_flt_var_public: (unit -> string) = 
+  let r = ref 0 in
+  fun _ -> let s = "__tmp__float__var" ^ (string_of_int !r) in r := !r + 1; s
+
 let get_fresh_var :(unit -> string) =
   let r = ref 0 in
   fun _ -> let s = "__tmp__fresh_var_" ^ (string_of_int !r) in r := !r + 1; s
@@ -348,7 +385,7 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
     
   | Seq (s1, s2) -> o_codegen_stmt g (Seq_codegen (Base_s s1, Base_s s2))
 
-  | Input (e_role, e_var, t) when is_role e_role && is_var e_var ->
+  | Input (e_role, e_var, t) when is_role e_role && is_var e_var  ->
      let rng = s.metadata in
      let r, x = get_role e_role, get_var e_var in
      let is_arr = is_array_typ t in
@@ -398,11 +435,17 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
        if is_secret_label l then
          let sl = get_secret_label l in
          let cin = If_codegen (Public, r_cmp, cin, None) in
+         let input_key = 
+          (match bt with
+          | Float32 ->
+            Input_Flt_g (r, sl, tmp_var_name, bt)
+          | _ ->
+            Input_g (r, sl, tmp_var_name, bt)) in
          (* add an input gate *)
          let assgn = Assign_codegen (assgn_left,
                                      Conditional_codegen (r_cmp,
-                                                          Input_g (r, sl, tmp_var_name, bt),
-                                                          Dummy_g (sl, bt), Public))
+                                                           input_key,
+                                                           Dummy_g (sl, bt), Public))
          in
          Seq_codegen (cin, assgn)
        else
@@ -494,7 +537,12 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
                             s)
              ) el (List.length el - 1, s) |> snd
          in
-         aux (App_codegen ("add_to_output_queue", [Base_e (Var { name = "out_q"; index = 0 } |> mk_dsyntax "");
+         let output_msg = 
+            match bt with
+            | Float32 -> "add_float_to_output_queue"
+            | _ -> "add_to_output_queue"
+         in 
+         aux (App_codegen (output_msg, [Base_e (Var { name = "out_q"; index = 0 } |> mk_dsyntax "");
                                                    Output_g (r, sl, elmt_of_e);
                                                    Base_e e_role;
                                                    Base_e (Var { name = "cout"; index = 0 } |> mk_dsyntax "")]))
@@ -628,6 +676,9 @@ and o_codegen_stmt (g:gamma) (s:codegen_stmt) :comp * gamma =
 
   | Read_interim _ -> failwith "Impossible! we don't support reading of arbitrary shares"
 
+  (* | Assign_codegen (e1, e2) when (typeof_expr g e1) == Float32 -> o_fltAssign (o_codegen_expr g e1) (o_codegen_expr g e2), g *)
+  (*Only one expr needs checking as the other's type is implied after typechecking*)
+  
   | Assign_codegen (e1, e2) -> o_with_semicolon (o_assign (o_codegen_expr g e1) (o_codegen_expr g e2)), g
            
   | For_codegen (e1, e2, e3, s) ->
@@ -735,11 +786,13 @@ Circuit* acirc;\n\
 Circuit* bcirc;\n\
 uint32_t bitlen = " ^ string_of_int bitlen ^ ";\n\
 output_queue out_q;\n\
-e_role role;\n"
+e_role role;\n\
+uint32_t nvals;\n"
 
 let aby_main_prelude_string :string =
 "role = role_param;\n\
-party = new ABYParty(role_param, address, port, seclvl, bitlen, nthreads, mt_alg, 520000000);\n\
+nvals = nvals_param;\n\
+party = new ABYParty(role_param, address, port, seclvl, bitlen, nthreads, mt_alg);\n\
 std::vector<Sharing*>& sharings = party->GetSharings();\n\
 ycirc = (sharings)[S_YAO]->GetCircuitBuildRoutine();\n\
 acirc = (sharings)[S_ARITH]->GetCircuitBuildRoutine();\n\
@@ -755,7 +808,7 @@ let o_one_program ((globals, main):global list * codegen_stmt) (ofname:string) :
   let main_header =
     if Config.get_codegen () = Config.CPP then o_str "\n\nint main () {\n"
     else o_str "\n\nint64_t ezpc_main (e_role role_param, char* address, uint16_t port, seclvl seclvl,\n\
-                uint32_t nvals, uint32_t nthreads, e_mt_gen_alg mt_alg,\n\
+                uint32_t nvals_param, uint32_t nthreads, e_mt_gen_alg mt_alg,\n\
                 e_sharing sharing) {\n"
   in
 

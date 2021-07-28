@@ -38,6 +38,7 @@ type codegen_expr =
   | Base_e              of expr
   | Input_g             of role * secret_label * var * base_type  (* base_type is used by the oblivc backend to output the correct format string specifier in the oblivc input function *)
   | Output_g            of role * secret_label * codegen_expr     (* only used by the ABY backend, in oblivc output is a statement, see Output_s below *)
+  | Input_Flt_g         of role * secret_label * var * base_type
   | Dummy_g             of secret_label * base_type
   | Clear_val           of codegen_expr * base_type
   | Conditional_codegen of codegen_expr * codegen_expr * codegen_expr * label

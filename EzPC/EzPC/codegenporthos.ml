@@ -45,6 +45,7 @@ let o_punop :unop -> comp = function
   | U_minus -> o_str "-"
   | Bitwise_neg -> o_str "~"
   | Not -> o_str "!"
+  | _ -> failwith "no support for unary floating-point operations in porthos"
                         
 let o_pbinop :binop -> comp = function
   | Sum          -> o_str "+"
@@ -67,6 +68,7 @@ let o_pbinop :binop -> comp = function
   | Or           -> o_str "||"
   | Xor          -> o_str "^"
   | R_shift_l    -> o_str ">>"
+  | _ -> failwith "no support for binary floating-point operations in porthos"
 
 let o_hd_and_args (head:comp) (args:comp list) :comp =
   match args with
@@ -87,6 +89,7 @@ let o_sunop (l:secret_label) (op:unop) (c:comp) :comp =
   | U_minus -> failwith "Codegen: unary minus is not being produced by lexer or parser right now."
   | Bitwise_neg -> err_unsupp "Bitwise_neg"
   | Not -> err_unsupp "Boolean_not"
+  | _ -> failwith "no support for secret unary floating-point operations in porthos"
   
 let o_sbinop (l:secret_label) (op:binop) (c1:comp) (c2:comp) :comp =
   let err (s:string) = failwith ("Codegen: Operator: " ^ s ^ " should have been desugared") in
@@ -113,6 +116,7 @@ let o_sbinop (l:secret_label) (op:binop) (c1:comp) (c2:comp) :comp =
   | Xor                -> err_unsupp "Boolean_xor"
   | R_shift_l          -> err_unsupp "Logical_right_shift"
   | Pow                -> err_unsupp "Pow"
+  | _ -> failwith "no support for secret binary floating-point operations in porthos"
                
 let o_pconditional (c1:comp) (c2:comp) (c3:comp) :comp =
   seq c1 (seq (o_str " ? ") (seq c2 (seq (o_str " : ") c3)))
@@ -130,6 +134,7 @@ let o_basetyp (t:base_type) :comp =
   | Int32  -> o_str "int32_t"
   | Int64  -> o_str "int64_t"
   | Bool   -> o_str "uint32_t"
+  | Float32 -> o_str "float"
 
 let rec o_secret_binop (g:gamma) (op:binop) (sl:secret_label) (e1:expr) (e2:expr) :comp =
   (*
@@ -226,6 +231,7 @@ and o_codegen_expr (g:gamma) (e:codegen_expr) :comp =
       | Secret sl -> failwith "Secret conditionals not allowed for this backend.")
 
   | App_codegen_expr (f, el) -> o_app (o_str f) (List.map o_codegen_expr el)
+  | Input_Flt_g (_, _, _, _) -> failwith ("Codegen floating-point input is not supported with this backend.")
   | Clear_val _ -> failwith ("Codegen_expr Clear_val is unsupported by this backend.") 
                                       
 let rec o_typ (t:typ) :comp =

@@ -1,0 +1,100 @@
+def float32_bl epowx(float32_pl x){
+
+  float32_pl N(* = round((x)*1.4426950408889634074)*);
+
+  float32_bl sN = N;
+  float32_bl d = x -. (sN *. 0.69315f);
+  float32_bl ans = 1.0f;
+  float32_bl y = 1.0f;
+
+  y = y *. d;
+  ans = ans +. y;
+
+  y = y *. d;
+  y = y /. 2.0f;
+  ans = ans +. y;
+
+  y = y *. d;
+  y = y /. 3.0f;
+  ans = ans +. y;
+
+  ans = ans *. FLT2EXP(sN);
+ 
+  return ans;
+}
+
+def void main ()
+{
+
+float32_pl x;
+float32_bl ans;
+
+x = -2.715728759765625f;
+ans = epowx(x);
+
+x = -2.4583146572113037109375f;
+ans = epowx(x);
+
+x = -2.224465847015380859375f;
+ans = epowx(x);
+
+x = -2.013206005096435546875f;
+ans = epowx(x);
+
+x = -1.82143878936767578125f;
+ans = epowx(x);
+
+x = -1.648078441619873046875f;
+ans = epowx(x);
+
+x = -1.4915215969085693359375f;
+ans = epowx(x);
+
+x = -1.3495066165924072265625f;
+ans = epowx(x);
+
+x = -1.22115039825439453125f;
+ans = epowx(x);
+
+x = -1.1048176288604736328125f;
+ans = epowx(x);
+
+x = -1.0f;
+ans = epowx(x);
+
+x = 0.0f;
+ans = epowx(x);
+
+x = 1.0f;
+ans = epowx(x);
+
+x = 1.1048176288604736328125f;
+ans = epowx(x);
+
+x = 1.22115039825439453125f;
+ans = epowx(x);
+
+x = 1.3495066165924072265625f;
+ans = epowx(x);
+
+x = 1.4915215969085693359375f;
+ans = epowx(x);
+
+x = 1.648078441619873046875f;
+ans = epowx(x);
+
+x = 1.82143878936767578125f;
+ans = epowx(x);
+
+x = 2.013206005096435546875f;
+ans = epowx(x);
+
+x = 2.224465847015380859375f;
+ans = epowx(x);
+
+x = 2.4583146572113037109375f;
+ans = epowx(x);
+
+x = 2.715728759765625f;
+ans = epowx(x);
+}

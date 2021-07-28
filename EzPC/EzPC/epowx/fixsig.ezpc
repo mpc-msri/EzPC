@@ -1,0 +1,58 @@
+def uint32_al epowx(uint32_al x){
+  x = 0u - x;
+  uint32 SCALE = 16777216u;
+  uint32_al ans = SCALE;
+  uint32_al y = SCALE;
+  
+  x = (x >> 12);
+
+  y = (y >> 12) * x;
+  ans = (ans-y);
+
+  y = (y >> 12) * x;
+  uint32_pl count = 2048u;
+  y = (y >> 12) * (count);
+  ans = ans+y;
+
+  y = (y >> 12) * x;
+  count = 1365u;
+  y = (y >> 12) * (count);
+  ans = (ans-y);
+
+  y = (y >> 12) * x;
+  count = 1024u;
+  y = (y >> 12) * (count);
+  ans = ans+y;
+
+  y = (y >> 12) * x;
+  count = 819u;
+  y = (y >> 12) * (count);
+  ans = (ans-y);
+  
+  return ans;     
+}
+
+def uint32_al sigmoidX(uint32_al x){
+  uint32_al negX = (0u - x);
+  bool_bl isPos = ((negX>x)?true:false);
+  uint32 SCALE = 16777216u;
+  x = isPos?negX:x;
+
+  uint32_al expX = epowx(x);
+
+  uint32_al ans;
+
+  ans = isPos?(SCALE*(SCALE >> 20)):(expX*(SCALE >> 20));
+  ans = ans/(SCALE+expX);
+  ans = ans*(SCALE >> 4);
+
+  return ans;
+}
+
+def void main ()
+{
+
+uint32_al x = 18535765u;
+uint32_al ans;
+ans = sigmoidX(x);
+}

@@ -47,6 +47,7 @@ type base_type =
   | Int32
   | Int64
   | Bool
+  | Float32
 
 type secret_label = 
   | Arithmetic
@@ -63,18 +64,23 @@ type const =
   | Int32C   of int32
   | Int64C   of int64
   | BoolC    of bool
+  | Float32C of string (*Check the implicaitons/Possible source of error*)
 
 type unop =
   (* Arithmetic *)
   | U_minus | Bitwise_neg
   (* Logical *)
   | Not
+  (* Floating Point *)
+  | Float_exp | Float_exp2
 
 type binop =
   (* Arithmetic *)
   | Sum | Sub | Mul | Div | Mod | Pow | Greater_than | Less_than | Is_equal | Greater_than_equal | Less_than_equal | R_shift_a | L_shift | Bitwise_and | Bitwise_or | Bitwise_xor
   (* Logical *)
   | And | Or | Xor | R_shift_l
+  (* Floating Point *)
+  | Float_sum | Float_sub | Float_mul | Float_div
 
 type var = {
     name: string;
@@ -155,13 +161,19 @@ let unop_to_string (u:unop) :string =
   | U_minus -> "-"
   | Bitwise_neg -> "~"
   | Not -> "!"
+  | Float_exp2 -> "FLT2EXP"
+  | Float_exp -> "FLTEXP"
             
 let binop_to_string (b:binop) :string =
   match b with
   | Sum -> "+"
+  | Float_sum -> "+."
   | Sub -> "-"
+  | Float_sub -> "-."
   | Mul -> "*"
+  | Float_mul -> "*."
   | Div -> "/"
+  | Float_div -> "/."
   | Mod -> "%"
   | Pow -> "pow"
   | Greater_than -> ">"
@@ -187,6 +199,7 @@ let rec expr_to_string (e:expr) :string =
   | Const (Int32C n)  -> Int32.to_string n
   | Const (Int64C n)  -> Int64.to_string n
   | Const (BoolC b)   -> string_of_bool b
+  | Const (Float32C n) -> n
   | Var x -> x.name
   | Unop (op, e, lopt) ->
      let op_str = unop_to_string op ^ "_" ^
@@ -219,6 +232,7 @@ let rec typ_to_string (t:typ) :string =
        | Int32  -> "int32"
        | Int64  -> "int64"
        | Bool -> "bool"
+       | Float32 -> "float"
      in
      prefix ^ " " ^ bt_str
   | Array (quals, t, e) ->
@@ -349,6 +363,7 @@ let typeof_const (c:const) (r:range) :typ =
    | UInt64C n -> Base (UInt64, Some Public)
    | Int32C n  -> Base (Int32, Some Public)
    | Int64C n  -> Base (Int64, Some Public)
+   | Float32C n -> Base (Float32, Some Public)
    | BoolC b   -> Base (Bool, Some Public)) |> mk_syntax r
 
 let join_types (t1:typ) (t2:typ) :typ option =
@@ -659,3 +674,5 @@ let get_unsigned (bt:base_type) :base_type =
   | UInt32 | UInt64 | Bool -> bt
   | Int32 -> UInt32
   | Int64 -> UInt64
+  | Float32 -> Float32
+  | _ -> UInt64

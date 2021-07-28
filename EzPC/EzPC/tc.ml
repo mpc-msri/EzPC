@@ -97,6 +97,7 @@ let check_unop_label_is_consistent (e:expr) (op:unop) (l:label) :unit result =
      | U_minus -> Type_error ("Unary minus should have been desugared: " ^ expr_to_string e, e.metadata)
      | Bitwise_neg when l = Boolean -> Well_typed ()
      | Not when l = Boolean -> Well_typed ()
+     | Float_exp | Float_exp2 when l = Boolean -> Well_typed ()
      | _ -> Type_error ("Unary operator expected a boolean label: " ^ expr_to_string e, e.metadata)
 
 (*
@@ -110,6 +111,7 @@ let check_binop_label_is_consistent (e:expr) (op:binop) (l:label) :unit result =
      match op with
      | Sum | Sub | Div | Mod -> Well_typed ()
      | Mul when l = Arithmetic -> Well_typed ()
+     | Float_sum | Float_sub | Float_mul |Float_div  when l = Boolean -> Well_typed ()
      | Greater_than | Less_than | Greater_than_equal | Less_than_equal | Is_equal when l = Boolean -> Well_typed ()
      | L_shift when l = Boolean -> Well_typed ()
      | R_shift_a when l = Boolean -> Well_typed ()
@@ -146,6 +148,13 @@ let check_expected_int_typ (e:expr) (t:typ) (l:label) :unit result =
   | Base (bt, Some lt) when (bt = UInt32 || bt = UInt64 || bt = Int32 || bt = Int64) && lt = l -> Well_typed ()
   | _ -> err
 
+let check_expected_flt_typ (e:expr) (t:typ) (l:label) :unit result =
+  let err = Type_error ("Expression " ^ (expr_to_string e) ^ " should have a float type with label " ^ label_to_string l ^
+                          ", instead got: " ^ typ_to_string t, e.metadata) in
+  match t.data with
+  | Base (bt, Some lt) when (bt = Float32) && lt = l -> Well_typed ()
+  | _ -> err
+
 let check_expected_bool_typ (e:expr) (t:typ) (l:label) :unit result =
   let err = Type_error ("Expression " ^ (expr_to_string e) ^ " should have bool type with label " ^ label_to_string l ^
                           ", instead got: " ^ typ_to_string t, e.metadata) in
@@ -173,6 +182,8 @@ let rec tc_expr (g:gamma) (e:expr) :eresult =
                           bind (match op with
                                 | Bitwise_neg -> check_expected_int_typ e1 t1 l
                                 | Not -> check_expected_bool_typ e1 t1 l
+                                | Float_exp | Float_exp2 -> 
+                                   check_expected_flt_typ e1 t1 l
                                 | _ -> Type_error ("Unexpected operator: " ^ unop_to_string op, e.metadata)) (fun _ -> Well_typed t1))))
 
   | Binop (op, e1, e2, lopt) ->
@@ -199,6 +210,9 @@ let rec tc_expr (g:gamma) (e:expr) :eresult =
                                  | And | Or | Xor -> 
                                     bind (check_expected_bool_typ e1 t1 l) (fun _ ->
                                            bind (check_expected_bool_typ e2 t2 l) (fun _ -> Well_typed t1))
+                                 | Float_sum | Float_sub | Float_div | Float_mul ->
+                                    bind (check_expected_flt_typ e1 t1 l) (fun _ ->
+                                          bind (check_expected_flt_typ e2 t2 l) (fun _ -> Well_typed t1))
                                  | _ -> Type_error ("Unexpected operator: " ^ binop_to_string op, e.metadata)))))
 
   | Conditional (e1, e2, e3, Some Public) ->
@@ -255,6 +269,8 @@ let rec check_type_well_formedness (g:gamma) (t:typ) :unit result =
   match t.data with
   | Base (_, None) -> Type_error ("Unlabeled type: " ^ (typ_to_string t), t.metadata)
   | Base (Bool, Some (Secret Arithmetic)) -> Type_error ("Bool type cannot be arithmetic shared: " ^ (typ_to_string t), t.metadata)
+  | Base (Float32, Some (Secret Arithmetic)) ->  Type_error ("Float type cannot be arithmetic shared: " ^ (typ_to_string t), t.metadata)
+  | Base (Float32, Some (Secret Boolean))
   | Base (UInt32, Some (Secret _))
   | Base (Int32, Some (Secret _)) -> if Config.get_bitlen () = 32 then Well_typed () else bitlen_err 32
   | Base (UInt64, Some (Secret _))
@@ -331,11 +347,11 @@ let rec tc_stmt (g:gamma) (s:stmt) :sresult =
   | For (_, e_var, e1, e2, s) when is_var e_var ->    (* TODO: check for qualifier consistency? *)
      let x = get_var e_var in
      bind (tc_expr g e1) (fun t1 ->
-            bind (check_expected_typ e1 t1 (Base (Int32, Some Public) |> mk_syntax e_var.metadata)) (fun _ ->
+            bind (check_expected_typ e1 t1 (Base (Int64, Some Public) |> mk_syntax e_var.metadata)) (fun _ ->
                    bind (tc_expr g e2) (fun t2 ->
                           bind (check_expected_typ e2 t2 t1) (fun _ ->
                                  let g_body = [x,
-                                               Base (Int32, Some Public) |> mk_syntax e_var.metadata] |> push_local_scope g in
+                                               Base (Int64, Some Public) |> mk_syntax e_var.metadata] |> push_local_scope g in
                                  bind (tc_stmt g_body s) (fun _ ->
                                         if SSet.mem x (modifies (g.top_level_functions |> List.map (fun (f, (bs, _)) -> (f, bs))) s)
                                         then Type_error ("Loop variable cannot be modified in the loop", s.metadata)

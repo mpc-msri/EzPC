@@ -36,6 +36,11 @@ SOFTWARE.
 #include<cmath>
 using namespace std;
 
+share* put_flt_cons32_gate(Circuit* c, float val, uint32_t bitlen, e_role role){
+  assert(c->GetCircuitType() == C_BOOLEAN);
+  uint32_t* val_int = (uint32_t*)&val;
+  return ((BooleanCircuit*)c)->PutINGate(val_int, bitlen, SERVER);
+}
 /*
  * somehow we need this redirection for adding Cons gates
  * directly calling PutConsGate gives an error
@@ -113,7 +118,7 @@ share* arithmetic_right_shift(Circuit* c, share* val, uint32_t shift_factor) {
 struct output_queue_elmt {
   ostream& os;  //output stream to which we will output (cout or files), can this be a reference to prevent copying?
   e_role role;  //who should we output the clear value to
-  enum {PrintMsg, PrintValue } kind;
+  enum {PrintMsg, PrintValue, PrintFloatValue } kind;
   string msg;
   share *ptr;
 };
@@ -128,6 +133,18 @@ void add_to_output_queue(output_queue &q,
 			 ostream &os)
 {
   struct output_queue_elmt elmt { os, role, output_queue_elmt::PrintValue, "", ptr };
+  q.push_back(elmt);
+}
+
+/*
+ * called from the EzPC generated code
+ */
+void add_float_to_output_queue(output_queue &q,
+			 share *ptr,
+			 e_role role,
+			 ostream &os)
+{
+  struct output_queue_elmt elmt { os, role, output_queue_elmt::PrintFloatValue, "", ptr };
   q.push_back(elmt);
 }
 
@@ -153,7 +170,20 @@ void flush_output_queue(output_queue &q, e_role role, uint32_t bitlen)
           it->os << it->ptr->get_clear_value<uint64_t>() << endl;
         }
       }
-    } else {
+    } else if (it->kind == output_queue_elmt::PrintFloatValue){
+      if(it->role == ALL || it->role == role) {  //if the queue element role is same as mine
+        if(bitlen == 32) {  //output to the stream
+          uint32_t out_int_val = it->ptr->get_clear_value<uint32_t>() ;
+          float out_val = *((float*)&out_int_val);
+          it->os << out_val << endl;
+        } else {
+          uint64_t out_int_val = it->ptr->get_clear_value<uint64_t>() ;
+          double out_val = *((double*)&out_int_val);
+          it->os << out_val << endl;
+        }
+      }
+    }
+    else{
       if(it->role == ALL || it->role == role) {  //if the queue element role is same as mine
         it->os << it->msg << endl;
       }
