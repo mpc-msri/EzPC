@@ -25,8 +25,8 @@ SOFTWARE.
 #ifndef __EZPC_H_
 #define __EZPC_H_
 #include "millionaire_prob.h"
-#include "../../../abycore/circuit/booleancircuits.h"
-#include "../../../abycore/sharing/sharing.h"
+#include "abycore/circuit/booleancircuits.h"
+#include "abycore/sharing/sharing.h"
 #include<vector>
 #include<string>
 #include<sstream>
