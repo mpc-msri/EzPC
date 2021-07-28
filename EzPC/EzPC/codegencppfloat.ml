@@ -170,7 +170,7 @@ let o_basetyp (t:base_type) :comp =
   | UInt64 -> o_str "uint64_t"
   | Int32  -> o_str default_bitlen_str
   | Int64  -> o_str "uint64_t"
-  | Float -> o_str "float"
+  | Float -> o_str "double"
   | Bool   -> o_str default_bitlen_str
 
 let rec o_secret_binop (g:gamma) (op:binop) (sl:secret_label) (e1:expr) (e2:expr) :comp =
@@ -220,7 +220,7 @@ and o_expr (g:gamma) (e:expr) :comp =
 
   | Const (UInt64C n) -> seq (o_str (" (uint64_t)")) (o_uint64 n)
 
-  | Const (FloatC f) -> seq (o_str (" (float)")) (o_float f)
+  | Const (FloatC f) -> seq (o_str (" (double)")) (o_float f)
 
   | Const (BoolC b) -> o_bool b
     

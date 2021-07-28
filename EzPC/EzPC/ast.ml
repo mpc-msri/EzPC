@@ -94,14 +94,14 @@ type qualifiers = qualifier list
   
 type expr' =
   | Role          of role
-  | Const	  of const
-  | Var 	  of var
+  | Const     of const
+  | Var       of var
   | Unop          of unop * expr * label option
-  | Binop 	  of binop * expr * expr * label option
+  | Binop     of binop * expr * expr * label option
   | Conditional   of expr  * expr * expr * label option
-  | Array_read	  of expr * expr
+  | Array_read    of expr * expr
   | App           of string * expr list
-  | Subsumption	  of expr * label * label
+  | Subsumption   of expr * label * label
 
 and expr = expr' syntax
                    
@@ -123,7 +123,7 @@ type stmt' =
   | While   of expr * stmt                                 (* guard, body *)
   | If_else of expr * stmt * stmt option                   (* conditional, then, optional else *)
   | Return  of expr option                                 (* return expression *)
-  | Seq	    of stmt * stmt
+  | Seq     of stmt * stmt
   | Input   of expr * expr * typ                           (* role, variable name, type *)
   | Output  of expr * expr * typ option                    (* role, expression to output, type *)
   | Skip    of string                                      (* dummy statement, repurpose it for different metadata *)
