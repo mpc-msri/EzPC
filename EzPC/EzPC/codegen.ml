@@ -739,7 +739,7 @@ e_role role;\n"
 
 let aby_main_prelude_string :string =
 "role = role_param;\n\
-party = new ABYParty(role_param, address, port, seclvl, bitlen, nthreads, mt_alg, 520000000);\n\
+party = new ABYParty(role_param, address, port, seclvl, bitlen, nthreads, mt_alg, 4000000);\n\
 std::vector<Sharing*>& sharings = party->GetSharings();\n\
 ycirc = (sharings)[S_YAO]->GetCircuitBuildRoutine();\n\
 acirc = (sharings)[S_ARITH]->GetCircuitBuildRoutine();\n\
