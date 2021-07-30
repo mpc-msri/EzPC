@@ -45,6 +45,28 @@ let o_punop :unop -> comp = function
   | U_minus -> o_str "-"
   | Bitwise_neg -> o_str "~"
   | Not -> o_str "!"
+                        
+let o_pbinop :binop -> comp = function
+  | Sum          -> o_str "+"
+  | Sub          -> o_str "-"
+  | Mul          -> o_str "*"
+  | Div          -> o_str "/"
+  | Mod          -> o_str "%"
+  | Pow          -> failwith "Pow is not an infix operator, so o_pbinop can't handle it"
+  | Greater_than -> o_str ">"
+  | Less_than    -> o_str "<"
+  | Is_equal     -> o_str "=="
+  | Greater_than_equal -> o_str ">="
+  | Less_than_equal -> o_str "<="
+  | R_shift_a    -> o_str ">>"
+  | L_shift      -> o_str "<<"
+  | Bitwise_and  -> o_str "&"
+  | Bitwise_or   -> o_str "|"
+  | Bitwise_xor  -> o_str "^"
+  | And          -> o_str "&&"
+  | Or           -> o_str "||"
+  | Xor          -> o_str "^"
+  | R_shift_l    -> o_str ">>"
 
 (*
  * ABY doesn't like circ->PutINVGate where circ:Circuit*, so we need to coerce it to BooleanCircuit*
@@ -69,32 +91,6 @@ let o_hd_and_args (head:comp) (args:comp list) :comp =
      seq c (o_str ")")
 
 let o_app (head:comp) (args:comp list) :comp = o_hd_and_args head args
-
-let o_pbinop (op:binop) (e1comp:comp) (e2comp:comp) : comp = 
-  let err_unhandled (s:string) = failwith ("Unhandled public operator : " ^ s) in
-  let make_function_call (fn_name:string) = o_app (o_str fn_name) [e1comp; e2comp] in
-  let make_op_call (opstr:string) = seq e1comp (seq o_space (seq (o_str opstr) (seq o_space e2comp))) in
-  match op with
-  | Sum          -> make_function_call "PublicAdd"
-  | Sub          -> make_function_call "PublicSub"
-  | Mul          -> make_function_call "PublicMult"
-  | Div          -> make_function_call "PublicDiv"
-  | Mod          -> make_function_call "PublicMod"
-  | Pow          -> err_unhandled "Pow"
-  | Greater_than -> make_function_call "PublicGT"
-  | Less_than    -> make_function_call "PublicLT"
-  | Is_equal     -> make_op_call "=="
-  | Greater_than_equal -> make_function_call "PublicGTE"
-  | Less_than_equal -> make_function_call "PublicLTE"
-  | R_shift_a    -> make_function_call "PublicRShiftA"
-  | L_shift      -> make_function_call "PublicLShift"
-  | Bitwise_and  -> make_op_call "&"
-  | Bitwise_or   -> make_op_call "|"
-  | Bitwise_xor  -> make_op_call "^"
-  | And          -> make_op_call "&&"
-  | Or           -> make_op_call "||"
-  | Xor          -> make_op_call "^"
-  | R_shift_l    -> make_function_call "PublicRShiftL"
 
 let o_cbfunction_maybe_coerce (coerce:bool) (l:secret_label) (f:comp) (args:comp list) :comp =
   o_app (seq (o_slabel_maybe_coerce coerce l) (seq (o_str "->") f)) args
@@ -164,14 +160,13 @@ let o_subsumption (src:label) (tgt:secret_label) (t:typ) (arg:comp) :comp =
        o_cbfunction tgt (o_str fn_name) [arg; o_str circ_arg]
 
 let o_basetyp (t:base_type) :comp =
-  let default_bitlen_str = ("uint" ^ (Config.get_bitlen () |> string_of_int) ^ "_t") in
   match t with
-  | UInt32 -> o_str default_bitlen_str
+  | UInt32 -> o_str "uint32_t"
   | UInt64 -> o_str "uint64_t"
-  | Int32  -> o_str default_bitlen_str
-  | Int64  -> o_str "uint64_t"
-  | Float -> o_str "double"
-  | Bool   -> o_str default_bitlen_str
+  | Int32  -> o_str "int32_t"
+  | Int64  -> o_str "int64_t"
+  | Float  -> o_str "FPArray"
+  | Bool   -> o_str "uint32_t"
 
 let rec o_secret_binop (g:gamma) (op:binop) (sl:secret_label) (e1:expr) (e2:expr) :comp =
   (*
@@ -216,11 +211,11 @@ and o_expr (g:gamma) (e:expr) :comp =
 
   | Const (Int64C n) -> seq (o_str (" (int64_t)")) (o_int64 n)
 
-  | Const (UInt32C n) -> seq (o_str (" (" ^ ("uint" ^ (Config.get_bitlen () |> string_of_int) ^ "_t") ^ ")")) (o_uint32 n)
+  | Const (UInt32C n) -> seq (o_str (" (uint32_t)")) (o_uint32 n)
 
   | Const (UInt64C n) -> seq (o_str (" (uint64_t)")) (o_uint64 n)
 
-  | Const (FloatC f) -> seq (o_str (" (double)")) (o_float f)
+  | Const (FloatC f) -> seq (o_str (" (float)")) (o_float f)
 
   | Const (BoolC b) -> o_bool b
     
@@ -234,7 +229,7 @@ and o_expr (g:gamma) (e:expr) :comp =
      o_paren (match op with
               | R_shift_l -> o_app (o_str "public_lrshift") [o_expr e1; o_expr e2]
               | Pow -> o_app (o_str "pow") [o_expr e1; o_expr e2]
-              | _ -> (o_pbinop op (o_expr e1) (o_expr e2)))
+              | _ -> seq (o_expr e1) (seq o_space (seq (o_pbinop op) (seq o_space (o_expr e2)))))
 
   | Binop (op, e1, e2, Some (Secret s)) -> o_secret_binop g op s e1 e2
 
@@ -292,7 +287,7 @@ let o_array_init (g:gamma) (t:typ) :comp =
   o_app s (List.map (o_expr g) l)
 
 let o_for (index:comp) (lower:comp) (upper:comp) (body:comp) :comp =
-  let init = seq (o_str ("for (" ^ ("uint" ^ (Config.get_bitlen () |> string_of_int) ^ "_t") ^ " ")) (seq index (seq (o_str " = ") lower)) in
+  let init = seq (o_str "for (uint32_t ") (seq index (seq (o_str " = ") lower)) in
   let term = seq index (seq (o_str " < ") upper) in
   let incr = seq index (o_str "++)") in
   let header = seq init (seq (o_str "; ") (seq term (seq (o_str "; ") (seq incr (o_str "{"))))) in
@@ -327,18 +322,34 @@ let out_files :(string list) ref = ref []
 
 let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
   match s.data with
-  | Decl (t, e, init_opt) ->
-     let o_init =
-       match init_opt with
-       | Some e -> Some (o_expr g e)
-       | None -> if is_array_typ t then Some (o_array_init g t) else None
-     in
-     let comment =
-       let c = Global.get_comment s.metadata in
-       if c = "" then o_null else o_comment c
-     in
-     seq comment (seq o_newline (o_with_semicolon (o_decl (o_typ t) (o_expr g e) o_init))),
-     add_local_binding g (get_var e) t
+  | Decl (t, e, init_opt) -> 
+     (match t.data with
+     | Base (Float, _) -> 
+        let maybe_init_prior, init_after =
+        (match init_opt with
+        | Some e -> 
+            (match e.data with
+            | Const (FloatC f) -> 
+                let prior1 = o_str "float *__dummy = new float[1] " |> s_smln 
+                in let prior2 = o_str "__dummy[0] = " |> seqs @@ o_float f |> s_smln 
+                in let after1 = o_str " = fp_op->input(ALICE, 1, __dummy) " |> s_smln 
+                in let after2 = o_str "delete __dummy " |> s_smln 
+                in seq prior1 prior2, seq after1 after2 
+            | Var x -> o_null, seql [o_str " = "; o_str x.name] |> s_smln 
+            | _ ->  let no_feature = o_str "!! Feature not added yet !!" in no_feature, no_feature)
+        | None -> o_null, o_smln) 
+        in let const_fparray = seql [o_str "FPArray "; o_expr g e] 
+        in seql [maybe_init_prior; const_fparray; init_after]
+     | _ -> let o_init =
+        (match init_opt with
+            | Some e -> Some (o_expr g e)
+            | None -> if is_array_typ t then Some (o_array_init g t) else None)
+        in
+        let comment = 
+        let c = Global.get_comment s.metadata
+        in if c = "" then o_null else o_comment c
+        in o_decl (o_typ t) (o_expr g e) o_init |> o_with_semicolon |> seq o_newline |> seq comment), 
+        add_local_binding g (get_var e) t
     
   | Assign (e1, e2) -> o_codegen_stmt g (Assign_codegen (Base_e e1, Base_e e2))
 
@@ -608,17 +619,11 @@ and o_codegen_stmt (g:gamma) (s:codegen_stmt) :comp * gamma =
   | App_codegen (f, args) -> o_with_semicolon (o_app (o_str f) (List.map (o_codegen_expr g) args)), g
 
   | Cin (s, x, _) ->
-    let codegen_expr_x = o_codegen_expr g x in
-    let cin_statement = 
      (if Config.get_dummy_inputs () then
-        o_with_semicolon (seq codegen_expr_x (o_str (" = rand()")))
+        o_with_semicolon (seq (o_codegen_expr g x) (o_str (" = rand()")))
       else
-        o_with_semicolon (seq (o_str s) (seq (o_str " >> ") codegen_expr_x)))
-    in
-    let assign_statement = 
-      o_with_semicolon (seq codegen_expr_x (seq (o_str " = getRingElt(") (seq codegen_expr_x (o_str ")"))))
-    in
-    seq (seq cin_statement o_newline) assign_statement, g
+        o_with_semicolon (seq (o_str s) (seq (o_str " >> ") (o_codegen_expr g x)))),
+     g
 
   | Cout (s, e, _) ->
      o_with_semicolon (seq (o_str s) (seq (o_str " << ") (seq (o_paren (o_codegen_expr g e)) (o_str " << endl")))),
@@ -688,33 +693,34 @@ let o_global (g0:gamma) (d:global) :comp * gamma =
      seq (o_with_semicolon (seq (o_str "const ") (o_decl (o_typ t) (o_expr g0 e_var) (Some (o_expr g0 init))))) o_newline,
      add_global_const g0 d.data
 
-let prelude_string (hash_define_str:string) :string =
-  let bitlen = Config.get_bitlen () |> string_of_int in
+let prelude_string :string = let ps1 =
 "\
 /*\n\
 This is an autogenerated file, generated using the EzPC compiler.\n\
 */\n\
-"
-^
-hash_define_str
-^
-"
 #include<vector>\n\
 #include<math.h>\n\
 #include<cstdlib>\n\
 #include<iostream>\n\
 #include<fstream>\n\
-#include<cassert>\n\
-"
-^
-"
-#include \"../../../EzPC/EzPC/Library/Library" ^ bitlen ^ "_cppring.h\"\n\
-"
-^
-"
 \n\
-using namespace std;\n\
+#include \"FloatingPoint/floating-point.h\"\n\
+#include \"FloatingPoint/fp-math.h\"\n\
 \n\
+using namespace std ;\n\
+using namespace sci ;\n\
+\n\
+IOPack *__iopack__ = nullptr ;\n\
+OTPack *__otpack__ = nullptr ;\n\
+FPOp *__fp_op__ = nullptr ;\n\
+FPMath *__fp_math__ = nullptr ;\n\
+int __party__ ;\n\
+string __address__ = \"127.0.0.1\" ;\n\
+int __port__ = 8000 ;\n\
+uint8_t __m_bits__ = 23, __e_bits__ = 8 ;\n\
+\n\
+" in let ps2 = 
+"
 uint32_t public_lrshift(uint32_t x, uint32_t y){\n\
   return (x >> y);\n\
 }\n\
@@ -753,46 +759,58 @@ ostream& operator<< (ostream &os, const vector<T> &v)\n\
 }\n\
 \n\
 "
+in ps1 
+                                   
+let aby_prelude_string (bitlen:int) :string =
+"\
+#include \"ezpc.h\"\n\
+ABYParty *party;\n\
+Circuit* ycirc;\n\
+Circuit* acirc;\n\
+Circuit* bcirc;\n\
+uint32_t bitlen = " ^ string_of_int bitlen ^ ";\n\
+output_queue out_q;\n\
+e_role role;\n"
+
+let aby_main_prelude_string :string =
+"role = role_param;\n\
+party = new ABYParty(role_param, address, port, seclvl, bitlen, nthreads, mt_alg, 520000000);\n\
+std::vector<Sharing*>& sharings = party->GetSharings();\n\
+ycirc = (sharings)[S_YAO]->GetCircuitBuildRoutine();\n\
+acirc = (sharings)[S_ARITH]->GetCircuitBuildRoutine();\n\
+bcirc = (sharings)[S_BOOL]->GetCircuitBuildRoutine();\n"
 
 let o_one_program ((globals, main):global list * codegen_stmt) (ofname:string) :unit =
-  let (hash_define_str, main_prelude) = 
-    let modulo_str = Config.get_modulo () |> Uint64.to_string in
-    if (Config.get_modulo () = Uint64.shift_left (Uint64.of_int 1) (Config.get_actual_bitlen ())) then begin
-      (* Note: CPPRING codegen is only called for bitlen < 64 *)
-      (* This is imp because we are adding statements like modulo = (1<<bitlen) below *)
-      (* This is a two-power ring *)
-      let hash_define_str = "#define TWO_POWER_RING" in 
-      let main_prelude = 
-        "modulo = " ^ modulo_str ^ ";\n\
-         moduloMask = modulo-1;\n\
-         moduloMidPt = modulo/2;\n\
-        "
-      in 
-      (hash_define_str, main_prelude)
-    end
-    else if Uint64.logand (Config.get_modulo ()) (Uint64.of_int 1) = (Uint64.of_int 1) then begin
-      (* Odd ring *)
-      let hash_define_str = "#define ODD_RING" in 
-      let main_prelude = 
-        "modulo = " ^ modulo_str ^ ";\n\
-         moduloMidPt = modulo/2;\n\
-        "
-      in 
-      (hash_define_str, main_prelude)
-    end
-    else begin
-      (* Even ring not a power of 2*)
-      let hash_define_str = "" in 
-      let main_prelude = 
-        "modulo = " ^ modulo_str ^ ";\n\
-        "
-      in 
-      (hash_define_str, main_prelude)
-    end 
+  let prelude =
+    if Config.get_codegen () = Config.CPPFLOAT then o_str prelude_string
+    else
+      o_str (prelude_string ^ "\n" ^ (aby_prelude_string (Config.get_bitlen ())))
   in
-  let prelude = prelude_string hash_define_str |> o_str in  
-  let main_header = o_str "\n\nint main () {\n" in
-  let main_prelude = o_str main_prelude in
+
+  let main_header =
+    if Config.get_codegen () = Config.CPPFLOAT then o_str 
+"\n\nint main (int __argc__, char **__argv__) {\n\
+cout.precision(15) ;\n\
+ArgMapping __amap__ ;\n\
+__amap__.arg(\"r\", __party__, \"Role of party: ALICE/SERVER = 1; BOB/CLIENT = 2\") ; \n\
+amap.parse(__argc__, __argv__) ;\n\
+\n\
+__iopack__ = new IOPack(__party__, __port__, __address__) ;\n\
+__otpack__ = new OTPack(__iopack__, __party__) ;\n\
+\n\
+__fp_op__ = new FPOp(__party__, __iopack__, __otpack__) ; \n\
+__fp_math__ = new FPMath(__party__, __iopack__, __otpack__) ; \n\    
+\n\
+"
+    else o_str "\n\nint64_t ezpc_main (e_role role_param, char* address, uint16_t port, seclvl seclvl,\n\
+                uint32_t nvals, uint32_t nthreads, e_mt_gen_alg mt_alg,\n\
+                e_sharing sharing) {\n"
+  in
+
+  let main_prelude =
+    if Config.get_codegen () = Config.CPPFLOAT then o_null
+    else seq (o_str aby_main_prelude_string) o_newline
+  in
   
   let main_prelude, g =
     let c_globals, g = List.fold_left (fun (c, g) d ->

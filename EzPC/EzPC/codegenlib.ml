@@ -50,9 +50,22 @@ let o_str (s:string) :comp = fun buf -> Buffer.add_string buf s
 
 let seq (f:comp) (g:comp) :comp = fun buf -> f buf; g buf
 
+let seqs (f:comp) (g:comp) :comp = seq g f
+
+let rec seql (l:comp list) : comp = 
+    match l with
+    | []        -> o_null
+    | hd::tl    -> seq hd (seql tl) 
+
 let o_space :comp = o_str " "
 
+let o_semicol :comp = o_str " ;"
+
 let o_newline :comp = o_str "\n"
+
+let s_smln = seqs @@ seql [o_semicol; o_newline]
+
+let o_smln = o_null |> s_smln
 
 let o_string_literal (s:string) :comp = seq (o_str "\"") (seq (o_str s) (o_str "\""))
 

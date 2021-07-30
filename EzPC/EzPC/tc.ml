@@ -139,9 +139,9 @@ let check_subsumption_type_and_label (e:expr) (t:typ) (l1:label) (l2:label) :ere
            | Base (bt, _) -> Well_typed (Base (bt, Some l2) |> mk_syntax t.metadata)
            | _ -> failwith "check_subsumption_type_and_label: impossible branch")
 
-(* numeric -> integer or floating type *)
+(* numeric represents either integer or floating type *)
 let check_expected_numeric_typ (e:expr) (t:typ) (l:label) :unit result =
-  let err = Type_error ("Expression " ^ (expr_to_string e) ^ " should have an int type with label " ^ label_to_string l ^
+  let err = Type_error ("Expression " ^ (expr_to_string e) ^ " should have either integer/floating type with label " ^ label_to_string l ^
                           ", instead got: " ^ typ_to_string t, e.metadata) in
   match t.data with
   | Base (bt, Some lt) when (bt <> Bool) && lt = l -> Well_typed ()

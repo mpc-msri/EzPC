@@ -31,6 +31,7 @@ type codegen =
   | PORTHOS
   | SCI
   | CPPRING
+  | CPPFLOAT
 
 type bool_sharing_mode =
   | Yao
