@@ -63,12 +63,14 @@ let o_semicol :comp = o_str " ;"
 
 let o_newline :comp = o_str "\n"
 
+(* Pipe a semicolon after a series of output pipes *)
 let s_smln = seqs @@ seql [o_semicol; o_newline]
 
+(* Insert a semicolon at the end of the buffer *)
 let o_smln = o_null |> s_smln
 
 let o_string_literal (s:string) :comp = seq (o_str "\"") (seq (o_str s) (o_str "\""))
 
-let o_paren (c:comp) :comp = seq (o_str "(") (seq c (o_str ")"))
+let o_paren (c:comp) :comp = seql [o_str "("; c; o_str ")"]
 
 let o_with_semicolon (c:comp) :comp = seq c (o_str ";")

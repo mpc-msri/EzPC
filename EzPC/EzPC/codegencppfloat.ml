@@ -297,9 +297,17 @@ let o_while (guard:comp) (body:comp) :comp =
   seq (o_str "while (") (seq guard (seq (o_str ") {\n") (seq body (o_str "\n}\n"))))
   
 let o_ite (c_if:comp) (c_then:comp) (c_else_opt:comp option) :comp =
-  let c_if_then = seq (o_str "if (") (seq c_if (seq (o_str ") {") (seq o_newline (seq c_then (seq o_newline (o_str "}")))))) in
+  (* let c_if_then = seq (o_str "if (") (seq c_if (seq (o_str ") {") (seq o_newline (seq c_then (seq o_newline (o_str "}")))))) in *)
+  (* Too many brackets, simplified expression below *)
+  let c_if_then = seql [o_str "if ("; c_if; o_str ") {"; o_newline; 
+        c_then; o_newline; 
+        o_str "}"] in
   if is_none c_else_opt then c_if_then
-  else seq c_if_then (seq (o_str " else {") (seq o_newline (seq (get_opt c_else_opt) (seq o_newline (o_str "}")))))
+  else (* seq c_if_then (seq (o_str " else {") (seq o_newline (seq (get_opt c_else_opt) (seq o_newline (o_str "}"))))) *)
+       (* Too many brackets, simplified expression below *)
+      seql [c_if_then; o_str " else {"; o_newline; 
+            get_opt c_else_opt; o_newline; 
+        o_str "}"]
 
 let o_assign (lhs:comp) (rhs:comp) :comp = seq lhs (seq (o_str " = ") rhs)
 
@@ -330,10 +338,10 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
         | Some e -> 
             (match e.data with
             | Const (FloatC f) -> 
-                let prior1 = o_str "float *__dummy = new float[1] " |> s_smln 
-                in let prior2 = o_str "__dummy[0] = " |> seqs @@ o_float f |> s_smln 
-                in let after1 = o_str " = fp_op->input(ALICE, 1, __dummy) " |> s_smln 
-                in let after2 = o_str "delete __dummy " |> s_smln 
+                let prior1 = o_str "float *__dummy_in_const = new float[1] " |> s_smln 
+                in let prior2 = o_str "__dummy_in_const[0] = " |> seqs @@ o_float f |> s_smln 
+                in let after1 = o_str " = fp_op->input(ALICE, 1, __dummy_in_const) " |> s_smln 
+                in let after2 = o_str "delete __dummy_in_const " |> s_smln 
                 in seq prior1 prior2, seq after1 after2 
             | Var x -> o_null, seql [o_str " = "; o_str x.name] |> s_smln 
             | _ ->  let no_feature = o_str "!! Feature not added yet !!" in no_feature, no_feature)
@@ -370,12 +378,16 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
   | Input (e_role, e_var, t) when is_role e_role && is_var e_var ->
      let rng = s.metadata in
      let r, x = get_role e_role, get_var e_var in
+     let fp_role = role_to_fpstring r in
      let is_arr = is_array_typ t in
      
      (* bt is the base type and l label *)
      let bt, l = get_bt_and_label t |> (fun (bt, l) -> get_inp_type bt, l) in
      let l = get_opt l in
-
+     let is_float = match bt with
+                    | Float -> true
+                    | _     -> false 
+     in
      (* list of dimensions, if an array else empty *)
      let el = if is_arr then snd (get_array_bt_and_dimensions t) else [] in
      
@@ -392,27 +404,37 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
        "Variable to read the clear value corresponding to the input variable " ^ x.name ^
          " at " ^ (Global.Metadata.sprint_metadata "" rng)
      in
-     let decl_tmp = Base_s (Decl (Base (bt, Some Public) |> mk_dsyntax "",
-                                  Var tmp_var_name |> mk_dsyntax "", None) |> mk_dsyntax s_decl_tmp) in
-     
+     let decl_tmp = if is_float (* float *__tmp_in_a = new float[1] ; *) 
+                    then let abuse_left = { name="float *__tmp_in_" ^ x.name; index=0 ; } in
+                        let assgn_float_left = Base_e ((Var abuse_left) |> mk_dsyntax "") in
+                        let abuse_right = { name="new float[1]"; index=0; } in
+                        let assgn_float_right = Base_e ((Var abuse_right) |> mk_dsyntax "") in
+                        Assign_codegen (assgn_float_left, assgn_float_right)
+                    else Base_s (Decl (Base (bt, Some Public) |> mk_dsyntax "",
+                    Var tmp_var_name |> mk_dsyntax "", None) |> mk_dsyntax s_decl_tmp)
+     in
      (* expression that we will initialize each optional loop iteration *)
-     let assgn_left =
-       Base_e (snd (List.fold_left (fun (i, e) _ ->
+     let assgn_left = if is_float then Base_e (Var x |> mk_dsyntax "") 
+       else Base_e (snd (List.fold_left (fun (i, e) _ ->
                         let i_var = { name = "i" ^ (string_of_int i); index = 0; } in
                         i + 1, Array_read (e, Var i_var |> mk_dsyntax "") |> mk_dsyntax ""
                       ) (0, Var x |> mk_dsyntax "") el))
      in
 
      (* conditional expression for role == r *)
-     let r_cmp =
-       let role_var = { name = "role"; index = 0 } in
-       Base_e (Binop (Is_equal, Var role_var |> mk_dsyntax "", Role r |> mk_dsyntax "", Some Public) |> mk_dsyntax "")
+     let r_cmp = 
+       let role_var = Var { name = if is_float then "party" else "role"; index = 0 ; } in
+       let what_role = if is_float then Var { name = fp_role; index = 0; } else Role r in     (* Abusing Var for a string here *)
+       Base_e (Binop (Is_equal, role_var |> mk_dsyntax "", what_role |> mk_dsyntax "", Some Public) |> mk_dsyntax "")
      in
      
      (* this is the innermost loop body *)
      let base_init =
        (* if role == r then cin into the temporary variable *)
-       let cin = Cin ("cin", Base_e (Var tmp_var_name |> mk_dsyntax "") , bt) in
+       let tmp_codegen_expr = if is_float
+            then Base_e (Var { tmp_var_name with name = "__tmp_in_" ^ x.name ^ "[0]" } |> mk_dsyntax "") 
+            else Base_e (Var tmp_var_name |> mk_dsyntax "") in
+       let cin = Cin ("cin", tmp_codegen_expr , bt) in
 
        if is_secret_label l then
          let sl = get_secret_label l in
@@ -422,12 +444,9 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
                                      Conditional_codegen (r_cmp,
                                                           Input_g (r, sl, tmp_var_name, bt),
                                                           Dummy_g (sl, bt), Public))
-         in
-         Seq_codegen (cin, assgn)
-       else
-         let assgn = Assign_codegen (assgn_left,
-                                     Base_e (Var tmp_var_name |> mk_dsyntax ""))
-         in
+         in Seq_codegen (cin, assgn)
+       else if is_float then cin
+       else let assgn = Assign_codegen (assgn_left, tmp_codegen_expr) in
          Seq_codegen (cin, assgn)
      in
      
@@ -443,24 +462,31 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
               ) el (List.length el - 1, base_init))
      in
 
-     (* adding a print statement for the input *)
      (*
       * ideally we want cout for a string, can be added easily to codegenast.ml,
       * but for now abusing the codegen for variables
       *)
      let print_input_message =
-       let x = { name = "\"Input " ^ x.name ^ ":\""; index = 0 } in
-       let cout_stmt = Cout ("cout", Base_e (Var x |> mk_dsyntax ""), bt) in
+       let abuse_x = { name = "\"Input " ^ x.name ^ ":\""; index = 0 } in           (* Abuse occuring here *)
+       let cout_stmt = Cout ("cout", Base_e (Var abuse_x |> mk_dsyntax ""), bt) in
 
        (* is_secret_label l is also a proxy for codegen ABY, since labels are erased already if codegen CPP *)
        if is_secret_label l then
          If_codegen (Public, r_cmp, cout_stmt, None)
-       else
+       else (* codegen CPP *)
          cout_stmt
      in
      
-     (* stitch *)
-     o_codegen_stmt g (Seq_codegen (decl, Seq_codegen (Seq_codegen (print_input_message, decl_tmp), loops)))
+     if is_float then let alice_or_bob = If_codegen (Public, r_cmp, Seq_codegen (print_input_message, loops), None) in
+        let assgn_right = Base_e (Var { name="fp_op->input(" ^ fp_role ^ ", 1, " ^ tmp_var_name.name ^ ")" ; index=0; } |> mk_dsyntax "") in      (* Abusing codegen for variables *) 
+        let assgn = Assign_codegen (assgn_left, assgn_right) in
+        let cleanup = o_str @@ "delete " ^ tmp_var_name.name |> s_smln in
+        let input_cmp, input_gamma = o_codegen_stmt g @@ Seq_codegen (Seq_codegen (Seq_codegen (decl, decl_tmp), alice_or_bob), assgn) in
+     input_cmp |> seqs cleanup, input_gamma
+     else o_codegen_stmt g (Seq_codegen (decl, Seq_codegen (Seq_codegen (print_input_message, decl_tmp), loops)))
+     (* stitch as
+     decl; print_input_message; decl_tmp; loops 
+     *)
 
   | Output (e_role, e, Some t) when is_role e_role ->
      let r = get_role e_role in
@@ -625,8 +651,11 @@ and o_codegen_stmt (g:gamma) (s:codegen_stmt) :comp * gamma =
         o_with_semicolon (seq (o_str s) (seq (o_str " >> ") (o_codegen_expr g x)))),
      g
 
+  (* Base type is only used in OBLIVC backend *)
   | Cout (s, e, _) ->
-     o_with_semicolon (seq (o_str s) (seq (o_str " << ") (seq (o_paren (o_codegen_expr g e)) (o_str " << endl")))),
+     (* o_with_semicolon (seq (o_str s) (seq (o_str " << ") (seq (o_paren (o_codegen_expr g e)) (o_str " << endl")))) *)
+     (* Too many brackets, cleaner line below *)
+     seql [o_str s; o_str " << "; o_paren @@ o_codegen_expr g e; o_str " << endl"] |> s_smln,
      g
 
   | Dump_interim (e_var, t, f) when is_var e_var -> read_or_write_interim g true e_var t f, g
@@ -647,7 +676,7 @@ and o_codegen_stmt (g:gamma) (s:codegen_stmt) :comp * gamma =
 
   | Read_interim _ -> failwith "Impossible! we don't support reading of arbitrary shares"
 
-  | Assign_codegen (e1, e2) -> o_with_semicolon (o_assign (o_codegen_expr g e1) (o_codegen_expr g e2)), g
+  | Assign_codegen (e1, e2) -> o_assign (o_codegen_expr g e1) (o_codegen_expr g e2) |> s_smln, g
            
   | For_codegen (e1, e2, e3, s) ->
      let i_var =
@@ -663,7 +692,7 @@ and o_codegen_stmt (g:gamma) (s:codegen_stmt) :comp * gamma =
 
   | If_codegen (_, e, s_then, s_else_opt) ->
      let g_body = [] |> push_local_scope g in
-     o_ite (o_codegen_expr g e) (o_codegen_stmt g_body s_then |> fst)
+     o_ite (o_codegen_expr g e) (s_then |> o_codegen_stmt g_body |> fst)
            (map_opt s_else_opt (fun s -> s |> o_codegen_stmt g_body |> fst)),
      g
 

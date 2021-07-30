@@ -152,6 +152,12 @@ let role_to_string (r:role) :string =
   | Client -> "CLIENT"
   | Both   -> "ALL"
 
+let role_to_fpstring (r:role) :string =
+  match r with
+  | Server -> "ALICE"
+  | Client -> "BOB"
+  | Both   -> "PUBLIC"
+
 let unop_to_string (u:unop) :string =
   match u with
   | U_minus -> "-"
