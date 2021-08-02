@@ -1,6 +1,7 @@
 - [Introduction](#introduction)
 - [Requirements/Setup](#requirementssetup)
 - [Usage](#usage)
+  * [Compiling random forest/decision tree](#compiling-random-forest-decision-tree)
   * [Compiling a tensorflow model](#compiling-a-tensorflow-model)
   * [Compiling an ONNX model](#compiling-an-onnx-model)
   * [Compiling and Running Models in Networks Directory Automatically](#compiling-and-running-models-in-networks-directory-automatically)
@@ -26,6 +27,9 @@ Athos also makes use of the EzPC compiler internally (please check `../EzPC/READ
 Please source the virtual environment in `mpc_venv` if you used the `setup_env_and_build.sh` script to setup and build.
 
 `source mpc_venv/bin/activate`
+
+## Compiling random forest/decision tree
+Use `CompileRandomForests.py` according to the readme in [Athos/RandomForests](https://github.com/mpc-msri/EzPC/tree/master/Athos/RandomForests)
 
 ## Compiling a tensorflow model
 The `CompileTFGraph.py` script can compile tensorflow models (v1.15). You can dump your tensorflow model as a frozen graph. Run [convert_variables_to_constants](https://www.tensorflow.org/api_docs/python/tf/compat/v1/graph_util/convert_variables_to_constants) on your model graph and then dump the output graph_def as a protobuf (see `dump_graph_def_pb` in `CompilerScripts/tf_graph_io.py`). Once you have the model.pb file simply do:
