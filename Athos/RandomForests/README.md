@@ -46,8 +46,7 @@ The client does not receive the model weights and only compute information about
 
 On the client machine, you need to have EzPC setup too (for testing, we can do it on the same machine). Say you have put `client.json` in `~/testing`. To compile do:
 ```
-cd path/to/Athos
-python CompileRandomForests.py --role="client" --config ~/testing/client.json
+python ~/EzPC/Athos/CompileRandomForests.py --role="client" --config ~/testing/client.json
 ```
 The generated binary is in `~/testing/ezpc_build_dir/random_forest`
 
