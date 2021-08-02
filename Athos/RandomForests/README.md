@@ -22,8 +22,7 @@ We will use the notebook example as an end-to-end demo.
  This dumps the model in `pickle_model.pickle`. Additionally it also dumps a sample input as a numpy array in `input.npy`.
  Note that the number of features in the input vector is 13. The script also prints the expected output for this example `Expected output:  133242.04011201978`
  ```
- cd path/to/Athos
- python CompileRandomForests.py --pickle RandomForests/notebooks/pickle_model.pickle --task="reg" --model_type="forest" --no_features=13 --role="server"
+ python ~/EzPC/Athos/CompileRandomForests.py --pickle ~/EzPC/Athos/RandomForests/notebooks/pickle_model.pickle --task="reg" --model_type="forest" --no_features=13 --role="server"
  ```
 The parameters are:
 - `pickle` : Path to the pickle file
