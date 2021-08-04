@@ -132,6 +132,6 @@ def void main()
 	{
 		finalResult = finalResult +_al inferenceResult[i];
 	};
-	finalResult = finalResult/(noOfTrees+0L);
+	(*finalResult = finalResult/(noOfTrees+0L);*)
 	output(CLIENT, finalResult)
 }
