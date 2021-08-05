@@ -331,6 +331,11 @@ let get_role (e:expr) :role =
   | Role r -> r
   | _ -> failwith "get_role: not a Role"
 
+let is_float_bt (bt:base_type) :bool =
+  match bt with
+  | Float -> true
+  | _ -> false
+
 (* 
 let is_pow_2 (e:expr) :bool =
   match e.data with

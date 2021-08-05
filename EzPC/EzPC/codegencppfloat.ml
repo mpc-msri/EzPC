@@ -328,29 +328,79 @@ let o_comment (s:string) :comp = seq (o_str "/* ") (seq (o_str s) (o_str " */"))
  *)
 let out_files :(string list) ref = ref []
 
+let rec o_flt_expr (g:gamma) (e:expr) :comp =
+  match e.data with
+  | Const (FloatC f) -> o_str @@ "__fp_const( " ^ (expr_to_string e) ^ ")" 
+  | Var x -> o_var x
+  | App (f, args) -> o_app (o_str f) (args |> List.map @@ o_flt_expr g)
+  | Binop (op, e1, e2, Some Public) -> (* Remove labels coerces all to public, but it's really meant to be secret for FP*)
+    let fn = match op with
+      | Sum -> "__fp_op->add"
+      | Sub -> "__fp_op->sub"
+      | Mul -> "__fp_op->mul"
+      | Div -> "__fp_op->div"
+      | Less_than -> "__fp_op->LT"
+      | Less_than_equal -> "__fp_op->LE"
+      | Greater_than -> "__fp_op->GT"
+      | Greater_than_equal -> "__fp_op->GE"
+      | _   -> failwith @@ "(binop) " ^ (binop_to_string op) ^ " is not implemented for floating point"
+    in
+    o_flt_expr g (App (fn, [e1; e2]) |> mk_dsyntax "")
+  | _ -> failwith @@ "(expr) " ^ (expr_to_string e) ^ " is not implemented for floating point"
+
+let rec has_float (g:gamma) (e:expr) :bool =
+  let has_float = has_float g in
+  match e.data with
+    | Const (FloatC f)  -> true
+    | Var x ->
+      let maybe_typ = lookup_variable g x
+      in (match maybe_typ with
+        | Some t ->
+          (match t.data with
+          | Base (Float, _) -> true
+          | _ -> false )
+        | None  -> failwith "Unknown variable while running has_float")
+    | Role r -> false
+    | Unop (_, e, _) -> has_float e
+    | Binop (_, e1, e2, _) -> has_float e1 || has_float e2
+    | Conditional (e1, e2, e3, _) -> has_float e1 || has_float e2 || has_float e3
+    | Array_read (e1, e2) when is_var e1 ->
+        let maybe_typ = get_var e1 |> lookup_variable g
+        in (match maybe_typ with
+            | Some t -> get_bt_and_label t |> fst |> is_float_bt
+            | None -> failwith "Unknown variable while running has_float")
+    | App (f, args) ->
+        let args_float = List.map has_float args |> List.exists (fun x -> x) in
+        let ret_float = 
+          (match (lookup_fun g f) with
+          | Some (_, t) ->
+            (match (typ_of_ret_typ t)  with
+            | Some t -> t |> get_bt_and_label |> fst |> is_float_bt 
+            | None -> false)
+          | None -> failwith "Unknown function name while running has_float")
+        in args_float || ret_float
+    (* Subsumption *)
+    | _ -> false
+
 let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
   match s.data with
   | Decl (t, e, init_opt) -> 
      (match t.data with
      | Base (Float, _) -> 
-        let maybe_init_prior, init_after =
+        let maybe_init =
         (match init_opt with
-        | Some e -> 
-            (match e.data with
-            | Const (FloatC f) -> 
-                let prior1 = o_str "float *__dummy_in_const = new float[1] " |> s_smln 
-                in let prior2 = o_str "__dummy_in_const[0] = " |> seqs @@ o_float f |> s_smln 
-                in let after1 = o_str " = fp_op->input(ALICE, 1, __dummy_in_const) " |> s_smln 
-                in let after2 = o_str "delete __dummy_in_const " |> s_smln 
-                in seq prior1 prior2, seq after1 after2 
-            | Var x -> o_null, seql [o_str " = "; o_str x.name] |> s_smln 
-            | _ ->  let no_feature = o_str "!! Feature not added yet !!" in no_feature, no_feature)
-        | None -> o_null, o_smln) 
+        | Some e -> seql [o_str " = "; o_flt_expr g e] 
+        | None -> o_null) |> s_smln 
         in let const_fparray = seql [o_str "FPArray "; o_expr g e] 
-        in seql [maybe_init_prior; const_fparray; init_after]
-     | _ -> let o_init =
+        in seql [const_fparray; maybe_init]
+     | _ -> let o_init =        
         (match init_opt with
-            | Some e -> Some (o_expr g e)
+            | Some e -> if (has_float g e) 
+                        then
+                          let get_bool = App("__get_bool", [e]) |> mk_dsyntax "" in
+                          Some (o_flt_expr g get_bool)
+                        else
+                          Some (o_expr g e)
             | None -> if is_array_typ t then Some (o_array_init g t) else None)
         in
         let comment = 
@@ -365,13 +415,20 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
 
   | For (_, e1, e2, e3, s) -> o_codegen_stmt g (For_codegen (Base_e e1, Base_e e2, Base_e e3, Base_s s))
 
-  | While (e, s) -> o_while (o_expr g e) (o_stmt ([] |> push_local_scope g) s |> fst), g
+  (* CFTIE. Result of expression here is of bool type, but can contain floating point *)
+  | While (e, s) ->
+      let o_guard = if (has_float g e) then (o_flt_expr g) else (o_expr g) in
+    o_while (o_guard e) (o_stmt ([] |> push_local_scope g) s |> fst), g
 
   | If_else (e, s_then, s_else_opt) ->
      o_codegen_stmt g (If_codegen (Public, Base_e e, Base_s s_then, map_opt s_else_opt (fun s -> Base_s s)))
 
-  | Return eopt -> o_with_semicolon (seq (o_str "return ")
-                                         (if is_none eopt then o_null else eopt |> get_opt |> o_expr g)), g
+  (* CFTIE. Result can be FP or bool *)
+  | Return eopt -> let o_ret = (fun e -> if (has_float g e) then (o_flt_expr g e) else (o_expr g e)) in
+      seql [
+        o_str "return ";
+        if is_none eopt then o_null else eopt |> get_opt |> o_ret
+      ] |> s_smln, g
     
   | Seq (s1, s2) -> o_codegen_stmt g (Seq_codegen (Base_s s1, Base_s s2))
 
@@ -384,10 +441,7 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
      (* bt is the base type and l label *)
      let bt, l = get_bt_and_label t |> (fun (bt, l) -> get_inp_type bt, l) in
      let l = get_opt l in
-     let is_float = match bt with
-                    | Float -> true
-                    | _     -> false 
-     in
+     let is_float = is_float_bt bt in
      (* list of dimensions, if an array else empty *)
      let el = if is_arr then snd (get_array_bt_and_dimensions t) else [] in
      
@@ -423,7 +477,7 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
 
      (* conditional expression for role == r *)
      let r_cmp = 
-       let role_var = Var { name = if is_float then "party" else "role"; index = 0 ; } in
+       let role_var = Var { name = if is_float then "__party" else "role"; index = 0 ; } in
        let what_role = if is_float then Var { name = fp_role; index = 0; } else Role r in     (* Abusing Var for a string here *)
        Base_e (Binop (Is_equal, role_var |> mk_dsyntax "", what_role |> mk_dsyntax "", Some Public) |> mk_dsyntax "")
      in
@@ -478,7 +532,7 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
      in
      
      if is_float then let alice_or_bob = If_codegen (Public, r_cmp, Seq_codegen (print_input_message, loops), None) in
-        let assgn_right = Base_e (Var { name="fp_op->input(" ^ fp_role ^ ", 1, " ^ tmp_var_name.name ^ ")" ; index=0; } |> mk_dsyntax "") in      (* Abusing codegen for variables *) 
+        let assgn_right = Base_e (Var { name="__fp_op->input(" ^ fp_role ^ ", 1, " ^ tmp_var_name.name ^ ")" ; index=0; } |> mk_dsyntax "") in      (* Abusing codegen for variables *) 
         let assgn = Assign_codegen (assgn_left, assgn_right) in
         let cleanup = o_str @@ "delete " ^ tmp_var_name.name |> s_smln in
         let input_cmp, input_gamma = o_codegen_stmt g @@ Seq_codegen (Seq_codegen (Seq_codegen (decl, decl_tmp), alice_or_bob), assgn) in
@@ -488,16 +542,25 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
      decl; print_input_message; decl_tmp; loops 
      *)
 
-  | Output (e_role, e, Some t) when is_role e_role ->
+  (* Yes, the last parameter in this type constructor will always be of the form 'Some t' thanks to
+    insert_coercions_stmt where Output(r, e, None) is forced to be Output(r, e, typeof_expr e) *)
+  | Output (e_role, e, Some t) when is_role e_role && is_var e ->       (* Added condition is_var e to test single variable output *)
      let r = get_role e_role in
+     let x = get_var e in
      let bt, l = get_bt_and_label t in
-
+     let is_float = is_float_bt bt in
+     (* Satisfied when using CPP or CPPFLOAT *)
      if not (l |> get_opt |> is_secret_label) then
-      let print_output_msg =
-        let msg = Var { name = "\"Value of " ^ (expr_to_string e) ^ ":\""; index = 0 } |> mk_dsyntax "" in
-        Cout ("cout", Base_e msg, bt)
-      in
-      o_codegen_stmt g (Seq_codegen (print_output_msg, Cout ("cout", Base_e e, bt)))
+      let msg = Var { name = "\"Value of " ^ (expr_to_string e) ^ ":\""; index = 0 } |> mk_dsyntax "" in
+      let print_output_msg = Cout ("cout", Base_e msg, bt) in
+      if not is_float then 
+        o_codegen_stmt g (Seq_codegen (print_output_msg, Cout ("cout", Base_e e, bt)))
+      else
+        let out_var = Var { name="__temp_out" ; index=0 } in
+        let assgn_lhs = Var { name="float __temp_out "; index=0} |> mk_dsyntax "" in
+        let assgn_rhs = Var { name="__fp_op->output(PUBLIC, " ^ x.name ^ ").get_native_type<float>()[0]"; index=0} |> mk_dsyntax "" in
+        let assgn = Assign_codegen (Base_e assgn_lhs, Base_e assgn_rhs) in
+        o_codegen_stmt g (Seq_codegen (assgn, Seq_codegen (print_output_msg, Cout ("cout", Base_e (out_var |> mk_dsyntax ""), bt)))) 
      else
       let print_output_msg =
         let msg = Var { name = "\"Value of " ^ (expr_to_string e) ^ ":\""; index = 0 } |> mk_dsyntax "" in
@@ -739,15 +802,33 @@ This is an autogenerated file, generated using the EzPC compiler.\n\
 using namespace std ;\n\
 using namespace sci ;\n\
 \n\
-IOPack *__iopack__ = nullptr ;\n\
-OTPack *__otpack__ = nullptr ;\n\
-FPOp *__fp_op__ = nullptr ;\n\
-FPMath *__fp_math__ = nullptr ;\n\
-int __party__ ;\n\
-string __address__ = \"127.0.0.1\" ;\n\
-int __port__ = 8000 ;\n\
-uint8_t __m_bits__ = 23, __e_bits__ = 8 ;\n\
+IOPack *__iopack = nullptr ;\n\
+OTPack *__otpack = nullptr ;\n\
+FPOp *__fp_op = nullptr ;\n\
+FPMath *__fp_math = nullptr ;\n\
+int __party ;\n\
+string __address = \"127.0.0.1\" ;\n\
+int __port = 8000 ;\n\
+uint8_t __m_bits = 23, __e_bits = 8 ;\n\
 \n\
+FPArray __fp_const(float f) {\n\
+    float *__dummy_const = new float[1] ;\n\
+    __dummy_const[0] = f ;\n\
+    FPArray x = __fp_op->input(ALICE, 1, __dummy_const) ;\n\
+    delete __dummy_const ;\n\
+    return x ;\n\
+}\n\
+\n\
+uint32_t __get_bool(BoolArray b) {\n\
+    b = __fp_op->bool_op->output(PUBLIC, b) ;\n\
+    uint8_t *b_ = new uint8_t[1] ;\n\
+    uint32_t ret ;\n\
+    memcpy(b_, b.data, sizeof(uint8_t)) ;\n\
+    ret = (uint8_t)b_[0] ;\n\
+    delete b_ ;\n\
+    return ret ;\n\
+}\n\
+\n
 " in let ps2 = 
 "
 uint32_t public_lrshift(uint32_t x, uint32_t y){\n\
@@ -818,17 +899,17 @@ let o_one_program ((globals, main):global list * codegen_stmt) (ofname:string) :
 
   let main_header =
     if Config.get_codegen () = Config.CPPFLOAT then o_str 
-"\n\nint main (int __argc__, char **__argv__) {\n\
+"\n\nint main (int __argc, char **__argv) {\n\
 cout.precision(15) ;\n\
-ArgMapping __amap__ ;\n\
-__amap__.arg(\"r\", __party__, \"Role of party: ALICE/SERVER = 1; BOB/CLIENT = 2\") ; \n\
-amap.parse(__argc__, __argv__) ;\n\
+ArgMapping __amap ;\n\
+__amap.arg(\"r\", __party, \"Role of party: ALICE/SERVER = 1; BOB/CLIENT = 2\") ; \n\
+__amap.parse(__argc, __argv) ;\n\
 \n\
-__iopack__ = new IOPack(__party__, __port__, __address__) ;\n\
-__otpack__ = new OTPack(__iopack__, __party__) ;\n\
+__iopack = new IOPack(__party, __port, __address) ;\n\
+__otpack = new OTPack(__iopack, __party) ;\n\
 \n\
-__fp_op__ = new FPOp(__party__, __iopack__, __otpack__) ; \n\
-__fp_math__ = new FPMath(__party__, __iopack__, __otpack__) ; \n\    
+__fp_op = new FPOp(__party, __iopack, __otpack) ; \n\
+__fp_math = new FPMath(__party, __iopack, __otpack) ; \n\    
 \n\
 "
     else o_str "\n\nint64_t ezpc_main (e_role role_param, char* address, uint16_t port, seclvl seclvl,\n\

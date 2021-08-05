@@ -153,7 +153,7 @@ let _ =
 
   let _ = if Config.get_codegen () = CPPFLOAT
     then begin
-    Config.set_bitlen 32 ;
+    Config.set_bitlen 32 ; 
     Config.disable_tac () ;
     Config.disable_cse ()
     end ;
