@@ -24,6 +24,7 @@ SOFTWARE.
 
 open Printf
 open Char
+open String
 open Stdint
 open Ast
 open Codegenast
@@ -259,10 +260,9 @@ and o_flt_expr (g:gamma) (e:expr) :comp =
       | Less_than_equal -> "__fp_op->LE"
       | Greater_than -> "__fp_op->GT"
       | Greater_than_equal -> "__fp_op->GE"
-      | _   -> failwith @@ "(binop) " ^ (binop_to_string op) ^ " is not implemented for floating point for " ^ (expr_to_string e)
-    in
-    o_flt_expr (App (fn, [e1; e2]) |> mk_dsyntax "")
-  | _ -> failwith @@ "(expr) " ^ (expr_to_string e) ^ " is not implemented for floating point"
+      | _   -> ""  
+    in if (String.length fn) > 0 then o_flt_expr (App (fn, [e1; e2]) |> mk_dsyntax "") else o_expr g e
+  | _ -> o_expr g e 
 
 and has_float (g:gamma) (e:expr) :bool =
   let has_float = has_float g in
@@ -275,7 +275,7 @@ and has_float (g:gamma) (e:expr) :bool =
           (match t.data with
           | Base (Float, _) -> true
           | _ -> false )
-        | None  -> failwith ("Var x : Unknown variable while running has_float " ^ x.name))
+        | None  -> false) 
     | Role r -> false
     | Unop (_, e, _) -> has_float e
     | Binop (_, e1, e2, _) -> has_float e1 || has_float e2
@@ -284,7 +284,7 @@ and has_float (g:gamma) (e:expr) :bool =
         let maybe_typ = get_var e1 |> lookup_variable g
         in (match maybe_typ with
             | Some t -> get_bt_and_label t |> fst |> is_float_bt
-            | None -> failwith "Array_read : Unknown variable while running has_float")
+            | None -> false) 
     | App (f, args) ->
         let args_float = List.map has_float args |> List.exists (fun x -> x) in
         let ret_float = 
@@ -293,7 +293,7 @@ and has_float (g:gamma) (e:expr) :bool =
             (match (typ_of_ret_typ t)  with
             | Some t -> t |> get_bt_and_label |> fst |> is_float_bt 
             | None -> false)
-          | None -> failwith "App : Unknown function name while running has_float")
+          | None -> false) 
         in args_float || ret_float
     (* Subsumption *)
     | _ -> false
@@ -307,7 +307,7 @@ and o_codegen_expr (g:gamma) (e:codegen_expr) :comp =
     | _ -> o_str "bitlen"
   in
   match e with
-  | Base_e e -> o_expr e
+  | Base_e e -> if (has_float g e) then o_flt_expr g e else o_expr e
               
   | Input_g (r, sl, s, bt) -> o_cbfunction sl (o_str "PutINGate") [o_str s.name; get_bitlen bt; o_role r]
 
@@ -892,13 +892,13 @@ bcirc = (sharings)[S_BOOL]->GetCircuitBuildRoutine();\n"
 
 let o_one_program ((globals, main):global list * codegen_stmt) (ofname:string) :unit =
   let prelude =
-    if Config.get_codegen () = Config.CPPFLOAT then o_str prelude_string
+    if Config.get_codegen () = Config.SECFLOAT then o_str prelude_string
     else
       o_str (prelude_string ^ "\n" ^ (aby_prelude_string (Config.get_bitlen ())))
   in
 
   let main_header =
-    if Config.get_codegen () = Config.CPPFLOAT then o_str 
+    if Config.get_codegen () = Config.SECFLOAT then o_str 
 "\n\nint main (int __argc, char **__argv) {\n\
 cout.precision(15) ;\n\
 ArgMapping __amap ;\n\
@@ -918,7 +918,7 @@ __fp_math = new FPMath(__party, __iopack, __otpack) ; \n\
   in
 
   let main_prelude =
-    if Config.get_codegen () = Config.CPPFLOAT then o_null
+    if Config.get_codegen () = Config.SECFLOAT then o_null
     else seq (o_str aby_main_prelude_string) o_newline
   in
   

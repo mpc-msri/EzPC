@@ -156,7 +156,7 @@ let role_to_fpstring (r:role) :string =
   match r with
   | Server -> "ALICE"
   | Client -> "BOB"
-  | Both   -> "PUBLIC"
+  | Both   -> "__party"
 
 let unop_to_string (u:unop) :string =
   match u with

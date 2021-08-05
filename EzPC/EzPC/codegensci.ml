@@ -190,8 +190,6 @@ and o_expr (g:gamma) (e:expr) :comp =
 
   | Const (UInt64C n) -> seq (o_str (" (uint64_t)")) (o_uint64 n)
 
-  | Const (FloatC f) -> seq (o_str (" (float)")) (o_float f)
-
   | Const (BoolC b) -> o_bool b
     
   | Var s -> o_var s
