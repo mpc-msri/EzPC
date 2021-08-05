@@ -48,6 +48,7 @@ type codegen_stmt =
   | App_codegen    of string * codegen_expr list
   | Cin            of string * codegen_expr * base_type  (* base_type is used in the oblivc backend for scanf format string *)
   | Cout           of string * codegen_expr * base_type  (* base_type is used in the oblivc backend for printf format string *)
+  | Line           of string
   | Dump_interim   of expr * typ * string
   | Read_interim   of expr * typ * string
   | Open_file      of bool * string * string             (* true if write, false for read; var name for stream; file *)
