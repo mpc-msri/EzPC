@@ -1,7 +1,7 @@
 - [Introduction](#introduction)
 - [Requirements/Setup](#requirementssetup)
 - [Usage](#usage)
-  * [Compiling random forest/decision tree](#compiling-random-forest-decision-tree)
+  * [Compiling random forest/decision tree](#compiling-random-forestdecision-tree)
   * [Compiling a tensorflow model](#compiling-a-tensorflow-model)
   * [Compiling an ONNX model](#compiling-an-onnx-model)
   * [Compiling and Running Models in Networks Directory Automatically](#compiling-and-running-models-in-networks-directory-automatically)
