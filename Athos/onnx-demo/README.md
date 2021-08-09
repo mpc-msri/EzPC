@@ -1,6 +1,4 @@
-# Server instructions
-
-### Compile the model:
+## Compile the model:
 After having setup the environment using ```./setup_env_and_build.sh quick```,
 load the environment:
 ```
@@ -8,7 +6,7 @@ source ~/EzPC/mpc_venv/bin/activate
 ```
 We call the party that owns the model, the server and the party that owns data to perform inference upon, the client. Both parties need to perform the above step.
 
-#### Server side
+### Server side
 
 To compile the model do:
 ```
@@ -24,7 +22,8 @@ This generates:
 We will send this `client.zip` to the client. Since the model is pruned, it doesn't reveal any propreitary weights to the client and only the model structure i.e. the computation. The client will then compile this model using CrypTFlow and generate the MPC binary.
 
 
-#### Client side
+### Client side
+
 The client, on receiving the client.zip file from the server needs to extract it and then compile it.
 ```
 unzip client.zip
@@ -41,14 +40,14 @@ python ~/EzPC/Athos/CompilerScripts/convert_np_to_fixedpt.py --inp input.npy --c
 ```
 This dumps `input_fixedpt_scale_15.inp`. Now both parties are ready to run the computation.
 
-### Running the model:
+## Running the model:
 Since our protocols are interactive in nature, both machines need to be able to communicate with each other over the network. Ensure that you have a port open on the server machine and that the server is reachable via the client. Say the server's ip address is `123.231.231.123` and the open port is `12345`.
 
-#### Server side
+### Server side
 ```
 ./model_SCI_HE.out r=1 p=12345 < model_input_weights_fixedpt_scale_15.inp
 ```
-#### Client side
+### Client side
 ```
 ./model_SCI_HE.out r=2 ip=123.231.231.123 p=12345 < input_fixedpt_scale_15.inp > output.txt
 ```
