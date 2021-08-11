@@ -51,6 +51,25 @@ and infer_binop_label (g:gamma) (op:binop) (e1:expr) (e2:expr) (lopt:label optio
      | None, _ -> warn_label_inference_failed (Binop (op, e1, e2, lopt)) rng
      | _, None -> warn_label_inference_failed (Binop (op, e1, e2, lopt)) rng
      | Some Public, Some Public -> Binop (op, e1, e2, Some Public)
+      (* 
+      let t1, t2 = typeof_expr e1 |> get_opt, typeof_expr e2 |> get_opt in
+      (match op with
+      | Sum | Sub ->
+        (match t1 with
+        | Base (Float, Some Public) -> Binop (op, e1, e2, Some (Secret Arithmetic))
+        | _ -> Binop (op, e1, e2, Some Public))
+      | Mul | Div -> Binop (op, e1, e2, Some (Secret Arithmetic))
+      | Is_equal ->
+        (match t1 with
+        | Base (Float, Some Public) -> failwith "infer_binop_label : Equality for floating points is not supported"
+        | Base (Bool, Some Public) -> failwith "infer_binop_label : Equality for booleans is not supported"
+        (* It's an integer type *)
+        | _ -> Binop (op, e1, e2, Some (Secret Arithmetic)))
+      | Less_than | Greater_than | Less_than_equal | Greater_than_equal -> Binop (op, e1, e2, Some (Secret Arithmetic))
+      | Xor -> Binop (op, e1, e2, Some Public)
+      | And | Or -> Binop (op, e1, e2, Some (Secret Boolean))
+      | _ -> failwith ("infer_binop_label : Binop" ^ (binop_to_string op) ^ "not supported between " ^ (expr_to_string e1) ^ "and" ^ (expr_to_string e2)))
+      *)
      | Some l1, Some l2 ->
         let set_default_label (lopt:label option) :expr' =
           if l1 = Public then Binop (op, e1, e2, Some l2)
@@ -62,7 +81,7 @@ and infer_binop_label (g:gamma) (op:binop) (e1:expr) (e2:expr) (lopt:label optio
         match op with
         | Sum | Sub | Div | Mod -> set_default_label None
         | Mul -> Binop (op, e1, e2, Some (Secret Arithmetic))
-        | Pow -> Binop (op, e1, e2, Some Public)
+        | Pow -> Binop (op, e1, e2, Some Public) 
         | Greater_than | Less_than | Greater_than_equal | Less_than_equal | Is_equal ->
            Binop (op, e1, e2, Some (Secret Boolean))
         | R_shift_a -> Binop (op, e1, e2, Some (Secret Boolean))

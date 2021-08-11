@@ -204,7 +204,13 @@ let rec tc_expr (g:gamma) (e:expr) :eresult =
                                  | R_shift_a | L_shift | R_shift_l ->
                                     bind (check_expected_int_typ e1 t1 l) (fun _ ->
                                            bind (check_expected_int_typ e2 t2 Public) (fun _ -> Well_typed t1))
-                                 | Greater_than | Less_than | Is_equal | Greater_than_equal | Less_than_equal -> 
+                                 | Is_equal ->
+                                    bind (check_expected_int_typ e1 t1 l) (fun _ ->
+                                      bind (check_expected_int_typ e2 t2 l) (fun _ ->
+                                        match join_types t1 t2 with
+                                        | Some t -> Well_typed (Base (Bool, t |> get_bt_and_label |> snd) |> mk_syntax e.metadata)
+                                        | None -> join_types_err e1 e2 t1 t2 e.metadata)) 
+                                 | Greater_than | Less_than | Greater_than_equal | Less_than_equal -> 
                                     bind (check_expected_numeric_typ e1 t1 l) (fun _ ->
                                            bind (check_expected_numeric_typ e2 t2 l) (fun _ ->
                                                   match join_types t1 t2 with
