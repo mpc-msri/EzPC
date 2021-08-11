@@ -257,6 +257,9 @@ and o_codegen_expr (g:gamma) (e:codegen_expr) :comp =
     | _ -> o_str "bitlen"
   in
   match e with
+
+  | Codegen_String s -> o_str s
+
   | Base_e e -> o_expr e
               
   | Input_g (r, sl, s, bt) -> o_cbfunction sl (o_str "PutINGate") [o_str s.name; get_bitlen bt; o_role r]

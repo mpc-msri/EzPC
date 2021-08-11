@@ -107,7 +107,7 @@ let o_sunop (l:secret_label) (op:unop) (c:comp) :comp =
   in
   o_cbfunction_maybe_coerce true l c_op [c]
   
-let o_sbinop (l:secret_label) (op:binop) (c1:comp) (c2:comp) :comp =
+let o_sbinop (l:secret_label) (op:binop) (c1:comp) (c2:comp) :comp = 
   let aux (s:string) (coerce:bool) :comp = o_cbfunction_maybe_coerce coerce l (o_str s) [c1; c2] in
   let err (s:string) = failwith ("Operator: " ^ s ^ " should have been desugared") in
   match op with
@@ -131,6 +131,7 @@ let o_sbinop (l:secret_label) (op:binop) (c1:comp) (c2:comp) :comp =
   | Xor                -> aux "PutXORGate" false
   | R_shift_l          -> o_app (o_str "logical_right_shift") [o_slabel l; c1; c2]
   | Pow                -> failwith ("Codegen cannot handle this secret binop: " ^ binop_to_string op)
+  
                
 let o_pconditional (c1:comp) (c2:comp) (c3:comp) :comp =
   seq c1 (seq (o_str " ? ") (seq c2 (seq (o_str " : ") c3)))
@@ -140,39 +141,30 @@ let o_sconditional (l:secret_label) (c_cond:comp) (c_then:comp) (c_else:comp) :c
 
 let o_subsumption (src:label) (tgt:secret_label) (t:typ) (arg:comp) :comp =
   match src with
-    | Public -> 
-       let fn =
-         o_str (
-             match t.data with
-             | Base (UInt32, _) | Base (Int32, _) -> "put_cons32_gate"
-             | Base (UInt64, _) | Base (Int64, _) -> "put_cons64_gate"
-             | Base (Bool, _) -> "put_cons1_gate"
-             | _ -> failwith ("codegen:Subsumption node with an unexpected typ: " ^ (typ_to_string t)))
-       in
-       o_app fn [o_slabel tgt; arg]
-    | Secret Arithmetic ->
-       let fn_name = if Config.get_bool_sharing_mode () = Config.Yao then "PutA2YGate" else "PutA2BGate" in
-       o_cbfunction tgt (o_str fn_name) [arg]
-    | Secret Boolean ->
-       let fn_name, circ_arg =
-         if Config.get_bool_sharing_mode () = Config.Yao then "PutY2AGate", "bcirc"
-         else "PutB2AGate", "ycirc"
-       in
-       o_cbfunction tgt (o_str fn_name) [arg; o_str circ_arg]
+    | Public ->
+      let fn_typ = 
+        match t.data with
+        | Base (UInt32, _)
+        | Base (UInt64, _)
+        | Base (Int32, _)
+        | Base (Int64, _) -> "integer"
+        | Base (Float, _) -> "float"
+        | Base (Bool, _) -> "bool"
+        | _ -> failwith "Impossible source type for subsumption"
+      in o_app (o_str @@ "subsumption_" ^ fn_typ) [arg]
+    | _ -> failwith "o_subsumption : Expected impossible branch. Should have been handled by infer.ml"
 
 let o_basetyp (t:base_type) :comp =
   match t with
-  | UInt32 -> o_str "uint32_t"
-  | UInt64 -> o_str "uint64_t"
-  | Int32  -> o_str "int32_t"
-  | Int64  -> o_str "int64_t"
+  | UInt32 | UInt64 | Int32 | Int64 -> o_str "FixArray"
   | Float  -> o_str "FPArray"
-  | Bool   -> o_str "uint32_t"
+  | Bool   -> o_str "BoolArray"
 
 let rec o_secret_binop (g:gamma) (op:binop) (sl:secret_label) (e1:expr) (e2:expr) :comp =
   (*
   * For some ops like shifts, type of whole expression is defined by 1st arg and not join of 1st and 2nd arg.
   *)
+  (*
   let t1 = e1 |> typeof_expr g |> get_opt in
   let is_signed =
     match t1.data with
@@ -201,6 +193,24 @@ let rec o_secret_binop (g:gamma) (op:binop) (sl:secret_label) (e1:expr) (e2:expr
   match app_opt with
   | Some app -> o_expr g (app |> mk_dsyntax "")
   | None -> o_sbinop sl op (o_expr g e1) (o_expr g e2)
+  *)
+  let backend = e1 |> typeof_expr g |> get_opt |> get_bt_and_label |> fst |> basetype_to_secfloat_backend in
+  let fn_name =
+    match op with
+    | Sum -> "sum"
+    | Sub -> "sub"
+    | Mul -> "mul"
+    | Div -> "div"
+    | Less_than -> "LT"
+    | Less_than_equal -> "LE"
+    | Greater_than -> "GT"
+    | Greater_than_equal -> "GE"
+    | And -> "AND"
+    | Or -> "Or"
+    | _ -> failwith "o_secret_binop : This binop hasn't been implemented yet"
+  in
+  let app = App (backend ^ "->" ^ fn_name, [e1; e2]) in
+  o_expr g (app |> mk_dsyntax "")
 
 and o_expr (g:gamma) (e:expr) :comp =
   let o_expr = o_expr g in
@@ -208,18 +218,22 @@ and o_expr (g:gamma) (e:expr) :comp =
   match e.data with
   | Role r -> o_role r
 
-  | Const (Int32C n) -> seq (o_str (" (int32_t)")) (o_int32 n)
+  (*
+  | Const (Int32C n) -> o_app (o_str "__integer_const") [o_int32 n; o_str "true"; o_str "32"]
+  | Const (Int64C n) -> o_app (o_str "__integer_const") [o_int64 n; o_str "true"; o_str "64"]
+  | Const (UInt32C n) -> o_app (o_str "__integer_const") [o_uint32 n; o_str "false"; o_str "32"]
+  | Const (UInt64C n) -> o_app (o_str "__integer_const") [o_uint64 n; o_str "false"; o_str "64"]
+  | Const (FloatC f) -> o_app (o_str "__float_const") [o_float f] 
+  | Const (BoolC b) -> o_app (o_str "__bool_const") [o_bool b]
+  *)
 
-  | Const (Int64C n) -> seq (o_str (" (int64_t)")) (o_int64 n)
-
-  | Const (UInt32C n) -> seq (o_str (" (uint32_t)")) (o_uint32 n)
-
-  | Const (UInt64C n) -> seq (o_str (" (uint64_t)")) (o_uint64 n)
-
-  | Const (FloatC f) -> seq (o_str (" (float)")) (o_float f)
-
+  | Const (Int32C n) -> o_int32 n
+  | Const (Int64C n) -> o_int64 n
+  | Const (UInt32C n) -> o_uint32 n
+  | Const (UInt64C n) -> o_uint64 n
+  | Const (FloatC f) -> o_float f 
   | Const (BoolC b) -> o_bool b
-    
+
   | Var s -> o_var s
 
   | Unop (op, e, Some Public) -> seq (o_punop op) (seq o_space (o_expr e))
@@ -307,6 +321,8 @@ and o_codegen_expr (g:gamma) (e:codegen_expr) :comp =
     | _ -> o_str "bitlen"
   in
   match e with
+  | Codegen_String s -> o_str s
+
   | Base_e e -> if (has_float g e) then o_flt_expr g e else o_expr e
               
   | Input_g (r, sl, s, bt) -> o_cbfunction sl (o_str "PutINGate") [o_str s.name; get_bitlen bt; o_role r]
@@ -326,9 +342,8 @@ and o_codegen_expr (g:gamma) (e:codegen_expr) :comp =
   | App_codegen_expr (f, el) -> o_app (o_str f) (List.map o_codegen_expr el)
 
                                      
-let o_typ (t:typ) :comp =
+let o_typ (t:typ) :comp =  
   match t.data with
-  | Base (bt, Some (Secret _)) -> o_str "share*"
   | Base (bt, _) -> o_basetyp bt
   | Array (quals, _, _) -> seq (if quals |> List.mem Immutable then o_str "const " else o_null) (o_str "auto")
 
@@ -337,10 +352,28 @@ let o_ret_typ (t:ret_typ) :comp =
   | Typ t -> o_typ t
   | Void _ -> o_str "void"
              
+(*!! Need to ensure that array size arguments are passed appropriately !!*)
 let o_array_init (g:gamma) (t:typ) :comp =
-  let t, l = get_array_bt_and_dimensions t in
-  let s = seq (o_str "make_vector<") (seq (o_typ t) (o_str ">")) in
-  o_app s (List.map (o_expr g) l)
+  let dims = get_array_bt_and_dimensions t |> snd in
+  let t, lopt = get_bt_and_label t in
+  let l = lopt |> get_opt in
+  let party = if is_secret_label l then "ALICE" else "PUBLIC" in
+  let o_dimargs = List.map (o_expr g) dims in
+  let o_args = [party] @
+    (match t with
+    | UInt32 -> ["false"; "32"]
+    | UInt64 -> ["false"; "32"]
+    | Int32 -> ["true"; "32"]
+    | Int64 -> ["true"; "64"]
+    | _ -> []) |> List.map o_str in
+  let args = o_args @ o_dimargs in
+  let make_typ =
+    match t with
+    | UInt32 | UInt64 | Int32 | Int64 -> "integer"
+    | Float -> "float"
+    | Bool -> "bool"
+  in let s = ("make_vector_" ^ make_typ) |> o_str in
+  o_app s args 
 
 let o_for (index:comp) (lower:comp) (upper:comp) (body:comp) :comp =
   let init = seq (o_str "for (uint32_t ") (seq index (seq (o_str " = ") lower)) in
@@ -386,30 +419,37 @@ let out_files :(string list) ref = ref []
 
 let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
   match s.data with
-  | Decl (t, e, init_opt) -> 
-     (match t.data with
-     | Base (Float, _) -> 
-        let maybe_init =
-        (match init_opt with
-        | Some e -> seql [o_str " = "; o_flt_expr g e] 
-        | None -> o_null) |> s_smln 
-        in let const_fparray = seql [o_str "FPArray "; o_expr g e] 
-        in seql [const_fparray; maybe_init]
-     | _ -> let o_init =        
-        (match init_opt with
-            | Some e -> if (has_float g e) 
-                        then
-                          let get_bool = App("__get_bool", [e]) |> mk_dsyntax "" in
-                          Some (o_flt_expr g get_bool)
-                        else
-                          Some (o_expr g e)
-            | None -> if is_array_typ t then Some (o_array_init g t) else None)
-        in
-        let comment = 
-        let c = Global.get_comment s.metadata
-        in if c = "" then o_null else o_comment c
-        in o_decl (o_typ t) (o_expr g e) o_init |> o_with_semicolon |> seq o_newline |> seq comment), 
-        add_local_binding g (get_var e) t
+  | Decl (t, e, init_opt) ->
+      let alb = add_local_binding g (get_var e) t in
+      if is_some init_opt then
+        seql [o_typ t; o_space; o_expr g e; o_str " = "; init_opt |> get_opt |> o_expr g] |> s_smln, alb
+      else
+        if is_array_typ t then
+          seql [o_typ t; o_space; o_expr g e; o_str " = "; o_array_init g t] |> s_smln, alb
+        else 
+          let bt, lab_opt = get_bt_and_label t in
+          let lab = lab_opt |> get_opt in
+          let o_party = o_str (if lab = Public then "PUBLIC" else "ALICE") in
+          let o_sz = o_str "1" in
+          let init_args = (fun f ->
+            match bt with
+            | UInt32 | Int32 | UInt64 | Int64 ->
+              let o_sign =
+                (match bt with
+                | UInt32 | UInt64 -> o_str "false"
+                | Int32 | Int64 -> o_str "true"
+                | _ -> failwith "o_stmt : This was supposed to be an exhaustive match"
+                ) in
+              let o_ell = 
+                (match bt with
+                | UInt32 | Int32 -> o_str "32"
+                | UInt64 | Int64 -> o_str "64"
+                | _ -> failwith "o_stmt : This was supposed to be an exhaustive match"
+                )
+              in o_app f [o_party; o_sz; o_sign; o_ell]
+            | Float | Bool -> o_app f [o_party; o_sz])
+          in
+          seql [o_typ t; o_space; o_expr g e |> init_args] |> s_smln, alb 
     
   | Assign (e1, e2) -> o_codegen_stmt g (Assign_codegen (Base_e e1, Base_e e2))
 
@@ -435,15 +475,14 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
   | Seq (s1, s2) -> o_codegen_stmt g (Seq_codegen (Base_s s1, Base_s s2))
 
   | Input (e_role, e_var, t) when is_role e_role && is_var e_var ->
-     let rng = s.metadata in
      let r, x = get_role e_role, get_var e_var in
-     let fp_role = role_to_fpstring r in
+     let r1 = role_to_fpstring r in 
      let is_arr = is_array_typ t in
      
      (* bt is the base type and l label *)
      let bt, l = get_bt_and_label t |> (fun (bt, l) -> get_inp_type bt, l) in
      let l = get_opt l in
-     let is_float = is_float_bt bt in
+
      (* list of dimensions, if an array else empty *)
      let el = if is_arr then snd (get_array_bt_and_dimensions t) else [] in
      
@@ -456,50 +495,58 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
          index = 0
        }
      in
-     let s_decl_tmp =
-       "Variable to read the clear value corresponding to the input variable " ^ x.name ^
-         " at " ^ (Global.Metadata.sprint_metadata "" rng)
+
+     let inp_type =
+      match bt with
+      | UInt32 | UInt64 | Int32 | Int64 -> "uint64_t"
+      | Float -> "float"
+      | Bool -> "uint8_t"
+
      in
-     let decl_tmp = if is_float (* float *__tmp_in_a = new float[1] ; *) 
-                    then Line ("float *__tmp_in_" ^ x.name ^ " = new float[1]")
-                    else Base_s (Decl (Base (bt, Some Public) |> mk_dsyntax "",
-                    Var tmp_var_name |> mk_dsyntax "", None) |> mk_dsyntax s_decl_tmp)
+     let decl_tmp = Line (inp_type ^ " *" ^ tmp_var_name.name ^ " = new " ^ inp_type ^ "[1]")
      in
+     
      (* expression that we will initialize each optional loop iteration *)
-     let assgn_left = if is_float then Base_e (Var x |> mk_dsyntax "") 
-       else Base_e (snd (List.fold_left (fun (i, e) _ ->
+     let assgn_left =
+       Base_e (snd (List.fold_left (fun (i, e) _ ->
                         let i_var = { name = "i" ^ (string_of_int i); index = 0; } in
                         i + 1, Array_read (e, Var i_var |> mk_dsyntax "") |> mk_dsyntax ""
                       ) (0, Var x |> mk_dsyntax "") el))
      in
 
      (* conditional expression for role == r *)
-     let r_cmp = 
-       let role_var = Var { name = if is_float then "__party" else "role"; index = 0 ; } in
-       let what_role = if is_float then Var { name = fp_role; index = 0; } else Role r in     (* Abusing Var for a string here *)
-       Base_e (Binop (Is_equal, role_var |> mk_dsyntax "", what_role |> mk_dsyntax "", Some Public) |> mk_dsyntax "")
+     let r_cmp =
+       let party_var = Var { name = "__party"; index = 0 } |> mk_dsyntax "" in
+       let party_const = Var { name = r1 ; index = 0 } |> mk_dsyntax "" in
+       Base_e (Binop (Is_equal, party_var, party_const, Some Public) |> mk_dsyntax "")
      in
      
      (* this is the innermost loop body *)
      let base_init =
        (* if role == r then cin into the temporary variable *)
-       let tmp_codegen_expr = if is_float
-            then Base_e (Var { tmp_var_name with name = "__tmp_in_" ^ x.name ^ "[0]" } |> mk_dsyntax "") 
-            else Base_e (Var tmp_var_name |> mk_dsyntax "") in
-       let cin = Cin ("cin", tmp_codegen_expr , bt) in
-
-       if is_secret_label l then
-         let sl = get_secret_label l in
-         let cin = If_codegen (Public, r_cmp, cin, None) in
-         (* add an input gate *)
-         let assgn = Assign_codegen (assgn_left,
-                                     Conditional_codegen (r_cmp,
-                                                          Input_g (r, sl, tmp_var_name, bt),
-                                                          Dummy_g (sl, bt), Public))
-         in Seq_codegen (cin, assgn)
-       else if is_float then cin
-       else let assgn = Assign_codegen (assgn_left, tmp_codegen_expr) in
-         Seq_codegen (cin, assgn)
+       let tmp_var_name_codegen = Base_e (Var tmp_var_name |> mk_dsyntax "") in
+       let tmp_var_name0 = Base_e (Var {name="__tmp_in_" ^ x.name ^ "[0]"; index=0} |> mk_dsyntax "") in 
+       let cin = 
+        let cin_ = Cin ("cin", tmp_var_name0, bt) in
+        if is_secret_label l then If_codegen (Public, r_cmp, cin_, None)
+       else cin_ 
+       in
+       let assgn_right =
+        let backend_op = basetype_to_secfloat_backend bt in
+        let args = [Codegen_String r1; Codegen_String "1"; tmp_var_name_codegen] in
+        let args =
+          let int_args = 
+            match bt with
+            | UInt32 -> [Codegen_String "false"; Codegen_String "32"]
+            | UInt64 -> [Codegen_String "false"; Codegen_String "64"]
+            | Int32 -> [Codegen_String "true"; Codegen_String "32"]
+            | Int64 -> [Codegen_String "true"; Codegen_String "64"]
+            | _ -> [] in
+          args @ int_args in
+          App_codegen_expr (backend_op ^ "->input", args)
+       in
+       let assgn = Assign_codegen (assgn_left, assgn_right) in
+       Seq_codegen (cin, assgn)
      in
      
      (* these are the for loops on the outside, note fold_right *)
@@ -514,99 +561,89 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
               ) el (List.length el - 1, base_init))
      in
 
+     (* adding a print statement for the input *)
      (*
       * ideally we want cout for a string, can be added easily to codegenast.ml,
       * but for now abusing the codegen for variables
       *)
      let print_input_message =
-       let abuse_x = { name = "\"Input " ^ x.name ^ ":\""; index = 0 } in           (* Abuse occuring here *)
-       let cout_stmt = Cout ("cout", Base_e (Var abuse_x |> mk_dsyntax ""), bt) in
+       let x = { name = "\"Input " ^ x.name ^ ":\""; index = 0 } in
+       let cout_stmt = Cout ("cout", Base_e (Var x |> mk_dsyntax ""), bt) in
 
        (* is_secret_label l is also a proxy for codegen ABY, since labels are erased already if codegen CPP *)
        if is_secret_label l then
          If_codegen (Public, r_cmp, cout_stmt, None)
-       else (* codegen CPP *)
+       else
          cout_stmt
      in
-     
-     if is_float then let alice_or_bob = If_codegen (Public, r_cmp, Seq_codegen (print_input_message, loops), None) in
-        let assgn_right = Base_e (Var { name="__fp_op->input(" ^ fp_role ^ ", 1, " ^ tmp_var_name.name ^ ")" ; index=0; } |> mk_dsyntax "") in      (* Abusing codegen for variables *) 
-        let assgn = Assign_codegen (assgn_left, assgn_right) in
-        let cleanup = o_str @@ "delete " ^ tmp_var_name.name |> s_smln in
-        let input_cmp, input_gamma = o_codegen_stmt g @@ Seq_codegen (Seq_codegen (Seq_codegen (decl, decl_tmp), alice_or_bob), assgn) in
-     input_cmp |> seqs cleanup, input_gamma
-     else o_codegen_stmt g (Seq_codegen (decl, Seq_codegen (Seq_codegen (print_input_message, decl_tmp), loops)))
-     (* stitch as
-     decl; print_input_message; decl_tmp; loops 
-     *)
-
+    
+     let cleanup = Line ("delete[] " ^ tmp_var_name.name) in 
+     (* stitch *)
+     o_codegen_stmt g (Seq_codegen(Seq_codegen (decl, Seq_codegen (Seq_codegen (print_input_message, decl_tmp), loops)), cleanup))
+ 
   (* Yes, the last parameter in this type constructor will always be of the form 'Some t' thanks to
     insert_coercions_stmt where Output(r, e, None) is forced to be Output(r, e, typeof_expr e) *)
-  | Output (e_role, e, Some t) when is_role e_role && is_var e ->       (* Added condition is_var e to test single variable output *)
+
+  | Output (e_role, e, Some t) when is_role e_role ->
      let r = get_role e_role in
-     let x = get_var e in
+     let r1 = role_to_fpstring r in
      let bt, l = get_bt_and_label t in
-     let is_float = is_float_bt bt in
-     (* Satisfied when using CPP or CPPFLOAT *)
-     if not (l |> get_opt |> is_secret_label) then
-      let msg = Var { name = "\"Value of " ^ (expr_to_string e) ^ ":\""; index = 0 } |> mk_dsyntax "" in
-      let print_output_msg = Cout ("cout", Base_e msg, bt) in
-      if not is_float then 
-        o_codegen_stmt g (Seq_codegen (print_output_msg, Cout ("cout", Base_e e, bt)))
-      else
-        let out_var = Var { name="__temp_out" ; index=0 } in
-        let assgn_lhs = Var { name="float __temp_out "; index=0} |> mk_dsyntax "" in
-        let assgn_rhs = Var { name="__fp_op->output(PUBLIC, " ^ x.name ^ ").get_native_type<float>()[0]"; index=0} |> mk_dsyntax "" in
-        let assgn = Assign_codegen (Base_e assgn_lhs, Base_e assgn_rhs) in
-        o_codegen_stmt g (Seq_codegen (assgn, Seq_codegen (print_output_msg, Cout ("cout", Base_e (out_var |> mk_dsyntax ""), bt)))) 
-     else
-      let print_output_msg =
-        let msg = Var { name = "\"Value of " ^ (expr_to_string e) ^ ":\""; index = 0 } |> mk_dsyntax "" in
-        App_codegen ("add_print_msg_to_output_queue", [Base_e (Var { name = "out_q"; index = 0 } |> mk_dsyntax "");
-                                                       Base_e msg;
-                                                       Base_e e_role;
-                                                       Base_e (Var { name = "cout"; index = 0 } |> mk_dsyntax "")])
-      in
+     let line = Line ("cout << \"Value of " ^ (expr_to_string e) ^ " : \"") in
+     let r_cmp =
+        let party_var = Var { name = "__party"; index = 0 } |> mk_dsyntax "" in
+        let party_const = Var { name = r1 ; index = 0 } |> mk_dsyntax "" in
+     Base_e (Binop (Is_equal, party_var, party_const, Some Public) |> mk_dsyntax "")
+     in
 
-       let is_arr = is_array_typ t in
-       
-       (* bt is the base type and sl is the secret label *)
-       let sl = l |> get_opt |> get_secret_label in
+     let print_output_msg = if r <> Both then If_codegen (Public, r_cmp, line, None) else line in
+     let is_arr = is_array_typ t in
+     
+     (* list of array dimensions, if any *)
+     let el = if is_arr then t |> get_array_bt_and_dimensions |> snd else [] in
 
-       (* list of array dimensions, if any *)
-       let el = if is_arr then t |> get_array_bt_and_dimensions |> snd else [] in
-
-       (* expression that we will put in the lhs for each output gate, and cout eventually *)
-       let elmt_of_e =
-         let aux (e:expr) :codegen_expr =
-           Base_e (el |> List.fold_left (fun (i, e) _ ->
-                             let i_var = { name = "i" ^ (string_of_int i); index = 0 } in
-                             i + 1,
-                             Array_read (e, Var i_var |> mk_dsyntax "") |> mk_dsyntax ""
-                           ) (0, e) |> snd)
-         in
-         aux e
+     (* expression that we will put in the lhs for each output gate, and cout eventually *)
+     let elmt_of_e =
+       let aux (e:expr) :codegen_expr =
+         Base_e (el |> List.fold_left (fun (i, e) _ ->
+                           let i_var = { name = "i" ^ (string_of_int i); index = 0 } in
+                           i + 1,
+                           Array_read (e, Var i_var |> mk_dsyntax "") |> mk_dsyntax ""
+                         ) (0, e) |> snd)
        in
+       aux e
+     in
 
-       (* now we are going to put two nested loops, one for output gates, and one for cout *)
-       let output_gate_loops =
-         let aux (s:codegen_stmt) :codegen_stmt =
-           List.fold_right (fun e (i, s) ->
-               let i_var = { name = "i" ^ (string_of_int i); index = 0 } in
-               i - 1,
-               For_codegen (Base_e (Var i_var |> mk_dsyntax ""),
-                            Base_e (Const (UInt32C (Uint32.of_int 0)) |> mk_dsyntax ""),
-                            Base_e e,
-                            s)
-             ) el (List.length el - 1, s) |> snd
-         in
-         aux (App_codegen ("add_to_output_queue", [Base_e (Var { name = "out_q"; index = 0 } |> mk_dsyntax "");
-                                                   Output_g (r, sl, elmt_of_e);
-                                                   Base_e e_role;
-                                                   Base_e (Var { name = "cout"; index = 0 } |> mk_dsyntax "")]))
+     (* now we are going to put two nested loops, one for output gates, and one for cout *)
+     let output_gate_loops =
+       let aux (s:codegen_stmt) :codegen_stmt =
+         List.fold_right (fun e (i, s) ->
+             let i_var = { name = "i" ^ (string_of_int i); index = 0 } in
+             i - 1,
+             For_codegen (Base_e (Var i_var |> mk_dsyntax ""),
+                          Base_e (Const (UInt32C (Uint32.of_int 0)) |> mk_dsyntax ""),
+                          Base_e e,
+                          s)
+           ) el (List.length el - 1, s) |> snd
        in
-
-       o_codegen_stmt g (Seq_codegen (print_output_msg, output_gate_loops))
+       aux (
+        let backend, pub = basetype_to_secfloat_backend bt, basetype_to_secfloat_pub bt in
+        let publicize = 
+          Assign_codegen (Codegen_String pub, App_codegen_expr (backend ^ "->output", [Codegen_String "PUBLIC"; elmt_of_e])) 
+        in let display = 
+          let out =
+            match bt with
+            | UInt32 -> ".get_native_type<uint32_t>()[0]"
+            | UInt64 -> ".get_native_type<uint64_t>()[0]"
+            | Int32 -> ".get_native_type<int32_t>()[0]"
+            | Int64 -> ".get_native_type<int64_t>()[0]"
+            | Float -> ".get_native_type<float>()[0]"
+            | Bool -> ".data[0]" in
+          let cout = Cout ("cout", Codegen_String ((if bt = Bool then "(bool)" else "") ^ pub ^ out), bt) in
+          if r <> Both then If_codegen (Public, r_cmp, cout, None) else cout
+        in Seq_codegen (publicize, display)
+       )
+     in
+     o_codegen_stmt g (Seq_codegen (print_output_msg, output_gate_loops))
 
   | Skip s -> (if s = "" then o_null else seq o_newline (seq (o_comment s) o_newline)), g
            
@@ -785,91 +822,21 @@ let o_global (g0:gamma) (d:global) :comp * gamma =
      seq (o_with_semicolon (seq (o_str "const ") (o_decl (o_typ t) (o_expr g0 e_var) (Some (o_expr g0 init))))) o_newline,
      add_global_const g0 d.data
 
-let prelude_string :string = let ps1 =
-"\
-/*\n\
-This is an autogenerated file, generated using the EzPC compiler.\n\
-*/\n\
-#include<vector>\n\
-#include<math.h>\n\
-#include<cstdlib>\n\
-#include<iostream>\n\
-#include<fstream>\n\
+let prelude_string :string = "
+#include <vector>\n\
+#include <math.h>\n\
+#include <cstdlib>\n\
+#include <iostream>\n\
+#include <fstream>\n\
 \n\
 #include \"FloatingPoint/floating-point.h\"\n\
 #include \"FloatingPoint/fp-math.h\"\n\
+#include \"secfloat.h\"\n\
 \n\
 using namespace std ;\n\
 using namespace sci ;\n\
-\n\
-IOPack *__iopack = nullptr ;\n\
-OTPack *__otpack = nullptr ;\n\
-FPOp *__fp_op = nullptr ;\n\
-FPMath *__fp_math = nullptr ;\n\
-int __party ;\n\
-string __address = \"127.0.0.1\" ;\n\
-int __port = 8000 ;\n\
-uint8_t __m_bits = 23, __e_bits = 8 ;\n\
-\n\
-FPArray __fp_const(float f) {\n\
-    float *__dummy_const = new float[1] ;\n\
-    __dummy_const[0] = f ;\n\
-    FPArray x = __fp_op->input(ALICE, 1, __dummy_const) ;\n\
-    delete __dummy_const ;\n\
-    return x ;\n\
-}\n\
-\n\
-uint32_t __get_bool(BoolArray b) {\n\
-    b = __fp_op->bool_op->output(PUBLIC, b) ;\n\
-    uint8_t *b_ = new uint8_t[1] ;\n\
-    uint32_t ret ;\n\
-    memcpy(b_, b.data, sizeof(uint8_t)) ;\n\
-    ret = (uint8_t)b_[0] ;\n\
-    delete b_ ;\n\
-    return ret ;\n\
-}\n\
-\n
-" in let ps2 = 
 "
-uint32_t public_lrshift(uint32_t x, uint32_t y){\n\
-  return (x >> y);\n\
-}\n\
-\n\
-int32_t public_lrshift(int32_t x, uint32_t y){\n\
-  return ((int32_t)(((uint32_t)x) >> y));\n\
-}\n\
-\n\
-uint64_t public_lrshift(uint64_t x, uint64_t y){\n\
-  return (x >> y);\n\
-}\n\
-\n\
-int64_t public_lrshift(int64_t x, uint64_t y){\n\
-  return ((int64_t)(((uint64_t)x) >> y));\n\
-}\n\
-\n\
-template<typename T>\n\
-vector<T> make_vector(size_t size) {\n\
-  return std::vector<T>(size);\n\
-}\n\
-\n\
-template <typename T, typename... Args>\n\
-  auto make_vector(size_t first, Args... sizes)\n\
-{\n\
-  auto inner = make_vector<T>(sizes...);\n\
-  return vector<decltype(inner)>(first, inner);\n\
-}\n\
-\n\
-template<typename T>\n\
-ostream& operator<< (ostream &os, const vector<T> &v)\n\
-{\n\
-  for(auto it = v.begin (); it != v.end (); ++it) {\n\
-    os << *it << endl;\n\
-  }\n\
-  return os;\n\
-}\n\
-\n\
-"
-in ps1 
+
                                    
 let aby_prelude_string (bitlen:int) :string =
 "\
@@ -900,16 +867,7 @@ let o_one_program ((globals, main):global list * codegen_stmt) (ofname:string) :
   let main_header =
     if Config.get_codegen () = Config.SECFLOAT then o_str 
 "\n\nint main (int __argc, char **__argv) {\n\
-cout.precision(15) ;\n\
-ArgMapping __amap ;\n\
-__amap.arg(\"r\", __party, \"Role of party: ALICE/SERVER = 1; BOB/CLIENT = 2\") ; \n\
-__amap.parse(__argc, __argv) ;\n\
-\n\
-__iopack = new IOPack(__party, __port, __address) ;\n\
-__otpack = new OTPack(__iopack, __party) ;\n\
-\n\
-__fp_op = new FPOp(__party, __iopack, __otpack) ; \n\
-__fp_math = new FPMath(__party, __iopack, __otpack) ; \n\    
+__init(__argc, __argv) ;\n\
 \n\
 "
     else o_str "\n\nint64_t ezpc_main (e_role role_param, char* address, uint16_t port, seclvl seclvl,\n\

@@ -63,6 +63,8 @@ let o_semicol :comp = o_str " ;"
 
 let o_newline :comp = o_str "\n"
 
+let s_comma = seqs @@ o_str ", "
+
 (* Pipe a semicolon after a series of output pipes *)
 let s_smln = seqs @@ seql [o_semicol; o_newline]
 

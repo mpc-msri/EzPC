@@ -222,6 +222,8 @@ and o_codegen_expr (g:gamma) (e:codegen_expr) :comp =
   let o_expr = o_expr g in
   let o_codegen_expr = o_codegen_expr g in
   match e with
+  | Codegen_String s -> o_str s
+
   | Base_e e -> o_expr e
               
   | Input_g (r, sl, s, bt) -> o_str s.name

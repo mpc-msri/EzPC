@@ -266,13 +266,20 @@ type sresult = gamma result
 
 let rec check_type_well_formedness (g:gamma) (t:typ) :unit result =
   let bitlen_err (n:int) = Type_error ("Incorrect bitlen, expected: " ^ (string_of_int (Config.get_bitlen ())) ^ ", found: " ^ (string_of_int n), t.metadata) in
+  let check_secfloat (bt:secret_label) (c:codegen) : unit result =
+    if bt = Arithmetic then Well_typed ()
+    else
+    match c with
+    | SECFLOAT -> Type_error ("Numeric type (int/float) can be arithmetic shared only", t.metadata)
+    | _ -> Well_typed ()
+  in
   match t.data with
+  (* All labels have to be inferred by this point *)
   | Base (_, None) -> Type_error ("Unlabeled type: " ^ (typ_to_string t), t.metadata)
   | Base (Bool, Some (Secret Arithmetic)) -> Type_error ("Bool type cannot be arithmetic shared: " ^ (typ_to_string t), t.metadata)
-  | Base (UInt32, Some (Secret _))
-  | Base (Int32, Some (Secret _)) -> if Config.get_bitlen () = 32 then Well_typed () else bitlen_err 32
-  | Base (UInt64, Some (Secret _))
-  | Base (Int64, Some (Secret _)) -> if Config.get_bitlen () = 64 then Well_typed () else bitlen_err 64
+  | Base (Int32, Some (Secret l)) -> if Config.get_bitlen () = 32 then Config.get_codegen () |> check_secfloat l else bitlen_err 32
+  | Base (Int64, Some (Secret l)) -> if Config.get_bitlen () = 64 then Config.get_codegen () |> check_secfloat l else bitlen_err 64
+  | Base (t, Some (Secret Boolean)) -> if t = Bool then Well_typed () else Config.get_codegen () |> check_secfloat Arithmetic
   | Base _ -> Well_typed ()
   | Array (_, bt, e) ->
      bind (check_type_well_formedness g bt) (fun _ ->

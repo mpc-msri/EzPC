@@ -156,7 +156,7 @@ let role_to_fpstring (r:role) :string =
   match r with
   | Server -> "ALICE"
   | Client -> "BOB"
-  | Both   -> "__party"
+  | Both   -> "PUBLIC"
 
 let unop_to_string (u:unop) :string =
   match u with
@@ -235,11 +235,22 @@ let rec typ_to_string (t:typ) :string =
      let qual_string = if quals |> List.mem Immutable then "const " else "" in
      qual_string ^ typ_to_string t ^ "[" ^ expr_to_string e ^ "]"
 
+let basetype_to_secfloat (t:base_type) :string =
+  match t with
+  | UInt32 | UInt64 | Int32 | Int64 -> "fix"
+  | Float -> "fp"
+  | Bool -> "bool"
+
+let basetype_to_secfloat_backend (t:base_type) :string = "__" ^ (basetype_to_secfloat t) ^ "_op"
+
+let basetype_to_secfloat_pub (t:base_type) :string = "__" ^ (basetype_to_secfloat t) ^ "_pub"
+
 let ret_typ_to_string (t:ret_typ) :string =
   match t with
   | Typ t -> t |> typ_to_string
   | Void _ -> "void"
-            
+          
+
 let rec stmt_to_string (s:stmt) :string =
   match s.data with
   | Decl (t, e, init_opt) ->
@@ -446,7 +457,7 @@ let erase_labels_program (p:program) :program = p |> List.map erase_labels_globa
   
 module SSet = Set.Make (
                   struct
-                    let compare = Pervasives.compare
+                    let compare = Stdlib.compare
                     type t = var
                   end
                 )

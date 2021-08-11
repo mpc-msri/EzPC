@@ -231,6 +231,7 @@ let maybe_add_subsumption (g:gamma) (tgt:label option) (e:expr) :expr =
   let lopt = label_of_expr g e in
   match lopt, tgt with
   | Some Public, Some (Secret l) -> { e with data = Subsumption (e, Public, Secret l) }
+  (* This case will never occur when codegen is SECFLOAT as int/float are always arithmetic shared, and bool is boolean shared only *)
   | Some (Secret l1), Some (Secret l2) when l1 <> l2 -> { e with data = Subsumption (e, Secret l1, Secret l2) }
   | _, _ -> e
 

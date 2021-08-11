@@ -82,7 +82,7 @@ let tc_and_codegen (p:program) (file:string) :unit =
              else p
            in
            let p =
-             if Config.get_codegen () = CPP || Config.get_codegen () = CPPRING || Config.get_codegen () = SECFLOAT 
+             if Config.get_codegen () = CPP || Config.get_codegen () = CPPRING || Config.get_codegen () = CPPFLOAT 
              then p |> erase_labels_program
              else p
            in
@@ -151,7 +151,7 @@ let _ =
   
   let _ = Arg.parse specs (fun f -> input_file := f) ("usage: ezpc [options] [input file]. options are:") in
 
-  let _ = if Config.get_codegen () = SECFLOAT
+  let _ = if Config.get_codegen () = CPPFLOAT || Config.get_codegen () = SECFLOAT
     then begin
     Config.set_bitlen 32 ; 
     Config.disable_tac () ;
