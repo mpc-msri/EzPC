@@ -38,8 +38,9 @@ def void main(){
 	int32_pl i = 1;
 	while (i < 10)
 	{
-		yy[i] = yy[i-1] + 1.0;
+		yy[i] = yy[i-1] + 1.0 ;
+    yy[i] = yy[i] * 3.14 ;
 		i = i + 1;
 	};
-	output(ALL, yy[9]);
+	output(ALL, yy);
 }

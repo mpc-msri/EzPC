@@ -137,28 +137,46 @@ let o_pconditional (c1:comp) (c2:comp) (c3:comp) :comp =
   seq c1 (seq (o_str " ? ") (seq c2 (seq (o_str " : ") c3)))
   
 let o_sconditional (l:secret_label) (c_cond:comp) (c_then:comp) (c_else:comp) :comp =
-  o_cbfunction l (o_str "PutMUXGate") [c_then; c_else; c_cond]
+  o_app (o_str "__bool_op->if_else") [c_cond; c_then; c_else] 
+  (* o_cbfunction l (o_str "PutMUXGate") [c_then; c_else; c_cond] *)
 
 let o_subsumption (src:label) (tgt:secret_label) (t:typ) (arg:comp) :comp =
   match src with
-    | Public ->
-      let fn_typ = 
-        match t.data with
-        | Base (UInt32, _)
-        | Base (UInt64, _)
-        | Base (Int32, _)
-        | Base (Int64, _) -> "integer"
-        | Base (Float, _) -> "float"
-        | Base (Bool, _) -> "bool"
-        | _ -> failwith "Impossible source type for subsumption"
-      in o_app (o_str @@ "subsumption_" ^ fn_typ) [arg]
-    | _ -> failwith "o_subsumption : Expected impossible branch. Should have been handled by infer.ml"
+  | Public ->
+    (match t.data with
+    | Base (UInt32, _) -> o_app (o_str "__public_int_to_arithmetic") [arg; o_str "false"; o_str "32"] 
+    | Base (UInt64, _) -> o_app (o_str "__public_int_to_arithmetic") [arg; o_str "false"; o_str "64"]
+    | Base (Int32, _) -> o_app (o_str "__public_int_to_arithmetic") [arg; o_str "true"; o_str "32"]
+    | Base (Int64, _) -> o_app (o_str "__public_int_to_arithmetic") [arg; o_str "true"; o_str "64"]
+    | Base (Float, _) -> o_app (o_str "__public_float_to_arithmetic") [arg]
+    | Base (Bool, _) -> o_app (o_str "__public_bool_to_boolean") [arg]
+    | _ -> failwith "Impossible source type for subsumption")
+  | _ -> failwith "o_subsumption : Expected impossible branch. Should have been handled by infer.ml"
 
-let o_basetyp (t:base_type) :comp =
+let o_sectyp (t:base_type) :comp =
+  let str =
+    match t with
+    | UInt32 | UInt64 | Int32 | Int64 -> "FixArray"
+    | Float  -> "FPArray"
+    | Bool   -> "BoolArray"
+  in o_str str
+
+let basetyp_to_sectyp (t:base_type) : string =
   match t with
-  | UInt32 | UInt64 | Int32 | Int64 -> o_str "FixArray"
-  | Float  -> o_str "FPArray"
-  | Bool   -> o_str "BoolArray"
+  | UInt32 | UInt64 | Int32 | Int64 -> "uint64_t"
+  | Float -> "float"
+  | Bool -> "uint8_t"
+
+let basetyp_to_cpptyp (t:base_type) : string =
+  match t with
+    | UInt32 -> "uint32_t"
+    | UInt64 -> "uint64_t"
+    | Int32 -> "int32_t"
+    | Int64 -> "int64_t"
+    | Float -> "float"
+    | Bool -> "bool"
+ 
+let o_basetyp (t:base_type) :comp = t |> basetyp_to_cpptyp |> o_str
 
 let rec o_secret_binop (g:gamma) (op:binop) (sl:secret_label) (e1:expr) (e2:expr) :comp =
   (*
@@ -197,7 +215,7 @@ let rec o_secret_binop (g:gamma) (op:binop) (sl:secret_label) (e1:expr) (e2:expr
   let backend = e1 |> typeof_expr g |> get_opt |> get_bt_and_label |> fst |> basetype_to_secfloat_backend in
   let fn_name =
     match op with
-    | Sum -> "sum"
+    | Sum -> "add"
     | Sub -> "sub"
     | Mul -> "mul"
     | Div -> "div"
@@ -217,16 +235,6 @@ and o_expr (g:gamma) (e:expr) :comp =
   let o_codegen_expr = o_codegen_expr g in
   match e.data with
   | Role r -> o_role r
-
-  (*
-  | Const (Int32C n) -> o_app (o_str "__integer_const") [o_int32 n; o_str "true"; o_str "32"]
-  | Const (Int64C n) -> o_app (o_str "__integer_const") [o_int64 n; o_str "true"; o_str "64"]
-  | Const (UInt32C n) -> o_app (o_str "__integer_const") [o_uint32 n; o_str "false"; o_str "32"]
-  | Const (UInt64C n) -> o_app (o_str "__integer_const") [o_uint64 n; o_str "false"; o_str "64"]
-  | Const (FloatC f) -> o_app (o_str "__float_const") [o_float f] 
-  | Const (BoolC b) -> o_app (o_str "__bool_const") [o_bool b]
-  *)
-
   | Const (Int32C n) -> o_int32 n
   | Const (Int64C n) -> o_int64 n
   | Const (UInt32C n) -> o_uint32 n
@@ -258,60 +266,6 @@ and o_expr (g:gamma) (e:expr) :comp =
 
   | _ -> failwith "o_expr: impossible branch"
 
-and o_flt_expr (g:gamma) (e:expr) :comp =
-  let o_flt_expr = o_flt_expr g in
-  match e.data with
-  | Const (FloatC f) -> o_str @@ "__fp_const( " ^ (expr_to_string e) ^ ")" 
-  | Var x -> o_var x
-  | App (f, args) -> o_app (o_str f) (args |> List.map @@ o_flt_expr)
-  | Binop (op, e1, e2, Some Public) -> (* Remove labels coerces all to public, but it's really meant to be secret for FP*)
-    let fn = match op with
-      | Sum -> "__fp_op->add"
-      | Sub -> "__fp_op->sub"
-      | Mul -> "__fp_op->mul"
-      | Div -> "__fp_op->div"
-      | Less_than -> "__fp_op->LT"
-      | Less_than_equal -> "__fp_op->LE"
-      | Greater_than -> "__fp_op->GT"
-      | Greater_than_equal -> "__fp_op->GE"
-      | _   -> ""  
-    in if (String.length fn) > 0 then o_flt_expr (App (fn, [e1; e2]) |> mk_dsyntax "") else o_expr g e
-  | _ -> o_expr g e 
-
-and has_float (g:gamma) (e:expr) :bool =
-  let has_float = has_float g in
-  match e.data with
-    | Const (FloatC f)  -> true
-    | Var x ->
-      let maybe_typ = lookup_variable g x
-      in (match maybe_typ with
-        | Some t ->
-          (match t.data with
-          | Base (Float, _) -> true
-          | _ -> false )
-        | None  -> false) 
-    | Role r -> false
-    | Unop (_, e, _) -> has_float e
-    | Binop (_, e1, e2, _) -> has_float e1 || has_float e2
-    | Conditional (e1, e2, e3, _) -> has_float e1 || has_float e2 || has_float e3
-    | Array_read (e1, e2) when is_var e1 ->
-        let maybe_typ = get_var e1 |> lookup_variable g
-        in (match maybe_typ with
-            | Some t -> get_bt_and_label t |> fst |> is_float_bt
-            | None -> false) 
-    | App (f, args) ->
-        let args_float = List.map has_float args |> List.exists (fun x -> x) in
-        let ret_float = 
-          (match (lookup_fun g f) with
-          | Some (_, t) ->
-            (match (typ_of_ret_typ t)  with
-            | Some t -> t |> get_bt_and_label |> fst |> is_float_bt 
-            | None -> false)
-          | None -> false) 
-        in args_float || ret_float
-    (* Subsumption *)
-    | _ -> false
- 
 and o_codegen_expr (g:gamma) (e:codegen_expr) :comp =
   let o_expr = o_expr g in
   let o_codegen_expr = o_codegen_expr g in
@@ -323,7 +277,7 @@ and o_codegen_expr (g:gamma) (e:codegen_expr) :comp =
   match e with
   | Codegen_String s -> o_str s
 
-  | Base_e e -> if (has_float g e) then o_flt_expr g e else o_expr e
+  | Base_e e -> o_expr e 
               
   | Input_g (r, sl, s, bt) -> o_cbfunction sl (o_str "PutINGate") [o_str s.name; get_bitlen bt; o_role r]
 
@@ -344,7 +298,8 @@ and o_codegen_expr (g:gamma) (e:codegen_expr) :comp =
                                      
 let o_typ (t:typ) :comp =  
   match t.data with
-  | Base (bt, _) -> o_basetyp bt
+  | Base (bt, Some Public) | Base (bt, None) -> o_basetyp bt
+  | Base (bt, Some (Secret _)) -> o_sectyp bt
   | Array (quals, _, _) -> seq (if quals |> List.mem Immutable then o_str "const " else o_null) (o_str "auto")
 
 let o_ret_typ (t:ret_typ) :comp =
@@ -357,23 +312,28 @@ let o_array_init (g:gamma) (t:typ) :comp =
   let dims = get_array_bt_and_dimensions t |> snd in
   let t, lopt = get_bt_and_label t in
   let l = lopt |> get_opt in
-  let party = if is_secret_label l then "ALICE" else "PUBLIC" in
   let o_dimargs = List.map (o_expr g) dims in
-  let o_args = [party] @
-    (match t with
-    | UInt32 -> ["false"; "32"]
-    | UInt64 -> ["false"; "32"]
-    | Int32 -> ["true"; "32"]
-    | Int64 -> ["true"; "64"]
-    | _ -> []) |> List.map o_str in
-  let args = o_args @ o_dimargs in
-  let make_typ =
-    match t with
-    | UInt32 | UInt64 | Int32 | Int64 -> "integer"
-    | Float -> "float"
-    | Bool -> "bool"
-  in let s = ("make_vector_" ^ make_typ) |> o_str in
-  o_app s args 
+  if is_secret_label l then
+    let party = "ALICE" in
+    let o_args = [party] @
+      (match t with
+      | UInt32 -> ["false"; "32"]
+      | UInt64 -> ["false"; "32"]
+      | Int32 -> ["true"; "32"]
+      | Int64 -> ["true"; "64"]
+      | _ -> []) |> List.map o_str in
+    let args = o_args @ o_dimargs in
+    let make_typ =
+      match t with
+      | UInt32 | UInt64 | Int32 | Int64 -> "integer"
+      | Float -> "float"
+      | Bool -> "bool"
+    in let s = ("make_vector_" ^ make_typ) |> o_str in
+    o_app s args 
+  else
+    let make_typ = t |> basetyp_to_cpptyp in
+    let s = ("make_vector<" ^ make_typ ^ ">") |> o_str in
+    o_app s o_dimargs
 
 let o_for (index:comp) (lower:comp) (upper:comp) (body:comp) :comp =
   let init = seq (o_str "for (uint32_t ") (seq index (seq (o_str " = ") lower)) in
@@ -429,27 +389,30 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
         else 
           let bt, lab_opt = get_bt_and_label t in
           let lab = lab_opt |> get_opt in
-          let o_party = o_str (if lab = Public then "PUBLIC" else "ALICE") in
-          let o_sz = o_str "1" in
-          let init_args = (fun f ->
-            match bt with
-            | UInt32 | Int32 | UInt64 | Int64 ->
-              let o_sign =
-                (match bt with
-                | UInt32 | UInt64 -> o_str "false"
-                | Int32 | Int64 -> o_str "true"
-                | _ -> failwith "o_stmt : This was supposed to be an exhaustive match"
-                ) in
-              let o_ell = 
-                (match bt with
-                | UInt32 | Int32 -> o_str "32"
-                | UInt64 | Int64 -> o_str "64"
-                | _ -> failwith "o_stmt : This was supposed to be an exhaustive match"
-                )
-              in o_app f [o_party; o_sz; o_sign; o_ell]
-            | Float | Bool -> o_app f [o_party; o_sz])
-          in
-          seql [o_typ t; o_space; o_expr g e |> init_args] |> s_smln, alb 
+          if is_secret_label lab then 
+            let o_party = "ALICE" |> o_str in
+            let o_sz = "1" |> o_str in
+            let init_args = (fun f ->
+              match bt with
+              | UInt32 | Int32 | UInt64 | Int64 ->
+                let o_sign =
+                  (match bt with
+                  | UInt32 | UInt64 -> o_str "false"
+                  | Int32 | Int64 -> o_str "true"
+                  | _ -> failwith "o_stmt : This was supposed to be an exhaustive match"
+                  ) in
+                let o_ell = 
+                  (match bt with
+                  | UInt32 | Int32 -> o_str "32"
+                  | UInt64 | Int64 -> o_str "64"
+                  | _ -> failwith "o_stmt : This was supposed to be an exhaustive match"
+                  )
+                in o_app f [o_party; o_sz; o_sign; o_ell]
+              | Float | Bool -> o_app f [o_party; o_sz])
+            in
+            seql [o_typ t; o_space; o_expr g e |> init_args] |> s_smln, alb
+          else
+            seql [o_typ t; o_space; o_expr g e] |> s_smln, alb
     
   | Assign (e1, e2) -> o_codegen_stmt g (Assign_codegen (Base_e e1, Base_e e2))
 
@@ -457,19 +420,16 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
 
   | For (_, e1, e2, e3, s) -> o_codegen_stmt g (For_codegen (Base_e e1, Base_e e2, Base_e e3, Base_s s))
 
-  (* CFTIE. Result of expression here is of bool type, but can contain floating point *)
   | While (e, s) ->
-      let o_guard = if (has_float g e) then (o_flt_expr g) else (o_expr g) in
-    o_while (o_guard e) (o_stmt ([] |> push_local_scope g) s |> fst), g
+    o_while (o_expr g e) (o_stmt ([] |> push_local_scope g) s |> fst), g
 
   | If_else (e, s_then, s_else_opt) ->
      o_codegen_stmt g (If_codegen (Public, Base_e e, Base_s s_then, map_opt s_else_opt (fun s -> Base_s s)))
 
-  (* CFTIE. Result can be FP or bool *)
-  | Return eopt -> let o_ret = (fun e -> if (has_float g e) then (o_flt_expr g e) else (o_expr g e)) in
+  | Return eopt -> 
       seql [
         o_str "return ";
-        if is_none eopt then o_null else eopt |> get_opt |> o_ret
+        if is_none eopt then o_null else eopt |> get_opt |> o_expr g
       ] |> s_smln, g
     
   | Seq (s1, s2) -> o_codegen_stmt g (Seq_codegen (Base_s s1, Base_s s2))
@@ -480,7 +440,8 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
      let is_arr = is_array_typ t in
      
      (* bt is the base type and l label *)
-     let bt, l = get_bt_and_label t |> (fun (bt, l) -> get_inp_type bt, l) in
+     (* let bt, l = get_bt_and_label t |> (fun (bt, l) -> get_inp_type bt, l) in *)
+     let bt, l = get_bt_and_label t in
      let l = get_opt l in
 
      (* list of dimensions, if an array else empty *)
@@ -496,12 +457,7 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
        }
      in
 
-     let inp_type =
-      match bt with
-      | UInt32 | UInt64 | Int32 | Int64 -> "uint64_t"
-      | Float -> "float"
-      | Bool -> "uint8_t"
-
+     let inp_type = bt |> (if is_secret_label l then basetyp_to_sectyp else basetyp_to_cpptyp)
      in
      let decl_tmp = Line (inp_type ^ " *" ^ tmp_var_name.name ^ " = new " ^ inp_type ^ "[1]")
      in
@@ -532,18 +488,21 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
        else cin_ 
        in
        let assgn_right =
-        let backend_op = basetype_to_secfloat_backend bt in
-        let args = [Codegen_String r1; Codegen_String "1"; tmp_var_name_codegen] in
-        let args =
-          let int_args = 
-            match bt with
-            | UInt32 -> [Codegen_String "false"; Codegen_String "32"]
-            | UInt64 -> [Codegen_String "false"; Codegen_String "64"]
-            | Int32 -> [Codegen_String "true"; Codegen_String "32"]
-            | Int64 -> [Codegen_String "true"; Codegen_String "64"]
-            | _ -> [] in
-          args @ int_args in
-          App_codegen_expr (backend_op ^ "->input", args)
+        if is_secret_label l then
+          let backend_op = basetype_to_secfloat_backend bt in
+          let args = [Codegen_String r1; Codegen_String "1"; tmp_var_name_codegen] in
+          let args =
+            let int_args = 
+              match bt with
+              | UInt32 -> [Codegen_String "false"; Codegen_String "32"]
+              | UInt64 -> [Codegen_String "false"; Codegen_String "64"]
+              | Int32 -> [Codegen_String "true"; Codegen_String "32"]
+              | Int64 -> [Codegen_String "true"; Codegen_String "64"]
+              | _ -> [] in
+            args @ int_args in
+            App_codegen_expr (backend_op ^ "->input", args)
+        else
+          tmp_var_name0
        in
        let assgn = Assign_codegen (assgn_left, assgn_right) in
        Seq_codegen (cin, assgn)
@@ -588,6 +547,7 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
      let r = get_role e_role in
      let r1 = role_to_fpstring r in
      let bt, l = get_bt_and_label t in
+     let l = l |> get_opt in
      let line = Line ("cout << \"Value of " ^ (expr_to_string e) ^ " : \"") in
      let r_cmp =
         let party_var = Var { name = "__party"; index = 0 } |> mk_dsyntax "" in
@@ -626,21 +586,28 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
            ) el (List.length el - 1, s) |> snd
        in
        aux (
-        let backend, pub = basetype_to_secfloat_backend bt, basetype_to_secfloat_pub bt in
-        let publicize = 
-          Assign_codegen (Codegen_String pub, App_codegen_expr (backend ^ "->output", [Codegen_String "PUBLIC"; elmt_of_e])) 
-        in let display = 
-          let out =
-            match bt with
-            | UInt32 -> ".get_native_type<uint32_t>()[0]"
-            | UInt64 -> ".get_native_type<uint64_t>()[0]"
-            | Int32 -> ".get_native_type<int32_t>()[0]"
-            | Int64 -> ".get_native_type<int64_t>()[0]"
-            | Float -> ".get_native_type<float>()[0]"
-            | Bool -> ".data[0]" in
-          let cout = Cout ("cout", Codegen_String ((if bt = Bool then "(bool)" else "") ^ pub ^ out), bt) in
+        let get_cout = (fun e ->
+          let cout = Cout ("cout", e, bt) in
           if r <> Both then If_codegen (Public, r_cmp, cout, None) else cout
-        in Seq_codegen (publicize, display)
+        ) in
+        if is_secret_label l then
+          let backend, pub = basetype_to_secfloat_backend bt, basetype_to_secfloat_pub bt in
+          let publicize = 
+            Assign_codegen (Codegen_String pub, App_codegen_expr (backend ^ "->output", [Codegen_String "PUBLIC"; elmt_of_e])) 
+          in let display = 
+            let out =
+              match bt with
+              | UInt32 -> ".get_native_type<uint32_t>()[0]"
+              | UInt64 -> ".get_native_type<uint64_t>()[0]"
+              | Int32 -> ".get_native_type<int32_t>()[0]"
+              | Int64 -> ".get_native_type<int64_t>()[0]"
+              | Float -> ".get_native_type<float>()[0]"
+              | Bool -> ".data[0]"
+            in
+            Codegen_String ((if bt = Bool then "(bool)" else "" ) ^ pub ^ out) |> get_cout
+          in Seq_codegen (publicize, display)
+        else
+          elmt_of_e |> get_cout
        )
      in
      o_codegen_stmt g (Seq_codegen (print_output_msg, output_gate_loops))

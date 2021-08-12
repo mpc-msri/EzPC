@@ -188,6 +188,7 @@ let binop_to_string (b:binop) :string =
   | R_shift_l -> ">>>"
             
 let rec expr_to_string (e:expr) :string =
+  let brak (s:string) :string = "(" ^ s ^ ")" in
   match e.data with
   | Role r -> role_to_string r
   | Const (UInt32C n) -> Uint32.to_string n
@@ -201,22 +202,22 @@ let rec expr_to_string (e:expr) :string =
      let op_str = unop_to_string op ^ "_" ^
                     if is_none lopt then "<no label>" else lopt |> get_opt |> label_to_string
      in
-     op_str ^ " " ^ expr_to_string e
+     op_str ^ (expr_to_string e |> brak)
   | Binop (op, e1, e2, lopt) ->
      let op_str =
        binop_to_string op ^ "_" ^
          if is_none lopt then "<no label>" else label_to_string (get_opt lopt)
      in
-     expr_to_string e1 ^ " " ^ op_str ^ " " ^ expr_to_string e2
+     (expr_to_string e1 |> brak) ^ " " ^ op_str ^ " " ^ (expr_to_string e2 |> brak)
   | Conditional (e1, e2, e3, lopt) ->
-     expr_to_string e1 ^ " ?_" ^ (if is_none lopt then "<no label>" else label_to_string (get_opt lopt)) ^
-       " " ^ expr_to_string e2 ^ " : " ^ expr_to_string e3
+     (expr_to_string e1 |> brak) ^ " ?_" ^ (if is_none lopt then "<no label>" else label_to_string (get_opt lopt)) ^
+       " " ^ (expr_to_string e2 |> brak) ^ " : " ^ (expr_to_string e3 |> brak)
   | Array_read (e1, e2) -> expr_to_string e1 ^ "[" ^ expr_to_string e2 ^ "]"
   | App (f, args) -> f ^ "(" ^
                        if List.length args = 0 then ")"
                        else
                          (List.fold_left (fun s arg -> s ^ ", " ^ expr_to_string arg) (expr_to_string (List.hd args)) (List.tl args)) ^ ")"
-  | Subsumption (e, src, tgt) -> "<" ^ label_to_string src ^ " ~> " ^ label_to_string tgt ^ "> " ^ expr_to_string e
+  | Subsumption (e, src, tgt) -> "<" ^ label_to_string src ^ " ~> " ^ label_to_string tgt ^ "> " ^ (expr_to_string e |> brak)
 
 let rec typ_to_string (t:typ) :string =
   match t.data with

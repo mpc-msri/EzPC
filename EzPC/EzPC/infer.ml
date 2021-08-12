@@ -26,6 +26,7 @@ open Utils
 open Global
 open Ast
 open Tcenv
+open Config
 
 let warn_label_inference_failed (e:expr') (r:range) :expr' =
   print_string ("WARNING: label inference failed for expression " ^ expr_to_string (e |> mk_dsyntax "")
@@ -79,11 +80,14 @@ and infer_binop_label (g:gamma) (op:binop) (e1:expr) (e2:expr) (lopt:label optio
           else warn_label_inference_failed (Binop (op, e1, e2, lopt)) rng
         in
         match op with
-        | Sum | Sub | Div | Mod -> set_default_label None
+        | Sum | Sub | Div | Mod ->
+          if Config.get_codegen () = SECFLOAT 
+          then Binop (op, e1, e2, Some (Secret Arithmetic))
+          else set_default_label None
         | Mul -> Binop (op, e1, e2, Some (Secret Arithmetic))
         | Pow -> Binop (op, e1, e2, Some Public) 
         | Greater_than | Less_than | Greater_than_equal | Less_than_equal | Is_equal ->
-           Binop (op, e1, e2, Some (Secret Boolean))
+           Binop (op, e1, e2, Some (Secret Arithmetic))
         | R_shift_a -> Binop (op, e1, e2, Some (Secret Boolean))
         | L_shift -> Binop (op, e1, e2, Some (Secret Boolean))
         | Bitwise_and -> Binop (op, e1, e2, Some (Secret Boolean))
@@ -251,7 +255,9 @@ let maybe_add_subsumption (g:gamma) (tgt:label option) (e:expr) :expr =
   match lopt, tgt with
   | Some Public, Some (Secret l) -> { e with data = Subsumption (e, Public, Secret l) }
   (* This case will never occur when codegen is SECFLOAT as int/float are always arithmetic shared, and bool is boolean shared only *)
-  | Some (Secret l1), Some (Secret l2) when l1 <> l2 -> { e with data = Subsumption (e, Secret l1, Secret l2) }
+  | Some (Secret l1), Some (Secret l2) when l1 <> l2 ->
+    if Config.get_codegen () = SECFLOAT then e
+    else { e with data = Subsumption (e, Secret l1, Secret l2) }
   | _, _ -> e
 
 let rec insert_coercions_expr (g:gamma) (e:expr) :expr =
@@ -267,6 +273,11 @@ let rec insert_coercions_expr (g:gamma) (e:expr) :expr =
         | R_shift_l | R_shift_a | L_shift ->  (* for these binops, the second argument is public, so don't need coercions there *)
          let e1 = maybe_add_subsumption g lopt (insert_coercions_expr g e1) in
          Binop (b, e1, e2, lopt)
+        | Greater_than | Greater_than_equal | Less_than | Less_than_equal | Is_equal ->
+          let lopt_coercion = (*if Config.get_codegen () = SECFLOAT then Some (Secret Arithmetic) else *) lopt in
+          let e1 = maybe_add_subsumption g lopt_coercion (insert_coercions_expr g e1) in
+          let e2 = maybe_add_subsumption g lopt_coercion (insert_coercions_expr g e2) in
+          Binop (b, e1, e2, lopt)
         | _ ->
          let e1 = maybe_add_subsumption g lopt (insert_coercions_expr g e1) in
          let e2 = maybe_add_subsumption g lopt (insert_coercions_expr g e2) in

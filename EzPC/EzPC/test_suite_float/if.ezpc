@@ -35,8 +35,7 @@ def void main(){
 	*)
 
     int32_al a ;
-	bool_pl b = (pi > euler) ;
-	if (b){
+	if (pi > euler){
 		a = 20;
 	}
 	else{

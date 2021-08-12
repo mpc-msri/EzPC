@@ -108,9 +108,16 @@ let check_binop_label_is_consistent (e:expr) (op:binop) (l:label) :unit result =
   | Public -> Well_typed ()
   | Secret l ->
      match op with
-     | Sum | Sub | Div | Mod -> Well_typed ()
+     | Sum | Sub | Mul | Div -> 
+      if Config.get_codegen () = SECFLOAT 
+      then (if l = Arithmetic then Well_typed () else err)
+      else Well_typed ()
+     | Mod -> Well_typed ()
      | Mul when l = Arithmetic -> Well_typed ()
-     | Greater_than | Less_than | Greater_than_equal | Less_than_equal | Is_equal when l = Boolean -> Well_typed ()
+     | Greater_than | Less_than | Greater_than_equal | Less_than_equal | Is_equal ->
+      if Config.get_codegen () = SECFLOAT
+      then (if l = Arithmetic then Well_typed () else err)
+      else (if l = Boolean then Well_typed () else err)
      | L_shift when l = Boolean -> Well_typed ()
      | R_shift_a when l = Boolean -> Well_typed ()
      | And when l = Boolean -> Well_typed ()
@@ -144,7 +151,7 @@ let check_expected_numeric_typ (e:expr) (t:typ) (l:label) :unit result =
   let err = Type_error ("Expression " ^ (expr_to_string e) ^ " should have either integer/floating type with label " ^ label_to_string l ^
                           ", instead got: " ^ typ_to_string t, e.metadata) in
   match t.data with
-  | Base (bt, Some lt) when (bt <> Bool) && lt = l -> Well_typed ()
+  | Base (bt, Some lt) when (bt <> Bool) (* && lt = l *) -> Well_typed ()
   | _ -> err
 
 let check_expected_int_typ (e:expr) (t:typ) (l:label) :unit result =
@@ -165,7 +172,16 @@ let check_non_void_ret_typ (f:string) (t:ret_typ) (r:range) :eresult =
   match t with
   | Typ t -> Well_typed t
   | Void _ -> Type_error ("Function " ^ f ^ " has a void return type", r)
-       
+
+let join_types_cmp (t1:typ) (t2:typ) :typ option =
+  match t1.data, t2.data with
+  | Base (x, Some Public), Base (y, Some Public) when x <> Bool && y <> Bool -> 
+    join_types t1 t2
+  | Base (x, Some (Secret Arithmetic)), Base (y, Some (Secret Arithmetic)) when x = y -> 
+    Some (Base (Bool, Some (Secret Boolean)) |> mk_dsyntax "")
+  | _, _ -> None
+
+
 let rec tc_expr (g:gamma) (e:expr) :eresult =
   match e.data with
   | Role r -> Well_typed (typeof_role e.metadata)
@@ -213,9 +229,14 @@ let rec tc_expr (g:gamma) (e:expr) :eresult =
                                  | Greater_than | Less_than | Greater_than_equal | Less_than_equal -> 
                                     bind (check_expected_numeric_typ e1 t1 l) (fun _ ->
                                            bind (check_expected_numeric_typ e2 t2 l) (fun _ ->
-                                                  match join_types t1 t2 with
-                                                  | Some t -> Well_typed (Base (Bool, t |> get_bt_and_label |> snd) |> mk_syntax e.metadata)
-                                                  | None   -> join_types_err e1 e2 t1 t2 e.metadata))
+                                                  if Config.get_codegen () = SECFLOAT then
+                                                    match join_types_cmp t1 t2 with
+                                                    | Some t -> Well_typed (Base (Bool, t |> get_bt_and_label |> snd) |> mk_syntax e.metadata)
+                                                    | None -> join_types_err e1 e2 t1 t2 e.metadata
+                                                  else 
+                                                    match join_types t1 t2 with
+                                                    | Some t -> Well_typed (Base (Bool, t |> get_bt_and_label |> snd) |> mk_syntax e.metadata)
+                                                    | None   -> join_types_err e1 e2 t1 t2 e.metadata))
                                  | And | Or | Xor -> 
                                     bind (check_expected_bool_typ e1 t1 l) (fun _ ->
                                            bind (check_expected_bool_typ e2 t2 l) (fun _ -> Well_typed t1))

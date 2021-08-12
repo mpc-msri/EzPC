@@ -151,13 +151,7 @@ let _ =
   
   let _ = Arg.parse specs (fun f -> input_file := f) ("usage: ezpc [options] [input file]. options are:") in
 
-  let _ = if Config.get_codegen () = CPPFLOAT || Config.get_codegen () = SECFLOAT
-    then begin
-    Config.set_bitlen 32 ; 
-    Config.disable_tac () ;
-    Config.disable_cse ()
-    end ;
-
+  let _ = 
     if Config.get_codegen () = CPP && Config.get_actual_bitlen () <> 32 && Config.get_actual_bitlen () <> 64
     then failwith "CPP codegen requires bitlen of 32/64.";
 
