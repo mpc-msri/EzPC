@@ -1,0 +1,8 @@
+def void main () {
+  input(SERVER, x, float_al[3]) ;
+  input(CLIENT, y, float_al[3]) ;
+
+  bool_bl[3] ans ;
+  for i = [0:3] { ans[i] = x[i] < y[i] ; } ;
+  output(ALL, ans) ;
+}

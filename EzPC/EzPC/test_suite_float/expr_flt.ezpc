@@ -1,0 +1,7 @@
+def void main () {
+  input(ALL, x, float_pl[2][2]) ;
+  input(ALL, y, float_pl) ; 
+  input(SERVER, w, float_al) ;
+  float_al z = ((x[1][0] + y) * w) - 100.0 ;
+  output(CLIENT, z) ;
+}

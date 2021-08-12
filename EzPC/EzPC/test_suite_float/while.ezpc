@@ -28,18 +28,19 @@ SOFTWARE.
 
 def void main(){
 	float_al[10] yy;
+  float_al y = 1.0 ;
 
 	(*
 		Following while loop will execute until the condition (i<10) is true.
 		In general, the condition can be any arbitrary expression evaluating to public boolean.
 	*)
 
-	yy[0] = 0.0;
+	yy[0] = y;
 	int32_pl i = 1;
 	while (i < 10)
 	{
-		yy[i] = yy[i-1] + 1.0 ;
-    yy[i] = yy[i] * 3.14 ;
+    y = y/2.0 ;
+		yy[i] = yy[i-1] + y ;
 		i = i + 1;
 	};
 	output(ALL, yy);

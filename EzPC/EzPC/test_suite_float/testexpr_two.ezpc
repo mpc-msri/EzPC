@@ -1,0 +1,7 @@
+def void main () {
+  int32_pl x ;
+  int32_al y ;
+  int32_pl z = 3 + 4 ; 
+
+  bool b = ((x + y) > 3) && ((x + 5 < z) || (z < 10)) ;
+}
