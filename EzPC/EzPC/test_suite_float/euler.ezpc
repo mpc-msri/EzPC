@@ -1,8 +1,8 @@
 def void main() {
     input(ALL, terms, int32_pl) ;
-    float_pl euler = 1.0 ;
-    float_pl fact = 1.0 ;
-    float_pl ctr = 1.0 ;
+    float_al euler = 1.0 ;
+    float_al fact = 1.0 ;
+    float_al ctr = 1.0 ;
     for i=[1:terms] {
         fact = fact * ctr ;
         euler = euler + (1.0/fact) ;
