@@ -36,13 +36,16 @@ from AST.ASTVisitor import ASTVisitor
 from AST.IRBuilderAST import IRBuilderAST
 
 
+
 class IRBuilderCSF(IRBuilderAST):
     varNameDelim = ""
 
-    def __init__(self, intPartBitwidth=-1):
+    def __init__(self, _debug=False, intPartBitwidth=-1):
         # For tracking temp variables
         self._var_cnt = 0
         self._iter_cnt = 0
+        self._debug = _debug
+        self._indent = 0
 
         # Global variables
         #   Used to note declarations which will go before any statements
@@ -63,7 +66,7 @@ class IRBuilderCSF(IRBuilderAST):
         self.scaleFac = Util.Config.consSF
         self.bitwidth = Util.Config.wordLength
         self.intPartBitwidth = intPartBitwidth
-        if self.intPartBitwidth == -1:
+        if self.intPartBitwidth == -1 :
             self.intPartBitwidth = self.bitwidth - 2 * self.scaleFac
         self.scaleFacMapping = {}
 
@@ -132,6 +135,9 @@ class IRBuilderCSF(IRBuilderAST):
     # =================
 
     def visitInt(self, node: AST.Int, args=None):
+        if self._debug :
+            print(f"{' '*self._indent}|visitInt")
+            self._indent += 1
         n = node.value
         prog = IR.Prog([IR.Comment("Int node, isSecret = {0}.".format(node.isSecret))])
         expr = self.getTempVar()
@@ -143,9 +149,14 @@ class IRBuilderCSF(IRBuilderAST):
         )
         if not (Util.Config.disableTruncOpti):
             self.scaleFacMapping[expr.idf] = self.scaleFac if node.isScaled else 0
+
+        if self._debug : self._indent -= 1
         return (prog, expr)
 
     def visitFloat(self, node: AST.Float, args=None):
+        if self._debug :
+            print(f"{' '*self._indent}|visitFloat")
+            self._indent += 1
         r = node.value
         p = self.get_expnt(abs(r))
         k = IR.DataType.getInt(np.ldexp(r, p))
@@ -164,17 +175,27 @@ class IRBuilderCSF(IRBuilderAST):
         )
         if not (Util.Config.disableTruncOpti):
             self.scaleFacMapping[expr.idf] = self.scaleFac
+
+        if self._debug : self._indent -= 1
         return (prog, expr)
 
     def visitId(self, node: AST.ID, args=None):
+        if self._debug :
+            print(f"{' '*self._indent}|visitId")
+            self._indent += 1
         idf = node.name
         prog = IR.Prog([])
         expr = IR.Var(idf)
         if not (Util.Config.disableTruncOpti):
             assert expr.idf in self.scaleFacMapping
+
+        if self._debug : self._indent -= 1
         return (prog, expr)
 
     def visitDecl(self, node: AST.Decl, args=None):
+        if self._debug :
+            print(f"{' '*self._indent}|visitDecl")
+            self._indent += 1
         def helperAssignGen(l1, l2, allComb):
             if l2 == []:
                 allComb.append(l1)
@@ -244,9 +265,13 @@ class IRBuilderCSF(IRBuilderAST):
         if not (Util.Config.disableTruncOpti):
             self.scaleFacMapping[expr.idf] = self.scaleFac if node.isScaled else 0
 
+        if self._debug : self._indent -= 1
         return (prog, expr)
 
     def visitTranspose(self, node: AST.Transpose, args=None):
+        if self._debug :
+            print(f"{' '*self._indent}|visitTranspose")
+            self._indent += 1
         (inp_prog, inp_arr) = self.visit(node.expr)
         inp_type = node.expr.type
         out_type = node.type
@@ -287,9 +312,13 @@ class IRBuilderCSF(IRBuilderAST):
         if not (Util.Config.disableTruncOpti):
             self.scaleFacMapping[out_arr.idf] = self.scaleFacMapping[inp_arr.idf]
 
+        if self._debug : self._indent -= 1
         return (final_prog, out_arr)
 
     def visitSlice(self, node: AST.Slice, args=None):
+        if self._debug :
+            print(f"{' '*self._indent}|visitSlice")
+            self._indent += 1
         (inp_prog, inp_arr) = self.visit(node.expr)
         inp_type = node.expr.type
         out_type = node.type
@@ -330,9 +359,13 @@ class IRBuilderCSF(IRBuilderAST):
         if not (Util.Config.disableTruncOpti):
             self.scaleFacMapping[out_arr.idf] = self.scaleFacMapping[inp_arr.idf]
 
+        if self._debug : self._indent -= 1
         return (final_prog, out_arr)
 
     def visitReshape(self, node: AST.Reshape, args=None):
+        if self._debug :
+            print(f"{' '*self._indent}|visitReshape")
+            self._indent += 1
         (prog_1, expr_1) = self.visit(node.expr)
 
         """
@@ -353,7 +386,8 @@ class IRBuilderCSF(IRBuilderAST):
         """
 
         typ_1 = node.expr.type
-        typ_2 = node.type
+        typ_2 = node.type               #! This is Type.Tensor object
+        # print(f"IRBuilderCSF.py : visitReshape : {typ_2}")
 
         # Declare variables
         expr_2 = self.getTempVar()
@@ -430,9 +464,14 @@ class IRBuilderCSF(IRBuilderAST):
         if not (Util.Config.disableTruncOpti):
             self.scaleFacMapping[expr_2.idf] = self.scaleFacMapping[expr_1.idf]
 
+        if self._debug : self._indent -= 1
+        # print(f"IRBuilderCSF.py : visitReshape : Before return {expr_2.idf}")
         return (prog_2, expr_2)
 
     def visitPool(self, node: AST.Pool, args=None):
+        if self._debug :
+            print(f"{' '*self._indent}|visitPool")
+            self._indent += 1
         (prog_1, expr_1) = self.visit(node.expr)
 
         [N, H, W, CI] = node.expr.type.shape
@@ -482,12 +521,17 @@ class IRBuilderCSF(IRBuilderAST):
         if not (Util.Config.disableTruncOpti):
             self.scaleFacMapping[expr_2.idf] = self.scaleFacMapping[expr_1.idf]
 
+        if self._debug : self._indent -= 1
         return (prog_2, expr_2)
 
     def visitUOp(self, node: AST.UOp, args=None):
+        if self._debug :
+            print(f"{' '*self._indent}|visitUOp")
+            self._indent += 1
         (prog_1, expr_1) = self.visit(node.expr)
         op = node.op
         if op == AST.Operators.ADD:
+            if self._debug : self._indent -= 1
             return (prog_1, expr_1)
         assert op == AST.Operators.SUB
 
@@ -521,10 +565,16 @@ class IRBuilderCSF(IRBuilderAST):
         if not (Util.Config.disableTruncOpti):
             self.scaleFacMapping[expr_2.idf] = self.scaleFacMapping[expr_1.idf]
 
+        if self._debug : self._indent -= 1
         return (prog_2, expr_2)
 
     def visitBOp(self, node: AST.BOp, args=None):
+        if self._debug :
+            print(f"{' '*self._indent}|visitBOp")
+            self._indent += 1
         op = node.op
+
+        if self._debug : self._indent -= 1
         if op in [AST.Operators.ADD, AST.Operators.SUB, AST.Operators.Equal]:
             return self.visitBopAddOrSubLike(node)
         elif op in [AST.Operators.ElemWiseMul, AST.Operators.ElemWiseDiv]:
@@ -539,6 +589,9 @@ class IRBuilderCSF(IRBuilderAST):
             assert False
 
     def visitBopAddOrSubLike(self, node: AST.BOp, args=None):
+        if self._debug :
+            print(f"{' '*self._indent}|visitBopAddOrSubLike")
+            self._indent += 1
         (prog_1, expr_1) = self.visit(node.expr1)
         (prog_2, expr_2) = self.visit(node.expr2)
 
@@ -618,6 +671,8 @@ class IRBuilderCSF(IRBuilderAST):
 
         out_prog = IRUtil.prog_merge(IR.Prog([comment, cmd0, decl]), out_prog)
         out_prog = IRUtil.prog_merge(prog_1, prog_2, out_prog)
+
+        if self._debug : self._indent -= 1
         return (out_prog, out_arr)
 
     # We first reshape both inputs and flatten them into 1d dims.
@@ -640,6 +695,9 @@ class IRBuilderCSF(IRBuilderAST):
     #     out_arr[i1][i2] = out_arr_flat[idx]
     # Standard broadcast rules apply to generate these flattened tensors.
     def visitBopElemWiseOp(self, node: AST.BOp, args=None):
+        if self._debug :
+            print(f"{' '*self._indent}|visitBopElemWiseOp")
+            self._indent += 1
         (prog_1, expr_1) = self.visit(node.expr1)
         (prog_2, expr_2) = self.visit(node.expr2)
 
@@ -844,12 +902,19 @@ class IRBuilderCSF(IRBuilderAST):
         out_prog = IRUtil.prog_merge(
             IRUtil.Prog([comment, cmd0]), progExtraBefore, out_prog, progExtraAfter
         )
+
+        if self._debug : self._indent -= 1
         return (out_prog, out_arr)
 
     def visitBopMul(self, node: AST.BOp, args=None):
+        if self._debug :
+            print(f"{' '*self._indent}|visitBopMul")
+            self._indent += 1
         typ_1 = node.expr1.type
         typ_2 = node.expr2.type
         typ_3 = node.type
+
+        if self._debug : self._indent -= 1
         if Type.isInt(typ_3):
             return self.visitBopMulInt(node)
         elif typ_1.dim == 0 or Type.isInt(typ_1) or typ_2.dim == 0 or Type.isInt(typ_2):
@@ -858,6 +923,9 @@ class IRBuilderCSF(IRBuilderAST):
             return self.visitBopMul2DTensor(node)
 
     def visitBopMulInt(self, node: AST.BOp, args=None):
+        if self._debug :
+            print(f"{' '*self._indent}|visitBopMulInt")
+            self._indent += 1
         (prog_1, expr_1) = self.visit(node.expr1)
         (prog_2, expr_2) = self.visit(node.expr2)
 
@@ -894,9 +962,13 @@ class IRBuilderCSF(IRBuilderAST):
             self.scaleFacMapping[expr_3.idf] = 2 * self.scaleFac
 
         prog_3 = IRUtil.prog_merge(progExtraBefore, prog_3, progExtraAfter)
+        if self._debug : self._indent -= 1
         return (prog_3, expr_3)
 
     def visitBopMulScalar1DTensor(self, node: AST.BOp, args=None):
+        if self._debug :
+            print(f"{' '*self._indent}|visitBopMulScalar1DTensor")
+            self._indent += 1
         (prog_1, expr_1) = self.visit(node.expr1)
         (prog_2, expr_2) = self.visit(node.expr2)
 
@@ -957,9 +1029,14 @@ class IRBuilderCSF(IRBuilderAST):
         prog_3 = IRUtil.prog_merge(
             IR.Prog([IR.Decl(expr_3.idf, node.type)]), prog_3, progExtraAfter
         )
+
+        if self._debug : self._indent -= 1
         return (prog_3, expr_3)
 
     def visitBopMul2DTensor(self, node: AST.BOp, args=None):
+        if self._debug :
+            print(f"{' '*self._indent}|visitBopMul2DTensor")
+            self._indent += 1
         (prog_1, expr_1) = self.visit(node.expr1)
         (prog_2, expr_2) = self.visit(node.expr2)
 
@@ -1033,9 +1110,13 @@ class IRBuilderCSF(IRBuilderAST):
             IR.Prog([IR.Decl(expr_3.idf, node.type)]), prog_3, progExtraAfter
         )
 
+        if self._debug : self._indent -= 1
         return (prog_3, expr_3)
 
     def visitBopConv(self, node: AST.BOp, args=None):
+        if self._debug :
+            print(f"{' '*self._indent}|visitBopConv")
+            self._indent += 1
         (prog1, expr_1) = self.visit(node.expr1)
         (prog2, expr_2) = self.visit(node.expr2)
 
@@ -1151,9 +1232,14 @@ class IRBuilderCSF(IRBuilderAST):
         returnProg = IRUtil.prog_merge(
             IR.Prog([IR.Decl(returnExpr.idf, node.type)]), returnProg, progExtraAfter
         )
+
+        if self._debug : self._indent -= 1
         return (returnProg, returnExpr)
 
     def visitBopConvTranspose(self, node: AST.BOp, args=None):
+        if self._debug :
+            print(f"{' '*self._indent}|visitBopConvTranspose")
+            self._indent += 1
         (prog1, expr_1) = self.visit(node.expr1)
         (prog2, expr_2) = self.visit(node.expr2)
 
@@ -1317,9 +1403,14 @@ class IRBuilderCSF(IRBuilderAST):
         returnProg = IRUtil.prog_merge(
             IR.Prog([IR.Decl(returnExpr.idf, node.type)]), returnProg, progExtraAfter
         )
+
+        if self._debug : self._indent -= 1
         return (returnProg, returnExpr)
 
     def visitFunc(self, node: AST.Func, args=None):
+        if self._debug :
+            print(f"{' '*self._indent}|visitFunc")
+            self._indent += 1
         op = node.op
         assert op in [
             AST.Operators.Floor,
@@ -1332,9 +1423,14 @@ class IRBuilderCSF(IRBuilderAST):
             AST.Operators.ClearMemSecret,
             AST.Operators.ClearMemPublic,
         ]
+
+        if self._debug : self._indent -= 1
         return self.visitFloorLike(node)
 
     def visitFloorLike(self, node: AST.Func, args=None):
+        if self._debug :
+            print(f"{' '*self._indent}|visitFloorLike")
+            self._indent += 1
         (prog1, expr1) = self.visit(node.expr)
         out_expr = self.getTempVar()
 
@@ -1365,8 +1461,10 @@ class IRBuilderCSF(IRBuilderAST):
             or node.op == AST.Operators.ClearMemPublic
         ):
             if Type.isInt(node.expr.type):
+                if self._debug : self._indent -= 1
                 return (prog1, expr1)
             if node.expr.type.dim == 0:
+                if self._debug : self._indent -= 1
                 return (prog1, expr1)
 
         argsList = OrderedDict()
@@ -1482,23 +1580,37 @@ class IRBuilderCSF(IRBuilderAST):
             )
 
         progFinal = IRUtil.prog_merge(prog1, progExtraBefore, progFinal)
+
+        if self._debug : self._indent -= 1
         return (progFinal, out_expr)
 
     def visitLet(self, node: AST.Let, args=None):
+        if self._debug :
+            print(f"{' '*self._indent}|visitLet")
+            self._indent += 1
+
         (prog_1, expr_1) = self.visit(node.decl)
         typ_1 = node.decl.type
         idf = node.name.name
-        if not (Type.isInt(typ_1)):
+        # print(f"visitLet : Name = {idf}, Type = {typ_1}")
+
+        if not (Type.isInt(typ_1)) :
             self.name_mapping[idf] = expr_1.idf
-        if not (Util.Config.disableTruncOpti):
+        if not (Util.Config.disableTruncOpti) :
             self.scaleFacMapping[idf] = self.scaleFacMapping[expr_1.idf]
+
         (prog_2, expr_2) = self.visit(node.expr)
         prog_2 = prog_2.subst(idf, expr_1)
         expr_2 = expr_2.subst(idf, expr_1)
         prog_3 = IRUtil.prog_merge(prog_1, prog_2)
+
+        if self._debug : self._indent -= 1
         return (prog_3, expr_2)
 
     def visitUninterpFuncCall(self, node: AST.UninterpFuncCall, args=None):
+        if self._debug :
+            print(f"{' '*self._indent}|visitUninterpFuncCall")
+            self._indent += 1
         progList = []
         exprList = []
         for ii, curArg in enumerate(node.argsList):
@@ -1588,9 +1700,14 @@ class IRBuilderCSF(IRBuilderAST):
             ),
             progFinal,
         )
+
+        if self._debug : self._indent -= 1
         return (progFinal, returnExpr)
 
     def visitArgMax(self, node: AST.ArgMax, args=None):
+        if self._debug :
+            print(f"{' '*self._indent}|visitArgMax")
+            self._indent += 1
         (prog_1, expr1) = self.visit(node.expr)
         (prog_2, expr2) = self.visit(node.dim)
 
@@ -1616,14 +1733,21 @@ class IRBuilderCSF(IRBuilderAST):
         comment = IR.Comment(str(node.metadata))
         prog_3 = IRUtil.prog_merge(prog_1, prog_2, IR.Prog([comment, funcCall]))
         prog_3 = IRUtil.prog_merge(IR.Prog([IR.Decl(tmpExpr.idf, node.type)]), prog_3)
+
+        if self._debug : self._indent -= 1
         return (prog_3, tmpExpr)
 
     def visitInput(self, node: AST.Input, args=None):
+        if self._debug :
+            print(f"{' '*self._indent}|visitInput")
+            self._indent += 1
         returnExpr = self.getTempVar()
         returnExpr.inputVar = True
         comment = IR.Comment(str(node.metadata))
         if not (Util.Config.disableTruncOpti):
             self.scaleFacMapping[returnExpr.idf] = self.scaleFac
+
+        if self._debug : self._indent -= 1
         return (
             IR.Prog(
                 [
@@ -1641,15 +1765,23 @@ class IRBuilderCSF(IRBuilderAST):
         )
 
     def visitOutput(self, node: AST.Output, args=None):
+        if self._debug :
+            print(f"{' '*self._indent}|visitOutput")
+            self._indent += 1
         (prog_0, expr_0) = self.visit(node.expr)
         output = IR.Output(expr_0, node.outputToParty)
         prog = IRUtil.prog_merge(prog_0, IR.Prog([output]))
         expr = self.getTempVar()
         if not (Util.Config.disableTruncOpti):
             self.scaleFacMapping[expr.idf] = self.scaleFac
+
+        if self._debug : self._indent -= 1
         return (prog, expr)
 
     def visitReduce(self, node: AST.Reduce, args=None):
+        if self._debug :
+            print(f"{' '*self._indent}|visitReduce")
+            self._indent += 1
         (prog_1, expr1) = self.visit(node.expr)
         assert node.op in [AST.Operators.ADD, AST.Operators.Mean]
 
@@ -1777,6 +1909,7 @@ class IRBuilderCSF(IRBuilderAST):
             if not (Util.Config.disableTruncOpti):
                 self.scaleFacMapping[output.idf] = self.scaleFacMapping[expr1.idf]
 
+            if self._debug : self._indent -= 1
             return (final_prog, output)
 
         # Insert call to ElemWiseVectorPublicDiv(size=s1*s2, inp=temp_flat, divisor=s0*s3, out=out_flat)
@@ -1836,9 +1969,13 @@ class IRBuilderCSF(IRBuilderAST):
             IR.Prog([free_out_flat_call]),
         )
 
+        if self._debug : self._indent -= 1
         return (final_prog, output)
 
     def visitFusedBatchNorm(self, node: AST.FusedBatchNorm, args=None):
+        if self._debug :
+            print(f"{' '*self._indent}|visitFusedBatchNorm")
+            self._indent += 1
         (prog1, expr1) = self.visit(node.expr)
         (prog2, expr2) = self.visit(node.multExpr)
         (prog3, expr3) = self.visit(node.addExpr)
@@ -1919,4 +2056,6 @@ class IRBuilderCSF(IRBuilderAST):
         returnProg = IRUtil.prog_merge(
             IR.Prog([IR.Decl(returnExpr.idf, node.type)]), returnProg
         )
+
+        if self._debug : self._indent -= 1
         return (returnProg, returnExpr)

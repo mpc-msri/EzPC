@@ -150,8 +150,11 @@ def generate_code(params, role, debug=False):
     if role == "server":
         # Compile to seedot. Generate AST in model directory
         weights_path = compile_onnx.compile(
-            model_path, input_tensor_info, output_tensors, scale, save_weights, role
+            model_path, input_tensor_info, output_tensors, scale, save_weights, "server"
         )
+        print("CompileONNXGraph.py (server) : generate_code : ONNX to SeeDot is done. Exiting!")
+        # sys.exit(1)
+
         # Zip the pruned model, sizeInfo to send to client
         file_list = [pruned_model_path]
         if "config_name" in params:
@@ -167,7 +170,7 @@ def generate_code(params, role, debug=False):
             output_tensors,
             scale,
             save_weights,
-            role,
+            "client",
         )
 
     # Compile to ezpc
@@ -191,6 +194,9 @@ def generate_code(params, role, debug=False):
     print("python3 {} ".format(seedot_script) + seedot_args)
     os.system("python3 {} ".format(seedot_script) + seedot_args)
 
+    print("CompileONNXGraph.py : generate_code : SeeDot to EzPC is done. Exiting!")
+    sys.exit(1)
+
     # Add library functions
     if target in ["ABY", "CPPRING"]:
         library = "cpp"
@@ -213,13 +219,15 @@ def generate_code(params, role, debug=False):
         )
         post = ""
     temp = os.path.join(model_abs_dir, "temp.ezpc")
-    os.system(
-        'cat "{pre}" "{common}" "{post}" "{ezpc}"> "{temp}"'.format(
-            pre=pre, common=common, post=post, ezpc=ezpc_abs_path, temp=temp
-        )
-    )
-    os.system('mv "{temp}" "{ezpc}"'.format(temp=temp, ezpc=ezpc_abs_path))
 
+    # os.system(
+    #     'cat "{pre}" "{common}" "{post}" "{ezpc}"> "{temp}"'.format(
+    #         pre=pre, common=common, post=post, ezpc=ezpc_abs_path, temp=temp
+    #     )
+    # )
+    # os.system('mv "{temp}" "{ezpc}"'.format(temp=temp, ezpc=ezpc_abs_path))
+
+    # EzPC to binary, no need to analyse this.
     ezpc_dir = os.path.join(athos_dir, "../EzPC/EzPC/")
     # Copy generated code to the ezpc directory
     os.system('cp "{ezpc}" "{ezpc_dir}"'.format(ezpc=ezpc_abs_path, ezpc_dir=ezpc_dir))

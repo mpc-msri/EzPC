@@ -153,6 +153,14 @@ class Compiler:
         with open(Util.Config.astFile, "rb") as ff:
             ast = pickle.load(ff)
 
+        if Util.Config.printASTBool:
+            PrintAST().visit(ast)
+            print("\n")
+            sys.stdout.flush()
+
+        # print("Compiler.py : Printed SeeDOT AST. Exiting!")
+        # sys.exit(1)
+
         if not (Util.Config.disableAllOpti):
             if not (Util.Config.disableRMO):
                 print("Performing Relu-maxpool optimization...")
@@ -167,18 +175,37 @@ class Compiler:
                 print("Garbage collection done.")
 
         # Perform type inference and annotate nodes with type information
+
+
         InferType().visit(ast)
 
-        if Util.Config.printASTBool:
-            PrintAST().visit(ast)
-            print("\n")
-            sys.stdout.flush()
-
         IRUtil.init()
-        compiler = IRBuilderCSF()
+        compiler = IRBuilderCSF(_debug=False)
         res = compiler.visit(ast)
-        res = self.fixOuputScale(res, compiler)
 
+        print("Compiler.py : Converted SeeDot to IR. Exiting!")
+        # sys.exit(1)
+
+        # print(type(res[0]), type(res[1]))
+        # print(f"type(res[1]) = {type(res[1])}")
+        # print(f"res[1] = {res[1]}")
+        # print(f"res[1].idx = {res[1].idx}")
+        # print(f"res[1].idf = {res[1].idf}")
+        # print("The command list - ")
+        # for it, cmd in enumerate(res[0].cmd_l) :
+        #     print(f"cmd[{it}] = {cmd}")
+
+        # print("\nTypeInfo - ")
+        # for k, v in compiler.typeInfo.items() :
+        #     print("{} : {}".format(k, v))
+
+        # print("\nScale factor mappings - ")
+        # for k, v in compiler.scaleFacMapping.items() :
+        #     print(f"scalefac[{k}] = {v}")
+        # print("\nCompiler.py : IRBuilder has visited! Exiting")
+        # sys.exit(1)
+
+        # res = self.fixOuputScale(res, compiler)
         Util.write_debug_info(compiler.name_mapping)
 
         # Insert a generic start_computation and end_computation function call after all input IR statements.
@@ -197,3 +224,6 @@ class Compiler:
 
         codegen.printAll(*res)
         writer.close()
+
+        print("Compiler.py : Output the EzPC file. Exit!")
+        sys.exit(1)

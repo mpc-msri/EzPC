@@ -30,7 +30,6 @@ from Util import *
 
 def init():
     global zero, one, negone, negmax
-
     zero = Int(0)
     one = Int(1)
     negone = Int(-1)

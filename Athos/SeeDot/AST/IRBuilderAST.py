@@ -27,11 +27,12 @@ from AST.ASTVisitor import ASTVisitor
 
 
 class IRBuilderAST(ASTVisitor):
-    typeInfo = {}
+	typeInfo = {}
 
-    def visit(self, node, args=None):
-        ret = super().visit(node, args)
-        if type(ret) is tuple:
-            if ret[1].idf not in self.typeInfo:
-                self.typeInfo[ret[1].idf] = node.type
-        return ret
+	def visit(self, node, args=None):
+		ret = super().visit(node, args)
+		if type(ret) is tuple:
+			# print("This is a tuple")
+			if ret[1].idf not in self.typeInfo:
+				self.typeInfo[ret[1].idf] = node.type
+		return ret

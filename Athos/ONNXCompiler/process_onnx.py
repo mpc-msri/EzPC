@@ -36,7 +36,7 @@ from onnxsim import simplify
 
 import AST.AST as AST
 
-from ONNXNodesAST import ONNXNodesAST, OnnxNode
+from ONNXNodesAST import ONNXNodesAST, OnnxNode, onnx2seedot
 from onnx.helper import make_tensor_value_info
 from onnx import ValueInfoProto, ModelProto, TensorProto, TensorShapeProto, helper
 from AST.PrintAST import PrintAST
@@ -158,6 +158,9 @@ def generate_seedot_ast(model, value_info, model_dir):
         value_info,
     )
 
+    # print("process_onnx.py : generate_seedot_ast : process_input_variables is done. Exiting!")
+    # sys.exit(1)
+
     process_onnx_nodes(
         innermost_let_ast_node,
         node_name_to_out_var_dict,
@@ -233,14 +236,18 @@ def dump_model_weights(model, scaling_factor, model_dir, model_name):
     preprocess_batch_normalization(model.graph, model_name_to_val_dict)
 
     chunk_n = ""
-    cnt_n = 0
+    # cnt_n = 0
+    #!! Need to make changes here for floating point
     for init_vals in model.graph.initializer:
         (chunk_1, cnt_1) = common.numpy_float_array_to_fixed_point_val_str(
             np.asarray(model_name_to_val_dict[init_vals.name], dtype=np.float32),
             scaling_factor,
         )
+        # chunk_1 = common.numpy_float_array_to_float_val_str(
+        #     np.asarray(model_name_to_val_dict[init_vals.name], dtype=np.float32)
+        # )
         chunk_n += chunk_1
-        cnt_n += cnt_1
+        # cnt_n += cnt_1
 
     print(
         "\nDumping model weights in ",
@@ -253,6 +260,8 @@ def dump_model_weights(model, scaling_factor, model_dir, model_name):
     return weights_path
 
 
+# Retains the model architecture except the weights
+# This is to be fed to the client
 def strip_weights(model):
     graph = model.graph
 
@@ -336,8 +345,16 @@ def compile(
 
     # value_info: { name : (type, dimension tuple) }
     value_info = get_node_metadata(model)
+    # for k, v in value_info.items() :
+    #     print(f"process_onnx.py : compile : value_info[{k}] = {v}")
+
+    # print("process_onnx.py : compile : Exiting before generate_seedot_ast")
+    # sys.exit(1)
 
     generate_seedot_ast(model, value_info, model_abs_dir)
+
+    # print("process_onnx.py : compile : Exiting after generate_seedot_ast")
+    # sys.exit(1)
 
     if role == "server" and save_weights:
         return dump_model_weights(model, scaling_factor, model_abs_dir, model_name)
@@ -365,14 +382,24 @@ def addOutputs(
         outVarPrefix = "O"
         for i in range(0, len(output_tensors)):  # name, decl, expr
             t_name = output_tensors[i]
+            # print(f"process_onnx.py : addOutputs : {t_name}")
             if i == len(output_tensors) - 1:
-                output_name = AST.ID(node_name_to_out_var_dict[t_name])
+                output_name = AST.ID(
+                    node_name_to_out_var_dict[t_name], 
+                    onnx2seedot(value_info[t_name][0])
+                )
                 output = AST.Output(output_name, AST.Party.CLIENT)
                 newNode = output
             else:
-                output_name = AST.ID(node_name_to_out_var_dict[t_name])
+                output_name = AST.ID(
+                    node_name_to_out_var_dict[t_name], 
+                    onnx2seedot(value_info[t_name][0])
+                )
                 output = AST.Output(output_name, AST.Party.CLIENT)
-                let_name_id = AST.ID(outVarPrefix + str(outVarCt))
+                let_name_id = AST.ID(
+                    outVarPrefix + str(outVarCt), 
+                    onnx2seedot(value_info[t_name][0])
+                )
                 newNode = AST.Let(let_name_id, output, AST.ASTNode())
                 mtdForCurAST = {
                     AST.ASTNode.mtdKeyTFOpName: "Output",
@@ -399,6 +426,12 @@ def process_input_variables(
             if isinstance(node, ValueInfoProto):  # input
                 self.shape = list(common.proto_val_to_dimension_tuple(node))
                 self.data_type = node.type.tensor_type.elem_type
+                # print(type(node))
+                # print(type(node.type))
+                # print(type(node.type.tensor_type))
+                # print(type(node.type.tensor_type.elem_type))
+                # print(f"In the Input() constructor. data_type = {self.data_type}")
+
                 # When weights are stripped from the model by the server,
                 # the doc_string field is set to this exact MPC_MODEL_WEIGHTS
                 # magic keyword
@@ -415,7 +448,7 @@ def process_input_variables(
 
         def __str__(self):
             return "Name: {n}, Shape: {s}, DataType: {dt}, Party: {p}".format(
-                n=self.name, s=self.shape, dt=self.data_type, p=self.party
+                n=self.name, s=self.shape, dt=onnx2seedot[self.data_type], p=self.party
             )
 
     input_nodes = [Input(i) for i in graph_def.input] + [
@@ -427,6 +460,7 @@ def process_input_variables(
             print("Node information")
             print(node)
 
+        # print(f"process_onnx.py : process_input_variables : {node}")
         curAst = ONNXNodesAST.Input(node, value_info, node_name_to_out_var_dict)
         mtdForCurAST = {
             AST.ASTNode.mtdKeyTFOpName: "Input",
@@ -435,7 +469,7 @@ def process_input_variables(
         if curAst is None:
             continue
 
-        cur_out_var_ast_node = AST.ID(node.name)
+        cur_out_var_ast_node = AST.ID(node.name, node.data_type)
 
         if program:
             assert type(innermost_let_ast_node) is AST.Let
@@ -474,6 +508,8 @@ def process_onnx_nodes(
             AST.ASTNode.mtdKeyTFNodeName: node.name,
         }
 
+        # print(f"process_onnx.py : process_onnx_nodes : {node}")
+        print(f"process_onnx.py : process_onnx_nodes : calling attr --> {node.op_type}")
         func = getattr(ONNXNodesAST, node.op_type)
         (innermost_let_ast_node, out_var_count) = func(
             node,

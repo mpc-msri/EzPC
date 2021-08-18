@@ -168,12 +168,15 @@ class Float(ASTNode):
         self.isSecret = isSecret
 
 
+#! Trying to add data types to identifiers
 class ID(ASTNode):
-    def __init__(self, name: str):
+    def __init__(self, name: str, dataType=None):
+        # print(f"\tAST.py : ID : name = {name}, dataType = {dataType}")
         if assertInputTypes:
             assert isinstance(name, str)
         super().__init__()
         self.name = name
+        self.dataType = dataType
 
 
 # shape : list of int, valueList : list of int/float AST Nodes
@@ -444,6 +447,7 @@ class Input(ASTNode):
                 inputByParty == Party.CLIENT or inputByParty == Party.SERVER
             )  # Right now EzPC supports input by two parties.
         super().__init__()
+        # print(f"AST.py : Input : dataType = {dataType}")
         self.shape = shape
         self.dataType = dataType
         self.isSecret = isSecret
