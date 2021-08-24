@@ -121,12 +121,12 @@ def generate_code(params, role, debug=False):
         else params["disable_relu_maxpool_opts"]
     )
     disable_garbage_collection = (
-        False
+        True
         if params["disable_garbage_collection"] is None
         else params["disable_garbage_collection"]
     )
     disable_trunc_opts = (
-        False if params["disable_trunc_opts"] is None else params["disable_trunc_opts"]
+        True if params["disable_trunc_opts"] is None else params["disable_trunc_opts"]
     )
     modulo = params["modulo"]
     backend = "OT" if params["backend"] is None else params["backend"]

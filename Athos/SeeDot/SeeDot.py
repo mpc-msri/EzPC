@@ -68,7 +68,7 @@ class MainDriver:
         parser.add_argument("--astFile", help="Load AST from this file")
         parser.add_argument(
             "-p", "--printAST", 
-            default=False,   #!! Changed from False to True
+            default=True,   #!! Changed from False to True
             type=bool, help="Print the AST or not."
         )
         parser.add_argument(

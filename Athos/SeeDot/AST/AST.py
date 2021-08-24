@@ -39,6 +39,7 @@ OperatorsSymbolDict = {
     "RELU": "relu",
     "RSQRT": "rsqrt",
     "Shape": "shape",
+    "SOFTMAX" : "softmax",
     "SIGMOID": "sigmoid",
     "SQRT": "sqrt",
     "SUB": "-",
@@ -60,6 +61,7 @@ class Operators(Enum):
     RELU = auto()
     TANH = auto()
     SIGMOID = auto()
+    SOFTMAX = auto()
     SQRT = auto()
     RSQRT = auto()
     Equal = auto()

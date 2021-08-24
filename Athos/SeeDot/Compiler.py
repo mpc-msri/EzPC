@@ -158,7 +158,7 @@ class Compiler:
             print("\n")
             sys.stdout.flush()
 
-        # print("Compiler.py : Printed SeeDOT AST. Exiting!")
+        print("Compiler.py : Printed SeeDOT AST. Exiting!")
         # sys.exit(1)
 
         if not (Util.Config.disableAllOpti):
@@ -179,11 +179,14 @@ class Compiler:
 
         InferType().visit(ast)
 
+        print("Compiler.py : Printed InferType")
+        # sys.exit(1)
+
         IRUtil.init()
-        compiler = IRBuilderCSF(_debug=False)
+        compiler = IRBuilderCSF(_debug=True)
         res = compiler.visit(ast)
 
-        print("Compiler.py : Converted SeeDot to IR. Exiting!")
+        # print("Compiler.py : Converted SeeDot to IR. Exiting!")
         # sys.exit(1)
 
         # print(type(res[0]), type(res[1]))
@@ -225,5 +228,4 @@ class Compiler:
         codegen.printAll(*res)
         writer.close()
 
-        print("Compiler.py : Output the EzPC file. Exit!")
-        sys.exit(1)
+        # print("Compiler.py : Output the EzPC file. Exit!")

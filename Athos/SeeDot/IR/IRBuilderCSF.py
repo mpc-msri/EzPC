@@ -78,6 +78,7 @@ class IRBuilderCSF(IRBuilderAST):
         return [self.getTempVar() for i in range(n)]
 
     def getTempVar(self):
+        # print(f"tmp{self._var_cnt}")
         var = IR.Var("tmp" + str(self._var_cnt))
         self._var_cnt += 1
         return var
@@ -110,6 +111,7 @@ class IRBuilderCSF(IRBuilderAST):
     def addTruncateFunctionCall(
         self, node: AST.ASTNode, nodeTypeStr: str, expr: IR.Var, consSF: int
     ):
+        # print("IRBuilderCSF.py : addTruncateFunctionCall")
         comment = IR.Comment("Truncation before {0} node.".format(nodeTypeStr))
         argsDict = OrderedDict()
         funcName = "ScaleDown"
@@ -386,7 +388,7 @@ class IRBuilderCSF(IRBuilderAST):
         """
 
         typ_1 = node.expr.type
-        typ_2 = node.type               #! This is Type.Tensor object
+        typ_2 = node.type               
         # print(f"IRBuilderCSF.py : visitReshape : {typ_2}")
 
         # Declare variables
@@ -707,7 +709,6 @@ class IRBuilderCSF(IRBuilderAST):
         elif node.op == AST.Operators.ElemWiseDiv:
             op_ir = IR.Op.Op["./"]
             funcName = "ElemWiseDiv"
-            assert False, "Did not implement div yet"
         else:
             assert False, "Non mul/div elemwise op"
 
@@ -717,6 +718,7 @@ class IRBuilderCSF(IRBuilderAST):
         node_type = node.type
         # outArr[s1][s2]
         out_arr = self.getTempVar()
+        print(f"visitBopLike : node.expr1.type.dataType = {node.expr1.type.dataType}")
         decl_out_arr = IR.Decl(
             out_arr.idf, node_type, node_type.bitlen, node_type.isSecret
         )
@@ -750,6 +752,7 @@ class IRBuilderCSF(IRBuilderAST):
             out_arr_flat = self.getTempVar()
             flat_type = Type.Tensor(
                 [flat_size],
+                node.expr1.type.dataType,
                 node.expr1.type.bitlen,
                 node.expr1.type.isSecret,
                 node.expr1.type.taint,
@@ -757,18 +760,21 @@ class IRBuilderCSF(IRBuilderAST):
             # inp1_arr_flat[s1*s2]
             # inp2_arr_flat[s1*s2]
             # out_arr_flat[s1*s2]
+            print(f"visitBopLike : inp1.dataType = {node.expr1.type.dataType}")
             decl_inp1_arr_flat = IR.Decl(
                 inp1_arr_flat.idf,
                 flat_type,
                 node.expr1.type.bitlen,
                 node.expr1.type.isSecret,
             )
+            print(f"visitBopLike : inp2.dataType = {node.expr2.type.dataType}")
             decl_inp2_arr_flat = IR.Decl(
                 inp2_arr_flat.idf,
                 flat_type,
                 node.expr2.type.bitlen,
                 node.expr2.type.isSecret,
             )
+            print(f"visitBopLike : out_arr.dataType = {node.expr1.type.dataType}")
             decl_out_arr_flat = IR.Decl(
                 out_arr_flat.idf, flat_type, node.type.bitlen, node.type.isSecret
             )
@@ -821,8 +827,7 @@ class IRBuilderCSF(IRBuilderAST):
             if node.op == AST.Operators.ElemWiseDiv:
                 argsDict[inp1_arr_flat] = "A"
                 argsDict[inp2_arr_flat] = "B"
-                funcName = "ElemwiseSuperDuperSecretDiv"
-                assert False, "Elemwise div not implemented"
+                funcName = "ElemWiseDiv"
             else:
                 # If either input is a model weight we can use an optimised version for mul
                 # Otherwise if both are derived from client input we use the hadmaard version
@@ -876,11 +881,7 @@ class IRBuilderCSF(IRBuilderAST):
 
         progExtraBefore = IR.Prog([])
         progExtraAfter = IR.Prog([])
-        if Util.Config.disableTruncOpti:
-            progExtraAfter = self.addTruncateFunctionCall(
-                node, "ElemWiseMul", out_arr, Util.Config.consSF
-            )
-        else:
+        if not Util.Config.disableTruncOpti:
             inputs_same = expr_1.idf == expr_2.idf
             expr1_sf = self.scaleFacMapping[expr_1.idf]
             expr2_sf = self.scaleFacMapping[expr_2.idf]
@@ -1049,7 +1050,6 @@ class IRBuilderCSF(IRBuilderAST):
 
         [I, J] = typ_1.shape
         [J, K] = typ_2.shape
-        typ_mul = Type.Tensor([J])
 
         shrT = Util.Config.consSF
 
@@ -1078,11 +1078,13 @@ class IRBuilderCSF(IRBuilderAST):
 
         progExtraBefore = IR.Prog([])
         progExtraAfter = IR.Prog([])
+        
         if Util.Config.disableTruncOpti:
-            progExtraAfter = self.addTruncateFunctionCall(
-                node, "MatMul2D", expr_3, Util.Config.consSF
-            )
-        else:
+            pass
+            # progExtraAfter = self.addTruncateFunctionCall(
+            #     node, "MatMul2D", expr_3, Util.Config.consSF
+            # )
+        if not Util.Config.disableTruncOpti:
             inputs_same = expr_1.idf == expr_2.idf
             expr1_sf = self.scaleFacMapping[expr_1.idf]
             expr2_sf = self.scaleFacMapping[expr_2.idf]
@@ -1206,10 +1208,11 @@ class IRBuilderCSF(IRBuilderAST):
         progExtraBefore = IR.Prog([])
         progExtraAfter = IR.Prog([])
         if Util.Config.disableTruncOpti:
-            progExtraAfter = self.addTruncateFunctionCall(
-                node, "Conv", returnExpr, Util.Config.consSF
-            )
-        else:
+            pass
+            # progExtraAfter = self.addTruncateFunctionCall(
+            #     node, "Conv", returnExpr, Util.Config.consSF
+            # )
+        if not Util.Config.disableTruncOpti :
             inputs_same = expr_1.idf == expr_2.idf
             expr1_sf = self.scaleFacMapping[expr_1.idf]
             expr2_sf = self.scaleFacMapping[expr_2.idf]
@@ -1230,7 +1233,7 @@ class IRBuilderCSF(IRBuilderAST):
 
         returnProg = IRUtil.prog_merge(prog1, prog2, progExtraBefore, progConv)
         returnProg = IRUtil.prog_merge(
-            IR.Prog([IR.Decl(returnExpr.idf, node.type)]), returnProg, progExtraAfter
+            IR.Prog([IR.Decl(returnExpr.idf, node.expr1.type)]), returnProg, progExtraAfter
         )
 
         if self._debug : self._indent -= 1
@@ -1418,6 +1421,7 @@ class IRBuilderCSF(IRBuilderAST):
             AST.Operators.RELU,
             AST.Operators.TANH,
             AST.Operators.SIGMOID,
+            AST.Operators.SOFTMAX,
             AST.Operators.SQRT,
             AST.Operators.RSQRT,
             AST.Operators.ClearMemSecret,
@@ -1444,6 +1448,8 @@ class IRBuilderCSF(IRBuilderAST):
             funcName = "Tanh"
         elif node.op == AST.Operators.SIGMOID:
             funcName = "Sigmoid"
+        elif node.op == AST.Operators.SOFTMAX:
+            funcName = "Softmax"
         elif node.op == AST.Operators.SQRT:
             funcName = "Sqrt"
         elif node.op == AST.Operators.RSQRT:
@@ -1482,24 +1488,7 @@ class IRBuilderCSF(IRBuilderAST):
             argsList[IR.Int(Util.Config.consSF, 32)] = "curScale"
 
         progExtraBefore = IR.Prog([])
-        if Util.Config.disableTruncOpti:
-            if node.op == AST.Operators.RELU:
-                argsList[IR.Int(Util.Config.consSF, 32)] = "consSF"
-                argsList[IR.Bool(False)] = "doTruncation"
-            if node.op in [
-                AST.Operators.TANH,
-                AST.Operators.SIGMOID,
-                AST.Operators.SQRT,
-                AST.Operators.RSQRT,
-            ]:
-                assert (
-                    self.scaleFac > 31
-                ), "The program scaling factor {} is invalid. Should be lesser than 32 if network has tan/sig/sqrt as those only support 32 bitlengths".format(
-                    self.scaleFac
-                )
-                argsList[IR.Int(self.scaleFac, 32)] = "sA"
-                argsList[IR.Int(self.scaleFac, 32)] = "sB"
-        else:
+        if not Util.Config.disableTruncOpti:
             final_sf = self.scaleFacMapping[expr1.idf]
             if node.op == AST.Operators.RELU:
                 argsList[IR.Int(final_sf - self.scaleFac, 32)] = "consSF"
@@ -1548,20 +1537,20 @@ class IRBuilderCSF(IRBuilderAST):
             self.scaleFacMapping[out_expr.idf] = final_sf
 
         # Tanh/Sigmoid/Sqrt impl only supports upto 32 bitwidth for input
-        if node.op in [
-            AST.Operators.TANH,
-            AST.Operators.SIGMOID,
-            AST.Operators.SQRT,
-            AST.Operators.RSQRT,
-        ]:
-            argsList[IR.Int(min(32, self.actualbitwidth), 32)] = "bwA"
-            # argsList[IR.Int(min(32, self.actualbitwidth), 32)] = "bwB"
-            argsList[IR.Int(self.actualbitwidth, 32)] = "bwB"
-            if node.op == AST.Operators.SQRT:
-                argsList[IR.Bool(False)] = "inverse"
-            if node.op == AST.Operators.RSQRT:
-                argsList[IR.Bool(True)] = "inverse"
-            argsList[IR.Int(8, 32)] = "LUTBITS"
+        # if node.op in [
+        #     AST.Operators.TANH,
+        #     AST.Operators.SIGMOID,
+        #     AST.Operators.SQRT,
+        #     AST.Operators.RSQRT,
+        # ]:
+        #     argsList[IR.Int(min(32, self.actualbitwidth), 32)] = "bwA"
+        #     # argsList[IR.Int(min(32, self.actualbitwidth), 32)] = "bwB"
+        #     argsList[IR.Int(self.actualbitwidth, 32)] = "bwB"
+        #     if node.op == AST.Operators.SQRT:
+        #         argsList[IR.Bool(False)] = "inverse"
+        #     if node.op == AST.Operators.RSQRT:
+        #         argsList[IR.Bool(True)] = "inverse"
+        #     argsList[IR.Int(8, 32)] = "LUTBITS"
 
         comment = IR.Comment(str(node.metadata))
         funcNameSuffix = ""
@@ -1574,9 +1563,10 @@ class IRBuilderCSF(IRBuilderAST):
                 IR.FuncCall(funcName + self.varNameDelim + funcNameSuffix, argsList),
             ]
         )
+        # print(f"IRBuilderCSF.py : visitFloorLike : out_expr.idf = {out_expr.idf}, node.type.datatype = {node.type.datatype}")
         if Type.isTensor(node.type):
             progFinal = IRUtil.prog_merge(
-                IR.Prog([IR.Decl(out_expr.idf, node.type)]), progFinal
+                IR.Prog([IR.Decl(out_expr.idf, node.expr.type)]), progFinal
             )
 
         progFinal = IRUtil.prog_merge(prog1, progExtraBefore, progFinal)

@@ -1,6 +1,6 @@
 {
-    "model_name": "model1.onnx",
-    "input_tensors": { "input" : "4,4,4,4"},
+    "model_name": "maxpool.onnx",
+    "input_tensors": { "input" : "1,1,100,100"},
     "target": "SCI",
     "backend": "OT",
     "scale": 15,

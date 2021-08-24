@@ -224,7 +224,7 @@ def preprocess_batch_normalization(graph_def, model_name_to_val_dict):
 def dump_model_weights(model, scaling_factor, model_dir, model_name):
     weights_path = ""
     weights_fname = (
-        model_name + "_input_weights_fixedpt_scale_" + str(scaling_factor) + ".inp"
+        model_name + "_input_weights_float" + ".inp"
     )
     weights_path = os.path.join(model_dir, weights_fname)
 
@@ -239,13 +239,13 @@ def dump_model_weights(model, scaling_factor, model_dir, model_name):
     # cnt_n = 0
     #!! Need to make changes here for floating point
     for init_vals in model.graph.initializer:
-        (chunk_1, cnt_1) = common.numpy_float_array_to_fixed_point_val_str(
-            np.asarray(model_name_to_val_dict[init_vals.name], dtype=np.float32),
-            scaling_factor,
-        )
-        # chunk_1 = common.numpy_float_array_to_float_val_str(
-        #     np.asarray(model_name_to_val_dict[init_vals.name], dtype=np.float32)
+        # (chunk_1, cnt_1) = common.numpy_float_array_to_fixed_point_val_str(
+        #     np.asarray(model_name_to_val_dict[init_vals.name], dtype=np.float32),
+        #     scaling_factor,
         # )
+        chunk_1 = common.numpy_float_array_to_float_val_str(
+            np.asarray(model_name_to_val_dict[init_vals.name], dtype=np.float32)
+        )
         chunk_n += chunk_1
         # cnt_n += cnt_1
 

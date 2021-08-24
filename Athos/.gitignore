@@ -6,6 +6,7 @@
 *.out
 *.ezpc
 *.cpp
+FP-Test/
 SeeDot/debug/
 *__temp1.ezpc
 *__temp2.ezpc

@@ -198,7 +198,7 @@ def isEqual(type1: Type, type2: Type):
 class InferType(ASTVisitor):
 
     def __init__ (self) :
-        self.debug = False
+        self.debug = True
         self.indent = 0
 
     def visitInt(self, node: AST.Int, args=None):
@@ -279,7 +279,7 @@ class InferType(ASTVisitor):
         for i in perm:
             new_shape.append(shape[i])
         node.type = Tensor(
-            new_shape, exprType.bitlen, exprType.isSecret, exprType.taint
+            new_shape, node.expr.dataType, exprType.bitlen, exprType.isSecret, exprType.taint
         )
         
         if self.debug : self.indent -= 1
@@ -431,7 +431,7 @@ class InferType(ASTVisitor):
             assert False
 
         node.type.taint = getTaint_type(eType, fType)
-        node.type.isSecret = eType.isSecret | fType.isSecret
+        node.type.isSecret = eType.isSecret or fType.isSecret
         
         if self.debug : self.indent -= 1
         return node.type
@@ -454,13 +454,13 @@ class InferType(ASTVisitor):
                 [n1, n2] = eType.shape
                 [n3, n4] = fType.shape
                 assert n2 == n3
-                node.type = Tensor([n1, n4], eType.bitlen)
+                node.type = Tensor([n1, n4], eType.dataType, eType.bitlen)
         else:
             print("Error: Unknown condition in type checking.", file=sys.stderr)
             assert False
 
         node.type.taint = getTaint_type(eType, fType)
-        node.type.isSecret = eType.isSecret | fType.isSecret
+        node.type.isSecret = eType.isSecret or fType.isSecret
 
         
         if self.debug : self.indent -= 1
@@ -591,6 +591,9 @@ class InferType(ASTVisitor):
             assert isTensor(eType)
             node.type = copy.copy(eType)
         elif node.op == AST.Operators.SIGMOID:
+            assert isTensor(eType)
+            node.type = copy.copy(eType)
+        elif node.op == AST.Operators.SOFTMAX:
             assert isTensor(eType)
             node.type = copy.copy(eType)
         elif node.op == AST.Operators.SQRT:
