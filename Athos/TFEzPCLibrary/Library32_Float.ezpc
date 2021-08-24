@@ -311,3 +311,62 @@ def void Conv2DGroupWrapper(int32_pl N, int32_pl H, int32_pl W, int32_pl CI,
 
 {	Conv2DGroup(N, H, W, CI, FH, FW, CO, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideH, strideW, G, inputArr, filterArr, outArr);
 }
+
+
+def void MaxPool(int32_pl N, int32_pl H, int32_pl W, int32_pl C,
+				  int32_pl ksizeH, int32_pl ksizeW,
+				  int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight,
+				  int32_pl strideH, int32_pl strideW,
+				  int32_pl N1, int32_pl imgH, int32_pl imgW, int32_pl C1,
+  				  float_al[N1][imgH][imgW][C1] inArr, 
+				  float_al[N][H][W][C] outArr){
+	
+	for n=[0:N]{
+		for c=[0:C]{
+			int32_pl leftTopCornerH = 0 - zPadHLeft;
+			int32_pl extremeRightBottomCornerH = imgH - 1 + zPadHRight;
+			int32_pl ctH = 0;
+			while((leftTopCornerH + ksizeH - 1) <= extremeRightBottomCornerH){
+				int32_pl leftTopCornerW = 0 - zPadWLeft;
+				int32_pl extremeRightBottomCornerW = imgW - 1 + zPadWRight;
+				int32_pl ctW = 0;
+				while((leftTopCornerW + ksizeW - 1) <= extremeRightBottomCornerW){
+
+					float_al maxi = 0.0;
+					if ((((leftTopCornerH < 0) || (leftTopCornerH >= imgH)) || ((leftTopCornerW < 0) || (leftTopCornerW >= imgW)))){
+						maxi = 0.0;
+					}
+					else{
+						maxi = inArr[n][leftTopCornerH][leftTopCornerW][c];
+					};
+					for fh=[0:ksizeH]{
+						for fw=[0:ksizeW]{
+							int32_pl curPosH = leftTopCornerH + fh;
+							int32_pl curPosW = leftTopCornerW + fw;
+							float_al temp = 0.0;
+							if ((((curPosH < 0) || (curPosH >= imgH)) || ((curPosW < 0) || (curPosW >= imgW)))){
+								temp = 0.0;
+							}
+							else{
+								temp = inArr[n][curPosH][curPosW][c];
+							};
+							(* 
+								Note the following is intentionally kept as maxi-temp<0 and not maxi<temp,
+									since that is what the cleartext implements.
+							*)
+							maxi = ((maxi - temp < 0.0) ? temp : maxi);
+						};
+					};
+
+					outArr[n][ctH][ctW][c] = maxi;
+					leftTopCornerW = leftTopCornerW + strideW;
+					ctW = ctW + 1;
+				};
+
+				leftTopCornerH = leftTopCornerH + strideH;
+				ctH = ctH + 1;
+			};
+		};
+	};
+
+}

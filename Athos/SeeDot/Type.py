@@ -523,7 +523,7 @@ class InferType(ASTVisitor):
         node.type = Tensor(
             shape,
             eType.bitlen,
-            eType.isSecret | fType.isSecret,
+            eType.isSecret or fType.isSecret,
             getTaint_type(eType, fType),
         )
         

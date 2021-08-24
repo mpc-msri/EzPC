@@ -1159,11 +1159,10 @@ class ONNXNodesAST:
             seedot_output_ast, 
             output_name, 
             mtdAST,
-            onnx2seedot(value_info[node.outputs[0]][0])
+            onnx2seedot(value_info[inputsRef[0]][0])
         )
         out_var_count += 1
 
-        # If there is bias to be added then reshape and add it
         if len(inputsRef) == 3:
             reshaped_bias_name = get_new_var_name(out_var_count)
             reshaped_bias = get_reshaped_bias_ast(
@@ -1181,7 +1180,7 @@ class ONNXNodesAST:
             seedot_output_ast = AST.BOp(
                 AST.ID(
                     output_name,
-                    onnx2seedot(value_info[node.outputs[0]][0])
+                    onnx2seedot(value_info[inputsRef[0]][0])
                 ),
                 getOperatorsIdx("+"),
                 AST.ID(

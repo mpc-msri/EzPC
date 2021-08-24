@@ -396,6 +396,8 @@ class Decl(Cmd):
         isSecret: bool = True,
         value: list = None,
     ):
+        if Type.isTensor(typeExpr) :
+            assert isinstance(typeExpr.dataType, str)
         self.varIdf = varIdf
         self.typeExpr = typeExpr
         self.bitlen = Util.Config.wordLength if bitlen == -1 else bitlen
