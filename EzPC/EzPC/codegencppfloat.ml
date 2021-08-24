@@ -208,7 +208,7 @@ and o_codegen_expr (g:gamma) (e:codegen_expr) :comp =
 
   | App_codegen_expr (f, el) -> o_app (o_str f) (List.map o_codegen_expr el)
 
-  | _ -> failwith "Invalid codegen_expr for this backend"
+  | _  -> failwith "Invalid codegen_expr for this backend"
 
                                      
 let o_typ (t:typ) :comp =  
@@ -616,21 +616,26 @@ let prelude_string :string = "
 #include <iostream>\n\
 #include <fstream>\n\
 \n\
-#include \"FloatingPoint/floating-point.h\"\n\
-#include \"FloatingPoint/fp-math.h\"\n\
-#include \"secfloat.h\"\n\
-\n\
 using namespace std ;\n\
-using namespace sci ;\n\
+template<typename T>\n\
+vector<T> make_vector(size_t size) {\n\
+  return std::vector<T>(size) ;\n\
+}\n\
+\n\
+template <typename T, typename... Args>\n\
+auto make_vector(size_t first, Args... sizes)\n\
+{\n\
+  auto inner = make_vector<T>(sizes...) ;\n\
+  return vector<decltype(inner)>(first, inner) ;\n\
+}\n\
+\n
 "
-
                                    
 let o_one_program ((globals, main):global list * codegen_stmt) (ofname:string) :unit =
   let prelude = o_str prelude_string
   in
   let main_header = o_str
 "\n\nint main (int __argc, char **__argv) {\n\
-  __init(__argc, __argv) ;\n\
 \n" in
   let main_prelude = o_null in
   

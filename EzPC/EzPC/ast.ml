@@ -400,7 +400,7 @@ let rec erase_labels_expr (e:expr) :expr =
   let l = Some Public in
   let aux (e:expr') :expr' =
     match e with
-    | Role _ -> e
+    | Role _ -> Role Both
     | Const _ -> e
     | Var _ -> e
     | Unop (op, e, _) -> Unop (op, erase_labels_expr e, l)

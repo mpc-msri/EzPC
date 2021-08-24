@@ -121,3 +121,8 @@ let get_shares_dir () :string = !c_private.shares_dir
 let set_debug_partitions () :unit = c_private := { !c_private with debug_partitions = true }
 
 let get_debug_partitions () :bool = !c_private.debug_partitions
+
+let is_codegen_float () :bool =
+  match get_codegen () with
+  | SECFLOAT | CPPFLOAT -> true
+  | _ -> false

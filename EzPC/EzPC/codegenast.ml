@@ -61,3 +61,8 @@ type codegen_stmt =
   | Output_s       of role * codegen_expr * codegen_expr * base_type (* only used by oblivc backend, first expression is add_to_output_queue return value -- this is where the clear output will be put, second expression is the secret expression, base_type is the base type of the secret expression *)
 
 type codegen_program = global list * codegen_stmt list
+
+let get_base_e (e:codegen_expr) : expr =
+  match e with
+  | Base_e e1 -> e1
+  | _ -> failwith "codegenast.ml : This was supposed to be a Base_e expression"

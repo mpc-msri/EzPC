@@ -109,13 +109,13 @@ let check_binop_label_is_consistent (e:expr) (op:binop) (l:label) :unit result =
   | Secret l ->
      match op with
      | Sum | Sub | Mul | Div -> 
-      if Config.get_codegen () = SECFLOAT 
+      if Config.is_codegen_float () 
       then (if l = Arithmetic then Well_typed () else err)
       else Well_typed ()
      | Mod -> Well_typed ()
      | Mul when l = Arithmetic -> Well_typed ()
      | Greater_than | Less_than | Greater_than_equal | Less_than_equal | Is_equal ->
-      if Config.get_codegen () = SECFLOAT
+      if Config.is_codegen_float ()
       then (if l = Arithmetic then Well_typed () else err)
       else (if l = Boolean then Well_typed () else err)
      | L_shift when l = Boolean -> Well_typed ()
@@ -229,7 +229,7 @@ let rec tc_expr (g:gamma) (e:expr) :eresult =
                                  | Greater_than | Less_than | Greater_than_equal | Less_than_equal -> 
                                     bind (check_expected_numeric_typ e1 t1 l) (fun _ ->
                                            bind (check_expected_numeric_typ e2 t2 l) (fun _ ->
-                                                  if Config.get_codegen () = SECFLOAT then
+                                                  if Config.is_codegen_float () then
                                                     match join_types_cmp t1 t2 with
                                                     | Some t -> Well_typed (Base (Bool, t |> get_bt_and_label |> snd) |> mk_syntax e.metadata)
                                                     | None -> join_types_err e1 e2 t1 t2 e.metadata
@@ -253,15 +253,16 @@ let rec tc_expr (g:gamma) (e:expr) :eresult =
                                                | Some t -> Well_typed t
                                                | None -> join_types_err e2 e3 t2 t3 e.metadata))))))
 
-
   | Conditional (e1, e2, e3, lopt) ->
      bind (check_option_is_set (expr_to_string e) lopt e.metadata) (fun _ ->
             bind (tc_expr g e1) (fun t1 ->
                    bind (check_expected_typ e1 t1 (Base (Bool, lopt) |> mk_dsyntax "")) (fun _ ->
                           bind (tc_expr g e2) (fun t2 ->
-                                 bind (check_base_type_and_label e2 t2 (get_opt lopt)) (fun _ ->
+                                 bind (if Config.is_codegen_float () then Well_typed t2
+                                      else check_base_type_and_label e2 t2 (get_opt lopt)) (fun _ ->
                                         bind (tc_expr g e3) (fun t3 ->
-                                               bind (check_base_type_and_label e3 t3 (get_opt lopt)) (fun _ ->
+                                               bind (if Config.is_codegen_float () then Well_typed t3
+                                                    else check_base_type_and_label e3 t3 (get_opt lopt)) (fun _ ->
                                                       match join_types t2 t3 with
                                                       | Some t -> Well_typed t
                                                       | None -> join_types_err e2 e3 t2 t3 e.metadata)))))))
@@ -293,20 +294,20 @@ type sresult = gamma result
 
 let rec check_type_well_formedness (g:gamma) (t:typ) :unit result =
   let bitlen_err (n:int) = Type_error ("Incorrect bitlen, expected: " ^ (string_of_int (Config.get_bitlen ())) ^ ", found: " ^ (string_of_int n), t.metadata) in
-  let check_secfloat (bt:secret_label) (c:codegen) : unit result =
+  let check_float_codegen (bt:secret_label) (c:codegen) : unit result =
     if bt = Arithmetic then Well_typed ()
     else
     match c with
-    | SECFLOAT -> Type_error ("Numeric type (int/float) can be arithmetic shared only", t.metadata)
+    | SECFLOAT | CPPFLOAT -> Type_error ("Numeric type (int/float) can be arithmetic shared only", t.metadata)
     | _ -> Well_typed ()
   in
   match t.data with
   (* All labels have to be inferred by this point *)
   | Base (_, None) -> Type_error ("Unlabeled type: " ^ (typ_to_string t), t.metadata)
   | Base (Bool, Some (Secret Arithmetic)) -> Type_error ("Bool type cannot be arithmetic shared: " ^ (typ_to_string t), t.metadata)
-  | Base (Int32, Some (Secret l)) -> if Config.get_bitlen () = 32 then Config.get_codegen () |> check_secfloat l else bitlen_err 32
-  | Base (Int64, Some (Secret l)) -> if Config.get_bitlen () = 64 then Config.get_codegen () |> check_secfloat l else bitlen_err 64
-  | Base (t, Some (Secret Boolean)) -> if t = Bool then Well_typed () else Config.get_codegen () |> check_secfloat Arithmetic
+  | Base (Int32, Some (Secret l)) -> if Config.get_bitlen () = 32 then Config.get_codegen () |> check_float_codegen l else bitlen_err 32
+  | Base (Int64, Some (Secret l)) -> if Config.get_bitlen () = 64 then Config.get_codegen () |> check_float_codegen l else bitlen_err 64
+  | Base (t, Some (Secret Boolean)) -> if t = Bool then Well_typed () else Config.get_codegen () |> check_float_codegen Arithmetic
   | Base _ -> Well_typed ()
   | Array (_, bt, e) ->
      bind (check_type_well_formedness g bt) (fun _ ->

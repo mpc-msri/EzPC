@@ -92,6 +92,7 @@ let tc_and_codegen (p:program) (file:string) :unit =
            else if Config.get_codegen () = PORTHOS then Codegenporthos.o_program p file
            else if Config.get_codegen () = SCI then Codegensci.o_program p file
            else if Config.get_codegen () = CPPRING then Codegencppring.o_program p file
+           else if Config.get_codegen () = CPPFLOAT then Codegencppfloat.o_program p file
            else if Config.get_codegen () = SECFLOAT then Codegensecfloat.o_program p file
            else Codegen.o_program p file;
            Well_typed ()) in
@@ -122,6 +123,7 @@ let specs = Arg.align [
                                                    | "PORTHOS" -> PORTHOS |> Config.set_codegen
                                                    | "SCI" -> SCI |> Config.set_codegen
                                                    | "CPPRING" -> CPPRING |> Config.set_codegen
+                                                   | "CPPFLOAT" -> CPPFLOAT |> Config.set_codegen
                                                    | "SECFLOAT" -> SECFLOAT |> Config.set_codegen
                                                    | _ -> failwith "Invalid codegen mode"),
                  " Codegen mode (ABY or CPP or OBLIVC or PORTHOS or SCI or CPPRING, default ABY)");
@@ -152,7 +154,7 @@ let _ =
   let _ = Arg.parse specs (fun f -> input_file := f) ("usage: ezpc [options] [input file]. options are:") in
 
   let _ = 
-    if Config.get_codegen () = SECFLOAT
+    if Config.is_codegen_float ()
     then Config.set_bitlen 32 ;
 
     if Config.get_codegen () = CPP && Config.get_actual_bitlen () <> 32 && Config.get_actual_bitlen () <> 64

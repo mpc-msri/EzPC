@@ -81,7 +81,7 @@ and infer_binop_label (g:gamma) (op:binop) (e1:expr) (e2:expr) (lopt:label optio
         in
         match op with
         | Sum | Sub | Div | Mod ->
-          if Config.get_codegen () = SECFLOAT 
+          if Config.is_codegen_float () 
           then Binop (op, e1, e2, Some (Secret Arithmetic))
           else set_default_label None
         | Mul -> Binop (op, e1, e2, Some (Secret Arithmetic))
@@ -256,12 +256,11 @@ let maybe_add_subsumption (g:gamma) (tgt:label option) (e:expr) :expr =
   | Some Public, Some (Secret l) -> { e with data = Subsumption (e, Public, Secret l) }
   (* This case will never occur when codegen is SECFLOAT as int/float are always arithmetic shared, and bool is boolean shared only *)
   | Some (Secret l1), Some (Secret l2) when l1 <> l2 ->
-    if Config.get_codegen () = SECFLOAT then e
+    if Config.is_codegen_float () then e
     else { e with data = Subsumption (e, Secret l1, Secret l2) }
   | _, _ -> e
 
 let rec insert_coercions_expr (g:gamma) (e:expr) :expr =
-  let e0 = e in
   let aux (g:gamma) (e:expr') :expr' =
     match e with
     | Role _ -> e
@@ -274,7 +273,7 @@ let rec insert_coercions_expr (g:gamma) (e:expr) :expr =
          let e1 = maybe_add_subsumption g lopt (insert_coercions_expr g e1) in
          Binop (b, e1, e2, lopt)
         | Greater_than | Greater_than_equal | Less_than | Less_than_equal | Is_equal ->
-          let lopt_coercion = (*if Config.get_codegen () = SECFLOAT then Some (Secret Arithmetic) else *) lopt in
+          let lopt_coercion = (*if Config.is_codegen_float () then Some (Secret Arithmetic) else *) lopt in
           let e1 = maybe_add_subsumption g lopt_coercion (insert_coercions_expr g e1) in
           let e2 = maybe_add_subsumption g lopt_coercion (insert_coercions_expr g e2) in
           Binop (b, e1, e2, lopt)
@@ -283,11 +282,16 @@ let rec insert_coercions_expr (g:gamma) (e:expr) :expr =
          let e2 = maybe_add_subsumption g lopt (insert_coercions_expr g e2) in
          Binop (b, e1, e2, lopt))
     | Conditional (e1, e2, e3, lopt) ->
-       let label_branches = label_of_expr g e0 in
        let e1 = maybe_add_subsumption g lopt (insert_coercions_expr g e1) in
-       let e2 = maybe_add_subsumption g label_branches (insert_coercions_expr g e2) in
-       let e3 = maybe_add_subsumption g label_branches (insert_coercions_expr g e3) in
-       Conditional (e1, e2, e3, lopt)
+       let e2 = (insert_coercions_expr g e2) in
+       let e3 = (insert_coercions_expr g e3) in
+       let l2, l3 = label_of_expr g e2, label_of_expr g e3 in
+       let label_branch = join_labels l2 l3 in
+       let e2 = maybe_add_subsumption g label_branch e2 in
+       let e3 = maybe_add_subsumption g label_branch e3 in
+       let expr = Conditional (e1, e2, e3, lopt) in
+       print_msg @@ label_to_string @@ (expr |> mk_dsyntax "" |> label_of_expr g |> get_opt) ;
+       expr
     | Array_read (e1, e2) -> Array_read (insert_coercions_expr g e1, insert_coercions_expr g e2)
     | App (f, args) ->
        let args = List.map (insert_coercions_expr g) args in
