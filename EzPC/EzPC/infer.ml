@@ -289,9 +289,7 @@ let rec insert_coercions_expr (g:gamma) (e:expr) :expr =
        let label_branch = join_labels l2 l3 in
        let e2 = maybe_add_subsumption g label_branch e2 in
        let e3 = maybe_add_subsumption g label_branch e3 in
-       let expr = Conditional (e1, e2, e3, lopt) in
-       print_msg @@ label_to_string @@ (expr |> mk_dsyntax "" |> label_of_expr g |> get_opt) ;
-       expr
+       Conditional (e1, e2, e3, lopt)
     | Array_read (e1, e2) -> Array_read (insert_coercions_expr g e1, insert_coercions_expr g e2)
     | App (f, args) ->
        let args = List.map (insert_coercions_expr g) args in
