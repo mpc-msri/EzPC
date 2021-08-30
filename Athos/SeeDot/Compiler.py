@@ -102,6 +102,12 @@ class Compiler:
         prog.cmd_l.insert(first_output_pos, IR.FuncCall("EndComputation", []))
         return (prog, expr)
 
+    def fixNames(self, res: (IR.Prog, IR.Expr), compiler: IRBuilderCSF):
+        (prog, expr) = res
+        prog = prog.updateName(compiler.expr_mapping)
+        expr = expr.updateName(compiler.expr_mapping)
+        return (prog, expr)
+
     def fixOuputScale(self, res: (IR.Prog, IR.Expr), compiler: IRBuilderCSF):
         (prog, expr) = res
         scaledown_cmd_list = []
@@ -178,6 +184,7 @@ class Compiler:
         compiler = IRBuilderCSF()
         res = compiler.visit(ast)
         res = self.fixOuputScale(res, compiler)
+        res = self.fixNames(res, compiler)
 
         Util.write_debug_info(compiler.name_mapping)
 

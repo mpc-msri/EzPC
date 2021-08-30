@@ -56,6 +56,7 @@ class IRBuilderCSF(IRBuilderAST):
 
         # Name mapping from SeeDot names to new names is useful for debugging
         self.name_mapping = {}
+        self.expr_mapping = {}
 
         self.actualbitwidth = Util.Config.actualWordLength
 
@@ -1488,13 +1489,12 @@ class IRBuilderCSF(IRBuilderAST):
         (prog_1, expr_1) = self.visit(node.decl)
         typ_1 = node.decl.type
         idf = node.name.name
-        if not (Type.isInt(typ_1)):
-            self.name_mapping[idf] = expr_1.idf
         if not (Util.Config.disableTruncOpti):
             self.scaleFacMapping[idf] = self.scaleFacMapping[expr_1.idf]
         (prog_2, expr_2) = self.visit(node.expr)
-        prog_2 = prog_2.subst(idf, expr_1)
-        expr_2 = expr_2.subst(idf, expr_1)
+
+        self.name_mapping[idf] = expr_1.idf
+        self.expr_mapping[idf] = expr_1
         prog_3 = IRUtil.prog_merge(prog_1, prog_2)
         return (prog_3, expr_2)
 
