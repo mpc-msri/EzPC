@@ -74,11 +74,13 @@ def test_non_linear(test_dir, backend, tfOp, a_shape, dtype):
     with tf.compat.v1.Session(graph=graph) as sess:
         expected_output = sess.run(output, feed_dict={a: a_inp})
     assert expected_output is not None
-    config = Config(backend).add_input(a).add_output(output)
+    config = TFConfig(backend).add_input(a).add_output(output)
     config.config["scale"] = 12
     compiler = Compiler(graph, config, test_dir)
     mpc_output = compiler.compile_and_run([a_inp])
-    assert_almost_equal(tf_output=expected_output, mpc_tensor=mpc_output, precision=2)
+    assert_almost_equal(
+        model_output=expected_output, mpc_tensor=mpc_output, precision=2
+    )
     return
 
 
@@ -94,8 +96,10 @@ def test_softmax(test_dir, backend, a_shape, axis, dtype):
     with tf.compat.v1.Session(graph=graph) as sess:
         expected_output = sess.run(output, feed_dict={a: a_inp})
     assert expected_output is not None
-    config = Config(backend).add_input(a).add_output(output)
+    config = TFConfig(backend).add_input(a).add_output(output)
     compiler = Compiler(graph, config, test_dir)
     mpc_output = compiler.compile_and_run([a_inp])
-    assert_almost_equal(tf_output=expected_output, mpc_tensor=mpc_output, precision=2)
+    assert_almost_equal(
+        model_output=expected_output, mpc_tensor=mpc_output, precision=2
+    )
     return

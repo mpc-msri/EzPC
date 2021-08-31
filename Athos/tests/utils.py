@@ -26,21 +26,35 @@ import sys
 import os
 import shutil
 import re
+from enum import Enum, auto
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 import CompileTFGraph
+import CompileONNXGraph
 import CompilerScripts.parse_config as parse_config
 from CompilerScripts.get_output import convert_raw_output_to_np
+
+import onnx
+from onnx import helper
+from onnx.backend.test.case import node
+from onnx import numpy_helper
+import onnxruntime as ort
+
+from io import BytesIO
 
 import numpy as np
 import subprocess
 import threading
 
 
-class Config:
+class Frontend(Enum):
+    Tensorflow = auto()
+    ONNX = auto()
+
+
+class BaseConfig:
     def __init__(self, mode):
         self.config = {
-            "model_name": "model.pb",
             "scale": 23,
             "bitlength": 64,
             "save_weights": True,
@@ -63,6 +77,12 @@ class Config:
         else:
             assert False, "Mode has to be one of CPP/3PC/2PC_OT/2PC_HE"
 
+
+class TFConfig(BaseConfig):
+    def __init__(self, mode):
+        super().__init__(mode)
+        self.config["model_name"] = "model.pb"
+
     def add_input(self, tensor_op):
         input_name = tensor_op.op.name
         shape = tensor_op.shape.as_list()
@@ -84,6 +104,32 @@ class Config:
         return self
 
 
+class ONNXConfig(BaseConfig):
+    def __init__(self, mode):
+        super().__init__(mode)
+        self.config["model_name"] = "model.onnx"
+
+    def parse_io(self, graph):
+        for inp in graph.input:
+            input_name = inp.name
+            shape = [i.dim_value for i in inp.type.tensor_type.shape.dim]
+            shape_string = ",".join(map(str, shape))
+            inputs = self.config.get("input_tensors")
+            if inputs == None:
+                self.config["input_tensors"] = {input_name: shape_string}
+            else:
+                self.config["input_tensors"][input_name] = shape_string
+
+        for out in graph.output:
+            output_name = out.name
+            outputs = self.config.get("output_tensors")
+            if outputs == None:
+                self.config["output_tensors"] = [output_name]
+            else:
+                self.config["output_tensors"].append(output_name)
+        return self
+
+
 def get_params(config):
     return parse_config.parse_config(config)
 
@@ -96,12 +142,15 @@ def make_dir(path):
     return
 
 
-def save_graph(graph_def, config, test_dir):
+def save_graph(graph_def, config, test_dir, frontend):
     fname = config["model_name"]
     fpath = os.path.join(test_dir, fname)
-    with open(fpath, "wb") as f:
-        f.write(graph_def.SerializeToString())
-        print("\n\nfile  name: ", f.name, "\n\n\n")
+    if frontend == Frontend.Tensorflow:
+        with open(fpath, "wb") as f:
+            f.write(graph_def.SerializeToString())
+    elif frontend == Frontend.ONNX:
+        model = onnx.helper.make_model(graph_def, producer_name="onnx-test")
+        onnx.save(model, fpath)
     config["model_name"] = fpath
     return
 
@@ -191,26 +240,94 @@ class Program:
         return convert_raw_output_to_np(raw_output, self.bitlength, self.scale)
 
 
+# Compiler(graph, config, test_dir, frontend=Frontend.ONNX)
 class Compiler:
-    def __init__(self, graph, config, test_dir):
-        self.graph_def = graph.as_graph_def()
+    def __init__(self, graph, config, test_dir, frontend=Frontend.Tensorflow):
+        if frontend == Frontend.Tensorflow:
+            self.graph_def = graph.as_graph_def()
+        else:
+            self.graph_def = graph
         self.config = config.config
         self.test_dir = test_dir
+        self.frontend = frontend
 
     def compile_and_run(self, inputs, timeoutSeconds=40):
-        save_graph(self.graph_def, self.config, self.test_dir)
+        save_graph(self.graph_def, self.config, self.test_dir, self.frontend)
         params = get_params(self.config)
-        print(params)
-        (output_program, model_weight_file) = CompileTFGraph.generate_code(
-            params, role="server", debug=False
-        )
+        if self.frontend == Frontend.Tensorflow:
+            (output_program, model_weight_file) = CompileTFGraph.generate_code(
+                params, role="server", debug=False
+            )
+        else:
+            (output_program, model_weight_file) = CompileONNXGraph.generate_code(
+                params, role="server", debug=False
+            )
         prog = Program(output_program, model_weight_file, params, self.test_dir)
         output = prog.run(inputs, timeoutSeconds)
         return output
 
 
-def assert_almost_equal(tf_output, mpc_tensor, precision):
-    if tf_output.shape == (0,):
+def assert_almost_equal(model_output, mpc_tensor, precision):
+    if model_output.shape == (0,):
         return
-    np.testing.assert_almost_equal(tf_output.flatten(), mpc_tensor, decimal=precision)
+    np.testing.assert_almost_equal(
+        model_output.flatten(), mpc_tensor, decimal=precision
+    )
     return
+
+
+def make_onnx_graph(
+    inp_node,  # type: onnx.NodeProto
+    inputs,  # type: Sequence[np.ndarray]
+    outputs,  # type: Sequence[np.ndarray]
+    tensors,  # type: Sequence[np.ndarray] The other tensors that appear in the graph
+    tensor_names,
+    name,
+):
+    present_inputs = [x for x in inp_node.input if (x != "")]
+    present_outputs = [x for x in inp_node.output if (x != "")]
+    inputs_vi = [
+        node._extract_value_info(arr, arr_name)
+        for arr, arr_name in zip(inputs, present_inputs)
+    ]
+    outputs_vi = [
+        node._extract_value_info(arr, arr_name)
+        for arr, arr_name in zip(outputs, present_outputs)
+    ]
+    initializer = [
+        numpy_helper.from_array(arr, arr_name)
+        for arr, arr_name in zip(tensors, tensor_names)
+    ]
+    value_info = [
+        node._extract_value_info(arr, arr_name)
+        for arr, arr_name in zip(tensors, tensor_names)
+    ]
+    graph = onnx.helper.make_graph(
+        nodes=[inp_node],
+        name=name,
+        inputs=inputs_vi,
+        outputs=outputs_vi,
+        initializer=initializer,
+        value_info=value_info,
+    )
+    return graph
+
+
+def run_onnx(graph, inputs):
+    model = onnx.helper.make_model(graph, producer_name="onnx-test")
+    print(model.opset_import)
+    model.opset_import[0].version = 13
+    onnx.checker.check_model(model)
+    model_file = BytesIO()
+    onnx.save_model(model, model_file)
+    sess = ort.InferenceSession(model_file.getvalue())
+    feed_dict = {}
+    for i in range(0, len(inputs)):
+        input_name = sess.get_inputs()[i].name
+        feed_dict[input_name] = inputs[i]
+    output_names = [i.name for i in graph.output]
+    output = sess.run(output_names, feed_dict)
+    model_file.close()
+    if len(output) == 1:
+        return output[0]
+    return output

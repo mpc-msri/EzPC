@@ -56,10 +56,12 @@ def test_reshape(test_dir, backend, a_shape, out_shape, dtype):
     with tf.compat.v1.Session(graph=graph) as sess:
         expected_output = sess.run(output, feed_dict={a: a_inp})
     assert expected_output is not None
-    config = Config(backend).add_input(a).add_output(output)
+    config = TFConfig(backend).add_input(a).add_output(output)
     compiler = Compiler(graph, config, test_dir)
     mpc_output = compiler.compile_and_run([a_inp])
-    assert_almost_equal(tf_output=expected_output, mpc_tensor=mpc_output, precision=2)
+    assert_almost_equal(
+        model_output=expected_output, mpc_tensor=mpc_output, precision=2
+    )
     return
 
 
@@ -77,10 +79,12 @@ def test_transpose(test_dir, backend, a_shape, perm, dtype):
     with tf.compat.v1.Session(graph=graph) as sess:
         expected_output = sess.run(output, feed_dict={a: a_inp})
 
-    config = Config(backend).add_input(a).add_output(output)
+    config = TFConfig(backend).add_input(a).add_output(output)
     compiler = Compiler(graph, config, test_dir)
     mpc_output = compiler.compile_and_run([a_inp])
-    assert_almost_equal(tf_output=expected_output, mpc_tensor=mpc_output, precision=2)
+    assert_almost_equal(
+        model_output=expected_output, mpc_tensor=mpc_output, precision=2
+    )
     return
 
 
@@ -114,11 +118,11 @@ def test_split(test_dir, backend, a_shape, num_or_size_splits, axis, dtype):
     else:
         tf_output = output
         tf_expected_output = expected_output
-    config = Config(backend).add_input(a).add_output(tf_output)
+    config = TFConfig(backend).add_input(a).add_output(tf_output)
     compiler = Compiler(graph, config, test_dir)
     mpc_output = compiler.compile_and_run([a_inp])
     assert_almost_equal(
-        tf_output=tf_expected_output, mpc_tensor=mpc_output, precision=2
+        model_output=tf_expected_output, mpc_tensor=mpc_output, precision=2
     )
     return
 
@@ -149,10 +153,12 @@ def test_squeeze(test_dir, backend, a_shape, axis, dtype):
     with tf.compat.v1.Session(graph=graph) as sess:
         expected_output = sess.run(output, feed_dict={a: a_inp})
 
-    config = Config(backend).add_input(a).add_output(output)
+    config = TFConfig(backend).add_input(a).add_output(output)
     compiler = Compiler(graph, config, test_dir)
     mpc_output = compiler.compile_and_run([a_inp])
-    assert_almost_equal(tf_output=expected_output, mpc_tensor=mpc_output, precision=2)
+    assert_almost_equal(
+        model_output=expected_output, mpc_tensor=mpc_output, precision=2
+    )
     return
 
 
@@ -174,10 +180,12 @@ def test_slice(test_dir, backend, a_shape, begin, size, dtype):
     with tf.compat.v1.Session(graph=graph) as sess:
         expected_output = sess.run(output, feed_dict={a: a_inp})
 
-    config = Config(backend).add_input(a).add_output(output)
+    config = TFConfig(backend).add_input(a).add_output(output)
     compiler = Compiler(graph, config, test_dir)
     mpc_output = compiler.compile_and_run([a_inp])
-    assert_almost_equal(tf_output=expected_output, mpc_tensor=mpc_output, precision=2)
+    assert_almost_equal(
+        model_output=expected_output, mpc_tensor=mpc_output, precision=2
+    )
     return
 
 
@@ -200,10 +208,12 @@ def test_concat(test_dir, backend, a_shape, b_shape, axis, dtype):
     with tf.compat.v1.Session(graph=graph) as sess:
         expected_output = sess.run(output, feed_dict={a: a_inp, b: b_inp})
 
-    config = Config(backend).add_input(a).add_input(b).add_output(output)
+    config = TFConfig(backend).add_input(a).add_input(b).add_output(output)
     compiler = Compiler(graph, config, test_dir)
     mpc_output = compiler.compile_and_run([a_inp, b_inp])
-    assert_almost_equal(tf_output=expected_output, mpc_tensor=mpc_output, precision=2)
+    assert_almost_equal(
+        model_output=expected_output, mpc_tensor=mpc_output, precision=2
+    )
     return
 
 
@@ -229,10 +239,12 @@ def test_expand_dims(test_dir, backend, a_shape, axis, dtype):
     with tf.compat.v1.Session(graph=graph) as sess:
         expected_output = sess.run(output, feed_dict={a: a_inp})
 
-    config = Config(backend).add_input(a).add_output(output)
+    config = TFConfig(backend).add_input(a).add_output(output)
     compiler = Compiler(graph, config, test_dir)
     mpc_output = compiler.compile_and_run([a_inp])
-    assert_almost_equal(tf_output=expected_output, mpc_tensor=mpc_output, precision=2)
+    assert_almost_equal(
+        model_output=expected_output, mpc_tensor=mpc_output, precision=2
+    )
     return
 
 
@@ -287,10 +299,12 @@ def test_pad(test_dir, backend, a_shape, paddings, mode, constant_values, dtype)
     with tf.compat.v1.Session(graph=graph) as sess:
         expected_output = sess.run(output, feed_dict={a: a_inp})
 
-    config = Config(backend).add_input(a).add_output(output)
+    config = TFConfig(backend).add_input(a).add_output(output)
     compiler = Compiler(graph, config, test_dir)
     mpc_output = compiler.compile_and_run([a_inp])
-    assert_almost_equal(tf_output=expected_output, mpc_tensor=mpc_output, precision=2)
+    assert_almost_equal(
+        model_output=expected_output, mpc_tensor=mpc_output, precision=2
+    )
     return
 
 
@@ -310,8 +324,10 @@ def test_tile(test_dir, backend, a_shape, multiples, dtype):
     with tf.compat.v1.Session(graph=graph) as sess:
         expected_output = sess.run(output, feed_dict={a: a_inp})
 
-    config = Config(backend).add_input(a).add_output(output)
+    config = TFConfig(backend).add_input(a).add_output(output)
     compiler = Compiler(graph, config, test_dir)
     mpc_output = compiler.compile_and_run([a_inp])
-    assert_almost_equal(tf_output=expected_output, mpc_tensor=mpc_output, precision=2)
+    assert_almost_equal(
+        model_output=expected_output, mpc_tensor=mpc_output, precision=2
+    )
     return
