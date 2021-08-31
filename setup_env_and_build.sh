@@ -26,7 +26,7 @@ sudo add-apt-repository ppa:deadsnakes/ppa -y
 sudo add-apt-repository ppa:avsm/ppa -y
 sudo apt update
 sudo apt install -y build-essential cmake libgmp-dev libglib2.0-dev libssl-dev libboost-all-dev m4 python3.7 opam
-sudo apt install -y unzip bubblewrap
+sudo apt install -y unzip bubblewrap graphviz
 
 build_cmake () {
   echo "Building and installing cmake from source"
@@ -106,7 +106,7 @@ sudo apt install -y python3.7-venv
 python3.7 -m venv mpc_venv
 source mpc_venv/bin/activate
 pip install -U pip
-pip install tensorflow==1.15.0 keras==2.3.0 scipy==1.1.0 matplotlib
+pip install tensorflow==1.15.0 keras==2.3.0 scipy==1.1.0 matplotlib scikit-learn=0.24.2
 pip install onnx onnx-simplifier onnxruntime
 pip install pytest pytest-cov 
 
