@@ -24,9 +24,15 @@ mode=$1
 
 sudo add-apt-repository ppa:deadsnakes/ppa -y
 sudo add-apt-repository ppa:avsm/ppa -y
+sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
 sudo apt update
-sudo apt install -y build-essential cmake libgmp-dev libglib2.0-dev libssl-dev libboost-all-dev m4 python3.7 opam
-sudo apt install -y unzip bubblewrap graphviz
+sudo apt install -y build-essential cmake libgmp-dev libglib2.0-dev libssl-dev \
+                    libboost-all-dev m4 python3.7 opam unzip bubblewrap graphviz
+
+#Install gcc 9
+sudo apt install -y gcc-9 g++-9
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 60 --slave /usr/bin/g++ g++ /usr/bin/g++-9
+sudo update-alternatives --config gcc
 
 build_cmake () {
   echo "Building and installing cmake from source"
@@ -112,7 +118,7 @@ pip install pytest pytest-cov
 
 
 build_boost () {
-  sudo apt-get install python-dev autotools-dev libicu-dev libbz2-dev
+  sudo apt-get -y install python-dev autotools-dev libicu-dev libbz2-dev
   echo "Building and installing boost from source"
   wget https://boostorg.jfrog.io/artifactory/main/release/1.67.0/source/boost_1_67_0.tar.gz
   tar -zxvf boost_1_67_0.tar.gz
