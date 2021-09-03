@@ -41,7 +41,10 @@ Alternatively you can use the **setup_env_and_build.sh** script. It installs dep
 
 Please do ``source mpc_venv/bin/activate`` before using the toolchain.
 
-We plan to release a docker version of the system as well which will make the system easier to setup.
+### Docker
+You can use a pre-built docker image from docker hub using ``docker pull ezpc/ezpc:latest``. We occasionally push stable images to that channel. However, if you want a docker image with the latest code, you can build it yourself using:
+
+```docker build -t ezpc_image - < path/to/EzPC/Dockerfile```
 
 ## Wiki
 Wiki section of this repository provides coding practices and examples to get started with EzPC.
