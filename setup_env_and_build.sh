@@ -79,9 +79,9 @@ rm install.sh
 
 # environment setup
 if [[ "$mode" == "quick" ]]; then
-	yes "" | opam init
-else
-	opam init
+	yes "" | opam init --disable-sandboxing
+else 
+	opam init --disable-sandboxing
 fi
 if [ $? -ne 0 ]; then
   echo "opam init failed"; exit
@@ -112,13 +112,13 @@ sudo apt install -y python3.7-venv
 python3.7 -m venv mpc_venv
 source mpc_venv/bin/activate
 pip install -U pip
-pip install tensorflow==1.15.0 keras==2.3.0 scipy==1.1.0 matplotlib scikit-learn=0.24.2
+pip install tensorflow==1.15.0 keras==2.3.0 scipy==1.1.0 matplotlib scikit-learn==0.24.2
 pip install onnx onnx-simplifier onnxruntime
 pip install pytest pytest-cov 
 
 
 build_boost () {
-  sudo apt-get -y install python-dev autotools-dev libicu-dev libbz2-dev
+  sudo apt-get -y install python3.7-dev autotools-dev libicu-dev libbz2-dev
   echo "Building and installing boost from source"
   wget https://boostorg.jfrog.io/artifactory/main/release/1.67.0/source/boost_1_67_0.tar.gz
   tar -zxvf boost_1_67_0.tar.gz
@@ -138,7 +138,7 @@ if dpkg -s libboost-dev >/dev/null; then
   if [[ "$BOOST_VERSION" == "$LATEST_VERSION" ]]; then
     echo "Boost already installed.."
   else
-    sudo apt purge libboost-all-dev
+    sudo apt purge libboost-all-dev -y
     build_boost
   fi
 else
