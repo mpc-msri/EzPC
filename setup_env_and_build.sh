@@ -27,7 +27,8 @@ sudo add-apt-repository ppa:avsm/ppa -y
 sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
 sudo apt update
 sudo apt install -y build-essential cmake libgmp-dev libglib2.0-dev libssl-dev \
-                    libboost-all-dev m4 python3.7 opam unzip bubblewrap graphviz
+                    libboost-all-dev m4 python3.7 opam unzip bubblewrap \
+                    graphviz tmux
 
 #Install gcc 9
 sudo apt install -y gcc-9 g++-9
