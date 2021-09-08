@@ -561,7 +561,10 @@ class IRBuilderCSF(IRBuilderAST):
         cmd0 = IR.Comment(expr_1.idf + " " + op_ir.name + " " + expr_2.idf)
         comment = IR.Comment(str(node.metadata))
 
-        decl = IR.Decl(out_arr.idf, node.expr2.type, node_type.bitlen, node_type.isSecret)
+        # print(f"visitBopAddOrSubLike : {node.expr1.type.dataType}, {node.expr1.type.shape}")
+        # print(node.expr1.name, node.expr1.type.dataType)
+        # print(node.expr2.name, node.expr2.type.dataType)
+        decl = IR.Decl(out_arr.idf, node.expr1.type, node_type.bitlen, node_type.isSecret)
 
         if Type.isNumeric(node_type):
             assign = IR.Assn(out_arr, IR.IntBop(expr_1, op_ir, expr_2))
@@ -626,7 +629,6 @@ class IRBuilderCSF(IRBuilderAST):
         node_type = node.type
         # outArr[s1][s2]
         out_arr = self.getTempVar()
-        print(f"visitBopLike : node.expr1.type.dataType = {node.expr1.type.dataType}")
         decl_out_arr = IR.Decl(
             out_arr.idf, node_type, node_type.bitlen, node_type.isSecret
         )
@@ -668,21 +670,18 @@ class IRBuilderCSF(IRBuilderAST):
             # inp1_arr_flat[s1*s2]
             # inp2_arr_flat[s1*s2]
             # out_arr_flat[s1*s2]
-            print(f"visitBopLike : inp1.dataType = {node.expr1.type.dataType}")
             decl_inp1_arr_flat = IR.Decl(
                 inp1_arr_flat.idf,
                 flat_type,
                 node.expr1.type.bitlen,
                 node.expr1.type.isSecret,
             )
-            print(f"visitBopLike : inp2.dataType = {node.expr2.type.dataType}")
             decl_inp2_arr_flat = IR.Decl(
                 inp2_arr_flat.idf,
                 flat_type,
                 node.expr2.type.bitlen,
                 node.expr2.type.isSecret,
             )
-            print(f"visitBopLike : out_arr.dataType = {node.expr1.type.dataType}")
             decl_out_arr_flat = IR.Decl(
                 out_arr_flat.idf, flat_type, node.type.bitlen, node.type.isSecret
             )

@@ -194,38 +194,24 @@ def generate_code(params, role, debug=False):
     print("python3 {} ".format(seedot_script) + seedot_args)
     os.system("python3 {} ".format(seedot_script) + seedot_args)
 
-    print("CompileONNXGraph.py : generate_code : SeeDot to EzPC is done. Exiting!")
-    sys.exit(1)
-
     # Add library functions
     if target in ["ABY", "CPPRING"]:
         library = "cpp"
     else:
         library = target.lower()
 
-    lib_bitlength = 64 if bitlength > 32 else 32
     library_dir = os.path.join(athos_dir, "TFEzPCLibrary")
-    common = os.path.join(library_dir, "Library{}_common.ezpc".format(lib_bitlength))
-    if library == "cpp":
-        pre = os.path.join(
-            library_dir, "Library{}_{}_pre.ezpc".format(lib_bitlength, library)
-        )
-        post = os.path.join(
-            library_dir, "Library{}_{}_post.ezpc".format(lib_bitlength, library)
-        )
-    else:
-        pre = os.path.join(
-            library_dir, "Library{}_{}.ezpc".format(lib_bitlength, library)
-        )
-        post = ""
     temp = os.path.join(model_abs_dir, "temp.ezpc")
+    pre = os.path.join(library_dir, "Library32_Float.ezpc")
+    os.system(
+        'cat "{pre}" "{ezpc}"> "{temp}"'.format(
+            pre=pre, ezpc=ezpc_abs_path, temp=temp
+        )
+    )
 
-    # os.system(
-    #     'cat "{pre}" "{common}" "{post}" "{ezpc}"> "{temp}"'.format(
-    #         pre=pre, common=common, post=post, ezpc=ezpc_abs_path, temp=temp
-    #     )
-    # )
-    # os.system('mv "{temp}" "{ezpc}"'.format(temp=temp, ezpc=ezpc_abs_path))
+    os.system('mv "{temp}" "{ezpc}"'.format(temp=temp, ezpc=ezpc_abs_path))
+    print("CompileONNXGraph.py : generate_code : SeeDot to EzPC is done. Exiting!")
+    sys.exit(1)
 
     # EzPC to binary, no need to analyse this.
     ezpc_dir = os.path.join(athos_dir, "../EzPC/EzPC/")

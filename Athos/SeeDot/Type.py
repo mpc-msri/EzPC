@@ -197,8 +197,8 @@ def isEqual(type1: Type, type2: Type):
 
 class InferType(ASTVisitor):
 
-    def __init__ (self) :
-        self.debug = True
+    def __init__ (self, debug=False) :
+        self.debug = debug
         self.indent = 0
 
     def visitInt(self, node: AST.Int, args=None):
@@ -254,6 +254,7 @@ class InferType(ASTVisitor):
         else:
             node.type = Tensor(
                 shape=node.shape,
+                dataType=node.dataType,
                 # baseType=node.dataType
                 isSecret=node.isSecret,
                 taint=constantTaintsMapping[node.isSecret],
@@ -305,7 +306,7 @@ class InferType(ASTVisitor):
         for i in range(0, len(shape)):
             assert shape[i] <= exprType.shape[i], " for {}".format(node.metadata)
 
-        node.type = Tensor(shape, exprType.bitlen, exprType.isSecret, exprType.taint)
+        node.type = Tensor(shape, exprType.dataType, exprType.bitlen, exprType.isSecret, exprType.taint)
         
         if self.debug : self.indent -= 1
         return node.type
@@ -355,7 +356,7 @@ class InferType(ASTVisitor):
         newW = ((W + zPadWLeft + zPadWRight - FW) // strideW) + 1
 
         node.type = Tensor(
-            [N, newH, newW, CI], exprType.bitlen, exprType.isSecret, exprType.taint
+            [N, newH, newW, CI], exprType.dataType, exprType.bitlen, exprType.isSecret, exprType.taint
         )
 
         
@@ -422,10 +423,10 @@ class InferType(ASTVisitor):
             node.type = Tensor(shape=output_shape, dataType=eType.dataType, bitlen=eType.bitlen)
         elif isTensor(eType) and isNumeric(fType):
             output_shape, _, _ = Util.getBroadcastShapes(eType.shape, [])
-            node.type = Tensor(shape=output_shape, bitlen=eType.bitlen)
+            node.type = Tensor(shape=output_shape, dataType=eType.dataType, bitlen=eType.bitlen)
         elif isNumeric(eType) and isTensor(fType):
             output_shape, _, _ = Util.getBroadcastShapes([], fType.shape)
-            node.type = Tensor(shape=output_shape, bitlen=eType.bitlen)
+            node.type = Tensor(shape=output_shape, dataType=eType.dataType, bitlen=eType.bitlen)
         else:
             print(eType, fType)
             assert False
@@ -522,6 +523,7 @@ class InferType(ASTVisitor):
             shape = [N, newD, newH, newW, CO]
         node.type = Tensor(
             shape,
+            eType.dataType,
             eType.bitlen,
             eType.isSecret or fType.isSecret,
             getTaint_type(eType, fType),
@@ -569,6 +571,7 @@ class InferType(ASTVisitor):
 
         node.type = Tensor(
             shape,
+            eType.dataType,
             eType.bitlen,
             eType.isSecret | fType.isSecret,
             getTaint_type(eType, fType),
@@ -607,7 +610,7 @@ class InferType(ASTVisitor):
         elif node.op == AST.Operators.Shape:
             assert isTensor(eType)
             node.type = Tensor(
-                [len(eType.shape)], eType.bitlen, eType.isSecret, eType.taint
+                [len(eType.shape)], eType.dataType, eType.bitlen, eType.isSecret, eType.taint
             )
         elif node.op == AST.Operators.ClearMemSecret:
             node.type = Unit()
@@ -672,7 +675,7 @@ class InferType(ASTVisitor):
         dimType = self.visit(node.dim)
         assert isInt(dimType) or (isTensor(dimType) and (len(dimType.shape) == 0))
 
-        node.type = Tensor(node.outputShape, eType.bitlen, eType.isSecret, eType.taint)
+        node.type = Tensor(node.outputShape, eType.dataType, eType.bitlen, eType.isSecret, eType.taint)
         
         if self.debug : self.indent -= 1
         return node.type
@@ -685,7 +688,7 @@ class InferType(ASTVisitor):
         node.expr.gamma = cur_gamma
         eType = self.visit(node.expr)
 
-        node.type = Tensor(node.outShape, eType.bitlen, eType.isSecret, eType.taint)
+        node.type = Tensor(node.outShape, eType.dataType, eType.bitlen, eType.isSecret, eType.taint)
         
         if self.debug : self.indent -= 1
         return node.type

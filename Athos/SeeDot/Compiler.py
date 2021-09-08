@@ -177,7 +177,7 @@ class Compiler:
         # Perform type inference and annotate nodes with type information
 
 
-        InferType().visit(ast)
+        InferType(False).visit(ast)
 
         print("Compiler.py : Printed InferType")
         # sys.exit(1)
