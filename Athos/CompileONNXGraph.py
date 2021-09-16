@@ -168,7 +168,7 @@ def generate_code(params, role, debug=False):
 
     # Compile to ezpc
     model_base_name = model_name[:-5]
-    ezpc_file_name = "{mname}_{bl}_{target}.ezpc".format(
+    ezpc_file_name = "{mname}_secfloat.ezpc".format(
         mname=model_base_name, bl=bitlength, target=target.lower()
     )
     ezpc_abs_path = os.path.join(model_abs_dir, ezpc_file_name)

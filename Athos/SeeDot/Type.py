@@ -1,7 +1,5 @@
 """
-
 Authors: Sridhar Gopinath, Nishant Kumar.
-
 Copyright:
 Copyright (c) 2020 Microsoft Research
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,7 +17,6 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
 """
 
 import Util
@@ -40,15 +37,14 @@ class Type:
 We want to analyse the taint of every tensor that flows in the graph.
 The possible taints for tensors are:
 {
-	Client: Input to the ML model (eg: the image input)
-	Server: The weights of the model
-	ClientXServer[C&S]: A tensor that is dervied after operations on both client and server tensors.
-	Secret_constant: A tensor that is a constant but declared as a secret
-	Public_constant: A tensor that is a constant but declared as public
+    Client: Input to the ML model (eg: the image input)
+    Server: The weights of the model
+    ClientXServer[C&S]: A tensor that is dervied after operations on both client and server tensors.
+    Secret_constant: A tensor that is a constant but declared as a secret
+    Public_constant: A tensor that is a constant but declared as public
 }
 Note: For ML models we don't expect to encounter any secret_constants and instead expect them
 to be encoded as weights of the model and so instead has the server taint.
-
 We infer taints in the following manner:
                     Client         Server      C&S     Secret_constant     Public_constant
 Client              Client         C&S         C&S     Client              Client
@@ -129,12 +125,28 @@ class Int(Type):
         return type(self)(self.bitlen, self.isSecret, self.taint)
 
 
+class Float(Type):
+    def __init__(self, bitlen=-1, isSecret=False, taint=Taints.PUBLIC_C):
+        if bitlen == -1:
+            self.bitlen = Util.Config.wordLength
+        else:
+            self.bitlen = bitlen
+        self.isSecret = isSecret
+        self.taint = taint
+
+    def __copy__(self):
+        return type(self)(self.bitlen, self.isSecret, self.taint)
+
+
 class Unit(Type):
     pass
 
 
 class Tensor(Type):
-    def __init__(self, shape: list, bitlen=-1, isSecret=True, taint=Taints.PUBLIC_C):
+    def __init__(
+        self, shape: list, dataType, bitlen=-1, isSecret=True, taint=Taints.PUBLIC_C
+    ):
+        # print(f"Type.py : Tensor : __init__ --> shape = {shape}, dataType = {dataType}")
         self.shape = shape
         self.dim = len(shape)
         if bitlen == -1:
@@ -143,6 +155,7 @@ class Tensor(Type):
             self.bitlen = bitlen
         self.isSecret = isSecret
         self.taint = taint
+        self.dataType = dataType
 
     def __copy__(self):
         return type(self)(self.shape, self.bitlen, self.isSecret, self.taint)
@@ -159,6 +172,14 @@ def isInt(type: Type):
     return isinstance(type, Int)
 
 
+def isFloat(type: Type):
+    return isinstance(type, Float)
+
+
+def isNumeric(type: Type):
+    return isinstance(type, Int) or isinstance(type, Float)
+
+
 def isTensor(type: Type):
     return isinstance(type, Tensor)
 
@@ -168,7 +189,7 @@ def isUnit(type: Type):
 
 
 def isEqual(type1: Type, type2: Type):
-    if isInt(type1) and isInt(type2):
+    if isNumeric(type1) and isNumeric(type2):
         return True
     elif isTensor(type1) and isTensor(type2):
         if type1.dim != type2.dim:
@@ -179,21 +200,40 @@ def isEqual(type1: Type, type2: Type):
 
 
 class InferType(ASTVisitor):
+    def __init__(self, debug=False):
+        self.debug = debug
+        self.indent = 0
+
     def visitInt(self, node: AST.Int, args=None):
+        if self.debug:
+            print(f"{' '*self.indent}||visitInt")
+            self.indent += 1
         bitlen = Util.Config.wordLength
         if node.bitLen:
             bitlen = node.bitLen
         node.type = Int(bitlen, node.isSecret, constantTaintsMapping[node.isSecret])
+
+        if self.debug:
+            self.indent -= 1
         return node.type
 
     def visitFloat(self, node: AST.Float, args=None):
+        if self.debug:
+            print(f"{' '*self.indent}||visitFloat")
+            self.indent += 1
         # Float is represented as an int in fixedpt.
-        node.type = Int(
+        node.type = Float(
             isSecret=node.isSecret, taint=constantTaintsMapping[node.isSecret]
         )
+
+        if self.debug:
+            self.indent -= 1
         return node.type
 
     def visitId(self, node: AST.ID, args=None):
+        if self.debug:
+            print(f"{' '*self.indent}||visitId")
+            self.indent += 1
         if node.name not in node.gamma:
             print(
                 "Error in type checking: Found id which is not contained in gamma.",
@@ -203,9 +243,15 @@ class InferType(ASTVisitor):
             assert False
         else:
             node.type = node.gamma[node.name]
+
+        if self.debug:
+            self.indent -= 1
         return node.type
 
     def visitDecl(self, node: AST.Decl, args=None):
+        if self.debug:
+            print(f"{' '*self.indent}||visitDecl")
+            self.indent += 1
         # TODO -- fill in bitlen properly
         if node.shape == []:
             node.type = Int(
@@ -214,12 +260,20 @@ class InferType(ASTVisitor):
         else:
             node.type = Tensor(
                 shape=node.shape,
+                dataType=node.dataType,
+                # baseType=node.dataType
                 isSecret=node.isSecret,
                 taint=constantTaintsMapping[node.isSecret],
             )
+
+        if self.debug:
+            self.indent -= 1
         return node.type
 
     def visitTranspose(self, node: AST.Transpose, args=None):
+        if self.debug:
+            print(f"{' '*self.indent}||visitTranspose")
+            self.indent += 1
         node.expr.gamma = dict(node.gamma)
         exprType = self.visit(node.expr)
 
@@ -233,11 +287,21 @@ class InferType(ASTVisitor):
         for i in perm:
             new_shape.append(shape[i])
         node.type = Tensor(
-            new_shape, exprType.bitlen, exprType.isSecret, exprType.taint
+            new_shape,
+            node.expr.dataType,
+            exprType.bitlen,
+            exprType.isSecret,
+            exprType.taint,
         )
+
+        if self.debug:
+            self.indent -= 1
         return node.type
 
     def visitSlice(self, node: AST.Slice, args=None):
+        if self.debug:
+            print(f"{' '*self.indent}||visitSlice")
+            self.indent += 1
         node.expr.gamma = dict(node.gamma)
         exprType = self.visit(node.expr)
         assert isTensor(exprType)
@@ -254,10 +318,19 @@ class InferType(ASTVisitor):
         for i in range(0, len(shape)):
             assert shape[i] <= exprType.shape[i], " for {}".format(node.metadata)
 
-        node.type = Tensor(shape, exprType.bitlen, exprType.isSecret, exprType.taint)
+        node.type = Tensor(
+            shape, exprType.dataType, exprType.bitlen, exprType.isSecret, exprType.taint
+        )
+
+        if self.debug:
+            self.indent -= 1
         return node.type
 
     def visitReshape(self, node: AST.Reshape, args=None):
+        if self.debug:
+            print(f"{' '*self.indent}||visitReshape")
+            self.indent += 1
+
         node.expr.gamma = dict(node.gamma)
         exprType = self.visit(node.expr)
 
@@ -268,12 +341,21 @@ class InferType(ASTVisitor):
             operator.mul, node.shape, 1
         )
         node.type = Tensor(
-            node.shape, exprType.bitlen, exprType.isSecret, exprType.taint
+            node.shape,
+            node.expr.dataType,
+            exprType.bitlen,
+            exprType.isSecret,
+            exprType.taint,
         )
 
+        if self.debug:
+            self.indent -= 1
         return node.type
 
     def visitPool(self, node: AST.Pool, args=None):
+        if self.debug:
+            print(f"{' '*self.indent}||visitPool")
+            self.indent += 1
         node.expr.gamma = dict(node.gamma)
         exprType = self.visit(node.expr)
 
@@ -293,17 +375,32 @@ class InferType(ASTVisitor):
         newW = ((W + zPadWLeft + zPadWRight - FW) // strideW) + 1
 
         node.type = Tensor(
-            [N, newH, newW, CI], exprType.bitlen, exprType.isSecret, exprType.taint
+            [N, newH, newW, CI],
+            exprType.dataType,
+            exprType.bitlen,
+            exprType.isSecret,
+            exprType.taint,
         )
 
+        if self.debug:
+            self.indent -= 1
         return node.type
 
     def visitUOp(self, node: AST.UOp, args=None):
+        if self.debug:
+            print(f"{' '*self.indent}||visitUOp")
+            self.indent += 1
         node.expr.gamma = dict(node.gamma)
         node.type = self.visit(node.expr)
+
+        if self.debug:
+            self.indent -= 1
         return node.type
 
     def visitBOp(self, node: AST.BOp, args=None):
+        if self.debug:
+            print(f"{' '*self.indent}||visitBOp")
+            self.indent += 1
         node.expr1.gamma = dict(node.gamma)
         eType = self.visit(node.expr1)
 
@@ -342,26 +439,43 @@ class InferType(ASTVisitor):
         ]
         if isInt(eType) and isInt(fType):
             node.type = Int(eType.bitlen)
+        elif isFloat(eType) and isFloat(fType):
+            node.type = Float()
         elif isTensor(eType) and isTensor(fType):
             output_shape, _, _ = Util.getBroadcastShapes(eType.shape, fType.shape)
-            node.type = Tensor(shape=output_shape, bitlen=eType.bitlen)
-        elif isTensor(eType) and isInt(fType):
+            # print(f"Type.py : typeCheckBroadcastOps : eType = {eType}, fType = {fType}")
+            node.type = Tensor(
+                shape=output_shape, dataType=eType.dataType, bitlen=eType.bitlen
+            )
+        elif isTensor(eType) and isNumeric(fType):
             output_shape, _, _ = Util.getBroadcastShapes(eType.shape, [])
-            node.type = Tensor(shape=output_shape, bitlen=eType.bitlen)
-        elif isInt(eType) and isTensor(fType):
+            node.type = Tensor(
+                shape=output_shape, dataType=eType.dataType, bitlen=eType.bitlen
+            )
+        elif isNumeric(eType) and isTensor(fType):
             output_shape, _, _ = Util.getBroadcastShapes([], fType.shape)
-            node.type = Tensor(shape=output_shape, bitlen=eType.bitlen)
+            node.type = Tensor(
+                shape=output_shape, dataType=eType.dataType, bitlen=eType.bitlen
+            )
         else:
             print(eType, fType)
             assert False
 
         node.type.taint = getTaint_type(eType, fType)
-        node.type.isSecret = eType.isSecret | fType.isSecret
+        node.type.isSecret = eType.isSecret or fType.isSecret
+
+        if self.debug:
+            self.indent -= 1
         return node.type
 
     def visitBopMul(self, node: AST.BOp, eType: Type, fType: Type, args=None):
+        if self.debug:
+            print(f"{' '*self.indent}||visitBopMul")
+            self.indent += 1
         if isInt(eType) and isInt(fType):
             node.type = Int(eType.bitlen, eType.isSecret)
+        elif isFloat(eType) and isFloat(fType):
+            node.type = Float(eType.bitlen, eType.isSecret)
         elif isTensor(eType) and isTensor(fType):
             if eType.dim == 0:
                 node.type = copy.copy(fType)
@@ -372,17 +486,22 @@ class InferType(ASTVisitor):
                 [n1, n2] = eType.shape
                 [n3, n4] = fType.shape
                 assert n2 == n3
-                node.type = Tensor([n1, n4], eType.bitlen)
+                node.type = Tensor([n1, n4], eType.dataType, eType.bitlen)
         else:
             print("Error: Unknown condition in type checking.", file=sys.stderr)
             assert False
 
         node.type.taint = getTaint_type(eType, fType)
-        node.type.isSecret = eType.isSecret | fType.isSecret
+        node.type.isSecret = eType.isSecret or fType.isSecret
 
+        if self.debug:
+            self.indent -= 1
         return node.type
 
     def visitBopConv(self, node: AST.BOp, eType: Type, fType: Type, args=None):
+        if self.debug:
+            print(f"{' '*self.indent}||visitBopConv")
+            self.indent += 1
         assert isTensor(eType) and isTensor(fType)
         convDim = 2
         group = 1
@@ -435,13 +554,20 @@ class InferType(ASTVisitor):
             shape = [N, newD, newH, newW, CO]
         node.type = Tensor(
             shape,
+            eType.dataType,
             eType.bitlen,
-            eType.isSecret | fType.isSecret,
+            eType.isSecret or fType.isSecret,
             getTaint_type(eType, fType),
         )
+
+        if self.debug:
+            self.indent -= 1
         return node.type
 
     def visitBopConvTranspose(self, node: AST.BOp, eType: Type, fType: Type, args=None):
+        if self.debug:
+            print(f"{' '*self.indent}||visitBopConvTranspose")
+            self.indent += 1
         assert isTensor(eType) and isTensor(fType)
 
         convDim = 2
@@ -468,22 +594,29 @@ class InferType(ASTVisitor):
             shape = [N, outputImgD, outputImgH, outputImgW, CO]
 
         # Logic explanation:
-        # 	ConvTranpose can be thought of as the inverse of some convolution for which it is doing the upsampling.
-        # 	For calculation of padding in the convTranspose operation, the output image size is required.
-        # 	This is why TF also mandates the operator to be specified with output size.
-        # 	This conv transpose operation can be thought of as conv between output
-        # 		of size shape = [N, outputImgH, outputImgW, CI], and filter of size [FH, FW, CI, CO].
-        # 		Hence, the input for this convTranspose would be [N, HP, WP, CO]
+        #   ConvTranpose can be thought of as the inverse of some convolution for which it is doing the upsampling.
+        #   For calculation of padding in the convTranspose operation, the output image size is required.
+        #   This is why TF also mandates the operator to be specified with output size.
+        #   This conv transpose operation can be thought of as conv between output
+        #       of size shape = [N, outputImgH, outputImgW, CI], and filter of size [FH, FW, CI, CO].
+        #       Hence, the input for this convTranspose would be [N, HP, WP, CO]
 
         node.type = Tensor(
             shape,
+            eType.dataType,
             eType.bitlen,
             eType.isSecret | fType.isSecret,
             getTaint_type(eType, fType),
         )
+
+        if self.debug:
+            self.indent -= 1
         return node.type
 
     def visitFunc(self, node: AST.Func, args=None):
+        if self.debug:
+            print(f"{' '*self.indent}||visitFunc")
+            self.indent += 1
         node.expr.gamma = dict(node.gamma)
         eType = self.visit(node.expr)
 
@@ -494,6 +627,9 @@ class InferType(ASTVisitor):
             assert isTensor(eType)
             node.type = copy.copy(eType)
         elif node.op == AST.Operators.SIGMOID:
+            assert isTensor(eType)
+            node.type = copy.copy(eType)
+        elif node.op == AST.Operators.SOFTMAX:
             assert isTensor(eType)
             node.type = copy.copy(eType)
         elif node.op == AST.Operators.SQRT:
@@ -507,7 +643,11 @@ class InferType(ASTVisitor):
         elif node.op == AST.Operators.Shape:
             assert isTensor(eType)
             node.type = Tensor(
-                [len(eType.shape)], eType.bitlen, eType.isSecret, eType.taint
+                [len(eType.shape)],
+                eType.dataType,
+                eType.bitlen,
+                eType.isSecret,
+                eType.taint,
             )
         elif node.op == AST.Operators.ClearMemSecret:
             node.type = Unit()
@@ -517,9 +657,14 @@ class InferType(ASTVisitor):
             print("Type inference not implemented for", node.op)
             assert False
 
+        if self.debug:
+            self.indent -= 1
         return node.type
 
     def visitLet(self, node: AST.Let, args=None):
+        if self.debug:
+            print(f"{' '*self.indent}||visitLet")
+            self.indent += 1
         node.decl.gamma = dict(node.gamma)
         eType = self.visit(node.decl)
 
@@ -531,9 +676,15 @@ class InferType(ASTVisitor):
         fType = self.visit(node.expr)
 
         node.type = copy.copy(fType)
+
+        if self.debug:
+            self.indent -= 1
         return node.type
 
     def visitUninterpFuncCall(self, node: AST.UninterpFuncCall, args=None):
+        if self.debug:
+            print(f"{' '*self.indent}||visitUninterpFuncCall")
+            self.indent += 1
         # Assert that outputShape and inputDims are lists of int astNode.
         assert len(node.argsList) > 0
         isSecret = False
@@ -543,13 +694,19 @@ class InferType(ASTVisitor):
             eType = self.visit(
                 curArg
             )  # This should set the type of each of the input nodes
-            isSecret = isSecret | eType.isSecret
+            isSecret = isSecret or eType.isSecret
             taint = getTaint_taint(taint, eType.taint)
         outputShape = node.outputShape
-        node.type = Tensor(outputShape, isSecret=isSecret, taint=taint)
+        node.type = Tensor(outputShape, "float32", isSecret=isSecret, taint=taint)
+
+        if self.debug:
+            self.indent -= 1
         return node.type
 
     def visitArgMax(self, node: AST.ArgMax, args=None):
+        if self.debug:
+            print(f"{' '*self.indent}||visitArgMax")
+            self.indent += 1
         node.expr.gamma = dict(node.gamma)
         eType = self.visit(node.expr)
 
@@ -557,30 +714,62 @@ class InferType(ASTVisitor):
         dimType = self.visit(node.dim)
         assert isInt(dimType) or (isTensor(dimType) and (len(dimType.shape) == 0))
 
-        node.type = Tensor(node.outputShape, eType.bitlen, eType.isSecret, eType.taint)
+        node.type = Tensor(
+            node.outputShape, eType.dataType, eType.bitlen, eType.isSecret, eType.taint
+        )
+
+        if self.debug:
+            self.indent -= 1
         return node.type
 
     def visitReduce(self, node: AST.Reduce, args=None):
+        if self.debug:
+            print(f"{' '*self.indent}||visitReduce")
+            self.indent += 1
         cur_gamma = dict(node.gamma)
         node.expr.gamma = cur_gamma
         eType = self.visit(node.expr)
 
-        node.type = Tensor(node.outShape, eType.bitlen, eType.isSecret, eType.taint)
+        node.type = Tensor(
+            node.outShape, eType.dataType, eType.bitlen, eType.isSecret, eType.taint
+        )
+
+        if self.debug:
+            self.indent -= 1
         return node.type
 
     def visitInput(self, node: AST.Input, args=None):
+        if self.debug:
+            print(f"{' '*self.indent}||visitInput")
+            self.indent += 1
+        # print("Type.py : visitInput : Creating an input tensor")
         node.type = Tensor(
-            node.shape, isSecret=node.isSecret, taint=Taints[node.inputByParty.name]
+            node.shape,
+            node.dataType,
+            isSecret=node.isSecret,
+            taint=Taints[node.inputByParty.name],
         )
+
+        if self.debug:
+            self.indent -= 1
         return node.type
 
     def visitOutput(self, node: AST.Output, args=None):
+        if self.debug:
+            print(f"{' '*self.indent}||visitOutput")
+            self.indent += 1
         node.expr.gamma = dict(node.gamma)
         self.visit(node.expr)
         node.type = Unit()
+
+        if self.debug:
+            self.indent -= 1
         return node.type
 
     def visitFusedBatchNorm(self, node: AST.FusedBatchNorm, args=None):
+        if self.debug:
+            print(f"{' '*self.indent}||visitFusedBatchNorm")
+            self.indent += 1
         cur_gamma = dict(node.gamma)
         node.expr.gamma = cur_gamma
         node.multExpr.gamma = cur_gamma
@@ -601,6 +790,11 @@ class InferType(ASTVisitor):
         taint = getTaint_taint(exprType.taint, multExprType.taint)
         taint = getTaint_taint(taint, addExprType.taint)
 
-        node.type = copy.copy(exprType)
+        # node.type = copy.copy(exprType)
+        node.type = Tensor(node.shape, multExprType.dataType)
         node.type.taint = taint
+
+        # print(f"Type.py : FusedBatchNorm : {multExprType.dataType}, {node.shape}")
+        if self.debug:
+            self.indent -= 1
         return node.type

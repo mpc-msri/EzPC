@@ -1,7 +1,5 @@
 """
-
 Authors: Nishant Kumar.
-
 Copyright:
 Copyright (c) 2020 Microsoft Research
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,7 +17,6 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
 """
 
 import os, math, sys
@@ -39,10 +36,12 @@ from AST.IRBuilderAST import IRBuilderAST
 class IRBuilderCSF(IRBuilderAST):
     varNameDelim = ""
 
-    def __init__(self, intPartBitwidth=-1):
+    def __init__(self, _debug=False, intPartBitwidth=-1):
         # For tracking temp variables
         self._var_cnt = 0
         self._iter_cnt = 0
+        self._debug = _debug
+        self._indent = 0
 
         # Global variables
         #   Used to note declarations which will go before any statements
@@ -76,6 +75,7 @@ class IRBuilderCSF(IRBuilderAST):
         return [self.getTempVar() for i in range(n)]
 
     def getTempVar(self):
+        # print(f"tmp{self._var_cnt}")
         var = IR.Var("tmp" + str(self._var_cnt))
         self._var_cnt += 1
         return var
@@ -92,36 +92,6 @@ class IRBuilderCSF(IRBuilderAST):
     def get_expnt(self, maxabs: float):  # -> int
         return self.getConsSF()
 
-    def addTruncateFunctionCallHelper(
-        self, exprNumToScaleDown: int, expr1: IR.Var, expr2: IR.Var, node: AST.BOp
-    ):
-        assert isinstance(node, AST.BOp)
-        if exprNumToScaleDown == 1:
-            exprToScaleDown = expr1
-            nodeToScaleDown = node.expr1
-        else:
-            assert exprNumToScaleDown == 2
-            exprToScaleDown = expr2
-            nodeToScaleDown = node.expr2
-        return (exprToScaleDown, nodeToScaleDown)
-
-    def addTruncateFunctionCall(
-        self, node: AST.ASTNode, nodeTypeStr: str, expr: IR.Var, consSF: int
-    ):
-        comment = IR.Comment("Truncation before {0} node.".format(nodeTypeStr))
-        argsDict = OrderedDict()
-        funcName = "ScaleDown"
-        if not (Type.isInt(node.type)):
-            outputShape = node.type.shape
-            for ii, curDimSize in enumerate(outputShape):
-                argsDict[IR.Int(curDimSize, 32)] = "size_" + str(ii)
-            funcName = funcName + str(len(outputShape))
-        argsDict[expr] = "expr"
-        argsDict[IR.Int(consSF, 32)] = "consSF"
-        funcCall = IR.FuncCall(funcName, argsDict)
-        prog = IR.Prog([comment, funcCall])
-        return prog
-
     def isModel(self, node: AST.ASTNode):
         if node.type.taint == Type.Taints.SERVER:
             return True
@@ -133,6 +103,9 @@ class IRBuilderCSF(IRBuilderAST):
     # =================
 
     def visitInt(self, node: AST.Int, args=None):
+        if self._debug:
+            print(f"{' '*self._indent}|visitInt")
+            self._indent += 1
         n = node.value
         prog = IR.Prog([IR.Comment("Int node, isSecret = {0}.".format(node.isSecret))])
         expr = self.getTempVar()
@@ -142,11 +115,15 @@ class IRBuilderCSF(IRBuilderAST):
         prog = IRUtil.prog_merge(
             IR.Prog([IR.Decl(expr.idf, node.type, bitlen, node.isSecret, [n])]), prog
         )
-        if not (Util.Config.disableTruncOpti):
-            self.scaleFacMapping[expr.idf] = self.scaleFac if node.isScaled else 0
+
+        if self._debug:
+            self._indent -= 1
         return (prog, expr)
 
     def visitFloat(self, node: AST.Float, args=None):
+        if self._debug:
+            print(f"{' '*self._indent}|visitFloat")
+            self._indent += 1
         r = node.value
         p = self.get_expnt(abs(r))
         k = IR.DataType.getInt(np.ldexp(r, p))
@@ -163,19 +140,28 @@ class IRBuilderCSF(IRBuilderAST):
         prog = IRUtil.prog_merge(
             IR.Prog([IR.Decl(expr.idf, node.type, -1, node.isSecret, [k])]), prog
         )
-        if not (Util.Config.disableTruncOpti):
-            self.scaleFacMapping[expr.idf] = self.scaleFac
+
+        if self._debug:
+            self._indent -= 1
         return (prog, expr)
 
     def visitId(self, node: AST.ID, args=None):
+        if self._debug:
+            print(f"{' '*self._indent}|visitId")
+            self._indent += 1
         idf = node.name
         prog = IR.Prog([])
         expr = IR.Var(idf)
-        if not (Util.Config.disableTruncOpti):
-            assert expr.idf in self.scaleFacMapping
+
+        if self._debug:
+            self._indent -= 1
         return (prog, expr)
 
     def visitDecl(self, node: AST.Decl, args=None):
+        if self._debug:
+            print(f"{' '*self._indent}|visitDecl")
+            self._indent += 1
+
         def helperAssignGen(l1, l2, allComb):
             if l2 == []:
                 allComb.append(l1)
@@ -242,12 +228,14 @@ class IRBuilderCSF(IRBuilderAST):
             prog,
         )
 
-        if not (Util.Config.disableTruncOpti):
-            self.scaleFacMapping[expr.idf] = self.scaleFac if node.isScaled else 0
-
+        if self._debug:
+            self._indent -= 1
         return (prog, expr)
 
     def visitTranspose(self, node: AST.Transpose, args=None):
+        if self._debug:
+            print(f"{' '*self._indent}|visitTranspose")
+            self._indent += 1
         (inp_prog, inp_arr) = self.visit(node.expr)
         inp_type = node.expr.type
         out_type = node.type
@@ -285,12 +273,14 @@ class IRBuilderCSF(IRBuilderAST):
             IR.Prog([IR.Decl(out_arr.idf, out_type)]), final_prog
         )
 
-        if not (Util.Config.disableTruncOpti):
-            self.scaleFacMapping[out_arr.idf] = self.scaleFacMapping[inp_arr.idf]
-
+        if self._debug:
+            self._indent -= 1
         return (final_prog, out_arr)
 
     def visitSlice(self, node: AST.Slice, args=None):
+        if self._debug:
+            print(f"{' '*self._indent}|visitSlice")
+            self._indent += 1
         (inp_prog, inp_arr) = self.visit(node.expr)
         inp_type = node.expr.type
         out_type = node.type
@@ -328,17 +318,18 @@ class IRBuilderCSF(IRBuilderAST):
             IR.Prog([IR.Decl(out_arr.idf, out_type)]), final_prog
         )
 
-        if not (Util.Config.disableTruncOpti):
-            self.scaleFacMapping[out_arr.idf] = self.scaleFacMapping[inp_arr.idf]
-
+        if self._debug:
+            self._indent -= 1
         return (final_prog, out_arr)
 
     def visitReshape(self, node: AST.Reshape, args=None):
+        if self._debug:
+            print(f"{' '*self._indent}|visitReshape")
+            self._indent += 1
         (prog_1, expr_1) = self.visit(node.expr)
 
         """
         reshape(A, n, h, w)
-
         cmd1:  t1 = t2 = t3 = 0;
         loop2: for n in 0:N:
                  for h in 0:H:
@@ -355,6 +346,7 @@ class IRBuilderCSF(IRBuilderAST):
 
         typ_1 = node.expr.type
         typ_2 = node.type
+        # print(f"IRBuilderCSF.py : visitReshape : {typ_2}")
 
         # Declare variables
         expr_2 = self.getTempVar()
@@ -428,12 +420,15 @@ class IRBuilderCSF(IRBuilderAST):
             )
         prog_2 = IRUtil.prog_merge(IR.Prog([IR.Decl(expr_2.idf, typ_2)]), prog_2)
 
-        if not (Util.Config.disableTruncOpti):
-            self.scaleFacMapping[expr_2.idf] = self.scaleFacMapping[expr_1.idf]
-
+        if self._debug:
+            self._indent -= 1
+        # print(f"IRBuilderCSF.py : visitReshape : Before return {expr_2.idf}")
         return (prog_2, expr_2)
 
     def visitPool(self, node: AST.Pool, args=None):
+        if self._debug:
+            print(f"{' '*self._indent}|visitPool")
+            self._indent += 1
         (prog_1, expr_1) = self.visit(node.expr)
 
         [N, H, W, CI] = node.expr.type.shape
@@ -478,24 +473,30 @@ class IRBuilderCSF(IRBuilderAST):
         funcCall = IR.FuncCall(node.poolType, funcCallArgsDict)
         prog_pool = IR.Prog([comment, funcCall])
         prog_2 = IRUtil.prog_merge(prog_1, prog_pool)
-        prog_2 = IRUtil.prog_merge(IR.Prog([IR.Decl(expr_2.idf, node.type)]), prog_2)
+        prog_2 = IRUtil.prog_merge(
+            IR.Prog([IR.Decl(expr_2.idf, node.expr.type)]), prog_2
+        )
 
-        if not (Util.Config.disableTruncOpti):
-            self.scaleFacMapping[expr_2.idf] = self.scaleFacMapping[expr_1.idf]
-
+        if self._debug:
+            self._indent -= 1
         return (prog_2, expr_2)
 
     def visitUOp(self, node: AST.UOp, args=None):
+        if self._debug:
+            print(f"{' '*self._indent}|visitUOp")
+            self._indent += 1
         (prog_1, expr_1) = self.visit(node.expr)
         op = node.op
         if op == AST.Operators.ADD:
+            if self._debug:
+                self._indent -= 1
             return (prog_1, expr_1)
         assert op == AST.Operators.SUB
 
         typ_2 = node.type
         expr_2 = self.getTempVar()
 
-        if Type.isInt(typ_2):
+        if Type.isNumeric(typ_2):
             comment = IR.Comment(str(node.metadata))
             bitlen = node.expr.bitlen
             decl = IR.Decl(expr_2.idf, node.type, typ_2.bitlen, typ_2.isSecret)
@@ -519,13 +520,18 @@ class IRBuilderCSF(IRBuilderAST):
                 IR.Prog([IR.Decl(expr_2.idf, node.type)]), prog_2
             )
 
-        if not (Util.Config.disableTruncOpti):
-            self.scaleFacMapping[expr_2.idf] = self.scaleFacMapping[expr_1.idf]
-
+        if self._debug:
+            self._indent -= 1
         return (prog_2, expr_2)
 
     def visitBOp(self, node: AST.BOp, args=None):
+        if self._debug:
+            print(f"{' '*self._indent}|visitBOp")
+            self._indent += 1
         op = node.op
+
+        if self._debug:
+            self._indent -= 1
         if op in [AST.Operators.ADD, AST.Operators.SUB, AST.Operators.Equal]:
             return self.visitBopAddOrSubLike(node)
         elif op in [AST.Operators.ElemWiseMul, AST.Operators.ElemWiseDiv]:
@@ -540,6 +546,9 @@ class IRBuilderCSF(IRBuilderAST):
             assert False
 
     def visitBopAddOrSubLike(self, node: AST.BOp, args=None):
+        if self._debug:
+            print(f"{' '*self._indent}|visitBopAddOrSubLike")
+            self._indent += 1
         (prog_1, expr_1) = self.visit(node.expr1)
         (prog_2, expr_2) = self.visit(node.expr2)
 
@@ -558,56 +567,24 @@ class IRBuilderCSF(IRBuilderAST):
         cmd0 = IR.Comment(expr_1.idf + " " + op_ir.name + " " + expr_2.idf)
         comment = IR.Comment(str(node.metadata))
 
-        if not (Util.Config.disableTruncOpti):
-            expr1_sf = self.scaleFacMapping[expr_1.idf]
-            expr2_sf = self.scaleFacMapping[expr_2.idf]
-            scaleUpFactor = -1
-            if expr1_sf > expr2_sf:
-                exprToScale = expr_2
-                typeOfExprToScale = node.expr2.type
-                scaleUpFactor = expr1_sf - expr2_sf
-                self.scaleFacMapping[expr_2.idf] = expr1_sf
-            elif expr2_sf > expr1_sf:
-                exprToScale = expr_1
-                typeOfExprToScale = node.expr1.type
-                scaleUpFactor = expr2_sf - expr1_sf
-                self.scaleFacMapping[expr_1.idf] = expr2_sf
+        # print(f"visitBopAddOrSubLike : {node.expr1.type.dataType}, {node.expr1.type.shape}")
+        # print(node.expr1.name, node.expr1.type.dataType)
+        # print(node.expr2.name, node.expr2.type.dataType)
+        decl = IR.Decl(
+            out_arr.idf, node.expr1.type, node_type.bitlen, node_type.isSecret
+        )
 
-            if scaleUpFactor != -1:
-                comm = IR.Comment(
-                    "Scale up of args needed was found while doing OptimizeTruncations."
-                )
-                argsDict = OrderedDict()
-                curFuncName = "ScaleUp"
-                if not (Type.isInt(typeOfExprToScale)):
-                    outputShape = typeOfExprToScale.shape
-                    for ii, curDimSize in enumerate(outputShape):
-                        argsDict[IR.Int(curDimSize, 32)] = "size_" + str(ii)
-                    curFuncName += str(len(outputShape))
-                argsDict[exprToScale] = "exprToScale, arg#{0}".format(
-                    2 if (expr1_sf > expr2_sf) else 1
-                )
-                argsDict[IR.Int(scaleUpFactor, 32)] = "ScaleUpFactor"
-                funcCall = IR.FuncCall(curFuncName, argsDict)
-
-                if Type.isInt(typeOfExprToScale) or typeOfExprToScale.shape == []:
-                    assn_expr = IR.Assn(exprToScale, funcCall)
-                    curProg = IR.Prog([comm, assn_expr])
-                else:
-                    curProg = IR.Prog([comm, funcCall])
-                prog_1 = IRUtil.prog_merge(curProg, prog_1)
-
-            self.scaleFacMapping[out_arr.idf] = self.scaleFacMapping[expr_1.idf]
-
-        decl = IR.Decl(out_arr.idf, node_type, node_type.bitlen, node_type.isSecret)
-
-        if Type.isInt(node_type):
+        if Type.isNumeric(node_type):
             assign = IR.Assn(out_arr, IR.IntBop(expr_1, op_ir, expr_2))
             out_prog = IR.Prog([assign])
         else:
             outputShape = node_type.shape
-            inp1_shape = [] if Type.isInt(node.expr1.type) else node.expr1.type.shape
-            inp2_shape = [] if Type.isInt(node.expr2.type) else node.expr2.type.shape
+            inp1_shape = (
+                [] if Type.isNumeric(node.expr1.type) else node.expr1.type.shape
+            )
+            inp2_shape = (
+                [] if Type.isNumeric(node.expr2.type) else node.expr2.type.shape
+            )
 
             expected_output_shape, _, _ = Util.getBroadcastShapes(
                 inp1_shape, inp2_shape
@@ -619,6 +596,9 @@ class IRBuilderCSF(IRBuilderAST):
 
         out_prog = IRUtil.prog_merge(IR.Prog([comment, cmd0, decl]), out_prog)
         out_prog = IRUtil.prog_merge(prog_1, prog_2, out_prog)
+
+        if self._debug:
+            self._indent -= 1
         return (out_prog, out_arr)
 
     # We first reshape both inputs and flatten them into 1d dims.
@@ -641,6 +621,9 @@ class IRBuilderCSF(IRBuilderAST):
     #     out_arr[i1][i2] = out_arr_flat[idx]
     # Standard broadcast rules apply to generate these flattened tensors.
     def visitBopElemWiseOp(self, node: AST.BOp, args=None):
+        if self._debug:
+            print(f"{' '*self._indent}|visitBopElemWiseOp")
+            self._indent += 1
         (prog_1, expr_1) = self.visit(node.expr1)
         (prog_2, expr_2) = self.visit(node.expr2)
 
@@ -650,7 +633,6 @@ class IRBuilderCSF(IRBuilderAST):
         elif node.op == AST.Operators.ElemWiseDiv:
             op_ir = IR.Op.Op["./"]
             funcName = "ElemWiseDiv"
-            assert False, "Did not implement div yet"
         else:
             assert False, "Non mul/div elemwise op"
 
@@ -664,14 +646,18 @@ class IRBuilderCSF(IRBuilderAST):
             out_arr.idf, node_type, node_type.bitlen, node_type.isSecret
         )
 
-        if Type.isInt(node_type):
+        if Type.isNumeric(node_type):
             assign = IR.Assn(out_arr, IR.IntBop(expr_1, op_ir, expr_2))
             out_prog = IR.Prog([assign])
         else:
             # Flattening inputs
             output_shape = node_type.shape
-            inp1_shape = [] if Type.isInt(node.expr1.type) else node.expr1.type.shape
-            inp2_shape = [] if Type.isInt(node.expr2.type) else node.expr2.type.shape
+            inp1_shape = (
+                [] if Type.isNumeric(node.expr1.type) else node.expr1.type.shape
+            )
+            inp2_shape = (
+                [] if Type.isNumeric(node.expr2.type) else node.expr2.type.shape
+            )
             out_iters = self.getTempIterators(len(output_shape))
             (
                 expected_output_shape,
@@ -693,6 +679,7 @@ class IRBuilderCSF(IRBuilderAST):
             out_arr_flat = self.getTempVar()
             flat_type = Type.Tensor(
                 [flat_size],
+                node.expr1.type.dataType,
                 node.expr1.type.bitlen,
                 node.expr1.type.isSecret,
                 node.expr1.type.taint,
@@ -764,8 +751,7 @@ class IRBuilderCSF(IRBuilderAST):
             if node.op == AST.Operators.ElemWiseDiv:
                 argsDict[inp1_arr_flat] = "A"
                 argsDict[inp2_arr_flat] = "B"
-                funcName = "ElemwiseSuperDuperSecretDiv"
-                assert False, "Elemwise div not implemented"
+                funcName = "ElemWiseDiv"
             else:
                 # If either input is a model weight we can use an optimised version for mul
                 # Otherwise if both are derived from client input we use the hadmaard version
@@ -819,46 +805,41 @@ class IRBuilderCSF(IRBuilderAST):
 
         progExtraBefore = IR.Prog([])
         progExtraAfter = IR.Prog([])
-        if Util.Config.disableTruncOpti:
-            progExtraAfter = self.addTruncateFunctionCall(
-                node, "ElemWiseMul", out_arr, Util.Config.consSF
-            )
-        else:
-            inputs_same = expr_1.idf == expr_2.idf
-            expr1_sf = self.scaleFacMapping[expr_1.idf]
-            expr2_sf = self.scaleFacMapping[expr_2.idf]
-            if expr1_sf > self.scaleFac:
-                progExtraBefore = self.addTruncateFunctionCall(
-                    node.expr1, "ElemWiseMul", expr_1, expr1_sf - self.scaleFac
-                )
-                self.scaleFacMapping[expr_1.idf] = self.scaleFac
-            if (not inputs_same) and (expr2_sf > self.scaleFac):
-                progExtraBefore = IRUtil.prog_merge(
-                    progExtraBefore,
-                    self.addTruncateFunctionCall(
-                        node.expr2, "ElemWiseMul", expr_2, expr2_sf - self.scaleFac
-                    ),
-                )
-                self.scaleFacMapping[expr_2.idf] = self.scaleFac
-            self.scaleFacMapping[out_arr.idf] = 2 * self.scaleFac
 
         out_prog = IRUtil.prog_merge(
             IRUtil.Prog([comment, cmd0]), progExtraBefore, out_prog, progExtraAfter
         )
+
+        if self._debug:
+            self._indent -= 1
         return (out_prog, out_arr)
 
     def visitBopMul(self, node: AST.BOp, args=None):
+        if self._debug:
+            print(f"{' '*self._indent}|visitBopMul")
+            self._indent += 1
         typ_1 = node.expr1.type
         typ_2 = node.expr2.type
         typ_3 = node.type
-        if Type.isInt(typ_3):
+
+        if self._debug:
+            self._indent -= 1
+        if Type.isNumeric(typ_3):
             return self.visitBopMulInt(node)
-        elif typ_1.dim == 0 or Type.isInt(typ_1) or typ_2.dim == 0 or Type.isInt(typ_2):
+        elif (
+            typ_1.dim == 0
+            or Type.isNumeric(typ_1)
+            or typ_2.dim == 0
+            or Type.isNumeric(typ_2)
+        ):
             return self.visitBopMulScalar1DTensor(node)
         else:
             return self.visitBopMul2DTensor(node)
 
     def visitBopMulInt(self, node: AST.BOp, args=None):
+        if self._debug:
+            print(f"{' '*self._indent}|visitBopMulInt")
+            self._indent += 1
         (prog_1, expr_1) = self.visit(node.expr1)
         (prog_2, expr_2) = self.visit(node.expr2)
 
@@ -871,33 +852,16 @@ class IRBuilderCSF(IRBuilderAST):
 
         progExtraBefore = IR.Prog([])
         progExtraAfter = IR.Prog([])
-        if Util.Config.disableTruncOpti:
-            progExtraAfter = self.addTruncateFunctionCall(
-                node, "MulInt", expr_3, Util.Config.consSF
-            )
-        else:
-            inputs_same = expr_1.idf == expr_2.idf
-            expr1_sf = self.scaleFacMapping[expr_1.idf]
-            expr2_sf = self.scaleFacMapping[expr_2.idf]
-            if expr1_sf > self.scaleFac:
-                progExtraBefore = self.addTruncateFunctionCall(
-                    node.expr1, "MulInt", expr_1, expr1_sf - self.scaleFac
-                )
-                self.scaleFacMapping[expr_1.idf] = self.scaleFac
-            if (not inputs_same) and (expr2_sf > self.scaleFac):
-                progExtraBefore = IRUtil.prog_merge(
-                    progExtraBefore,
-                    self.addTruncateFunctionCall(
-                        node.expr2, "MulInt", expr_2, expr2_sf - self.scaleFac
-                    ),
-                )
-                self.scaleFacMapping[expr_2.idf] = self.scaleFac
-            self.scaleFacMapping[expr_3.idf] = 2 * self.scaleFac
 
         prog_3 = IRUtil.prog_merge(progExtraBefore, prog_3, progExtraAfter)
+        if self._debug:
+            self._indent -= 1
         return (prog_3, expr_3)
 
     def visitBopMulScalar1DTensor(self, node: AST.BOp, args=None):
+        if self._debug:
+            print(f"{' '*self._indent}|visitBopMulScalar1DTensor")
+            self._indent += 1
         (prog_1, expr_1) = self.visit(node.expr1)
         (prog_2, expr_2) = self.visit(node.expr2)
 
@@ -906,14 +870,14 @@ class IRBuilderCSF(IRBuilderAST):
         typ_3 = node.type
 
         isIntMult = False
-        if typ_1.dim == 0 or Type.isInt(typ_1):
+        if typ_1.dim == 0 or Type.isNumeric(typ_1):
             a, b = expr_1, expr_2
             outputShape = typ_2.shape
-            isIntMult = Type.isInt(typ_1)
+            isIntMult = Type.isNumeric(typ_1)
         else:
             a, b = expr_2, expr_1
             outputShape = typ_1.shape
-            isIntMult = Type.isInt(typ_2)
+            isIntMult = Type.isNumeric(typ_2)
 
         # decl fresh vars
         expr_3 = self.getTempVar()
@@ -926,28 +890,6 @@ class IRBuilderCSF(IRBuilderAST):
         funcCallArgsDict[expr_3] = "C"
         progExtraBefore = IR.Prog([])
         progExtraAfter = IR.Prog([])
-        if Util.Config.disableTruncOpti:
-            progExtraAfter = self.addTruncateFunctionCall(
-                node, "ScalarMul", expr_3, Util.Config.consSF
-            )
-        else:
-            inputs_same = expr_1.idf == expr_2.idf
-            expr1_sf = self.scaleFacMapping[expr_1.idf]
-            expr2_sf = self.scaleFacMapping[expr_2.idf]
-            if expr1_sf > self.scaleFac:
-                progExtraBefore = self.addTruncateFunctionCall(
-                    node.expr1, "ScalarMul", expr_1, expr1_sf - self.scaleFac
-                )
-                self.scaleFacMapping[expr_1.idf] = self.scaleFac
-            if (not inputs_same) and (expr2_sf > self.scaleFac):
-                progExtraBefore = IRUtil.prog_merge(
-                    progExtraBefore,
-                    self.addTruncateFunctionCall(
-                        node.expr2, "ScalarMul", expr_2, expr2_sf - self.scaleFac
-                    ),
-                )
-                self.scaleFacMapping[expr_2.idf] = self.scaleFac
-            self.scaleFacMapping[expr_3.idf] = 2 * self.scaleFac
 
         funcCall = IR.FuncCall(
             "ScalarMul" + self.varNameDelim + str(len(outputShape)), funcCallArgsDict
@@ -958,9 +900,15 @@ class IRBuilderCSF(IRBuilderAST):
         prog_3 = IRUtil.prog_merge(
             IR.Prog([IR.Decl(expr_3.idf, node.type)]), prog_3, progExtraAfter
         )
+
+        if self._debug:
+            self._indent -= 1
         return (prog_3, expr_3)
 
     def visitBopMul2DTensor(self, node: AST.BOp, args=None):
+        if self._debug:
+            print(f"{' '*self._indent}|visitBopMul2DTensor")
+            self._indent += 1
         (prog_1, expr_1) = self.visit(node.expr1)
         (prog_2, expr_2) = self.visit(node.expr2)
 
@@ -973,7 +921,6 @@ class IRBuilderCSF(IRBuilderAST):
 
         [I, J] = typ_1.shape
         [J, K] = typ_2.shape
-        typ_mul = Type.Tensor([J])
 
         shrT = Util.Config.consSF
 
@@ -1002,28 +949,6 @@ class IRBuilderCSF(IRBuilderAST):
 
         progExtraBefore = IR.Prog([])
         progExtraAfter = IR.Prog([])
-        if Util.Config.disableTruncOpti:
-            progExtraAfter = self.addTruncateFunctionCall(
-                node, "MatMul2D", expr_3, Util.Config.consSF
-            )
-        else:
-            inputs_same = expr_1.idf == expr_2.idf
-            expr1_sf = self.scaleFacMapping[expr_1.idf]
-            expr2_sf = self.scaleFacMapping[expr_2.idf]
-            if expr1_sf > self.scaleFac:
-                progExtraBefore = self.addTruncateFunctionCall(
-                    node.expr1, "MatMul2D", expr_1, expr1_sf - self.scaleFac
-                )
-                self.scaleFacMapping[expr_1.idf] = self.scaleFac
-            if (not inputs_same) and (expr2_sf > self.scaleFac):
-                progExtraBefore = IRUtil.prog_merge(
-                    progExtraBefore,
-                    self.addTruncateFunctionCall(
-                        node.expr2, "MatMul2D", expr_2, expr2_sf - self.scaleFac
-                    ),
-                )
-                self.scaleFacMapping[expr_2.idf] = self.scaleFac
-            self.scaleFacMapping[expr_3.idf] = 2 * self.scaleFac
 
         funcCall = IR.FuncCall("MatMul2D", funcCallArgsDict)
         comment = IR.Comment(str(node.metadata))
@@ -1034,9 +959,14 @@ class IRBuilderCSF(IRBuilderAST):
             IR.Prog([IR.Decl(expr_3.idf, node.type)]), prog_3, progExtraAfter
         )
 
+        if self._debug:
+            self._indent -= 1
         return (prog_3, expr_3)
 
     def visitBopConv(self, node: AST.BOp, args=None):
+        if self._debug:
+            print(f"{' '*self._indent}|visitBopConv")
+            self._indent += 1
         (prog1, expr_1) = self.visit(node.expr1)
         (prog2, expr_2) = self.visit(node.expr2)
 
@@ -1125,36 +1055,21 @@ class IRBuilderCSF(IRBuilderAST):
 
         progExtraBefore = IR.Prog([])
         progExtraAfter = IR.Prog([])
-        if Util.Config.disableTruncOpti:
-            progExtraAfter = self.addTruncateFunctionCall(
-                node, "Conv", returnExpr, Util.Config.consSF
-            )
-        else:
-            inputs_same = expr_1.idf == expr_2.idf
-            expr1_sf = self.scaleFacMapping[expr_1.idf]
-            expr2_sf = self.scaleFacMapping[expr_2.idf]
-            if expr1_sf > self.scaleFac:
-                progExtraBefore = self.addTruncateFunctionCall(
-                    node.expr1, "Conv", expr_1, expr1_sf - self.scaleFac
-                )
-                self.scaleFacMapping[expr_1.idf] = self.scaleFac
-            if (not inputs_same) and (expr2_sf > self.scaleFac):
-                progExtraBefore = IRUtil.prog_merge(
-                    progExtraBefore,
-                    self.addTruncateFunctionCall(
-                        node.expr2, "Conv", expr_2, expr2_sf - self.scaleFac
-                    ),
-                )
-                self.scaleFacMapping[expr_2.idf] = self.scaleFac
-            self.scaleFacMapping[returnExpr.idf] = 2 * self.scaleFac
-
         returnProg = IRUtil.prog_merge(prog1, prog2, progExtraBefore, progConv)
         returnProg = IRUtil.prog_merge(
-            IR.Prog([IR.Decl(returnExpr.idf, node.type)]), returnProg, progExtraAfter
+            IR.Prog([IR.Decl(returnExpr.idf, node.expr1.type)]),
+            returnProg,
+            progExtraAfter,
         )
+
+        if self._debug:
+            self._indent -= 1
         return (returnProg, returnExpr)
 
     def visitBopConvTranspose(self, node: AST.BOp, args=None):
+        if self._debug:
+            print(f"{' '*self._indent}|visitBopConvTranspose")
+            self._indent += 1
         (prog1, expr_1) = self.visit(node.expr1)
         (prog2, expr_2) = self.visit(node.expr2)
 
@@ -1291,36 +1206,20 @@ class IRBuilderCSF(IRBuilderAST):
 
         progExtraBefore = IR.Prog([])
         progExtraAfter = IR.Prog([])
-        if Util.Config.disableTruncOpti:
-            progExtraAfter = self.addTruncateFunctionCall(
-                node, "ConvTranspose", returnExpr, self.scaleFac
-            )
-        else:
-            inputs_same = expr_1.idf == expr_2.idf
-            expr1_sf = self.scaleFacMapping[expr_1.idf]
-            expr2_sf = self.scaleFacMapping[expr_2.idf]
-            if expr1_sf > self.scaleFac:
-                progExtraBefore = self.addTruncateFunctionCall(
-                    node.expr1, "ConvTranspose", expr_1, expr1_sf - self.scaleFac
-                )
-                self.scaleFacMapping[expr_1.idf] = self.scaleFac
-            if (not inputs_same) and (expr2_sf > self.scaleFac):
-                progExtraBefore = IRUtil.prog_merge(
-                    progExtraBefore,
-                    self.addTruncateFunctionCall(
-                        node.expr2, "ConvTranspose", expr_2, expr2_sf - self.scaleFac
-                    ),
-                )
-                self.scaleFacMapping[expr2.idf] = self.scaleFac
-            self.scaleFacMapping[returnExpr.idf] = 2 * self.scaleFac
 
         returnProg = IRUtil.prog_merge(prog1, prog2, progExtraBefore, progConv)
         returnProg = IRUtil.prog_merge(
             IR.Prog([IR.Decl(returnExpr.idf, node.type)]), returnProg, progExtraAfter
         )
+
+        if self._debug:
+            self._indent -= 1
         return (returnProg, returnExpr)
 
     def visitFunc(self, node: AST.Func, args=None):
+        if self._debug:
+            print(f"{' '*self._indent}|visitFunc")
+            self._indent += 1
         op = node.op
         assert op in [
             AST.Operators.Floor,
@@ -1328,14 +1227,21 @@ class IRBuilderCSF(IRBuilderAST):
             AST.Operators.RELU,
             AST.Operators.TANH,
             AST.Operators.SIGMOID,
+            AST.Operators.SOFTMAX,
             AST.Operators.SQRT,
             AST.Operators.RSQRT,
             AST.Operators.ClearMemSecret,
             AST.Operators.ClearMemPublic,
         ]
+
+        if self._debug:
+            self._indent -= 1
         return self.visitFloorLike(node)
 
     def visitFloorLike(self, node: AST.Func, args=None):
+        if self._debug:
+            print(f"{' '*self._indent}|visitFloorLike")
+            self._indent += 1
         (prog1, expr1) = self.visit(node.expr)
         out_expr = self.getTempVar()
 
@@ -1349,6 +1255,8 @@ class IRBuilderCSF(IRBuilderAST):
             funcName = "Tanh"
         elif node.op == AST.Operators.SIGMOID:
             funcName = "Sigmoid"
+        elif node.op == AST.Operators.SOFTMAX:
+            funcName = "Softmax"
         elif node.op == AST.Operators.SQRT:
             funcName = "Sqrt"
         elif node.op == AST.Operators.RSQRT:
@@ -1365,9 +1273,13 @@ class IRBuilderCSF(IRBuilderAST):
             node.op == AST.Operators.ClearMemSecret
             or node.op == AST.Operators.ClearMemPublic
         ):
-            if Type.isInt(node.expr.type):
+            if Type.isNumeric(node.expr.type):
+                if self._debug:
+                    self._indent -= 1
                 return (prog1, expr1)
             if node.expr.type.dim == 0:
+                if self._debug:
+                    self._indent -= 1
                 return (prog1, expr1)
 
         argsList = OrderedDict()
@@ -1385,86 +1297,6 @@ class IRBuilderCSF(IRBuilderAST):
             argsList[IR.Int(Util.Config.consSF, 32)] = "curScale"
 
         progExtraBefore = IR.Prog([])
-        if Util.Config.disableTruncOpti:
-            if node.op == AST.Operators.RELU:
-                argsList[IR.Int(Util.Config.consSF, 32)] = "consSF"
-                argsList[IR.Bool(False)] = "doTruncation"
-            if node.op in [
-                AST.Operators.TANH,
-                AST.Operators.SIGMOID,
-                AST.Operators.SQRT,
-                AST.Operators.RSQRT,
-            ]:
-                assert (
-                    self.scaleFac > 31
-                ), "The program scaling factor {} is invalid. Should be lesser than 32 if network has tan/sig/sqrt as those only support 32 bitlengths".format(
-                    self.scaleFac
-                )
-                argsList[IR.Int(self.scaleFac, 32)] = "sA"
-                argsList[IR.Int(self.scaleFac, 32)] = "sB"
-        else:
-            final_sf = self.scaleFacMapping[expr1.idf]
-            if node.op == AST.Operators.RELU:
-                argsList[IR.Int(final_sf - self.scaleFac, 32)] = "consSF"
-                if final_sf > self.scaleFac:
-                    # If it can't tolerate one more mult operation, then scale down here
-                    assert final_sf - self.scaleFac == self.scaleFac
-                    final_sf = self.scaleFac
-                    argsList[IR.Bool(True)] = "doTruncation"
-                else:
-                    argsList[IR.Bool(False)] = "doTruncation"
-            if node.op in [
-                AST.Operators.TANH,
-                AST.Operators.SIGMOID,
-                AST.Operators.SQRT,
-                AST.Operators.RSQRT,
-            ]:
-                # Since these class of functions can only handle input of 32 bitlength, we have to scale down
-                # inputs before calling them.
-                # 32 bit fixedpt |(+/-)| _ _ _ _ _ _ _ _ | _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-                # 31 bits available. For small values with max precision we can do 0.31 split
-                # Consider fp number: 2^-25 (2.98023223876953125 × 10^-8)
-                # | 1 | 1 1 0 0 1 1 0 | 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 |
-                #   = 1 * 1.0 *  2^(102 - 127) = 2^-25
-                # If we scale by mantissa number of bits i.e. 23, we get a fixedpt val
-                #   = floor(1 * (2 ^ (-25 + 23))) = floor(2^-2) = floor(0.025) = 0
-                # We have lost the precision. It is possible to scale more than mantissa bits to get precision.
-                # if we had scaled by 25 bits, we wouldve got fixedpt val = 1 and we could then do a 6.25 split while
-                # storing it. Upper bound of scaling is not mantissa, it is fixedpt bitlen available.
-                if final_sf > 31:
-                    assert (
-                        final_sf > self.scaleFac
-                    ), "The program scaling factor {} is invalid. Should be lesser than 32 if network has tan/sig/sqrt as those only support 32 bitlengths".format(
-                        self.scaleFac
-                    )
-                    assert final_sf - self.scaleFac == self.scaleFac
-                    progExtraBefore = IRUtil.prog_merge(
-                        progExtraBefore,
-                        self.addTruncateFunctionCall(
-                            node.expr, node.op.name, expr1, final_sf - self.scaleFac
-                        ),
-                    )
-                    self.scaleFacMapping[expr1.idf] = self.scaleFac
-                    final_sf = self.scaleFac
-                argsList[IR.Int(final_sf, 32)] = "sA"
-                argsList[IR.Int(final_sf, 32)] = "sB"
-            self.scaleFacMapping[out_expr.idf] = final_sf
-
-        # Tanh/Sigmoid/Sqrt impl only supports upto 32 bitwidth for input
-        if node.op in [
-            AST.Operators.TANH,
-            AST.Operators.SIGMOID,
-            AST.Operators.SQRT,
-            AST.Operators.RSQRT,
-        ]:
-            argsList[IR.Int(min(32, self.actualbitwidth), 32)] = "bwA"
-            # argsList[IR.Int(min(32, self.actualbitwidth), 32)] = "bwB"
-            argsList[IR.Int(self.actualbitwidth, 32)] = "bwB"
-            if node.op == AST.Operators.SQRT:
-                argsList[IR.Bool(False)] = "inverse"
-            if node.op == AST.Operators.RSQRT:
-                argsList[IR.Bool(True)] = "inverse"
-            argsList[IR.Int(8, 32)] = "LUTBITS"
 
         comment = IR.Comment(str(node.metadata))
         funcNameSuffix = ""
@@ -1477,28 +1309,40 @@ class IRBuilderCSF(IRBuilderAST):
                 IR.FuncCall(funcName + self.varNameDelim + funcNameSuffix, argsList),
             ]
         )
+        # print(f"IRBuilderCSF.py : visitFloorLike : out_expr.idf = {out_expr.idf}, node.type.datatype = {node.type.datatype}")
         if Type.isTensor(node.type):
             progFinal = IRUtil.prog_merge(
-                IR.Prog([IR.Decl(out_expr.idf, node.type)]), progFinal
+                IR.Prog([IR.Decl(out_expr.idf, node.expr.type)]), progFinal
             )
 
         progFinal = IRUtil.prog_merge(prog1, progExtraBefore, progFinal)
+
+        if self._debug:
+            self._indent -= 1
         return (progFinal, out_expr)
 
     def visitLet(self, node: AST.Let, args=None):
+        if self._debug:
+            print(f"{' '*self._indent}|visitLet")
+            self._indent += 1
+
         (prog_1, expr_1) = self.visit(node.decl)
         typ_1 = node.decl.type
         idf = node.name.name
-        if not (Util.Config.disableTruncOpti):
-            self.scaleFacMapping[idf] = self.scaleFacMapping[expr_1.idf]
-        (prog_2, expr_2) = self.visit(node.expr)
 
+        (prog_2, expr_2) = self.visit(node.expr)
         self.name_mapping[idf] = expr_1.idf
         self.expr_mapping[idf] = expr_1
         prog_3 = IRUtil.prog_merge(prog_1, prog_2)
+
+        if self._debug:
+            self._indent -= 1
         return (prog_3, expr_2)
 
     def visitUninterpFuncCall(self, node: AST.UninterpFuncCall, args=None):
+        if self._debug:
+            print(f"{' '*self._indent}|visitUninterpFuncCall")
+            self._indent += 1
         progList = []
         exprList = []
         for ii, curArg in enumerate(node.argsList):
@@ -1527,25 +1371,6 @@ class IRBuilderCSF(IRBuilderAST):
         #   Then for each input tensor, its shape is inserted in args, followed by the input tensor itself.
         #   If the current input tensor has the same shape as any of the previous tensors, then its shape is not inserted.
         funcArgsList = OrderedDict()
-
-        if not (Util.Config.disableTruncOpti):
-            # TODO -- remove CreateTensor from uninterp function calls
-            for ii, curArg in enumerate(node.argsList):
-                curExpr = exprList[ii]
-                curScale = self.scaleFacMapping[curExpr.idf]
-                curType = curArg.type
-                if (
-                    (not (Type.isInt(curType)))
-                    and (curScale > self.scaleFac)
-                    and (curType.isSecret)
-                ):
-                    curProg = self.addTruncateFunctionCall(
-                        curArg, "UninterpFuncCall", curExpr, curScale - self.scaleFac
-                    )
-                    progList.insert(0, curProg)
-                    self.scaleFacMapping[curExpr.idf] = self.scaleFac
-
-            self.scaleFacMapping[returnExpr.idf] = self.scaleFac
 
         tensorShapesFound = {}
         outputShape = node.type.shape
@@ -1588,9 +1413,15 @@ class IRBuilderCSF(IRBuilderAST):
             ),
             progFinal,
         )
+
+        if self._debug:
+            self._indent -= 1
         return (progFinal, returnExpr)
 
     def visitArgMax(self, node: AST.ArgMax, args=None):
+        if self._debug:
+            print(f"{' '*self._indent}|visitArgMax")
+            self._indent += 1
         (prog_1, expr1) = self.visit(node.expr)
         (prog_2, expr2) = self.visit(node.dim)
 
@@ -1607,23 +1438,27 @@ class IRBuilderCSF(IRBuilderAST):
         funcArgsList[expr2] = "dim"
         funcArgsList[tmpExpr] = "outArr"
 
-        if not (Util.Config.disableTruncOpti):
-            self.scaleFacMapping[tmpExpr.idf] = -1
-
         funcCall = IR.FuncCall(
             "ArgMax" + self.varNameDelim + str(len(outputShape)), funcArgsList
         )
         comment = IR.Comment(str(node.metadata))
         prog_3 = IRUtil.prog_merge(prog_1, prog_2, IR.Prog([comment, funcCall]))
         prog_3 = IRUtil.prog_merge(IR.Prog([IR.Decl(tmpExpr.idf, node.type)]), prog_3)
+
+        if self._debug:
+            self._indent -= 1
         return (prog_3, tmpExpr)
 
     def visitInput(self, node: AST.Input, args=None):
+        if self._debug:
+            print(f"{' '*self._indent}|visitInput")
+            self._indent += 1
         returnExpr = self.getTempVar()
         returnExpr.inputVar = True
         comment = IR.Comment(str(node.metadata))
-        if not (Util.Config.disableTruncOpti):
-            self.scaleFacMapping[returnExpr.idf] = self.scaleFac
+
+        if self._debug:
+            self._indent -= 1
         return (
             IR.Prog(
                 [
@@ -1641,15 +1476,22 @@ class IRBuilderCSF(IRBuilderAST):
         )
 
     def visitOutput(self, node: AST.Output, args=None):
+        if self._debug:
+            print(f"{' '*self._indent}|visitOutput")
+            self._indent += 1
         (prog_0, expr_0) = self.visit(node.expr)
         output = IR.Output(expr_0, node.outputToParty)
         prog = IRUtil.prog_merge(prog_0, IR.Prog([output]))
         expr = self.getTempVar()
-        if not (Util.Config.disableTruncOpti):
-            self.scaleFacMapping[expr.idf] = self.scaleFac
+
+        if self._debug:
+            self._indent -= 1
         return (prog, expr)
 
     def visitReduce(self, node: AST.Reduce, args=None):
+        if self._debug:
+            print(f"{' '*self._indent}|visitReduce")
+            self._indent += 1
         (prog_1, expr1) = self.visit(node.expr)
         assert node.op in [AST.Operators.ADD, AST.Operators.Mean]
 
@@ -1669,7 +1511,6 @@ class IRBuilderCSF(IRBuilderAST):
                     output[i1][i2] = sum / (s0 * s3)
             if keep dim == true, output rank is same as input. We generate:
                     output[0][i1][i2][0] = sum / (s0 * s3)
-
             Ideally the above loop nest is what we would want to generate. But since we have
             a division, we need to make calls to the div functionality and flatten the tensors.
             temp_flat[s1*s2];
@@ -1685,7 +1526,6 @@ class IRBuilderCSF(IRBuilderAST):
             for i1=[0:s1]
                 for i2=[0:s2]
                   output[i1][i2] = out_flat[i1*s2 + i2]
-
         """
         reduced_dims = node.reductionAxesList
         inputShape = node.expr.type.shape
@@ -1774,9 +1614,9 @@ class IRBuilderCSF(IRBuilderAST):
                 IR.Prog([sumExpr_decl, output_decl]),
                 IR.Prog(sum_loop),
             )
-            if not (Util.Config.disableTruncOpti):
-                self.scaleFacMapping[output.idf] = self.scaleFacMapping[expr1.idf]
 
+            if self._debug:
+                self._indent -= 1
             return (final_prog, output)
 
         # Insert call to ElemWiseVectorPublicDiv(size=s1*s2, inp=temp_flat, divisor=s0*s3, out=out_flat)
@@ -1821,9 +1661,6 @@ class IRBuilderCSF(IRBuilderAST):
         argsDict[out_flat] = "A"
         free_out_flat_call = IR.FuncCall("ClearMemSecret1", argsDict)
 
-        if not (Util.Config.disableTruncOpti):
-            self.scaleFacMapping[output.idf] = self.scaleFacMapping[expr1.idf]
-
         comment = IR.Comment(str(node.metadata))
         final_prog = IRUtil.prog_merge(
             prog_1,
@@ -1836,14 +1673,20 @@ class IRBuilderCSF(IRBuilderAST):
             IR.Prog([free_out_flat_call]),
         )
 
+        if self._debug:
+            self._indent -= 1
         return (final_prog, output)
 
     def visitFusedBatchNorm(self, node: AST.FusedBatchNorm, args=None):
+        if self._debug:
+            print(f"{' '*self._indent}|visitFusedBatchNorm")
+            self._indent += 1
         (prog1, expr1) = self.visit(node.expr)
         (prog2, expr2) = self.visit(node.multExpr)
         (prog3, expr3) = self.visit(node.addExpr)
 
         returnExpr = self.getTempVar()
+        # print(f"FusedBatchNorm : {returnExpr.idf}")
 
         funcArgsList = OrderedDict()
         for ii, elem in enumerate(node.type.shape):
@@ -1855,44 +1698,6 @@ class IRBuilderCSF(IRBuilderAST):
         progExtraBefore = IR.Prog([])
         multExprScaleDownSf = self.scaleFac
         addExprScaleUpSf = 0
-        if not (Util.Config.disableTruncOpti):
-            # TruncOpti is on
-            multExprScaleDownSf = 0
-            addExprScaleUpSf = 0
-
-            expr_sf = self.scaleFacMapping[expr1.idf]
-            multExpr_sf = self.scaleFacMapping[expr2.idf]
-            addExpr_sf = self.scaleFacMapping[expr3.idf]
-            if expr_sf > self.scaleFac:
-                # Scale down needed
-                progExtraBefore = IRUtil.prog_merge(
-                    progExtraBefore,
-                    self.addTruncateFunctionCall(
-                        node.expr, "FusedBatchNorm", expr1, expr_sf - self.scaleFac
-                    ),
-                )
-                self.scaleFacMapping[expr1.idf] = self.scaleFac
-
-            if multExpr_sf > self.scaleFac:
-                # Scale down needed
-                progExtraBefore = IRUtil.prog_merge(
-                    progExtraBefore,
-                    self.addTruncateFunctionCall(
-                        node.multExpr,
-                        "FusedBatchNorm",
-                        expr2,
-                        multExpr_sf - self.scaleFac,
-                    ),
-                )
-                self.scaleFacMapping[expr2.idf] = self.scaleFac
-
-            final_sf = 2 * self.scaleFac
-            assert final_sf >= addExpr_sf
-            if final_sf > addExpr_sf:
-                addExprScaleUpSf = final_sf - addExpr_sf
-                self.scaleFacMapping[expr3.idf] += addExprScaleUpSf
-
-            self.scaleFacMapping[returnExpr.idf] = final_sf
 
         funcArgsList[IR.Int(multExprScaleDownSf, 32)] = "multExprScaleDownSf"
         funcArgsList[IR.Int(addExprScaleUpSf, 32)] = "addExprScaleUpSf"
@@ -1919,4 +1724,7 @@ class IRBuilderCSF(IRBuilderAST):
         returnProg = IRUtil.prog_merge(
             IR.Prog([IR.Decl(returnExpr.idf, node.type)]), returnProg
         )
+
+        if self._debug:
+            self._indent -= 1
         return (returnProg, returnExpr)

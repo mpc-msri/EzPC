@@ -902,7 +902,9 @@ class ONNXNodesAST:
         )
         out_var_count += 1
 
+        # print(f"ONNXNodesAST.py : BatchNormalization : {value_info[node.outputs[0]]}")
         seedot_output_ast = AST.FusedBatchNorm(
+            list(value_info[node.outputs[0]][1]),
             AST.ID(reshaped_input_name, onnx2seedot(value_info[inputsRef[0]][0])),
             AST.ID(
                 node_name_to_out_var_dict[inputsRef[1]],
@@ -919,7 +921,7 @@ class ONNXNodesAST:
             seedot_output_ast,
             output_name,
             mtdAST,
-            onnx2seedot(value_info[inputsRefs[0]][0]),
+            onnx2seedot(value_info[inputsRef[0]][0]),
         )
         out_var_count += 1
 

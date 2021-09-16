@@ -1,6 +1,6 @@
 {
-    "model_name": "relevance.onnx",
-    "input_tensors": { "input" : "1,874"},
+    "model_name": "chexpert.onnx",
+    "input_tensors": { "input" : "1,3,320,320"},
     "target": "SCI",
     "backend": "OT",
     "scale": 23,

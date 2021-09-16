@@ -183,7 +183,6 @@ class Compiler:
         IRUtil.init()
         compiler = IRBuilderCSF()
         res = compiler.visit(ast)
-        res = self.fixOuputScale(res, compiler)
         res = self.fixNames(res, compiler)
 
         Util.write_debug_info(compiler.name_mapping)

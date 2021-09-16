@@ -1,7 +1,5 @@
 """
-
 Authors: Nishant Kumar.
-
 Copyright:
 Copyright (c) 2020 Microsoft Research
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,7 +17,6 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
 """
 
 import Util
@@ -113,12 +110,16 @@ class EzPC(CodegenBase):
             "input({0}, {1}, ".format(inputByPartyStr, ir.expr.idf), indent=True
         )
         # assert(ir.dataType in ["DT_INT32"]) ####TODO: fix this
-        if Util.Config.wordLength == 32:
+        # print(f"EzPC.py : {ir.dataType}")
+        if ir.dataType == "float32":
+            self.out.printf("float_")
+        elif Util.Config.wordLength == 32:
             self.out.printf("int32_")
         elif Util.Config.wordLength == 64:
             self.out.printf("int64_")
         else:
             assert False
+
         if ir.isSecret:
             self.out.printf("al")
         else:
@@ -139,6 +140,15 @@ class EzPC(CodegenBase):
 
     def printDecl(self, ir):
         typ_str = IR.DataType.getIntStrForBitlen(ir.bitlen)
+        if Type.isTensor(ir.typeExpr):
+            typ_str = (
+                IR.DataType.floatStr
+                if ir.typeExpr.dataType == "float32"
+                else IR.DataType.getIntStrForBitlen(ir.bitlen)
+            )
+            # print(f"EzPC.py : printDecl : ir = {ir.typeExpr.dataType}, typ_str = {typ_str}")
+        # print(f"EzPC.py : printDecl : typ_str = {typ_str}")
+        # print(f"EzPC.py : printDecl : {ir.varIdf}, {ir.typeExpr}")
         variableLabel = "pl" if not (ir.isSecret) else "al"
 
         if Type.isInt(ir.typeExpr):

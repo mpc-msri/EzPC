@@ -1,7 +1,5 @@
 """
-
 Authors: Nishant Kumar.
-
 Copyright:
 Copyright (c) 2020 Microsoft Research
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,7 +17,6 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
 """
 
 from enum import Enum, auto
@@ -39,6 +36,7 @@ OperatorsSymbolDict = {
     "RELU": "relu",
     "RSQRT": "rsqrt",
     "Shape": "shape",
+    "SOFTMAX": "softmax",
     "SIGMOID": "sigmoid",
     "SQRT": "sqrt",
     "SUB": "-",
@@ -60,6 +58,7 @@ class Operators(Enum):
     RELU = auto()
     TANH = auto()
     SIGMOID = auto()
+    SOFTMAX = auto()
     SQRT = auto()
     RSQRT = auto()
     Equal = auto()
@@ -81,11 +80,11 @@ class Operators(Enum):
 
     def findConvTransposePadding(i, i_prime, f, p_total, stride):
         # The parameters have the following semantics:
-        # 	i = conv input img size
-        # 	i_prime = convTranspose input img Size
-        # 	f = filter size
-        # 	p_total = conv input padding total
-        # 	stride = conv input stride
+        #   i = conv input img size
+        #   i_prime = convTranspose input img Size
+        #   f = filter size
+        #   p_total = conv input padding total
+        #   stride = conv input stride
         p_total_tr = 2 * f - p_total - 2 + ((i + p_total - f) % stride)
         stride_tr = 1
         i_prime_tilde = i_prime + (i_prime - 1) * (stride - 1)
@@ -168,12 +167,15 @@ class Float(ASTNode):
         self.isSecret = isSecret
 
 
+#! Trying to add data types to identifiers
 class ID(ASTNode):
-    def __init__(self, name: str):
+    def __init__(self, name: str, dataType=None):
+        # print(f"\tAST.py : ID : name = {name}, dataType = {dataType}")
         if assertInputTypes:
             assert isinstance(name, str)
         super().__init__()
         self.name = name
+        self.dataType = dataType
 
 
 # shape : list of int, valueList : list of int/float AST Nodes
@@ -244,7 +246,7 @@ class Reshape(ASTNode):
 
 # expr : ASTNode
 # options : Other options required by maxpool
-# 			Order: [FH, FW, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideH, strideW]
+#           Order: [FH, FW, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideH, strideW]
 class Pool(ASTNode):
     class PoolType:
         MaxPool = "MaxPool"
@@ -317,7 +319,7 @@ class BOp(ASTNode):
                         assert PaddingKeysDict.strideD in options
             if op == Operators.CONVTRANSPOSE:
                 # In addition if this op is convTranspose, then
-                # 	the output size should also be specified
+                #   the output size should also be specified
                 assert PaddingKeysDict.outputImgH in options
                 assert PaddingKeysDict.outputImgW in options
                 if (PaddingKeysDict.ConvDim in options) and (
@@ -357,9 +359,9 @@ class Let(ASTNode):
 # outputShape : list of int, funcName : str, argsList : list of ASTNodes
 # isSecret : whether the output of this node is public or secret
 # outputDiffInpDims = 0 => output only different input dims
-# 					= 1 => always output input dims
-# 					= 2 => never output input dims
-# 					: NOTE this doesn't apply for function names
+#                   = 1 => always output input dims
+#                   = 2 => never output input dims
+#                   : NOTE this doesn't apply for function names
 class UninterpFuncCall(ASTNode):
     def __init__(
         self,
@@ -428,9 +430,9 @@ class Reduce(ASTNode):
 
 # shape : list of int, dataType : ID
 # NOTE: Though datatype is being passed to this function, the output code eventually only has
-# 		int in the apt bitlen for which the whole compilation is done
+#       int in the apt bitlen for which the whole compilation is done
 # Also, take note of the last parameter - "inputByParty". This can be used to set the party which
-# 	which will do the input for this variable. Defaults to SERVER.
+#   which will do the input for this variable. Defaults to SERVER.
 class Input(ASTNode):
     def __init__(
         self, shape: list, dataType: str, isSecret=True, inputByParty=Party.SERVER
@@ -444,6 +446,7 @@ class Input(ASTNode):
                 inputByParty == Party.CLIENT or inputByParty == Party.SERVER
             )  # Right now EzPC supports input by two parties.
         super().__init__()
+        # print(f"AST.py : Input : dataType = {dataType}")
         self.shape = shape
         self.dataType = dataType
         self.isSecret = isSecret
@@ -461,12 +464,13 @@ class Output(ASTNode):
 
 # Since some optimizations are possible around batchnorm, keep this as an interpreted node
 class FusedBatchNorm(ASTNode):
-    def __init__(self, expr: ID, multExpr: ID, addExpr: ID):
+    def __init__(self, shape: list, expr: ID, multExpr: ID, addExpr: ID):
         if assertInputTypes:
             assert isinstance(expr, ID)
             assert isinstance(multExpr, ID)
             assert isinstance(addExpr, ID)
         super().__init__()
+        self.shape = shape
         self.expr = expr
         self.multExpr = multExpr
         self.addExpr = addExpr
