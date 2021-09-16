@@ -1,7 +1,5 @@
 """
-
 Authors: Pratik Bhatu.
-
 Copyright:
 Copyright (c) 2021 Microsoft Research
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,7 +17,6 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
 """
 import argparse
 from argparse import RawTextHelpFormatter
@@ -55,21 +52,17 @@ Choose client if you are the data owner.
 Config file should be a json in the following format:
 {
   //--------------------------- Mandatory options ---------------------------
-
   "model_name":"model.onnx",  // ONNX file to compile.
   "output_tensors":[
     "output1",
     "output2"
   ],
   "target":"SCI",  // Compilation target. ABY/CPP/CPPRING/PORTHOS/SCI
-
-
   
   //--------------------------- Optional options ---------------------------
   "scale":10,             // Scaling factor to compile for. DEFAULT=12.
   "bitlength":64,         // Bit length to compile for. DEFAULT=64.
   "save_weights" : true,  // Save model scaled weights in fixed point. DEFAULT=true.
-
   "input_tensors":{               // Name and shape of the input tensors
     "actual_input_1":"224,244,3", // for the model. Not required if the
     "input2":"2,245,234,3"        // placeholder nodes have shape info in the .pb file.
@@ -78,10 +71,8 @@ Config file should be a json in the following format:
                       // CPPRING/SCI backend. For 
                       // SCI + backend=OT => Power of 2 
                       // SCI + backend=HE => Prime value."
-
   "backend" : "OT",   // Backend to be used - OT/HE (default OT). 
                       // Only applicable for SCI backend
-
   "disable_all_hlil_opts" : false,      // Disable all optimizations in HLIL. DEFAULT=false
   "disable_relu_maxpool_opts" : false,  // Disable Relu-Maxpool optimization. DEFAULT=false
   "disable_garbage_collection" : false, // Disable Garbage Collection optimization. DEFAULT=false
@@ -121,12 +112,12 @@ def generate_code(params, role, debug=False):
         else params["disable_relu_maxpool_opts"]
     )
     disable_garbage_collection = (
-        False
+        True
         if params["disable_garbage_collection"] is None
         else params["disable_garbage_collection"]
     )
     disable_trunc_opts = (
-        False if params["disable_trunc_opts"] is None else params["disable_trunc_opts"]
+        True if params["disable_trunc_opts"] is None else params["disable_trunc_opts"]
     )
     modulo = params["modulo"]
     backend = "OT" if params["backend"] is None else params["backend"]
@@ -150,8 +141,13 @@ def generate_code(params, role, debug=False):
     if role == "server":
         # Compile to seedot. Generate AST in model directory
         weights_path = compile_onnx.compile(
-            model_path, input_tensor_info, output_tensors, scale, save_weights, role
+            model_path, input_tensor_info, output_tensors, scale, save_weights, "server"
         )
+        print(
+            "CompileONNXGraph.py (server) : generate_code : ONNX to SeeDot is done. Exiting!"
+        )
+        # sys.exit(1)
+
         # Zip the pruned model, sizeInfo to send to client
         file_list = [pruned_model_path]
         if "config_name" in params:
@@ -167,7 +163,7 @@ def generate_code(params, role, debug=False):
             output_tensors,
             scale,
             save_weights,
-            role,
+            "client",
         )
 
     # Compile to ezpc
@@ -197,29 +193,18 @@ def generate_code(params, role, debug=False):
     else:
         library = target.lower()
 
-    lib_bitlength = 64 if bitlength > 32 else 32
     library_dir = os.path.join(athos_dir, "TFEzPCLibrary")
-    common = os.path.join(library_dir, "Library{}_common.ezpc".format(lib_bitlength))
-    if library == "cpp":
-        pre = os.path.join(
-            library_dir, "Library{}_{}_pre.ezpc".format(lib_bitlength, library)
-        )
-        post = os.path.join(
-            library_dir, "Library{}_{}_post.ezpc".format(lib_bitlength, library)
-        )
-    else:
-        pre = os.path.join(
-            library_dir, "Library{}_{}.ezpc".format(lib_bitlength, library)
-        )
-        post = ""
     temp = os.path.join(model_abs_dir, "temp.ezpc")
+    pre = os.path.join(library_dir, "Library32_Float.ezpc")
     os.system(
-        'cat "{pre}" "{common}" "{post}" "{ezpc}"> "{temp}"'.format(
-            pre=pre, common=common, post=post, ezpc=ezpc_abs_path, temp=temp
-        )
+        'cat "{pre}" "{ezpc}"> "{temp}"'.format(pre=pre, ezpc=ezpc_abs_path, temp=temp)
     )
-    os.system('mv "{temp}" "{ezpc}"'.format(temp=temp, ezpc=ezpc_abs_path))
 
+    os.system('mv "{temp}" "{ezpc}"'.format(temp=temp, ezpc=ezpc_abs_path))
+    print("CompileONNXGraph.py : generate_code : SeeDot to EzPC is done. Exiting!")
+    sys.exit(1)
+
+    # EzPC to binary, no need to analyse this.
     ezpc_dir = os.path.join(athos_dir, "../EzPC/EzPC/")
     # Copy generated code to the ezpc directory
     os.system('cp "{ezpc}" "{ezpc_dir}"'.format(ezpc=ezpc_abs_path, ezpc_dir=ezpc_dir))
