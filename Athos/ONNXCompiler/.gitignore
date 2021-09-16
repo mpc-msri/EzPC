@@ -1,5 +1,8 @@
 models/
 debug/
+__pycache__/
+build_dir/
+*.zip
 *.cpp
 *.inp
 *.h
