@@ -1146,8 +1146,11 @@ class ONNXNodesAST:
             AST.ID(reshaped_filter_name, onnx2seedot(value_info[inputsRef[1]][0])),
             options,
         )
+        _debug_node = seedot_output_ast
+        # print(f"ONNXNodesAST.py : conv2d : This conv has \
+        #     expr1 = {_debug_node.expr1.name}, \
+        #     expr2 = {_debug_node.expr2.name}")
         output_name = get_new_var_name(out_var_count)
-        print(f"ONNXNodesAST.py : conv2d : {output_name}")
         innermost_let_ast_node = update_program_with_new_node(
             innermost_let_ast_node,
             seedot_output_ast,

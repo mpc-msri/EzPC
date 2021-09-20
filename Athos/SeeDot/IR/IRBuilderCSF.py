@@ -967,6 +967,12 @@ class IRBuilderCSF(IRBuilderAST):
         if self._debug:
             print(f"{' '*self._indent}|visitBopConv")
             self._indent += 1
+
+        # print(f"This conv has \
+        #     expr1 = {node.expr1.name}, \
+        #     expr2 = {node.expr2.name}, \
+        #     shape = {node.type.shape}")
+
         (prog1, expr_1) = self.visit(node.expr1)
         (prog2, expr_2) = self.visit(node.expr2)
 
@@ -1058,7 +1064,7 @@ class IRBuilderCSF(IRBuilderAST):
         progExtraAfter = IR.Prog([])
         returnProg = IRUtil.prog_merge(prog1, prog2, progExtraBefore, progConv)
         returnProg = IRUtil.prog_merge(
-            IR.Prog([IR.Decl(returnExpr.idf, node.expr1.type)]),
+            IR.Prog([IR.Decl(returnExpr.idf, node.type)]),
             returnProg,
             progExtraAfter,
         )
