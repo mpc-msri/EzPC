@@ -791,7 +791,7 @@ class InferType(ASTVisitor):
         taint = getTaint_taint(taint, addExprType.taint)
 
         # node.type = copy.copy(exprType)
-        node.type = Tensor(node.shape, multExprType.dataType)
+        node.type = Tensor(exprType.shape, multExprType.dataType)
         node.type.taint = taint
 
         # print(f"Type.py : FusedBatchNorm : {multExprType.dataType}, {node.shape}")

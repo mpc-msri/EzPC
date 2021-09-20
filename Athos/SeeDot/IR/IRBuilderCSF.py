@@ -990,7 +990,7 @@ class IRBuilderCSF(IRBuilderAST):
             assert False
 
         returnExpr = self.getTempVar()
-        print(f"IRBuilderCSF.py : BopConv : {returnExpr.idf}")
+        # print(f"IRBuilderCSF.py : BopConv : {returnExpr.idf}")
         comment = IR.Comment(
             expr_1.idf + " # " + expr_2.idf + ", convDim = " + str(convDim)
         )
