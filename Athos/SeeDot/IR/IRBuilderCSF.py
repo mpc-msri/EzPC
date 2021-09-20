@@ -984,6 +984,7 @@ class IRBuilderCSF(IRBuilderAST):
             assert False
 
         returnExpr = self.getTempVar()
+        print(f"IRBuilderCSF.py : BopConv : {returnExpr.idf}")
         comment = IR.Comment(
             expr_1.idf + " # " + expr_2.idf + ", convDim = " + str(convDim)
         )
@@ -1696,11 +1697,6 @@ class IRBuilderCSF(IRBuilderAST):
         funcArgsList[expr3] = "addExpr"
 
         progExtraBefore = IR.Prog([])
-        multExprScaleDownSf = self.scaleFac
-        addExprScaleUpSf = 0
-
-        funcArgsList[IR.Int(multExprScaleDownSf, 32)] = "multExprScaleDownSf"
-        funcArgsList[IR.Int(addExprScaleUpSf, 32)] = "addExprScaleUpSf"
         funcArgsList[returnExpr] = "returnExpr"
 
         funcCallIR = IR.FuncCall(

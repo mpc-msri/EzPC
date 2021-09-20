@@ -1147,6 +1147,7 @@ class ONNXNodesAST:
             options,
         )
         output_name = get_new_var_name(out_var_count)
+        print(f"ONNXNodesAST.py : conv2d : {output_name}")
         innermost_let_ast_node = update_program_with_new_node(
             innermost_let_ast_node,
             seedot_output_ast,
