@@ -473,9 +473,7 @@ class IRBuilderCSF(IRBuilderAST):
         funcCall = IR.FuncCall(node.poolType, funcCallArgsDict)
         prog_pool = IR.Prog([comment, funcCall])
         prog_2 = IRUtil.prog_merge(prog_1, prog_pool)
-        prog_2 = IRUtil.prog_merge(
-            IR.Prog([IR.Decl(expr_2.idf, node.expr.type)]), prog_2
-        )
+        prog_2 = IRUtil.prog_merge(IR.Prog([IR.Decl(expr_2.idf, node.type)]), prog_2)
 
         if self._debug:
             self._indent -= 1
