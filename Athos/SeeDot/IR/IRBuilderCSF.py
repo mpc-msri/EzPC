@@ -526,7 +526,7 @@ class IRBuilderCSF(IRBuilderAST):
 
     def visitBOp(self, node: AST.BOp, args=None):
         if self._debug:
-            print(f"{' '*self._indent}|visitBOp")
+            print(f"{' '*self._indent}|visitBOp --> {node.op}")
             self._indent += 1
         op = node.op
 
@@ -534,6 +534,10 @@ class IRBuilderCSF(IRBuilderAST):
             self._indent -= 1
         if op in [AST.Operators.ADD, AST.Operators.SUB, AST.Operators.Equal]:
             return self.visitBopAddOrSubLike(node)
+        elif op == AST.Operators.GEMMADD:
+            return self.visitGemmAdd(node)
+        elif op == AST.Operators.CONVADD:
+            return self.visitConvAdd(node)
         elif op in [AST.Operators.ElemWiseMul, AST.Operators.ElemWiseDiv]:
             return self.visitBopElemWiseOp(node)
         elif op == AST.Operators.MUL:
@@ -544,6 +548,74 @@ class IRBuilderCSF(IRBuilderAST):
             return self.visitBopConvTranspose(node)
         else:
             assert False
+
+    def visitConvAdd(self, node: AST.BOp, args=None):
+        if self._debug:
+            print(f"{' '*self._indent}|visitConvAdd")
+            self._indent += 1
+
+        (prog_1, expr_1) = self.visit(node.expr1)
+        (prog_2, expr_2) = self.visit(node.expr2)
+
+        comment = IR.Comment(str(node.metadata))
+        op_ir = IR.Op.Op["+"]
+        cmd0 = IR.Comment(expr_1.idf + " " + op_ir.name + " " + expr_2.idf)
+
+        out_arr = self.getTempVar()
+        node_type = node.type
+        out_shape = node_type.shape
+        decl_out_arr = IR.Decl(
+            out_arr.idf, node_type, node_type.bitlen, node_type.isSecret
+        )
+
+        argsDict = OrderedDict()
+        argsDict[IR.Int(out_shape[0], 32)] = "dim_rows"
+        argsDict[IR.Int(out_shape[1], 32)] = "dim_cols"
+        argsDict[IR.Int(out_shape[2], 32)] = "dim_cols"
+        argsDict[IR.Int(out_shape[3], 32)] = "dim_cols"
+        argsDict[expr_1] = "convadd_left"
+        argsDict[expr_2] = "convadd_right"
+        argsDict[out_arr] = "convadd_sum"
+        funcCall = IR.FuncCall("ConvAdd", argsDict)
+
+        out_prog = IR.Prog([funcCall])
+        out_prog = IRUtil.prog_merge(IR.Prog([comment, cmd0, decl_out_arr]), out_prog)
+        out_prog = IRUtil.prog_merge(prog_1, prog_2, out_prog)
+
+        return (out_prog, out_arr)
+
+    def visitGemmAdd(self, node: AST.BOp, args=None):
+        if self._debug:
+            print(f"{' '*self._indent}|visitGemAdd")
+            self._indent += 1
+
+        (prog_1, expr_1) = self.visit(node.expr1)
+        (prog_2, expr_2) = self.visit(node.expr2)
+
+        comment = IR.Comment(str(node.metadata))
+        op_ir = IR.Op.Op["+"]
+        cmd0 = IR.Comment(expr_1.idf + " " + op_ir.name + " " + expr_2.idf)
+
+        out_arr = self.getTempVar()
+        node_type = node.type
+        out_shape = node_type.shape
+        decl_out_arr = IR.Decl(
+            out_arr.idf, node_type, node_type.bitlen, node_type.isSecret
+        )
+
+        argsDict = OrderedDict()
+        argsDict[IR.Int(out_shape[0], 32)] = "dim_rows"
+        argsDict[IR.Int(out_shape[1], 32)] = "dim_cols"
+        argsDict[expr_1] = "gemadd_left"
+        argsDict[expr_2] = "gemadd_right"
+        argsDict[out_arr] = "gemadd_sum"
+        funcCall = IR.FuncCall("GemmAdd", argsDict)
+
+        out_prog = IR.Prog([funcCall])
+        out_prog = IRUtil.prog_merge(IR.Prog([comment, cmd0, decl_out_arr]), out_prog)
+        out_prog = IRUtil.prog_merge(prog_1, prog_2, out_prog)
+
+        return (out_prog, out_arr)
 
     def visitBopAddOrSubLike(self, node: AST.BOp, args=None):
         if self._debug:
@@ -589,6 +661,7 @@ class IRBuilderCSF(IRBuilderAST):
             expected_output_shape, _, _ = Util.getBroadcastShapes(
                 inp1_shape, inp2_shape
             )
+            # print(f"IRBuilderCSF.py : {inp1_shape}, {inp2_shape}, {expected_output_shape}")
             assert outputShape == expected_output_shape
             out_prog = IRUtil.generateBroadcastLoopBOp(
                 expr_1, inp1_shape, expr_2, inp2_shape, out_arr, op_ir

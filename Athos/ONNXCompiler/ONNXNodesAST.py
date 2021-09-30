@@ -723,7 +723,7 @@ class ONNXNodesAST:
         # W*x + b
         seedot_output_ast = AST.BOp(
             AST.BOp(input1AST, getOperatorsIdx("*"), input2AST),
-            getOperatorsIdx("+"),
+            getOperatorsIdx("g+"),
             AST.ID(
                 node_name_to_out_var_dict[inputsRef[2]],
                 onnx2seedot(value_info[inputsRef[2]][0]),
@@ -1174,9 +1174,10 @@ class ONNXNodesAST:
             )
             out_var_count += 1
 
+            # print("ONNXNodesAST.py : conv2d : Most definitely here")
             seedot_output_ast = AST.BOp(
                 AST.ID(output_name, onnx2seedot(value_info[inputsRef[0]][0])),
-                getOperatorsIdx("+"),
+                getOperatorsIdx("c+"),
                 AST.ID(reshaped_bias_name, onnx2seedot(value_info[inputsRef[2]][0])),
                 options,
             )

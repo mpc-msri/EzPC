@@ -30,7 +30,7 @@ import AST.AST as AST
 
 # TODO - check if this can be cleaned up
 class Op:
-    Op = Enum("Op", "+ - * / << >> & | ^ ~ ! && || < <= > >= == != max .* ./")
+    Op = Enum("Op", "+ g+ - * / << >> & | ^ ~ ! && || < <= > >= == != max .* ./")
     Op.print = lambda self, writer: writer.printf("%s", self.name)
     Op.op_list = lambda op_str: list(
         map(lambda x: Op.Op[x], op_str.split())

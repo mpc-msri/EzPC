@@ -409,6 +409,8 @@ class InferType(ASTVisitor):
 
         if node.op in [
             AST.Operators.ADD,
+            AST.Operators.GEMMADD,
+            AST.Operators.CONVADD,
             AST.Operators.SUB,
             AST.Operators.Equal,
             AST.Operators.ElemWiseMul,
@@ -432,6 +434,8 @@ class InferType(ASTVisitor):
 
         assert node.op in [
             AST.Operators.ADD,
+            AST.Operators.GEMMADD,
+            AST.Operators.CONVADD,
             AST.Operators.SUB,
             AST.Operators.Equal,
             AST.Operators.ElemWiseMul,
