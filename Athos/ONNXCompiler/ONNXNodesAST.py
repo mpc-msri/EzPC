@@ -482,6 +482,57 @@ class ONNXNodesAST:
 
         return (innermost_let_ast_node, out_var_count)
 
+    def Dropout(
+        node,
+        value_info,
+        node_name_to_out_var_dict,
+        innermost_let_ast_node,
+        out_var_count,
+        mtdAST,
+    ):
+        node = OnnxNode(node)
+        inputsRef = node.inputs
+        assert len(inputsRef) == 1
+
+        reshaped_input_name = get_new_var_name(out_var_count)
+        reshaped_input = get_reshaped_input_ast(
+            inputsRef[0], value_info, node_name_to_out_var_dict
+        )
+        innermost_let_ast_node = update_program_with_new_node(
+            innermost_let_ast_node, reshaped_input, reshaped_input_name, mtdAST
+        )
+        out_var_count += 1
+
+        seedot_output_ast = AST.Func(
+            getOperatorsIdx("softmax"),
+            AST.ID(reshaped_input_name, onnx2seedot(value_info[inputsRef[0]][0])),
+        )
+        output_name = get_new_var_name(out_var_count)
+        innermost_let_ast_node = update_program_with_new_node(
+            innermost_let_ast_node,
+            seedot_output_ast,
+            output_name,
+            mtdAST,
+            onnx2seedot(value_info[inputsRef[0]][0]),
+        )
+        out_var_count += 1
+
+        reshaped_output_name = get_new_var_name(out_var_count)
+        onnx_output_ast = get_reshaped_output_ast(
+            node.outputs[0], value_info, output_name
+        )
+        innermost_let_ast_node = update_program_with_new_node(
+            innermost_let_ast_node,
+            onnx_output_ast,
+            reshaped_output_name,
+            mtdAST,
+            onnx2seedot(value_info[inputsRef[0]][0]),
+        )
+        out_var_count += 1
+        node_name_to_out_var_dict[node.outputs[0]] = reshaped_output_name
+
+        return (innermost_let_ast_node, out_var_count)
+
     def Softmax(
         node,
         value_info,

@@ -67,7 +67,7 @@ class MainDriver:
         )
         parser.add_argument("--astFile", help="Load AST from this file")
         parser.add_argument(
-            "-p", "--printAST", default=False, type=bool, help="Print the AST or not."
+            "-p", "--printAST", default=True, type=bool, help="Print the AST or not."
         )
         parser.add_argument(
             "--consSF", default=15, type=int, help="Use this constant scaling factor."
