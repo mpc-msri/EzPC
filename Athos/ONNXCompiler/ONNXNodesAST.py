@@ -139,21 +139,6 @@ def getOperatorsIdx(token):
     # TODO : remove usage of this
     return AST.Operators.convSymbolToEnumValue(token)
 
-
-def get_seedot_shape_order(old_shape):
-    if len(old_shape) == 4:
-        # Case when spatial dimension is 2
-        # inverse of [1, 3, 4, 2] is [1, 4, 2, 3]
-        return ([old_shape[0], old_shape[2], old_shape[3], old_shape[1]], [1, 4, 2, 3])
-    else:
-        # Casr when spatial dimension is 3
-        # inverse of [1, 3, 4, 5, 2] is [1, 5, 2, 3, 4]
-        return (
-            [old_shape[0], old_shape[2], old_shape[3], old_shape[4], old_shape[1]],
-            [1, 5, 2, 3, 4],
-        )
-
-
 def get_seedot_filter_shape_order(filter_shape):
     if len(filter_shape) == 4:
         # Case when spatial dimension is 2
@@ -176,14 +161,41 @@ def get_seedot_filter_shape_order(filter_shape):
             [5, 4, 1, 2, 3],
         )
 
-
 def get_onnx_order(onnx_shape):
+    if len(onnx_shape) == 1:
+        return [1]
+    if len(onnx_shape) == 2:
+        return [1, 2]
+    if len(onnx_shape) == 3:
+        return [1, 2, 3]
     if len(onnx_shape) == 4:
         # inverse of [1, 4, 2, 3] is [1, 3, 4, 2]
         return [1, 3, 4, 2]
-    else:
+    if len(onnx_shape) == 5:
         # inverse of [1, 5, 2, 3, 4] is [1, 3, 4, 5, 2]
         return [1, 3, 4, 5, 2]
+    assert False, "Unhandle shape"
+    return None
+
+
+def get_seedot_shape_order(old_shape):
+    if len(old_shape) == 1:
+        return (old_shape, [1])
+    if len(old_shape) == 2:
+        return ([old_shape[0], old_shape[1]], [1, 2])
+    if len(old_shape) == 4:
+        # Case when spatial dimension is 2
+        # inverse of [1, 3, 4, 2] is [1, 4, 2, 3]
+        return ([old_shape[0], old_shape[2], old_shape[3], old_shape[1]], [1, 4, 2, 3])
+    if len(old_shape) == 5:
+        # Casr when spatial dimension is 3
+        # inverse of [1, 3, 4, 5, 2] is [1, 5, 2, 3, 4]
+        return (
+            [old_shape[0], old_shape[2], old_shape[3], old_shape[4], old_shape[1]],
+            [1, 5, 2, 3, 4],
+        )
+    assert False, "Unhandled dimension"
+    return (None, None)
 
 
 def get_reshaped_input_ast(input_name, value_info, node_name_to_out_var_dict):
@@ -1116,6 +1128,8 @@ class ONNXNodesAST:
         typeOfPool,
     ):
         node = OnnxNode(node)
+        if "pads" not in node.attrs.keys() :
+            node.attrs["pads"] = [0, 0, 0, 0]
         if DEBUG:
             print(node)
         inputsRef = node.inputs
