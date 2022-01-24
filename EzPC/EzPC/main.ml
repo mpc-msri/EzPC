@@ -92,6 +92,7 @@ let tc_and_codegen (p:program) (file:string) :unit =
            else if Config.get_codegen () = PORTHOS then Codegenporthos.o_program p file
            else if Config.get_codegen () = SCI then Codegensci.o_program p file
            else if Config.get_codegen () = CPPRING then Codegencppring.o_program p file
+           else if Config.get_codegen () = EMP then Codegenemp.o_program p file
            else Codegen.o_program p file;
            Well_typed ()) in
   match x with
@@ -121,6 +122,7 @@ let specs = Arg.align [
                                                    | "PORTHOS" -> PORTHOS |> Config.set_codegen
                                                    | "SCI" -> SCI |> Config.set_codegen
                                                    | "CPPRING" -> CPPRING |> Config.set_codegen
+                                                   | "EMP" -> EMP |> Config.set_codegen
                                                    | _ -> failwith "Invalid codegen mode"),
                  " Codegen mode (ABY or CPP or OBLIVC or PORTHOS or SCI or CPPRING, default ABY)");
                 ("--o_prefix", Arg.String (fun s -> o_prefix := s), " Prefix for output files, default is the input file prefix");
