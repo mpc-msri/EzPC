@@ -35,9 +35,9 @@ open Codegenlib
 
 let o_role (r:role) :comp =
   match r with
-  | Server -> o_str "SERVER"
-  | Client -> o_str "CLIENT"
-  | Both   -> o_str "ALL"
+  | Server -> o_str "BOB"
+  | Client -> o_str "ALICE"
+  | Both   -> o_str "PUBLIC"
 
 let o_var (x:var) :comp = o_str x.name (* o_str (x.name ^ (string_of_int x.index)) *)
 
