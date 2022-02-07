@@ -92,10 +92,15 @@ let o_hd_and_args (head:comp) (args:comp list) :comp =
 
 let o_app (head:comp) (args:comp list) :comp = o_hd_and_args head args
 
+(* (result).reveal<bool>(ALICE) *)
+(* [ycirc->PutOUTGate[result, ALICE]] *)
+
+
 let o_cbfunction_maybe_coerce (coerce:bool) (l:secret_label) (f:comp) (args:comp list) :comp =
   o_app (seq (o_slabel_maybe_coerce coerce l) (seq (o_str "->") f)) args
 
-let o_cbfunction :secret_label -> comp -> comp list -> comp = o_cbfunction_maybe_coerce false
+let o_cbfunction (l:secret_label) (f:comp) (args:comp list) :comp = 
+  o_app (seq (o_str "<")( seq f  (o_str ">"))) args
 
 let o_sunop (l:secret_label) (op:unop) (c:comp) :comp =
   let c_op =
@@ -107,13 +112,13 @@ let o_sunop (l:secret_label) (op:unop) (c:comp) :comp =
   o_cbfunction_maybe_coerce true l c_op [c]
   
 let o_sbinop (l:secret_label) (op:binop) (c1:comp) (c2:comp) :comp =
-  let aux (s:string) (coerce:bool) :comp = o_cbfunction_maybe_coerce coerce l (o_str s) [c1; c2] in
+  let aux (s:string) (coerce:bool) :comp = seq c1 (o_app (o_str s) [c2]) in
   let err (s:string) = failwith ("Operator: " ^ s ^ " should have been desugared") in
   match op with
   | Sum                -> aux "PutADDGate" false
   | Sub                -> aux "PutSUBGate" false
   | Mul                -> aux "PutMULGate" false
-  | Greater_than       -> aux "PutGTGate" false
+  | Greater_than       -> aux ".operator>" false
   | Div                -> err "DIV"
   | Mod                -> err "MOD"
   | Less_than          -> err "LT"
@@ -159,13 +164,30 @@ let o_subsumption (src:label) (tgt:secret_label) (t:typ) (arg:comp) :comp =
        in
        o_cbfunction tgt (o_str fn_name) [arg; o_str circ_arg]
 
+
 let o_basetyp (t:base_type) :comp =
   match t with
   | UInt32 -> o_str "uint32_t"
   | UInt64 -> o_str "uint64_t"
   | Int32  -> o_str "int32_t"
   | Int64  -> o_str "int64_t"
-  | Bool   -> o_str "uint32_t"
+  | Bool   -> o_str "bool"
+
+let o_sec (bt:base_type) = 
+  match bt with
+      | Bool -> o_str "Bit"
+      | _ -> o_str "Integer"
+
+let o_typ (t:typ) :comp =
+  match t.data with
+  | Base (bt, Some (Secret _)) -> o_sec bt
+  | Base (bt, _) -> o_basetyp bt
+  | Array (quals, _, _) -> seq (if quals |> List.mem Immutable then o_str "const " else o_null) (o_str "auto")
+
+let o_ret_typ (t:ret_typ) :comp =
+  match t with
+  | Typ t -> o_typ t
+  | Void _ -> o_str "void"
 
 let rec o_secret_binop (g:gamma) (op:binop) (sl:secret_label) (e1:expr) (e2:expr) :comp =
   (*
@@ -236,7 +258,7 @@ and o_expr (g:gamma) (e:expr) :comp =
 
   | App (f, args) -> o_app (o_str f) (List.map o_expr args)
 
-  | Subsumption (e, l1, Secret l2) -> o_subsumption l1 l2 (typeof_expr g e |> get_opt) (o_expr e)
+  | Subsumption (e, l1, Secret l2) ->  (o_expr e)
 
   | _ -> failwith "o_expr: impossible branch"
 
@@ -251,11 +273,13 @@ and o_codegen_expr (g:gamma) (e:codegen_expr) :comp =
   match e with
   | Base_e e -> o_expr e
               
-  | Input_g (r, sl, s, bt) -> o_cbfunction sl (o_str "PutINGate") [o_str s.name; get_bitlen bt; o_role r]
+  | Input_g (r, sl, s, bt) -> o_app (o_sec bt) [get_bitlen bt;  o_str s.name;  o_role r]
 
   | Dummy_g (sl, bt) -> o_cbfunction sl (o_str "PutDummyINGate") [get_bitlen bt]
     
-  | Output_g (r, sl, e) -> o_cbfunction sl (o_str "PutOUTGate") [o_codegen_expr e; o_role r]
+  | Output_g (r, sl,  Base_e e) -> 
+    let bt, l = get_bt_and_label (typeof_expr g e |> get_opt) in
+    seq (o_codegen_expr (Base_e e)) (seq (o_str ".reveal") (o_cbfunction sl (o_basetyp bt) [o_role r]) )
 
   | Clear_val (e, bt) -> seq (o_codegen_expr e) (seq (o_str "->get_clear_value<") (seq (o_basetyp bt) (o_str ">()")))
 
@@ -266,18 +290,10 @@ and o_codegen_expr (g:gamma) (e:codegen_expr) :comp =
       | Secret sl -> o_sconditional sl c1 c2 c3)
 
   | App_codegen_expr (f, el) -> o_app (o_str f) (List.map o_codegen_expr el)
-                                      
-let o_typ (t:typ) :comp =
-  match t.data with
-  | Base (bt, Some (Secret _)) -> o_str "share*"
-  | Base (bt, _) -> o_basetyp bt
-  | Array (quals, _, _) -> seq (if quals |> List.mem Immutable then o_str "const " else o_null) (o_str "auto")
+    
+  | _ -> o_str "Unbound Case"
 
-let o_ret_typ (t:ret_typ) :comp =
-  match t with
-  | Typ t -> o_typ t
-  | Void _ -> o_str "void"
-             
+
 let o_array_init (g:gamma) (t:typ) :comp =
   let t, l = get_array_bt_and_dimensions t in
   let s = seq (o_str "make_vector<") (seq (o_typ t) (o_str ">")) in
@@ -399,10 +415,7 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
          let sl = get_secret_label l in
          let cin = If_codegen (Public, r_cmp, cin, None) in
          (* add an input gate *)
-         let assgn = Assign_codegen (assgn_left,
-                                     Conditional_codegen (r_cmp,
-                                                          Input_g (r, sl, tmp_var_name, bt),
-                                                          Dummy_g (sl, bt), Public))
+         let assgn = Assign_codegen (assgn_left,Input_g (r, sl, tmp_var_name, bt))
          in
          Seq_codegen (cin, assgn)
        else
@@ -456,10 +469,8 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
      else
       let print_output_msg =
         let msg = Var { name = "\"Value of " ^ (expr_to_string e) ^ ":\""; index = 0 } |> mk_dsyntax "" in
-        App_codegen ("add_print_msg_to_output_queue", [Base_e (Var { name = "out_q"; index = 0 } |> mk_dsyntax "");
-                                                       Base_e msg;
-                                                       Base_e e_role;
-                                                       Base_e (Var { name = "cout"; index = 0 } |> mk_dsyntax "")])
+        Cout ("cout", Base_e msg, bt)
+      (* cout << "ALICE larger ? \t" <<(result).reveal<bool>(ALICE)<<endl; *)
       in
 
        let is_arr = is_array_typ t in
@@ -494,11 +505,12 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
                             s)
              ) el (List.length el - 1, s) |> snd
          in
-         aux (App_codegen ("add_to_output_queue", [Base_e (Var { name = "out_q"; index = 0 } |> mk_dsyntax "");
-                                                   Output_g (r, sl, elmt_of_e);
-                                                   Base_e e_role;
-                                                   Base_e (Var { name = "cout"; index = 0 } |> mk_dsyntax "")]))
+         
+         aux (Cout ("cout", Output_g (r, sl, elmt_of_e),bt))
+         
        in
+       (* (result).reveal<bool>(ALICE) *)
+       (* [ycirc->PutOUTGate[result, ALICE]] *)
 
        o_codegen_stmt g (Seq_codegen (print_output_msg, output_gate_loops))
 
@@ -693,6 +705,8 @@ let emp_main_prelude_string :string =
 "\
 int role,party,port;\n\
 parse_party_and_port(argv, &party, &port);\n\
+NetIO * io = new NetIO(party==ALICE ? nullptr : \"127.0.0.1\", port);\n\
+setup_semi_honest(io, party);\n\
 "
 
 
@@ -718,7 +732,7 @@ let o_one_program ((globals, main):global list * codegen_stmt) (ofname:string) :
   in
   let main_body, g = o_codegen_stmt ([] |> push_local_scope g) main in
   let main_end =
-    o_null
+    o_str "\n\n\nfinalize_semi_honest();\ndelete io; \n\ "
   in
 
   
