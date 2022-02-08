@@ -26,6 +26,7 @@ from enum import Enum, auto
 
 OperatorsSymbolDict = {
     "ADD": "+",
+    "DIV": "/",
     "ClearMemPublic": "clearmempublic",
     "ClearMemSecret": "clearmemsecret",
     "CONV": "#",
@@ -37,6 +38,7 @@ OperatorsSymbolDict = {
     "Mean": "mean",
     "MUL": "*",
     "RELU": "relu",
+    "CLIP": "clip",
     "RSQRT": "rsqrt",
     "Shape": "shape",
     "SIGMOID": "sigmoid",
@@ -53,11 +55,13 @@ class Party(Enum):
 
 class Operators(Enum):
     ADD = auto()
+    DIV = auto()
     SUB = auto()
     MUL = auto()
     CONV = auto()
     CONVTRANSPOSE = auto()
     RELU = auto()
+    CLIP = auto()
     TANH = auto()
     SIGMOID = auto()
     SQRT = auto()

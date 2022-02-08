@@ -353,6 +353,16 @@ class IRBuilderCSF(IRBuilderAST):
                          t1++;
         """
 
+        # print(node.expr)
+
+        t1 = node.expr.type
+        t2 = node.type
+        # [] 0
+        # [] 0
+        # print("Shapes, dim ---")
+        # print(t1.shape, t1.dim)
+        # print(t2.shape, t2.dim)
+
         typ_1 = node.expr.type
         typ_2 = node.type
 
@@ -365,8 +375,12 @@ class IRBuilderCSF(IRBuilderAST):
         cmd1 = [IR.Assn(var, IRUtil.zero) for var in iters_1]
 
         # Incrementing the first index
+        # print(iters_1)
         first_iter = iters_1[0]
         cmd4 = IRUtil.incCmd(first_iter)
+
+        # print("Bye")
+        # sys.exit(0)
 
         # Incrementing other indices using a loop
         cmd5 = [cmd4]
@@ -901,6 +915,14 @@ class IRBuilderCSF(IRBuilderAST):
         (prog_1, expr_1) = self.visit(node.expr1)
         (prog_2, expr_2) = self.visit(node.expr2)
 
+        """
+        A 100
+        B 100
+
+        int64_al[100] A ;
+        int64_al[100] B ;
+        """
+
         typ_1 = node.expr1.type
         typ_2 = node.expr2.type
         typ_3 = node.type
@@ -1326,6 +1348,7 @@ class IRBuilderCSF(IRBuilderAST):
             AST.Operators.Floor,
             AST.Operators.Shape,
             AST.Operators.RELU,
+            AST.Operators.CLIP,
             AST.Operators.TANH,
             AST.Operators.SIGMOID,
             AST.Operators.SQRT,
@@ -1345,6 +1368,8 @@ class IRBuilderCSF(IRBuilderAST):
             funcName = "Shape"
         elif node.op == AST.Operators.RELU:
             funcName = "Relu"
+        elif node.op == AST.Operators.CLIP:
+            funcName = "Clip"
         elif node.op == AST.Operators.TANH:
             funcName = "Tanh"
         elif node.op == AST.Operators.SIGMOID:
@@ -1386,7 +1411,7 @@ class IRBuilderCSF(IRBuilderAST):
 
         progExtraBefore = IR.Prog([])
         if Util.Config.disableTruncOpti:
-            if node.op == AST.Operators.RELU:
+            if node.op in [AST.Operators.RELU, AST.Operators.CLIP]:
                 argsList[IR.Int(Util.Config.consSF, 32)] = "consSF"
                 argsList[IR.Bool(False)] = "doTruncation"
             if node.op in [
@@ -1404,7 +1429,7 @@ class IRBuilderCSF(IRBuilderAST):
                 argsList[IR.Int(self.scaleFac, 32)] = "sB"
         else:
             final_sf = self.scaleFacMapping[expr1.idf]
-            if node.op == AST.Operators.RELU:
+            if node.op in [AST.Operators.RELU, AST.Operators.CLIP]:
                 argsList[IR.Int(final_sf - self.scaleFac, 32)] = "consSF"
                 if final_sf > self.scaleFac:
                     # If it can't tolerate one more mult operation, then scale down here

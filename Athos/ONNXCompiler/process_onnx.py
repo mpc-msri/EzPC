@@ -181,6 +181,7 @@ def generate_seedot_ast(model, value_info, model_dir):
         common.write_debug_info(node_name_to_out_var_dict)
 
     with open(os.path.join(model_dir, "astOutput.pkl"), "wb") as f:
+        # print(program)
         pickle.dump(program, f)
         print("Dumped SeeDot AST")
 
