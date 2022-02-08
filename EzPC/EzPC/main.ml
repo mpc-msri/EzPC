@@ -34,6 +34,7 @@ open Optimizer
 open Partition
 open Codegen
 open Codegenoblivc
+open Codegenemp
 
 let load_file (f:string) :string =
   let ic = open_in f in
