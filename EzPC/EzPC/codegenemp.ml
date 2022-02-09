@@ -63,24 +63,10 @@ let o_pbinop :binop -> comp = function
   | Bitwise_and  -> o_str "&"
   | Bitwise_or   -> o_str "|"
   | Bitwise_xor  -> o_str "^"
-  | And          -> o_str "and"
+  | And          -> o_str "&&"
   | Or           -> o_str "||"
   | Xor          -> o_str "^"
   | R_shift_l    -> o_str ">>"
-
-(*
- * emp doesn't like circ->PutINVGate where circ:Circuit*, so we need to coerce it to BooleanCircuit*
- * Providing a more generic flag
- *)
-let o_slabel_maybe_coerce (coerce:bool) (sl:secret_label) :comp =
-  match sl with
-  | Arithmetic -> o_str "acirc"
-  | Boolean    ->
-    let c = if Config.get_bool_sharing_mode () = Config.Yao then o_str "ycirc"
-            else o_str "bcirc" in
-    if coerce then o_paren (seq (o_str "(BooleanCircuit *) ") c) else c
-                  
-let o_slabel :secret_label -> comp = o_slabel_maybe_coerce false
 
 let o_hd_and_args (head:comp) (args:comp list) :comp =
   match args with
@@ -92,13 +78,6 @@ let o_hd_and_args (head:comp) (args:comp list) :comp =
 
 let o_app (head:comp) (args:comp list) :comp = o_hd_and_args head args
 
-(* (result).reveal<bool>(ALICE) *)
-(* [ycirc->PutOUTGate[result, ALICE]] *)
-
-
-let o_cbfunction_maybe_coerce (coerce:bool) (l:secret_label) (f:comp) (args:comp list) :comp =
-  o_app (seq (o_slabel_maybe_coerce coerce l) (seq (o_str "->") f)) args
-
 let o_cbfunction (l:secret_label) (f:comp) (args:comp list) :comp = 
   o_app (seq (o_str "<")( seq f  (o_str ">"))) args
 
@@ -107,64 +86,54 @@ let o_sunop (l:secret_label) (op:unop) (c:comp) :comp =
     match op with
     | U_minus -> failwith "Codegen: unary minus is not being produced by lexer or parser right now."
     | Bitwise_neg 
-    | Not -> o_str "PutINVGate"
+    | Not -> o_str ".operator!"
   in
-  o_cbfunction_maybe_coerce true l c_op [c]
+  o_app (seq c c_op) []
   
 let o_sbinop (l:secret_label) (op:binop) (c1:comp) (c2:comp) :comp =
-  let aux (s:string) (coerce:bool) :comp = seq c1 (o_app (o_str s) [c2]) in
-  let err (s:string) = failwith ("Operator: " ^ s ^ " should have been desugared") in
+  let aux (s:string)  :comp = seq c1 (o_app (o_str s) [c2]) in
   match op with
-  | Sum                -> aux "PutADDGate" false
-  | Sub                -> aux "PutSUBGate" false
-  | Mul                -> aux "PutMULGate" false
-  | Greater_than       -> aux ".operator>" false
-  | Div                -> err "DIV"
-  | Mod                -> err "MOD"
-  | Less_than          -> err "LT"
-  | Is_equal           -> err "EQ"
-  | Greater_than_equal -> err "GEQ"
-  | Less_than_equal    -> err "LEQ"
-  | R_shift_a          -> o_app (o_str "arithmetic_right_shift") [o_slabel l; c1; c2]
-  | L_shift            -> o_app (o_str "left_shift") [o_slabel l; c1; c2]
-  | Bitwise_and        -> aux "PutANDGate" false
-  | Bitwise_or         -> aux "PutORGate" true
-  | Bitwise_xor        -> aux "PutXORGate" false
-  | And                -> aux "PutANDGate" false
-  | Or                 -> aux "PutORGate" true
-  | Xor                -> aux "PutXORGate" false
-  | R_shift_l          -> o_app (o_str "logical_right_shift") [o_slabel l; c1; c2]
+  | Sum                -> aux ".operator+" 
+  | Sub                -> aux ".operator-" 
+  | Mul                -> aux ".operator*" 
+  | Greater_than       -> aux ".operator>" 
+  | Div                -> aux ".operator/"
+  | Mod                -> aux ".operator%"
+  | Less_than          -> aux ".operator<"
+  | Is_equal           -> aux ".operator=="
+  | Greater_than_equal -> aux ".operator>="
+  | Less_than_equal    -> aux ".operator<="
+  | R_shift_a          -> aux ".operator>>"
+  | L_shift            -> aux ".operator<<"
+  | Bitwise_and        -> aux ".operator&" 
+  | Bitwise_or         -> aux ".operator|" 
+  | Bitwise_xor        -> aux ".operator^" 
+  | And                -> aux ".operator&" 
+  | Or                 -> aux ".operator|" 
+  | Xor                -> aux ".operator^" 
+  | R_shift_l          -> aux ".operator>>"
   | Pow                -> failwith ("Codegen cannot handle this secret binop: " ^ binop_to_string op)
                
 let o_pconditional (c1:comp) (c2:comp) (c3:comp) :comp =
   seq c1 (seq (o_str " ? ") (seq c2 (seq (o_str " : ") c3)))
   
-let o_sconditional (l:secret_label) (c_cond:comp) (c_then:comp) (c_else:comp) :comp =
-  o_cbfunction l (o_str "PutMUXGate") [c_then; c_else; c_cond]
+(* let o_sconditional (l:secret_label) (c_cond:comp) (c_then:comp) (c_else:comp) :comp =
+  o_cbfunction l (o_str "ifThenElse") [c_then; c_else; c_cond] *)
 
-let o_subsumption (src:label) (tgt:secret_label) (t:typ) (arg:comp) :comp =
-  match src with
-    | Public -> 
-       let fn =
-         o_str (
-             match t.data with
-             | Base (UInt32, _) | Base (Int32, _) -> "put_cons32_gate"
-             | Base (UInt64, _) | Base (Int64, _) -> "put_cons64_gate"
-             | Base (Bool, _) -> "put_cons1_gate"
-             | _ -> failwith ("codegen:Subsumption node with an unexpected typ: " ^ (typ_to_string t)))
-       in
-       o_app fn [o_slabel tgt; arg]
-    | Secret Arithmetic ->
-       let fn_name = if Config.get_bool_sharing_mode () = Config.Yao then "PutA2YGate" else "PutA2BGate" in
-       o_cbfunction tgt (o_str fn_name) [arg]
-    | Secret Boolean ->
-       let fn_name, circ_arg =
-         if Config.get_bool_sharing_mode () = Config.Yao then "PutY2AGate", "bcirc"
-         else "PutB2AGate", "ycirc"
-       in
-       o_cbfunction tgt (o_str fn_name) [arg; o_str circ_arg]
-
-
+let o_subsumption (src:label) (tgt:secret_label) (t:typ) (e:comp) :comp =
+  let bt,l = get_bt_and_label t in
+  let get_bitlen bt =
+    match bt with
+    | Bool -> o_uint32 (Uint32.of_int 1)
+    | _ -> o_str "bitlen"
+  in
+  
+  match t.data with
+  | Base (UInt32,_) | Base (Int32,_)  
+  | Base (UInt64,_) | Base (Int64,_) -> o_app (o_str "Integer") [get_bitlen bt ; e ; o_str"PUBLIC"] 
+  | Base (Bool,_) -> o_app (o_str "Bit") [e;o_str "PUBLIC"]
+  | _ -> failwith "unknown type of subsumption node"
+  
 let o_basetyp (t:base_type) :comp =
   match t with
   | UInt32 -> o_str "uint32_t"
@@ -189,40 +158,7 @@ let o_ret_typ (t:ret_typ) :comp =
   | Typ t -> o_typ t
   | Void _ -> o_str "void"
 
-let rec o_secret_binop (g:gamma) (op:binop) (sl:secret_label) (e1:expr) (e2:expr) :comp =
-  (*
-  * For some ops like shifts, type of whole expression is defined by 1st arg and not join of 1st and 2nd arg.
-  *)
-  let t1 = e1 |> typeof_expr g |> get_opt in
-  let is_signed =
-    match t1.data with
-    | Base (Int32, _) | Base (Int64, _) -> true
-    | _ -> false
-  in
-  let fn_name (s:string) =
-    ((if is_signed then "signed" else "unsigned") ^ s ^
-       (if sl = Arithmetic then "al" else "bl")) |> some
-  in
-  let app_opt =
-    let fn_name_opt =
-      match op with
-      | Div -> fn_name "div"
-      | Mod -> fn_name "mod"
-      | Is_equal -> fn_name "equals"
-      | Less_than -> fn_name "lt"
-      | Greater_than_equal -> fn_name "geq"
-      | Less_than_equal -> fn_name "leq"
-      | Greater_than when is_signed -> fn_name "gt"
-      | R_shift_a when is_signed -> fn_name "arshift"
-      | _ -> None
-    in
-    map_opt fn_name_opt (fun s -> App (s, [e1; e2]))
-  in
-  match app_opt with
-  | Some app -> o_expr g (app |> mk_dsyntax "")
-  | None -> o_sbinop sl op (o_expr g e1) (o_expr g e2)
-
-and o_expr (g:gamma) (e:expr) :comp =
+let rec o_expr (g:gamma) (e:expr) :comp =
   let o_expr = o_expr g in
   let o_codegen_expr = o_codegen_expr g in
   match e.data with
@@ -250,7 +186,7 @@ and o_expr (g:gamma) (e:expr) :comp =
               | Pow -> o_app (o_str "pow") [o_expr e1; o_expr e2]
               | _ -> seq (o_expr e1) (seq o_space (seq (o_pbinop op) (seq o_space (o_expr e2)))))
 
-  | Binop (op, e1, e2, Some (Secret s)) -> o_secret_binop g op s e1 e2
+  | Binop (op, e1, e2, Some (Secret s)) -> o_sbinop s op (o_expr e1) (o_expr e2)
 
   | Conditional (e1, e2, e3, lopt) -> o_codegen_expr (Conditional_codegen (Base_e e1, Base_e e2, Base_e e3, (get_opt lopt)))
 
@@ -258,7 +194,7 @@ and o_expr (g:gamma) (e:expr) :comp =
 
   | App (f, args) -> o_app (o_str f) (List.map o_expr args)
 
-  | Subsumption (e, l1, Secret l2) ->  (o_expr e)
+  | Subsumption (e, l1, Secret l2) ->  o_subsumption l1 l2 (typeof_expr g e |> get_opt) (o_expr e)
 
   | _ -> failwith "o_expr: impossible branch"
 
@@ -275,7 +211,7 @@ and o_codegen_expr (g:gamma) (e:codegen_expr) :comp =
               
   | Input_g (r, sl, s, bt) -> o_app (o_sec bt) [get_bitlen bt;  o_str s.name;  o_role r]
 
-  | Dummy_g (sl, bt) -> o_cbfunction sl (o_str "PutDummyINGate") [get_bitlen bt]
+  | Dummy_g (sl, bt) -> o_str "0"
     
   | Output_g (r, sl,  Base_e e) -> 
     let bt, l = get_bt_and_label (typeof_expr g e |> get_opt) in
@@ -287,7 +223,7 @@ and o_codegen_expr (g:gamma) (e:codegen_expr) :comp =
      let c1, c2, c3 = o_codegen_expr e1, o_codegen_expr e2, o_codegen_expr e3 in
      (match l with
       | Public -> o_pconditional c1 c2 c3
-      | Secret sl -> o_sconditional sl c1 c2 c3)
+      | Secret sl -> o_str "Couldn't find such support in EMP")
 
   | App_codegen_expr (f, el) -> o_app (o_str f) (List.map o_codegen_expr el)
     
