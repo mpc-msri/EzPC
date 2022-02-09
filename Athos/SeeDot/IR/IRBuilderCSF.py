@@ -333,6 +333,9 @@ class IRBuilderCSF(IRBuilderAST):
 
         return (final_prog, out_arr)
 
+    def visitExpand():
+        assert False
+
     def visitReshape(self, node: AST.Reshape, args=None):
         (prog_1, expr_1) = self.visit(node.expr)
 
@@ -1401,6 +1404,12 @@ class IRBuilderCSF(IRBuilderAST):
         if Type.isTensor(inputType):
             for ii, curDim in enumerate(inputType.shape):
                 argsList[IR.Int(curDim, 32)] = "inShape_" + str(ii)
+
+        if node.op == AST.Operators.CLIP:
+            print(f"IRBuilderCSF.py --> {node.alpha, node.beta}")
+            argsList[IR.Int(node.alpha, 32)] = "alpha"
+            argsList[IR.Int(node.beta, 32)] = "beta"
+
         argsList[expr1] = "inArr"
 
         if Type.isTensor(node.type):

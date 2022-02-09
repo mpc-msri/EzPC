@@ -336,13 +336,18 @@ class BOp(ASTNode):
 
 
 class Func(ASTNode):
-    def __init__(self, op: Operators, expr: ASTNode):
+    def __init__(self, op: Operators, expr: ASTNode, **kwargs):
         if assertInputTypes:
             assert isinstance(op, Operators)
             assert isinstance(expr, ASTNode)
         super().__init__()
         self.op = op
         self.expr = expr
+        for k, v in kwargs.items():
+            if k == "alpha":
+                self.alpha = v
+            elif k == "beta":
+                self.beta = v
 
 
 class Let(ASTNode):

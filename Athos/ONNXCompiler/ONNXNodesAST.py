@@ -415,8 +415,60 @@ class ONNXNodesAST:
         )
         out_var_count += 1
 
+        print(f"ONNXNodesAST.py --> Getting parameters of clip {node.attrs}")
         seedot_output_ast = AST.Func(
-            getOperatorsIdx("clip"), AST.ID(reshaped_input_name)
+            getOperatorsIdx("clip"),
+            AST.ID(reshaped_input_name),
+            alpha=node.attrs["min"],
+            beta=node.attrs["max"],
+        )
+        output_name = get_new_var_name(out_var_count)
+        innermost_let_ast_node = update_program_with_new_node(
+            innermost_let_ast_node, seedot_output_ast, output_name, mtdAST
+        )
+        out_var_count += 1
+
+        reshaped_output_name = get_new_var_name(out_var_count)
+        onnx_output_ast = get_reshaped_output_ast(
+            node.outputs[0], value_info, output_name
+        )
+        innermost_let_ast_node = update_program_with_new_node(
+            innermost_let_ast_node, onnx_output_ast, reshaped_output_name, mtdAST
+        )
+        out_var_count += 1
+        node_name_to_out_var_dict[node.outputs[0]] = reshaped_output_name
+
+        if DEBUG:
+            print(node.outputs[0])
+            print(onnx_input_shape, "->", seedot_input_shape, "->", onnx_output_shape)
+
+        return (innermost_let_ast_node, out_var_count)
+        # return AST.Func(getOperatorsIdx('relu'), AST.ID(node_name_to_out_var_dict[inputsRef[0]]))
+
+    def HardSigmoid(
+        node,
+        value_info,
+        node_name_to_out_var_dict,
+        innermost_let_ast_node,
+        out_var_count,
+        mtdAST,
+    ):
+        node = OnnxNode(node)
+
+        inputsRef = node.inputs
+        assert len(inputsRef) == 1
+
+        reshaped_input_name = get_new_var_name(out_var_count)
+        reshaped_input = get_reshaped_input_ast(
+            inputsRef[0], value_info, node_name_to_out_var_dict
+        )
+        innermost_let_ast_node = update_program_with_new_node(
+            innermost_let_ast_node, reshaped_input, reshaped_input_name, mtdAST
+        )
+        out_var_count += 1
+
+        seedot_output_ast = AST.Func(
+            getOperatorsIdx("hardsigmoid"), AST.ID(reshaped_input_name)
         )
         output_name = get_new_var_name(out_var_count)
         innermost_let_ast_node = update_program_with_new_node(

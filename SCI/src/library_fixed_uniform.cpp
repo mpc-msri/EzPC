@@ -735,6 +735,10 @@ void ArgMax(int32_t s1, int32_t s2, intType *inArr, intType *outArr) {
 #endif
 }
 
+void Clip(int32_t size, int32_t alpha, int32_t beta, intType *inArr, intType *outArr, int sf, bool doTruncation) {
+  assert(false) ;
+}
+
 void Relu(int32_t size, intType *inArr, intType *outArr, int sf,
           bool doTruncation) {
 #ifdef LOG_LAYERWISE
