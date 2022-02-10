@@ -117,22 +117,23 @@ let o_sbinop (l:secret_label) (op:binop) (c1:comp) (c2:comp) :comp =
 let o_pconditional (c1:comp) (c2:comp) (c3:comp) :comp =
   seq c1 (seq (o_str " ? ") (seq c2 (seq (o_str " : ") c3)))
   
-(* let o_sconditional (l:secret_label) (c_cond:comp) (c_then:comp) (c_else:comp) :comp =
-  o_cbfunction l (o_str "ifThenElse") [c_then; c_else; c_cond] *)
+(* a?b:c
+(a&b)^(~a&c) *)
+
+let o_sconditional (l:secret_label) (c_cond:comp) (c_then:comp) (c_else:comp) :comp =
+  o_app (o_str " If") [c_cond;c_then;c_else]
 
 let o_subsumption (src:label) (tgt:secret_label) (t:typ) (e:comp) :comp =
-  let bt,l = get_bt_and_label t in
-  let get_bitlen bt =
-    match bt with
-    | Bool -> o_uint32 (Uint32.of_int 1)
-    | _ -> o_str "bitlen"
-  in
-  
-  match t.data with
-  | Base (UInt32,_) | Base (Int32,_)  
-  | Base (UInt64,_) | Base (Int64,_) -> o_app (o_str "Integer") [get_bitlen bt ; e ; o_str"PUBLIC"] 
-  | Base (Bool,_) -> o_app (o_str "Bit") [e;o_str "PUBLIC"]
-  | _ -> failwith "unknown type of subsumption node"
+  match src with
+    | Public ->
+        (* let bt,l = get_bt_and_label t in *)
+        (match t.data with
+        | Base (UInt32,_) | Base (Int32,_)  
+        | Base (UInt64,_) | Base (Int64,_) -> o_app (o_str "Integer") [o_str "bitlen" ; e ; o_str"PUBLIC"] 
+        | Base (Bool,_) -> o_app (o_str "Bit") [e;o_str "PUBLIC"]
+        | _ -> failwith "unknown type of subsumption node")
+    | Secret Arithmetic 
+    | Secret Boolean -> e
   
 let o_basetyp (t:base_type) :comp =
   match t with
@@ -209,7 +210,10 @@ and o_codegen_expr (g:gamma) (e:codegen_expr) :comp =
   match e with
   | Base_e e -> o_expr e
               
-  | Input_g (r, sl, s, bt) -> o_app (o_sec bt) [get_bitlen bt;  o_str s.name;  o_role r]
+  | Input_g (r, sl, s, bt) -> 
+      (match bt with 
+      | Bool -> o_app (o_sec bt) [ o_str s.name;  o_role r]
+      | _ ->  o_app (o_sec bt) [get_bitlen bt;  o_str s.name;  o_role r])
 
   | Dummy_g (sl, bt) -> o_str "0"
     
@@ -223,17 +227,22 @@ and o_codegen_expr (g:gamma) (e:codegen_expr) :comp =
      let c1, c2, c3 = o_codegen_expr e1, o_codegen_expr e2, o_codegen_expr e3 in
      (match l with
       | Public -> o_pconditional c1 c2 c3
-      | Secret sl -> o_str "Couldn't find such support in EMP")
+      | Secret sl -> o_sconditional sl c1 c2 c3)
 
   | App_codegen_expr (f, el) -> o_app (o_str f) (List.map o_codegen_expr el)
     
   | _ -> o_str "Unbound Case"
 
+let rec put_arr_dim (args:comp list) : comp =
+  match args with 
+  | hd :: tl -> seq (seq (o_str "[") (seq ( hd) (o_str "]"))) (put_arr_dim tl)
+  | [] -> o_str ""
 
 let o_array_init (g:gamma) (t:typ) :comp =
   let t, l = get_array_bt_and_dimensions t in
-  let s = seq (o_str "make_vector<") (seq (o_typ t) (o_str ">")) in
-  o_app s (List.map (o_expr g) l)
+  let args =(List.map (o_expr g) l) in
+  let initialize = seq (o_str "new ") (seq (o_typ t) (put_arr_dim args )) in
+initialize
 
 let o_for (index:comp) (lower:comp) (upper:comp) (body:comp) :comp =
   let init = seq (o_str "for (uint32_t ") (seq index (seq (o_str " = ") lower)) in
@@ -445,9 +454,6 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
          aux (Cout ("cout", Output_g (r, sl, elmt_of_e),bt))
          
        in
-       (* (result).reveal<bool>(ALICE) *)
-       (* [ycirc->PutOUTGate[result, ALICE]] *)
-
        o_codegen_stmt g (Seq_codegen (print_output_msg, output_gate_loops))
 
   | Skip s -> (if s = "" then o_null else seq o_newline (seq (o_comment s) o_newline)), g
