@@ -329,7 +329,7 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
 
      (* conditional expression for role == r *)
      let r_cmp =
-       let role_var = { name = "role"; index = 0 } in
+       let role_var = { name = "party"; index = 0 } in
        Base_e (Binop (Is_equal, Var role_var |> mk_dsyntax "", Role r |> mk_dsyntax "", Some Public) |> mk_dsyntax "")
      in
      
@@ -523,7 +523,7 @@ let emp_prelude_string (bitlen:int) :string =
 using namespace emp;\n\
 using namespace std;\n\
 int bitlen = " ^ string_of_int bitlen ^ ";\n\
-int role,party,port;\n\
+int party,port;\n\
 "
 
 let emp_main_prelude_string :string =
