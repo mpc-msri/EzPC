@@ -117,16 +117,12 @@ let o_sbinop (l:secret_label) (op:binop) (c1:comp) (c2:comp) :comp =
 let o_pconditional (c1:comp) (c2:comp) (c3:comp) :comp =
   seq c1 (seq (o_str " ? ") (seq c2 (seq (o_str " : ") c3)))
   
-(* a?b:c
-(a&b)^(~a&c) *)
-
 let o_sconditional (l:secret_label) (c_cond:comp) (c_then:comp) (c_else:comp) :comp =
   o_app (o_str " If") [c_cond;c_then;c_else]
 
 let o_subsumption (src:label) (tgt:secret_label) (t:typ) (e:comp) :comp =
   match src with
     | Public ->
-        (* let bt,l = get_bt_and_label t in *)
         (match t.data with
         | Base (UInt32,_) | Base (Int32,_)  
         | Base (UInt64,_) | Base (Int64,_) -> o_app (o_str "Integer") [o_str "bitlen" ; e ; o_str"PUBLIC"] 
@@ -183,7 +179,6 @@ let rec o_expr (g:gamma) (e:expr) :comp =
 
   | Binop (op, e1, e2, Some Public) ->
      o_paren (match op with
-              | R_shift_l -> o_app (o_str "public_lrshift") [o_expr e1; o_expr e2]
               | Pow -> o_app (o_str "pow") [o_expr e1; o_expr e2]
               | _ -> seq (o_expr e1) (seq o_space (seq (o_pbinop op) (seq o_space (o_expr e2)))))
 
@@ -202,26 +197,18 @@ let rec o_expr (g:gamma) (e:expr) :comp =
 and o_codegen_expr (g:gamma) (e:codegen_expr) :comp =
   let o_expr = o_expr g in
   let o_codegen_expr = o_codegen_expr g in
-  let get_bitlen bt = 
-    match bt with
-    | Bool -> o_uint32 (Uint32.of_int 1)
-    | _ -> o_str "bitlen"
-  in
+
   match e with
   | Base_e e -> o_expr e
               
   | Input_g (r, sl, s, bt) -> 
       (match bt with 
       | Bool -> o_app (o_sec bt) [ o_str s.name;  o_role r]
-      | _ ->  o_app (o_sec bt) [get_bitlen bt;  o_str s.name;  o_role r])
+      | _ ->  o_app (o_sec bt) [o_str "bitlen";  o_str s.name;  o_role r])
 
-  | Dummy_g (sl, bt) -> o_str "0"
-    
   | Output_g (r, sl,  Base_e e) -> 
     let bt, l = get_bt_and_label (typeof_expr g e |> get_opt) in
     seq (o_codegen_expr (Base_e e)) (seq (o_str ".reveal") (o_cbfunction sl (o_basetyp bt) [o_role r]) )
-
-  | Clear_val (e, bt) -> seq (o_codegen_expr e) (seq (o_str "->get_clear_value<") (seq (o_basetyp bt) (o_str ">()")))
 
   | Conditional_codegen (e1, e2, e3, l) ->
      let c1, c2, c3 = o_codegen_expr e1, o_codegen_expr e2, o_codegen_expr e3 in
@@ -231,7 +218,7 @@ and o_codegen_expr (g:gamma) (e:codegen_expr) :comp =
 
   | App_codegen_expr (f, el) -> o_app (o_str f) (List.map o_codegen_expr el)
     
-  | _ -> o_str "Unbound Case"
+  | _ -> o_str "Unbound Case (codegen_expr)"
 
 let rec put_arr_dim (args:comp list) : comp =
   match args with 
@@ -242,7 +229,7 @@ let o_array_init (g:gamma) (t:typ) :comp =
   let t, l = get_array_bt_and_dimensions t in
   let args =(List.map (o_expr g) l) in
   let initialize = seq (o_str "new ") (seq (o_typ t) (put_arr_dim args )) in
-initialize
+  initialize
 
 let o_for (index:comp) (lower:comp) (upper:comp) (body:comp) :comp =
   let init = seq (o_str "for (uint32_t ") (seq index (seq (o_str " = ") lower)) in
@@ -260,16 +247,11 @@ let o_ite (c_if:comp) (c_then:comp) (c_else_opt:comp option) :comp =
   else seq c_if_then (seq (o_str " else {") (seq o_newline (seq (get_opt c_else_opt) (seq o_newline (o_str "}")))))
 
 let o_assign (lhs:comp) (rhs:comp) :comp = seq lhs (seq (o_str " = ") rhs)
-
 let o_decl (c_t:comp) (c_varname:comp) (init_opt:comp option) :comp =
   let c = seq c_t (seq o_space c_varname) in
   if is_none init_opt then c
   else seq c (seq (o_str " = ") (get_opt init_opt))
                                          
-let get_fresh_var :(unit -> string) =
-  let r = ref 0 in
-  fun _ -> let s = "__tmp__fresh_var_" ^ (string_of_int !r) in r := !r + 1; s
-
 let o_comment (s:string) :comp = seq (o_str "/* ") (seq (o_str s) (o_str " */"))
 
 (*
@@ -460,92 +442,6 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
            
   | _ -> failwith "codegen_stmt: impossible branch"
 
-and read_or_write_interim (g:gamma) (write:bool) (e_var:expr) (t:typ) (f:string) :comp =
-  let f = if not (Config.get_shares_dir () = "") then (Config.get_shares_dir () ^ "/" ^ f) else f in
-
-  let bt, l = get_bt_and_label t in
-  let is_arr = is_array_typ t in     
-
-  (* bt is the base type and l is the label *)
-  let l = l |> get_opt in
-  (* list of array dimensions, if any *)
-  let el = if is_arr then t |> get_array_bt_and_dimensions |> snd else [] in
-
-  (* expression that we will put in the lhs for each output gate, and read/write eventually *)
-  let elmt_of_e =
-    let aux (e:expr) :codegen_expr =
-      Base_e (el |> List.fold_left (fun (i, e) _ ->
-                        let i_var = { name = "i" ^ (string_of_int i); index = 0 } in
-                        i + 1,
-                        Array_read (e, Var i_var |> mk_dsyntax "") |> mk_dsyntax ""
-                      ) (0, e_var) |> snd)
-    in
-    aux e_var
-  in
-  
-  let fstream_add_name = get_fresh_var () in
-  let fstream_rand_name = get_fresh_var () in
-  let decl_fstream_add =
-    let comment =
-      "File for " ^ (if write then "writing" else "reading") ^ " variable " ^ (e_var |> get_var |> (fun v -> v.name))
-    in
-    Seq_codegen (Base_s (Skip comment |> mk_dsyntax ""), Open_file (write, fstream_add_name, f ^ ".sh"))
-  in
-  let decl_fstream_rand = Open_file (write, fstream_rand_name, f ^ ".rand.sh") in
-  
-  (* now we are going to put nested loops *)
-  let loops =
-    let aux (s:codegen_stmt) :codegen_stmt =
-      List.fold_right (fun e (i, s) ->
-          let i_var = { name = "i" ^ (string_of_int i); index = 0 } in
-          i - 1,
-          For_codegen (Base_e (Var i_var |> mk_dsyntax ""),
-                       Base_e (Const (UInt32C (Uint32.of_int 0)) |> mk_dsyntax ""),
-                       Base_e e,
-                       s)
-        ) el (List.length el - 1, s) |> snd
-    in
-    let s_body =
-      if l = Public then
-        if write then Cout (fstream_add_name, elmt_of_e, bt)
-        else Cin (fstream_add_name, elmt_of_e, bt)
-      else
-        let sl = get_secret_label l in
-        let circ_var =
-          (if sl = Arithmetic then Var {name = "acirc"; index = 0 }
-           else Var {name = "ycirc"; index = 0 })
-          |> mk_dsyntax ""
-        in
-        if write then
-          App_codegen ("write_share", [elmt_of_e;
-                                       Base_e circ_var;
-                                       Base_e (Var {name = "bitlen"; index = 0 } |> mk_dsyntax "");
-                                       Base_e (Var {name = "role"; index = 0 } |> mk_dsyntax "");
-                                       Base_e (Var {name = fstream_add_name; index = 0 } |> mk_dsyntax "");
-                                       Base_e (Var {name = fstream_rand_name; index = 0 } |> mk_dsyntax "");
-                                       Base_e (Var { name = "out_q"; index = 0 } |> mk_dsyntax "")])
-        else
-          let fname =
-            if Config.get_bitlen () = 32 then "read_share<uint32_t>"
-            else "read_share<uint64_t>"
-          in
-          Assign_codegen (elmt_of_e,
-                          App_codegen_expr (fname,
-                                            [Base_e circ_var;
-                                             Base_e (Var {name = "role"; index = 0 } |> mk_dsyntax "");
-                                             Base_e (Var {name = "bitlen"; index = 0 } |> mk_dsyntax "");
-                                             Base_e (Var {name = fstream_add_name; index = 0 } |> mk_dsyntax "");
-                                             Base_e (Var {name = fstream_rand_name; index = 0 } |> mk_dsyntax "")]))
-    in
-    aux s_body
-  in
-
-  let s = Seq_codegen (decl_fstream_add, Seq_codegen (decl_fstream_rand, loops)) in
-  let s = if write then s
-          else Seq_codegen (s, Seq_codegen (Close_file fstream_rand_name, Close_file fstream_add_name))
-  in
-
-  o_codegen_stmt g s |> fst
 
 and o_codegen_stmt (g:gamma) (s:codegen_stmt) :comp * gamma =
   match s with
@@ -564,23 +460,9 @@ and o_codegen_stmt (g:gamma) (s:codegen_stmt) :comp * gamma =
      o_with_semicolon (seq (o_str s) (seq (o_str " << ") (seq (o_paren (o_codegen_expr g e)) (o_str " << endl")))),
      g
 
-  | Dump_interim (e_var, t, f) when is_var e_var -> read_or_write_interim g true e_var t f, g
+  | Dump_interim _ | Read_interim _ -> failwith "Codegen: Dumping/Reading of interim shares is not supported by this backend."
 
-  | Read_interim (e_var, t, f) when is_var e_var -> read_or_write_interim g false e_var t f, g
-
-  | Open_file (write, x, f) ->
-     (if write then
-        let c = o_str ("ofstream " ^ x ^ ";\n" ^ x ^ ".open(\"" ^ f ^ "\", ios::out | ios::trunc);\n") in
-        out_files := !out_files @ [x];
-        c
-      else o_str ("ifstream " ^ x ^ ";\n" ^ x ^ ".open(\"" ^ f ^ "\", ios::in);\n")),
-     g
-
-  | Close_file f -> o_str (f ^ ".close ();\n"), g
-
-  | Dump_interim _ -> failwith "Impossible! we don't support dumping of arbitrary shares"
-
-  | Read_interim _ -> failwith "Impossible! we don't support reading of arbitrary shares"
+  | Open_file _ | Close_file _ -> failwith "Codegen: Opening/Closing of file is not supported by this backend."
 
   | Assign_codegen (e1, e2) -> o_with_semicolon (o_assign (o_codegen_expr g e1) (o_codegen_expr g e2)), g
            
@@ -641,11 +523,11 @@ let emp_prelude_string (bitlen:int) :string =
 using namespace emp;\n\
 using namespace std;\n\
 int bitlen = " ^ string_of_int bitlen ^ ";\n\
+int role,party,port;\n\
 "
 
 let emp_main_prelude_string :string =
 "\
-int role,party,port;\n\
 parse_party_and_port(argv, &party, &port);\n\
 NetIO * io = new NetIO(party==ALICE ? nullptr : \"127.0.0.1\", port);\n\
 setup_semi_honest(io, party);\n\
