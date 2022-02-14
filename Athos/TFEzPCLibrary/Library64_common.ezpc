@@ -8310,6 +8310,101 @@ def void Relu5(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, 
 	ClearMemSecret1(size, reshapedOutArr);
 }
 
+def void Clip1(int32_pl s1, int32_pl alpha, int32_pl beta, int64_al[s1] inArr, int64_al[s1] outArr, int32_pl sf, bool_pl doTruncation)
+{
+	Clip(s1, alpha, beta, inArr, outArr, sf, doTruncation);
+}
+
+def void Clip2(int32_pl s1, int32_pl s2, int32_pl alpha, int32_pl beta, int64_al[s1][s2] inArr, int64_al[s1][s2] outArr, int32_pl sf, bool_pl doTruncation)
+{
+	int32_pl size = s1*s2;
+	int64_al[size] reshapedInArr;
+	int64_al[size] reshapedOutArr;
+	for i1=[0:s1]{
+		for i2=[0:s2]{
+			int32_pl linIdx = (i1*s2) + (i2);
+			reshapedInArr[linIdx] = inArr[i1][i2];
+		};
+	};
+	Clip(size, alpha, beta, reshapedInArr, reshapedOutArr, sf, doTruncation);
+	for i1=[0:s1]{
+		for i2=[0:s2]{
+			int32_pl linIdx = (i1*s2) + (i2);
+			outArr[i1][i2] = reshapedOutArr[linIdx];
+		};
+	};
+
+	ClearMemSecret1(size, reshapedInArr);
+	ClearMemSecret1(size, reshapedOutArr);
+}
+
+def void Clip4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl alpha, int32_pl beta, int64_al[s1][s2][s3][s4] inArr, int64_al[s1][s2][s3][s4] outArr, int32_pl sf, bool_pl doTruncation)
+{
+	int32_pl size = s1*s2*s3*s4;
+	int64_al[size] reshapedInArr;
+	int64_al[size] reshapedOutArr;
+	for i1=[0:s1]{
+		for i2=[0:s2]{
+			for i3=[0:s3]{
+				for i4=[0:s4]{
+					int32_pl linIdx = (i1*s2*s3*s4) + (i2*s3*s4) + (i3*s4) + i4;
+					reshapedInArr[linIdx] = inArr[i1][i2][i3][i4];
+				};
+			};
+		};
+	};
+	Clip(size, alpha, beta, reshapedInArr, reshapedOutArr, sf, doTruncation);
+	for i1=[0:s1]{
+		for i2=[0:s2]{
+			for i3=[0:s3]{
+				for i4=[0:s4]{
+					int32_pl linIdx = (i1*s2*s3*s4) + (i2*s3*s4) + (i3*s4) + i4;
+					outArr[i1][i2][i3][i4] = reshapedOutArr[linIdx];
+				};
+			};
+		};
+	};
+
+	ClearMemSecret1(size, reshapedInArr);
+	ClearMemSecret1(size, reshapedOutArr);
+}
+
+def void Clip5(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int32_pl alpha, int32_pl beta, int64_al[s1][s2][s3][s4][s5] inArr, int64_al[s1][s2][s3][s4][s5] outArr, int32_pl sf, bool_pl doTruncation)
+{
+	int32_pl size = s1*s2*s3*s4*s5;
+	int64_al[size] reshapedInArr;
+	int64_al[size] reshapedOutArr;
+	for i1=[0:s1]{
+		for i2=[0:s2]{
+			for i3=[0:s3]{
+				for i4=[0:s4]{
+					for i5=[0:s5]{
+						int32_pl linIdx = (i1*s2*s3*s4*s5) + (i2*s3*s4*s5) + (i3*s4*s5) + (i4*s5) + i5;
+						reshapedInArr[linIdx] = inArr[i1][i2][i3][i4][i5];
+					};
+				};
+			};
+		};
+	};
+	Clip(size, alpha, beta, reshapedInArr, reshapedOutArr, sf, doTruncation);
+	for i1=[0:s1]{
+		for i2=[0:s2]{
+			for i3=[0:s3]{
+				for i4=[0:s4]{
+					for i5=[0:s5]{
+						int32_pl linIdx = (i1*s2*s3*s4*s5) + (i2*s3*s4*s5) + (i3*s4*s5) + (i4*s5) + i5;
+						outArr[i1][i2][i3][i4][i5] = reshapedOutArr[linIdx];
+					};
+				};
+			};
+		};
+	};
+
+	ClearMemSecret1(size, reshapedInArr);
+	ClearMemSecret1(size, reshapedOutArr);
+}
+
+
 (**************************)
 def void Floor2(int32_pl s1, int32_pl s2, int64_al[s1][s2] inArr, int64_al[s1][s2] outArr, int32_pl sf)
 {
