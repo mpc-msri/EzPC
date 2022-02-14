@@ -12,8 +12,8 @@ BINARY_NAME=$(basename $EMP_CPP_FILE .cpp)
 g++  ${EMP_CPP_FILE} \
         -I ${EZPC_SRC_PATH}/emp-sh2pc \
         -DEMP_CIRCUIT_PATH=/usr/local/include/emp-tool/circuits/files/ \
-        -fconcepts -pthread -Wall -funroll-loops -Wno-ignored-attributes \
-        -Wno-unused-result -march=native -maes -mrdseed -std=c++14 -O3 \
+        -fconcepts -pthread -funroll-loops -Wno-ignored-attributes \
+        -Wno-unused-result -Wno-write-strings -march=native -maes -mrdseed -std=c++14 -O3 \
         -Wl,-rpath,/usr/local/lib /usr/local/lib/libemp-tool.so \
         -lssl -lcrypto \
 	-o $BINARY_NAME

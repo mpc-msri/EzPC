@@ -220,16 +220,11 @@ and o_codegen_expr (g:gamma) (e:codegen_expr) :comp =
     
   | _ -> o_str "Unbound Case (codegen_expr)"
 
-let rec put_arr_dim (args:comp list) : comp =
-  match args with 
-  | hd :: tl -> seq (seq (o_str "[") (seq ( hd) (o_str "]"))) (put_arr_dim tl)
-  | [] -> o_str ""
 
 let o_array_init (g:gamma) (t:typ) :comp =
   let t, l = get_array_bt_and_dimensions t in
-  let args =(List.map (o_expr g) l) in
-  let initialize = seq (o_str "new ") (seq (o_typ t) (put_arr_dim args )) in
-  initialize
+  let s = seq (o_str "make_vector<") (seq (o_typ t) (o_str ">")) in
+  o_app s (List.map (o_expr g) l)
 
 let o_for (index:comp) (lower:comp) (upper:comp) (body:comp) :comp =
   let init = seq (o_str "for (uint32_t ") (seq index (seq (o_str " = ") lower)) in
@@ -525,6 +520,17 @@ using namespace std;\n\
 int bitlen = " ^ string_of_int bitlen ^ ";\n\
 int party,port;\n\
 char *ip = \"127.0.0.1\"; \n\
+template<typename T> \n\
+vector<T> make_vector(size_t size) { \n\
+return std::vector<T>(size); \n\
+} \n\
+
+template <typename T, typename... Args> \n\
+auto make_vector(size_t first, Args... sizes) \n\
+{ \n\
+auto inner = make_vector<T>(sizes...); \n\
+return vector<decltype(inner)>(first, inner); \n\
+} \n\
 "
 
 let emp_main_prelude_string :string =
