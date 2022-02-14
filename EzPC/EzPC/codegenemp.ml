@@ -524,12 +524,19 @@ using namespace emp;\n\
 using namespace std;\n\
 int bitlen = " ^ string_of_int bitlen ^ ";\n\
 int party,port;\n\
+char *ip = \"127.0.0.1\"; \n\
 "
 
 let emp_main_prelude_string :string =
 "\
 parse_party_and_port(argv, &party, &port);\n\
-NetIO * io = new NetIO(party==ALICE ? nullptr : \"127.0.0.1\", port);\n\
+if(argc>3){
+  ip=argv[3];
+}
+cout<<\"Ip Address: \"<<ip<<endl;\n\
+cout<<\"Port: \"<<port<<endl;\n\
+cout<<\"Party: \"<<(party==1? \"CLIENT\" : \"SERVER\")<<endl;\n\
+NetIO * io = new NetIO(party==ALICE ? nullptr : ip, port);\n\
 setup_semi_honest(io, party);\n\
 "
 
