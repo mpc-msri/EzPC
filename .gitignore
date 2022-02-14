@@ -4,11 +4,3 @@ bin/
 
 # Vim c_tags files
 c_*
-/mpc_venv/
-.vscode/
-/EzPC/EzPC/ABY
-EzPC/EzPC/emp-ot/
-EzPC/EzPC/emp-sh2pc/
-EzPC/EzPC/emp-tool/
-EzPC/EzPC/install.py
-SCI/cmake/SCIConfig.cmake
