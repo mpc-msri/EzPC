@@ -13,8 +13,8 @@ You should have run ```setup_env_and_build.sh```. It will automatically build Ez
 Sample compilation of ezpc program to cpp
 ```
 cd EzPC
-eval `opam config env`   				 # Load ocaml environment
-./ezpc.sh --help          				 # Shows usage
+eval `opam config env`   		 # Load ocaml environment
+./ezpc.sh --help          		 # Shows usage
 ./ezpc.sh dot_product.ezpc --bitlen 32	 # Default backend is ABY to change add [ --codegen EMP/SCI/CPP/OBLIVC/PORTHOS/CPPRING ]
 ```
 This generates a dot_product0.cpp file.
