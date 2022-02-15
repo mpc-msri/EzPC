@@ -576,7 +576,6 @@ let o_one_program ((globals, main):global list * codegen_stmt) (ofname:string) :
 
   let file = seq main_prelude (seq main_body main_end) in
   let file' = seq file (o_str "\nreturn 0;\n}\n") in
-  let _= print_string"inside emp \n" in
   let b = Buffer.create 0 in
   file' b;
   let fd = open_out ofname in

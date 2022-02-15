@@ -125,7 +125,7 @@ let specs = Arg.align [
                                                    | "CPPRING" -> CPPRING |> Config.set_codegen
                                                    | "EMP" -> EMP |> Config.set_codegen
                                                    | _ -> failwith "Invalid codegen mode"),
-                 " Codegen mode (ABY or CPP or OBLIVC or PORTHOS or SCI or CPPRING, default ABY)");
+                 " Codegen mode (ABY or EMP or CPP or OBLIVC or PORTHOS or SCI or CPPRING, default ABY)");
                 ("--o_prefix", Arg.String (fun s -> o_prefix := s), " Prefix for output files, default is the input file prefix");
                 ("--disable-tac", Arg.Unit Config.disable_tac, " Disable 3-address code transformation (also disables the CSE optimization)");
                 ("--disable-cse", Arg.Unit Config.disable_cse, " Disable Common Subexpression Elimination optimization");

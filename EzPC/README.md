@@ -13,9 +13,9 @@ You should have run ```setup_env_and_build.sh```. It will automatically build Ez
 Sample compilation of ezpc program to cpp
 ```
 cd EzPC
-eval `opam config env`    # Load ocaml environment
-./ezpc.sh --help          # Shows usage
-./ezpc.sh dot_product.ezpc --bitlen 32
+eval `opam config env`   				 # Load ocaml environment
+./ezpc.sh --help          				 # Shows usage
+./ezpc.sh dot_product.ezpc --bitlen 32	 # Default backend is ABY to change add [ --codegen EMP/SCI/CPP/OBLIVC/PORTHOS/CPPRING ]
 ```
 This generates a dot_product0.cpp file.
 
@@ -29,6 +29,16 @@ This generates a dot_product0.cpp file.
 ./dot_product0 -r 1 
 
 # For the default checked in program at $EZPC/EzPC/ABY_Example/ this should output 2.
+```
+# Running EzPC with EMP
+```
+./compile_emp.sh dot_product0.cpp 
+# Running the compiled code:
+# In one terminal(Client):
+./dot_product0 1 12345 [optional ip address]
+# In another terminal(Server):
+./dot_product0 2 12345 [optional ip address]
+
 ```
 
 # Running test suite for ezpc
