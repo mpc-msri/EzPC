@@ -1,6 +1,7 @@
 #!/bin/bash
 
-# Authors: Nishant Kumar.
+# Authors: Saksham Gupta.
+#This is adapted from runtests.
 
 # Copyright:
 # Copyright (c) 2020 Microsoft Research

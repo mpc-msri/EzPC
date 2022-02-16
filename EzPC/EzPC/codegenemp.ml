@@ -1,6 +1,7 @@
 (*
 
-Authors: Aseem Rastogi, Nishant Kumar, Mayank Rathee.
+Authors: Saksham Gupta.
+This is adapted from other codegen files.
 
 Copyright:
 Copyright (c) 2020 Microsoft Research
