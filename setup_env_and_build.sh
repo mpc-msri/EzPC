@@ -168,6 +168,11 @@ if [ $? -ne 0 ]; then
   exit
 fi
 
+#Build EMP
+wget https://raw.githubusercontent.com/emp-toolkit/emp-readme/master/scripts/install.py
+python install.py --deps --tool --ot --sh2pc
+
+
 #Build Porthos 
 cd $ROOT/Porthos
 ./setup-eigen.sh
