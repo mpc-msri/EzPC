@@ -75,6 +75,8 @@ void Max(int32_t size, intType *inArr, intType alpha, intType *outArr, int sf, b
 void Relu(int32_t size, intType *inArr, intType *outArr, int sf,
           bool doTruncation);
 
+void Clip(int32_t size, int64_t alpha, int64_t beta, intType *inArr, intType *outArr, int sf, bool doTruncation) ;
+
 void MaxPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t ksizeH,
              int32_t ksizeW, int32_t zPadHLeft, int32_t zPadHRight,
              int32_t zPadWLeft, int32_t zPadWRight, int32_t strideH,

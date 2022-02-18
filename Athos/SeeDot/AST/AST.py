@@ -26,6 +26,7 @@ from enum import Enum, auto
 
 OperatorsSymbolDict = {
     "ADD": "+",
+    "SUB": "-",
     "DIV": "/",
     "ClearMemPublic": "clearmempublic",
     "ClearMemSecret": "clearmemsecret",
@@ -55,8 +56,8 @@ class Party(Enum):
 
 class Operators(Enum):
     ADD = auto()
-    DIV = auto()
     SUB = auto()
+    DIV = auto()
     MUL = auto()
     CONV = auto()
     CONVTRANSPOSE = auto()
