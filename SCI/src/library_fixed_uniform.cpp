@@ -793,7 +793,6 @@ void HardSigmoid(int32_t size, intType *inArr, intType *outArr, int sf, bool doT
   for(int i=0;i<size;i++){
     inArr[i]+=(intType)3;
   }
-  cout<<"yeah new impl"<<endl;
   ElemWiseVectorPublicDiv(size,inArr,6,tmpIn);
   Min(size, tmpIn, (int64_t)1, tmpOut, sf, doTruncation) ;
   Max(size, tmpOut, (int64_t)0, outArr, sf, doTruncation) ;
