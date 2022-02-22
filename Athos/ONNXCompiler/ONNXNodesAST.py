@@ -466,9 +466,9 @@ class ONNXNodesAST:
             innermost_let_ast_node, reshaped_input, reshaped_input_name, mtdAST
         )
         out_var_count += 1
-
+        print("in Onnx nodes AST")
         seedot_output_ast = AST.Func(
-            getOperatorsIdx("sigmoid"), AST.ID(reshaped_input_name)
+            getOperatorsIdx("hardsigmoid"), AST.ID(reshaped_input_name)
         )
         output_name = get_new_var_name(out_var_count)
         innermost_let_ast_node = update_program_with_new_node(
@@ -502,7 +502,7 @@ class ONNXNodesAST:
         mtdAST,
     ):
         node = OnnxNode(node)
-
+        print("Inside OnnxAST --> Relu")
         inputsRef = node.inputs
         assert len(inputsRef) == 1
 
@@ -537,7 +537,7 @@ class ONNXNodesAST:
         if DEBUG:
             print(node.outputs[0])
             print(onnx_input_shape, "->", seedot_input_shape, "->", onnx_output_shape)
-
+        print("Exiting  OnnxAST --> Relu")
         return (innermost_let_ast_node, out_var_count)
         # return AST.Func(getOperatorsIdx('relu'), AST.ID(node_name_to_out_var_dict[inputsRef[0]]))
 
