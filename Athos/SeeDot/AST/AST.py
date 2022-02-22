@@ -43,6 +43,7 @@ OperatorsSymbolDict = {
     "RSQRT": "rsqrt",
     "Shape": "shape",
     "SIGMOID": "sigmoid",
+    "HARDSIGMOID": "hardsigmoid",
     "SQRT": "sqrt",
     "SUB": "-",
     "TANH": "tanh",
@@ -65,6 +66,7 @@ class Operators(Enum):
     CLIP = auto()
     TANH = auto()
     SIGMOID = auto()
+    HARDSIGMOID = auto()
     SQRT = auto()
     RSQRT = auto()
     Equal = auto()

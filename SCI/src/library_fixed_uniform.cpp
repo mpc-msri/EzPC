@@ -787,6 +787,20 @@ void Clip(int32_t size, int64_t alpha, int64_t beta, intType *inArr, intType *ou
   delete[] maxIn ;
 }
 
+void HardSigmoid(int32_t size, intType *inArr, intType *outArr, int sf, bool doTruncation) {
+  intType *tmpIn = new intType[size] ;
+  intType *tmpOut = new intType[size] ;
+  for(int i=0;i<size;i++){
+    inArr[i]+=(intType)3;
+  }
+  ElemWiseVectorPublicDiv(size,inArr,6,tmpIn);
+  Min(size, tmpIn, (int64_t)1, tmpOut, sf, doTruncation) ;
+  Max(size, tmpOut, (int64_t)0, outArr, sf, doTruncation) ;
+
+  delete[] tmpIn ;
+  delete[] tmpOut ;
+}
+
 void Relu(int32_t size, intType *inArr, intType *outArr, int sf,
           bool doTruncation) {
 #ifdef LOG_LAYERWISE
