@@ -41,15 +41,14 @@ int main(int argc, char **argv) {
 
   amap.parse(argc, argv);
 
-  NetIO *io = new NetIO(party == ALICE ? nullptr : "127.0.0.1", port);
+  IOPack *iopack = new IOPack(party, port, address);
   uint64_t magnitude_bound = (1 << (bitlength - 3));
   uint64_t mask_l = -1ULL;
   if (bitlength != 64) {
     mask_l = (1ULL << bitlength) - 1ULL;
   }
-  OTPack otpack(io, party);
-  ArgMaxProtocol<NetIO, uint64_t> argmax_oracle(party, RING, io, bitlength,
-                                                MILL_PARAM, 0, &otpack);
+  OTPack otpack(iopack, party);
+  ArgMaxProtocol<uint64_t> argmax_oracle(party, RING, iopack, bitlength, MILL_PARAM, 0, &otpack);
   PRG128 prg;
   uint64_t *input_share1, *input_share2, *input_share_uncorrected;
   uint8_t *input_share_sign;
@@ -67,7 +66,7 @@ int main(int argc, char **argv) {
   case ALICE: {
     prg.random_data(input_share_uncorrected, sizeof(uint64_t) * num_argmax);
     prg.random_data(input_share_sign, num_argmax);
-    uint64_t comm_start = io->counter;
+    uint64_t comm_start = iopack->get_comm();
     auto start = clock_start();
     for (int i = 0; i < num_argmax; i++) {
       input_share_uncorrected[i] %= magnitude_bound;
@@ -84,18 +83,21 @@ int main(int argc, char **argv) {
                             argmax_output_protocol);
 
     long long t = time_from(start);
-    uint64_t comm_end = io->counter;
+    uint64_t comm_end = iopack->get_comm();
     cout << "Comparison Time\t" << RED << (double(num_argmax) / t) * 1e6
          << " ArgMax/sec" << RESET << endl;
     cout << "ALICE communication\t" << BLUE
-         << ((double)(comm_end - comm_start) * 8) / (bitlength * num_argmax)
-         << "*" << bitlength << " bits/ArgMax" << RESET << endl;
+         << ((double)(comm_end - comm_start) * 8) / (bitlength * num_argmax) << "*" << bitlength
+         << " bits/ArgMax" << RESET << endl;
     std::cout << "ALICE: Done MaxPool protocol execution" << std::endl;
-    io->recv_data(input_share2, sizeof(uint64_t) * num_argmax);
-    io->recv_data(argmax_output_protocol_share_other, sizeof(uint64_t) * 1);
-    io->recv_data(argmax_output_protocol_share_other_arg, sizeof(uint64_t) * 1);
+    iopack->io->recv_data(input_share2, sizeof(uint64_t) * num_argmax);
+    iopack->io->recv_data(argmax_output_protocol_share_other,
+                          sizeof(uint64_t) * 1);
+    iopack->io->recv_data(argmax_output_protocol_share_other_arg,
+                          sizeof(uint64_t) * 1);
 
     cout << "Checking correctness of ArgMax now..." << endl;
+
     argmax_output_protocol[0] =
         (argmax_output_protocol[0] + argmax_output_protocol_share_other[0]) &
         mask_l;
@@ -130,7 +132,7 @@ int main(int argc, char **argv) {
     // These are written so that overall time excludes these.
     prg.random_data(input_share_uncorrected, sizeof(uint64_t) * num_argmax);
     prg.random_data(input_share_sign, num_argmax);
-    uint64_t comm_start = io->counter;
+    uint64_t comm_start = iopack->get_comm();
 
     for (int i = 0; i < num_argmax; i++) {
       input_share_uncorrected[i] %= magnitude_bound;
@@ -146,15 +148,15 @@ int main(int argc, char **argv) {
                             argmax_output_protocol_arg, true,
                             argmax_output_protocol);
 
-    uint64_t comm_end = io->counter;
+    uint64_t comm_end = iopack->get_comm();
     cout << "BOB communication\t" << BLUE
-         << ((double)(comm_end - comm_start) * 8) / (bitlength * num_argmax)
-         << "*" << bitlength << " bits/ArgMax" << RESET << endl;
+         << ((double)(comm_end - comm_start) * 8) / (bitlength * num_argmax) << "*" << bitlength
+         << " bits/ArgMax" << RESET << endl;
 
     std::cout << "BOB: Done MaxPool protocol execution" << std::endl;
-    io->send_data(input_share2, sizeof(uint64_t) * num_argmax);
-    io->send_data(argmax_output_protocol, sizeof(uint64_t) * 1);
-    io->send_data(argmax_output_protocol_arg, sizeof(uint64_t) * 1);
+    iopack->io->send_data(input_share2, sizeof(uint64_t) * num_argmax);
+    iopack->io->send_data(argmax_output_protocol, sizeof(uint64_t) * 1);
+    iopack->io->send_data(argmax_output_protocol_arg, sizeof(uint64_t) * 1);
     break;
   }
   }

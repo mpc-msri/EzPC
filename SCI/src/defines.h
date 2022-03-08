@@ -23,7 +23,7 @@ SOFTWARE.
 #define DEFINES_H___
 
 #define LOG_LAYERWISE
-#define VERIFY_LAYERWISE
+// #define VERIFY_LAYERWISE
 #define USE_EIGEN
 #define WRITE_LOG
 // #define APPROXIMATE_SIGMOID

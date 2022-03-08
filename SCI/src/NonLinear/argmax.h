@@ -25,12 +25,12 @@ SOFTWARE.
 #include "NonLinear/relu-field.h"
 #include "NonLinear/relu-ring.h"
 
-template <typename IO, typename type> class ArgMaxProtocol {
+template <typename type> class ArgMaxProtocol {
 public:
-  IO *io = nullptr;
-  sci::OTPack<IO> *otpack = nullptr;
-  ReLURingProtocol<IO, type> *relu_oracle = nullptr;
-  ReLUFieldProtocol<IO, type> *relu_field_oracle = nullptr;
+  sci::IOPack *iopack = nullptr;
+  sci::OTPack *otpack = nullptr;
+  ReLURingProtocol<type> *relu_oracle = nullptr;
+  ReLUFieldProtocol<type> *relu_field_oracle = nullptr;
   int party;
   int algeb_str;
   int l, b;
@@ -44,12 +44,11 @@ public:
   type mask_l;
 
   // Constructor
-  ArgMaxProtocol(int party, int algeb_str, IO *io, int l, int b, uint64_t prime,
-                 sci::OTPack<IO> *otpack,
-                 ReLUProtocol<IO, type> *relu_obj = nullptr) {
+  ArgMaxProtocol(int party, int algeb_str, sci::IOPack *iopack, int l, int b,
+                 uint64_t prime, sci::OTPack *otpack) {
     this->party = party;
     this->algeb_str = algeb_str;
-    this->io = io;
+    this->iopack = iopack;
     this->l = l;
     mask_lower = (1ULL << this->l) - 1;
     mask_upper = (1ULL << (2 * this->l)) - 1 - mask_lower;
@@ -57,33 +56,21 @@ public:
     this->prime_mod = prime;
     this->otpack = otpack;
     if (algeb_str == RING) {
-      if (relu_obj == nullptr) {
-        this->relu_oracle =
-            new ReLURingProtocol<IO, type>(party, RING, io, l, b, otpack);
-        createdReluObj = true;
-      } else {
-        this->relu_oracle = (ReLURingProtocol<IO, type> *)relu_obj;
-      }
+      this->relu_oracle =
+          new ReLURingProtocol<type>(party, RING, iopack, l, b, otpack);
     } else {
-      if (relu_obj == nullptr) {
-        this->relu_field_oracle = new ReLUFieldProtocol<IO, type>(
-            party, FIELD, io, l, b, this->prime_mod, otpack);
-        createdReluObj = true;
-      } else {
-        this->relu_field_oracle = (ReLUFieldProtocol<IO, type> *)relu_obj;
-      }
+      this->relu_field_oracle = new ReLUFieldProtocol<type>(
+          party, FIELD, iopack, l, b, this->prime_mod, otpack);
     }
     configure();
   }
 
   // Destructor
   ~ArgMaxProtocol() {
-    if (createdReluObj) {
-      if (algeb_str == RING)
-        delete relu_oracle;
-      else
-        delete relu_field_oracle;
-    }
+    if (algeb_str == RING)
+      delete relu_oracle;
+    else
+      delete relu_field_oracle;
   }
 
   void configure() {
@@ -244,41 +231,49 @@ public:
       this->relu_oracle->triple_gen->prg->random_data(
           additive_masks, 2 * num_relu * sizeof(type));
     }
-
-    if (party == sci::ALICE) {
-      for (int i = 0; i < num_relu; i++) {
-        set_argmax_end_ot_messages_super_32(
-            ot_messages_0 + i, ot_messages_1 + i, share + i, indexshare + i,
-            drelu_ans + i, ((type *)additive_masks) + i, num_relu);
-      }
-      if (this->algeb_str == FIELD) {
-        relu_field_oracle->otpack->iknp_straight->send(ot_messages_0,
-                                                       ot_messages_1, num_relu);
-        relu_field_oracle->otpack->iknp_reversed->recv(
-            received_shares, (bool *)drelu_ans, num_relu);
-      } else {
-        relu_oracle->otpack->iknp_straight->send(ot_messages_0, ot_messages_1,
-                                                 num_relu);
-        relu_oracle->otpack->iknp_reversed->recv(received_shares,
-                                                 (bool *)drelu_ans, num_relu);
-      }
-    } else // party = sci::BOB
+    for (int i = 0; i < num_relu; i++) {
+      set_argmax_end_ot_messages_super_32(
+          ot_messages_0 + i, ot_messages_1 + i, share + i, indexshare + i,
+          drelu_ans + i, ((type *)additive_masks) + i, num_relu);
+    }
+#pragma omp parallel num_threads(2)
     {
-      for (int i = 0; i < num_relu; i++) {
-        set_argmax_end_ot_messages_super_32(
-            ot_messages_0 + i, ot_messages_1 + i, share + i, indexshare + i,
-            drelu_ans + i, ((type *)additive_masks) + i, num_relu);
-      }
-      if (this->algeb_str == FIELD) {
-        relu_field_oracle->otpack->iknp_straight->recv(
-            received_shares, (bool *)drelu_ans, num_relu);
-        relu_field_oracle->otpack->iknp_reversed->send(ot_messages_0,
-                                                       ot_messages_1, num_relu);
+      if (omp_get_thread_num() == 1) {
+        if (party == sci::ALICE) {
+          if (this->algeb_str == FIELD) {
+            relu_field_oracle->otpack->iknp_reversed->recv(
+                received_shares, (bool *)drelu_ans, num_relu);
+          } else {
+            relu_oracle->otpack->iknp_reversed->recv(
+                received_shares, (bool *)drelu_ans, num_relu);
+          }
+        } else { // party == sci::BOB
+          if (this->algeb_str == FIELD) {
+            relu_field_oracle->otpack->iknp_reversed->send(
+                ot_messages_0, ot_messages_1, num_relu);
+          } else {
+            relu_oracle->otpack->iknp_reversed->send(ot_messages_0,
+                                                     ot_messages_1, num_relu);
+          }
+        }
       } else {
-        relu_oracle->otpack->iknp_straight->recv(received_shares,
-                                                 (bool *)drelu_ans, num_relu);
-        relu_oracle->otpack->iknp_reversed->send(ot_messages_0, ot_messages_1,
-                                                 num_relu);
+        if (party == sci::ALICE) {
+          if (this->algeb_str == FIELD) {
+            relu_field_oracle->otpack->iknp_straight->send(
+                ot_messages_0, ot_messages_1, num_relu);
+          } else {
+            relu_oracle->otpack->iknp_straight->send(ot_messages_0,
+                                                     ot_messages_1, num_relu);
+          }
+        } else { // party == sci::BOB
+          if (this->algeb_str == FIELD) {
+            relu_field_oracle->otpack->iknp_straight->recv(
+                received_shares, (bool *)drelu_ans, num_relu);
+          } else {
+            relu_oracle->otpack->iknp_straight->recv(
+                received_shares, (bool *)drelu_ans, num_relu);
+          }
+        }
       }
     }
     for (int i = 0; i < num_relu; i++) {

@@ -1,4 +1,5 @@
 #include "utils/io_channel.h"
+#include "utils/io_pack.h"
 #include "utils/net_io_channel.h"
 
 #include "utils/ArgMapping/ArgMapping.h"

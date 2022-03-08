@@ -22,18 +22,19 @@ SOFTWARE.
 #include "globals.h"
 
 sci::NetIO *io;
-sci::OTPack<sci::NetIO> *otpack;
+sci::IOPack *iopack;
+sci::OTPack *otpack;
 
-#ifdef SCI_OT
-LinearOT *mult;
 AuxProtocols *aux;
 Truncation *truncation;
 XTProtocol *xt;
-MathFunctions *math;
+#ifdef SCI_OT
+LinearOT *mult;
 #endif
-ArgMaxProtocol<sci::NetIO, intType> *argmax;
-ReLUProtocol<sci::NetIO, intType> *relu;
-MaxPoolProtocol<sci::NetIO, intType> *maxpool;
+MathFunctions *math;
+ArgMaxProtocol<intType> *argmax;
+ReLUProtocol<intType> *relu;
+MaxPoolProtocol<intType> *maxpool;
 // Additional classes for Athos
 #ifdef SCI_OT
 MatMulUniform<sci::NetIO, intType, sci::IKNP<sci::NetIO>> *multUniform;
@@ -49,16 +50,17 @@ sci::KKOT<sci::NetIO> *kkot;
 sci::PRG128 *prg128Instance;
 
 sci::NetIO *ioArr[MAX_THREADS];
-sci::OTPack<sci::NetIO> *otpackArr[MAX_THREADS];
+sci::IOPack *iopackArr[MAX_THREADS];
+sci::OTPack *otpackArr[MAX_THREADS];
+MathFunctions *mathArr[MAX_THREADS];
 #ifdef SCI_OT
 LinearOT *multArr[MAX_THREADS];
+#endif
 AuxProtocols *auxArr[MAX_THREADS];
 Truncation *truncationArr[MAX_THREADS];
 XTProtocol *xtArr[MAX_THREADS];
-MathFunctions *mathArr[MAX_THREADS];
-#endif
-ReLUProtocol<sci::NetIO, intType> *reluArr[MAX_THREADS];
-MaxPoolProtocol<sci::NetIO, intType> *maxpoolArr[MAX_THREADS];
+ReLUProtocol<intType> *reluArr[MAX_THREADS];
+MaxPoolProtocol<intType> *maxpoolArr[MAX_THREADS];
 // Additional classes for Athos
 #ifdef SCI_OT
 MatMulUniform<sci::NetIO, intType, sci::IKNP<sci::NetIO>>

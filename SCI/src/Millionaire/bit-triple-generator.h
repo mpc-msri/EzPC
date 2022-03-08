@@ -21,7 +21,7 @@ SOFTWARE.
 
 #ifndef TRIPLE_GENERATOR_H__
 #define TRIPLE_GENERATOR_H__
-#include "OT/emp-ot.h"
+#include "OT/ot_pack.h"
 
 enum TripleGenMethod {
   Ideal,          // (Insecure) Ideal Functionality
@@ -65,15 +65,15 @@ public:
   }
 };
 
-template <typename IO> class TripleGenerator {
+class TripleGenerator {
 public:
-  IO *io = nullptr;
-  sci::OTPack<IO> *otpack = nullptr;
+  sci::IOPack *iopack;
+  sci::OTPack *otpack;
   sci::PRG128 *prg;
   int party;
 
-  TripleGenerator(int party, IO *io, sci::OTPack<IO> *otpack) {
-    this->io = io;
+  TripleGenerator(int party, sci::IOPack *iopack, sci::OTPack *otpack) {
+    this->iopack = iopack;
     this->otpack = otpack;
     this->prg = new sci::PRG128;
   }
@@ -125,24 +125,24 @@ public:
             c[i / 8] ^= temp_c;
           }
         }
-        io->send_data(a, num_bytes);
-        io->send_data(b, num_bytes);
-        io->send_data(c, num_bytes);
+        iopack->io->send_data(a, num_bytes);
+        iopack->io->send_data(b, num_bytes);
+        iopack->io->send_data(c, num_bytes);
         delete[] a;
         delete[] b;
         delete[] c;
       } else {
         if (packed) {
-          io->recv_data(ai, num_bytes);
-          io->recv_data(bi, num_bytes);
-          io->recv_data(ci, num_bytes);
+          iopack->io->recv_data(ai, num_bytes);
+          iopack->io->recv_data(bi, num_bytes);
+          iopack->io->recv_data(ci, num_bytes);
         } else {
           uint8_t *a = new uint8_t[num_bytes];
           uint8_t *b = new uint8_t[num_bytes];
           uint8_t *c = new uint8_t[num_bytes];
-          io->recv_data(a, num_bytes);
-          io->recv_data(b, num_bytes);
-          io->recv_data(c, num_bytes);
+          iopack->io->recv_data(a, num_bytes);
+          iopack->io->recv_data(b, num_bytes);
+          iopack->io->recv_data(c, num_bytes);
 
           for (int i = 0; i < num_triples; i += 8) {
             if (num_triples - i >= 8) {

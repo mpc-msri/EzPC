@@ -25,10 +25,9 @@ SOFTWARE.
 using namespace sci;
 using namespace std;
 
-int dim = 1 << 8;
+int dim = 35;//1 << 8;
 int bw = 16;
-int shift = 6;
-int shift_bnd = 17;
+int shift = 7;
 
 uint64_t mask_bw = (bw == 64 ? -1 : ((1ULL << bw) - 1));
 uint64_t mask_shift = (shift == 64 ? -1 : ((1ULL << shift) - 1));
@@ -37,8 +36,8 @@ uint64_t mask_out = ((bw - shift) == 64 ? -1 : ((1ULL << (bw - shift)) - 1));
 // vars
 int party, port = 32000;
 string address = "127.0.0.1";
-NetIO *io;
-OTPack<NetIO> *otpack;
+IOPack *iopack;
+OTPack *otpack;
 Truncation *trunc_oracle;
 PRG128 prg;
 
@@ -58,8 +57,8 @@ void trunc_reduce() {
   if (party == ALICE) {
     uint64_t *inA_bob = new uint64_t[dim];
     uint64_t *outB_bob = new uint64_t[dim];
-    io->recv_data(inA_bob, sizeof(uint64_t) * dim);
-    io->recv_data(outB_bob, sizeof(uint64_t) * dim);
+    iopack->io->recv_data(inA_bob, sizeof(uint64_t) * dim);
+    iopack->io->recv_data(outB_bob, sizeof(uint64_t) * dim);
     for (int i = 0; i < dim; i++) {
       inA[i] = (inA[i] + inA_bob[i]) & mask_bw;
       outB[i] = (outB[i] + outB_bob[i]) & mask_out;
@@ -70,8 +69,8 @@ void trunc_reduce() {
     }
     cout << "Correct!" << endl;
   } else { // BOB
-    io->send_data(inA, sizeof(uint64_t) * dim);
-    io->send_data(outB, sizeof(uint64_t) * dim);
+    iopack->io->send_data(inA, sizeof(uint64_t) * dim);
+    iopack->io->send_data(outB, sizeof(uint64_t) * dim);
   }
 }
 
@@ -91,8 +90,8 @@ void trunc(bool signed_arithmetic = true) {
   if (party == ALICE) {
     uint64_t *inA_bob = new uint64_t[dim];
     uint64_t *outB_bob = new uint64_t[dim];
-    io->recv_data(inA_bob, sizeof(uint64_t) * dim);
-    io->recv_data(outB_bob, sizeof(uint64_t) * dim);
+    iopack->io->recv_data(inA_bob, sizeof(uint64_t) * dim);
+    iopack->io->recv_data(outB_bob, sizeof(uint64_t) * dim);
     for (int i = 0; i < dim; i++) {
       inA[i] = (inA[i] + inA_bob[i]) & mask_bw;
       outB[i] = (outB[i] + outB_bob[i]) & mask_bw;
@@ -107,8 +106,8 @@ void trunc(bool signed_arithmetic = true) {
     }
     cout << "Correct!" << endl;
   } else { // BOB
-    io->send_data(inA, sizeof(uint64_t) * dim);
-    io->send_data(outB, sizeof(uint64_t) * dim);
+    iopack->io->send_data(inA, sizeof(uint64_t) * dim);
+    iopack->io->send_data(outB, sizeof(uint64_t) * dim);
   }
 }
 
@@ -128,8 +127,8 @@ void div_pow2(bool signed_arithmetic = true) {
   if (party == ALICE) {
     uint64_t *inA_bob = new uint64_t[dim];
     uint64_t *outB_bob = new uint64_t[dim];
-    io->recv_data(inA_bob, sizeof(uint64_t) * dim);
-    io->recv_data(outB_bob, sizeof(uint64_t) * dim);
+    iopack->io->recv_data(inA_bob, sizeof(uint64_t) * dim);
+    iopack->io->recv_data(outB_bob, sizeof(uint64_t) * dim);
     for (int i = 0; i < dim; i++) {
       inA[i] = (inA[i] + inA_bob[i]) & mask_bw;
       outB[i] = (outB[i] + outB_bob[i]) & mask_bw;
@@ -145,8 +144,8 @@ void div_pow2(bool signed_arithmetic = true) {
     }
     cout << "Correct!" << endl;
   } else { // BOB
-    io->send_data(inA, sizeof(uint64_t) * dim);
-    io->send_data(outB, sizeof(uint64_t) * dim);
+    iopack->io->send_data(inA, sizeof(uint64_t) * dim);
+    iopack->io->send_data(outB, sizeof(uint64_t) * dim);
   }
 }
 
@@ -160,18 +159,31 @@ int main(int argc, char **argv) {
 
   amap.parse(argc, argv);
 
-  io = new NetIO(party == 1 ? nullptr : address.c_str(), port);
-  otpack = new OTPack<NetIO>(io, party);
-  trunc_oracle = new Truncation(party, io, otpack);
+  iopack = new IOPack(party, port, "127.0.0.1");
+  otpack = new OTPack(iopack, party);
+  trunc_oracle = new Truncation(party, iopack, otpack);
+  uint64_t num_rounds;
 
   cout << "<><><><> Truncate & Reduce <><><><>" << endl;
+  num_rounds = iopack->get_rounds();
   trunc_reduce();
+  num_rounds = iopack->get_rounds() - num_rounds;
+  cout << "Num rounds (TR): " << num_rounds << endl;
+
   cout << "<><><><> (Unsigned) Truncate <><><><>" << endl;
+  num_rounds = iopack->get_rounds();
   trunc(false);
+  num_rounds = iopack->get_rounds() - num_rounds;
+  cout << "Num rounds (LRS): " << num_rounds << endl;
+
   cout << "<><><><> (Signed) Truncate <><><><>" << endl;
   trunc(true);
   cout << "<><><><> (Unsigned) Division by power of 2 <><><><>" << endl;
+  num_rounds = iopack->get_rounds();
   div_pow2(false);
+  num_rounds = iopack->get_rounds() - num_rounds;
+  cout << "Num rounds (Div-Pow2): " << num_rounds << endl;
+
   cout << "<><><><> (Signed) Division by power of 2 <><><><>" << endl;
   div_pow2(true);
 }

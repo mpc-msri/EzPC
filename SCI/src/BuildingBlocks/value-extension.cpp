@@ -24,26 +24,16 @@ SOFTWARE.
 using namespace std;
 using namespace sci;
 
-XTProtocol::XTProtocol(int party, NetIO *io, OTPack<NetIO> *otpack,
-                       AuxProtocols *auxp) {
+XTProtocol::XTProtocol(int party, IOPack *iopack, OTPack *otpack) {
   this->party = party;
-  this->io = io;
+  this->iopack = iopack;
   this->otpack = otpack;
-  if (auxp == nullptr) {
-    del_aux = true;
-    this->aux = new AuxProtocols(party, io, otpack);
-  } else {
-    this->aux = auxp;
-  }
+  this->aux = new AuxProtocols(party, iopack, otpack);
   this->millionaire = this->aux->mill;
   this->triple_gen = this->millionaire->triple_gen;
 }
 
-XTProtocol::~XTProtocol() {
-  if (del_aux) {
-    delete this->aux;
-  }
-}
+XTProtocol::~XTProtocol() { delete aux; };
 
 void XTProtocol::z_extend(int32_t dim, uint64_t *inA, uint64_t *outB,
                           int32_t bwA, int32_t bwB, uint8_t *msbA) {

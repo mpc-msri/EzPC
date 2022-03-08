@@ -25,37 +25,20 @@ SOFTWARE.
 using namespace std;
 using namespace sci;
 
-Truncation::Truncation(int party, NetIO *io, OTPack<NetIO> *otpack,
-                       AuxProtocols *auxp,
-                       MillionaireWithEquality<NetIO> *mill_eq_in) {
+Truncation::Truncation(int party, IOPack *iopack, OTPack *otpack) {
   this->party = party;
-  this->io = io;
+  this->iopack = iopack;
   this->otpack = otpack;
-  if (auxp == nullptr) {
-    del_aux = true;
-    this->aux = new AuxProtocols(party, io, otpack);
-  } else {
-    this->aux = auxp;
-  }
-  if (mill_eq_in == nullptr) {
-    del_milleq = true;
-    this->mill_eq =
-        new MillionaireWithEquality<NetIO>(party, io, otpack, this->aux->mill);
-  } else {
-    this->mill_eq = mill_eq_in;
-  }
+  this->aux = new AuxProtocols(party, iopack, otpack);
   this->mill = this->aux->mill;
-  this->eq = new Equality<NetIO>(party, io, otpack, this->mill);
+  this->mill_eq = new MillionaireWithEquality(party, iopack, otpack);
+  this->eq = new Equality(party, iopack, otpack);
   this->triple_gen = this->mill->triple_gen;
 }
 
 Truncation::~Truncation() {
-  if (del_aux) {
-    delete this->aux;
-  }
-  if (del_milleq) {
-    delete this->mill_eq;
-  }
+  delete this->aux;
+  delete this->mill_eq;
   delete this->eq;
 }
 
@@ -270,7 +253,7 @@ void Truncation::truncate_red_then_ext(int32_t dim, uint64_t *inA,
   }
   uint64_t *tmpB = new uint64_t[dim];
   truncate_and_reduce(dim, inA, tmpB, shift, bw);
-  XTProtocol xt(this->party, this->io, this->otpack, this->aux);
+  XTProtocol xt(this->party, this->iopack, this->otpack);
   if (signed_arithmetic)
     xt.s_extend(dim, tmpB, outB, bw - shift, bw);
   else
@@ -306,6 +289,10 @@ void Truncation::truncate_and_reduce(int32_t dim, uint64_t *inA, uint64_t *outB,
   for (int i = 0; i < dim; i++) {
     outB[i] = ((inA[i] >> shift) + arith_wrap[i]) & mask_out;
   }
+
+  delete[] inA_lower;
+  delete[] wrap;
+  delete[] arith_wrap;
 
   return;
 }
