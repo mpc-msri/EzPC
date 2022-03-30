@@ -63,6 +63,15 @@ void Conv2DGroupWrapper(signedIntType N, signedIntType H, signedIntType W,
                         signedIntType strideW, signedIntType G,
                         intType *inputArr, intType *filterArr, intType *outArr);
 
+void ConvTranspose2DWrapper(int32_t N, int32_t HPrime, int32_t WPrime,
+                               int32_t CI, int32_t FH, int32_t FW,
+                               int32_t CO, int32_t H, int32_t W,
+                               int32_t zPadTrHLeft, int32_t zPadTrHRight,
+                               int32_t zPadTrWLeft, int32_t zPadTrWRight,
+                               int32_t strideH, int32_t strideW,
+                               uint64_t* inputArr, uint64_t* filterArr,
+                               uint64_t* outArr);
+
 void ElemWiseActModelVectorMult(int32_t size, intType *inArr,
                                 intType *multArrVec, intType *outputArr);
 

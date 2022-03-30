@@ -556,6 +556,89 @@ void Conv2DGroupWrapper(signedIntType N, signedIntType H, signedIntType W,
 #endif
 }
 
+static void ConvTranspose2D(int32_t N, int32_t HPrime, int32_t WPrime,
+                               int32_t CI, int32_t FH, int32_t FW,
+                               int32_t CO, int32_t H, int32_t W,
+                               int32_t zPadTrHLeft, int32_t zPadTrHRight,
+                               int32_t zPadTrWLeft, int32_t zPadTrWRight,
+                               int32_t strideH, int32_t strideW,
+                               uint64_t* inArr, uint64_t* filterArr,
+                               uint64_t* outArr){
+                                  
+  uint64_t reshapedFilterRows = CO;
+
+  uint64_t reshapedFilterCols =(( FH * FW ) * CI);
+
+  uint64_t reshapedIPRows = ((FH * FW) * CI);
+
+  uint64_t reshapedIPCols = ((N * H) * W);
+
+  uint64_t *filterReshaped =
+      make_array<uint64_t>(reshapedFilterRows, reshapedFilterCols);
+
+  uint64_t *inputReshaped = make_array<uint64_t>(reshapedIPRows, reshapedIPCols);
+
+  uint64_t *matmulOP = make_array<uint64_t>(reshapedFilterRows, reshapedIPCols);
+  ConvTranspose2DReshapeFilter(FH, FW, CO, CI, filterArr, filterReshaped);
+  ConvTranspose2DReshapeInput(N, HPrime, WPrime, CI, FH, FW, zPadTrHLeft,
+                                zPadTrHRight, zPadTrWLeft, zPadTrWRight,
+                                strideH, strideW, reshapedIPRows,
+                                reshapedIPCols, inArr, inputReshaped);
+  MatMul2D(reshapedFilterRows, reshapedFilterCols, reshapedIPCols,
+              filterReshaped, inputReshaped, matmulOP, 1);
+  ConvTranspose2DReshapeMatMulOP(N, H, W, CO, matmulOP, outArr);
+  ClearMemSecret2(reshapedFilterRows, reshapedFilterCols, filterReshaped);
+  ClearMemSecret2(reshapedIPRows, reshapedIPCols, inputReshaped);
+  ClearMemSecret2(reshapedFilterRows, reshapedIPCols, matmulOP);
+}
+
+void ConvTranspose2DWrapper(int32_t N, int32_t HPrime, int32_t WPrime,
+                               int32_t CI, int32_t FH, int32_t FW,
+                               int32_t CO, int32_t H, int32_t W,
+                               int32_t zPadTrHLeft, int32_t zPadTrHRight,
+                               int32_t zPadTrWLeft, int32_t zPadTrWRight,
+                               int32_t strideH, int32_t strideW,
+                               uint64_t* inArr, uint64_t* filterArr,
+                               uint64_t* outArr){
+  #ifdef LOG_LAYERWISE
+    INIT_ALL_IO_DATA_SENT;
+    INIT_TIMER;
+  #endif
+
+  static int ctr = 1;
+  std::cout << "ConvTranspose2DCSF " << ctr << " called N=" << N << ", H=" << H
+            << ", W=" << W << ", CI=" << CI << ", FH=" << FH << ", FW=" << FW
+            << ", CO=" << CO << ", S=" << strideH << std::endl;
+  ctr++;
+
+  signedIntType newH = (((H + (zPadTrHLeft + zPadTrHRight) - FH) / strideH) + 1);
+  signedIntType newW = (((W + (zPadTrWLeft + zPadTrWRight) - FW) / strideW) + 1);
+
+  #ifdef SCI_OT
+    // If its a ring, then its a OT based -- use the default Conv2DCSF
+    // implementation that comes from the EzPC library
+    ConvTranspose2D(N, HPrime, WPrime, CI, FH, FW, CO, H, W,
+                   zPadTrHLeft, zPadTrHRight, zPadTrWLeft, zPadTrWRight,
+                   strideH, strideW, inArr, filterArr, outArr);
+  #endif
+
+  #ifdef SCI_HE
+      assert(false && "Conv Transpose2D not implemented in HE");
+  #endif
+
+
+  #ifdef LOG_LAYERWISE
+    auto temp = TIMER_TILL_NOW;
+    ConvTimeInMilliSec += temp;
+    std::cout << "Time in sec for current conv = " << (temp / 1000.0)
+              << std::endl;
+    uint64_t curComm;
+    FIND_ALL_IO_TILL_NOW(curComm);
+    ConvCommSent += curComm;
+  #endif
+
+}
+
 void ElemWiseActModelVectorMult(int32_t size, intType *inArr,
                                 intType *multArrVec, intType *outputArr) {
 #ifdef LOG_LAYERWISE

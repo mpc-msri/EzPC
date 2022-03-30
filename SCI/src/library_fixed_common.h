@@ -105,6 +105,110 @@ static void Conv2DReshapeInput(int32_t N, int32_t H, int32_t W, int32_t CI,
   }
 }
 
+
+/************************ Transpose Conv **************************/
+
+
+static void ConvTranspose2DReshapeFilter(int64_t FH, int64_t FW, int64_t CO,
+                                     int64_t CI, uint64_t *inputArr,
+                                     uint64_t *outputArr){
+  for (uint64_t co = (int32_t)0; co < CO; co++) {
+    for (uint64_t fh = (int32_t)0; fh < FH; fh++) {
+      for (uint64_t fw = (int32_t)0; fw < FW; fw++) {
+        for (uint64_t ci = (int32_t)0; ci < CI; ci++) {
+
+          uint64_t linIdx =((((fh * FW) * CI) + (fw * CI)) + ci);
+           Arr2DIdxRowM(outputArr, CO, ((FH * FW) * CI), co, linIdx) =
+              Arr4DIdxRowM(inputArr, FH, FW, CO, CI, ((FH-(int32_t)1)-fh), ((FW-(int32_t)1)-fw), co, ci);
+        }
+      }
+    }
+  }
+
+ }
+
+static void ConvTranspose2DReshapeMatMulOP(int32_t N, int32_t finalH, int32_t finalW,
+                                  int32_t CO, uint64_t *inputArr,
+                                  uint64_t *outputArr) {
+  for (uint32_t co = (int32_t)0; co < (uint32_t)CO; co++) {
+    for (uint32_t n = (int32_t)0; n < (uint32_t)N; n++) {
+      for (uint32_t h = (int32_t)0; h < (uint32_t)finalH; h++) {
+        for (uint32_t w = (int32_t)0; w < (uint32_t)finalW; w++) {
+          Arr4DIdxRowM(outputArr, N, finalH, finalW, CO, n, h, w, co) =
+              Arr2DIdxRowM(inputArr, CO, ((N * finalH) * finalW), co,
+                           ((((n * finalH) * finalW) + (h * finalW)) + w));
+        }
+      }
+    }
+  }
+}
+
+static void ConvTranspose2DReshapeInput(int64_t N, int64_t HPrime,
+                                    int64_t WPrime, int64_t CI, int64_t FH,
+                                    int64_t FW, int64_t zPadTrHLeft,
+                                    int64_t zPadTrHRight, int64_t zPadTrWLeft,
+                                    int64_t zPadTrWRight, int64_t strideH,
+                                    int64_t strideW, int64_t RRows,
+                                    int64_t RCols, uint64_t *inputArr,
+                                    uint64_t *outputArr) {
+
+  int32_t linIdxFilterMult = (int32_t)0;
+  for (uint32_t n = (int32_t)0; n < (uint32_t)N; n++) {
+
+    int32_t leftTopCornerH = ((int32_t)0 - zPadTrHLeft);
+
+    int32_t HPrimeTilde = (HPrime + ((HPrime-(int32_t)1) * (strideH - (int32_t)1)));
+
+    int32_t extremeRightBottomCornerH = ((HPrimeTilde - (int32_t)1) + zPadTrHRight);
+    while (
+        (((leftTopCornerH + FH) - (int32_t)1) <= extremeRightBottomCornerH)) {
+
+      int32_t leftTopCornerW = ((int32_t)0 - zPadTrWLeft);
+
+      int32_t WPrimeTilde = (WPrime + ((WPrime-(int32_t)1) * (strideW - (int32_t)1)));
+
+      int32_t extremeRightBottomCornerW = ((WPrimeTilde - (int32_t)1) + zPadTrWRight);
+      while (
+          (((leftTopCornerW + FW) - (int32_t)1) <= extremeRightBottomCornerW)) {
+        for (uint32_t fh = (int32_t)0; fh < (uint32_t)FH; fh++) {
+          for (uint32_t fw = (int32_t)0; fw < (uint32_t)FW; fw++) {
+
+            int32_t curPosH = (leftTopCornerH + fh);
+
+            int32_t curPosW = (leftTopCornerW + fw);
+
+            uint64_t val = funcSSCons((int64_t)0);
+            for (uint32_t ci = (int32_t)0; ci < (uint32_t)CI; ci++) {
+              if ((((curPosH < (int32_t)0) || (curPosH >= HPrimeTilde)) ||
+                   ((curPosW < (int32_t)0) || (curPosW >= WPrimeTilde)))) {
+                val = funcSSCons((int64_t)0);
+              } else {
+                if(((curPosH % strideH) == (int32_t)0) && ((curPosW % strideW) == (int32_t)0)){
+                  uint64_t idxInputH = (curPosH / strideH);
+
+                  uint64_t idxInputW = (curPosW / strideW);
+                  val = Arr4DIdxRowM(inputArr, N, HPrime, WPrime, CI, n, idxInputH, idxInputW,ci);
+                }
+                else{
+                  val = (int64_t)0;
+                }
+              
+              }
+              Arr2DIdxRowM(outputArr, RRows, RCols,
+                           ((((fh * FW) * CI) + (fw * CI)) + ci),
+                           linIdxFilterMult) = val;
+            }
+          }
+        }
+        linIdxFilterMult = (linIdxFilterMult + (int32_t)1);
+        leftTopCornerW = (leftTopCornerW + (int32_t)1);
+      }
+
+      leftTopCornerH = (leftTopCornerH + (int32_t)1);
+    }
+  }
+}
+
 /************************ Grouped Conv **************************/
 
 static void Conv2DReshapeFilterGroup(int32_t FH, int32_t FW, int32_t CI,
