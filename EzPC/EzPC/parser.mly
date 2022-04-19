@@ -108,8 +108,6 @@ let match_stmt_option msg str =
 %left SUM SUB
 %left MUL DIV MOD
 %left POW
-%nonassoc BINOP_ASSOC
-%nonassoc BINOP_SOME_ASSOC
 %nonassoc UNOP_ASSOC
 %nonassoc UNOP_SOME_ASSOC
 %nonassoc LBRACKET
