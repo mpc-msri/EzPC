@@ -1,0 +1,118 @@
+name: CI Testing
+
+# Controls when the workflow will run
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  ABY-and-EMP:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+
+      - name: Setup
+        run: |
+          sudo apt-get update
+          ./setup_env_and_build.sh quick
+          source mpc_venv/bin/activate
+        shell: bash
+
+      - name: Test EMP
+        if: always()
+        run: |
+          pwd
+          ls
+          eval $(opam config env)
+          cd EzPC/EzPC/
+          ./runemptests.sh
+          cd ../..
+      - name: Test ABY
+        if: always()
+        run: |
+          cd EzPC/EzPC/
+          eval $(opam config env)
+          chmod +x runtests.sh
+          make runtest
+          cd ../..
+          
+  ONNX-CPP:
+    # The type of runner that the job will run on
+      runs-on: ubuntu-latest
+      # Steps represent a sequence of tasks that will be executed as part of the job
+      steps:
+        # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+        - uses: actions/checkout@v2
+
+        - name: Setup
+          run: |
+            sudo apt-get update
+            ./setup_env_and_build.sh quick
+            source mpc_venv/bin/activate
+          shell: bash
+
+        - name: Test Athos ONNX-CPP
+          if: always()
+          run: |
+            source mpc_venv/bin/activate
+            cd Athos/tests/onnx/unittests
+            pytest --backend CPP
+          shell: bash
+        
+  ONNX-SCI-OT:
+    # The type of runner that the job will run on
+      runs-on: ubuntu-latest
+      # Steps represent a sequence of tasks that will be executed as part of the job
+      steps:
+        # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+        - uses: actions/checkout@v2
+
+        - name: Setup
+          run: |
+            sudo apt-get update
+            ./setup_env_and_build.sh quick
+            source mpc_venv/bin/activate
+          shell: bash
+        - name: Test Athos ONNX SCI-OT
+          if: always()
+          run: |
+            source mpc_venv/bin/activate
+            cd Athos/tests/onnx/unittests
+            pytest --backend 2PC_OT
+            
+  
+            
+  
+          
+  TF-SCI-OT:
+    # The type of runner that the job will run on
+      runs-on: ubuntu-latest
+      # Steps represent a sequence of tasks that will be executed as part of the job
+      steps:
+        # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+        - uses: actions/checkout@v2
+
+        - name: Setup
+          run: |
+            sudo apt-get update
+            ./setup_env_and_build.sh quick
+            source mpc_venv/bin/activate
+          shell: bash
+        - name: Test Athos TF SCI-OT
+          if: always()
+          run: |
+            source mpc_venv/bin/activate
+            cd Athos/tests/tf/unittests
+            pytest --backend 2PC_OT
+            
+  

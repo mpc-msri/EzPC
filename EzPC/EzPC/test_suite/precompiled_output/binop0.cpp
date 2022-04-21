@@ -357,7 +357,7 @@ int64_t ezpc_main (e_role role_param, char* address, uint16_t port, seclvl seclv
 uint32_t nvals, uint32_t nthreads, e_mt_gen_alg mt_alg,
 e_sharing sharing) {
 role = role_param;
-party = new ABYParty(role_param, address, port, seclvl, bitlen, nthreads, mt_alg, 520000000);
+party = new ABYParty(role_param, address, port, seclvl, bitlen, nthreads, mt_alg, 4000000);
 std::vector<Sharing*>& sharings = party->GetSharings();
 ycirc = (sharings)[S_YAO]->GetCircuitBuildRoutine();
 acirc = (sharings)[S_ARITH]->GetCircuitBuildRoutine();

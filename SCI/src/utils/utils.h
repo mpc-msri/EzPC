@@ -59,6 +59,8 @@ inline double time_from(const time_point<high_resolution_clock> &s);
 // block128 conversions
 template <typename T = uint64_t> std::string m128i_to_string(const __m128i var);
 block128 bool_to128(const bool *data);
+
+template <typename T> inline void int_to_bool(bool *data, T input, int len);
 void int64_to_bool(bool *data, uint64_t input, int length);
 inline void uint8_to_bool(uint8_t *data, uint8_t input, int length);
 

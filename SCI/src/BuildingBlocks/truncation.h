@@ -28,21 +28,17 @@ SOFTWARE.
 
 class Truncation {
 public:
-  sci::NetIO *io = nullptr;
-  sci::OTPack<sci::NetIO> *otpack;
-  TripleGenerator<sci::NetIO> *triple_gen = nullptr;
-  MillionaireProtocol<sci::NetIO> *mill = nullptr;
-  MillionaireWithEquality<sci::NetIO> *mill_eq = nullptr;
-  Equality<sci::NetIO> *eq = nullptr;
-  AuxProtocols *aux = nullptr;
-  bool del_aux = false;
-  bool del_milleq = false;
+  sci::IOPack *iopack;
+  sci::OTPack *otpack;
+  TripleGenerator *triple_gen;
+  MillionaireProtocol *mill;
+  MillionaireWithEquality *mill_eq;
+  Equality *eq;
+  AuxProtocols *aux;
   int party;
 
   // Constructor
-  Truncation(int party, sci::NetIO *io, sci::OTPack<sci::NetIO> *otpack,
-             AuxProtocols *auxp = nullptr,
-             MillionaireWithEquality<sci::NetIO> *mill_eq_in = nullptr);
+  Truncation(int party, sci::IOPack *iopack, sci::OTPack *otpack);
 
   // Destructor
   ~Truncation();

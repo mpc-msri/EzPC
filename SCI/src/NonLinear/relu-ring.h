@@ -24,17 +24,17 @@ SOFTWARE.
 
 #include "Millionaire/millionaire.h"
 #include "NonLinear/relu-interface.h"
+#include <omp.h>
 
 #define RING 0
 #define OFF_PLACE
 
-template <typename IO, typename type>
-class ReLURingProtocol : public ReLUProtocol<IO, type> {
+template <typename type> class ReLURingProtocol : public ReLUProtocol<type> {
 public:
-  IO *io = nullptr;
-  sci::OTPack<IO> *otpack;
-  TripleGenerator<IO> *triple_gen = nullptr;
-  MillionaireProtocol<IO> *millionaire = nullptr;
+  sci::IOPack *iopack;
+  sci::OTPack *otpack;
+  TripleGenerator *triple_gen;
+  MillionaireProtocol *millionaire;
   int party;
   int algeb_str;
   int l, b;
@@ -51,15 +51,15 @@ public:
   type msb_one_type;
 
   // Constructor
-  ReLURingProtocol(int party, int algeb_str, IO *io, int l, int b,
-                   sci::OTPack<IO> *otpack) {
+  ReLURingProtocol(int party, int algeb_str, sci::IOPack *iopack, int l, int b,
+                   sci::OTPack *otpack) {
     this->party = party;
     this->algeb_str = algeb_str;
-    this->io = io;
+    this->iopack = iopack;
     this->l = l;
     this->b = b;
     this->otpack = otpack;
-    this->millionaire = new MillionaireProtocol<IO>(party, io, otpack);
+    this->millionaire = new MillionaireProtocol(party, iopack, otpack);
     this->triple_gen = this->millionaire->triple_gen;
     configure();
   }
@@ -194,27 +194,27 @@ public:
     uint64_t *additive_masks = new uint64_t[num_relu];
     uint64_t *received_shares = new uint64_t[num_relu];
     this->triple_gen->prg->random_data(additive_masks, num_relu * sizeof(type));
-    switch (this->party) {
-    case sci::ALICE: {
-      for (int i = 0; i < num_relu; i++) {
-        set_relu_end_ot_messages(ot_messages[i], share + i, msb_local_share + i,
-                                 ((type *)additive_masks) + i);
-      }
-      otpack->iknp_straight->send(ot_messages, num_relu, this->l);
-      otpack->iknp_reversed->recv(received_shares, msb_local_share, num_relu,
-                                  this->l);
-      break;
+    for (int i = 0; i < num_relu; i++) {
+      set_relu_end_ot_messages(ot_messages[i], share + i, msb_local_share + i,
+                               ((type *)additive_masks) + i);
     }
-    case sci::BOB: {
-      for (int i = 0; i < num_relu; i++) {
-        set_relu_end_ot_messages(ot_messages[i], share + i, msb_local_share + i,
-                                 ((type *)additive_masks) + i);
+#pragma omp parallel num_threads(2)
+    {
+      if (omp_get_thread_num() == 1) {
+        if (party == sci::ALICE) {
+          otpack->iknp_reversed->recv(received_shares, msb_local_share,
+                                      num_relu, this->l);
+        } else { // party == sci::BOB
+          otpack->iknp_reversed->send(ot_messages, num_relu, this->l);
+        }
+      } else {
+        if (party == sci::ALICE) {
+          otpack->iknp_straight->send(ot_messages, num_relu, this->l);
+        } else { // party == sci::BOB
+          otpack->iknp_straight->recv(received_shares, msb_local_share,
+                                      num_relu, this->l);
+        }
       }
-      otpack->iknp_straight->recv(received_shares, msb_local_share, num_relu,
-                                  this->l);
-      otpack->iknp_reversed->send(ot_messages, num_relu, this->l);
-      break;
-    }
     }
     for (int i = 0; i < num_relu; i++) {
       result[i] = ((type *)additive_masks)[i] +

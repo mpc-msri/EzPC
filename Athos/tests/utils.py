@@ -150,6 +150,7 @@ def save_graph(graph_def, config, test_dir, frontend):
             f.write(graph_def.SerializeToString())
     elif frontend == Frontend.ONNX:
         model = onnx.helper.make_model(graph_def, producer_name="onnx-test")
+        model.opset_import[0].version = 15
         onnx.save(model, fpath)
     config["model_name"] = fpath
     return

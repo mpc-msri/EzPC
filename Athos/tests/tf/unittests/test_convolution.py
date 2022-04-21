@@ -31,7 +31,7 @@ import os
 
 # Athos DIR
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-from tests.utils import Config, Compiler, assert_almost_equal
+from tests.utils import TFConfig, Compiler, assert_almost_equal
 
 
 @pytest.mark.parametrize(

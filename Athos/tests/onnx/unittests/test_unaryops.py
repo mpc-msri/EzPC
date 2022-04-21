@@ -103,7 +103,7 @@ def test_uop(test_dir, backend, Op, a_shape, dtype):
             (3, 2, 2),
             None,
             1,
-            # marks=pytest.mark.skip(reason="axes can't be none. keepdims has to be 0"),
+            marks=pytest.mark.skip(reason="axes can't be none. keepdims has to be 0"),
             id="default_axes_keepdims",
         ),
         pytest.param(

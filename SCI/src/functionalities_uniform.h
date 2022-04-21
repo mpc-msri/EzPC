@@ -268,6 +268,9 @@ void funcMatmulThread(int tid, int N, int s1, int s2, int s3, intType *A,
   }
 #else  // USE_LINEAR_UNIFORM
   MultMode mode;
+#ifdef TRAINING
+  mode = MultMode::None;
+#else
   if (tid & 1) {
     if (partyWithAInAB_mul == sci::ALICE)
       mode = MultMode::Bob_has_A;
@@ -279,6 +282,7 @@ void funcMatmulThread(int tid, int N, int s1, int s2, int s3, intType *A,
     else
       mode = MultMode::Alice_has_B;
   }
+#endif
   if (s2EndIdx > s2StartIdx) {
     multArr[tid]->matmul_cross_terms(s1, (s2EndIdx - s2StartIdx), s3, APtr,
                                      BPtr, C, bitlength, bitlength, bitlength,
@@ -296,6 +300,10 @@ void funcDotProdThread(int tid, int N, int size, intType *multiplyArr,
   if (size == 0)
     return;
   assert(tid >= 0);
+#ifdef TRAINING
+    multArr[tid]->hadamard_cross_terms(size, multiplyArr, inArr, outArr,
+                                       bitlength, bitlength, bitlength, MultMode::None);
+#else
   if (tid & 1) {
     MultMode mode = (both_cross_terms ? MultMode::None : MultMode::Bob_has_A);
     multArr[tid]->hadamard_cross_terms(size, multiplyArr, inArr, outArr,
@@ -305,6 +313,7 @@ void funcDotProdThread(int tid, int N, int size, intType *multiplyArr,
     multArr[tid]->hadamard_cross_terms(size, multiplyArr, inArr, outArr,
                                        bitlength, bitlength, bitlength, mode);
   }
+#endif
 }
 #endif
 
@@ -317,15 +326,11 @@ void funcDotProdThread(int tid, int N, int size, intType *multiplyArr,
    required to be used is present in IKNP - so keeping that too in the
    interface.
 */
-void funcTruncateTwoPowerRing(int curParty, sci::NetIO *curio,
-                              sci::OTPack<sci::NetIO> *curotpack,
-                              sci::IKNP<sci::NetIO> *curiknp,
-                              ReLUProtocol<sci::NetIO, intType> *curReluImpl,
-                              sci::PRG128 *curPrgInstance, int size,
-                              intType *inp, intType *outp, int consSF,
-                              uint8_t *msbShare,
-                              bool doCarryBitCalculation = true) {
-  assert(size % 8 == 0);
+void funcTruncateTwoPowerRing(
+    int curParty, sci::IOPack *curiopack, sci::OTPack *curotpack,
+    sci::IKNP<sci::NetIO> *curiknp, ReLUProtocol<intType> *curReluImpl,
+    sci::PRG128 *curPrgInstance, int size, intType *inp, intType *outp,
+    int consSF, uint8_t *msbShare, bool doCarryBitCalculation = true) {
   static const int rightShiftForMsb = bitlength - 1;
   uint64_t *carryBitCompArr;
   uint8_t *carryBitCompAns;
@@ -344,7 +349,7 @@ void funcTruncateTwoPowerRing(int curParty, sci::NetIO *curio,
         carryBitCompArr[i] = (sci::all1Mask(consSF)) - carryBitCompArr[i];
       }
     }
-    MillionaireProtocol millionaire(curParty, curio, curotpack);
+    MillionaireProtocol millionaire(curParty, curiopack, curotpack);
     millionaire.compare(carryBitCompAns, carryBitCompArr, size, consSF);
   }
 
@@ -460,10 +465,9 @@ void funcTruncateTwoPowerRing(int curParty, sci::NetIO *curio,
 void funcTruncateTwoPowerRingWrapper(int size, intType *inp, intType *outp,
                                      int consSF, uint8_t *msbShare,
                                      bool doCarryBitCalculation = true) {
-  assert(size % 8 == 0);
 #ifdef MULTITHREADED_TRUNC
   std::thread truncThreads[num_threads];
-  int chunk_size = (size / (8 * num_threads)) * 8;
+  int chunk_size = size / num_threads;
   for (int i = 0; i < num_threads; i++) {
     int offset = i * chunk_size;
     int curSize;
@@ -479,7 +483,7 @@ void funcTruncateTwoPowerRingWrapper(int size, intType *inp, intType *outp,
     if (msbShare != nullptr)
       msbShareArg = msbShareArg + offset;
     truncThreads[i] = std::thread(
-        funcTruncateTwoPowerRing, curParty, ioArr[i], otpackArr[i],
+        funcTruncateTwoPowerRing, curParty, iopackArr[i], otpackArr[i],
         otInstanceArr[i], reluArr[i], prgInstanceArr[i], curSize, inp + offset,
         outp + offset, consSF, msbShareArg, doCarryBitCalculation);
   }
@@ -487,9 +491,10 @@ void funcTruncateTwoPowerRingWrapper(int size, intType *inp, intType *outp,
     truncThreads[i].join();
   }
 #else
-  funcTruncateTwoPowerRing(
-      party, io, otpack, iknpOT, kkot, relu, prg128Instance, // Global variables
-      size, inp, outp, consSF, msbShare, doCarryBitCalculation);
+  funcTruncateTwoPowerRing(party, iopack, otpack, iknpOT, kkot, relu,
+                           prg128Instance, // Global variables
+                           size, inp, outp, consSF, msbShare,
+                           doCarryBitCalculation);
 #endif
 }
 
@@ -501,16 +506,15 @@ void funcTruncateTwoPowerRingWrapper(int size, intType *inp, intType *outp,
         - The last COT being performed is also not using packing for bitlenth !=
    32/64.
 */
-void funcAvgPoolTwoPowerRing(int curParty, sci::NetIO *curio,
-                             sci::OTPack<sci::NetIO> *curotpack,
+void funcAvgPoolTwoPowerRing(int curParty, sci::IOPack *curiopack,
+                             sci::OTPack *curotpack,
                              sci::IKNP<sci::NetIO> *curiknp,
                              sci::KKOT<sci::NetIO> *curkkot,
-                             ReLUProtocol<sci::NetIO, intType> *curReluImpl,
+                             ReLUProtocol<intType> *curReluImpl,
                              sci::PRG128 *curPrgInstance, int size,
                              intType *inp, intType *outp, intType divisor) {
   assert(inp != outp &&
          "Assumption is there is a separate array for input and output");
-  assert(size % 8 == 0 && "pad size to multiple of 8 and pass");
   assert(divisor > 0 && "working with positive divisor");
   static const int rightShiftForMsb = bitlength - 1;
   assert(sci::all1Mask(bitlength) >
@@ -707,7 +711,7 @@ void funcAvgPoolTwoPowerRing(int curParty, sci::NetIO *curio,
     }
   }
 
-  MillionaireProtocol millionaire(curParty, curio, curotpack);
+  MillionaireProtocol millionaire(curParty, curiopack, curotpack);
   millionaire.compare(carryBit, radixCompValues, totalComp, bitsForA - 1);
   for (int i = 0; i < totalComp; i++) {
     localShareA_all3_drelu[i] = (localShareA_all3_drelu[i] + carryBit[i]) & 1;
@@ -769,10 +773,9 @@ void funcAvgPoolTwoPowerRing(int curParty, sci::NetIO *curio,
 
 void funcAvgPoolTwoPowerRingWrapper(int size, intType *inp, intType *outp,
                                     intType divisor) {
-  assert(size % 8 == 0);
 #ifdef MULTITHREADED_TRUNC
   std::thread truncThreads[num_threads];
-  int chunk_size = (size / (8 * num_threads)) * 8;
+  int chunk_size = size / num_threads;
   for (int i = 0; i < num_threads; i++) {
     int offset = i * chunk_size;
     int curSize;
@@ -785,7 +788,7 @@ void funcAvgPoolTwoPowerRingWrapper(int size, intType *inp, intType *outp,
     if (i & 1)
       curParty = 3 - curParty;
     truncThreads[i] = std::thread(
-        funcAvgPoolTwoPowerRing, curParty, ioArr[i], otpackArr[i],
+        funcAvgPoolTwoPowerRing, curParty, iopackArr[i], otpackArr[i],
         otInstanceArr[i], kkotInstanceArr[i], reluArr[i], prgInstanceArr[i],
         curSize, inp + offset, outp + offset, divisor);
   }
@@ -793,8 +796,8 @@ void funcAvgPoolTwoPowerRingWrapper(int size, intType *inp, intType *outp,
     truncThreads[i].join();
   }
 #else
-  funcAvgPoolTwoPowerRing(party, io, otpack, iknpOT, kkot, relu, prg128Instance,
-                          size, inp, outp, divisor);
+  funcAvgPoolTwoPowerRing(party, iopack, otpack, iknpOT, kkot, relu,
+                          prg128Instance, size, inp, outp, divisor);
 #endif
 }
 
@@ -808,16 +811,14 @@ void funcAvgPoolTwoPowerRingWrapper(int size, intType *inp, intType *outp,
    with no packing.
 */
 template <typename intType>
-void funcFieldDiv(int curParty, sci::NetIO *curio,
-                  sci::OTPack<sci::NetIO> *curotpack,
+void funcFieldDiv(int curParty, sci::IOPack *curiopack, sci::OTPack *curotpack,
                   sci::IKNP<sci::NetIO> *curiknp,
                   sci::KKOT<sci::NetIO> *curkkot,
-                  ReLUProtocol<sci::NetIO, intType> *curReluImpl,
+                  ReLUProtocol<intType> *curReluImpl,
                   sci::PRG128 *curPrgInstance, int size, intType *inp,
                   intType *outp, intType divisor, uint8_t *msbShare) {
   assert(inp != outp &&
          "Assumption is there is a separate array for input and output");
-  assert(size % 8 == 0 && "pad size to multiple of 8 and pass");
   assert((divisor > 0) && (divisor < prime_mod) &&
          "working with positive divisor");
   assert(prime_mod > 6 * divisor);
@@ -1015,7 +1016,7 @@ void funcFieldDiv(int curParty, sci::NetIO *curio,
     }
   }
 
-  MillionaireProtocol millionaire(curParty, curio, curotpack);
+  MillionaireProtocol millionaire(curParty, curiopack, curotpack);
   millionaire.compare(carryBit, radixCompValues, totalComp, bitsForA - 1);
   for (int i = 0; i < totalComp; i++) {
     localShareA_all3_drelu[i] = (localShareA_all3_drelu[i] + carryBit[i]) & 1;
@@ -1080,10 +1081,9 @@ void funcFieldDiv(int curParty, sci::NetIO *curio,
 template <typename intType>
 void funcFieldDivWrapper(int size, intType *inp, intType *outp, intType divisor,
                          uint8_t *msbShare) {
-  assert(size % 8 == 0);
 #ifdef MULTITHREADED_TRUNC
   std::thread truncThreads[num_threads];
-  int chunk_size = (size / (8 * num_threads)) * 8;
+  int chunk_size = size / num_threads;
   for (int i = 0; i < num_threads; i++) {
     int offset = i * chunk_size;
     int curSize;
@@ -1099,7 +1099,7 @@ void funcFieldDivWrapper(int size, intType *inp, intType *outp, intType divisor,
     if (msbShare != nullptr)
       msbShareArg = msbShareArg + offset;
     truncThreads[i] = std::thread(
-        funcFieldDiv<intType>, curParty, ioArr[i], otpackArr[i],
+        funcFieldDiv<intType>, curParty, iopackArr[i], otpackArr[i],
         otInstanceArr[i], kkotInstanceArr[i], reluArr[i], prgInstanceArr[i],
         curSize, inp + offset, outp + offset, divisor, msbShareArg);
   }
@@ -1107,8 +1107,8 @@ void funcFieldDivWrapper(int size, intType *inp, intType *outp, intType divisor,
     truncThreads[i].join();
   }
 #else
-  funcFieldDiv<intType>(party, io, otpack, iknpOT, kkot, relu, prg128Instance,
-                        size, inp, outp, divisor, msbShare);
+  funcFieldDiv<intType>(party, iopack, otpack, iknpOT, kkot, relu,
+                        prg128Instance, size, inp, outp, divisor, msbShare);
 #endif
 }
 

@@ -25,26 +25,28 @@ SOFTWARE.
 #include "OT/emp-ot.h"
 #include "utils/emp-tool.h"
 #include <cmath>
+#include <omp.h>
 
 #define MILL_PARAM 4
+#define WAN_EXEC
 
-template <typename IO> class MillionaireProtocol {
+class MillionaireProtocol {
 public:
-  IO *io = nullptr;
-  sci::OTPack<IO> *otpack;
-  TripleGenerator<IO> *triple_gen;
+  sci::IOPack *iopack;
+  sci::OTPack *otpack;
+  TripleGenerator *triple_gen;
   int party;
   int l, r, log_alpha, beta, beta_pow;
   int num_digits, num_triples_corr, num_triples_std, log_num_digits;
   int num_triples;
   uint8_t mask_beta, mask_r;
 
-  MillionaireProtocol(int party, IO *io, sci::OTPack<IO> *otpack,
+  MillionaireProtocol(int party, sci::IOPack *iopack, sci::OTPack *otpack,
                       int bitlength = 32, int radix_base = MILL_PARAM) {
     this->party = party;
-    this->io = io;
+    this->iopack = iopack;
     this->otpack = otpack;
-    this->triple_gen = new TripleGenerator<IO>(party, io, otpack);
+    this->triple_gen = new TripleGenerator(party, iopack, otpack);
     configure(bitlength, radix_base);
   }
 
@@ -211,24 +213,6 @@ public:
                                      num_cmps * (num_digits - 2), 2);
         otpack->kkot[r - 1]->send(
             leaf_ot_messages + num_cmps * (num_digits - 1), num_cmps, 2);
-        /*
-                            if(r == 2){
-                                    otpack->kkot_4->send(leaf_ot_messages+num_cmps*(num_digits-1),
-           num_cmps, 2);
-                            }
-                            else if(r == 3){
-                                    otpack->kkot_8->send(leaf_ot_messages+num_cmps*(num_digits-1),
-           num_cmps, 2);
-                            }
-                            else if(r == 4){
-                                    otpack->kkot_16->send(leaf_ot_messages+num_cmps*(num_digits-1),
-           num_cmps, 2);
-                            }
-                            else{
-                                    throw std::invalid_argument("Not yet
-           implemented!");
-                            }
-        */
       } else {
         // otpack->kkot_beta->send(leaf_ot_messages+num_cmps,
         // num_cmps*(num_digits-1), 2);
@@ -267,27 +251,6 @@ public:
         otpack->kkot[r - 1]->recv(leaf_res_cmp + num_cmps * (num_digits - 1),
                                   digits + num_cmps * (num_digits - 1),
                                   num_cmps, 2);
-        /*
-                            if(r == 2){
-                                    otpack->kkot_4->recv(leaf_res_cmp+num_cmps*(num_digits-1),
-                                                    digits+num_cmps*(num_digits-1),
-           num_cmps, 2);
-                            }
-                            else if(r == 3){
-                                    otpack->kkot_8->recv(leaf_res_cmp+num_cmps*(num_digits-1),
-                                                    digits+num_cmps*(num_digits-1),
-           num_cmps, 2);
-                            }
-                            else if(r == 4){
-                                    otpack->kkot_16->recv(leaf_res_cmp+num_cmps*(num_digits-1),
-                                                    digits+num_cmps*(num_digits-1),
-           num_cmps, 2);
-                            }
-                            else{
-                                    throw std::invalid_argument("Not yet
-           implemented!");
-                            }
-        */
       } else {
         // otpack->kkot_beta->recv(leaf_res_cmp+num_cmps, digits+num_cmps,
         // num_cmps*(num_digits-1), 2);
@@ -424,25 +387,33 @@ public:
           ((num_triples_std + 2 * old_counter_corr) * num_cmps) / 8;
       int size_corr = (2 * (counter_corr - old_counter_corr) * num_cmps) / 8;
 
-      if (party == sci::ALICE) {
-        io->send_data(ei + offset_std, size_std);
-        io->send_data(ei + offset_corr, size_corr);
-        io->send_data(fi + offset_std, size_std);
-        io->send_data(fi + offset_corr, size_corr);
-        io->recv_data(e + offset_std, size_std);
-        io->recv_data(e + offset_corr, size_corr);
-        io->recv_data(f + offset_std, size_std);
-        io->recv_data(f + offset_corr, size_corr);
-      } else // party = sci::BOB
+#pragma omp parallel num_threads(2)
       {
-        io->recv_data(e + offset_std, size_std);
-        io->recv_data(e + offset_corr, size_corr);
-        io->recv_data(f + offset_std, size_std);
-        io->recv_data(f + offset_corr, size_corr);
-        io->send_data(ei + offset_std, size_std);
-        io->send_data(ei + offset_corr, size_corr);
-        io->send_data(fi + offset_std, size_std);
-        io->send_data(fi + offset_corr, size_corr);
+        if (omp_get_thread_num() == 1) {
+          if (party == sci::ALICE) {
+            iopack->io_rev->recv_data(e + offset_std, size_std);
+            iopack->io_rev->recv_data(e + offset_corr, size_corr);
+            iopack->io_rev->recv_data(f + offset_std, size_std);
+            iopack->io_rev->recv_data(f + offset_corr, size_corr);
+          } else { // party == sci::BOB
+            iopack->io_rev->send_data(ei + offset_std, size_std);
+            iopack->io_rev->send_data(ei + offset_corr, size_corr);
+            iopack->io_rev->send_data(fi + offset_std, size_std);
+            iopack->io_rev->send_data(fi + offset_corr, size_corr);
+          }
+        } else {
+          if (party == sci::ALICE) {
+            iopack->io->send_data(ei + offset_std, size_std);
+            iopack->io->send_data(ei + offset_corr, size_corr);
+            iopack->io->send_data(fi + offset_std, size_std);
+            iopack->io->send_data(fi + offset_corr, size_corr);
+          } else { // party == sci::BOB
+            iopack->io->recv_data(e + offset_std, size_std);
+            iopack->io->recv_data(e + offset_corr, size_corr);
+            iopack->io->recv_data(f + offset_std, size_std);
+            iopack->io->recv_data(f + offset_corr, size_corr);
+          }
+        }
       }
       for (int i = 0; i < size_std; i++) {
         e[i + offset_std] ^= ei[i + offset_std];

@@ -1436,6 +1436,7 @@ class IRBuilderCSF(IRBuilderAST):
             AST.Operators.CLIP,
             AST.Operators.TANH,
             AST.Operators.SIGMOID,
+            AST.Operators.HARDSIGMOID,
             AST.Operators.SQRT,
             AST.Operators.RSQRT,
             AST.Operators.ClearMemSecret,
@@ -1460,6 +1461,8 @@ class IRBuilderCSF(IRBuilderAST):
             funcName = "Tanh"
         elif node.op == AST.Operators.SIGMOID:
             funcName = "Sigmoid"
+        elif node.op == AST.Operators.HARDSIGMOID:
+            funcName = "HardSigmoid"
         elif node.op == AST.Operators.SQRT:
             funcName = "Sqrt"
         elif node.op == AST.Operators.RSQRT:
@@ -1503,7 +1506,11 @@ class IRBuilderCSF(IRBuilderAST):
 
         progExtraBefore = IR.Prog([])
         if Util.Config.disableTruncOpti:
-            if node.op in [AST.Operators.RELU, AST.Operators.CLIP]:
+            if node.op in [
+                AST.Operators.RELU,
+                AST.Operators.CLIP,
+                AST.Operators.HARDSIGMOID,
+            ]:
                 argsList[IR.Int(Util.Config.consSF, 32)] = "consSF"
                 argsList[IR.Bool(False)] = "doTruncation"
             if node.op in [
@@ -1521,7 +1528,11 @@ class IRBuilderCSF(IRBuilderAST):
                 argsList[IR.Int(self.scaleFac, 32)] = "sB"
         else:
             final_sf = self.scaleFacMapping[expr1.idf]
-            if node.op in [AST.Operators.RELU, AST.Operators.CLIP]:
+            if node.op in [
+                AST.Operators.RELU,
+                AST.Operators.CLIP,
+                AST.Operators.HARDSIGMOID,
+            ]:
                 argsList[IR.Int(final_sf - self.scaleFac, 32)] = "consSF"
                 if final_sf > self.scaleFac:
                     # If it can't tolerate one more mult operation, then scale down here

@@ -30,25 +30,24 @@ using namespace sci;
 
 int party = 0;
 int port = 32000;
-int num_rows = 1 << 10, num_cols = 1 << 6;
-int l = 32, b = 4;
+int num_rows = 35, num_cols = 1 << 6;
+int bitlength = 32, b = 4;
 int batch_size = 0;
 string address = "127.0.0.1";
 int num_threads = 1;
-int32_t bitlength = 32;
 
-sci::NetIO *ioArr[MAX_THREADS];
-sci::OTPack<sci::NetIO> *otpackArr[MAX_THREADS];
+IOPack *iopackArr[MAX_THREADS];
+OTPack *otpackArr[MAX_THREADS];
 
 void ring_maxpool_thread(int tid, uint64_t *z, uint64_t *x, int lnum_rows,
                          int lnum_cols) {
-  MaxPoolProtocol<NetIO, uint64_t> *maxpool_oracle;
+  MaxPoolProtocol<uint64_t> *maxpool_oracle;
   if (tid & 1) {
-    maxpool_oracle = new MaxPoolProtocol<NetIO, uint64_t>(
-        3 - party, RING, ioArr[tid], l, b, 0, otpackArr[tid]);
+    maxpool_oracle = new MaxPoolProtocol<uint64_t>(
+        3 - party, RING, iopackArr[tid], bitlength, b, 0, otpackArr[tid]);
   } else {
-    maxpool_oracle = new MaxPoolProtocol<NetIO, uint64_t>(
-        party, RING, ioArr[tid], l, b, 0, otpackArr[tid]);
+    maxpool_oracle = new MaxPoolProtocol<uint64_t>(party, RING, iopackArr[tid],
+                                                   bitlength, b, 0, otpackArr[tid]);
   }
   if (batch_size) {
     for (int j = 0; j < lnum_rows; j += batch_size) {
@@ -75,7 +74,7 @@ int main(int argc, char **argv) {
   ArgMapping amap;
   amap.arg("r", party, "Role of party: ALICE = 1; BOB = 2");
   amap.arg("p", port, "Port Number");
-  amap.arg("l", l, "Bitlength of inputs");
+  amap.arg("l", bitlength, "Bitlength of inputs");
   amap.arg("b", b, "Radix base");
   amap.arg("Nr", num_rows, "Number of rows");
   amap.arg("Nc", num_cols, "Number of cols");
@@ -86,10 +85,9 @@ int main(int argc, char **argv) {
   if (batch_size > 0) {
     batch_size = 1 << batch_size;
   }
-  num_rows = ((num_rows + 7) / 8) * 8;
 
   cout << "========================================================" << endl;
-  cout << "Role: " << party << " - Bitlength: " << l << " - Radix Base: " << b
+  cout << "Role: " << party << " - Bitlength: " << bitlength << " - Radix Base: " << b
        << "\n#rows: " << num_rows << " - #cols: " << num_cols
        << " - Batch Size: " << batch_size << " - # Threads: " << num_threads
        << endl;
@@ -98,10 +96,10 @@ int main(int argc, char **argv) {
   /************ Generate Test Data ************/
   /********************************************/
   uint64_t mask_l;
-  if (l == 64)
+  if (bitlength == 64)
     mask_l = -1;
   else
-    mask_l = (1ULL << l) - 1;
+    mask_l = (1ULL << bitlength) - 1;
   PRG128 prg;
   uint64_t *x = new uint64_t[num_rows * num_cols];
   uint64_t *z = new uint64_t[num_rows];
@@ -114,11 +112,11 @@ int main(int argc, char **argv) {
   /********************************************/
 
   for (int i = 0; i < num_threads; i++) {
-    ioArr[i] = new NetIO(party == 1 ? nullptr : address.c_str(), port + i);
+    iopackArr[i] = new IOPack(party, port + i, address);
     if (i & 1) {
-      otpackArr[i] = new OTPack<NetIO>(ioArr[i], 3 - party);
+      otpackArr[i] = new OTPack(iopackArr[i], 3 - party);
     } else {
-      otpackArr[i] = new OTPack<NetIO>(ioArr[i], party);
+      otpackArr[i] = new OTPack(iopackArr[i], party);
     }
   }
   std::cout << "All Base OTs Done" << std::endl;
@@ -128,7 +126,7 @@ int main(int argc, char **argv) {
 
   auto start = clock_start();
   std::thread maxpool_threads[num_threads];
-  int chunk_size = (num_rows / (8 * num_threads)) * 8;
+  int chunk_size = num_rows / num_threads;
   for (int i = 0; i < num_threads; ++i) {
     int offset = i * chunk_size;
     int lnum_rows;
@@ -151,15 +149,15 @@ int main(int argc, char **argv) {
 
   switch (party) {
   case sci::ALICE: {
-    ioArr[0]->send_data(x, sizeof(uint64_t) * num_rows * num_cols);
-    ioArr[0]->send_data(z, sizeof(uint64_t) * num_rows);
+    iopackArr[0]->io->send_data(x, sizeof(uint64_t) * num_rows * num_cols);
+    iopackArr[0]->io->send_data(z, sizeof(uint64_t) * num_rows);
     break;
   }
   case sci::BOB: {
     uint64_t *xi = new uint64_t[num_rows * num_cols];
     uint64_t *zi = new uint64_t[num_rows];
-    ioArr[0]->recv_data(xi, sizeof(uint64_t) * num_rows * num_cols);
-    ioArr[0]->recv_data(zi, sizeof(uint64_t) * num_rows);
+    iopackArr[0]->io->recv_data(xi, sizeof(uint64_t) * num_rows * num_cols);
+    iopackArr[0]->io->recv_data(zi, sizeof(uint64_t) * num_rows);
 
     for (int i = 0; i < num_rows; i++) {
       zi[i] = (zi[i] + z[i]) & mask_l;
@@ -170,7 +168,7 @@ int main(int argc, char **argv) {
       uint64_t maxpool_output = xi[i * num_cols];
       for (int c = 1; c < num_cols; c++) {
         maxpool_output = ((maxpool_output - xi[i * num_cols + c]) & mask_l) >=
-                                 (1ULL << (l - 1))
+                                 (1ULL << (bitlength - 1))
                              ? xi[i * num_cols + c]
                              : maxpool_output;
       }
@@ -187,14 +185,14 @@ int main(int argc, char **argv) {
 
   cout << "Number of Maxpool rows (num_cols=" << num_cols << ")/s:\t"
        << (double(num_rows) / t) * 1e6 << std::endl;
-  cout << "Maxpool Time (l=" << l << "; b=" << b << ")\t" << t << " mus"
+  cout << "Maxpool Time (bitlength=" << bitlength << "; b=" << b << ")\t" << t << " mus"
        << endl;
 
   /******************* Cleanup ****************/
   /********************************************/
 
   for (int i = 0; i < num_threads; i++) {
-    delete ioArr[i];
+    delete iopackArr[i];
     delete otpackArr[i];
   }
 

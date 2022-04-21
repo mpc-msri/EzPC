@@ -25,13 +25,13 @@ SOFTWARE.
 #include "NonLinear/relu-field.h"
 #include "NonLinear/relu-ring.h"
 
-template <typename IO, typename type> class MaxPoolProtocol {
+template <typename type> class MaxPoolProtocol {
 public:
-  IO *io = nullptr;
-  sci::OTPack<IO> *otpack = nullptr;
-  TripleGenerator<IO> *triple_gen = nullptr;
-  ReLURingProtocol<IO, type> *relu_oracle = nullptr;
-  ReLUFieldProtocol<IO, type> *relu_field_oracle = nullptr;
+  sci::IOPack *iopack;
+  sci::OTPack *otpack;
+  TripleGenerator *triple_gen;
+  ReLURingProtocol<type> *relu_oracle;
+  ReLUFieldProtocol<type> *relu_field_oracle;
   int party;
   int algeb_str;
   int l, b;
@@ -40,37 +40,31 @@ public:
   type mask_l;
 
   // Constructor
-  MaxPoolProtocol(int party, int algeb_str, IO *io, int l, int b,
-                  uint64_t prime, sci::OTPack<IO> *otpack,
-                  ReLUProtocol<IO, type> *relu_obj = nullptr) {
+  MaxPoolProtocol(int party, int algeb_str, sci::IOPack *iopack, int l, int b,
+                  uint64_t prime, sci::OTPack *otpack) {
     this->party = party;
     this->algeb_str = algeb_str;
-    this->io = io;
+    this->iopack = iopack;
     this->l = l;
     this->b = b;
     this->prime_mod = prime;
     this->otpack = otpack;
     if (algeb_str == RING) {
-      if (relu_obj == nullptr) {
-        this->relu_oracle =
-            new ReLURingProtocol<IO, type>(party, RING, io, l, b, otpack);
-      } else {
-        this->relu_oracle = (ReLURingProtocol<IO, type> *)relu_obj;
-      }
+      this->relu_oracle =
+          new ReLURingProtocol<type>(party, RING, iopack, l, b, otpack);
     } else {
-      if (relu_obj == nullptr) {
-        this->relu_field_oracle = new ReLUFieldProtocol<IO, type>(
-            party, FIELD, io, l, b, this->prime_mod, otpack);
-      } else {
-        this->relu_field_oracle = (ReLUFieldProtocol<IO, type> *)relu_obj;
-      }
+      this->relu_field_oracle = new ReLUFieldProtocol<type>(
+          party, FIELD, iopack, l, b, this->prime_mod, otpack);
     }
     configure();
   }
 
   // Destructor
   ~MaxPoolProtocol() {
-    // Empty
+    if (algeb_str == RING)
+      delete relu_oracle;
+    else
+      delete relu_field_oracle;
   }
 
   void configure() {
@@ -129,13 +123,13 @@ public:
                        type *maxiIdx, bool computeMaxIdx = false) {
     type *otherPartyData = new type[rows * cols];
     if (party == 1) {
-      io->send_data(inpArr, sizeof(type) * rows * cols);
+      iopack->io->send_data(inpArr, sizeof(type) * rows * cols);
       for (int i = 0; i < rows; i++) {
         maxi[i] = 0;
         maxiIdx[i] = 0;
       }
     } else {
-      io->recv_data(otherPartyData, sizeof(type) * rows * cols);
+      iopack->io->recv_data(otherPartyData, sizeof(type) * rows * cols);
       if (this->algeb_str == RING) {
         for (int i = 0; i < rows * cols; i++) {
           otherPartyData[i] = otherPartyData[i] + inpArr[i];

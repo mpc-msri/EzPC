@@ -1,6 +1,7 @@
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 include(cmake/source_of_randomness.cmake)
 
+set(OPENSSL_ROOT_DIR "/usr/local/opt/openssl")
 find_package(OpenSSL REQUIRED)
 find_package(GMP REQUIRED)
 

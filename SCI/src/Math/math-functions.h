@@ -30,14 +30,14 @@ SOFTWARE.
 class MathFunctions {
 public:
   int party;
-  sci::NetIO *io;
-  sci::OTPack<sci::NetIO> *otpack;
+  sci::IOPack *iopack;
+  sci::OTPack *otpack;
   AuxProtocols *aux;
   XTProtocol *xt;
   Truncation *trunc;
   LinearOT *mult;
 
-  MathFunctions(int party, sci::NetIO *io, sci::OTPack<sci::NetIO> *otpack);
+  MathFunctions(int party, sci::IOPack *iopack, sci::OTPack *otpack);
 
   ~MathFunctions();
 
@@ -60,9 +60,6 @@ public:
            // scales
            int32_t s_nm, int32_t s_dn, int32_t s_out, bool signed_nm = true,
            bool compute_msnzb = false);
-
-  void taylor_series_exp(int32_t dim, uint64_t *x, uint64_t *y, int32_t bw_x,
-                         int32_t bw_y, int32_t s_x, int32_t s_y);
 
   // Assumes x is always negative
   void lookup_table_exp(int32_t dim, uint64_t *x, uint64_t *y, int32_t bw_x,

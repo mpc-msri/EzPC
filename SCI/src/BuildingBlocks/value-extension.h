@@ -27,17 +27,15 @@ SOFTWARE.
 
 class XTProtocol {
 public:
-  sci::NetIO *io = nullptr;
-  sci::OTPack<sci::NetIO> *otpack;
-  TripleGenerator<sci::NetIO> *triple_gen = nullptr;
-  MillionaireProtocol<sci::NetIO> *millionaire = nullptr;
-  AuxProtocols *aux = nullptr;
-  bool del_aux = false;
+  sci::IOPack *iopack;
+  sci::OTPack *otpack;
+  TripleGenerator *triple_gen;
+  MillionaireProtocol *millionaire;
+  AuxProtocols *aux;
   int party;
 
   // Constructor
-  XTProtocol(int party, sci::NetIO *io, sci::OTPack<sci::NetIO> *otpack,
-             AuxProtocols *auxp = nullptr);
+  XTProtocol(int party, sci::IOPack *iopack, sci::OTPack *otpack);
 
   // Destructor
   ~XTProtocol();

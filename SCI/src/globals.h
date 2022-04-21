@@ -22,6 +22,9 @@ SOFTWARE.
 #ifndef GLOBALS_H___
 #define GLOBALS_H___
 
+#include "BuildingBlocks/aux-protocols.h"
+#include "BuildingBlocks/truncation.h"
+#include "Math/math-functions.h"
 #include "NonLinear/argmax.h"
 #include "NonLinear/maxpool.h"
 #include "NonLinear/relu-interface.h"
@@ -31,11 +34,8 @@ SOFTWARE.
 #include <cstdint>
 #include <thread>
 #ifdef SCI_OT
-#include "BuildingBlocks/aux-protocols.h"
-#include "BuildingBlocks/truncation.h"
 #include "LinearOT/linear-ot.h"
 #include "LinearOT/linear-uniform.h"
-#include "Math/math-functions.h"
 #endif
 // Additional Headers for Athos
 #ifdef SCI_HE
@@ -49,18 +49,19 @@ SOFTWARE.
 #define MAX_THREADS 4
 
 extern sci::NetIO *io;
-extern sci::OTPack<sci::NetIO> *otpack;
+extern sci::IOPack *iopack;
+extern sci::OTPack *otpack;
 
-#ifdef SCI_OT
-extern LinearOT *mult;
 extern AuxProtocols *aux;
 extern Truncation *truncation;
 extern XTProtocol *xt;
-extern MathFunctions *math;
+#ifdef SCI_OT
+extern LinearOT *mult;
 #endif
-extern ArgMaxProtocol<sci::NetIO, intType> *argmax;
-extern ReLUProtocol<sci::NetIO, intType> *relu;
-extern MaxPoolProtocol<sci::NetIO, intType> *maxpool;
+extern MathFunctions *math;
+extern ArgMaxProtocol<intType> *argmax;
+extern ReLUProtocol<intType> *relu;
+extern MaxPoolProtocol<intType> *maxpool;
 // Additional classes for Athos
 #ifdef SCI_OT
 extern MatMulUniform<sci::NetIO, intType, sci::IKNP<sci::NetIO>> *multUniform;
@@ -76,16 +77,17 @@ extern sci::KKOT<sci::NetIO> *kkot;
 extern sci::PRG128 *prg128Instance;
 
 extern sci::NetIO *ioArr[MAX_THREADS];
-extern sci::OTPack<sci::NetIO> *otpackArr[MAX_THREADS];
+extern sci::IOPack *iopackArr[MAX_THREADS];
+extern sci::OTPack *otpackArr[MAX_THREADS];
+extern MathFunctions *mathArr[MAX_THREADS];
 #ifdef SCI_OT
 extern LinearOT *multArr[MAX_THREADS];
+#endif
 extern AuxProtocols *auxArr[MAX_THREADS];
 extern Truncation *truncationArr[MAX_THREADS];
 extern XTProtocol *xtArr[MAX_THREADS];
-extern MathFunctions *mathArr[MAX_THREADS];
-#endif
-extern ReLUProtocol<sci::NetIO, intType> *reluArr[MAX_THREADS];
-extern MaxPoolProtocol<sci::NetIO, intType> *maxpoolArr[MAX_THREADS];
+extern ReLUProtocol<intType> *reluArr[MAX_THREADS];
+extern MaxPoolProtocol<intType> *maxpoolArr[MAX_THREADS];
 // Additional classes for Athos
 #ifdef SCI_OT
 extern MatMulUniform<sci::NetIO, intType, sci::IKNP<sci::NetIO>>

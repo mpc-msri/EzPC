@@ -35,6 +35,9 @@ extern void Relu(int32_pl s1, int64_al[s1] inArr, int64_al[s1] outArr, int32_pl 
 extern void Clip(int32_pl s1, int32_pl alpha, int32_pl beta, int64_al[s1] inArr, int64_al[s1] outArr, int32_pl sf, bool_pl doTruncation);
 
 (**************************)
+extern void HardSigmoid(int32_pl s1, int64_al[s1] inArr, int64_al[s1] outArr, int32_pl sf, bool_pl doTruncation);
+
+(**************************)
 extern void Floor(int32_pl s1, int64_al[s1] inArr, int64_al[s1] outArr, int32_pl sf);
 
 (**************************)

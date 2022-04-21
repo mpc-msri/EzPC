@@ -28,13 +28,13 @@ using namespace std;
 
 int party, port = 32000;
 string address = "127.0.0.1";
-NetIO *io;
-OTPack<NetIO> *otpack;
+IOPack *iopack;
+OTPack *otpack;
 LinearOT *prod;
 
-int dim1 = 100;
-int dim2 = 1000; // 53;
-int dim3 = 100;
+int dim1 = 1;
+int dim2 = 100;
+int dim3 = 35;
 int bwA = 8;
 int bwB = 8;
 int bwC = bwA + bwB;
@@ -62,7 +62,8 @@ void test_matrix_multiplication(uint64_t *inA, uint64_t *inB,
     prod->aux->MSB(inA, msbA, dim1 * dim2, bwA);
     prod->aux->MSB(inB, msbB, dim2 * dim3, bwB);
   }
-  uint64_t comm_start = io->counter;
+  uint64_t num_rounds = iopack->get_rounds();
+  uint64_t comm_start = iopack->get_comm();
   prod->matrix_multiplication(dim1, dim2, dim3, inA, inB, outC, bwA, bwB, bwC,
                               signed_arithmetic, signed_B, ::accumulate, mode,
                               msbA, msbB);
@@ -70,21 +71,23 @@ void test_matrix_multiplication(uint64_t *inA, uint64_t *inB,
     delete[] msbA;
     delete[] msbB;
   }
-  uint64_t comm_end = io->counter;
+  uint64_t comm_end = iopack->get_comm();
   cout << "Bytes Sent: " << (comm_end - comm_start) << endl;
+  num_rounds = iopack->get_rounds() - num_rounds;
+  cout << "Num rounds: " << num_rounds << endl;
   STOP_TIMER("Total time for matmul");
 
   if (party == ALICE) {
-    io->send_data(inA, dim1 * dim2 * sizeof(uint64_t));
-    io->send_data(inB, dim2 * dim3 * sizeof(uint64_t));
-    io->send_data(outC, dim * sizeof(uint64_t));
+    iopack->io->send_data(inA, dim1 * dim2 * sizeof(uint64_t));
+    iopack->io->send_data(inB, dim2 * dim3 * sizeof(uint64_t));
+    iopack->io->send_data(outC, dim * sizeof(uint64_t));
   } else { // party == BOB
     uint64_t *inA0 = new uint64_t[dim1 * dim2];
     uint64_t *inB0 = new uint64_t[dim2 * dim3];
     uint64_t *outC0 = new uint64_t[dim];
-    io->recv_data(inA0, dim1 * dim2 * sizeof(uint64_t));
-    io->recv_data(inB0, dim2 * dim3 * sizeof(uint64_t));
-    io->recv_data(outC0, dim * sizeof(uint64_t));
+    iopack->io->recv_data(inA0, dim1 * dim2 * sizeof(uint64_t));
+    iopack->io->recv_data(inB0, dim2 * dim3 * sizeof(uint64_t));
+    iopack->io->recv_data(outC0, dim * sizeof(uint64_t));
 
     int extra_bits = (::accumulate ? ceil(log2(dim2)) : 0);
     uint64_t *res = new uint64_t[dim];
@@ -155,13 +158,14 @@ int main(int argc, char **argv) {
   amap.arg("r", party, "Role of party: ALICE = 1; BOB = 2");
   amap.arg("p", port, "Port Number");
   amap.arg("ip", address, "IP Address of server (ALICE)");
+  amap.arg("m", precomputed_MSBs, "MSB_to_Wrap Optimization?");
+  amap.arg("a", ::accumulate, "Accumulate?");
 
   amap.parse(argc, argv);
 
-  io = new NetIO(party == 1 ? nullptr : "127.0.0.1", port);
-  otpack = new OTPack<NetIO>(io, party);
-
-  prod = new LinearOT(party, io, otpack);
+  iopack = new IOPack(party, port, "127.0.0.1");
+  otpack = new OTPack(iopack, party);
+  prod = new LinearOT(party, iopack, otpack);
 
   PRG128 prg; //(fix_key);
 
@@ -178,6 +182,8 @@ int main(int argc, char **argv) {
     inB[i] &= maskB;
   }
 
+  cout << "Precomputed MSBs: " << precomputed_MSBs << endl;
+  cout << "Accumulate: " << ::accumulate << endl;
   mode = MultMode::None;
   cout << "Mode: None" << endl;
   test_matrix_multiplication(inA, inB, false);

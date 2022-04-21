@@ -2,6 +2,10 @@
 
 **Reference Papers:**  
 
+[SecFloat: Accurate Floating-Point meets Secure 2-Party Computation](https://eprint.iacr.org/2022/)  
+Deevashwer Rathee, Anwesh Bhattacharya, Rahul Sharma, Divya Gupta, Nishanth Chandran, Aseem Rastogi  
+*IEEE S&P 2022*
+
 [SIRNN: A Math Library for Secure RNN Inference](https://eprint.iacr.org/2021/459)  
 Deevashwer Rathee, Mayank Rathee, Rahul Kranti Kiran Goli, Divya Gupta, Rahul Sharma, Nishanth Chandran, Aseem Rastogi  
 *IEEE S&P 2021*
@@ -28,7 +32,7 @@ This repository has the following components:
 - **SIRNN**: an end-to-end framework for performing inference over quantized RNN models using semi-honest 2-party computation protocols.
 - **Porthos** (part of **CrypTFlow**): a semi-honest 3 party computation protocol which is geared towards TensorFlow-like applications.
 - **Aramis** (part of **CrypTFlow**): a novel technique that uses hardware with integrity guarantees to convert any semi-honest MPC protocol into an MPC protocol that provides malicious security.
-- **SCI** (part of **CrypTFlow2** and **SIRNN**): a semi-honest 2-party computation library for secure inference on deep neural networks.
+- **SCI** (part of **CrypTFlow2**, **SIRNN** and **SecFloat**): a semi-honest 2-party computation library for secure (fixed-point) inference on deep neural networks and secure floating-point computation.
 
 Each one of the above is independent and usable in their own right and more information can be found in the readme of each of the components. But together these combine to make **CrypTFlow** a powerful system for end-to-end secure inference of deep neural networks written in TensorFlow.
 
@@ -51,3 +55,5 @@ Wiki section of this repository provides coding practices and examples to get st
 
 ## Issues/Bugs
 For bugs and support, please create an issue on the issues page.
+
+

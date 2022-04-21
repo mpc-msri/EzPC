@@ -545,6 +545,9 @@ class InferType(ASTVisitor):
         elif node.op == AST.Operators.SIGMOID:
             assert isTensor(eType)
             node.type = copy.copy(eType)
+        elif node.op == AST.Operators.HARDSIGMOID:
+            assert isTensor(eType) and eType.dim >= 1
+            node.type = copy.copy(eType)
         elif node.op == AST.Operators.SQRT:
             assert isTensor(eType)
             node.type = copy.copy(eType)

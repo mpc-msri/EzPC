@@ -42,7 +42,14 @@ generateAndDiffCode () {
 			actualFileName="${fileNameWithExtn%.*}"
 			outputFullFileName=""$genDir"/"$actualFileName"0."$compiledCodeExtn""
 			expectedCodeFullFileName=""$precompiledCodeDir"/"$actualFileName"0."$compiledCodeExtn""
-			timeout $timeout ./ezpc.sh "$fullFileName" --o_prefix "$genDir"/"$actualFileName"
+			if [[ $baseFileName == random_* ]];
+			then
+				echo "Bitlen : 64"
+				timeout $timeout ./ezpc.sh "$fullFileName" --o_prefix "$genDir"/"$actualFileName" --bitlen 64
+			else
+				echo "Bitlen : 32"
+				timeout $timeout ./ezpc.sh "$fullFileName" --o_prefix "$genDir"/"$actualFileName" --bitlen 32
+			fi
 			exitCode=$?
 			if [ $exitCode -eq 0 ]; 
 			then 

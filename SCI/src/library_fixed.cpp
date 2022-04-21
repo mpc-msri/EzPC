@@ -26,36 +26,47 @@ SOFTWARE.
 using namespace std;
 using namespace sci;
 
+#define START_IDX 0
+#define print_vec(vec, bw, N)                                                  \
+  {                                                                            \
+    uint64_t* rec_vec = new uint64_t[N];                                       \
+    reconstruct(N, vec+START_IDX, rec_vec, bw);                                \
+    std::cout << #vec << "_pub:" << std::endl;                                 \
+    for (int i = 0; i < N; i++) {                                              \
+        std::cout << rec_vec[i] << " ";                                        \
+    }                                                                          \
+    std::cout << std::endl;                                                    \
+  }                                                                            \
+
 void initialize() {
   assert(num_threads <= MAX_THREADS);
 
   for (int i = 0; i < num_threads; i++) {
-    ioArr[i] =
-        new sci::NetIO(party == ALICE ? nullptr : address.c_str(), port + i);
+    iopackArr[i] = new sci::IOPack(party, port + i, address);
+    ioArr[i] = iopackArr[i]->io;
     if (i & 1) {
-      otpackArr[i] = new OTPack<NetIO>(ioArr[i], 3 - party);
+      otpackArr[i] = new OTPack(iopackArr[i], 3 - party);
     } else {
-      otpackArr[i] = new OTPack<NetIO>(ioArr[i], party);
+      otpackArr[i] = new OTPack(iopackArr[i], party);
     }
   }
   io = ioArr[0];
+  iopack = iopackArr[0];
   otpack = otpackArr[0];
 
   for (int i = 0; i < num_threads; i++) {
     if (i & 1) {
-      auxArr[i] = new AuxProtocols(3 - party, ioArr[i], otpackArr[i]);
-      truncationArr[i] =
-          new Truncation(3 - party, ioArr[i], otpackArr[i], auxArr[i]);
-      xtArr[i] = new XTProtocol(3 - party, ioArr[i], otpackArr[i], auxArr[i]);
-      multArr[i] = new LinearOT(3 - party, ioArr[i], otpackArr[i]);
-      mathArr[i] = new MathFunctions(3 - party, ioArr[i], otpackArr[i]);
+      auxArr[i] = new AuxProtocols(3 - party, iopackArr[i], otpackArr[i]);
+      truncationArr[i] = new Truncation(3 - party, iopackArr[i], otpackArr[i]);
+      xtArr[i] = new XTProtocol(3 - party, iopackArr[i], otpackArr[i]);
+      multArr[i] = new LinearOT(3 - party, iopackArr[i], otpackArr[i]);
+      mathArr[i] = new MathFunctions(3 - party, iopackArr[i], otpackArr[i]);
     } else {
-      auxArr[i] = new AuxProtocols(party, ioArr[i], otpackArr[i]);
-      truncationArr[i] =
-          new Truncation(party, ioArr[i], otpackArr[i], auxArr[i]);
-      xtArr[i] = new XTProtocol(party, ioArr[i], otpackArr[i], auxArr[i]);
-      multArr[i] = new LinearOT(party, ioArr[i], otpackArr[i]);
-      mathArr[i] = new MathFunctions(party, ioArr[i], otpackArr[i]);
+      auxArr[i] = new AuxProtocols(party, iopackArr[i], otpackArr[i]);
+      truncationArr[i] = new Truncation(party, iopackArr[i], otpackArr[i]);
+      xtArr[i] = new XTProtocol(party, iopackArr[i], otpackArr[i]);
+      multArr[i] = new LinearOT(party, iopackArr[i], otpackArr[i]);
+      mathArr[i] = new MathFunctions(party, iopackArr[i], otpackArr[i]);
     }
   }
   aux = auxArr[0];
@@ -65,10 +76,10 @@ void initialize() {
   math = mathArr[0];
 
   io->sync();
-  num_rounds = io->num_rounds;
+  num_rounds = iopack->get_rounds();
   start_time = std::chrono::high_resolution_clock::now();
   for (int i = 0; i < num_threads; i++) {
-    auto temp = ioArr[i]->counter;
+    auto temp = iopackArr[i]->get_comm();
     comm_threads[i] = temp;
   }
 }
@@ -80,7 +91,7 @@ void finalize() {
           .count();
   uint64_t totalComm = 0;
   for (int i = 0; i < num_threads; i++) {
-    auto temp = ioArr[i]->counter;
+    auto temp = iopackArr[i]->get_comm();
     totalComm += (temp - comm_threads[i]);
   }
   uint64_t totalCommClient;
@@ -91,7 +102,7 @@ void finalize() {
             << " milliseconds.\n";
   std::cout << "Total data sent = " << (totalComm / (1.0 * (1ULL << 20)))
             << " MiB." << std::endl;
-  std::cout << "Number of rounds = " << ioArr[0]->num_rounds - num_rounds
+  std::cout << "Number of rounds = " << iopack->get_rounds() - num_rounds
             << std::endl;
   if (party == SERVER) {
     io->recv_data(&totalCommClient, sizeof(uint64_t));
@@ -1048,7 +1059,7 @@ void ArgMax(uint64_t *A, int32_t I, int32_t J, int32_t bwA, int32_t bw_index,
   INIT_TIMER;
   INIT_ALL_IO_DATA_SENT;
 #endif
-  argmax = new ArgMaxProtocol<NetIO, uint64_t>(party, RING, io, bwA, MILL_PARAM,
+  argmax = new ArgMaxProtocol<uint64_t>(party, RING, iopack, bwA, MILL_PARAM,
                                                0, otpack);
 
   argmax->ArgMaxMPC(I * J, A, index, false, nullptr);
@@ -1076,7 +1087,7 @@ void MaxPool2D(uint64_t *A, int32_t I, int32_t J, int32_t bwA, int32_t bwB,
   INIT_ALL_IO_DATA_SENT;
 #endif
 
-  maxpool = new MaxPoolProtocol<NetIO, uint64_t>(party, RING, io, bwA,
+  maxpool = new MaxPoolProtocol<uint64_t>(party, RING, iopack, bwA,
                                                  MILL_PARAM, 0, otpack);
   uint64_t *B_temp = new uint64_t[I];
   maxpool->funcMaxMPC(I, J, A, B_temp, nullptr);
@@ -1282,9 +1293,9 @@ void Convolution(int32_t N, int32_t H, int32_t W, int32_t CIN, int32_t HF,
     for (int i = 0; i < N * HOUT * WOUT * COUTF * G; i++) {
       if (recC[i] != (correctC[i])) {
         pass = false;
+        std::cout << i << "\t" << int(recC[i]) << "\t" << int(correctC[i])
+                  << std::endl;
       }
-      std::cout << i << "\t" << int(recC[i]) << "\t" << int(correctC[i])
-                << std::endl;
     }
     if (pass == true)
       std::cout << GREEN << "Convolution Output Matches" << RESET << std::endl;
