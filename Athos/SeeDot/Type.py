@@ -281,6 +281,18 @@ class InferType(ASTVisitor):
 
         return node.type
 
+    def visitGather(self, node: AST.Gather, args=None):
+        node.expr.gamma = dict(node.gamma)
+        exprType = self.visit(node.expr)
+
+        assert isTensor(exprType) and exprType.dim > 0
+
+        node.type = Tensor(
+            node.shape, exprType.bitlen, exprType.isSecret, exprType.taint
+        )
+
+        return node.type
+
     def visitPool(self, node: AST.Pool, args=None):
         node.expr.gamma = dict(node.gamma)
         exprType = self.visit(node.expr)

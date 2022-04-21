@@ -42,6 +42,7 @@ OperatorsSymbolDict = {
     "CLIP": "clip",
     "RSQRT": "rsqrt",
     "Shape": "shape",
+    "Gather": "gather",
     "SIGMOID": "sigmoid",
     "SQRT": "sqrt",
     "SUB": "-",
@@ -72,6 +73,7 @@ class Operators(Enum):
     ElemWiseDiv = auto()
     Floor = auto()
     Shape = auto()
+    Gather = auto()
     Mean = auto()
     ClearMemSecret = auto()
     ClearMemPublic = auto()
@@ -245,6 +247,24 @@ class Reshape(ASTNode):
         self.expr = expr
         self.shape = shape
         self.order = order
+
+
+class Gather(ASTNode):
+    def __init__(self, expr: ASTNode, shape: list, axis: int, index: int):
+        if assertInputTypes:
+            assert isinstance(expr, ASTNode)
+            assert isinstance(axis, int)
+            assert isinstance(index, int)
+
+        super().__init__()
+        self.expr = expr
+        self.shape = shape
+        self.axis = axis
+        self.index = index
+
+        print(
+            f"Created AST.Gather node with shape={shape}, axis={axis} and index={index}"
+        )
 
 
 # expr : ASTNode

@@ -735,57 +735,57 @@ void ArgMax(int32_t s1, int32_t s2, intType *inArr, intType *outArr) {
 #endif
 }
 
-void Min(int32_t size, intType *inArr, intType alpha, intType *outArr, int sf, bool doTruncation) {
-  intType *tempIn = new intType[size] ;
-  intType *tempOut = new intType[size] ;
-  for (int i = 0 ; i < size ; i++) {
-    if (party == SERVER)
-      tempIn[i] = alpha - inArr[i] ;
-    else
-      tempIn[i] = -inArr[i] ;
-  }
+// void Min(int32_t size, intType *inArr, intType alpha, intType *outArr, int sf, bool doTruncation) {
+//   intType *tempIn = new intType[size] ;
+//   intType *tempOut = new intType[size] ;
+//   for (int i = 0 ; i < size ; i++) {
+//     if (party == SERVER)
+//       tempIn[i] = alpha - inArr[i] ;
+//     else
+//       tempIn[i] = -inArr[i] ;
+//   }
   
-  Relu(size, tempIn, tempOut, sf, doTruncation) ;
-  for (int i = 0 ; i < size ; i++) {
-    if (party == SERVER)
-      outArr[i] = alpha - tempOut[i] ;
-    else
-      outArr[i] = -tempOut[i] ;
-  }
+//   Relu(size, tempIn, tempOut, sf, doTruncation) ;
+//   for (int i = 0 ; i < size ; i++) {
+//     if (party == SERVER)
+//       outArr[i] = alpha - tempOut[i] ;
+//     else
+//       outArr[i] = -tempOut[i] ;
+//   }
 
-  delete[] tempIn ;
-  delete[] tempOut ;
-}
+//   delete[] tempIn ;
+//   delete[] tempOut ;
+// }
 
-void Max(int32_t size, intType *inArr, intType alpha, intType *outArr, int sf, bool doTruncation) {
-  intType *tempIn = new intType[size] ;
-  intType *tempOut = new intType[size] ;
-  for (int i = 0 ; i < size ; i++) {
-    if (party == SERVER)
-      tempIn[i] = inArr[i] - alpha ;
-    else
-      tempIn[i] = inArr[i] ;
-  }
+// void Max(int32_t size, intType *inArr, intType alpha, intType *outArr, int sf, bool doTruncation) {
+//   intType *tempIn = new intType[size] ;
+//   intType *tempOut = new intType[size] ;
+//   for (int i = 0 ; i < size ; i++) {
+//     if (party == SERVER)
+//       tempIn[i] = inArr[i] - alpha ;
+//     else
+//       tempIn[i] = inArr[i] ;
+//   }
   
-  Relu(size, tempIn, tempOut, sf, doTruncation) ;
-  for (int i = 0 ; i < size ; i++) {
-    if (party == SERVER)
-      outArr[i] = tempOut[i] + alpha ;
-    else
-      outArr[i] = tempOut[i] ;
-  }
+//   Relu(size, tempIn, tempOut, sf, doTruncation) ;
+//   for (int i = 0 ; i < size ; i++) {
+//     if (party == SERVER)
+//       outArr[i] = tempOut[i] + alpha ;
+//     else
+//       outArr[i] = tempOut[i] ;
+//   }
 
-  delete[] tempIn ;
-  delete[] tempOut ;
-}
+//   delete[] tempIn ;
+//   delete[] tempOut ;
+// }
 
-void Clip(int32_t size, int64_t alpha, int64_t beta, intType *inArr, intType *outArr, int sf, bool doTruncation) {
-  intType *maxIn = new intType[size] ;
-  Max(size, inArr, alpha, maxIn, sf, doTruncation) ;
-  Min(size, maxIn, beta, outArr, sf, doTruncation) ;
+// void Clip(int32_t size, int64_t alpha, int64_t beta, intType *inArr, intType *outArr, int sf, bool doTruncation) {
+//   intType *maxIn = new intType[size] ;
+//   Max(size, inArr, alpha, maxIn, sf, doTruncation) ;
+//   Min(size, maxIn, beta, outArr, sf, doTruncation) ;
 
-  delete[] maxIn ;
-}
+//   delete[] maxIn ;
+// }
 
 void Relu(int32_t size, intType *inArr, intType *outArr, int sf,
           bool doTruncation) {

@@ -269,6 +269,8 @@ def update_program_with_new_node(
 
 class ONNXNodesAST:
     def Input(node, value_info, node_name_to_out_var_dict):
+        # print(f"Input --> {node.shape}")
+
         return AST.Input(
             node.shape, onnx2seedot(node.data_type), inputByParty=node.party
         )
@@ -393,58 +395,6 @@ class ONNXNodesAST:
 
         return (innermost_let_ast_node, out_var_count)
 
-    def Clip(
-        node,
-        value_info,
-        node_name_to_out_var_dict,
-        innermost_let_ast_node,
-        out_var_count,
-        mtdAST,
-    ):
-        node = OnnxNode(node)
-
-        inputsRef = node.inputs
-        assert len(inputsRef) == 1
-
-        reshaped_input_name = get_new_var_name(out_var_count)
-        reshaped_input = get_reshaped_input_ast(
-            inputsRef[0], value_info, node_name_to_out_var_dict
-        )
-        innermost_let_ast_node = update_program_with_new_node(
-            innermost_let_ast_node, reshaped_input, reshaped_input_name, mtdAST
-        )
-        out_var_count += 1
-
-        print(f"ONNXNodesAST.py --> Getting parameters of clip {node.attrs}")
-        seedot_output_ast = AST.Func(
-            getOperatorsIdx("clip"),
-            AST.ID(reshaped_input_name),
-            alpha=node.attrs["min"],
-            beta=node.attrs["max"],
-        )
-        output_name = get_new_var_name(out_var_count)
-        innermost_let_ast_node = update_program_with_new_node(
-            innermost_let_ast_node, seedot_output_ast, output_name, mtdAST
-        )
-        out_var_count += 1
-
-        reshaped_output_name = get_new_var_name(out_var_count)
-        onnx_output_ast = get_reshaped_output_ast(
-            node.outputs[0], value_info, output_name
-        )
-        innermost_let_ast_node = update_program_with_new_node(
-            innermost_let_ast_node, onnx_output_ast, reshaped_output_name, mtdAST
-        )
-        out_var_count += 1
-        node_name_to_out_var_dict[node.outputs[0]] = reshaped_output_name
-
-        if DEBUG:
-            print(node.outputs[0])
-            print(onnx_input_shape, "->", seedot_input_shape, "->", onnx_output_shape)
-
-        return (innermost_let_ast_node, out_var_count)
-        # return AST.Func(getOperatorsIdx('relu'), AST.ID(node_name_to_out_var_dict[inputsRef[0]]))
-
     def HardSigmoid(
         node,
         value_info,
@@ -453,6 +403,8 @@ class ONNXNodesAST:
         out_var_count,
         mtdAST,
     ):
+        print(f"\n\n-----------------------------\nHARDSIGMOID\n\n")
+
         node = OnnxNode(node)
 
         inputsRef = node.inputs
@@ -870,6 +822,42 @@ class ONNXNodesAST:
 
         return (innermost_let_ast_node, out_var_count)
 
+    def Gather(
+        node,
+        value_info,
+        node_name_to_out_var_dict,
+        innermost_let_ast_node,
+        out_var_count,
+        mtdAST,
+        index,
+    ):
+        node = OnnxNode(node)
+        if DEBUG:
+            print(node)
+
+        inputsRef = node.inputs
+        # print(f"{node}")
+        # print(f"Gather inputs --> {node.inputs}")
+        # print(f"Gather attrs  --> {node.attrs} ")
+        # print(f"Value Info of inputs --> {value_info[inputsRef[0]]} and {value_info[inputsRef[1]]}")
+        # print(f"Value Info of output --> {value_info[node.outputs[0]]}")
+        # print(f"The bloody index --> {index}")
+
+        seedot_output_ast = AST.Gather(
+            AST.ID(node_name_to_out_var_dict[inputsRef[0]]),
+            list(value_info[inputsRef[0]][1]),
+            node.attrs["axis"],
+            index,
+        )
+        output_name = get_new_var_name(out_var_count)
+        innermost_let_ast_node = update_program_with_new_node(
+            innermost_let_ast_node, seedot_output_ast, output_name, mtdAST
+        )
+        out_var_count += 1
+        node_name_to_out_var_dict[node.outputs[0]] = output_name
+
+        return (innermost_let_ast_node, out_var_count)
+
     def Gemm(
         node,
         value_info,
@@ -991,6 +979,8 @@ class ONNXNodesAST:
     ):
         node = OnnxNode(node)
         inputsRef = node.inputs
+
+        print(f"ReduceMean --> {value_info[node.inputs[0]]}")
 
         keepdims = node.attrs["keepdims"]
         axes = node.attrs["axes"]
