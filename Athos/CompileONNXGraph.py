@@ -109,6 +109,7 @@ def generate_code(params, role, debug=False):
         # CPP currently only supports 32 and 64 bitwdith
         if target == "CPP":
             bitlength = 64 if bitlength > 32 else 32
+
     save_weights = True if params["save_weights"] is None else params["save_weights"]
     disable_all_hlil_opts = (
         False
@@ -121,7 +122,7 @@ def generate_code(params, role, debug=False):
         else params["disable_relu_maxpool_opts"]
     )
     disable_garbage_collection = (
-        False
+        True
         if params["disable_garbage_collection"] is None
         else params["disable_garbage_collection"]
     )
@@ -150,7 +151,12 @@ def generate_code(params, role, debug=False):
     if role == "server":
         # Compile to seedot. Generate AST in model directory
         weights_path = compile_onnx.compile(
-            model_path, input_tensor_info, output_tensors, scale, save_weights, role
+            model_path,
+            input_tensor_info,
+            output_tensors,
+            scale,
+            save_weights,
+            role,
         )
         # Zip the pruned model, sizeInfo to send to client
         file_list = [pruned_model_path]
@@ -337,4 +343,6 @@ if __name__ == "__main__":
     args = parse_args()
     params = parse_config.get_params(args.config)
     params["config_name"] = args.config
+
+    print(params)
     generate_code(params, args.role)
