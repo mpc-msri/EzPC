@@ -264,10 +264,6 @@ class Gather(ASTNode):
         self.axis = axis
         self.index = index
 
-        print(
-            f"Created AST.Gather node with shape={shape}, axis={axis} and index={index}"
-        )
-
 
 # expr : ASTNode
 # options : Other options required by maxpool

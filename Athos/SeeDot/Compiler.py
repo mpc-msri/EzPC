@@ -176,7 +176,7 @@ class Compiler:
         InferType().visit(ast)
 
         # if Util.Config.printASTBool :
-        if True:
+        if False:
             PrintAST().visit(ast)
             print("\n")
             sys.stdout.flush()

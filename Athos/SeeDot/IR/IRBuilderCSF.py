@@ -133,7 +133,6 @@ class IRBuilderCSF(IRBuilderAST):
     # =================
 
     def visitInt(self, node: AST.Int, args=None):
-        print("visitInt")
         n = node.value
         prog = IR.Prog([IR.Comment("Int node, isSecret = {0}.".format(node.isSecret))])
         expr = self.getTempVar()
@@ -148,7 +147,6 @@ class IRBuilderCSF(IRBuilderAST):
         return (prog, expr)
 
     def visitFloat(self, node: AST.Float, args=None):
-        print("visitFloat")
         r = node.value
         p = self.get_expnt(abs(r))
         k = IR.DataType.getInt(np.ldexp(r, p))
@@ -170,7 +168,6 @@ class IRBuilderCSF(IRBuilderAST):
         return (prog, expr)
 
     def visitId(self, node: AST.ID, args=None):
-        print("visitId")
         idf = node.name
         prog = IR.Prog([])
         expr = IR.Var(idf)
@@ -179,8 +176,6 @@ class IRBuilderCSF(IRBuilderAST):
         return (prog, expr)
 
     def visitDecl(self, node: AST.Decl, args=None):
-        print("visitDecl")
-
         def helperAssignGen(l1, l2, allComb):
             if l2 == []:
                 allComb.append(l1)
@@ -253,7 +248,6 @@ class IRBuilderCSF(IRBuilderAST):
         return (prog, expr)
 
     def visitTranspose(self, node: AST.Transpose, args=None):
-        print("visitTranspose")
         (inp_prog, inp_arr) = self.visit(node.expr)
         inp_type = node.expr.type
         out_type = node.type
@@ -297,7 +291,6 @@ class IRBuilderCSF(IRBuilderAST):
         return (final_prog, out_arr)
 
     def visitSlice(self, node: AST.Slice, args=None):
-        print("visitSlice")
         (inp_prog, inp_arr) = self.visit(node.expr)
         inp_type = node.expr.type
         out_type = node.type
@@ -341,13 +334,10 @@ class IRBuilderCSF(IRBuilderAST):
         return (final_prog, out_arr)
 
     def visitExpand():
-        print("visitExpand")
         assert False
 
     def visitGather(self, node: AST.Gather, args=None):
-        print("visitGather")
         (prog_1, expr_1) = self.visit(node.expr)
-        print(f"IRBuilderCSF.py --> Gather is starting with {expr_1.idf}")
 
         out_arr = self.getTempVar()
         out_decl = IR.Prog(
@@ -442,8 +432,6 @@ class IRBuilderCSF(IRBuilderAST):
         iters_1 = self.getTempIterators(typ_1.dim)
         iters_2 = self.getTempIterators(typ_2.dim)
 
-        print(f"Reshape --> {expr_1.inputVar} and {expr_2.inputVar}")
-
         # Initialize to 0
         cmd1 = [IR.Assn(var, IRUtil.zero) for var in iters_1]
 
@@ -521,7 +509,6 @@ class IRBuilderCSF(IRBuilderAST):
         return (prog_2, expr_2)
 
     def visitPool(self, node: AST.Pool, args=None):
-        print("visitPool")
         (prog_1, expr_1) = self.visit(node.expr)
 
         [N, H, W, CI] = node.expr.type.shape
@@ -574,7 +561,6 @@ class IRBuilderCSF(IRBuilderAST):
         return (prog_2, expr_2)
 
     def visitUOp(self, node: AST.UOp, args=None):
-        print("visitUOp")
         (prog_1, expr_1) = self.visit(node.expr)
         op = node.op
         if op == AST.Operators.ADD:
@@ -614,7 +600,6 @@ class IRBuilderCSF(IRBuilderAST):
         return (prog_2, expr_2)
 
     def visitBOp(self, node: AST.BOp, args=None):
-        print("visitBOp")
         op = node.op
         if op in [AST.Operators.ADD, AST.Operators.SUB, AST.Operators.Equal]:
             return self.visitBopAddOrSubLike(node)
@@ -630,7 +615,6 @@ class IRBuilderCSF(IRBuilderAST):
             assert False
 
     def visitBopAddOrSubLike(self, node: AST.BOp, args=None):
-        print("visitBopAddOrSubLike")
         (prog_1, expr_1) = self.visit(node.expr1)
         (prog_2, expr_2) = self.visit(node.expr2)
 
@@ -732,7 +716,6 @@ class IRBuilderCSF(IRBuilderAST):
     #     out_arr[i1][i2] = out_arr_flat[idx]
     # Standard broadcast rules apply to generate these flattened tensors.
     def visitBopElemWiseOp(self, node: AST.BOp, args=None):
-        print("visitBopElemWiseOp")
         (prog_1, expr_1) = self.visit(node.expr1)
         (prog_2, expr_2) = self.visit(node.expr2)
 
@@ -940,7 +923,6 @@ class IRBuilderCSF(IRBuilderAST):
         return (out_prog, out_arr)
 
     def visitBopMul(self, node: AST.BOp, args=None):
-        print("visitBopMul")
         typ_1 = node.expr1.type
         typ_2 = node.expr2.type
         typ_3 = node.type
@@ -952,7 +934,6 @@ class IRBuilderCSF(IRBuilderAST):
             return self.visitBopMul2DTensor(node)
 
     def visitBopMulInt(self, node: AST.BOp, args=None):
-        print("visitBopMulInt")
         (prog_1, expr_1) = self.visit(node.expr1)
         (prog_2, expr_2) = self.visit(node.expr2)
 
@@ -992,7 +973,6 @@ class IRBuilderCSF(IRBuilderAST):
         return (prog_3, expr_3)
 
     def visitBopMulScalar1DTensor(self, node: AST.BOp, args=None):
-        print("visitBopMulScalar1DTensor")
         (prog_1, expr_1) = self.visit(node.expr1)
         (prog_2, expr_2) = self.visit(node.expr2)
 
@@ -1064,7 +1044,6 @@ class IRBuilderCSF(IRBuilderAST):
         return (prog_3, expr_3)
 
     def visitBopMul2DTensor(self, node: AST.BOp, args=None):
-        print("visitBopMul2DTensor")
         (prog_1, expr_1) = self.visit(node.expr1)
         (prog_2, expr_2) = self.visit(node.expr2)
 
@@ -1141,7 +1120,6 @@ class IRBuilderCSF(IRBuilderAST):
         return (prog_3, expr_3)
 
     def visitBopConv(self, node: AST.BOp, args=None):
-        print("visitBopConv")
         (prog1, expr_1) = self.visit(node.expr1)
         (prog2, expr_2) = self.visit(node.expr2)
 
@@ -1260,7 +1238,6 @@ class IRBuilderCSF(IRBuilderAST):
         return (returnProg, returnExpr)
 
     def visitBopConvTranspose(self, node: AST.BOp, args=None):
-        print("visitBopConvTranspose")
         (prog1, expr_1) = self.visit(node.expr1)
         (prog2, expr_2) = self.visit(node.expr2)
 
@@ -1427,7 +1404,6 @@ class IRBuilderCSF(IRBuilderAST):
         return (returnProg, returnExpr)
 
     def visitFunc(self, node: AST.Func, args=None):
-        print("visitFunc")
         op = node.op
         assert op in [
             AST.Operators.Floor,
@@ -1445,7 +1421,6 @@ class IRBuilderCSF(IRBuilderAST):
         return self.visitFloorLike(node)
 
     def visitFloorLike(self, node: AST.Func, args=None):
-        print("visitFloorLike")
         (prog1, expr1) = self.visit(node.expr)
         out_expr = self.getTempVar()
 
@@ -1614,7 +1589,6 @@ class IRBuilderCSF(IRBuilderAST):
         return (progFinal, out_expr)
 
     def visitLet(self, node: AST.Let, args=None):
-        print("visitLet")
         (prog_1, expr_1) = self.visit(node.decl)
         typ_1 = node.decl.type
         idf = node.name.name
@@ -1628,7 +1602,6 @@ class IRBuilderCSF(IRBuilderAST):
         return (prog_3, expr_2)
 
     def visitUninterpFuncCall(self, node: AST.UninterpFuncCall, args=None):
-        print("visitUninterpFuncCall")
         progList = []
         exprList = []
         for ii, curArg in enumerate(node.argsList):
@@ -1721,7 +1694,6 @@ class IRBuilderCSF(IRBuilderAST):
         return (progFinal, returnExpr)
 
     def visitArgMax(self, node: AST.ArgMax, args=None):
-        print("visitArgMax")
         (prog_1, expr1) = self.visit(node.expr)
         (prog_2, expr2) = self.visit(node.dim)
 
@@ -1750,7 +1722,6 @@ class IRBuilderCSF(IRBuilderAST):
         return (prog_3, tmpExpr)
 
     def visitInput(self, node: AST.Input, args=None):
-        print("visitInput")
         returnExpr = self.getTempVar()
         returnExpr.inputVar = True
         comment = IR.Comment(str(node.metadata))
@@ -1773,7 +1744,6 @@ class IRBuilderCSF(IRBuilderAST):
         )
 
     def visitOutput(self, node: AST.Output, args=None):
-        print("visitOutput")
         (prog_0, expr_0) = self.visit(node.expr)
         output = IR.Output(expr_0, node.outputToParty)
         prog = IRUtil.prog_merge(prog_0, IR.Prog([output]))
@@ -1783,7 +1753,6 @@ class IRBuilderCSF(IRBuilderAST):
         return (prog, expr)
 
     def visitReduce(self, node: AST.Reduce, args=None):
-        print("visitReduce")
         (prog_1, expr1) = self.visit(node.expr)
         assert node.op in [AST.Operators.ADD, AST.Operators.Mean]
 
@@ -1973,7 +1942,6 @@ class IRBuilderCSF(IRBuilderAST):
         return (final_prog, output)
 
     def visitFusedBatchNorm(self, node: AST.FusedBatchNorm, args=None):
-        print("visitFusedBatchNorm")
         (prog1, expr1) = self.visit(node.expr)
         (prog2, expr2) = self.visit(node.multExpr)
         (prog3, expr3) = self.visit(node.addExpr)

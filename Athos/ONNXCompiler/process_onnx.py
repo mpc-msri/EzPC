@@ -435,13 +435,11 @@ def process_input_variables(
         Input(i) for i in graph_def.initializer
     ]
 
-    print(f"Printing all the input nodes with length = {len(input_nodes)}")
+    # print(f"Printing all the input nodes with length = {len(input_nodes)}")
     for node in input_nodes:
         if DEBUG:
             print("Node information")
             print(node)
-
-        print(node.shape)
 
         if node.shape == []:
             continue

@@ -288,7 +288,7 @@ class InferType(ASTVisitor):
         assert isTensor(exprType) and exprType.dim > 0
 
         node.type = Tensor(
-            node.shape, exprType.bitlen, exprType.isSecret, exprType.taint
+            node.shape[1:], exprType.bitlen, exprType.isSecret, exprType.taint
         )
 
         return node.type
