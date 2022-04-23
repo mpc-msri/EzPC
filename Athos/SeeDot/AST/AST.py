@@ -39,7 +39,6 @@ OperatorsSymbolDict = {
     "Mean": "mean",
     "MUL": "*",
     "RELU": "relu",
-    "CLIP": "clip",
     "RSQRT": "rsqrt",
     "Shape": "shape",
     "Gather": "gather",
@@ -64,7 +63,6 @@ class Operators(Enum):
     CONV = auto()
     CONVTRANSPOSE = auto()
     RELU = auto()
-    CLIP = auto()
     TANH = auto()
     SIGMOID = auto()
     HARDSIGMOID = auto()

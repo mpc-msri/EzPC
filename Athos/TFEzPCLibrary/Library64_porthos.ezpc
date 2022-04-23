@@ -22,18 +22,6 @@ SOFTWARE.
 
 *)
 
-(*************Need to be implemented*************)
-def void Clip(int32_pl s1, int32_pl alpha, int32_pl beta, int64_al[s1] inArr, int64_al[s1] outArr, int32_pl sf, bool_pl doTruncation)
-{
-	return ;
-}
-
-(***********need to be implemented***************)
-def void HardSigmoid(int32_pl s1,int64_al[s1] inArr,int64_al[s1] outArr,int32_pl sf,bool_pl doTruncation)
-{
-	return ;
-}
-
 (**************************)
 extern void MatMul2D(int32_pl i, int32_pl j, int32_pl k, int64_al[i][j] A, int64_al[j][k] B, int64_al[i][k] C, bool_pl modelIsA);
 

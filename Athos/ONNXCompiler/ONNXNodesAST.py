@@ -978,8 +978,6 @@ class ONNXNodesAST:
         node = OnnxNode(node)
         inputsRef = node.inputs
 
-        print(f"ReduceMean --> {value_info[node.inputs[0]]}")
-
         keepdims = node.attrs["keepdims"]
         axes = node.attrs["axes"]
 
@@ -1013,8 +1011,6 @@ class ONNXNodesAST:
         out_var_count,
         mtdAST,
     ):
-        print("ONNXNodesAST.py --> Hello from MatMul")
-
         node = OnnxNode(node)
         if DEBUG:
             print(node)

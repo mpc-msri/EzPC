@@ -1409,7 +1409,6 @@ class IRBuilderCSF(IRBuilderAST):
             AST.Operators.Floor,
             AST.Operators.Shape,
             AST.Operators.RELU,
-            AST.Operators.CLIP,
             AST.Operators.TANH,
             AST.Operators.SIGMOID,
             AST.Operators.HARDSIGMOID,
@@ -1430,8 +1429,6 @@ class IRBuilderCSF(IRBuilderAST):
             funcName = "Shape"
         elif node.op == AST.Operators.RELU:
             funcName = "Relu"
-        elif node.op == AST.Operators.CLIP:
-            funcName = "Clip"
         elif node.op == AST.Operators.TANH:
             funcName = "Tanh"
         elif node.op == AST.Operators.SIGMOID:
@@ -1466,11 +1463,6 @@ class IRBuilderCSF(IRBuilderAST):
             for ii, curDim in enumerate(inputType.shape):
                 argsList[IR.Int(curDim, 32)] = "inShape_" + str(ii)
 
-        if node.op == AST.Operators.CLIP:
-            print(f"IRBuilderCSF.py --> {node.alpha, node.beta}")
-            argsList[IR.Int(node.alpha, 32)] = "alpha"
-            argsList[IR.Int(node.beta, 32)] = "beta"
-
         argsList[expr1] = "inArr"
 
         if Type.isTensor(node.type):
@@ -1483,7 +1475,6 @@ class IRBuilderCSF(IRBuilderAST):
         if Util.Config.disableTruncOpti:
             if node.op in [
                 AST.Operators.RELU,
-                AST.Operators.CLIP,
                 AST.Operators.HARDSIGMOID,
             ]:
                 argsList[IR.Int(Util.Config.consSF, 32)] = "consSF"
@@ -1505,7 +1496,6 @@ class IRBuilderCSF(IRBuilderAST):
             final_sf = self.scaleFacMapping[expr1.idf]
             if node.op in [
                 AST.Operators.RELU,
-                AST.Operators.CLIP,
                 AST.Operators.HARDSIGMOID,
             ]:
                 argsList[IR.Int(final_sf - self.scaleFac, 32)] = "consSF"
