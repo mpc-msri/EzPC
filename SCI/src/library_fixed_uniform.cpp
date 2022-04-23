@@ -847,49 +847,51 @@ void ArgMax(int32_t s1, int32_t s2, intType *inArr, intType *outArr) {
 #endif
 }
 
-// void Min(int32_t size, intType *inArr, intType alpha, intType *outArr, int sf, bool doTruncation) {
-//   intType *tempIn = new intType[size] ;
-//   intType *tempOut = new intType[size] ;
-//   for (int i = 0 ; i < size ; i++) {
-//     if (party == SERVER)
-//       tempIn[i] = alpha - inArr[i] ;
-//     else
-//       tempIn[i] = -inArr[i] ;
-//   }
+void Min(int32_t size, intType *inArr, intType alpha, intType *outArr, int32_t sf, bool doTruncation) {
+  intType *tempIn = new intType[size] ;
+  intType *tempOut = new intType[size] ;
+  for (int i = 0 ; i < size ; i++) {
+    if (party == SERVER)
+      tempIn[i] = alpha - inArr[i] ;
+    else
+      tempIn[i] = -inArr[i] ;
+  }
   
-//   Relu(size, tempIn, tempOut, sf, doTruncation) ;
-//   for (int i = 0 ; i < size ; i++) {
-//     if (party == SERVER)
-//       outArr[i] = alpha - tempOut[i] ;
-//     else
-//       outArr[i] = -tempOut[i] ;
-//   }
+  Relu(size, tempIn, tempOut, sf, doTruncation) ;
 
-//   delete[] tempIn ;
-//   delete[] tempOut ;
-// }
+  for (int i = 0 ; i < size ; i++) {
+    if (party == SERVER)
+      outArr[i] = alpha - tempOut[i] ;
+    else
+      outArr[i] = -tempOut[i] ;
+  }
 
-// void Max(int32_t size, intType *inArr, intType alpha, intType *outArr, int sf, bool doTruncation) {
-//   intType *tempIn = new intType[size] ;
-//   intType *tempOut = new intType[size] ;
-//   for (int i = 0 ; i < size ; i++) {
-//     if (party == SERVER)
-//       tempIn[i] = inArr[i] - alpha ;
-//     else
-//       tempIn[i] = inArr[i] ;
-//   }
+  delete[] tempIn ;
+  delete[] tempOut ;
+}
+
+void Max(int32_t size, intType *inArr, intType alpha, intType *outArr, int32_t sf, bool doTruncation) {
+  intType *tempIn = new intType[size] ;
+  intType *tempOut = new intType[size] ;
+  for (int i = 0 ; i < size ; i++) {
+    if (party == SERVER)
+      tempIn[i] = inArr[i] - alpha ;
+    else
+      tempIn[i] = inArr[i] ;
+  }
   
-//   Relu(size, tempIn, tempOut, sf, doTruncation) ;
-//   for (int i = 0 ; i < size ; i++) {
-//     if (party == SERVER)
-//       outArr[i] = tempOut[i] + alpha ;
-//     else
-//       outArr[i] = tempOut[i] ;
-//   }
+  Relu(size, tempIn, tempOut, sf, doTruncation) ;
 
-//   delete[] tempIn ;
-//   delete[] tempOut ;
-// }
+  for (int i = 0 ; i < size ; i++) {
+    if (party == SERVER)
+      outArr[i] = tempOut[i] + alpha ; 
+    else
+      outArr[i] = tempOut[i] ;
+  }
+
+  delete[] tempIn ;
+  delete[] tempOut ;
+}
 
 // void Clip(int32_t size, int64_t alpha, int64_t beta, intType *inArr, intType *outArr, int sf, bool doTruncation) {
 //   intType *maxIn = new intType[size] ;
@@ -899,18 +901,22 @@ void ArgMax(int32_t s1, int32_t s2, intType *inArr, intType *outArr) {
 //   delete[] maxIn ;
 // }
 
-void HardSigmoid(int32_t size, intType *inArr, intType *outArr, int sf, bool doTruncation) {
+void HardSigmoid(int32_t size, intType *inArr, intType *outArr, int32_t sf, bool doTruncation) {
   intType *tmpIn = new intType[size] ;
   intType *tmpOut = new intType[size] ;
-  for(int i=0;i<size;i++){
-    inArr[i]+=(intType)3;
+  for(int i=0;i<size;i++) {
+    if (party == SERVER )
+      inArr[i]+=(intType)(3<<sf);
   }
-  ElemWiseVectorPublicDiv(size,inArr,6,tmpIn);
-  Min(size, tmpIn, (int64_t)1, tmpOut, sf, doTruncation) ;
+
+  ElemWiseVectorPublicDiv(size,inArr,6<<sf,tmpIn);
+  Min(size, tmpIn, (int64_t)1<<sf, tmpOut, sf, doTruncation) ;
   Max(size, tmpOut, (int64_t)0, outArr, sf, doTruncation) ;
 
   delete[] tmpIn ;
   delete[] tmpOut ;
+
+  //Min(size, inArr, (int64_t)1, outArr, sf, doTruncation) ;
 }
 
 void Relu(int32_t size, intType *inArr, intType *outArr, int sf,

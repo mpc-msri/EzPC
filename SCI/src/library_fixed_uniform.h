@@ -77,9 +77,9 @@ void ElemWiseActModelVectorMult(int32_t size, intType *inArr,
 
 void ArgMax(int32_t s1, int32_t s2, intType *inArr, intType *outArr);
 
-// void Min(int32_t size, intType *inArr, intType alpha, intType *outArr, int sf, bool doTruncation) ;
+void Min(int32_t size, intType *inArr, intType alpha, intType *outArr, int sf, bool doTruncation) ;
 
-// void Max(int32_t size, intType *inArr, intType alpha, intType *outArr, int sf, bool doTruncation) ;
+void Max(int32_t size, intType *inArr, intType alpha, intType *outArr, int sf, bool doTruncation) ;
 
 void Relu(int32_t size, intType *inArr, intType *outArr, int sf,
           bool doTruncation);
