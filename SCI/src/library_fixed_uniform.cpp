@@ -847,52 +847,6 @@ void ArgMax(int32_t s1, int32_t s2, intType *inArr, intType *outArr) {
 #endif
 }
 
-void Min(int32_t size, intType *inArr, intType alpha, intType *outArr, int32_t sf, bool doTruncation) {
-  intType *tempIn = new intType[size] ;
-  intType *tempOut = new intType[size] ;
-  for (int i = 0 ; i < size ; i++) {
-    if (party == SERVER)
-      tempIn[i] = alpha - inArr[i] ;
-    else
-      tempIn[i] = -inArr[i] ;
-  }
-  
-  Relu(size, tempIn, tempOut, sf, doTruncation) ;
-
-  for (int i = 0 ; i < size ; i++) {
-    if (party == SERVER)
-      outArr[i] = alpha - tempOut[i] ;
-    else
-      outArr[i] = -tempOut[i] ;
-  }
-
-  delete[] tempIn ;
-  delete[] tempOut ;
-}
-
-void Max(int32_t size, intType *inArr, intType alpha, intType *outArr, int32_t sf, bool doTruncation) {
-  intType *tempIn = new intType[size] ;
-  intType *tempOut = new intType[size] ;
-  for (int i = 0 ; i < size ; i++) {
-    if (party == SERVER)
-      tempIn[i] = inArr[i] - alpha ;
-    else
-      tempIn[i] = inArr[i] ;
-  }
-  
-  Relu(size, tempIn, tempOut, sf, doTruncation) ;
-
-  for (int i = 0 ; i < size ; i++) {
-    if (party == SERVER)
-      outArr[i] = tempOut[i] + alpha ; 
-    else
-      outArr[i] = tempOut[i] ;
-  }
-
-  delete[] tempIn ;
-  delete[] tempOut ;
-}
-
 // void Clip(int32_t size, int64_t alpha, int64_t beta, intType *inArr, intType *outArr, int sf, bool doTruncation) {
 //   intType *maxIn = new intType[size] ;
 //   Max(size, inArr, alpha, maxIn, sf, doTruncation) ;
@@ -901,22 +855,84 @@ void Max(int32_t size, intType *inArr, intType alpha, intType *outArr, int32_t s
 //   delete[] maxIn ;
 // }
 
-void HardSigmoid(int32_t size, intType *inArr, intType *outArr, int32_t sf, bool doTruncation) {
-  intType *tmpIn = new intType[size] ;
-  intType *tmpOut = new intType[size] ;
-  for(int i=0;i<size;i++) {
-    if (party == SERVER )
-      inArr[i]+=(intType)(3<<sf);
+void Min(int32_t size, intType *inArr, int32_t alpha, intType *outArr, int32_t sf, bool doTruncation) {
+  intType *tempIn = new intType[size] ;
+  intType *tempOut = new intType[size] ;
+
+  intType affine ;
+  if (alpha < 0) {
+  	affine = ((intType)((int32_t)(-1)*alpha)) << sf ;
+  	affine = (intType)((-((signedIntType)1))*((signedIntType)affine)) ;
+  } else {
+  	affine = ((intType)alpha) << sf ;
   }
 
-  ElemWiseVectorPublicDiv(size,inArr,6<<sf,tmpIn);
-  Min(size, tmpIn, (int64_t)1<<sf, tmpOut, sf, doTruncation) ;
-  Max(size, tmpOut, (int64_t)0, outArr, sf, doTruncation) ;
+  for (int i = 0 ; i < size ; i++) {
+    if (party == SERVER)
+      tempIn[i] = affine - inArr[i] ;
+    else
+      tempIn[i] = -inArr[i] ;
+  }
+  
+  Relu(size, tempIn, tempOut, sf, doTruncation) ;
+
+  for (int i = 0 ; i < size ; i++) {
+    if (party == SERVER)
+      outArr[i] = affine - tempOut[i] ;
+    else
+      outArr[i] = -tempOut[i] ;
+  }
+
+  delete[] tempIn ;
+  delete[] tempOut ;
+}
+
+void Max(int32_t size, intType *inArr, int32_t alpha, intType *outArr, int32_t sf, bool doTruncation) {
+  intType *tempIn = new intType[size] ;
+  intType *tempOut = new intType[size] ;
+
+  intType affine ;
+  if (alpha < 0) {
+  	affine = ((intType)((int32_t)(-1)*alpha)) << sf ;
+  	affine = (intType)((-((signedIntType)1))*((signedIntType)affine)) ;
+  } else {
+  	affine = ((intType)alpha) << sf ;
+  }
+  	
+  for (int i = 0 ; i < size ; i++) {
+  	tempIn[i] = inArr[i] ;
+  	if (party == SERVER)
+  		tempIn[i] = tempIn[i] - affine ;
+  }
+  
+  Relu(size, tempIn, tempOut, sf, doTruncation) ;
+
+  for (int i = 0 ; i < size ; i++) {
+  	outArr[i] = tempOut[i] ;
+    if (party == SERVER)
+       outArr[i] += affine ; 
+  }
+
+  delete[] tempIn ;
+  delete[] tempOut ;
+}
+
+void HardSigmoid(int32_t size, intType *inArr, intType *outArr, int32_t sf, bool doTruncation) {
+  intType *tmpIn = new intType[size] ;
+  intType *tmpIn1 = new intType[size] ;
+  for(int i=0;i<size;i++) {
+    if (party == SERVER)
+    	tmpIn[i] = inArr[i] + (intType)(3<<sf) ;
+    else 
+    	tmpIn[i] = inArr[i] ;
+  }
+
+  ElemWiseVectorPublicDiv(size,tmpIn,6,tmpIn1);
+  Min(size, tmpIn1, (int32_t)1, tmpIn1, sf, doTruncation) ;
+  Max(size, tmpIn1, (int32_t)0, outArr, sf, doTruncation) ;
 
   delete[] tmpIn ;
-  delete[] tmpOut ;
-
-  //Min(size, inArr, (int64_t)1, outArr, sf, doTruncation) ;
+  delete[] tmpIn1 ;
 }
 
 void Relu(int32_t size, intType *inArr, intType *outArr, int sf,
