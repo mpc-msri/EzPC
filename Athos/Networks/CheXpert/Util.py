@@ -178,28 +178,30 @@ def compute_mean_and_std(dataset):
 
 
 def save_data_as_pickle(dataset, mode):
-    preProcessedImgSaveFolder = "./PreProcessedImages"
+    preProcessedImgSaveFolder = "./Data_batch"
     filename = os.path.join(
         preProcessedImgSaveFolder, "preprocess_" + mode + "_batch" + ".p"
     )
     features = []
     labels = []
-    for img, attr, _ in dataset:
+    ids = []
+    for img, attr, id in dataset:
         features.append(img)
         labels.append(attr)
-    pickle.dump((features, labels), open(filename, "wb"))
+        ids.append(id)
+    pickle.dump((features, labels, id), open(filename, "wb"))
 
 
 def load_preprocess_validation_data(
-    preProcessedImgSaveFolder="./PreProcessedImages",
+    preProcessedImgSaveFolder="./Data_batch",
 ):
-    valid_features, valid_labels = pickle.load(
+    valid_features, valid_labels, valid_ids = pickle.load(
         open(
             os.path.join(preProcessedImgSaveFolder, "preprocess_valid_batch.p"),
             mode="rb",
         )
     )
-    return valid_features, valid_labels
+    return valid_features, valid_labels, valid_ids
 
 
 # if __name__ == '__main__':
