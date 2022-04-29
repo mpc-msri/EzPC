@@ -609,6 +609,24 @@ class InferType(ASTVisitor):
         node.type = Tensor(node.outputShape, eType.bitlen, eType.isSecret, eType.taint)
         return node.type
 
+    def visitUnsqueeze(self, node: AST.Unsqueeze, args=None):
+        node.expr.gamma = dict(node.gamma)
+        exprType = self.visit(node.expr)
+
+        dims = len(node.shape)
+
+        assert isTensor(exprType) and exprType.dim >= 1
+        assert 0 <= node.axis <= dims
+
+        node.type = Tensor(
+            node.shape[: node.axis] + [1] + node.shape[node.axis :],
+            exprType.bitlen,
+            exprType.isSecret,
+            exprType.taint,
+        )
+
+        return node.type
+
     def visitReduce(self, node: AST.Reduce, args=None):
         cur_gamma = dict(node.gamma)
         node.expr.gamma = cur_gamma

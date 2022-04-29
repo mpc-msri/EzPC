@@ -41,6 +41,7 @@ OperatorsSymbolDict = {
     "RELU": "relu",
     "RSQRT": "rsqrt",
     "Shape": "shape",
+    "Unsqueeze": "unsqueeze",
     "Gather": "gather",
     "SIGMOID": "sigmoid",
     "HARDSIGMOID": "hardsigmoid",
@@ -73,6 +74,7 @@ class Operators(Enum):
     ElemWiseDiv = auto()
     Floor = auto()
     Shape = auto()
+    Unsqueeze = auto()
     Gather = auto()
     Mean = auto()
     ClearMemSecret = auto()
@@ -253,6 +255,10 @@ class Gather(ASTNode):
     def __init__(self, expr: ASTNode, shape: list, axis: int, index: int):
         if assertInputTypes:
             assert isinstance(expr, ASTNode)
+
+            for elem in shape:
+                assert isinstance(elem, int)
+
             assert isinstance(axis, int)
             assert isinstance(index, int)
 
@@ -365,6 +371,23 @@ class Func(ASTNode):
                 self.alpha = v
             elif k == "beta":
                 self.beta = v
+
+
+class Unsqueeze(ASTNode):
+    def __init__(self, expr: ID, shape: list, axis: int):
+        if assertInputTypes:
+            assert isinstance(expr, ID)
+            assert isinstance(shape, list)
+
+            for elem in shape:
+                assert isinstance(elem, int)
+
+            assert isinstance(axis, int)
+
+        super().__init__()
+        self.expr = expr
+        self.shape = shape
+        self.axis = axis
 
 
 class Let(ASTNode):

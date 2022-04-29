@@ -359,13 +359,6 @@ class IRBuilderCSF(IRBuilderAST):
         iter_decl = IR.Prog([IR.Decl(index_iter[0].idf, Type.Int(), isSecret=False)])
         iter_assn = IR.Prog([IR.Assn(index_iter[0], IRUtil.Int(node.index))])
 
-        # assn = IR.Prog([IR.Assn(out_arr, IRUtil.addIndex(expr_1, iters))])
-        # prog_out = IRUtil.prog_merge(prog_1, prog_out)
-        # prog_out = IRUtil.prog_merge(prog_out, iter_decl)
-        # prog_out = IRUtil.prog_merge(prog_out, iter_assn)
-        # prog_out = IRUtil.prog_merge(prog_out, assn)
-
-        # iters = self.getTempIterators(len(node.shape)-1)
         loopShape = node.shape[1:]
         loopIters = self.getTempIterators(len(node.shape) - 1)
 
@@ -380,6 +373,61 @@ class IRBuilderCSF(IRBuilderAST):
                 IR.Assn(
                     IRUtil.addIndex(out_arr, loopIters),
                     IRUtil.addIndex(expr_1, index_iter + loopIters),
+                )
+            ],
+        )
+
+        prog_out = IRUtil.prog_merge(prog_1, out_decl)
+        prog_out = IRUtil.prog_merge(prog_out, iter_decl)
+        prog_out = IRUtil.prog_merge(prog_out, iter_assn)
+        prog_out = IRUtil.prog_merge(prog_out, IR.Prog(iter_decl_lst))
+        prog_out = IRUtil.prog_merge(prog_out, IR.Prog(loop))
+
+        if not (Util.Config.disableTruncOpti):
+            self.scaleFacMapping[out_arr.idf] = self.scaleFacMapping[expr_1.idf]
+
+        return (prog_out, out_arr)
+
+    def visitUnsqueeze(self, node: AST.Unsqueeze, args=None):
+        (prog_1, expr_1) = self.visit(node.expr)
+
+        out_arr = self.getTempVar()
+        out_decl = IR.Prog(
+            [
+                IR.Decl(
+                    out_arr.idf,
+                    Type.Tensor(
+                        node.shape[: node.axis] + [1] + node.shape[node.axis :],
+                        node.expr.type.bitlen,
+                        node.expr.type.isSecret,
+                        node.expr.type.taint,
+                    ),
+                    isSecret=node.type.isSecret,
+                )
+            ]
+        )
+
+        index_iter = self.getTempIterators(1)
+        iter_decl = IR.Prog([IR.Decl(index_iter[0].idf, Type.Int(), isSecret=False)])
+        iter_assn = IR.Prog([IR.Assn(index_iter[0], IRUtil.zero)])
+
+        loopShape = node.shape
+        loopIters = self.getTempIterators(len(node.shape))
+
+        iter_decl_lst = []
+        for var in loopIters:
+            iter_decl_lst.append(IR.Decl(var.idf, Type.Int(), isSecret=False))
+
+        loop = IRUtil.loop(
+            loopShape,
+            loopIters,
+            [
+                IR.Assn(
+                    IRUtil.addIndex(
+                        out_arr,
+                        loopIters[: node.axis] + index_iter + loopIters[node.axis :],
+                    ),
+                    IRUtil.addIndex(expr_1, loopIters),
                 )
             ],
         )
