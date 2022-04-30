@@ -224,7 +224,7 @@ def preprocess_winograd(graph_def, model_name_to_val_dict):
     pass
 
 
-def dump_model_weights(model, scaling_factor, model_dir, model_name):
+def dump_model_weights(model, scaling_factor, model_dir, gather_names, model_name):
     weights_path = ""
     weights_fname = (
         model_name + "_input_weights_fixedpt_scale_" + str(scaling_factor) + ".inp"
@@ -239,9 +239,14 @@ def dump_model_weights(model, scaling_factor, model_dir, model_name):
     preprocess_batch_normalization(model.graph, model_name_to_val_dict)
     # preprocess_winograd(model.graph, model_name_to_val_dict)
 
+    print(f"Going to dump and gather names = {gather_names}")
+
     chunk_n = ""
     cnt_n = 0
     for init_vals in model.graph.initializer:
+        if init_vals.name :
+            continue
+
         (chunk_1, cnt_1) = common.numpy_float_array_to_fixed_point_val_str(
             np.asarray(model_name_to_val_dict[init_vals.name], dtype=np.float32),
             scaling_factor,
@@ -343,17 +348,18 @@ def compile(
 
     # value_info: { name : (type, dimension tuple) }
     value_info = get_node_metadata(model)
-
-    # for lol in model.graph.initializer :
-    #     if lol.name == "361" :
-    #         print(lol)
-    #         print(numpy_helper.to_array(lol).tolist())
-
-    # print(f"Going to generate seedot_ast")
     generate_seedot_ast(model, value_info, model_abs_dir)
 
     if role == "server" and save_weights:
-        return dump_model_weights(model, scaling_factor, model_abs_dir, model_name)
+        gather_names = []
+
+        for node in model.graph.node:
+            if node.op_type == "Gather" :
+                gather_names.append(
+                    list(node.input)[1]
+                )
+
+        return dump_model_weights(model, scaling_factor, model_abs_dir, gather_names, model_name)
     return
 
 
@@ -500,7 +506,7 @@ def process_onnx_nodes(
             name = list(node.input)[1]
 
             index = None
-            for lol in model.graph.initializer:
+            for lol in model.graph.initializer :
                 if lol.name == name:
                     index = numpy_helper.to_array(lol).tolist()
                     break
