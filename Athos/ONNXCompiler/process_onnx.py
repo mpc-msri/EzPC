@@ -244,7 +244,7 @@ def dump_model_weights(model, scaling_factor, model_dir, gather_names, model_nam
     chunk_n = ""
     cnt_n = 0
     for init_vals in model.graph.initializer:
-        if init_vals.name :
+        if init_vals.name in gather_names :
             continue
 
         (chunk_1, cnt_1) = common.numpy_float_array_to_fixed_point_val_str(
