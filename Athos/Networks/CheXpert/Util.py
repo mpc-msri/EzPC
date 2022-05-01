@@ -32,6 +32,7 @@ import os
 import json
 import math
 import pickle
+import numpy, sys
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
@@ -39,6 +40,9 @@ from PIL import Image
 import torchvision.transforms as T
 import torch
 from torch.utils.data import Dataset
+
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "TFCompiler"))
+import DumpTFMtData
 
 
 class ChexpertSmall(Dataset):
@@ -177,7 +181,7 @@ def compute_mean_and_std(dataset):
     return m, math.sqrt(s / (k - 1))
 
 
-def save_data_as_pickle(dataset, mode):
+def save_data_as_pickle(dataset, mode, scalingFac):
     preProcessedImgSaveFolder = "./Data_batch"
     filename = os.path.join(
         preProcessedImgSaveFolder, "preprocess_" + mode + "_batch" + ".p"
@@ -186,10 +190,12 @@ def save_data_as_pickle(dataset, mode):
     labels = []
     ids = []
     for img, attr, id in dataset:
+        img[...] = img * (1 << scalingFac)
+        print("Processed img {}".format(id))
         features.append(img)
         labels.append(attr)
         ids.append(id)
-    pickle.dump((features, labels, id), open(filename, "wb"))
+    pickle.dump((features, labels, ids), open(filename, "wb"))
 
 
 def load_preprocess_validation_data(
@@ -204,40 +210,43 @@ def load_preprocess_validation_data(
     return valid_features, valid_labels, valid_ids
 
 
-# if __name__ == '__main__':
-#     data_dir = "../../HelperScripts/CheXpert"
-#     preProcessedImgSaveFolder = "./PreProcessedImages"
-#     ds = ChexpertSmall(root=data_dir, mode='valid')
-#     print('Valid dataset loaded. Length: ', len(ds))
+def main():
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("scale", type=str, help="Scaling Factor.")
+    args = parser.parse_args()
+    scalingFac = int(args.scale)
+    mode = "valid"
+    ds = ChexpertSmall(
+        "../../HelperScripts/CheXpert",
+        mode,
+        transform=T.Compose(
+            [
+                T.Grayscale(num_output_channels=3),
+                T.CenterCrop(320),
+                T.ToTensor(),
+                T.Normalize(mean=[0.5306], std=[0.0333]),
+            ]
+        ),
+    )
+    print("length: ", len(ds))
+    print("attributes: ", ds.attr_names)
+    m, s = compute_mean_and_std(ds)
+    print("Dataset mean: {}; dataset std {}".format(m, s))
+    save_data_as_pickle(ds, mode, scalingFac)
+    print("\n" * 4)
+
+    print("*" * 20)
+    id = 1
+    print("Sample Image {} from Valid Dataset".format(id))
+    print("*" * 20)
+    features, labels, ids = load_preprocess_validation_data()
+    print(features[id].shape)
+    print(features[id])
+    print(labels[id])
+    print(ids[id])
 
 
-mode = "valid"
-ds = ChexpertSmall(
-    "../../HelperScripts/CheXpert",
-    mode,
-    transform=T.Compose(
-        [
-            T.Grayscale(num_output_channels=3),
-            T.CenterCrop(320),
-            T.ToTensor(),
-            T.Normalize(mean=[0.5306], std=[0.0333]),
-        ]
-    ),
-)
-print("length: ", len(ds))
-print("attributes: ", ds.attr_names)
-m, s = compute_mean_and_std(ds)
-print("Dataset mean: {}; dataset std {}".format(m, s))
-save_data_as_pickle(ds, mode)
-print("\n" * 4)
-
-
-print("*" * 20)
-id = 5
-print("Sample Image {} from Valid Dataset".format(id))
-print("*" * 20)
-img, attr, patient_id = ds[id]
-print(attr)
-print(patient_id)
-print(img)
-print(img.shape)
+if __name__ == "__main__":
+    main()
