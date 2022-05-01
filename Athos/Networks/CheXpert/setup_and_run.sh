@@ -20,20 +20,29 @@
 # SOFTWARE.
 
 if [ -z "$1" ]; then
-	scale=12
+	scale=23
 else
 	scale=$1
 fi
 
-if [ ! -f "PreProcessedImages/preprocess_valid_batch.p" ] ; then
+if [ ! -f "Data_batch/preprocess_valid_batch.p" ] ; then
 	echo -e "\n\n"
 	echo "--------------------------------------------------------------------------------"
 	echo "One-time set up of ChexPert dataset"
 	echo "This will take some time"
+    echo "Processed and scaled data is dumped in Data_batch/preprocess_valid_batch.p"
+    echo "Data can be retrieved with function - Util.load_preprocess_validation_data()"
 	echo "--------------------------------------------------------------------------------"
 	echo -e "\n\n"
 	cd "../../HelperScripts" 
 	./SetupCheXpert.sh
 	cd -
-	python3 Util.py
+	python Util.py $scale
 fi
+
+echo "--------------------------------------------------------------------------------"
+echo "Preparing images in .inp format"
+echo "This will take some time"
+echo "--------------------------------------------------------------------------------"
+echo -e "\n\n"
+python Prepare_Model.py

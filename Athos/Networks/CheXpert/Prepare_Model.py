@@ -32,23 +32,19 @@ import DumpTFMtData
 
 
 def main():
-    import argparse
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument("scale", type=str, help="Scaling Factor.")
-    args = parser.parse_args()
-    scalingFac = int(args.scale)
     (
         all_testing_features,
         all_testing_labels,
         all_testing_ids,
     ) = Util.load_preprocess_validation_data()
     for ii, curFeature in enumerate(all_testing_features):
-        imgFileName = "./PreProcessedImages/model_input_scale_{}_{}.inp".format(
-            scalingFac, ii
-        )
+        imgFileName = "./PreProcessedImages/model_input_{}.inp".format(ii)
 
-        DumpTFMtData.dumpImageDataInt(curFeature, imgFileName, scalingFac, "w")
+        # Passing scale as 0 because the data being loaded is already scaled.
+        DumpTFMtData.dumpImageDataInt(
+            curFeature, imgFileName, scalingFac=0, writeMode="w"
+        )
 
 
 if __name__ == "__main__":
