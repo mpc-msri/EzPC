@@ -96,7 +96,7 @@ class ChexpertSmall(Dataset):
     def __getitem__(self, idx):
         # 1. select and load image
         img_path = self.data.iloc[idx, 0]  # 'Path' column is 0
-        img = Image.open(os.path.join(self.root, img_path))
+        img = Image.open(os.path.join(self.root, img_path)).convert("RGB")
         if self.transform is not None:
             img = self.transform(img)
 
@@ -192,6 +192,9 @@ def save_data_as_pickle(dataset, mode, scalingFac):
     for img, attr, id in dataset:
         img[...] = img * (1 << scalingFac)
         print("Processed img {}".format(id))
+        # print(type(img))
+        img = img.reshape(-1, 1)
+        # print(img.shape)
         features.append(img)
         labels.append(attr)
         ids.append(id)
@@ -223,17 +226,18 @@ def main():
         mode,
         transform=T.Compose(
             [
-                T.Grayscale(num_output_channels=3),
+                # T.Grayscale(num_output_channels=3),
                 T.CenterCrop(320),
                 T.ToTensor(),
                 T.Normalize(mean=[0.5306], std=[0.0333]),
+                T.Lambda(lambda x: torch.flatten(x)),
             ]
         ),
     )
     print("length: ", len(ds))
     print("attributes: ", ds.attr_names)
-    m, s = compute_mean_and_std(ds)
-    print("Dataset mean: {}; dataset std {}".format(m, s))
+    # m, s = compute_mean_and_std(ds)
+    # print("Dataset mean: {}; dataset std {}".format(m, s))
     save_data_as_pickle(ds, mode, scalingFac)
     print("\n" * 4)
 
