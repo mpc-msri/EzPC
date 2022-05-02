@@ -344,5 +344,4 @@ if __name__ == "__main__":
     params = parse_config.get_params(args.config)
     params["config_name"] = args.config
 
-    print(params)
     generate_code(params, args.role)
