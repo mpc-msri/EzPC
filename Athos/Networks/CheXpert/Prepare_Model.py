@@ -26,9 +26,7 @@ SOFTWARE.
 import os
 import sys
 import Util
-
-sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "TFCompiler"))
-import DumpTFMtData
+import numpy
 
 
 def main():
@@ -42,9 +40,11 @@ def main():
         imgFileName = "./PreProcessedImages/model_input_{}.inp".format(ii)
 
         # Passing scale as 0 because the data being loaded is already scaled.
-        DumpTFMtData.dumpImageDataInt(
-            curFeature, imgFileName, scalingFac=0, writeMode="w"
-        )
+        print("Dumping image data...")
+        with open(imgFileName, "w") as ff:
+            for xx in numpy.nditer(curFeature, order="C"):
+                ff.write(str(int(xx)) + "\n")
+            ff.write("\n\n")
 
 
 if __name__ == "__main__":
