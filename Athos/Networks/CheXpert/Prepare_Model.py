@@ -44,7 +44,6 @@ def main():
         with open(imgFileName, "w") as ff:
             for xx in numpy.nditer(curFeature, order="C"):
                 ff.write(str(int(xx)) + "\n")
-            ff.write("\n\n")
 
 
 if __name__ == "__main__":
