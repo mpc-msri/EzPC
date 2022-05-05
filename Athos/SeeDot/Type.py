@@ -272,6 +272,9 @@ class InferType(ASTVisitor):
 
         # Reshape is valid if the total number of elements remain same after reshape
         # print(exprType.shape)
+
+        print(exprType.shape, node.shape)
+
         assert reduce(operator.mul, exprType.shape, 1) == reduce(
             operator.mul, node.shape, 1
         )

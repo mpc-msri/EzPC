@@ -20,6 +20,7 @@ SOFTWARE.
 """
 
 import os, sys
+from . import winograd as wino
 
 # Add SeeDot directory to path
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "SeeDot"))
@@ -139,7 +140,7 @@ def get_node_metadata(model):
     return value_info
 
 
-def generate_seedot_ast(model, value_info, model_dir):
+def generate_seedot_ast(model, model_name_to_val_dict, value_info, model_dir):
     graph_def = model.graph
     # Iterate through the ONNX graph nodes and translate them to SeeDot AST nodes
     program = None
@@ -155,6 +156,7 @@ def generate_seedot_ast(model, value_info, model_dir):
         out_var_count,
         mtdAST,
         graph_def,
+        model_name_to_val_dict,
         value_info,
     )
 
@@ -207,44 +209,48 @@ def preprocess_batch_normalization(graph_def, model_name_to_val_dict):
                 mean[i] = 0
                 var[i] = 1 - 1e-5
 
-    # Just testing if the correct values are put
-    model_name_to_val_dict2 = {}
-    for init_vals in graph_def.initializer:
-        # TODO: Remove float_data
-        model_name_to_val_dict2[init_vals.name] = init_vals.float_data
-    for node in graph_def.node:
-        node.name = node.output[0]
-        if node.op_type == "BatchNormalization":
-            mean = model_name_to_val_dict[node.input[3]]
-            for val in mean:
-                assert val == 0
-
 
 def preprocess_winograd(graph_def, model_name_to_val_dict):
-    pass
+    # set names to graph nodes if not present
+    for node in graph_def.node:
+        node.name = node.output[0]
+        # Update the batch normalization scale and B
+        # so that mean and var are not required
+        if node.op_type == "Conv":
+            print("HAVE TO CONVERT THIS BLOODY NODE TO WINOGRAD")
+
+            # print(type(model_name_to_val_dict[node.input[1]]))
+
+            wt = np.array(model_name_to_val_dict[node.input[1]])
+            # print(wt[0][0])
+            # print(wt.shape)
+
+            filter_m = wino.get_modified_filter(wt)
+            # print(filter_m.shape)
+            # print(filter_m[0][0])
+
+            model_name_to_val_dict[node.input[1]] = filter_m.tolist()
+            # print(type(model_name_to_val_dict[node.input[1]]))
 
 
-def dump_model_weights(model, scaling_factor, model_dir, gather_names, model_name):
+def dump_model_weights(
+    model, model_name_to_val_dict, scaling_factor, model_dir, gather_names, model_name
+):
     weights_path = ""
     weights_fname = (
         model_name + "_input_weights_fixedpt_scale_" + str(scaling_factor) + ".inp"
     )
     weights_path = os.path.join(model_dir, weights_fname)
 
-    model_name_to_val_dict = {
-        init_vals.name: numpy_helper.to_array(init_vals).tolist()
-        for init_vals in model.graph.initializer
-    }
+    print("GONNA KILL MYSELF")
+    # sys.exit(0)
 
-    preprocess_batch_normalization(model.graph, model_name_to_val_dict)
-    # preprocess_winograd(model.graph, model_name_to_val_dict)
-
-    print(f"Going to dump and gather names = {gather_names}")
+    # print(f"Going to dump and gather names = {gather_names}")
 
     chunk_n = ""
     cnt_n = 0
     for init_vals in model.graph.initializer:
-        if init_vals.name in gather_names :
+        if init_vals.name in gather_names:
             continue
 
         (chunk_1, cnt_1) = common.numpy_float_array_to_fixed_point_val_str(
@@ -346,21 +352,34 @@ def compile(
         print(model.graph.value_info)
         print("Done ******************")
 
+    model_name_to_val_dict = {
+        init_vals.name: numpy_helper.to_array(init_vals).tolist()
+        for init_vals in model.graph.initializer
+    }
+
+    preprocess_batch_normalization(model.graph, model_name_to_val_dict)
+    preprocess_winograd(model.graph, model_name_to_val_dict)
+
     # value_info: { name : (type, dimension tuple) }
     value_info = get_node_metadata(model)
-    generate_seedot_ast(model, value_info, model_abs_dir)
+    print(value_info)
+    generate_seedot_ast(model, model_name_to_val_dict, value_info, model_abs_dir)
 
     if role == "server" and save_weights:
         gather_names = []
 
         for node in model.graph.node:
-            if node.op_type == "Gather" :
-                gather_names.append(
-                    list(node.input)[1]
-                )
+            if node.op_type == "Gather":
+                gather_names.append(list(node.input)[1])
 
-        return dump_model_weights(model, scaling_factor, model_abs_dir, gather_names, model_name)
-    return
+    return dump_model_weights(
+        model,
+        model_name_to_val_dict,
+        scaling_factor,
+        model_abs_dir,
+        gather_names,
+        model_name,
+    )
 
 
 def addOutputs(
@@ -410,11 +429,13 @@ def process_input_variables(
     out_var_count,
     mtdAST,
     graph_def,
+    model_name_to_val_dict,
     value_info,
 ):
     class Input:
         def __init__(self, node):
             self.name = node.name
+            self.trushape = None
             if isinstance(node, ValueInfoProto):  # input
                 self.shape = list(common.proto_val_to_dimension_tuple(node))
                 self.data_type = node.type.tensor_type.elem_type
@@ -427,6 +448,15 @@ def process_input_variables(
                     self.party = AST.Party.CLIENT
             elif isinstance(node, TensorProto):  # initializers
                 self.shape = list(node.dims)
+
+                candidate_shape = list(
+                    np.array(model_name_to_val_dict[self.name]).shape
+                )
+                if candidate_shape != self.shape:
+                    self.trushape = candidate_shape
+                # self.shape = list(np.array(model_name_to_val_dict[self.name]).shape)
+
+                print(f"INITIALIZED AN INPUT --> Shape = {self.shape}")
                 self.data_type = node.data_type
                 self.party = AST.Party.SERVER
             else:
@@ -506,7 +536,7 @@ def process_onnx_nodes(
             name = list(node.input)[1]
 
             index = None
-            for lol in model.graph.initializer :
+            for lol in model.graph.initializer:
                 if lol.name == name:
                     index = numpy_helper.to_array(lol).tolist()
                     break

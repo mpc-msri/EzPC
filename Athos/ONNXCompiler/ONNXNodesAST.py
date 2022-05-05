@@ -269,7 +269,7 @@ def update_program_with_new_node(
 
 class ONNXNodesAST:
     def Input(node, value_info, node_name_to_out_var_dict):
-        # print(f"Input --> {node.shape}")
+        # print(f"ONNXNodesAST : Input --> {node.trushape}")
 
         return AST.Input(
             node.shape, onnx2seedot(node.data_type), inputByParty=node.party
@@ -1185,6 +1185,8 @@ class ONNXNodesAST:
         out_var_count,
         mtdAST,
     ):
+        print("Landed at CONV Node")
+
         node = OnnxNode(node)
         if DEBUG:
             print(node)
