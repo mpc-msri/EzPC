@@ -1732,30 +1732,28 @@ class IRBuilderCSF(IRBuilderAST):
         return (progFinal, returnExpr)
 
     def visitArgMax(self, node: AST.ArgMax, args=None):
-        (prog_1, expr1) = self.visit(node.expr)
-        (prog_2, expr2) = self.visit(node.dim)
+        # (prog_1, expr1) = self.visit(node.dim)
+        (prog_2, expr2) = self.visit(node.expr)
 
         tmpExpr = self.getTempVar()
         outputShape = node.type.shape
-
+        print("output Shape {}".format(outputShape))
         funcArgsList = OrderedDict()
         outputShape = node.type.shape
         for ii, curDim in enumerate(outputShape):
             funcArgsList[IR.Int(curDim, 32)] = "OutputShape_" + str(ii)
         for ii, curDim in enumerate(node.inShape):
             funcArgsList[IR.Int(curDim, 32)] = "OutputShape_" + str(ii)
-        funcArgsList[expr1] = "inArr"
+        # funcArgsList[expr1] = "inArr"
         funcArgsList[expr2] = "dim"
         funcArgsList[tmpExpr] = "outArr"
 
         if not (Util.Config.disableTruncOpti):
             self.scaleFacMapping[tmpExpr.idf] = -1
 
-        funcCall = IR.FuncCall(
-            "ArgMax" + self.varNameDelim + str(len(outputShape)), funcArgsList
-        )
+        funcCall = IR.FuncCall("ArgMax" + self.varNameDelim, funcArgsList)
         comment = IR.Comment(str(node.metadata))
-        prog_3 = IRUtil.prog_merge(prog_1, prog_2, IR.Prog([comment, funcCall]))
+        prog_3 = IRUtil.prog_merge(prog_2, IR.Prog([comment, funcCall]))
         prog_3 = IRUtil.prog_merge(IR.Prog([IR.Decl(tmpExpr.idf, node.type)]), prog_3)
         return (prog_3, tmpExpr)
 

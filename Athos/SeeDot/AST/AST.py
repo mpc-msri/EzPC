@@ -45,6 +45,7 @@ OperatorsSymbolDict = {
     "Gather": "gather",
     "SIGMOID": "sigmoid",
     "HARDSIGMOID": "hardsigmoid",
+    "ARGMAX": "argmax",
     "SQRT": "sqrt",
     "SUB": "-",
     "TANH": "tanh",
@@ -67,6 +68,7 @@ class Operators(Enum):
     TANH = auto()
     SIGMOID = auto()
     HARDSIGMOID = auto()
+    ARGMAX = auto()
     SQRT = auto()
     RSQRT = auto()
     Equal = auto()

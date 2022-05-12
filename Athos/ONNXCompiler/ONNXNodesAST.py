@@ -856,6 +856,42 @@ class ONNXNodesAST:
 
         return (innermost_let_ast_node, out_var_count)
 
+    def ArgMax(
+        node,
+        value_info,
+        node_name_to_out_var_dict,
+        innermost_let_ast_node,
+        out_var_count,
+        mtdAST,
+    ):
+
+        node = OnnxNode(node)
+        if DEBUG:
+            print(node)
+
+        inputsRef = node.inputs
+
+        # print("params")
+        # print(value_info[node.outputs[0]][1])
+        # print(node_name_to_out_var_dict[inputsRef[0]])
+        # print(value_info[inputsRef[0]][1][1])
+        # print(value_info[inputsRef[0]][0])
+        # print("params   over")
+        seedot_output_ast = AST.ArgMax(
+            list(value_info[node.outputs[0]][1]),
+            AST.ID(node_name_to_out_var_dict[inputsRef[0]]),
+            AST.Int(value_info[inputsRef[0]][1][1], isSecret=False, bitLen=32),
+            [value_info[inputsRef[0]][1][1]],
+        )
+        output_name = get_new_var_name(out_var_count)
+        innermost_let_ast_node = update_program_with_new_node(
+            innermost_let_ast_node, seedot_output_ast, output_name, mtdAST
+        )
+        out_var_count += 1
+        node_name_to_out_var_dict[node.outputs[0]] = output_name
+
+        return (innermost_let_ast_node, out_var_count)
+
     def Gemm(
         node,
         value_info,
