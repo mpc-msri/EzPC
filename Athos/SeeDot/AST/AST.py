@@ -31,6 +31,7 @@ OperatorsSymbolDict = {
     "ClearMemPublic": "clearmempublic",
     "ClearMemSecret": "clearmemsecret",
     "CONV": "#",
+    "CONVWINO": "#w",
     "CONVTRANSPOSE": "#T",  # ConvTranspose
     "ElemWiseDiv": "./",
     "ElemWiseMul": ".*",
@@ -62,6 +63,7 @@ class Operators(Enum):
     DIV = auto()
     MUL = auto()
     CONV = auto()
+    CONVWINO = auto()
     CONVTRANSPOSE = auto()
     RELU = auto()
     TANH = auto()
@@ -115,6 +117,7 @@ class PaddingKeysDict:
     FH = "FH"
     FW = "FW"
     FD = "FD"
+    WinoM = "WinoM"
     zPadHLeft = "zPadHLeft"
     zPadHRight = "zPadHRight"
     zPadWLeft = "zPadWLeft"
@@ -237,7 +240,7 @@ class Slice(ASTNode):
 
 # expr : ASTNode, shape : list of int, order : int : optional
 class Reshape(ASTNode):
-    def __init__(self, expr: ASTNode, shape: list, order: list):
+    def __init__(self, expr: ASTNode, shape: list, order: list, trushape=None):
         if assertInputTypes:
             assert isinstance(expr, ASTNode)
             for elem in shape:
@@ -249,6 +252,7 @@ class Reshape(ASTNode):
         self.expr = expr
         self.shape = shape
         self.order = order
+        self.trushape = trushape
 
 
 class Gather(ASTNode):
@@ -482,7 +486,7 @@ class Reduce(ASTNode):
 # 	which will do the input for this variable. Defaults to SERVER.
 class Input(ASTNode):
     def __init__(
-        self, shape: list, dataType: str, isSecret=True, inputByParty=Party.SERVER
+        self, shape: list, dataType: str, isSecret=True, inputByParty=Party.SERVER, trushape=None
     ):
         if assertInputTypes:
             for elem in shape:
@@ -497,7 +501,7 @@ class Input(ASTNode):
         self.dataType = dataType
         self.isSecret = isSecret
         self.inputByParty = inputByParty
-
+        self.trushape = trushape
 
 class Output(ASTNode):
     def __init__(self, expr: ASTNode, outputToParty=Party.CLIENT):

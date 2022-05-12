@@ -23,6 +23,11 @@ SOFTWARE.
 *)
 
 (**************************)
+
+def void WinogradHadamard(int32_pl s2, int32_pl s3, int64_al[s2][s3] mat, int64_al[s3][1] vec, int64_al[s2][s3] res, bool_pl modelIsA) {
+	int32_pl lol ;
+}
+
 def void MatMul2D(int32_pl i, int32_pl j, int32_pl k, int64_al[i][j] A, int64_al[j][k] B, int64_al[i][k] C, bool_pl modelIsA)
 {
 	for i1=[0:i]{

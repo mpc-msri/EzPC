@@ -194,7 +194,6 @@ class InferType(ASTVisitor):
         return node.type
 
     def visitId(self, node: AST.ID, args=None):
-        # print(f"visitId --> {node.name}")
         if node.name not in node.gamma:
             print(
                 "Error in type checking: Found id which is not contained in gamma.",
@@ -205,8 +204,6 @@ class InferType(ASTVisitor):
         else:
             node.type = node.gamma[node.name]
             tns = node.type
-            # print(f"The type of {node.name} --> {node.type}")
-            # print(tns.)
         return node.type
 
     def visitDecl(self, node: AST.Decl, args=None):
@@ -263,21 +260,15 @@ class InferType(ASTVisitor):
 
     def visitReshape(self, node: AST.Reshape, args=None):
         node.expr.gamma = dict(node.gamma)
-        # print(type(node.expr))
         exprType = self.visit(node.expr)
 
-        # print(exprType.shape)
-        # print(isTensor(exprType), exprType.dim >= 1)
         assert isTensor(exprType) and exprType.dim >= 1
 
         # Reshape is valid if the total number of elements remain same after reshape
-        # print(exprType.shape)
+        # assert reduce(operator.mul, exprType.shape, 1) == reduce(
+        #     operator.mul, node.shape, 1
+        # )
 
-        print(exprType.shape, node.shape)
-
-        assert reduce(operator.mul, exprType.shape, 1) == reduce(
-            operator.mul, node.shape, 1
-        )
         node.type = Tensor(
             node.shape, exprType.bitlen, exprType.isSecret, exprType.taint
         )
@@ -327,6 +318,7 @@ class InferType(ASTVisitor):
         return node.type
 
     def visitBOp(self, node: AST.BOp, args=None):
+
         node.expr1.gamma = dict(node.gamma)
         eType = self.visit(node.expr1)
 
@@ -348,6 +340,8 @@ class InferType(ASTVisitor):
             return self.visitBopDiv(node, eType, fType)
         elif node.op == AST.Operators.CONV:
             return self.visitBopConv(node, eType, fType)
+        elif node.op == AST.Operators.CONVWINO :
+            return self.visitBopConvWino(node, eType, fType)
         elif node.op == AST.Operators.CONVTRANSPOSE:
             return self.visitBopConvTranspose(node, eType, fType)
         else:
@@ -378,7 +372,6 @@ class InferType(ASTVisitor):
             output_shape, _, _ = Util.getBroadcastShapes([], fType.shape)
             node.type = Tensor(shape=output_shape, bitlen=eType.bitlen)
         else:
-            # print(eType, fType)
             assert False
 
         node.type.taint = getTaint_type(eType, fType)
@@ -429,6 +422,25 @@ class InferType(ASTVisitor):
         node.type.taint = getTaint_type(eType, fType)
         node.type.isSecret = eType.isSecret | fType.isSecret
 
+        return node.type
+
+    def visitBopConvWino(self, node: AST.BOp, eType: Type, fType: Type, args=None):
+        H, W = eType.shape[1], eType.shape[2]
+        FH, FW = fType.shape[:2]
+        N = eType.shape[0]
+        CO = fType.shape[-1]
+
+        newH = H - FH + 1
+        newW = W - FW + 1
+
+        shape = [N, newH, newW, CO]
+
+        node.type = Tensor(
+            shape,
+            eType.bitlen,
+            eType.isSecret | fType.isSecret,
+            getTaint_type(eType, fType),
+        )
         return node.type
 
     def visitBopConv(self, node: AST.BOp, eType: Type, fType: Type, args=None):

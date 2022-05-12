@@ -51,6 +51,244 @@ uint64_t getRingElt(int64_t x) {
 
 using namespace std;
 
+void WinogradM4R3ImageTransform(uint64_t* D, uint64_t* M){
+	M[0*6+0] = 16*D[0*6+0] - 20*D[0*6+2] + 4*D[0*6+4] - 20*D[2*6+0] + 25*D[2*6+2] - 5*D[2*6+4] + 4*D[4*6+0] - 5*D[4*6+2] + D[4*6+4] ;
+	M[0*6+1] = 16*D[0*6+1] + 16*D[0*6+2] - 4*D[0*6+3] - 4*D[0*6+4] - 20*D[2*6+1] - 20*D[2*6+2] + 5*D[2*6+3] + 5*D[2*6+4] + 4*D[4*6+1] + 4*D[4*6+2] - D[4*6+3] - D[4*6+4] ;
+	M[0*6+2] = 16*D[0*6+1] - 16*D[0*6+2] - 4*D[0*6+3] + 4*D[0*6+4] - 20*D[2*6+1] + 20*D[2*6+2] + 5*D[2*6+3] - 5*D[2*6+4] + 4*D[4*6+1] - 4*D[4*6+2] - D[4*6+3] + D[4*6+4] ;
+	M[0*6+3] = 8*D[0*6+1] + 4*D[0*6+2] - 8*D[0*6+3] - 4*D[0*6+4] - 10*D[2*6+1] - 5*D[2*6+2] + 10*D[2*6+3] + 5*D[2*6+4] + 2*D[4*6+1] + D[4*6+2] - 2*D[4*6+3] - D[4*6+4] ;
+	M[0*6+4] = 8*D[0*6+1] - 4*D[0*6+2] - 8*D[0*6+3] + 4*D[0*6+4] - 10*D[2*6+1] + 5*D[2*6+2] + 10*D[2*6+3] - 5*D[2*6+4] + 2*D[4*6+1] - D[4*6+2] - 2*D[4*6+3] + D[4*6+4] ;
+	M[0*6+5] = 16*D[0*6+1] - 20*D[0*6+3] + 4*D[0*6+5] - 20*D[2*6+1] + 25*D[2*6+3] - 5*D[2*6+5] + 4*D[4*6+1] - 5*D[4*6+3] + D[4*6+5] ;
+	M[1*6+0] = 16*D[1*6+0] - 20*D[1*6+2] + 4*D[1*6+4] + 16*D[2*6+0] - 20*D[2*6+2] + 4*D[2*6+4] - 4*D[3*6+0] + 5*D[3*6+2] - D[3*6+4] - 4*D[4*6+0] + 5*D[4*6+2] - D[4*6+4] ;
+	M[1*6+1] = 16*D[1*6+1] + 16*D[1*6+2] - 4*D[1*6+3] - 4*D[1*6+4] + 16*D[2*6+1] + 16*D[2*6+2] - 4*D[2*6+3] - 4*D[2*6+4] - 4*D[3*6+1] - 4*D[3*6+2] + D[3*6+3] + D[3*6+4] - 4*D[4*6+1] - 4*D[4*6+2] + D[4*6+3] + D[4*6+4] ;
+	M[1*6+2] = 16*D[1*6+1] - 16*D[1*6+2] - 4*D[1*6+3] + 4*D[1*6+4] + 16*D[2*6+1] - 16*D[2*6+2] - 4*D[2*6+3] + 4*D[2*6+4] - 4*D[3*6+1] + 4*D[3*6+2] + D[3*6+3] - D[3*6+4] - 4*D[4*6+1] + 4*D[4*6+2] + D[4*6+3] - D[4*6+4] ;
+	M[1*6+3] = 8*D[1*6+1] + 4*D[1*6+2] - 8*D[1*6+3] - 4*D[1*6+4] + 8*D[2*6+1] + 4*D[2*6+2] - 8*D[2*6+3] - 4*D[2*6+4] - 2*D[3*6+1] - D[3*6+2] + 2*D[3*6+3] + D[3*6+4] - 2*D[4*6+1] - D[4*6+2] + 2*D[4*6+3] + D[4*6+4] ;
+	M[1*6+4] = 8*D[1*6+1] - 4*D[1*6+2] - 8*D[1*6+3] + 4*D[1*6+4] + 8*D[2*6+1] - 4*D[2*6+2] - 8*D[2*6+3] + 4*D[2*6+4] - 2*D[3*6+1] + D[3*6+2] + 2*D[3*6+3] - D[3*6+4] - 2*D[4*6+1] + D[4*6+2] + 2*D[4*6+3] - D[4*6+4] ;
+	M[1*6+5] = 16*D[1*6+1] - 20*D[1*6+3] + 4*D[1*6+5] + 16*D[2*6+1] - 20*D[2*6+3] + 4*D[2*6+5] - 4*D[3*6+1] + 5*D[3*6+3] - D[3*6+5] - 4*D[4*6+1] + 5*D[4*6+3] - D[4*6+5] ;
+	M[2*6+0] = 16*D[1*6+0] - 20*D[1*6+2] + 4*D[1*6+4] - 16*D[2*6+0] + 20*D[2*6+2] - 4*D[2*6+4] - 4*D[3*6+0] + 5*D[3*6+2] - D[3*6+4] + 4*D[4*6+0] - 5*D[4*6+2] + D[4*6+4] ;
+	M[2*6+1] = 16*D[1*6+1] + 16*D[1*6+2] - 4*D[1*6+3] - 4*D[1*6+4] - 16*D[2*6+1] - 16*D[2*6+2] + 4*D[2*6+3] + 4*D[2*6+4] - 4*D[3*6+1] - 4*D[3*6+2] + D[3*6+3] + D[3*6+4] + 4*D[4*6+1] + 4*D[4*6+2] - D[4*6+3] - D[4*6+4] ;
+	M[2*6+2] = 16*D[1*6+1] - 16*D[1*6+2] - 4*D[1*6+3] + 4*D[1*6+4] - 16*D[2*6+1] + 16*D[2*6+2] + 4*D[2*6+3] - 4*D[2*6+4] - 4*D[3*6+1] + 4*D[3*6+2] + D[3*6+3] - D[3*6+4] + 4*D[4*6+1] - 4*D[4*6+2] - D[4*6+3] + D[4*6+4] ;
+	M[2*6+3] = 8*D[1*6+1] + 4*D[1*6+2] - 8*D[1*6+3] - 4*D[1*6+4] - 8*D[2*6+1] - 4*D[2*6+2] + 8*D[2*6+3] + 4*D[2*6+4] - 2*D[3*6+1] - D[3*6+2] + 2*D[3*6+3] + D[3*6+4] + 2*D[4*6+1] + D[4*6+2] - 2*D[4*6+3] - D[4*6+4] ;
+	M[2*6+4] = 8*D[1*6+1] - 4*D[1*6+2] - 8*D[1*6+3] + 4*D[1*6+4] - 8*D[2*6+1] + 4*D[2*6+2] + 8*D[2*6+3] - 4*D[2*6+4] - 2*D[3*6+1] + D[3*6+2] + 2*D[3*6+3] - D[3*6+4] + 2*D[4*6+1] - D[4*6+2] - 2*D[4*6+3] + D[4*6+4] ;
+	M[2*6+5] = 16*D[1*6+1] - 20*D[1*6+3] + 4*D[1*6+5] - 16*D[2*6+1] + 20*D[2*6+3] - 4*D[2*6+5] - 4*D[3*6+1] + 5*D[3*6+3] - D[3*6+5] + 4*D[4*6+1] - 5*D[4*6+3] + D[4*6+5] ;
+	M[3*6+0] = 8*D[1*6+0] - 10*D[1*6+2] + 2*D[1*6+4] + 4*D[2*6+0] - 5*D[2*6+2] + D[2*6+4] - 8*D[3*6+0] + 10*D[3*6+2] - 2*D[3*6+4] - 4*D[4*6+0] + 5*D[4*6+2] - D[4*6+4] ;
+	M[3*6+1] = 8*D[1*6+1] + 8*D[1*6+2] - 2*D[1*6+3] - 2*D[1*6+4] + 4*D[2*6+1] + 4*D[2*6+2] - D[2*6+3] - D[2*6+4] - 8*D[3*6+1] - 8*D[3*6+2] + 2*D[3*6+3] + 2*D[3*6+4] - 4*D[4*6+1] - 4*D[4*6+2] + D[4*6+3] + D[4*6+4] ;
+	M[3*6+2] = 8*D[1*6+1] - 8*D[1*6+2] - 2*D[1*6+3] + 2*D[1*6+4] + 4*D[2*6+1] - 4*D[2*6+2] - D[2*6+3] + D[2*6+4] - 8*D[3*6+1] + 8*D[3*6+2] + 2*D[3*6+3] - 2*D[3*6+4] - 4*D[4*6+1] + 4*D[4*6+2] + D[4*6+3] - D[4*6+4] ;
+	M[3*6+3] = 4*D[1*6+1] + 2*D[1*6+2] - 4*D[1*6+3] - 2*D[1*6+4] + 2*D[2*6+1] + D[2*6+2] - 2*D[2*6+3] - D[2*6+4] - 4*D[3*6+1] - 2*D[3*6+2] + 4*D[3*6+3] + 2*D[3*6+4] - 2*D[4*6+1] - D[4*6+2] + 2*D[4*6+3] + D[4*6+4] ;
+	M[3*6+4] = 4*D[1*6+1] - 2*D[1*6+2] - 4*D[1*6+3] + 2*D[1*6+4] + 2*D[2*6+1] - D[2*6+2] - 2*D[2*6+3] + D[2*6+4] - 4*D[3*6+1] + 2*D[3*6+2] + 4*D[3*6+3] - 2*D[3*6+4] - 2*D[4*6+1] + D[4*6+2] + 2*D[4*6+3] - D[4*6+4] ;
+	M[3*6+5] = 8*D[1*6+1] - 10*D[1*6+3] + 2*D[1*6+5] + 4*D[2*6+1] - 5*D[2*6+3] + D[2*6+5] - 8*D[3*6+1] + 10*D[3*6+3] - 2*D[3*6+5] - 4*D[4*6+1] + 5*D[4*6+3] - D[4*6+5] ;
+	M[4*6+0] = 8*D[1*6+0] - 10*D[1*6+2] + 2*D[1*6+4] - 4*D[2*6+0] + 5*D[2*6+2] - D[2*6+4] - 8*D[3*6+0] + 10*D[3*6+2] - 2*D[3*6+4] + 4*D[4*6+0] - 5*D[4*6+2] + D[4*6+4] ;
+	M[4*6+1] = 8*D[1*6+1] + 8*D[1*6+2] - 2*D[1*6+3] - 2*D[1*6+4] - 4*D[2*6+1] - 4*D[2*6+2] + D[2*6+3] + D[2*6+4] - 8*D[3*6+1] - 8*D[3*6+2] + 2*D[3*6+3] + 2*D[3*6+4] + 4*D[4*6+1] + 4*D[4*6+2] - D[4*6+3] - D[4*6+4] ;
+	M[4*6+2] = 8*D[1*6+1] - 8*D[1*6+2] - 2*D[1*6+3] + 2*D[1*6+4] - 4*D[2*6+1] + 4*D[2*6+2] + D[2*6+3] - D[2*6+4] - 8*D[3*6+1] + 8*D[3*6+2] + 2*D[3*6+3] - 2*D[3*6+4] + 4*D[4*6+1] - 4*D[4*6+2] - D[4*6+3] + D[4*6+4] ;
+	M[4*6+3] = 4*D[1*6+1] + 2*D[1*6+2] - 4*D[1*6+3] - 2*D[1*6+4] - 2*D[2*6+1] - D[2*6+2] + 2*D[2*6+3] + D[2*6+4] - 4*D[3*6+1] - 2*D[3*6+2] + 4*D[3*6+3] + 2*D[3*6+4] + 2*D[4*6+1] + D[4*6+2] - 2*D[4*6+3] - D[4*6+4] ;
+	M[4*6+4] = 4*D[1*6+1] - 2*D[1*6+2] - 4*D[1*6+3] + 2*D[1*6+4] - 2*D[2*6+1] + D[2*6+2] + 2*D[2*6+3] - D[2*6+4] - 4*D[3*6+1] + 2*D[3*6+2] + 4*D[3*6+3] - 2*D[3*6+4] + 2*D[4*6+1] - D[4*6+2] - 2*D[4*6+3] + D[4*6+4] ;
+	M[4*6+5] = 8*D[1*6+1] - 10*D[1*6+3] + 2*D[1*6+5] - 4*D[2*6+1] + 5*D[2*6+3] - D[2*6+5] - 8*D[3*6+1] + 10*D[3*6+3] - 2*D[3*6+5] + 4*D[4*6+1] - 5*D[4*6+3] + D[4*6+5] ;
+	M[5*6+0] = 16*D[1*6+0] - 20*D[1*6+2] + 4*D[1*6+4] - 20*D[3*6+0] + 25*D[3*6+2] - 5*D[3*6+4] + 4*D[5*6+0] - 5*D[5*6+2] + D[5*6+4] ;
+	M[5*6+1] = 16*D[1*6+1] + 16*D[1*6+2] - 4*D[1*6+3] - 4*D[1*6+4] - 20*D[3*6+1] - 20*D[3*6+2] + 5*D[3*6+3] + 5*D[3*6+4] + 4*D[5*6+1] + 4*D[5*6+2] - D[5*6+3] - D[5*6+4] ;
+	M[5*6+2] = 16*D[1*6+1] - 16*D[1*6+2] - 4*D[1*6+3] + 4*D[1*6+4] - 20*D[3*6+1] + 20*D[3*6+2] + 5*D[3*6+3] - 5*D[3*6+4] + 4*D[5*6+1] - 4*D[5*6+2] - D[5*6+3] + D[5*6+4] ;
+	M[5*6+3] = 8*D[1*6+1] + 4*D[1*6+2] - 8*D[1*6+3] - 4*D[1*6+4] - 10*D[3*6+1] - 5*D[3*6+2] + 10*D[3*6+3] + 5*D[3*6+4] + 2*D[5*6+1] + D[5*6+2] - 2*D[5*6+3] - D[5*6+4] ;
+	M[5*6+4] = 8*D[1*6+1] - 4*D[1*6+2] - 8*D[1*6+3] + 4*D[1*6+4] - 10*D[3*6+1] + 5*D[3*6+2] + 10*D[3*6+3] - 5*D[3*6+4] + 2*D[5*6+1] - D[5*6+2] - 2*D[5*6+3] + D[5*6+4] ;
+	M[5*6+5] = 16*D[1*6+1] - 20*D[1*6+3] + 4*D[1*6+5] - 20*D[3*6+1] + 25*D[3*6+3] - 5*D[3*6+5] + 4*D[5*6+1] - 5*D[5*6+3] + D[5*6+5] ;
+}
+
+void WinogradM4R3OutputTransform(uint64_t* M, uint64_t* C){
+	C[0*4+0] = M[0*6+0] + M[0*6+1] + M[0*6+2] + M[0*6+3] + M[0*6+4] + M[1*6+0] + M[1*6+1] + M[1*6+2] + M[1*6+3] + M[1*6+4] + M[2*6+0] + M[2*6+1] + M[2*6+2] + M[2*6+3] + M[2*6+4] + M[3*6+0] + M[3*6+1] + M[3*6+2] + M[3*6+3] + M[3*6+4] + M[4*6+0] + M[4*6+1] + M[4*6+2] + M[4*6+3] + M[4*6+4] ;
+	C[0*4+1] = M[0*6+1] - M[0*6+2] + 2*M[0*6+3] - 2*M[0*6+4] + M[1*6+1] - M[1*6+2] + 2*M[1*6+3] - 2*M[1*6+4] + M[2*6+1] - M[2*6+2] + 2*M[2*6+3] - 2*M[2*6+4] + M[3*6+1] - M[3*6+2] + 2*M[3*6+3] - 2*M[3*6+4] + M[4*6+1] - M[4*6+2] + 2*M[4*6+3] - 2*M[4*6+4] ;
+	C[0*4+2] = M[0*6+1] + M[0*6+2] + 4*M[0*6+3] + 4*M[0*6+4] + M[1*6+1] + M[1*6+2] + 4*M[1*6+3] + 4*M[1*6+4] + M[2*6+1] + M[2*6+2] + 4*M[2*6+3] + 4*M[2*6+4] + M[3*6+1] + M[3*6+2] + 4*M[3*6+3] + 4*M[3*6+4] + M[4*6+1] + M[4*6+2] + 4*M[4*6+3] + 4*M[4*6+4] ;
+	C[0*4+3] = M[0*6+1] - M[0*6+2] + 8*M[0*6+3] - 8*M[0*6+4] + M[0*6+5] + M[1*6+1] - M[1*6+2] + 8*M[1*6+3] - 8*M[1*6+4] + M[1*6+5] + M[2*6+1] - M[2*6+2] + 8*M[2*6+3] - 8*M[2*6+4] + M[2*6+5] + M[3*6+1] - M[3*6+2] + 8*M[3*6+3] - 8*M[3*6+4] + M[3*6+5] + M[4*6+1] - M[4*6+2] + 8*M[4*6+3] - 8*M[4*6+4] + M[4*6+5] ;
+	C[1*4+0] = M[1*6+0] + M[1*6+1] + M[1*6+2] + M[1*6+3] + M[1*6+4] - M[2*6+0] - M[2*6+1] - M[2*6+2] - M[2*6+3] - M[2*6+4] + 2*M[3*6+0] + 2*M[3*6+1] + 2*M[3*6+2] + 2*M[3*6+3] + 2*M[3*6+4] - 2*M[4*6+0] - 2*M[4*6+1] - 2*M[4*6+2] - 2*M[4*6+3] - 2*M[4*6+4] ;
+	C[1*4+1] = M[1*6+1] - M[1*6+2] + 2*M[1*6+3] - 2*M[1*6+4] - M[2*6+1] + M[2*6+2] - 2*M[2*6+3] + 2*M[2*6+4] + 2*M[3*6+1] - 2*M[3*6+2] + 4*M[3*6+3] - 4*M[3*6+4] - 2*M[4*6+1] + 2*M[4*6+2] - 4*M[4*6+3] + 4*M[4*6+4] ;
+	C[1*4+2] = M[1*6+1] + M[1*6+2] + 4*M[1*6+3] + 4*M[1*6+4] - M[2*6+1] - M[2*6+2] - 4*M[2*6+3] - 4*M[2*6+4] + 2*M[3*6+1] + 2*M[3*6+2] + 8*M[3*6+3] + 8*M[3*6+4] - 2*M[4*6+1] - 2*M[4*6+2] - 8*M[4*6+3] - 8*M[4*6+4] ;
+	C[1*4+3] = M[1*6+1] - M[1*6+2] + 8*M[1*6+3] - 8*M[1*6+4] + M[1*6+5] - M[2*6+1] + M[2*6+2] - 8*M[2*6+3] + 8*M[2*6+4] - M[2*6+5] + 2*M[3*6+1] - 2*M[3*6+2] + 16*M[3*6+3] - 16*M[3*6+4] + 2*M[3*6+5] - 2*M[4*6+1] + 2*M[4*6+2] - 16*M[4*6+3] + 16*M[4*6+4] - 2*M[4*6+5] ;
+	C[2*4+0] = M[1*6+0] + M[1*6+1] + M[1*6+2] + M[1*6+3] + M[1*6+4] + M[2*6+0] + M[2*6+1] + M[2*6+2] + M[2*6+3] + M[2*6+4] + 4*M[3*6+0] + 4*M[3*6+1] + 4*M[3*6+2] + 4*M[3*6+3] + 4*M[3*6+4] + 4*M[4*6+0] + 4*M[4*6+1] + 4*M[4*6+2] + 4*M[4*6+3] + 4*M[4*6+4] ;
+	C[2*4+1] = M[1*6+1] - M[1*6+2] + 2*M[1*6+3] - 2*M[1*6+4] + M[2*6+1] - M[2*6+2] + 2*M[2*6+3] - 2*M[2*6+4] + 4*M[3*6+1] - 4*M[3*6+2] + 8*M[3*6+3] - 8*M[3*6+4] + 4*M[4*6+1] - 4*M[4*6+2] + 8*M[4*6+3] - 8*M[4*6+4] ;
+	C[2*4+2] = M[1*6+1] + M[1*6+2] + 4*M[1*6+3] + 4*M[1*6+4] + M[2*6+1] + M[2*6+2] + 4*M[2*6+3] + 4*M[2*6+4] + 4*M[3*6+1] + 4*M[3*6+2] + 16*M[3*6+3] + 16*M[3*6+4] + 4*M[4*6+1] + 4*M[4*6+2] + 16*M[4*6+3] + 16*M[4*6+4] ;
+	C[2*4+3] = M[1*6+1] - M[1*6+2] + 8*M[1*6+3] - 8*M[1*6+4] + M[1*6+5] + M[2*6+1] - M[2*6+2] + 8*M[2*6+3] - 8*M[2*6+4] + M[2*6+5] + 4*M[3*6+1] - 4*M[3*6+2] + 32*M[3*6+3] - 32*M[3*6+4] + 4*M[3*6+5] + 4*M[4*6+1] - 4*M[4*6+2] + 32*M[4*6+3] - 32*M[4*6+4] + 4*M[4*6+5] ;
+	C[3*4+0] = M[1*6+0] + M[1*6+1] + M[1*6+2] + M[1*6+3] + M[1*6+4] - M[2*6+0] - M[2*6+1] - M[2*6+2] - M[2*6+3] - M[2*6+4] + 8*M[3*6+0] + 8*M[3*6+1] + 8*M[3*6+2] + 8*M[3*6+3] + 8*M[3*6+4] - 8*M[4*6+0] - 8*M[4*6+1] - 8*M[4*6+2] - 8*M[4*6+3] - 8*M[4*6+4] + M[5*6+0] + M[5*6+1] + M[5*6+2] + M[5*6+3] + M[5*6+4] ;
+	C[3*4+1] = M[1*6+1] - M[1*6+2] + 2*M[1*6+3] - 2*M[1*6+4] - M[2*6+1] + M[2*6+2] - 2*M[2*6+3] + 2*M[2*6+4] + 8*M[3*6+1] - 8*M[3*6+2] + 16*M[3*6+3] - 16*M[3*6+4] - 8*M[4*6+1] + 8*M[4*6+2] - 16*M[4*6+3] + 16*M[4*6+4] + M[5*6+1] - M[5*6+2] + 2*M[5*6+3] - 2*M[5*6+4] ;
+	C[3*4+2] = M[1*6+1] + M[1*6+2] + 4*M[1*6+3] + 4*M[1*6+4] - M[2*6+1] - M[2*6+2] - 4*M[2*6+3] - 4*M[2*6+4] + 8*M[3*6+1] + 8*M[3*6+2] + 32*M[3*6+3] + 32*M[3*6+4] - 8*M[4*6+1] - 8*M[4*6+2] - 32*M[4*6+3] - 32*M[4*6+4] + M[5*6+1] + M[5*6+2] + 4*M[5*6+3] + 4*M[5*6+4] ;
+	C[3*4+3] = M[1*6+1] - M[1*6+2] + 8*M[1*6+3] - 8*M[1*6+4] + M[1*6+5] - M[2*6+1] + M[2*6+2] - 8*M[2*6+3] + 8*M[2*6+4] - M[2*6+5] + 8*M[3*6+1] - 8*M[3*6+2] + 64*M[3*6+3] - 64*M[3*6+4] + 8*M[3*6+5] - 8*M[4*6+1] + 8*M[4*6+2] - 64*M[4*6+3] + 64*M[4*6+4] - 8*M[4*6+5] + M[5*6+1] - M[5*6+2] + 8*M[5*6+3] - 8*M[5*6+4] + M[5*6+5] ;
+}
+
+void WinogradHadamard(int32_t s1, int32_t s2, int32_t s3, const intType *A,
+              const intType *B, intType *C, bool modelIsA) {
+#ifdef LOG_LAYERWISE
+  INIT_ALL_IO_DATA_SENT;
+  INIT_TIMER;
+#endif
+
+  std::cout << "Matmul called s1,s2,s3 = " << s1 << " " << s2 << " " << s3
+            << std::endl;
+
+  // By default, the model is A and server/Alice has it
+  // So, in the AB mult, party with A = server and party with B = client.
+  int partyWithAInAB_mul = sci::ALICE; 
+  int partyWithBInAB_mul = sci::BOB;
+  if (!modelIsA) {
+    // Model is B
+    partyWithAInAB_mul = sci::BOB;
+    partyWithBInAB_mul = sci::ALICE;
+  }
+
+#if defined(SCI_OT)
+#ifndef MULTITHREADED_MATMUL
+#ifdef USE_LINEAR_UNIFORM
+  if (partyWithAInAB_mul == sci::ALICE) {
+    if (party == sci::ALICE) {
+      multUniform->funcOTSenderInputA(s1, s2, s3, A, C, iknpOT);
+    } else {
+      multUniform->funcOTReceiverInputB(s1, s2, s3, B, C, iknpOT);
+    }
+  } else {
+    if (party == sci::BOB) {
+      multUniform->funcOTSenderInputA(s1, s2, s3, A, C, iknpOTRoleReversed);
+    } else {
+      multUniform->funcOTReceiverInputB(s1, s2, s3, B, C, iknpOTRoleReversed);
+    }
+  }
+#else  // USE_LINEAR_UNIFORM
+#ifdef TRAINING
+  mult->matmul_cross_terms(s1, s2, s3, A, B, C, bitlength, bitlength,
+                           bitlength, true, MultMode::None);
+#else
+  if (modelIsA) {
+    mult->matmul_cross_terms(s1, s2, s3, A, B, C, bitlength, bitlength,
+                             bitlength, true, MultMode::Alice_has_A);
+  } else {
+    mult->matmul_cross_terms(s1, s2, s3, A, B, C, bitlength, bitlength,
+                             bitlength, true, MultMode::Alice_has_B);
+  }
+#endif
+#endif // USE_LINEAR_UNIFORM
+
+  if (party == sci::ALICE) {
+    // Now irrespective of whether A is the model or B is the model and whether
+    //	server holds A or B, server should add locally A*B.
+    //
+    // Add also A*own share of B
+    intType *CTemp = new intType[s1 * s3];
+#ifdef USE_LINEAR_UNIFORM
+    multUniform->ideal_func(s1, s2, s3, A, B, CTemp);
+#else  // USE_LINEAR_UNIFORM
+    mult->matmul_cleartext(s1, s2, s3, A, B, CTemp, true);
+#endif // USE_LINEAR_UNIFORM
+    sci::elemWiseAdd<intType>(s1 * s3, C, CTemp, C);
+    delete[] CTemp;
+  } else {
+    // For minionn kind of hacky runs, switch this off
+#ifndef HACKY_RUN
+    if (modelIsA) {
+      for (int i = 0; i < s1 * s2; i++)
+        assert(A[i] == 0);
+    } else {
+      for (int i = 0; i < s2 * s3; i++)
+        assert(B[i] == 0);
+    }
+#endif
+  }
+
+#else // MULTITHREADED_MATMUL is ON
+  int required_num_threads = num_threads;
+  if (s2 < num_threads) {
+    required_num_threads = s2;
+  }
+  intType *C_ans_arr[required_num_threads];
+  int cols[required_num_threads] ;
+  std::thread matmulThreads[required_num_threads];
+  for (int i = 0; i < required_num_threads; i++) {
+    // C_ans_arr[i] = new intType[s1 * s3];
+    C_ans_arr[i] = nullptr ;
+    cols[i] = 0 ;
+    matmulThreads[i] = std::thread(funcWinogradHadamardThread, i, required_num_threads,
+                                   s1, s2, s3, (intType *)A, (intType *)B,
+                                   &C_ans_arr[i], &cols[i], partyWithAInAB_mul);
+  }
+  for (int i = 0; i < required_num_threads; i++) {
+    matmulThreads[i].join();
+  }
+
+  for (int i = 0; i < s1 * s2 * s3; i++) {
+    C[i] = 0;
+  }
+
+  int done_cols = 0 ;
+  for (int i = 0; i < required_num_threads; i++) {
+    if (C_ans_arr[i] == nullptr) {
+      printf("\tGonna continue\n") ;
+      continue ;
+    }
+    
+    for (int j = 0; j < s1 * s3; j++) {
+      for (int k = 0 ; k < cols[i] ; k++) {
+        C[j*s2 + (k + done_cols)] = C_ans_arr[i][j*cols[i] + k] ;
+      }
+      // C[j] += C_ans_arr[i][j];
+    }
+
+    done_cols += cols[i] ;
+    delete[] C_ans_arr[i];
+  }
+
+  if (party == sci::ALICE) {
+    intType *CTemp = new intType[s1 * s2 * s3];
+#ifdef USE_LINEAR_UNIFORM
+    printf("\tParty ALICE --> Linear uniform\n") ;
+    multUniform->ideal_func(s1, s2, s3, A, B, CTemp);
+#else  // USE_LINEAR_UNIFORM
+    printf("\tParty ALICE --> Not using linear uniform\n") ;
+    mult->matmul_cleartext(s1, s2, s3, (intType*)A, (intType*)B, CTemp, false);
+#endif // USE_LINEAR_UNIFORM
+    printf("\tParty ALICE --> elemWiseAdd\n") ;
+    sci::elemWiseAdd<intType>(s1 * s2 * s3, C, CTemp, C);
+    delete[] CTemp;
+  } else {
+    // For minionn kind of hacky runs, switch this off
+#ifndef HACKY_RUN
+    if (modelIsA) {
+      for (int i = 0; i < s1 * s2; i++)
+        assert(A[i] == 0);
+    } else {
+      for (int i = 0; i < s2 * s3; i++)
+        assert(B[i] == 0);
+    }
+#endif
+  }
+#endif
+  intType moduloMask = (1ULL << bitlength) - 1;
+  if (bitlength == 64)
+    moduloMask = -1;
+  for (int i = 0; i < s1 * s2 * s3; i++) {
+    C[i] = C[i] & moduloMask;
+  }
+
+// #elif defined(SCI_HE)
+//   // We only support matrix vector multiplication.
+//   assert(modelIsA == false &&
+//          "Assuming code generated by compiler produces B as the model.");
+//   std::vector<std::vector<intType>> At(s2);
+//   std::vector<std::vector<intType>> Bt(s3);
+//   std::vector<std::vector<intType>> Ct(s3);
+//   for (int i = 0; i < s2; i++) {
+//     At[i].resize(s1);
+//     for (int j = 0; j < s1; j++) {
+//       At[i][j] = getRingElt(Arr2DIdxRowM(A, s1, s2, j, i));
+//     }
+//   }
+//   for (int i = 0; i < s3; i++) {
+//     Bt[i].resize(s2);
+//     Ct[i].resize(s1);
+//     for (int j = 0; j < s2; j++) {
+//       Bt[i][j] = getRingElt(Arr2DIdxRowM(B, s2, s3, j, i));
+//     }
+//   }
+//   he_fc->matrix_multiplication(s3, s2, s1, Bt, At, Ct);
+//   for (int i = 0; i < s1; i++) {
+//     for (int j = 0; j < s3; j++) {
+//       Arr2DIdxRowM(C, s1, s3, i, j) = getRingElt(Ct[j][i]);
+//     }
+//   }
+#endif
+}
+
 void MatMul2D(int32_t s1, int32_t s2, int32_t s3, const intType *A,
               const intType *B, intType *C, bool modelIsA) {
 #ifdef LOG_LAYERWISE
@@ -122,13 +360,14 @@ void MatMul2D(int32_t s1, int32_t s2, int32_t s3, const intType *A,
       for (int i = 0; i < s1 * s2; i++)
         assert(A[i] == 0);
     } else {
-      for (int i = 0; i < s1 * s2; i++)
+      for (int i = 0; i < s2 * s3; i++)
         assert(B[i] == 0);
     }
 #endif
   }
 
 #else // MULTITHREADED_MATMUL is ON
+  printf("Multithreaded cross terms\n") ;
   int required_num_threads = num_threads;
   if (s2 < num_threads) {
     required_num_threads = s2;
@@ -159,6 +398,7 @@ void MatMul2D(int32_t s1, int32_t s2, int32_t s3, const intType *A,
 #ifdef USE_LINEAR_UNIFORM
     multUniform->ideal_func(s1, s2, s3, A, B, CTemp);
 #else  // USE_LINEAR_UNIFORM
+    printf("Multithreaded direct terms\n") ;
     mult->matmul_cleartext(s1, s2, s3, (intType*)A, (intType*)B, CTemp, true);
 #endif // USE_LINEAR_UNIFORM
     sci::elemWiseAdd<intType>(s1 * s3, C, CTemp, C);
@@ -170,7 +410,7 @@ void MatMul2D(int32_t s1, int32_t s2, int32_t s3, const intType *A,
       for (int i = 0; i < s1 * s2; i++)
         assert(A[i] == 0);
     } else {
-      for (int i = 0; i < s1 * s2; i++)
+      for (int i = 0; i < s2 * s3; i++)
         assert(B[i] == 0);
     }
 #endif

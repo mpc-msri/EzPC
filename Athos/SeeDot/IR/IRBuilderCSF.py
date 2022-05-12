@@ -445,7 +445,7 @@ class IRBuilderCSF(IRBuilderAST):
 
     def visitReshape(self, node: AST.Reshape, args=None):
         (prog_1, expr_1) = self.visit(node.expr)
-
+    
         """
         reshape(A, n, h, w)
         cmd1:  t1 = t2 = t3 = 0;
@@ -462,18 +462,18 @@ class IRBuilderCSF(IRBuilderAST):
                          t1++;
         """
 
-        # print(node.expr)
-
-        t1 = node.expr.type
-        t2 = node.type
-        # [] 0
-        # [] 0
-        # print("Shapes, dim ---")
-        # print(t1.shape, t1.dim)
-        # print(t2.shape, t2.dim)
-
         typ_1 = node.expr.type
         typ_2 = node.type
+
+        # typ_1 is the prior shape, incremented manuallly. 
+        # [6, 4, 3, 3] to [3, 3, 4, 6]
+        # Alternatively --> [6, 4, 6, 6] to [6, 6, 4, 6]
+        if node.trushape is not None :
+            # typ_1 = Type.Tensor(shape=node.trushape)
+            shape = node.trushape
+            typ_2 = Type.Tensor(shape=shape)
+            typ_1 = Type.Tensor(shape=(shape[3], shape[2], shape[0], shape[1]))
+
 
         # Declare variables
         expr_2 = self.getTempVar()
@@ -484,12 +484,8 @@ class IRBuilderCSF(IRBuilderAST):
         cmd1 = [IR.Assn(var, IRUtil.zero) for var in iters_1]
 
         # Incrementing the first index
-        # print(iters_1)
         first_iter = iters_1[0]
         cmd4 = IRUtil.incCmd(first_iter)
-
-        # print("Bye")
-        # sys.exit(0)
 
         # Incrementing other indices using a loop
         cmd5 = [cmd4]
@@ -657,6 +653,8 @@ class IRBuilderCSF(IRBuilderAST):
             return self.visitBopMul(node)
         elif op == AST.Operators.CONV:
             return self.visitBopConv(node)
+        elif op == AST.Operators.CONVWINO:
+            return self.visitBopConvWino(node)
         elif op == AST.Operators.CONVTRANSPOSE:
             return self.visitBopConvTranspose(node)
         else:
@@ -1166,6 +1164,86 @@ class IRBuilderCSF(IRBuilderAST):
         )
 
         return (prog_3, expr_3)
+        
+
+    def visitBopConvWino(self, node: AST.BOp, args=None):
+        (prog1, expr_1) = self.visit(node.expr1)
+        (prog2, expr_2) = self.visit(node.expr2)
+
+        [N, H, W, CI] = node.expr1.type.shape
+        [FH, FW, CI1, CO] = node.expr2.type.shape
+
+        returnExpr = self.getTempVar()
+        comment = IR.Comment(
+            "WINOGRAD"
+        )
+        funcCallArgsDict = OrderedDict()
+        funcCallArgsDict[IR.Int(node.options[AST.PaddingKeysDict.WinoM], 32)] = "m"
+        funcCallArgsDict[IR.Int(FH, 32)] = "r"
+        funcCallArgsDict[IR.Int(N, 32)] = "N"
+        funcCallArgsDict[IR.Int(H, 32)] = "H"
+        funcCallArgsDict[IR.Int(W, 32)] = "W"
+        funcCallArgsDict[IR.Int(CI, 32)] = "CI"
+        funcCallArgsDict[IR.Int(CO, 32)] = "CO"
+
+        funcCallArgsDict[
+            IR.Int(node.options[AST.PaddingKeysDict.zPadHLeft], 32)
+        ] = "zPadHLeft"
+        funcCallArgsDict[
+            IR.Int(node.options[AST.PaddingKeysDict.zPadHRight], 32)
+        ] = "zPadHRight"
+        funcCallArgsDict[
+            IR.Int(node.options[AST.PaddingKeysDict.zPadWLeft], 32)
+        ] = "zPadWLeft"
+        funcCallArgsDict[
+            IR.Int(node.options[AST.PaddingKeysDict.zPadWRight], 32)
+        ] = "zPadWRight"
+
+        isGroupConv = False
+        if AST.PaddingKeysDict.group in node.options.keys():
+            funcCallArgsDict[IR.Int(node.options[AST.PaddingKeysDict.group], 32)] = "G"
+            isGroupConv = True
+
+        funcCallArgsDict[expr_1] = "input"
+        funcCallArgsDict[expr_2] = "filter"
+        funcCallArgsDict[returnExpr] = "output"
+
+        funcCallName = f"Conv2DWinoWrapper"
+
+        funcCall = IR.FuncCall(funcCallName, funcCallArgsDict)
+        progConv = IR.Prog([comment, funcCall])
+
+        progExtraBefore = IR.Prog([])
+        progExtraAfter = IR.Prog([])
+
+        if Util.Config.disableTruncOpti:
+            progExtraAfter = self.addTruncateFunctionCall(
+                node, "Conv", returnExpr, Util.Config.consSF
+            )
+        else:
+            inputs_same = expr_1.idf == expr_2.idf
+            expr1_sf = self.scaleFacMapping[expr_1.idf]
+            expr2_sf = self.scaleFacMapping[expr_2.idf]
+            if expr1_sf > self.scaleFac:
+                progExtraBefore = self.addTruncateFunctionCall(
+                    node.expr1, "Conv", expr_1, expr1_sf - self.scaleFac
+                )
+                self.scaleFacMapping[expr_1.idf] = self.scaleFac
+            if (not inputs_same) and (expr2_sf > self.scaleFac):
+                progExtraBefore = IRUtil.prog_merge(
+                    progExtraBefore,
+                    self.addTruncateFunctionCall(
+                        node.expr2, "Conv", expr_2, expr2_sf - self.scaleFac
+                    ),
+                )
+                self.scaleFacMapping[expr_2.idf] = self.scaleFac
+            self.scaleFacMapping[returnExpr.idf] = 2 * self.scaleFac
+ 
+        returnProg = IRUtil.prog_merge(prog1, prog2, progExtraBefore, progConv)
+        returnProg = IRUtil.prog_merge(
+            IR.Prog([IR.Decl(returnExpr.idf, node.type)]), returnProg, progExtraAfter
+        )
+        return (returnProg, returnExpr)
 
     def visitBopConv(self, node: AST.BOp, args=None):
         (prog1, expr_1) = self.visit(node.expr1)
@@ -1771,7 +1849,7 @@ class IRBuilderCSF(IRBuilderAST):
                     comment,
                     IR.Input(
                         returnExpr,
-                        node.shape,
+                        node.trushape if node.trushape else node.shape,
                         node.dataType,
                         node.isSecret,
                         node.inputByParty,

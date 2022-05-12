@@ -37,7 +37,7 @@ from onnxsim import simplify
 
 import AST.AST as AST
 
-from ONNXNodesAST import ONNXNodesAST, OnnxNode
+from ONNXNodesAST import ONNXNodesAST, OnnxNode, translate_onnx, convert_onnx
 from onnx.helper import make_tensor_value_info
 from onnx import ValueInfoProto, ModelProto, TensorProto, TensorShapeProto, helper
 from AST.PrintAST import PrintAST
@@ -130,13 +130,28 @@ def inferShapes(model):
     return inferred_model
 
 
-def get_node_metadata(model):
+def get_node_metadata(model, model_name_to_val_dict):
     value_info = {}
     for val in model.graph.value_info:
-        value_info[val.name] = (
-            val.type.tensor_type.elem_type,
-            common.proto_val_to_dimension_tuple(val),
-        )
+        truth = None
+        if val.name in model_name_to_val_dict :
+            tup1 = tuple(np.array(model_name_to_val_dict[val.name]).shape)
+            tup2 = common.proto_val_to_dimension_tuple(val)
+            truth = tup1 == tup2
+
+        if truth == False :
+            value_info[val.name] = (
+                val.type.tensor_type.elem_type,
+                common.proto_val_to_dimension_tuple(val),
+                tuple(np.array(model_name_to_val_dict[val.name]).shape)
+            )
+        else :
+            value_info[val.name] = (
+                val.type.tensor_type.elem_type,
+                common.proto_val_to_dimension_tuple(val),
+                None
+            )
+
     return value_info
 
 
@@ -211,26 +226,28 @@ def preprocess_batch_normalization(graph_def, model_name_to_val_dict):
 
 
 def preprocess_winograd(graph_def, model_name_to_val_dict):
-    # set names to graph nodes if not present
+    skip_strides = lambda x : dict(
+        [
+            (attr.name, translate_onnx(attr.name, convert_onnx(attr)))
+            for attr in x
+        ]
+    )["strides"] != [1, 1]
+
     for node in graph_def.node:
         node.name = node.output[0]
-        # Update the batch normalization scale and B
-        # so that mean and var are not required
         if node.op_type == "Conv":
-            print("HAVE TO CONVERT THIS BLOODY NODE TO WINOGRAD")
-
-            # print(type(model_name_to_val_dict[node.input[1]]))
+            if skip_strides(node.attribute) :
+                continue
 
             wt = np.array(model_name_to_val_dict[node.input[1]])
-            # print(wt[0][0])
-            # print(wt.shape)
+            if tuple(wt.shape[2:]) == (1, 1) :
+                continue
 
-            filter_m = wino.get_modified_filter(wt)
-            # print(filter_m.shape)
-            # print(filter_m[0][0])
-
+            filter_size = wt.shape[2]
+            filter_m = wino.get_modified_filter(wt, filter_size)
+            for x in filter_m.flatten() :
+                print("{:.20f}".format(x))
             model_name_to_val_dict[node.input[1]] = filter_m.tolist()
-            # print(type(model_name_to_val_dict[node.input[1]]))
 
 
 def dump_model_weights(
@@ -241,11 +258,6 @@ def dump_model_weights(
         model_name + "_input_weights_fixedpt_scale_" + str(scaling_factor) + ".inp"
     )
     weights_path = os.path.join(model_dir, weights_fname)
-
-    print("GONNA KILL MYSELF")
-    # sys.exit(0)
-
-    # print(f"Going to dump and gather names = {gather_names}")
 
     chunk_n = ""
     cnt_n = 0
@@ -321,7 +333,7 @@ def strip_weights(model):
 # the model directory.
 # Optionaly dumps model weights as fixedpt in specified scaling factor
 def compile(
-    model_fname, input_t_info, output_t_names, scaling_factor, save_weights, role
+    model_fname, input_t_info, output_t_names, scaling_factor, save_weights, role, use_winograd
 ):
     sys.setrecursionlimit(10000)
     if not model_fname.endswith(".onnx"):
@@ -349,7 +361,6 @@ def compile(
 
     if DEBUG:
         print("Printing shape ******************")
-        print(model.graph.value_info)
         print("Done ******************")
 
     model_name_to_val_dict = {
@@ -358,11 +369,11 @@ def compile(
     }
 
     preprocess_batch_normalization(model.graph, model_name_to_val_dict)
-    preprocess_winograd(model.graph, model_name_to_val_dict)
+    if use_winograd :
+        preprocess_winograd(model.graph, model_name_to_val_dict)
 
     # value_info: { name : (type, dimension tuple) }
-    value_info = get_node_metadata(model)
-    print(value_info)
+    value_info = get_node_metadata(model, model_name_to_val_dict)
     generate_seedot_ast(model, model_name_to_val_dict, value_info, model_abs_dir)
 
     if role == "server" and save_weights:
@@ -380,7 +391,6 @@ def compile(
         gather_names,
         model_name,
     )
-
 
 def addOutputs(
     output_tensors,
@@ -456,7 +466,6 @@ def process_input_variables(
                     self.trushape = candidate_shape
                 # self.shape = list(np.array(model_name_to_val_dict[self.name]).shape)
 
-                print(f"INITIALIZED AN INPUT --> Shape = {self.shape}")
                 self.data_type = node.data_type
                 self.party = AST.Party.SERVER
             else:

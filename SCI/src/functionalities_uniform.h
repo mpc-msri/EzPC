@@ -209,8 +209,6 @@ void funcMatmulThread(int tid, int N, int s1, int s2, int s3, intType *A,
   int bucket_size = std::ceil(s2 / (double)N);
   int s2StartIdx = tid * bucket_size;                   // Inclusive
   int s2EndIdx = std::min((tid + 1) * bucket_size, s2); // Exclusive
-
-
   if(s2StartIdx == s2EndIdx || s2StartIdx > s2){
     memset(C, 0, s1 * s3 * sizeof(intType));
     return;
@@ -290,6 +288,97 @@ void funcMatmulThread(int tid, int N, int s1, int s2, int s3, intType *A,
   } else {
     memset(C, 0, s1 * s3 * sizeof(intType));
   }
+#endif // USE_LINEAR_UNIFORM
+  delete[] APtr;
+}
+
+void funcWinogradHadamardThread(int tid, int N, int s1, int s2, int s3, intType *A,
+                      intType *B, intType** C, int* how_many_cols, int partyWithAInAB_mul) {
+  assert(tid >= 0);
+  int bucket_size = std::ceil(s2 / (double)N);
+  int s2StartIdx = tid * bucket_size;                   // Inclusive
+  int s2EndIdx = std::min((tid + 1) * bucket_size, s2); // Exclusive
+  if(s2StartIdx == s2EndIdx || s2StartIdx > s2) {
+    *how_many_cols = 0 ;
+    return;
+  } else {
+    *how_many_cols = (s2EndIdx - s2StartIdx) ;
+  }
+
+  *C = new intType[s1 * (s2EndIdx - s2StartIdx) * s3] ;
+  intType *APtr = new intType[s1 * (s2EndIdx - s2StartIdx)];
+
+  for (int i = 0; i < s1; i++) {
+    for (int j = s2StartIdx; j < s2EndIdx; j++) {
+      Arr2DIdxRowM(APtr, s1, (s2EndIdx - s2StartIdx), i, (j - s2StartIdx)) =
+          Arr2DIdxRowM(A, s1, s2, i, j);
+    }
+  }
+  intType *BPtr = B + s2StartIdx * s3;
+  /*
+    Case 1: If Alice has A and Bob has B
+    Then for even threads, Bob (holding B) acts as receiver and Alice
+     (holding A) acts as sender For odd threads, Bob (holding B) acts as sender
+     and Alice (holding A) acts as receiver.
+
+    Case 2: If Alice has B and Bob has A
+    Then for even threads, Bob (holding A) acts as receiver and Alice
+    (holding B) as sender For odd threads, Bob (holding A) acts as sender and
+    Alice (holding B) as receiver.
+
+    Note that for even threads, Bob is always the
+    receiver and Alice is always the sender and for odd threads, Bob is always
+    the sender and Alice the receiver This makes sure that the matmul and
+    otinstances (indexed by tid) are always used by with the same
+    sender-receiver pair.
+  */
+
+#ifdef USE_LINEAR_UNIFORM
+  assert(s2EndIdx > s2StartIdx);
+  bool useBobAsSender = tid & 1;
+  if (partyWithAInAB_mul == sci::BOB)
+    useBobAsSender = !useBobAsSender;
+  if (useBobAsSender) {
+    // Odd tid, use Bob (holding B) as sender and Alice (holding A) as receiver
+    if (party == partyWithAInAB_mul) {
+      multUniformArr[tid]->funcOTReceiverInputA(s1, (s2EndIdx - s2StartIdx), s3,
+                                                APtr, *C, otInstanceArr[tid]);
+    } else {
+      multUniformArr[tid]->funcOTSenderInputB(s1, (s2EndIdx - s2StartIdx), s3,
+                                              BPtr, *C, otInstanceArr[tid]);
+    }
+  } else {
+    // Even tid, use Bob (holding B) as receiver and Alice (holding A) as sender
+    if (party == partyWithAInAB_mul) {
+      multUniformArr[tid]->funcOTSenderInputA(s1, (s2EndIdx - s2StartIdx), s3,
+                                              APtr, *C, otInstanceArr[tid]);
+    } else {
+      multUniformArr[tid]->funcOTReceiverInputB(s1, (s2EndIdx - s2StartIdx), s3,
+                                                BPtr, *C, otInstanceArr[tid]);
+    }
+  }
+#else  // USE_LINEAR_UNIFORM
+  MultMode mode;
+#ifdef TRAINING
+  mode = MultMode::None;
+#else
+  if (tid & 1) {
+    if (partyWithAInAB_mul == sci::ALICE)
+      mode = MultMode::Bob_has_A;
+    else
+      mode = MultMode::Bob_has_B;
+  } else {
+    if (partyWithAInAB_mul == sci::ALICE)
+      mode = MultMode::Alice_has_A;
+    else
+      mode = MultMode::Alice_has_B;
+  }
+#endif
+  if (s2EndIdx > s2StartIdx) {
+    multArr[tid]->matmul_cross_terms(s1, (s2EndIdx - s2StartIdx), s3, APtr,
+                                     BPtr, *C, bitlength, bitlength, bitlength,
+                                     false, mode);
+  } 
 #endif // USE_LINEAR_UNIFORM
   delete[] APtr;
 }

@@ -37,12 +37,26 @@ SOFTWARE.
 #define Arr5DIdxRowM(arr, s0, s1, s2, s3, s4, i, j, k, l, m)                   \
   (*((arr) + (i) * (s1) * (s2) * (s3) * (s4) + (j) * (s2) * (s3) * (s4) +      \
      (k) * (s3) * (s4) + (l) * (s4) + (m)))
+#define Arr6DIdxRowM(arr, s0, s1, s2, s3, s4, s5, i, j, k, l, m, n)                   \
+  (*((arr) + (i) * (s1) * (s2) * (s3) * (s4) *(s5) + (j) * (s2) * (s3) * (s4) *(s5) +      \
+     (k) * (s3) * (s4) * (s5) + (l) * (s4) * (s5) + (m) * (s5) + (n)))
+#define Arr7DIdxRowM(arr, s0, s1, s2, s3, s4, s5, s6, i, j, k, l, m, n, o)                   \
+  (*((arr) + (i) * (s1) * (s2) * (s3) * (s4) *(s5) * (s6) + (j) * (s2) * (s3) * (s4) *(s5) * (s6) +      \
+     (k) * (s3) * (s4) * (s5) * (s6) + (l) * (s4) * (s5) * (s6) + (m) * (s5) * (s6) + (n) * (s6) + (o)))
+
 
 #define Arr2DIdxColM(arr, s0, s1, i, j) (*((arr) + (j) * (s0) + (i)))
 
 intType funcSSCons(int64_t x);
 void funcReconstruct2PCCons(signedIntType *y, const intType *x, int len);
 signedIntType funcReconstruct2PCCons(intType x, int revealParty);
+
+void WinogradM4R3ImageTransform(uint64_t* D, uint64_t* M) ;
+
+void WinogradM4R3OutputTransform(uint64_t* M, uint64_t* C) ;
+
+void WinogradHadamard(int32_t s1, int32_t s2, int32_t s3, const intType *A,
+              const intType *B, intType *C, bool modelIsA);
 
 void MatMul2D(int32_t s1, int32_t s2, int32_t s3, const intType *A,
               const intType *B, intType *C, bool modelIsA);
@@ -204,6 +218,16 @@ T *make_array(size_t s1, size_t s2, size_t s3, size_t s4) {
 template <typename T>
 T *make_array(size_t s1, size_t s2, size_t s3, size_t s4, size_t s5) {
   return new T[s1 * s2 * s3 * s4 * s5];
+}
+
+template <typename T>
+T *make_array(size_t s1, size_t s2, size_t s3, size_t s4, size_t s5, size_t s6) {
+  return new T[s1 * s2 * s3 * s4 * s5 * s6];
+}
+
+template <typename T>
+T *make_array(size_t s1, size_t s2, size_t s3, size_t s4, size_t s5, size_t s6, size_t s7) {
+  return new T[s1 * s2 * s3 * s4 * s5 * s6 * s7];
 }
 
 #endif

@@ -3,7 +3,7 @@ import pickle as pkl
 
 
 def get_modified_kernel(
-    kernel, output_shape, constants, indices, numerators, denominators
+    kernel, output_dim, constants, indices, numerators, denominators
 ):
     mul_terms = []
     for consts, inds, den in zip(constants, indices, denominators):
@@ -12,10 +12,9 @@ def get_modified_kernel(
             summ += c * kernel[i]
         mul_terms += [summ / den]
 
-    return np.array(mul_terms).reshape(*output_shape)
+    return np.array(mul_terms).reshape(output_dim, output_dim)
 
-
-def get_modified_filter(filter, m=4, r=3, H=8, W=8):
+def get_modified_filter(filter, r, m=4):
     n = m + r - 1
     filter_m = np.random.rand(filter.shape[0], filter.shape[1], n, n)
 
@@ -30,11 +29,10 @@ def get_modified_filter(filter, m=4, r=3, H=8, W=8):
     for i in range(filter.shape[0]):
         for j in range(filter.shape[1]):
             filter_m[i][j] = get_modified_kernel(
-                filter[i][j], (n, n), constants, indices, numerators, denominators
+                filter[i][j], n, constants, indices, numerators, denominators
             )
 
     return filter_m
-
 
 if __name__ == "__main__":
     pass

@@ -369,8 +369,10 @@ void LinearOT::matmul_cross_terms(int32_t dim1, int32_t dim2, int32_t dim3,
   }
   if (!row_batching) {
     if (accumulate) {
+      // becomes (dim1, dim3)
       matrix_transpose(outC, dim3, dim1);
     } else {
+      // becomes (dim1, dim3, dim2)
       matrix_transpose(outC, dim3, dim1, dim2);
     }
   }
