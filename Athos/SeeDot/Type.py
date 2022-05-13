@@ -430,8 +430,8 @@ class InferType(ASTVisitor):
         N = eType.shape[0]
         CO = fType.shape[-1]
 
-        newH = H - FH + 1
-        newW = W - FW + 1
+        newH = H - FH + 1 + node.options[AST.PaddingKeysDict.zPadHLeft] + node.options[AST.PaddingKeysDict.zPadHRight]
+        newW = W - FW + 1 + node.options[AST.PaddingKeysDict.zPadWLeft] + node.options[AST.PaddingKeysDict.zPadWRight]
 
         shape = [N, newH, newW, CO]
 
