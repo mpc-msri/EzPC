@@ -1,3 +1,49 @@
+def void ElemWiseMul6(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int32_pl s6, 
+int64_al[s1][s2][s3][s4][s5][s6] arr1, int64_al[s1][s2][s3][s4][s5][s6] arr2, int64_al[s1][s2][s3][s4][s5][s6] outArr)
+{
+	int32_pl inpSize = s1*s2*s3*s4*s5*s6 ;
+	int64_al[inpSize] arr1Reshaped;
+	int64_al[inpSize] arr2Reshaped;
+	int64_al[inpSize] outArrReshaped;
+	for i1=[0:s1]{
+		for i2=[0:s2]{
+			for i3=[0:s3] {
+				for i4=[0:s4] {
+					for i5=[0:s5] {
+						for i6=[0:s6] {
+							int32_pl linIdx = (i1*s2*s3*s4*s5*s6) + (i2*s3*s4*s5*s6) + (i3*s4*s5*s6) + (i4*s5*s6) + (i5*s6) + i6 ;
+							arr1Reshaped[linIdx] = arr1[i1][i2][i3][i4][i5][i6] ;
+							arr2Reshaped[linIdx] = arr2[i1][i2][i3][i4][i5][i6] ;
+						} ;
+					} ;
+				} ;
+			} ;
+		};
+	};
+
+	ElemWiseSecretSharedVectorMult(inpSize, arr1Reshaped, arr2Reshaped, outArrReshaped) ;
+
+	for i1=[0:s1]{
+		for i2=[0:s2]{
+			for i3=[0:s3] {
+				for i4=[0:s4] {
+					for i5=[0:s5] {
+						for i6=[0:s6] {
+							int32_pl linIdx = (i1*s2*s3*s4*s5*s6) + (i2*s3*s4*s5*s6) + (i3*s4*s5*s6) + (i4*s5*s6) + (i5*s6) + i6 ;
+							outArr[i1][i2][i3][i4][i5][i6] = outArrReshaped[linIdx] ;
+						} ;
+					} ;
+				} ;
+			} ;
+		};
+	};
+
+	ClearMemSecret1(inpSize, arr1Reshaped);
+	ClearMemSecret1(inpSize, arr2Reshaped);
+	ClearMemSecret1(inpSize, outArrReshaped);
+}
+
+
 def void ElemWiseMul7(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int32_pl s6, int32_pl s7, 
 int64_al[s1][s2][s3][s4][s5][s6][s7] arr1, int64_al[s1][s2][s3][s4][s5][s6][s7] arr2, int64_al[s1][s2][s3][s4][s5][s6][s7] outArr)
 {
@@ -324,14 +370,13 @@ C[3][0] = (8L*M[1][0] + 8L*M[1][1] + 8L*M[1][2] + 8L*M[1][3] + 8L*M[1][4] + 8L*M
 C[3][1] = (16L*M[1][1] - 16L*M[1][2] + 32L*M[1][3] - 32L*M[1][4] + 8L*M[1][5] - 8L*M[1][6] + 48L*M[1][7] - 48L*M[1][8] - 16L*M[2][1] + 16L*M[2][2] - 32L*M[2][3] + 32L*M[2][4] - 8L*M[2][5] + 8L*M[2][6] - 48L*M[2][7] + 48L*M[2][8] + 128L*M[3][1] - 128L*M[3][2] + 256L*M[3][3] - 256L*M[3][4] + 64L*M[3][5] - 64L*M[3][6] + 384L*M[3][7] - 384L*M[3][8] - 128L*M[4][1] + 128L*M[4][2] - 256L*M[4][3] + 256L*M[4][4] - 64L*M[4][5] + 64L*M[4][6] - 384L*M[4][7] + 384L*M[4][8] + 2L*M[5][1] - 2L*M[5][2] + 4L*M[5][3] - 4L*M[5][4] + M[5][5] - M[5][6] + 6L*M[5][7] - 6L*M[5][8] - 2L*M[6][1] + 2L*M[6][2] - 4L*M[6][3] + 4L*M[6][4] - M[6][5] + M[6][6] - 6L*M[6][7] + 6L*M[6][8] + 432L*M[7][1] - 432L*M[7][2] + 864L*M[7][3] - 864L*M[7][4] + 216L*M[7][5] - 216L*M[7][6] + 1296L*M[7][7] - 1296L*M[7][8] - 432L*M[8][1] + 432L*M[8][2] - 864L*M[8][3] + 864L*M[8][4] - 216L*M[8][5] + 216L*M[8][6] - 1296L*M[8][7] + 1296L*M[8][8] + 16L*M[9][1] - 16L*M[9][2] + 32L*M[9][3] - 32L*M[9][4] + 8L*M[9][5] - 8L*M[9][6] + 48L*M[9][7] - 48L*M[9][8])/16L ;
 C[3][2] = (32L*M[1][1] + 32L*M[1][2] + 128L*M[1][3] + 128L*M[1][4] + 8L*M[1][5] + 8L*M[1][6] + 288L*M[1][7] + 288L*M[1][8] - 32L*M[2][1] - 32L*M[2][2] - 128L*M[2][3] - 128L*M[2][4] - 8L*M[2][5] - 8L*M[2][6] - 288L*M[2][7] - 288L*M[2][8] + 256L*M[3][1] + 256L*M[3][2] + 1024L*M[3][3] + 1024L*M[3][4] + 64L*M[3][5] + 64L*M[3][6] + 2304L*M[3][7] + 2304L*M[3][8] - 256L*M[4][1] - 256L*M[4][2] - 1024L*M[4][3] - 1024L*M[4][4] - 64L*M[4][5] - 64L*M[4][6] - 2304L*M[4][7] - 2304L*M[4][8] + 4L*M[5][1] + 4L*M[5][2] + 16L*M[5][3] + 16L*M[5][4] + M[5][5] + M[5][6] + 36L*M[5][7] + 36L*M[5][8] - 4L*M[6][1] - 4L*M[6][2] - 16L*M[6][3] - 16L*M[6][4] - M[6][5] - M[6][6] - 36L*M[6][7] - 36L*M[6][8] + 864L*M[7][1] + 864L*M[7][2] + 3456L*M[7][3] + 3456L*M[7][4] + 216L*M[7][5] + 216L*M[7][6] + 7776L*M[7][7] + 7776L*M[7][8] - 864L*M[8][1] - 864L*M[8][2] - 3456L*M[8][3] - 3456L*M[8][4] - 216L*M[8][5] - 216L*M[8][6] - 7776L*M[8][7] - 7776L*M[8][8] + 32L*M[9][1] + 32L*M[9][2] + 128L*M[9][3] + 128L*M[9][4] + 8L*M[9][5] + 8L*M[9][6] + 288L*M[9][7] + 288L*M[9][8])/32L ;
 C[3][3] = (64L*M[1][1] - 64L*M[1][2] + 512L*M[1][3] - 512L*M[1][4] + 8L*M[1][5] - 8L*M[1][6] + 1728L*M[1][7] - 1728L*M[1][8] + 64L*M[1][9] - 64L*M[2][1] + 64L*M[2][2] - 512L*M[2][3] + 512L*M[2][4] - 8L*M[2][5] + 8L*M[2][6] - 1728L*M[2][7] + 1728L*M[2][8] - 64L*M[2][9] + 512L*M[3][1] - 512L*M[3][2] + 4096L*M[3][3] - 4096L*M[3][4] + 64L*M[3][5] - 64L*M[3][6] + 13824L*M[3][7] - 13824L*M[3][8] + 512L*M[3][9] - 512L*M[4][1] + 512L*M[4][2] - 4096L*M[4][3] + 4096L*M[4][4] - 64L*M[4][5] + 64L*M[4][6] - 13824L*M[4][7] + 13824L*M[4][8] - 512L*M[4][9] + 8L*M[5][1] - 8L*M[5][2] + 64L*M[5][3] - 64L*M[5][4] + M[5][5] - M[5][6] + 216L*M[5][7] - 216L*M[5][8] + 8L*M[5][9] - 8L*M[6][1] + 8L*M[6][2] - 64L*M[6][3] + 64L*M[6][4] - M[6][5] + M[6][6] - 216L*M[6][7] + 216L*M[6][8] - 8L*M[6][9] + 1728L*M[7][1] - 1728L*M[7][2] + 13824L*M[7][3] - 13824L*M[7][4] + 216L*M[7][5] - 216L*M[7][6] + 46656L*M[7][7] - 46656L*M[7][8] + 1728L*M[7][9] - 1728L*M[8][1] + 1728L*M[8][2] - 13824L*M[8][3] + 13824L*M[8][4] - 216L*M[8][5] + 216L*M[8][6] - 46656L*M[8][7] + 46656L*M[8][8] - 1728L*M[8][9] + 64L*M[9][1] - 64L*M[9][2] + 512L*M[9][3] - 512L*M[9][4] + 8L*M[9][5] - 8L*M[9][6] + 1728L*M[9][7] - 1728L*M[9][8] + 64L*M[9][9])/64L ;
-
 }
 
 
-def void Conv2DWinoWrapper(int32_pl m, int32_pl r, int32_pl N, int32_pl H, int32_pl W, int32_pl CI, int32_pl CO, 
-				   int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, int32_pl G,
+def void Conv2DWino(int32_pl m, int32_pl r, int32_pl N, int32_pl H, int32_pl W, int32_pl CI, int32_pl CO, 
+				   int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight,
 				   int64_al[N][H][W][CI] inputArr, 
-				   int64_al[m+r-1][m+r-1][CI/G][CO] transformedFilter, 
+				   int64_al[m+r-1][m+r-1][CI][CO] transformedFilter, 
 				   int64_al[N][H+zPadHLeft+zPadHRight-r+1][W+zPadWLeft+zPadWRight-r+1][CO] outArr) {
 
 	int32_pl n = m + r - 1 ;
@@ -540,5 +585,202 @@ def void Conv2DWinoWrapper(int32_pl m, int32_pl r, int32_pl N, int32_pl H, int32
 				} ;
 			} ;
 		} ;
+	} ;
+}
+
+def void Conv2DWinoDW(int32_pl m, int32_pl r, int32_pl N, int32_pl H, int32_pl W, int32_pl C, 
+				   int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight,
+				   int64_al[N][H][W][C] inputArr, 
+				   int64_al[m+r-1][m+r-1][1][C] transformedFilter, 
+				   int64_al[N][H+zPadHLeft+zPadHRight-r+1][W+zPadWLeft+zPadWRight-r+1][C] outArr) {
+
+	int32_pl n = m + r - 1 ;
+
+	int32_pl truH = H + zPadHLeft + zPadHRight ;
+	int32_pl truW = W + zPadWLeft + zPadWRight ;
+	int32_pl outH = truH - r + 1 ;
+	int32_pl outW = truW - r + 1 ;
+
+	int64_al[N][C][truH][truW] truInputImg ;
+
+	for i1=[0:N] {
+		for i2=[0:C] {
+
+			for i3=[0:truH] {
+				for i4=[0:truW] {
+
+					if ((zPadHLeft <= i3) && (i3 < (zPadHLeft + H)) && (zPadWLeft <= i4) && (i4 < (zPadWLeft + W))) {
+						truInputImg[i1][i2][i3][i4] = inputArr[i1][i3-zPadHLeft][i4-zPadWLeft][i2] ;
+					} else {
+						truInputImg[i1][i2][i3][i4] = 0L ;
+					} ;
+
+				} ;
+			} ;
+
+		} ;
+	} ;
+
+	int32_pl TH ;
+	int32_pl TW ;
+
+	if (((truH - r + 1) % m) == 0) {
+		TH = (truH - r + 1) / m ;
+	} else {
+		TH = ((truH - r + 1) / m) + 1 ;
+	} ;
+
+	if (((truW - r + 1) % m) == 0) {
+		TW = (truW - r + 1) / m ;
+	} else {
+		TW = ((truW - r + 1) / m) + 1 ;
+	} ;
+
+	int64_al[N][C][TH][TW][n][n] inputTiles ;
+
+	for i1=[0:N] {
+		for i2=[0:C] {
+
+			for th=[0:TH] {
+				for tw=[0:TW] {
+
+					int64_al[n][n] inputBlock ;
+					int64_al[n][n] inputTransformed ;
+
+					for i=[0:n] {
+						for j=[0:n] {
+							int32_pl indH ;
+							int32_pl indW ;
+
+							indH = (th*m) + i ;
+							indW = (tw*m) + j ;
+
+							if ((indH < truH) && (indW < truW)) {
+								inputBlock[i][j] = truInputImg[i1][i2][indH][indW] ;
+							} else {
+								inputBlock[i][j] = 0L ;
+							} ;
+
+						} ;
+					} ;
+
+					if ((m == 4) && (r == 3)) {
+						WinogradM4R3ImageTransform(inputBlock, inputTransformed) ;
+					} else {
+					if ((m == 4) && (r == 5)) {
+						WinogradM4R5ImageTransform(inputBlock, inputTransformed) ;
+					} else {
+					if ((m == 4) && (r == 7)) {
+						WinogradM4R7ImageTransform(inputBlock, inputTransformed) ;
+					} ;
+					} ;
+					} ;
+
+					for i=[0:n] {
+						for j=[0:n] {
+							inputTiles[i1][i2][th][tw][i][j] = inputTransformed[i][j] ;
+						} ;
+					} ;
+
+				} ;
+			} ;
+		} ;
+	} ;
+
+	int64_al[N][C][TH][TW][n][n] mul1 ;
+	int64_al[N][C][TH][TW][n][n] mul2 ;
+	int64_al[N][C][TH][TW][n][n] mulout ;
+
+	for i1=[0:N] {
+		for i2=[0:C] {
+			for th=[0:TH] {
+				for tw=[0:TW] {
+					for i=[0:n] {
+						for j=[0:n] {
+							mul1[i1][i2][th][tw][i][j] = inputTiles[i1][i2][th][tw][i][j] ;
+							mul2[i1][i2][th][tw][i][j] = transformedFilter[i][j][0][i2] ;
+						} ;
+					} ;
+				} ;
+			} ;
+		} ;
+	} ;
+
+	ElemWiseMul6(N, C, TH, TW, n, n, mul1, mul2, mulout) ;
+
+	int64_al[N][C][TH][TW][m][m] outputTiles ;
+
+	for i1=[0:N] {
+		for i2=[0:C] {
+			for th=[0:TH] {
+				for tw=[0:TW] {
+
+					int64_al[n][n] outputBlock ;
+					int64_al[m][m] outputTransformed ;
+
+					for i=[0:n] {
+						for j=[0:n] {
+							outputBlock[i][j] = mulout[i1][i2][th][tw][i][j] ;
+						} ;
+					} ;
+
+					if ((m == 4) && (r == 3)) {
+						WinogradM4R3OutputTransform(outputBlock, outputTransformed) ;
+					} else {
+					if ((m == 4) && (r == 5)) {
+						WinogradM4R5OutputTransform(outputBlock, outputTransformed) ;
+					} else {
+					if ((m == 4) && (r == 7)) {
+						WinogradM4R7OutputTransform(outputBlock, outputTransformed) ;
+					} ;
+					} ;
+					} ;
+
+					for i=[0:m] {
+						for j=[0:m] {
+							outputTiles[i1][i2][th][tw][i][j] = outputTransformed[i][j] ;
+						} ;
+					} ;
+				} ;
+			} ;
+		} ;
+	} ;
+
+	for i1=[0:N] {
+		for i2=[0:C] {
+			for th=[0:TH] {
+				for tw=[0:TW] {
+					int32_pl i3 = th*m ;
+					int32_pl i4 = tw*m ;
+
+					for i=[0:m] {
+						for j=[0:m] {
+							int32_pl indH ;
+							int32_pl indW ;
+
+							indH = (th*m) + i ;
+							indW = (tw*m) + j ;
+
+							if ((indH < outH) && (indW < outW)) {
+								outArr[i1][indH][indW][i2] = outputTiles[i1][i2][th][tw][i][j] ;
+							} ;
+
+						} ;
+					} ;
+				} ;
+			} ;
+		} ;
+	} ;
+}
+
+def void Conv2DWinoWrapper(int32_pl m, int32_pl r, int32_pl N, int32_pl H, int32_pl W, int32_pl CI, int32_pl CO, 
+				   int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, int32_pl G,
+				   int64_al[N][H][W][CI] inputArr, 
+				   int64_al[m+r-1][m+r-1][CI/G][CO] transformedFilter, 
+				   int64_al[N][H+zPadHLeft+zPadHRight-r+1][W+zPadWLeft+zPadWRight-r+1][CO] outArr) {
+	if (G == CI) {
+		Conv2DWinoDW(m, r, N, H, W, CI, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, inputArr, transformedFilter, outArr) ;
+	} else {
+		Conv2DWino(m, r, N, H, W, CI, CO, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, inputArr, transformedFilter, outArr) ;
 	} ;
 }

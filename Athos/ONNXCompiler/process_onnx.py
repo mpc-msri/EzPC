@@ -240,13 +240,11 @@ def preprocess_winograd(graph_def, model_name_to_val_dict):
                 continue
 
             wt = np.array(model_name_to_val_dict[node.input[1]])
-            if tuple(wt.shape[2:]) == (1, 1) :
+            if tuple(wt.shape[2:]) == (1, 1) or wt.shape[2] > 5 :
                 continue
 
             filter_size = wt.shape[2]
             filter_m = wino.get_modified_filter(wt, filter_size)
-            for x in filter_m.flatten() :
-                print("{:.20f}".format(x))
             model_name_to_val_dict[node.input[1]] = filter_m.tolist()
 
 
