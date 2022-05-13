@@ -1,6 +1,4 @@
 import numpy as np
-import pickle as pkl
-
 
 def get_modified_kernel(
     kernel, output_dim, constants, indices, numerators, denominators

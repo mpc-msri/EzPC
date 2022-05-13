@@ -36530,6 +36530,17 @@ def void ClearMemSecret5(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int
 	return;
 }
 
+def void ClearMemSecret6(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int32_pl s6, int64_al[s1][s2][s3][s4][s5][s6] arr)
+{
+	return;
+}
+
+def void ClearMemSecret7(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int32_pl s6, int32_pl s7, int64_al[s1][s2][s3][s4][s5][s6][s7] arr)
+{
+	return;
+}
+
+
 def void ClearMemPublic(int32_pl x)
 {
 	return;	

@@ -467,6 +467,9 @@ def void Conv2DWino(int32_pl m, int32_pl r, int32_pl N, int32_pl H, int32_pl W, 
 						} ;
 					} ;
 
+					ClearMemSecret2(n, n, inputBlock) ;
+					ClearMemSecret2(n, n, inputTransformed) ;
+
 				} ;
 			} ;
 		} ;
@@ -533,6 +536,9 @@ def void Conv2DWino(int32_pl m, int32_pl r, int32_pl N, int32_pl H, int32_pl W, 
 							} ;
 						} ;
 
+						ClearMemSecret2(n, n, outputBlock) ;
+						ClearMemSecret2(m, m, outputTransformed) ;
+
 					} ;
 				} ;
 			} ;
@@ -586,6 +592,14 @@ def void Conv2DWino(int32_pl m, int32_pl r, int32_pl N, int32_pl H, int32_pl W, 
 			} ;
 		} ;
 	} ;
+
+	ClearMemSecret4(N, CI, truH, truW, truInputImg) ;
+	ClearMemSecret6(N, CI, TH, TW, n, n, inputTiles) ;
+	ClearMemSecret7(N, CO, CI, TH, TW, n, n, mul1) ;
+	ClearMemSecret7(N, CO, CI, TH, TW, n, n, mul2) ;
+	ClearMemSecret7(N, CO, CI, TH, TW, n, n, mulout) ;
+	ClearMemSecret7(N, CO, CI, TH, TW, m, m, outputTiles) ;
+	ClearMemSecret6(N, CO, TH, TW, m, m, reducedTiles) ;
 }
 
 def void Conv2DWinoDW(int32_pl m, int32_pl r, int32_pl N, int32_pl H, int32_pl W, int32_pl C, 
@@ -682,6 +696,9 @@ def void Conv2DWinoDW(int32_pl m, int32_pl r, int32_pl N, int32_pl H, int32_pl W
 						} ;
 					} ;
 
+					ClearMemSecret2(n, n, inputBlock) ;
+					ClearMemSecret2(n, n, inputTransformed) ;
+
 				} ;
 			} ;
 		} ;
@@ -741,6 +758,9 @@ def void Conv2DWinoDW(int32_pl m, int32_pl r, int32_pl N, int32_pl H, int32_pl W
 							outputTiles[i1][i2][th][tw][i][j] = outputTransformed[i][j] ;
 						} ;
 					} ;
+
+					ClearMemSecret2(n, n, outputBlock) ;
+					ClearMemSecret2(m, m, outputTransformed) ;
 				} ;
 			} ;
 		} ;
@@ -771,6 +791,20 @@ def void Conv2DWinoDW(int32_pl m, int32_pl r, int32_pl N, int32_pl H, int32_pl W
 			} ;
 		} ;
 	} ;
+
+	int64_al[N][C][truH][truW] truInputImg ;
+	int64_al[N][C][TH][TW][n][n] inputTiles ;
+	int64_al[N][C][TH][TW][n][n] mul1 ;
+	int64_al[N][C][TH][TW][n][n] mul2 ;
+	int64_al[N][C][TH][TW][n][n] mulout ;
+	int64_al[N][C][TH][TW][m][m] outputTiles ;
+
+	ClearMemSecret4(N, C, truH, truW) ;
+	ClearMemSecret6(N, C, TH, TW, n, n, inputTiles) ;
+	ClearMemSecret6(N, C, TH, TW, n, n, mul1) ;
+	ClearMemSecret6(N, C, TH, TW, n, n, mul2) ;
+	ClearMemSecret6(N, C, TH, TW, n, n, mulout) ;
+	ClearMemSecret6(N, C, TH, TW, m, m, outputTiles) ;
 }
 
 def void Conv2DWinoWrapper(int32_pl m, int32_pl r, int32_pl N, int32_pl H, int32_pl W, int32_pl CI, int32_pl CO, 

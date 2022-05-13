@@ -99,6 +99,7 @@ def generate_code(params, role, debug=False):
     output_tensors = params["output_tensors"]
     scale = 12 if params["scale"] is None else params["scale"]
     target = params["target"]
+    use_winograd = params["winograd"]
     if params["bitlength"] is None:
         if target == "SCI":
             bitlength = 41
@@ -157,6 +158,7 @@ def generate_code(params, role, debug=False):
             scale,
             save_weights,
             role,
+            use_winograd
         )
         # Zip the pruned model, sizeInfo to send to client
         file_list = [pruned_model_path]
@@ -219,9 +221,23 @@ def generate_code(params, role, debug=False):
         )
         post = ""
     temp = os.path.join(model_abs_dir, "temp.ezpc")
+
+    wino = ""
+    if use_winograd :
+        if library == "cpp" :
+            wino = os.path.join(
+                library_dir,
+                "Library{}_cpp_winograd.ezpc".format(lib_bitlength)
+            )
+        elif library == "SCI" :
+            wino = os.path.join(
+                library_dir,
+                "Library{}_sci_winograd.ezpc".format(lib_bitlength)
+            )
+    
     os.system(
-        'cat "{pre}" "{common}" "{post}" "{ezpc}"> "{temp}"'.format(
-            pre=pre, common=common, post=post, ezpc=ezpc_abs_path, temp=temp
+        'cat "{pre}" "{common}" "{wino}" "{post}" "{ezpc}"> "{temp}"'.format(
+            pre=pre, common=common, post=post, ezpc=ezpc_abs_path, temp=temp, wino=wino
         )
     )
     os.system('mv "{temp}" "{ezpc}"'.format(temp=temp, ezpc=ezpc_abs_path))

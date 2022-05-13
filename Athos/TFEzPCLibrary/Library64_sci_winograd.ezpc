@@ -14,10 +14,10 @@ extern void WinogradM4R7OutputTransform(int64_al[10][10] M, int64_al[4][4] C) ;
 
 *)
 
-def void Conv2DWinoWrapper(int32_pl m, int32_pl r, int32_pl N, int32_pl H, int32_pl W, int32_pl CI, int32_pl CO, 
-				   int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, int32_pl G,
+def void Conv2DWino(int32_pl m, int32_pl r, int32_pl N, int32_pl H, int32_pl W, int32_pl CI, int32_pl CO, 
+				   int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight,
 				   int64_al[N][H][W][CI] inputArr, 
-				   int64_al[m+r-1][m+r-1][CI/G][CO] transformedFilter, 
+				   int64_al[m+r-1][m+r-1][CI][CO] transformedFilter, 
 				   int64_al[N][H+zPadHLeft+zPadHRight-r+1][W+zPadWLeft+zPadWRight-r+1][CO] outArr) {
 
 	int32_pl n = m + r - 1 ;
@@ -108,6 +108,9 @@ def void Conv2DWinoWrapper(int32_pl m, int32_pl r, int32_pl N, int32_pl H, int32
 						} ;
 					} ;
 
+					ClearMemSecret2(n, n, inputBlock) ;
+					ClearMemSecret2(n, n, inputTransformed) ;
+
 				} ;
 			} ;
 		} ;
@@ -129,8 +132,10 @@ def void Conv2DWinoWrapper(int32_pl m, int32_pl r, int32_pl N, int32_pl H, int32
 				for ci=[0:CI] {
 					for i=[0:n] {
 						for j=[0:n] {
+
 							mul1[co][th*TW + tw][ci*n*n+i*n+j] = inputTiles[0][ci][th][tw][i][j] ;
 							mul2[co][th*TW + tw][ci*n*n+i*n+j] = transformedFilter[i][j][ci][co] ;
+
 						} ;
 					} ;
 				} ;
@@ -198,6 +203,9 @@ def void Conv2DWinoWrapper(int32_pl m, int32_pl r, int32_pl N, int32_pl H, int32
 						} ;
 					} ;
 
+					ClearMemSecret2(n, n, outputBlock) ;
+					ClearMemSecret2(m, m, outputTransformed) ;
+
 				} ;
 			} ;
 		} ;
@@ -246,5 +254,32 @@ def void Conv2DWinoWrapper(int32_pl m, int32_pl r, int32_pl N, int32_pl H, int32
 		} ;
 	} ;
 
+	int64_al[N][CI][truH][truW] truInputImg ;
+	int64_al[N][CI][TH][TW][n][n] inputTiles ;
+	int64_al[s1][s2][s3] mul1 ;
+	int64_al[s1][s2][s3] mul2 ;
+	int64_al[s1][s2][s3] mulout ;
+	int64_al[CO][CI][TH][TW][m][m] outputTiles ;
+	int64_al[CO][TH][TW][m][m] reducedTiles ;
 
+	ClearMemSecret4(N, CI, truH, truW, truInputImg) ;
+	ClearMemSecret6(N, CI, TH, TW, n, n, inputTiles) ;
+	ClearMemSecret3(s1, s2, s3, mul1) ;
+	ClearMemSecret3(s1, s2, s3, mul2) ;
+	ClearMemSecret3(s1, s2, s3, mulout) ;
+	ClearMemSecret6(CO, CI, TH, TW, m, m, outputTiles) ;
+	ClearMemSecret5(CO, TH, TW, m, m, reducedTiles) ;
+}
+
+
+def void Conv2DWinoWrapper(int32_pl m, int32_pl r, int32_pl N, int32_pl H, int32_pl W, int32_pl CI, int32_pl CO, 
+				   int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, int32_pl G,
+				   int64_al[N][H][W][CI] inputArr, 
+				   int64_al[m+r-1][m+r-1][CI/G][CO] transformedFilter, 
+				   int64_al[N][H+zPadHLeft+zPadHRight-r+1][W+zPadWLeft+zPadWRight-r+1][CO] outArr) {
+	if (G == CI) {
+		Conv2DWinoDW(m, r, N, H, W, CI, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, inputArr, transformedFilter, outArr) ;
+	} else {
+		Conv2DWino(m, r, N, H, W, CI, CO, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, inputArr, transformedFilter, outArr) ;
+	} ;
 }
