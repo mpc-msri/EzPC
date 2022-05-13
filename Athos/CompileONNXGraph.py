@@ -94,12 +94,18 @@ Config file should be a json in the following format:
 
 
 def generate_code(params, role, debug=False):
+    print(params)
+
     model_path = params["model_name"]
     input_tensor_info = params["input_tensors"]
     output_tensors = params["output_tensors"]
     scale = 12 if params["scale"] is None else params["scale"]
     target = params["target"]
-    use_winograd = params["winograd"]
+    use_winograd = if params["winograd"]
+
+    if use_winograd :
+        print("------------------------------ VINOD WATED WINOGRAD ---------------------- ")
+
     if params["bitlength"] is None:
         if target == "SCI":
             bitlength = 41
