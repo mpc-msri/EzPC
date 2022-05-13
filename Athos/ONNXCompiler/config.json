@@ -1,9 +1,10 @@
 {
-    "model_name": "conv.onnx",
-    "input_tensors": { "input" : "1,1,32,32"},
-    "target": "SCI",
+    "model_name": "ResNet18.onnx",
+    "input_tensors": { "input" : "1,3,320,320"},
+    "target": "CPP",
     "backend": "OT",
     "scale": 23,
-    "bitlength": 56,
+    "bitlength": 63,
+    "winograd": true,
     "output_tensors": [ "output"]
 }
