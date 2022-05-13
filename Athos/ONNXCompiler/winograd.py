@@ -14,13 +14,9 @@ def get_modified_kernel(
 
     return np.array(mul_terms).reshape(output_dim, output_dim)
 
-def get_modified_filter(filter, r, m=4):
-    n = m + r - 1
+def get_modified_filter(filter, transform, n):
     filter_m = np.random.rand(filter.shape[0], filter.shape[1], n, n)
 
-    transform = pkl.load(
-        open(f"../Winograd/Transforms/WinogradM{m}R{r}_transform.pkl", "rb")
-    )
     constants = transform["constants"]
     indices = transform["indices"]
     numerators = transform["numerators"]

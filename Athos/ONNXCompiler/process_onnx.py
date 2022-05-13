@@ -233,6 +233,19 @@ def preprocess_winograd(graph_def, model_name_to_val_dict):
         ]
     )["strides"] != [1, 1]
 
+    m4r3_pkl = pkl.load(
+        open(f"../Winograd/Transforms/WinogradM4R3_transform.pkl", "rb")
+    )
+
+    m4r5_pkl = pkl.load(
+        open(f"../Winograd/Transforms/WinogradM4R5_transform.pkl", "rb")
+    )
+
+    transform_dict = {
+        "m4r3" : m4r3_pkl,
+        "m4r5" : m4r5_pkl
+    }
+
     for node in graph_def.node:
         node.name = node.output[0]
         if node.op_type == "Conv":
@@ -243,8 +256,8 @@ def preprocess_winograd(graph_def, model_name_to_val_dict):
             if tuple(wt.shape[2:]) == (1, 1) or wt.shape[2] > 5 :
                 continue
 
-            filter_size = wt.shape[2]
-            filter_m = wino.get_modified_filter(wt, filter_size)
+            r = wt.shape[2]
+            filter_m = wino.get_modified_filter(wt, transform_dict[f"m4r{r}"], r+3)
             model_name_to_val_dict[node.input[1]] = filter_m.tolist()
 
 
