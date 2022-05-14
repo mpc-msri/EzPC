@@ -216,10 +216,6 @@ void WinogradHadamard(int32_t s1, int32_t s2, int32_t s3, const intType *A,
   INIT_ALL_IO_DATA_SENT;
   INIT_TIMER;
 #endif
-
-  std::cout << "Matmul called s1,s2,s3 = " << s1 << " " << s2 << " " << s3
-            << std::endl;
-
   // By default, the model is A and server/Alice has it
   // So, in the AB mult, party with A = server and party with B = client.
   int partyWithAInAB_mul = sci::ALICE; 
@@ -332,13 +328,10 @@ void WinogradHadamard(int32_t s1, int32_t s2, int32_t s3, const intType *A,
   if (party == sci::ALICE) {
     intType *CTemp = new intType[s1 * s2 * s3];
 #ifdef USE_LINEAR_UNIFORM
-    printf("\tParty ALICE --> Linear uniform\n") ;
     multUniform->ideal_func(s1, s2, s3, A, B, CTemp);
 #else  // USE_LINEAR_UNIFORM
-    printf("\tParty ALICE --> Not using linear uniform\n") ;
     mult->matmul_cleartext(s1, s2, s3, (intType*)A, (intType*)B, CTemp, false);
 #endif // USE_LINEAR_UNIFORM
-    printf("\tParty ALICE --> elemWiseAdd\n") ;
     sci::elemWiseAdd<intType>(s1 * s2 * s3, C, CTemp, C);
     delete[] CTemp;
   } else {
@@ -499,7 +492,6 @@ void MatMul2D(int32_t s1, int32_t s2, int32_t s3, const intType *A,
 #ifdef USE_LINEAR_UNIFORM
     multUniform->ideal_func(s1, s2, s3, A, B, CTemp);
 #else  // USE_LINEAR_UNIFORM
-    printf("Multithreaded direct terms\n") ;
     mult->matmul_cleartext(s1, s2, s3, (intType*)A, (intType*)B, CTemp, true);
 #endif // USE_LINEAR_UNIFORM
     sci::elemWiseAdd<intType>(s1 * s3, C, CTemp, C);
