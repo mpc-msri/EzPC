@@ -253,7 +253,7 @@ def preprocess_winograd(graph_def, model_name_to_val_dict):
                 continue
 
             wt = np.array(model_name_to_val_dict[node.input[1]])
-            if tuple(wt.shape[2:]) == (1, 1) or wt.shape[2] > 5 :
+            if tuple(wt.shape[2:]) == (1, 1) or wt.shape[2] > 3 :
                 continue
 
             r = wt.shape[2]

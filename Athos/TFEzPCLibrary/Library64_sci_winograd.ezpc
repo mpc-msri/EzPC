@@ -2,17 +2,10 @@ extern void WinogradM4R3ImageTransform(int64_al[6][6] D, int64_al[6][6] M) ;
 
 extern void WinogradM4R3OutputTransform(int64_al[6][6] M, int64_al[4][4] C) ;
 
-(*
-
 extern void WinogradM4R5ImageTransform(int64_al[8][8] D, int64_al[8][8] M) ;
 
 extern void WinogradM4R5OutputTransform(int64_al[8][8] M, int64_al[4][4] C) ;
 
-extern void WinogradM4R7ImageTransform(int64_al[10][10] D, int64_al[10][10] M) ;
-
-extern void WinogradM4R7OutputTransform(int64_al[10][10] M, int64_al[4][4] C) ;
-
-*)
 
 def void Conv2DWino(int32_pl m, int32_pl r, int32_pl N, int32_pl H, int32_pl W, int32_pl CI, int32_pl CO, 
 				   int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight,
@@ -90,15 +83,11 @@ def void Conv2DWino(int32_pl m, int32_pl r, int32_pl N, int32_pl H, int32_pl W, 
 						} ;
 					} ;
 
-					if ((m == 4) && (r == 3)) {
+					if (r == 3) {
 						WinogradM4R3ImageTransform(inputBlock, inputTransformed) ;
 					} else {
-					if ((m == 4) && (r == 5)) {
+					if (r == 5) {
 						WinogradM4R5ImageTransform(inputBlock, inputTransformed) ;
-					} else {
-					if ((m == 4) && (r == 7)) {
-						WinogradM4R7ImageTransform(inputBlock, inputTransformed) ;
-					} ;
 					} ;
 					} ;
 
@@ -159,7 +148,7 @@ def void Conv2DWino(int32_pl m, int32_pl r, int32_pl N, int32_pl H, int32_pl W, 
 			} ;
 		} ;
 
-		WinogradHadamard(s2, s3, 1, mat, vec, res, 0) ;
+		WinogradHadamard(s2, s3, 1, mat, vec, res, false) ;
 
 		for j=[0:s2] {
 			for k=[0:s3] {
@@ -185,15 +174,11 @@ def void Conv2DWino(int32_pl m, int32_pl r, int32_pl N, int32_pl H, int32_pl W, 
 						} ;
 					} ;
 
-					if ((m == 4) && (r == 3)) {
+					if (r == 3) {
 						WinogradM4R3OutputTransform(outputBlock, outputTransformed) ;
 					} else {
-					if ((m == 4) && (r == 5)) {
+					if (r == 5) {
 						WinogradM4R5OutputTransform(outputBlock, outputTransformed) ;
-					} else {
-					if ((m == 4) && (r == 7)) {
-						WinogradM4R7OutputTransform(outputBlock, outputTransformed) ;
-					} ;
 					} ;
 					} ;
 
@@ -254,14 +239,6 @@ def void Conv2DWino(int32_pl m, int32_pl r, int32_pl N, int32_pl H, int32_pl W, 
 		} ;
 	} ;
 
-	int64_al[N][CI][truH][truW] truInputImg ;
-	int64_al[N][CI][TH][TW][n][n] inputTiles ;
-	int64_al[s1][s2][s3] mul1 ;
-	int64_al[s1][s2][s3] mul2 ;
-	int64_al[s1][s2][s3] mulout ;
-	int64_al[CO][CI][TH][TW][m][m] outputTiles ;
-	int64_al[CO][TH][TW][m][m] reducedTiles ;
-
 	ClearMemSecret4(N, CI, truH, truW, truInputImg) ;
 	ClearMemSecret6(N, CI, TH, TW, n, n, inputTiles) ;
 	ClearMemSecret3(s1, s2, s3, mul1) ;
@@ -269,6 +246,225 @@ def void Conv2DWino(int32_pl m, int32_pl r, int32_pl N, int32_pl H, int32_pl W, 
 	ClearMemSecret3(s1, s2, s3, mulout) ;
 	ClearMemSecret6(CO, CI, TH, TW, m, m, outputTiles) ;
 	ClearMemSecret5(CO, TH, TW, m, m, reducedTiles) ;
+}
+
+
+def void Conv2DWinoDW(int32_pl m, int32_pl r, int32_pl N, int32_pl H, int32_pl W, int32_pl C, 
+				   int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight,
+				   int64_al[N][H][W][C] inputArr, 
+				   int64_al[m+r-1][m+r-1][1][C] transformedFilter, 
+				   int64_al[N][H+zPadHLeft+zPadHRight-r+1][W+zPadWLeft+zPadWRight-r+1][C] outArr) {
+
+	int32_pl n = m + r - 1 ;
+
+	int32_pl truH = H + zPadHLeft + zPadHRight ;
+	int32_pl truW = W + zPadWLeft + zPadWRight ;
+	int32_pl outH = truH - r + 1 ;
+	int32_pl outW = truW - r + 1 ;
+
+	int64_al[N][C][truH][truW] truInputImg ;
+
+	for i1=[0:N] {
+		for i2=[0:C] {
+
+			for i3=[0:truH] {
+				for i4=[0:truW] {
+
+					if ((zPadHLeft <= i3) && (i3 < (zPadHLeft + H)) && (zPadWLeft <= i4) && (i4 < (zPadWLeft + W))) {
+						truInputImg[i1][i2][i3][i4] = inputArr[i1][i3-zPadHLeft][i4-zPadWLeft][i2] ;
+					} else {
+						truInputImg[i1][i2][i3][i4] = 0L ;
+					} ;
+
+				} ;
+			} ;
+
+		} ;
+	} ;
+
+	int32_pl TH ;
+	int32_pl TW ;
+
+	if (((truH - r + 1) % m) == 0) {
+		TH = (truH - r + 1) / m ;
+	} else {
+		TH = ((truH - r + 1) / m) + 1 ;
+	} ;
+
+	if (((truW - r + 1) % m) == 0) {
+		TW = (truW - r + 1) / m ;
+	} else {
+		TW = ((truW - r + 1) / m) + 1 ;
+	} ;
+
+	int64_al[N][C][TH][TW][n][n] inputTiles ;
+
+	for i1=[0:N] {
+		for i2=[0:C] {
+
+			for th=[0:TH] {
+				for tw=[0:TW] {
+
+					int64_al[n][n] inputBlock ;
+					int64_al[n][n] inputTransformed ;
+
+					for i=[0:n] {
+						for j=[0:n] {
+							int32_pl indH ;
+							int32_pl indW ;
+
+							indH = (th*m) + i ;
+							indW = (tw*m) + j ;
+
+							if ((indH < truH) && (indW < truW)) {
+								inputBlock[i][j] = truInputImg[i1][i2][indH][indW] ;
+							} else {
+								inputBlock[i][j] = 0L ;
+							} ;
+
+						} ;
+					} ;
+
+					if (r == 3) {
+						WinogradM4R3ImageTransform(inputBlock, inputTransformed) ;
+					} else {
+					if (r == 5) {
+						WinogradM4R5ImageTransform(inputBlock, inputTransformed) ;
+					} ;
+					} ;
+
+
+					for i=[0:n] {
+						for j=[0:n] {
+							inputTiles[i1][i2][th][tw][i][j] = inputTransformed[i][j] ;
+						} ;
+					} ;
+
+					ClearMemSecret2(n, n, inputBlock) ;
+					ClearMemSecret2(n, n, inputTransformed) ;
+
+				} ;
+			} ;
+		} ;
+	} ;
+
+	int32_pl s2 = TH*TW ;
+	int32_pl s3 = C*n*n ;
+
+	int64_al[s2][s3] mul1 ;
+	int64_al[s2][s3] mul2 ;
+	int64_al[s2][s3] mulout ;
+
+	for th=[0:TH] {
+		for tw=[0:TW] {
+
+			for c=[0:C] {
+				for i=[0:n] {
+					for j=[0:n] {
+
+						mul1[th*TW + tw][c*n*n+i*n+j] = inputTiles[0][c][th][tw][i][j] ;
+						mul2[th*TW + tw][c*n*n+i*n+j] = transformedFilter[i][j][0][c] ;
+
+					} ;
+				} ;
+			} ;
+
+		} ;
+	} ;
+
+	int64_al[s2][s3] mat ;
+	int64_al[s3][1] vec ;
+	int64_al[s2][s3] res ;
+
+	for k=[0:s3] {
+		vec[k][0] = mul2[0][k] ;
+	} ;
+
+	for j=[0:s2] {
+		for k=[0:s3] {
+			mat[j][k] = mul1[j][k] ;
+		} ;
+	} ;
+
+	WinogradHadamard(s2, s3, 1, mat, vec, res, false) ;
+
+	for j=[0:s2] {
+		for k=[0:s3] {
+			mulout[j][k] = res[j][k] ;
+		} ;
+	} ;
+
+	int64_al[C][TH][TW][m][m] outputTiles ;
+
+	for i3=[0:C] {
+		for th=[0:TH] {
+			for tw=[0:TW] {
+
+				int64_al[n][n] outputBlock ;
+				int64_al[m][m] outputTransformed ;
+
+				for i=[0:n] {
+					for j=[0:n] {
+						outputBlock[i][j] = mulout[th*TW + tw][i3*n*n+i*n+j]
+					} ;
+				} ;
+
+					if (r == 3) {
+						WinogradM4R3OutputTransform(outputBlock, outputTransformed) ;
+					} else {
+					if (r == 5) {
+						WinogradM4R5OutputTransform(outputBlock, outputTransformed) ;
+					} ;
+					} ;
+
+				for i=[0:m] {
+					for j=[0:m] {
+						outputTiles[i3][th][tw][i][j] = outputTransformed[i][j] ;
+					} ;
+				} ;
+
+				ClearMemSecret2(n, n, outputBlock) ;
+				ClearMemSecret2(m, m, outputTransformed) ;
+
+			} ;
+		} ;
+	} ;
+
+
+	for i2=[0:C] {
+		for th=[0:TH] {
+			for tw=[0:TW] {
+				int32_pl i3 = th*m ;
+				int32_pl i4 = tw*m ;
+
+				for i=[0:m] {
+					for j=[0:m] {
+						int32_pl indH ;
+						int32_pl indW ;
+
+						indH = (th*m) + i ;
+						indW = (tw*m) + j ;
+
+						if ((indH < outH) && (indW < outW)) {
+							outArr[0][indH][indW][i2] = outputTiles[i2][th][tw][i][j] ;
+						} ;
+
+					} ;
+				} ;
+			} ;
+		} ;
+	} ;
+
+
+	ClearMemSecret4(N, C, truH, truW, truInputImg) ;
+	ClearMemSecret6(N, C, TH, TW, n, n, inputTiles) ;
+	ClearMemSecret2(s2, s3, mul1) ;
+	ClearMemSecret2(s2, s3, mul2) ;
+	ClearMemSecret2(s2, s3, mulout) ;
+	ClearMemSecret2(s2, s3, mat) ;
+	ClearMemSecret2(s3, 1, mul1) ;
+	ClearMemSecret2(s2, s3, res) ;
+	ClearMemSecret5(C, TH, TW, m, m, outputTiles) ;
 }
 
 

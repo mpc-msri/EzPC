@@ -55,6 +55,10 @@ void WinogradM4R3ImageTransform(uint64_t* D, uint64_t* M) ;
 
 void WinogradM4R3OutputTransform(uint64_t* M, uint64_t* C) ;
 
+void WinogradM4R5ImageTransform(uint64_t* D, uint64_t* M) ;
+
+void WinogradM4R5OutputTransform(uint64_t* M, uint64_t* C) ;
+
 void WinogradHadamard(int32_t s1, int32_t s2, int32_t s3, const intType *A,
               const intType *B, intType *C, bool modelIsA);
 
@@ -153,6 +157,16 @@ inline void ClearMemSecret4(int32_t s1, int32_t s2, int32_t s3, int32_t s4,
 
 inline void ClearMemSecret5(int32_t s1, int32_t s2, int32_t s3, int32_t s4,
                             int32_t s5, intType *arr) {
+  delete[] arr;
+}
+
+inline void ClearMemSecret6(int32_t s1, int32_t s2, int32_t s3, int32_t s4,
+                            int32_t s5, int32_t s6, intType *arr) {
+  delete[] arr;
+}
+
+inline void ClearMemSecret7(int32_t s1, int32_t s2, int32_t s3, int32_t s4,
+                            int32_t s5, int32_t s6, int32_t s7, intType *arr) {
   delete[] arr;
 }
 

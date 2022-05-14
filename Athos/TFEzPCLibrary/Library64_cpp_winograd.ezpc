@@ -449,16 +449,12 @@ def void Conv2DWino(int32_pl m, int32_pl r, int32_pl N, int32_pl H, int32_pl W, 
 						} ;
 					} ;
 
-					if ((m == 4) && (r == 3)) {
+					if (r == 3) {
 						WinogradM4R3ImageTransform(inputBlock, inputTransformed) ;
 					} else {
-					if ((m == 4) && (r == 5)) {
+					if (r == 5) {
 						WinogradM4R5ImageTransform(inputBlock, inputTransformed) ;
-					} else {
-					if ((m == 4) && (r == 7)) {
-						WinogradM4R7ImageTransform(inputBlock, inputTransformed) ;
-					} ;
-					} ;
+					} ; 
 					} ;
 
 					for i=[0:n] {
@@ -518,15 +514,11 @@ def void Conv2DWino(int32_pl m, int32_pl r, int32_pl N, int32_pl H, int32_pl W, 
 
 
 
-						if ((m == 4) && (r == 3)) {
+						if (r == 3) {
 							WinogradM4R3OutputTransform(outputBlock, outputTransformed) ;
 						} else {
-						if ((m == 4) && (r == 5)) {
+						if (r == 5) {
 							WinogradM4R5OutputTransform(outputBlock, outputTransformed) ;
-						} else {
-						if ((m == 4) && (r == 7)) {
-							WinogradM4R7OutputTransform(outputBlock, outputTransformed) ;
-						} ;
 						} ;
 						} ;
 
@@ -678,15 +670,11 @@ def void Conv2DWinoDW(int32_pl m, int32_pl r, int32_pl N, int32_pl H, int32_pl W
 						} ;
 					} ;
 
-					if ((m == 4) && (r == 3)) {
+					if (r == 3) {
 						WinogradM4R3ImageTransform(inputBlock, inputTransformed) ;
 					} else {
-					if ((m == 4) && (r == 5)) {
+					if (r == 5) {
 						WinogradM4R5ImageTransform(inputBlock, inputTransformed) ;
-					} else {
-					if ((m == 4) && (r == 7)) {
-						WinogradM4R7ImageTransform(inputBlock, inputTransformed) ;
-					} ;
 					} ;
 					} ;
 
@@ -741,15 +729,11 @@ def void Conv2DWinoDW(int32_pl m, int32_pl r, int32_pl N, int32_pl H, int32_pl W
 						} ;
 					} ;
 
-					if ((m == 4) && (r == 3)) {
+					if (r == 3) {
 						WinogradM4R3OutputTransform(outputBlock, outputTransformed) ;
 					} else {
-					if ((m == 4) && (r == 5)) {
+					if (r == 5) {
 						WinogradM4R5OutputTransform(outputBlock, outputTransformed) ;
-					} else {
-					if ((m == 4) && (r == 7)) {
-						WinogradM4R7OutputTransform(outputBlock, outputTransformed) ;
-					} ;
 					} ;
 					} ;
 

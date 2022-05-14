@@ -94,14 +94,12 @@ Config file should be a json in the following format:
 
 
 def generate_code(params, role, debug=False):
-    print(params)
-
     model_path = params["model_name"]
     input_tensor_info = params["input_tensors"]
     output_tensors = params["output_tensors"]
     scale = 12 if params["scale"] is None else params["scale"]
     target = params["target"]
-    use_winograd = if params["winograd"]
+    use_winograd = params["winograd"]
 
     if use_winograd :
         print("------------------------------ VINOD WATED WINOGRAD ---------------------- ")
@@ -235,7 +233,7 @@ def generate_code(params, role, debug=False):
                 library_dir,
                 "Library{}_cpp_winograd.ezpc".format(lib_bitlength)
             )
-        elif library == "SCI" :
+        elif library == "sci" :
             wino = os.path.join(
                 library_dir,
                 "Library{}_sci_winograd.ezpc".format(lib_bitlength)
