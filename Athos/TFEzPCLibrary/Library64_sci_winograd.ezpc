@@ -462,7 +462,6 @@ def void Conv2DWinoDW(int32_pl m, int32_pl r, int32_pl N, int32_pl H, int32_pl W
 	ClearMemSecret2(s2, s3, mul2) ;
 	ClearMemSecret2(s2, s3, mulout) ;
 	ClearMemSecret2(s2, s3, mat) ;
-	ClearMemSecret2(s3, 1, mul1) ;
 	ClearMemSecret2(s2, s3, res) ;
 	ClearMemSecret5(C, TH, TW, m, m, outputTiles) ;
 }
