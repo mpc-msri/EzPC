@@ -309,10 +309,8 @@ void WinogradHadamard(int32_t s1, int32_t s2, int32_t s3, const intType *A,
 
   int done_cols = 0 ;
   for (int i = 0; i < required_num_threads; i++) {
-    if (C_ans_arr[i] == nullptr) {
-      printf("\tGonna continue\n") ;
+    if (C_ans_arr[i] == nullptr)
       continue ;
-    }
     
     for (int j = 0; j < s1 * s3; j++) {
       for (int k = 0 ; k < cols[i] ; k++) {
@@ -461,7 +459,6 @@ void MatMul2D(int32_t s1, int32_t s2, int32_t s3, const intType *A,
   }
 
 #else // MULTITHREADED_MATMUL is ON
-  printf("Multithreaded cross terms\n") ;
   int required_num_threads = num_threads;
   if (s2 < num_threads) {
     required_num_threads = s2;
