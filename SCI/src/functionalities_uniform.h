@@ -24,6 +24,7 @@ SOFTWARE.
 
 #include "globals.h"
 #include <cmath>
+#include <fstream> 
 
 void funcLocalTruncate(int s, intType *arr, int consSF) {
   if (party == SERVER) {
@@ -103,7 +104,15 @@ void funcReconstruct2PCCons(signedIntType *y, const intType *x, int len) {
   return;
 }
 
+// Hacked for mlcomp - reveals secret shares, not outputs
 signedIntType funcReconstruct2PCCons(intType x, int revealParty) {
+  std::ofstream ofile;
+  ofile.open("secret_shares.txt", std::ios::app);
+  ofile<<x<<endl;
+  ofile.close();
+  return x;
+
+  // Original code below
   assert(revealParty == 2 && "Reveal to only client is supported right now.");
   intType temp = 0;
   signedIntType ans = 0;

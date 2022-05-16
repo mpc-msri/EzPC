@@ -4,3 +4,5 @@ bin/
 
 # Vim c_tags files
 c_*
+
+local/
