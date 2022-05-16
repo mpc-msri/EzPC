@@ -1,0 +1,2 @@
+/usr/bin/ar qc ../../lib/libSCI-LinearOT.a  CMakeFiles/SCI-LinearOT.dir/linear-ot.cpp.o
+/usr/bin/ranlib ../../lib/libSCI-LinearOT.a

@@ -1,0 +1,2 @@
+/usr/bin/ar qc ../../lib/libSCI-LinearHE.a  CMakeFiles/SCI-LinearHE.dir/conv-field.cpp.o CMakeFiles/SCI-LinearHE.dir/fc-field.cpp.o CMakeFiles/SCI-LinearHE.dir/elemwise-prod-field.cpp.o CMakeFiles/SCI-LinearHE.dir/utils-HE.cpp.o
+/usr/bin/ranlib ../../lib/libSCI-LinearHE.a

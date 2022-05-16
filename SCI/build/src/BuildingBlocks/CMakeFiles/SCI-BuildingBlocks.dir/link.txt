@@ -1,0 +1,2 @@
+/usr/bin/ar qc ../../lib/libSCI-BuildingBlocks.a  CMakeFiles/SCI-BuildingBlocks.dir/value-extension.cpp.o CMakeFiles/SCI-BuildingBlocks.dir/aux-protocols.cpp.o CMakeFiles/SCI-BuildingBlocks.dir/truncation.cpp.o
+/usr/bin/ranlib ../../lib/libSCI-BuildingBlocks.a

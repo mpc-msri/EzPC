@@ -1,0 +1,2 @@
+/usr/bin/ar qc ../lib/libSCI-OT.a  CMakeFiles/SCI-OT.dir/library_fixed_uniform.cpp.o CMakeFiles/SCI-OT.dir/library_fixed.cpp.o CMakeFiles/SCI-OT.dir/globals.cpp.o CMakeFiles/SCI-OT.dir/cleartext_library_fixed.cpp.o
+/usr/bin/ranlib ../lib/libSCI-OT.a

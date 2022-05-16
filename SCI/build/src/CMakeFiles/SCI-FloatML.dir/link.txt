@@ -1,0 +1,2 @@
+/usr/bin/ar qc ../lib/libSCI-FloatML.a  CMakeFiles/SCI-FloatML.dir/library_float.cpp.o CMakeFiles/SCI-FloatML.dir/globals_float.cpp.o CMakeFiles/SCI-FloatML.dir/cleartext_library_float.cpp.o
+/usr/bin/ranlib ../lib/libSCI-FloatML.a

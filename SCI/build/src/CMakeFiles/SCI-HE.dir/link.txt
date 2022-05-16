@@ -1,0 +1,2 @@
+/usr/bin/ar qc ../lib/libSCI-HE.a  CMakeFiles/SCI-HE.dir/library_fixed_uniform.cpp.o CMakeFiles/SCI-HE.dir/globals.cpp.o
+/usr/bin/ranlib ../lib/libSCI-HE.a

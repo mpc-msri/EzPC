@@ -1,0 +1,2 @@
+/usr/bin/ar qc ../../lib/libSCI-Math.a  CMakeFiles/SCI-Math.dir/math-functions.cpp.o
+/usr/bin/ranlib ../../lib/libSCI-Math.a

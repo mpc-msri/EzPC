@@ -1,0 +1,2 @@
+/usr/bin/ar qc ../../lib/libSCI-FloatingPoint.a  CMakeFiles/SCI-FloatingPoint.dir/fp-math.cpp.o CMakeFiles/SCI-FloatingPoint.dir/floating-point.cpp.o CMakeFiles/SCI-FloatingPoint.dir/fixed-point.cpp.o CMakeFiles/SCI-FloatingPoint.dir/bool-data.cpp.o
+/usr/bin/ranlib ../../lib/libSCI-FloatingPoint.a

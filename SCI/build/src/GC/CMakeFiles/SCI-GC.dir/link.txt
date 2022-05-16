@@ -1,0 +1,2 @@
+/usr/bin/ar qc ../../lib/libSCI-GC.a  CMakeFiles/SCI-GC.dir/emp-tool.cpp.o CMakeFiles/SCI-GC.dir/halfgate_gen.cpp.o CMakeFiles/SCI-GC.dir/halfgate_eva.cpp.o
+/usr/bin/ranlib ../../lib/libSCI-GC.a
