@@ -184,6 +184,7 @@ def parse_config(config, sample_network=False):
     input_t_info = parse_input_tensors(config)
 
     save_weights = get_opt_bool_param(config, "save_weights")
+    winograd = get_opt_bool_param(config, "winograd")
     scale = get_opt_int_param(config, "scale")
     bitlen = get_opt_int_param(config, "bitlength")
     modulo = get_opt_int_param(config, "modulo")
@@ -202,6 +203,7 @@ def parse_config(config, sample_network=False):
         "bitlength": bitlen,
         "target": target,
         "save_weights": save_weights,
+        "winograd":winograd,
         "modulo": modulo,
         "backend": backend,
         "disable_all_hlil_opts": disable_hlil_opts,

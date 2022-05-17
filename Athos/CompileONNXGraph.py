@@ -184,8 +184,8 @@ def generate_code(params, role, debug=False):
 
     # Compile to ezpc
     model_base_name = model_name[:-5]
-    ezpc_file_name = "{mname}_{bl}_{target}.ezpc".format(
-        mname=model_base_name, bl=bitlength, target=target.lower()
+    ezpc_file_name = "{mname}_{wino}_{bl}_{target}.ezpc".format(
+        mname=model_base_name, bl=bitlength, wino="winograd" if use_winograd else "normal", target=target.lower()
     )
     ezpc_abs_path = os.path.join(model_abs_dir, ezpc_file_name)
 
@@ -274,6 +274,8 @@ def generate_code(params, role, debug=False):
     os.system('rm "{}"'.format(ezpc_file_name))
     output_file = os.path.join(model_abs_dir, output_name)
 
+    return
+
     print("Compiling generated code to {target} target".format(target=target))
     if target == "SCI":
         program_name = model_base_name + "_" + target + "_" + backend + ".out"
@@ -299,7 +301,7 @@ def generate_code(params, role, debug=False):
                 """g++ {opt_flag} -fopenmp -pthread -w -march=native -msse4.1 -maes -mpclmul \
         -mrdseed -fpermissive -fpic -std=c++17 -L \"{porthos_lib}\" -I \"{porthos_headers}\" \"{file}\" \
         -lPorthos-Protocols -lssl -lcrypto -lrt -lboost_system \
-        -o \"{output}\"""".format(
+            -o \"{output}\"""".format(
                     porthos_lib=porthos_lib,
                     porthos_headers=porthos_src,
                     file=output_file,

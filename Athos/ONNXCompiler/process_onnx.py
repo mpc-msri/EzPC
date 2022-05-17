@@ -234,11 +234,11 @@ def preprocess_winograd(graph_def, model_name_to_val_dict):
     )["strides"] != [1, 1]
 
     m4r3_pkl = pickle.load(
-        open(f"../Winograd/Transforms/WinogradM4R3_transform.pkl", "rb")
+        open(f"/home/t-anweshb/Desktop/EzPC/Athos/Winograd/Transforms/WinogradM4R3_transform.pkl", "rb")
     )
 
     m4r5_pkl = pickle.load(
-        open(f"../Winograd/Transforms/WinogradM4R5_transform.pkl", "rb")
+        open(f"/home/t-anweshb/Desktop/EzPC/Athos/Winograd/Transforms/WinogradM4R5_transform.pkl", "rb")
     )
 
     transform_dict = {
@@ -262,11 +262,11 @@ def preprocess_winograd(graph_def, model_name_to_val_dict):
 
 
 def dump_model_weights(
-    model, model_name_to_val_dict, scaling_factor, model_dir, gather_names, model_name
+    model, model_name_to_val_dict, scaling_factor, model_dir, gather_names, model_name, use_winograd
 ):
     weights_path = ""
     weights_fname = (
-        model_name + "_input_weights_fixedpt_scale_" + str(scaling_factor) + ".inp"
+        model_name + "_{}_weights".format("winograd" if use_winograd else "normal") + str(scaling_factor) + ".inp"
     )
     weights_path = os.path.join(model_dir, weights_fname)
 
@@ -401,6 +401,7 @@ def compile(
         model_abs_dir,
         gather_names,
         model_name,
+        use_winograd
     )
 
 def addOutputs(
