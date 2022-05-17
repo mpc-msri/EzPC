@@ -2099,7 +2099,7 @@ def void Sqrt2(int32_pl s1, int32_pl s2, int32_al[s1][s2] inp, int32_al[s1][s2] 
   int32_al[size] outCopy;
   for i=[0:s1] {
     for j=[0:s2] {
-      inpCopy[i*s1 + j] = inp[i][j];
+      inpCopy[i*s2 + j] = inp[i][j];
     };
   };
 
