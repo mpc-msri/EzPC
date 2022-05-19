@@ -81,7 +81,7 @@ generateAndDiffCode () {
 	else
 		echo -e "Compilation failed for following files."
 		printf '%s\n' "${compileErrorFiles[@]}"
-    	checks="Failed"
+    		checks="Failed"
 
 	fi
 	
@@ -91,7 +91,7 @@ generateAndDiffCode () {
 	else
 		echo -e "Diff failed for following files."
 		printf '%s\n' "${diffFailedFiles[@]}"
-    	checks="Failed"
+    		checks="Failed"
 
 	fi
 
