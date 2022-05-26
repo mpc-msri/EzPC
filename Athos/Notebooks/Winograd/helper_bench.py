@@ -6,12 +6,12 @@ import sys
 import argparse
 from argparse import RawTextHelpFormatter
 
-def generate_config(net_path, net_name, input_shape, use_winograd=False, secure=False) :
+def generate_config(net_path, net_name, input_shape, use_winograd) :
 	config_file = open(os.path.join(net_path, "config.json"), 'w')
 	config_dict = {
 		"model_name" : net_name + ".onnx",
 		"input_tensors" : {"input" : "{},{},{},{}".format(*input_shape)},
-		"target" : "SCI" if secure else "CPP",
+		"target" : "SCI",
 		"scale" : 23,
 		"bitlength" : 60,
 		"output_tensors" : ["output"],
@@ -42,10 +42,10 @@ def parse_args() :
 	)
 
 	parser.add_argument(
-		"--sm",
-		required=False,
-		type=str,
-		choices=["single", "multi"]
+		"--bench",
+		required=True,
+		type=int,
+		choices=[1, 2, 3, 4]
 	)
 
 	parser.add_argument(
@@ -55,32 +55,41 @@ def parse_args() :
 		choices=["normal", "winograd"]
 	)
 
-	parser.add_argument(
-		"--exec",
-		required=True,
-		type=str,
-		choices=["clear", "secure"]
-	)
-
 	return parser.parse_args()
 
 if __name__ == "__main__" :
 	args = parse_args()
 	is_dense = args.dg == "dense"
-	is_single = args.sm == "single"
 	is_winograd = args.nw == "winograd"
-	is_secure = args.exec == "secure"
 
-	img_shape = (10, 10) if args.filter == 3 else (12, 12)
-	input_shape = ((1, 1) if is_single else (1, 4)) + img_shape
+	shapes = {
+	    "conv3_dense_bench1" : (1, 1, 6, 6),
+	    "conv3_dense_bench2" : (1, 3, 46, 46),
+	    "conv3_dense_bench3" : (1, 16, 128, 128),
+	    "conv3_dense_bench4" : (1, 64, 256, 256),
+	    
+	    "conv5_dense_bench1" : (1, 1, 8, 8),
+	    "conv5_dense_bench2" : (1, 3, 46, 46),
+	    "conv5_dense_bench3" : (1, 16, 128, 128),
+	    "conv5_dense_bench4" : (1, 64, 256, 256),
+	    
+	    "conv3_group_bench1" : (1, 3, 6, 6),
+	    "conv3_group_bench2" : (1, 16, 46, 46),
+	    "conv3_group_bench3" : (1, 32, 128, 128),
+	    "conv3_group_bench4" : (1, 64, 256, 256),
+	    
+	    "conv5_group_bench1" : (1, 3, 8, 8),
+	    "conv5_group_bench2" : (1, 16, 46, 46),
+	    "conv5_group_bench3" : (1, 32, 128, 128),
+	    "conv5_group_bench4" : (1, 64, 256, 256),
+	}
 
-	net_suff = f"_{args.dg}"
-	if is_dense : net_suff += f"_{args.sm}"
+	bench_str = f"conv{args.filter}_{args.dg}_bench{args.bench}"
+	input_shape = shapes[bench_str]
 
 	generate_config(
-		os.path.join(args.root, f"Conv{args.filter}"),
-		f"conv{args.filter}" + net_suff, 
+		os.path.join(args.root, f"Microbenches"),
+		bench_str, 
 		input_shape, 
-		is_winograd, 
-		is_secure
+		is_winograd
 	)

@@ -1,0 +1,1 @@
+{"model_name": "conv5_group.onnx", "input_tensors": {"input": "1,1,12,12"}, "target": "SCI", "scale": 23, "bitlength": 60, "output_tensors": ["output"], "winograd": true}

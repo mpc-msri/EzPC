@@ -1,0 +1,14 @@
+J8   tmp13
+J7   tmp12
+J6   tmp11
+J5   tmp10
+J4   tmp9
+J3   tmp8
+J2   tmp7
+J1   tmp6
+J0   tmp5
+29   tmp4
+21   tmp3
+conv.bias   tmp2
+conv.weight   tmp1
+input_names   tmp0

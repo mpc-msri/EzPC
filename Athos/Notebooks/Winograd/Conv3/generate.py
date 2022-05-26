@@ -1,4 +1,5 @@
 import os
+import sys
 
 if __name__ == "__main__" :
 	for dg in ["dense", "group"] :
@@ -11,7 +12,6 @@ if __name__ == "__main__" :
 					os.system(f"python3 ../helper.py --root .. --filter 3 --dg {dg} --sm {sm} --exec {ex} --nw {nw}")
 					os.system(f"python3 ../../../CompileONNXGraph.py --config config.json --role server")
 
-
-	os.system("mv *.ezpc EzPC/")
-	os.system("mv *.inp Weights/")
-	os.system("mv *.cpp CPP/")
+	os.system(f"mv *.ezpc EzPC/")
+	os.system(f"mv *.inp Weights/")
+	os.system(f"mv *.cpp CPP/")
