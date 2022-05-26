@@ -875,7 +875,7 @@ void funcAvgPoolTwoPowerRingWrapper(int size, intType *inp, intType *outp,
     }
     int curParty = party;
     if (i & 1)
-      curParty = 3 - curParty;
+      curParty = 3 - curParty ;
     truncThreads[i] = std::thread(
         funcAvgPoolTwoPowerRing, curParty, iopackArr[i], otpackArr[i],
         otInstanceArr[i], kkotInstanceArr[i], reluArr[i], prgInstanceArr[i],

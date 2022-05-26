@@ -1,5 +1,6 @@
 models/
 debug/
+*.onnx
 *.cpp
 *.inp
 *.h

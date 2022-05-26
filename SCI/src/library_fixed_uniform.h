@@ -59,6 +59,10 @@ void WinogradM4R5ImageTransform(uint64_t* D, uint64_t* M) ;
 
 void WinogradM4R5OutputTransform(uint64_t* M, uint64_t* C) ;
 
+void WinogradM2R5ImageTransform(uint64_t* D, uint64_t* M) ;
+
+void WinogradM2R5OutputTransform(uint64_t* M, uint64_t* C) ;
+
 void WinogradHadamard(int32_t s1, int32_t s2, int32_t s3, const intType *A,
               const intType *B, intType *C, bool modelIsA);
 

@@ -7271,7 +7271,7 @@ def void Conv2DGroup(int32_pl N, int32_pl H, int32_pl W, int32_pl CI,
 	int32_pl reshapedIPCols = N * outH * outW;
 
 
-	for g=[0:G]{
+	for g=[0:G] {
 		int64_al[reshapedIPRows][reshapedIPCols] inputReshaped;
 		int64_al[reshapedFilterRows][reshapedIPCols] matmulOP;
 		int64_al[reshapedFilterRows][reshapedFilterCols] filterReshaped;
@@ -8092,6 +8092,38 @@ def void ElemWiseMul5(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_
 
 	ClearMemSecret1(inpSize, arr1Reshaped);
 	ClearMemSecret1(inpSize, arr2Reshaped);
+	ClearMemSecret1(inpSize, outArrReshaped);
+}
+
+def void ElemWisePublicDiv4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int64_al[s1][s2][s3][s4] arr, int32_pl div, int64_al[s1][s2][s3][s4] outArr)
+{
+	int32_pl inpSize = s1*s2*s3*s4;
+	int64_al[inpSize] arrReshaped;
+	int64_al[inpSize] outArrReshaped;
+	for i1=[0:s1]{
+		for i2=[0:s2]{
+			for i3=[0:s3]{
+				for i4=[0:s4]{
+					int32_pl linIdx = (i1*s2*s3*s4) + (i2*s3*s4) + (i3*s4) + (i4);
+					arrReshaped[linIdx] = arr[i1][i2][i3][i4];
+				};
+			};
+		};
+	};
+
+	ElemWiseVectorPublicDiv(inpSize, arrReshaped, div, outArrReshaped);
+	for i1=[0:s1]{
+		for i2=[0:s2]{
+			for i3=[0:s3]{
+				for i4=[0:s4]{
+					int32_pl linIdx = (i1*s2*s3*s4) + (i2*s3*s4) + (i3*s4) + (i4);
+					outArr[i1][i2][i3][i4] = outArrReshaped[linIdx];
+				};
+			};
+		};
+	};
+
+	ClearMemSecret1(inpSize, arrReshaped);
 	ClearMemSecret1(inpSize, outArrReshaped);
 }
 

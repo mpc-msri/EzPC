@@ -237,14 +237,9 @@ def preprocess_winograd(graph_def, model_name_to_val_dict):
         open(f"/home/t-anweshb/Desktop/EzPC/Athos/Winograd/Transforms/WinogradM4R3_transform.pkl", "rb")
     )
 
-    m4r5_pkl = pickle.load(
-        open(f"/home/t-anweshb/Desktop/EzPC/Athos/Winograd/Transforms/WinogradM4R5_transform.pkl", "rb")
+    m2r5_pkl = pickle.load(
+        open(f"/home/t-anweshb/Desktop/EzPC/Athos/Winograd/Transforms/WinogradM2R5_transform.pkl", "rb")
     )
-
-    transform_dict = {
-        "m4r3" : m4r3_pkl,
-        "m4r5" : m4r5_pkl
-    }
 
     for node in graph_def.node:
         node.name = node.output[0]
@@ -253,11 +248,21 @@ def preprocess_winograd(graph_def, model_name_to_val_dict):
                 continue
 
             wt = np.array(model_name_to_val_dict[node.input[1]])
-            if tuple(wt.shape[2:]) == (1, 1) or wt.shape[2] > 3 :
+            if tuple(wt.shape[2:]) == (1, 1) or wt.shape[2] > 5 :
                 continue
 
             r = wt.shape[2]
-            filter_m = wino.get_modified_filter(wt, transform_dict[f"m4r{r}"], r+3)
+
+            m = {
+                3 : 4,
+                5 : 2
+            }[r]
+
+            transform_pkl = {
+                3 : m4r3_pkl,
+                5 : m2r5_pkl
+            }[r]
+            filter_m = wino.get_modified_filter(wt, transform_pkl, m+r-1)
             model_name_to_val_dict[node.input[1]] = filter_m.tolist()
 
 
