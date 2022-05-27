@@ -25,4 +25,4 @@ RUN mkdir -p /ezpc_dir
 WORKDIR /ezpc_dir
 RUN git clone https://github.com/agrawal-d/EzPC
 RUN cd EzPC && git checkout mlcomp && git pull origin mlcomp
-RUN ./setup_env_and_build.sh quick
+RUN cd EzPC && ./setup_env_and_build.sh quick
