@@ -70,7 +70,8 @@ sci::IKNP<sci::NetIO> *otInstanceArr[MAX_THREADS];
 sci::KKOT<sci::NetIO> *kkotInstanceArr[MAX_THREADS];
 sci::PRG128 *prgInstanceArr[MAX_THREADS];
 
-std::chrono::time_point<std::chrono::high_resolution_clock> start_time;
+std::chrono::time_point<std::chrono::high_resolution_clock> start_time ;
+
 uint64_t comm_threads[MAX_THREADS];
 uint64_t num_rounds;
 

@@ -2064,6 +2064,34 @@ void StartComputation() {
             << std::endl;
 }
 
+float get_commun() {
+  uint64_t totalSent = 0;
+  uint64_t totalComm = 0 ;
+  for (int i = 0; i < num_threads; i++) {
+    auto temp = iopackArr[i]->get_comm();
+    totalSent += temp ;
+    totalComm += (temp - comm_threads[i]);
+  }
+
+  uint64_t totalRecv = 0 ;
+  if (party == SERVER)
+    io->recv_data(&totalRecv, sizeof(uint64_t));
+  else
+    io->send_data(&totalComm, sizeof(uint64_t));
+
+  return ((float)(totalComm + totalRecv))/(1ULL << 20) ;
+}
+
+std::chrono::time_point<std::chrono::high_resolution_clock> get_counter() {
+  return std::chrono::high_resolution_clock::now() ;
+}
+
+uint64_t get_time(std::chrono::time_point<std::chrono::high_resolution_clock> t) {
+  return (uint64_t)std::chrono::duration_cast<std::chrono::milliseconds>(
+    get_counter() - t
+  ).count();
+}
+
 void EndComputation() {
   auto endTimer = std::chrono::high_resolution_clock::now();
   auto execTimeInMilliSec =

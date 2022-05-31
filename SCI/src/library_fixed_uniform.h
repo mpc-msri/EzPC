@@ -130,6 +130,12 @@ void StartComputation();
 
 void EndComputation();
 
+float get_commun() ;
+
+std::chrono::time_point<std::chrono::high_resolution_clock> get_counter() ;
+
+uint64_t get_time(std::chrono::time_point<std::chrono::high_resolution_clock> t) ;
+
 intType SecretAdd(intType x, intType y);
 
 intType SecretSub(intType x, intType y);
