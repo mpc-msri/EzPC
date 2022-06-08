@@ -94,10 +94,6 @@ ConvTranspose
 
 There are some additional limitations in some of the nodes. The compiler will exit with information about the limitation when the model with an unsupported node is compiled.
 
-
-![image](https://user-images.githubusercontent.com/7714968/172600921-3e803aa5-2ceb-46a7-8b52-484ebda39916.png)
-
-
 ## Compiling and Running Models in Networks Directory Automatically
 The `CompileSampleNetworks.py` script can compile and optionally run models in the Networks directory like ResNet-50, DenseNet, SqueezeNet, etc..
 To compile and run ResNet with the Porthos semi-honest 3PC protocol we do:
