@@ -93,7 +93,7 @@ GlobalAveragePool
 ConvTranspose
 ```
 
-**Some other nodes are supported too**. There are some also additional limitations in some of the nodes. The compiler will exit with information about the limitation when the model with an unsupported node is compiled.
+There are some also additional limitations in some of the nodes. The compiler will exit with information about the limitation when the model with an unsupported node is compiled.
 
 ## Compiling and Running Models in Networks Directory Automatically
 The `CompileSampleNetworks.py` script can compile and optionally run models in the Networks directory like ResNet-50, DenseNet, SqueezeNet, etc..
