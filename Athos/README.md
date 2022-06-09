@@ -61,17 +61,18 @@ Similar to how we compile tensorflow graphs, we have a `CompileONNXGraph.py` scr
 
 ### Supported nodes
 
-The following nodes are currently supported in ONNX models:
+Some of the supported nodes in ONNX models are:
 
 ```Cast
 Pad
 Concat
-HardSigmoid
+HardSigmoid ( Only in SCI )
 Relu
 Div
 Add
 Sub
 Mul
+Clip ( Only in SCI )
 Gather
 ArgMax
 Gemm
@@ -92,7 +93,7 @@ GlobalAveragePool
 ConvTranspose
 ```
 
-There are some additional limitations in some of the nodes. The compiler will exit with information about the limitation when the model with an unsupported node is compiled.
+**Some other nodes are supported too**. There are some also additional limitations in some of the nodes. The compiler will exit with information about the limitation when the model with an unsupported node is compiled.
 
 ## Compiling and Running Models in Networks Directory Automatically
 The `CompileSampleNetworks.py` script can compile and optionally run models in the Networks directory like ResNet-50, DenseNet, SqueezeNet, etc..
