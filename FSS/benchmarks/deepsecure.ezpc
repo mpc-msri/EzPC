@@ -1,0 +1,64 @@
+extern void ScalarMul(int32_pl I, int32_pl J, int32_pl shrA, int32_pl shrB, int32_pl demote, int32_pl bwA, int32_pl bwB, int32_pl bwTemp, int32_pl bwC, int64_al A, int64_al[I*J] B, int64_al[I*J] C);
+
+extern void MatAdd(int32_pl I, int32_pl J, int32_pl shrA, int32_pl shrB, int32_pl shrC, int32_pl demote, int32_pl bwA, int32_pl bwB, int32_pl bwTemp, int32_pl bwC, int64_al[I*J] A, int64_al[I*J] B, int64_al[I*J] C);
+
+extern void MulCir(int32_pl I, int32_pl J, int32_pl shrA, int32_pl shrB, int32_pl demote, int32_pl bwA, int32_pl bwB, int32_pl bwTemp, int32_pl bwC, int64_al[I*J] A, int64_al[I*J] B, int64_al[I*J] C);
+
+extern void MatMul(int32_pl I, int32_pl K, int32_pl J, int32_pl shrA, int32_pl shrB, int32_pl H1, int32_pl H2, int32_pl demote, int32_pl bwA, int32_pl bwB, int32_pl bwTemp, int32_pl bwC, int64_al[I*K] A, int64_al[K*J] B, int64_al[I*J] C, int64_al[K] tmp);
+
+extern void MatMulUniform(int32_pl bw, int32_pl s1, int32_pl s2, int32_pl s3, int64_al[s1*s2] A, int64_al[s2*s3] B, int64_al[s1*s3] C);
+
+extern void MatAddBroadCastA(int32_pl I, int32_pl J, int32_pl shrA, int32_pl shrB, int32_pl shrC, int32_pl demote, int32_pl bwA, int32_pl bwB, int32_pl bwTemp, int32_pl bwC, int64_al A, int64_al[I*J] B, int64_al[I*J] C);
+
+extern void MatSubBroadCastA(int32_pl I, int32_pl J, int32_pl shrA, int32_pl shrB, int32_pl shrC, int32_pl demote, int32_pl bwA, int32_pl bwB, int32_pl bwTemp, int32_pl bwC, int64_al A, int64_al[I*J] B, int64_al[I*J] C);
+
+extern void MatAddBroadCastB(int32_pl I, int32_pl J, int32_pl shrA, int32_pl shrB, int32_pl shrC, int32_pl demote, int32_pl bwA, int32_pl bwB, int32_pl bwTemp, int32_pl bwC, int64_al[I*J] A, int64_al B, int64_al[I*J] C);
+
+extern void MatSubBroadCastB(int32_pl I, int32_pl J, int32_pl shrA, int32_pl shrB, int32_pl shrC, int32_pl demote, int32_pl bwA, int32_pl bwB, int32_pl bwTemp, int32_pl bwC, int64_al[I*J] A, int64_al B, int64_al[I*J] C);
+
+extern void ArgMax(int32_pl I, int32_pl J, int32_pl bwA, int32_pl bwB, int64_al[I*J] A, int64_al[1] index);
+
+extern void Sigmoid(int32_pl I, int32_pl J, int32_pl shrA, int32_pl shrB, int32_pl bwA, int32_pl bwB, int64_al[I*J] A, int64_al[I*J] B);
+
+extern void TanH(int32_pl I, int32_pl J, int32_pl shrA, int32_pl shrB, int32_pl bwA, int32_pl bwB, int64_al[I*J] A, int64_al[I*J] B);
+
+extern void AdjustScaleShl(int32_pl I, int32_pl J, int32_pl shr, int64_al[I*J] A);
+
+
+extern void internalTruncateAndFix(int32_pl size, int32_pl shift, int32_pl bin, int32_pl bout, int64_al[size] inArr, int64_al[size] outArr);
+
+
+extern void initialize();
+extern void finalize();
+
+def void main()
+{
+    int32_pl a1 = 5625;
+    int32_pl a2 = 2000;
+	input(SERVER, W1, int64_al[2000*5625]);
+	input(SERVER, W2, int64_al[500*2000]);
+	input(SERVER, W3, int64_al[19*500]);
+    input(CLIENT, inp, int64_al[5625]);
+	initialize();
+
+    int64_al[2000*1] tmp1;
+    int64_al[2000*1] tmp2;
+    int64_al[2000*1] tmp3;
+    int64_al[500*1] tmp4;
+    int64_al[500*1] tmp5;
+    int64_al[500*1] tmp6;
+    int64_al[19*1] tmp7;
+    int64_al[1] tmp;
+
+    MatMulUniform(16, 2000, 5625, 1, W1, inp, tmp1);
+    TanH(2000, 1, 4096, 4096, 16, 16, tmp1, tmp2);
+    internalTruncateAndFix(2000, 6, 16, 16, tmp2, tmp3);
+    MatMulUniform(16, 500, 2000, 1, W2, tmp3, tmp4);
+    TanH(500, 1, 4096, 4096, 16, 16, tmp4, tmp5);
+    internalTruncateAndFix(500, 12, 16, 16, tmp5, tmp6);
+    MatMulUniform(16, 19, 500, 1, W3, tmp6, tmp7);
+    ArgMax(19, 1, 16, 16, tmp7, tmp);
+	finalize();
+
+	output(CLIENT, tmp);
+}

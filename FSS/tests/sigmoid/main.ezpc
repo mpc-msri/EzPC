@@ -1,0 +1,16 @@
+extern void Sigmoid(int32_pl one, int32_pl size, int32_pl scaleIn, int32_pl scaleOut, int32_pl bwA, int32_pl bwB, int64_al[size] A, int64_al[size] B);
+
+extern void initialize();
+extern void finalize();
+
+def void main()
+{
+    int32_pl size = 10;
+    input(SERVER, A, int64_al[size]);
+    int64_al[size] B;
+    initialize();
+    (* truncate-fix with shift = 0 is equivalent to sign extension *)
+    Sigmoid(1, size, 512, 16384, 16, 16, A, B);
+    finalize();
+    output(CLIENT, B);
+}
