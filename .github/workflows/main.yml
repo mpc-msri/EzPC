@@ -26,6 +26,7 @@ jobs:
           sudo apt-get update
           ./setup_env_and_build.sh quick
           source mpc_venv/bin/activate
+          pip3 install --upgrade protobuf==3.20.0
         shell: bash
 
       - name: Test EMP
@@ -59,6 +60,7 @@ jobs:
             sudo apt-get update
             ./setup_env_and_build.sh quick
             source mpc_venv/bin/activate
+            pip3 install --upgrade protobuf==3.20.0
           shell: bash
 
         - name: Test Athos ONNX-CPP
@@ -82,6 +84,7 @@ jobs:
             sudo apt-get update
             ./setup_env_and_build.sh quick
             source mpc_venv/bin/activate
+            pip3 install --upgrade protobuf==3.20.0
           shell: bash
         - name: Test Athos ONNX SCI-OT
           if: always()
@@ -155,6 +158,7 @@ jobs:
             sudo apt-get update
             ./setup_env_and_build.sh quick
             source mpc_venv/bin/activate
+            pip3 install --upgrade protobuf==3.20.0
           shell: bash
         - name: Test Athos TF SCI-OT
           if: always()
