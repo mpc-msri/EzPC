@@ -34,6 +34,7 @@ open Optimizer
 open Partition
 open Codegen
 open Codegenoblivc
+open Codegenemp
 
 let load_file (f:string) :string =
   let ic = open_in f in
@@ -93,6 +94,7 @@ let tc_and_codegen (p:program) (file:string) :unit =
            else if Config.get_codegen () = SCI then Codegensci.o_program p file
            else if Config.get_codegen () = FSS then Codegenfss.o_program p file
            else if Config.get_codegen () = CPPRING then Codegencppring.o_program p file
+           else if Config.get_codegen () = EMP then Codegenemp.o_program p file
            else Codegen.o_program p file;
            Well_typed ()) in
   match x with
@@ -123,8 +125,9 @@ let specs = Arg.align [
                                                    | "SCI" -> SCI |> Config.set_codegen
                                                    | "FSS" -> FSS |> Config.set_codegen
                                                    | "CPPRING" -> CPPRING |> Config.set_codegen
+                                                   | "EMP" -> EMP |> Config.set_codegen
                                                    | _ -> failwith "Invalid codegen mode"),
-                 " Codegen mode (ABY or CPP or OBLIVC or PORTHOS or SCI or CPPRING, default ABY)");
+                 " Codegen mode (ABY or CPP or OBLIVC or PORTHOS or SCI or CPPRING or FSS or EMP, default ABY)");
                 ("--o_prefix", Arg.String (fun s -> o_prefix := s), " Prefix for output files, default is the input file prefix");
                 ("--disable-tac", Arg.Unit Config.disable_tac, " Disable 3-address code transformation (also disables the CSE optimization)");
                 ("--disable-cse", Arg.Unit Config.disable_cse, " Disable Common Subexpression Elimination optimization");
