@@ -32,6 +32,7 @@ type codegen =
   | SCI
   | FSS
   | CPPRING
+  | EMP
 
 type bool_sharing_mode =
   | Yao
