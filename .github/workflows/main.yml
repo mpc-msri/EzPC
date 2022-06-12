@@ -63,7 +63,6 @@ jobs:
             wget https://raw.githubusercontent.com/emp-toolkit/emp-readme/master/scripts/install.py
             python install.py --deps --tool --ot --sh2pc
             rm -rf install.py
-            ./runemptests.sh
             cd ../../
 
       - name: Test EMP
@@ -85,6 +84,7 @@ jobs:
           mkdir build && cd build
           cmake -DCMAKE_INSTALL_PREFIX=./install -DABY_BUILD_EXE=On ..
           cmake --build . --target install --parallel
+          cd ..
           cd EzPC/EzPC/
           eval $(opam config env)
           chmod +x runtests.sh
