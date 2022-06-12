@@ -84,7 +84,7 @@ jobs:
           mkdir build && cd build
           cmake -DCMAKE_INSTALL_PREFIX=./install -DABY_BUILD_EXE=On ..
           cmake --build . --target install --parallel
-          cd ..
+          cd ../..
           cd EzPC/EzPC/
           eval $(opam config env)
           chmod +x runtests.sh
@@ -146,25 +146,64 @@ jobs:
   ONNX-SCI-OT:
     # The type of runner that the job will run on
       runs-on: ubuntu-latest
-      # Steps represent a sequence of tasks that will be executed as part of the job
+      container: 
+        image: drunkenlegend/ezpcsetup:latest
+    # Steps represent a sequence of tasks that will be executed as part of the job
       steps:
-        # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-        - uses: actions/checkout@v2
+    
+      - name: Update Git
+        run: |
+            add-apt-repository ppa:git-core/ppa -y
+            apt-get update
+            apt-get install git -y 
+            
+      - name: Setup Python
+        run: |
+            pip3 --version
+            python --version
+            python3 --version
+            echo 'alias python="/usr/bin/python3"' >> /root/.bashrc
+            echo 'alias pip="/usr/bin/pip3"' >> /root/.bashrc
+            source /root/.bashrc
+            pip3 install -U pip
+            pip install tensorflow==1.15.0 keras==2.3.0 scipy==1.1.0 matplotlib scikit-learn==0.24.2
+            pip install onnx onnx-simplifier onnxruntime black
+            pip install pytest pytest-cov 
+            python3 -m pip install onnx_graphsurgeon --index-url https://pypi.ngc.nvidia.com
+            pip freeze
+        shell: bash
 
-        - name: Setup
-          run: |
-            sudo apt-get update
-            ./setup_env_and_build.sh quick
-            source mpc_venv/bin/activate
-            pip3 install --upgrade protobuf==3.20.0
-          shell: bash
-        - name: Test Athos ONNX SCI-OT
-          if: always()
-          run: |
-            source mpc_venv/bin/activate
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+            submodules: 'true'
+      - name: Setup SCI
+        run: |
+            cd SCI
+            mkdir -p build
+            cd build
+            cmake -DCMAKE_INSTALL_PREFIX=./install ../
+            cmake --build . --target install --parallel
+            cd ../..
+
+      - name: Test Athos ONNX-SCI-OT
+        if: always()
+        env:
+            HOME: /root
+            OPAM_SWITCH_PREFIX: /root/.opam/4.10.0
+            CAML_LD_LIBRARY_PATH: /root/.opam/4.10.0/lib/stublibs:/root/.opam/4.10.0/lib/ocaml/stublibs:/root/.opam/4.10.0/lib/ocaml
+            OCAML_TOPLEVEL_PATH: /root/.opam/4.10.0/lib/toplevel
+            MANPATH: :/root/.opam/4.10.0/man
+            PATH: /root/.opam/4.10.0/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+        run: |
+            cd EzPC/EzPC/
+            make
+            cd ../..
             cd Athos/tests/onnx/unittests
             pytest --backend 2PC_OT
-
+        shell: bash
+        
+        
   FSS:
     # The type of runner that the job will run on
       runs-on: ubuntu-latest
