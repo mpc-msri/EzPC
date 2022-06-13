@@ -26,22 +26,6 @@ jobs:
             add-apt-repository ppa:git-core/ppa -y
             apt-get update
             apt-get install git -y 
-            
-      - name: Setup Python
-        run: |
-            pip3 --version
-            python --version
-            python3 --version
-            echo 'alias python="/usr/bin/python3"' >> /root/.bashrc
-            echo 'alias pip="/usr/bin/pip3"' >> /root/.bashrc
-            source /root/.bashrc
-            pip3 install -U pip
-            pip install tensorflow==1.15.0 keras==2.3.0 scipy==1.1.0 matplotlib scikit-learn==0.24.2
-            pip install onnx onnx-simplifier onnxruntime black
-            pip install pytest pytest-cov 
-            python3 -m pip install onnx_graphsurgeon --index-url https://pypi.ngc.nvidia.com
-            pip freeze
-        shell: bash
 
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -65,18 +49,7 @@ jobs:
             rm -rf install.py
             cd ../../
 
-      - name: Test EMP
-        env:
-            HOME: /root
-        if: always()
-        run: |
-          pwd
-          ls
-          eval $(opam config env)
-          cd EzPC/EzPC/
-          ./runemptests.sh
-          cd ../..
-      - name: Test ABY
+      - name: Setup and Test ABY
         env:
             HOME: /root
         if: always()
@@ -92,6 +65,7 @@ jobs:
           chmod +x runtests.sh
           make runtest
           cd ../..
+        shell: bash
           
   ONNX-CPP:
     # The type of runner that the job will run on
@@ -106,22 +80,6 @@ jobs:
             add-apt-repository ppa:git-core/ppa -y
             apt-get update
             apt-get install git -y 
-            
-      - name: Setup Python
-        run: |
-            pip3 --version
-            python --version
-            python3 --version
-            echo 'alias python="/usr/bin/python3"' >> /root/.bashrc
-            echo 'alias pip="/usr/bin/pip3"' >> /root/.bashrc
-            source /root/.bashrc
-            pip3 install -U pip
-            pip install tensorflow==1.15.0 keras==2.3.0 scipy==1.1.0 matplotlib scikit-learn==0.24.2
-            pip install onnx onnx-simplifier onnxruntime black
-            pip install pytest pytest-cov 
-            python3 -m pip install onnx_graphsurgeon --index-url https://pypi.ngc.nvidia.com
-            pip freeze
-        shell: bash
 
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -159,22 +117,6 @@ jobs:
             apt-get update
             apt-get install git -y 
             
-      - name: Setup Python
-        run: |
-            pip3 --version
-            python --version
-            python3 --version
-            echo 'alias python="/usr/bin/python3"' >> /root/.bashrc
-            echo 'alias pip="/usr/bin/pip3"' >> /root/.bashrc
-            source /root/.bashrc
-            pip3 install -U pip
-            pip install tensorflow==1.15.0 keras==2.3.0 scipy==1.1.0 matplotlib scikit-learn==0.24.2
-            pip install onnx onnx-simplifier onnxruntime black
-            pip install pytest pytest-cov 
-            python3 -m pip install onnx_graphsurgeon --index-url https://pypi.ngc.nvidia.com
-            pip freeze
-        shell: bash
-
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
@@ -271,22 +213,6 @@ jobs:
             add-apt-repository ppa:git-core/ppa -y
             apt-get update
             apt-get install git -y 
-            
-      - name: Setup Python
-        run: |
-            pip3 --version
-            python --version
-            python3 --version
-            echo 'alias python="/usr/bin/python3"' >> /root/.bashrc
-            echo 'alias pip="/usr/bin/pip3"' >> /root/.bashrc
-            source /root/.bashrc
-            pip3 install -U pip
-            pip install tensorflow==1.15.0 keras==2.3.0 scipy==1.1.0 matplotlib scikit-learn==0.24.2
-            pip install onnx onnx-simplifier onnxruntime black
-            pip install pytest pytest-cov 
-            python3 -m pip install onnx_graphsurgeon --index-url https://pypi.ngc.nvidia.com
-            pip freeze
-        shell: bash
 
       - name: Checkout repository
         uses: actions/checkout@v3
