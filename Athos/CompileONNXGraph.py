@@ -340,8 +340,8 @@ def generate_code(params, role, debug=False):
 
 
 if __name__ == "__main__":
-    args = parse_args()
-    params = parse_config.get_params(args.config)
-    params["config_name"] = args.config
+    # args = parse_args()
+    params = parse_config.get_params("config.json")
+    params["config_name"] = "config.json"
 
-    generate_code(params, args.role)
+    generate_code(params, "server")

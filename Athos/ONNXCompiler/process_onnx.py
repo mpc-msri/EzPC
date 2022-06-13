@@ -177,14 +177,16 @@ def generate_seedot_ast(model, value_info, model_dir):
         value_info,
     )
 
-    if DEBUG:
+    if True:
         PrintAST().visit(program)
         common.write_debug_info(node_name_to_out_var_dict)
 
     with open(os.path.join(model_dir, "astOutput.pkl"), "wb") as f:
-        # print(program)
+        print(program)
         pickle.dump(program, f)
         print("Dumped SeeDot AST")
+        print("Quitting early")
+        exit(0)
 
 
 def preprocess_batch_normalization(graph_def, model_name_to_val_dict):
@@ -244,7 +246,7 @@ def dump_model_weights(model, scaling_factor, model_dir, gather_names, model_nam
     chunk_n = ""
     cnt_n = 0
     for init_vals in model.graph.initializer:
-        if init_vals.name in gather_names :
+        if init_vals.name in gather_names:
             continue
 
         (chunk_1, cnt_1) = common.numpy_float_array_to_fixed_point_val_str(
@@ -354,12 +356,12 @@ def compile(
         gather_names = []
 
         for node in model.graph.node:
-            if node.op_type == "Gather" :
-                gather_names.append(
-                    list(node.input)[1]
-                )
+            if node.op_type == "Gather":
+                gather_names.append(list(node.input)[1])
 
-        return dump_model_weights(model, scaling_factor, model_abs_dir, gather_names, model_name)
+        return dump_model_weights(
+            model, scaling_factor, model_abs_dir, gather_names, model_name
+        )
     return
 
 
@@ -506,7 +508,7 @@ def process_onnx_nodes(
             name = list(node.input)[1]
 
             index = None
-            for lol in model.graph.initializer :
+            for lol in model.graph.initializer:
                 if lol.name == name:
                     index = numpy_helper.to_array(lol).tolist()
                     break
