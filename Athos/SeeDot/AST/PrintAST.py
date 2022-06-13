@@ -22,11 +22,22 @@ SOFTWARE.
 
 """
 
+from numpy import save
 import AST.AST as AST
 from AST.ASTVisitor import ASTVisitor
 import binascii
+import builtins
 
 indent = ""
+
+saveFile = open("ast.txt", "w")
+
+
+def print(*args, sep=None, end=None):
+    for arg in args:
+        builtins.print(arg, sep="", end="", file=saveFile)
+
+    builtins.print(end, sep="", end="", file=saveFile)
 
 
 class PrintAST(ASTVisitor):
