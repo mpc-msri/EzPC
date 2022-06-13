@@ -40,6 +40,15 @@ def print(*args, sep=None, end=None):
     builtins.print(end, sep="", end="", file=saveFile)
 
 
+def liststr(data):
+
+    if data is None:
+        return " "
+
+    data = [str(elem) for elem in data]
+    return ", ".join(data)
+
+
 class PrintAST(ASTVisitor):
     # TODO : fix printing of AST
     def visitInt(self, node: AST.Int, args=None):
@@ -49,18 +58,19 @@ class PrintAST(ASTVisitor):
         print(indent * node.depth, node.value, end=" ")
 
     def visitId(self, node: AST.ID, args=None):
-        print(indent * node.depth, node.name, end=" ")
+        # print("{Called node.id}", end='')
+        print(node.name, end=" ")
 
     def visitDecl(self, node: AST.Decl, args=None):
         if node.valueList:
             print(
                 indent * node.depth,
-                node.shape,
+                liststr(node.shape),
                 list(map(lambda x: x.value, node.valueList)),
                 end=" ",
             )
         else:
-            print(indent * node.depth, node.shape, end=" ")
+            print(indent * node.depth, liststr(node.shape), end=" ")
 
     def visitTranspose(self, node: AST.Transpose, args=None):
         node.expr.depth = node.depth + 1
@@ -76,18 +86,19 @@ class PrintAST(ASTVisitor):
 
     def visitReshape(self, node: AST.Reshape, args=None):
         node.expr.depth = node.depth + 1
-        print(indent * node.depth, "reshape", end=" ")
+        orderLen = "" if node.order is None else str(len(node.order))
+        print(f"reshape{orderLen}(", end=" ")
         self.visit(node.expr)
-        if node.order:
-            print(node.shape, "order", node.order, end=" ")
+        if liststr(node.order):
+            print(", ", liststr(node.shape), ", ", liststr(node.order), end=" ")
         else:
-            print(node.shape, end=" ")
+            print(liststr(node.shape), end=" ")
 
     def visitGather(self, node: AST.Gather, args=None):
         node.expr.depth = node.depth + 1
         print(indent * node.depth, "Gather", end=" ")
         self.visit(node.expr)
-        print(node.shape, node.axis, node.index, end=" ")
+        print(liststr(node.shape), node.axis, node.index, end=" ")
 
     def visitPool(self, node: AST.Pool, args=None):
         node.expr.depth = node.depth + 1
@@ -112,24 +123,20 @@ class PrintAST(ASTVisitor):
         self.visit(node.expr)
 
     def visitLet(self, node: AST.Let, args=None):
-        if node.decl is not None:
-            node.decl.depth = node.depth + 1
-        if node.expr is not None:
-            node.expr.depth = node.depth + 1
-        print(indent * node.depth, "(", end=" ")
-        print("let", end=" ")
-        if hasattr(node.name, "type") and hasattr(node.name.type, "taint"):
-            print("<", node.decl.type.taint.name, ">", end=" ")
-        self.visit(node.name)
-        print("=", end=" ")
+        # print(" Gonna print node.name.name " , node.name.name, end='')
+        # self.visit(node.name)
         self.visit(node.decl)
-        print(
-            "{",
-            node.metadata[AST.ASTNode.mtdKeyTFOpName],
-            node.metadata[AST.ASTNode.mtdKeyTFNodeName],
-            "} in ",
-            end="\n",
-        )
+        # print(
+        #     "{",
+        #     node.metadata[AST.ASTNode.mtdKeyTFOpName],
+        #     node.metadata[AST.ASTNode.mtdKeyTFNodeName],
+        #     "} in ",
+        #     end="\n",
+        print(node.name.name, end="")
+        # )
+        print(")", end="")
+        print("", end="\n")
+
         self.visit(node.expr)
         print(")", end="")
 
@@ -156,14 +163,14 @@ class PrintAST(ASTVisitor):
         print(
             indent * node.depth,
             "input( ",
-            node.shape,
+            liststr(node.shape),
+            ", ",
             node.dataType,
-            " <",
+            ", ",
             node.inputByParty.name,
-            "> ",
+            ", ",
             end="",
         )
-        print(" )", end="")
 
     def visitOutput(self, node: AST.Output, args=None):
         print(indent * node.depth, "output( ", end="")
