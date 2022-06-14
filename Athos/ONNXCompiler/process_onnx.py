@@ -20,6 +20,7 @@ SOFTWARE.
 """
 
 import os, sys
+from SeeDot.Type import InferType
 
 # Add SeeDot directory to path
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "SeeDot"))
@@ -139,7 +140,7 @@ def get_node_metadata(model):
     return value_info
 
 
-def generate_seedot_ast(model, value_info, model_dir):
+def generate_seedot_ast(model, value_info, model_dir, fzpc_mode=False):
     graph_def = model.graph
     # Iterate through the ONNX graph nodes and translate them to SeeDot AST nodes
     program = None
@@ -177,8 +178,9 @@ def generate_seedot_ast(model, value_info, model_dir):
         value_info,
     )
 
-    if True:
-        PrintAST().visit(program)
+    if fzpc_mode:
+        InferType().visit(program)
+        PrintAST(value_info).visit(program)
         common.write_debug_info(node_name_to_out_var_dict)
 
     with open(os.path.join(model_dir, "astOutput.pkl"), "wb") as f:
@@ -317,7 +319,13 @@ def strip_weights(model):
 # the model directory.
 # Optionaly dumps model weights as fixedpt in specified scaling factor
 def compile(
-    model_fname, input_t_info, output_t_names, scaling_factor, save_weights, role
+    model_fname,
+    input_t_info,
+    output_t_names,
+    scaling_factor,
+    save_weights,
+    role,
+    fzpc_mode=False,
 ):
     sys.setrecursionlimit(10000)
     if not model_fname.endswith(".onnx"):
@@ -350,7 +358,7 @@ def compile(
 
     # value_info: { name : (type, dimension tuple) }
     value_info = get_node_metadata(model)
-    generate_seedot_ast(model, value_info, model_abs_dir)
+    generate_seedot_ast(model, value_info, model_abs_dir, fzpc_mode)
 
     if role == "server" and save_weights:
         gather_names = []
@@ -387,13 +395,13 @@ def addOutputs(
         for i in range(0, len(output_tensors)):  # name, decl, expr
             t_name = output_tensors[i]
             if i == len(output_tensors) - 1:
-                output_name = AST.ID(node_name_to_out_var_dict[t_name])
+                output_name = AST.ID(node_name_to_out_var_dict[t_name], t_name)
                 output = AST.Output(output_name, AST.Party.CLIENT)
                 newNode = output
             else:
-                output_name = AST.ID(node_name_to_out_var_dict[t_name])
+                output_name = AST.ID(node_name_to_out_var_dict[t_name], t_name)
                 output = AST.Output(output_name, AST.Party.CLIENT)
-                let_name_id = AST.ID(outVarPrefix + str(outVarCt))
+                let_name_id = AST.ID(outVarPrefix + str(outVarCt), outVarCt)
                 newNode = AST.Let(let_name_id, output, AST.ASTNode())
                 mtdForCurAST = {
                     AST.ASTNode.mtdKeyTFOpName: "Output",

@@ -467,7 +467,7 @@ class ONNXNodesAST:
         out_var_count += 1
 
         seedot_output_ast = AST.Func(
-            getOperatorsIdx("relu"), AST.ID(reshaped_input_name)
+            getOperatorsIdx("relu"), AST.ID(reshaped_input_name, out_var_count)
         )
         output_name = get_new_var_name(out_var_count)
         innermost_let_ast_node = update_program_with_new_node(

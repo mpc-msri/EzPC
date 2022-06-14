@@ -89,6 +89,13 @@ Config file should be a json in the following format:
 }
 """,
     )
+    parser.add_argument(
+        "--fzpc_mode",
+        type=bool,
+        required=False,
+        default=False,
+        help="Set to true if AST should be processed and printed for FzPC compilation",
+    )
     args = parser.parse_args()
     return args
 
@@ -157,6 +164,7 @@ def generate_code(params, role, debug=False):
             scale,
             save_weights,
             role,
+            params["fzpc_mode"],
         )
         # Zip the pruned model, sizeInfo to send to client
         file_list = [pruned_model_path]
@@ -341,7 +349,9 @@ def generate_code(params, role, debug=False):
 
 if __name__ == "__main__":
     # args = parse_args()
-    params = parse_config.get_params("config.json")
-    params["config_name"] = "config.json"
+    config_dbg_file = "config.json"
+    params = parse_config.get_params(config_dbg_file)
+    params["config_name"] = config_dbg_file
+    params["fzpc_mode"] = True
 
     generate_code(params, "server")

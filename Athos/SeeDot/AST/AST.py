@@ -178,11 +178,12 @@ class Float(ASTNode):
 
 
 class ID(ASTNode):
-    def __init__(self, name: str):
+    def __init__(self, name: str, originalName=None):
         if assertInputTypes:
             assert isinstance(name, str)
         super().__init__()
         self.name = name
+        self.originalName = originalName
 
 
 # shape : list of int, valueList : list of int/float AST Nodes

@@ -53,6 +53,12 @@ def liststr(data):
 
 
 class PrintAST(ASTVisitor):
+
+    # Value info contains shapes of the variables
+    def __init__(self, value_info) -> None:
+        self.value_info = value_info
+        super().__init__()
+
     # TODO : fix printing of AST
     def visitInt(self, node: AST.Int, args=None):
         print(indent * node.depth, node.value, end=" ")
@@ -77,9 +83,10 @@ class PrintAST(ASTVisitor):
 
     def visitTranspose(self, node: AST.Transpose, args=None):
         node.expr.depth = node.depth + 1
-        print(indent * node.depth, end=" ")
+        # print(node.__dict__, end="\n")
+        print("Transpose(", end=" ")
         self.visit(node.expr)
-        print("^Transpose", end=" ")
+        print(", ", end="")
 
     def visitSlice(self, node: AST.Transpose, args=None):
         node.expr.depth = node.depth + 1
@@ -113,36 +120,32 @@ class PrintAST(ASTVisitor):
         print(indent * node.depth, AST.OperatorsSymbolDict[node.op.name], end=" ")
         self.visit(node.expr)
 
+    # function(operator 1, operator 2, options, shape, output)
     def visitBOp(self, node: AST.BOp, args=None):
         node.expr1.depth = node.expr2.depth = node.depth + 1
-        print(indent * node.depth, end=" ")
+        print(f"{node.op.name}( ", end="")
         self.visit(node.expr1)
-        print(AST.OperatorsSymbolDict[node.op.name], end=" ")
+        print(", ", end="")
+        # print(AST.OperatorsSymbolDict[node.op.name], end=" ")
         self.visit(node.expr2)
+        print(", ", end="")
+        if node.options is not None:
+            print(liststr(node.options.values()), end=", ")
+        if node.type is not None:
+            print(liststr(node.type.shape), end=", ")
 
     def visitFunc(self, node: AST.Func, args=None):
         print(indent * node.depth, AST.OperatorsSymbolDict[node.op.name], end="(")
         node.expr.depth = node.depth + 1
         self.visit(node.expr)
-        print("DONE RELU", end=".]")
+        print(", ", end="")
 
     def visitLet(self, node: AST.Let, args=None):
-        # print(" Gonna print node.name.name " , node.name.name, end='')
-        # self.visit(node.name)
         self.visit(node.decl)
-        # print(
-        #     "{",
-        #     node.metadata[AST.ASTNode.mtdKeyTFOpName],
-        #     node.metadata[AST.ASTNode.mtdKeyTFNodeName],
-        #     "} in ",
-        #     end="\n",
         print(node.name.name, end="")
-        # )
         print(")", end="")
         print("", end="\n")
-
         self.visit(node.expr)
-        # print(")", end="")
 
     def visitUninterpFuncCall(self, node: AST.UninterpFuncCall, args=None):
         print(indent * node.depth, "UninterpFuncCall( ", node.funcName, end=", ")
