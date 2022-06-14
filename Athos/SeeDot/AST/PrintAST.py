@@ -33,6 +33,8 @@ indent = ""
 saveFile = open("ast.txt", "w")
 
 
+# Overrides builtin print to force write to file.
+# Caveat is that end *needs* to be specified, else "None" is printed
 def print(*args, sep=None, end=None):
     for arg in args:
         builtins.print(arg, sep="", end="", file=saveFile)
@@ -40,6 +42,7 @@ def print(*args, sep=None, end=None):
     builtins.print(end, sep="", end="", file=saveFile)
 
 
+# Prints list as comma separated string
 def liststr(data):
 
     if data is None:
@@ -89,10 +92,10 @@ class PrintAST(ASTVisitor):
         orderLen = "" if node.order is None else str(len(node.order))
         print(f"reshape{orderLen}(", end=" ")
         self.visit(node.expr)
-        if liststr(node.order):
-            print(", ", liststr(node.shape), ", ", liststr(node.order), end=" ")
+        if node.order:
+            print(", ", liststr(node.shape), ", ", liststr(node.order), end=", ")
         else:
-            print(liststr(node.shape), end=" ")
+            print(liststr(node.shape), end=", ")
 
     def visitGather(self, node: AST.Gather, args=None):
         node.expr.depth = node.depth + 1
@@ -118,9 +121,10 @@ class PrintAST(ASTVisitor):
         self.visit(node.expr2)
 
     def visitFunc(self, node: AST.Func, args=None):
-        print(indent * node.depth, AST.OperatorsSymbolDict[node.op.name], end=" ")
+        print(indent * node.depth, AST.OperatorsSymbolDict[node.op.name], end="(")
         node.expr.depth = node.depth + 1
         self.visit(node.expr)
+        print("DONE RELU", end=".]")
 
     def visitLet(self, node: AST.Let, args=None):
         # print(" Gonna print node.name.name " , node.name.name, end='')
@@ -138,12 +142,13 @@ class PrintAST(ASTVisitor):
         print("", end="\n")
 
         self.visit(node.expr)
-        print(")", end="")
+        # print(")", end="")
 
     def visitUninterpFuncCall(self, node: AST.UninterpFuncCall, args=None):
-        print(indent * node.depth, "UninterpFuncCall", node.funcName, end=" ")
+        print(indent * node.depth, "UninterpFuncCall( ", node.funcName, end=", ")
         for x in node.argsList:
             self.visit(x)
+            print(", ", end="")
 
     def visitArgMax(self, node: AST.ArgMax, args=None):
         print(indent * node.depth, "ArgMax", end=" ")
@@ -176,7 +181,7 @@ class PrintAST(ASTVisitor):
         print(indent * node.depth, "output( ", end="")
         node.expr.depth = node.depth + 1
         self.visit(node.expr)
-        print(indent * node.depth, " )", end="")
+        print(indent * node.depth, ")", end="")
 
     def visitFusedBatchNorm(self, node: AST.FusedBatchNorm, args=None):
         node.expr.depth = node.multExpr.depth = node.addExpr.depth = node.depth + 1
