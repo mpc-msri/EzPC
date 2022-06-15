@@ -37,9 +37,9 @@ saveFile = open("ast.txt", "w")
 # Caveat is that end *needs* to be specified, else "None" is printed
 def print(*args, sep=None, end=None):
     for arg in args:
-        builtins.print(arg, sep="", end="", file=saveFile)
+        builtins.print(arg, sep="", end="", file=saveFile, flush=True)
 
-    builtins.print(end, sep="", end="", file=saveFile)
+    builtins.print(end, sep="", end="", file=saveFile, flush=True)
 
 
 # Prints list as comma separated string
@@ -140,21 +140,38 @@ class PrintAST(ASTVisitor):
         self.visit(node.expr)
         print(", ", end="")
 
+    def visitLinearLayer(self, node: AST.BOp, args=None):
+        print("LinearLayer(", end=" ")
+        self.visit(node.expr1.expr1)
+        print(", ", end="")
+        print(liststr(node.expr1.expr1.type.shape), end=", ")
+        print(node.expr)
+
     def visitLet(self, node: AST.Let, args=None):
-        self.visit(node.decl)
-        print(node.name.name, end="")
-        print(")", end="")
-        print("", end="\n")
-        self.visit(node.expr)
+
+        # Check for LinearLayer expression ( y = w*x_transpose + b )
+        try:
+            if node.decl.expr1.op == AST.Operators.MUL and isinstance(
+                node.decl.expr1.expr2, AST.Transpose
+            ):
+                # Now we are in LinearLayer
+                self.visitLinearLayer(node.decl)
+                self.visit(node.expr)
+        except:
+            self.visit(node.decl)
+            print(node.name.name, end="")
+            print(")", end="")
+            print("", end="\n")
+            self.visit(node.expr)
 
     def visitUninterpFuncCall(self, node: AST.UninterpFuncCall, args=None):
-        print(indent * node.depth, "UninterpFuncCall( ", node.funcName, end=", ")
+        print("UninterpFuncCall( ", node.funcName, end=", ")
         for x in node.argsList:
             self.visit(x)
             print(", ", end="")
 
     def visitArgMax(self, node: AST.ArgMax, args=None):
-        print(indent * node.depth, "ArgMax", end=" ")
+        print("ArgMax(", end=" ")
         self.visit(node.expr)
         self.visit(node.dim)
 
