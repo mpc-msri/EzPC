@@ -94,7 +94,7 @@ Config file should be a json in the following format:
         type=bool,
         required=False,
         default=False,
-        help="Set to true if AST should be processed and printed for FzPC compilation",
+        help="Set to true if AST should be processed and printed in ast.txt for FzPC compilation",
     )
     args = parser.parse_args()
     return args
@@ -348,10 +348,9 @@ def generate_code(params, role, debug=False):
 
 
 if __name__ == "__main__":
-    # args = parse_args()
-    config_dbg_file = "config.json"
-    params = parse_config.get_params(config_dbg_file)
-    params["config_name"] = config_dbg_file
-    params["fzpc_mode"] = True
+    args = parse_args()
+    params = parse_config.get_params(args.config)
+    params["config_name"] = args.config
+    params["fzpc_mode"] = args.fzpc_mode
 
-    generate_code(params, "server")
+    generate_code(params, args.role)
