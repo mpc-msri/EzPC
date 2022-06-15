@@ -140,12 +140,15 @@ class PrintAST(ASTVisitor):
         self.visit(node.expr)
         print(", ", end="")
 
+    # LinearLayer(fc.weight, shapes1, fc.bias, J540, J541)
     def visitLinearLayer(self, node: AST.BOp, args=None):
         print("LinearLayer(", end=" ")
-        self.visit(node.expr1.expr1)
-        print(", ", end="")
+        print(node.expr1.expr2.expr.name, end=", ")
+        print(liststr(node.expr1.expr2.expr.type.shape), end=", ")
+        print(node.expr2.name, end=", "),
+        print(liststr(node.expr2.type.shape), end=", "),
+        print(node.expr1.expr1.name, end=", ")
         print(liststr(node.expr1.expr1.type.shape), end=", ")
-        print(node.expr)
 
     def visitLet(self, node: AST.Let, args=None):
 
@@ -156,6 +159,8 @@ class PrintAST(ASTVisitor):
             ):
                 # Now we are in LinearLayer
                 self.visitLinearLayer(node.decl)
+                print(node.name.name, end="")
+                print(")", end="\n")
                 self.visit(node.expr)
         except:
             self.visit(node.decl)
