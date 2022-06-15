@@ -52,8 +52,14 @@ def liststr(data):
     return ", ".join(data)
 
 
+# For purposes of parsing printed output into an AST
+# the implementation is incomplete, as currently, most nodes
+# are printed in parsable manner.
+# Minor changes are needed to make some other nodes parsable
+# These changes have not been made yet because such models were
+# not available when developing this file.
+# For example, visitArgMax may need to be modified to make output parsable
 class PrintAST(ASTVisitor):
-
     # Value info contains shapes of the variables
     def __init__(self, value_info) -> None:
         self.value_info = value_info
@@ -106,7 +112,7 @@ class PrintAST(ASTVisitor):
 
     def visitGather(self, node: AST.Gather, args=None):
         node.expr.depth = node.depth + 1
-        print(indent * node.depth, "Gather", end=" ")
+        print(indent * node.depth, "Gather(", end=" ")
         self.visit(node.expr)
         print(liststr(node.shape), node.axis, node.index, end=" ")
 
@@ -140,7 +146,6 @@ class PrintAST(ASTVisitor):
         self.visit(node.expr)
         print(", ", end="")
 
-    # LinearLayer(fc.weight, shapes1, fc.bias, J540, J541)
     def visitLinearLayer(self, node: AST.BOp, args=None):
         print("LinearLayer(", end=" ")
         print(node.expr1.expr2.expr.name, end=", ")
@@ -150,6 +155,7 @@ class PrintAST(ASTVisitor):
         print(node.expr1.expr1.name, end=", ")
         print(liststr(node.expr1.expr1.type.shape), end=", ")
 
+    # Base method for all nodes
     def visitLet(self, node: AST.Let, args=None):
 
         # Check for LinearLayer expression ( y = w*x_transpose + b )
