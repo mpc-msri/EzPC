@@ -62,14 +62,7 @@ and infer_binop_label (g:gamma) (op:binop) (e1:expr) (e2:expr) (lopt:label optio
           else if is_some lopt then Binop (op, e1, e2, Some (lopt |> get_opt))
           else warn_label_inference_failed (Binop (op, e1, e2, lopt)) rng
         in
-        (* print_string(expr_to_string e1 ^ ", " );
-        print_string(typ_to_string (typeof_expr g e1 |> get_opt) ^ " ,");
-        print_string(label_to_string l1 ^ "\n");
-        print_string(expr_to_string e2 ^ ", " );
-        print_string(typ_to_string (typeof_expr g e2 |> get_opt) ^ ", ");
-        print_string(label_to_string l2  ^ "\n"); *)
         let t1, t2= typeof_expr g e1 |> get_opt , typeof_expr g e2 |> get_opt in
-        (* print_string ("case passed \n"); *)
         match op with
         | Sum | Sub | Div | Mod -> set_default_label None
         | Mul -> 
