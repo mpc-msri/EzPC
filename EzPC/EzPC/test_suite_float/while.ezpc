@@ -27,8 +27,8 @@ SOFTWARE.
 *)
 
 def void main(){
-	float_al[10] yy;
-  float_al y = 1.0 ;
+	float_fl[10] yy;
+  float_fl y = 1.0 ;
 
 	(*
 		Following while loop will execute until the condition (i<10) is true.

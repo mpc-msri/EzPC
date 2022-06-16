@@ -31,10 +31,10 @@ SOFTWARE.
 *)
 
 def void main(){
-	input(SERVER, w, float_al);
-	input(SERVER, x, float_bl);
-	input(SERVER, z, float_al[10]);
-	input(CLIENT, a, float_al); 
+	input(SERVER, w, float_fl);
+	input(SERVER, x, float_pl);
+	input(SERVER, z, float_fl[10]);
+	input(CLIENT, a, float_fl); 
 	input(SERVER, b, bool_bl);
 	input(SERVER, c, bool_bl);
 }

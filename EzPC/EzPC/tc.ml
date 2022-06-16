@@ -72,7 +72,7 @@ let check_expected_typ (e:expr) (t:typ) (expected:typ) :unit result =
   | _, _ -> err
        
 let join_types_err (e1:expr) (e2:expr) (t1:typ) (t2:typ) (r:range) :eresult =
-  Type_error ("Cannot join types " ^ typ_to_string t1 ^ " and " ^ typ_to_string t2 ^
+  Type_error ("Cannott join types " ^ typ_to_string t1 ^ " and " ^ typ_to_string t2 ^
                 " for expressions " ^ expr_to_string e1 ^ " and " ^ expr_to_string e2, r)
 
 let check_base_type (t:typ) (r:range) :unit result =
@@ -81,6 +81,7 @@ let check_base_type (t:typ) (r:range) :unit result =
   | _ -> Type_error ("Expected a base type, found: " ^ (typ_to_string t), r)
   
 let check_base_type_and_label (e:expr) (t:typ) (l:label) :eresult =
+       (* print_string(expr_to_string e ^ " \n"); *)
   match t.data with
   | Base (_, Some lt) when l = lt -> Well_typed t
   | _ -> Type_error ("Expected a base type with label " ^ (label_to_string l) ^ " for expression " ^ (expr_to_string e) ^ ", found: " ^ (typ_to_string t), e.metadata)
@@ -103,21 +104,15 @@ let check_unop_label_is_consistent (e:expr) (op:unop) (l:label) :unit result =
  * Bitwise operators are not supported with secret labels, ABY does bad things
  *)
 let check_binop_label_is_consistent (e:expr) (op:binop) (l:label) :unit result =
-  let err = Type_error ("Binop label is inconsistent: " ^ (expr_to_string e), e.metadata) in
+  let err = Type_error ("Binop label is inconsisssssstent: " ^ (expr_to_string e), e.metadata) in
   match l with
   | Public -> Well_typed ()
   | Secret l ->
      match op with
-     | Sum | Sub | Mul | Div -> 
-      if Config.is_codegen_float () 
-      then (if l = Arithmetic then Well_typed () else err)
-      else Well_typed ()
-     | Mod -> Well_typed ()
-     | Mul when l = Arithmetic -> Well_typed ()
-     | Greater_than | Less_than | Greater_than_equal | Less_than_equal | Is_equal ->
-      if Config.is_codegen_float ()
-      then (if l = Arithmetic then Well_typed () else err)
-      else (if l = Boolean then Well_typed () else err)
+     | Sum | Sub | Div ->  Well_typed ()
+     | Mul when (l = Baba  || l = Arithmetic) -> Well_typed ()
+     | Mod when (l = Boolean  || l = Arithmetic) -> Well_typed ()
+     | Greater_than | Less_than | Greater_than_equal | Less_than_equal | Is_equal  -> Well_typed ()
      | L_shift when l = Boolean -> Well_typed ()
      | R_shift_a when l = Boolean -> Well_typed ()
      | And when l = Boolean -> Well_typed ()
@@ -151,11 +146,11 @@ let check_expected_numeric_typ (e:expr) (t:typ) (l:label) :unit result =
   let err = Type_error ("Expression " ^ (expr_to_string e) ^ " should have either integer/floating type with label " ^ label_to_string l ^
                           ", instead got: " ^ typ_to_string t, e.metadata) in
   match t.data with
-  | Base (bt, Some lt) when (bt <> Bool) (* && lt = l *) -> Well_typed ()
+  | Base (bt, Some lt) when (bt <> Bool && lt = l)  -> Well_typed ()
   | _ -> err
 
 let check_expected_int_typ (e:expr) (t:typ) (l:label) :unit result =
-  let err = Type_error ("Expression " ^ (expr_to_string e) ^ " should have an int type with label " ^ label_to_string l ^
+  let err = Type_error ("Expression " ^ (expr_to_string e) ^ " should havvveeee an int type with label " ^ label_to_string l ^
                           ", instead got: " ^ typ_to_string t, e.metadata) in
   match t.data with
   | Base (bt, Some lt) when (bt = UInt32 || bt = UInt64 || bt = Int32 || bt = Int64) && lt = l -> Well_typed ()
@@ -205,13 +200,13 @@ let rec tc_expr (g:gamma) (e:expr) :eresult =
                    bind (tc_expr g e1) (fun t1 ->
                           bind (tc_expr g e2) (fun t2 ->
                                  match op with
-                                 | Sum | Sub | Mul | Div | Pow ->
+                                 | Sum | Sub | Mul | Div  ->
                                     bind (check_expected_numeric_typ e1 t1 l) (fun _ ->
                                            bind (check_expected_numeric_typ e2 t2 l) (fun _ ->
                                                   match join_types t1 t2 with
                                                   | Some t -> Well_typed t
                                                   | None -> join_types_err e1 e2 t1 t2 e.metadata))
-                                 | Mod | Bitwise_and | Bitwise_or | Bitwise_xor ->
+                                 | Pow | Mod | Bitwise_and | Bitwise_or | Bitwise_xor ->
                                     bind (check_expected_int_typ e1 t1 l) (fun _ ->
                                            bind (check_expected_int_typ e2 t2 l) (fun _ ->
                                                   match join_types t1 t2 with
@@ -220,19 +215,11 @@ let rec tc_expr (g:gamma) (e:expr) :eresult =
                                  | R_shift_a | L_shift | R_shift_l ->
                                     bind (check_expected_int_typ e1 t1 l) (fun _ ->
                                            bind (check_expected_int_typ e2 t2 Public) (fun _ -> Well_typed t1))
-                                 | Is_equal ->
-                                    bind (check_expected_int_typ e1 t1 l) (fun _ ->
-                                      bind (check_expected_int_typ e2 t2 l) (fun _ ->
-                                        match join_types t1 t2 with
-                                        | Some t -> Well_typed (Base (Bool, t |> get_bt_and_label |> snd) |> mk_syntax e.metadata)
-                                        | None -> join_types_err e1 e2 t1 t2 e.metadata)) 
-                                 | Greater_than | Less_than | Greater_than_equal | Less_than_equal -> 
+                                 | Is_equal | Greater_than | Less_than | Greater_than_equal | Less_than_equal -> 
                                     bind (check_expected_numeric_typ e1 t1 l) (fun _ ->
                                            bind (check_expected_numeric_typ e2 t2 l) (fun _ ->
-                                                  if Config.is_codegen_float () then
-                                                    match join_types_cmp t1 t2 with
-                                                    | Some t -> Well_typed (Base (Bool, t |> get_bt_and_label |> snd) |> mk_syntax e.metadata)
-                                                    | None -> join_types_err e1 e2 t1 t2 e.metadata
+                                                  if is_float_bt (get_bt t1) &&  is_float_bt (get_bt t2) then
+                                                     Well_typed (Base (Bool, Some (Secret Boolean)) |> mk_syntax e.metadata)
                                                   else 
                                                     match join_types t1 t2 with
                                                     | Some t -> Well_typed (Base (Bool, t |> get_bt_and_label |> snd) |> mk_syntax e.metadata)
@@ -258,11 +245,9 @@ let rec tc_expr (g:gamma) (e:expr) :eresult =
             bind (tc_expr g e1) (fun t1 ->
                    bind (check_expected_typ e1 t1 (Base (Bool, lopt) |> mk_dsyntax "")) (fun _ ->
                           bind (tc_expr g e2) (fun t2 ->
-                                 bind (if Config.is_codegen_float () then Well_typed t2
-                                      else check_base_type_and_label e2 t2 (get_opt lopt)) (fun _ ->
+                                 bind (check_base_type_and_label e2 t2 (get_opt lopt)) (fun _ ->
                                         bind (tc_expr g e3) (fun t3 ->
-                                               bind (if Config.is_codegen_float () then Well_typed t3
-                                                    else check_base_type_and_label e3 t3 (get_opt lopt)) (fun _ ->
+                                               bind (check_base_type_and_label e3 t3 (get_opt lopt)) (fun _ ->
                                                       match join_types t2 t3 with
                                                       | Some t -> Well_typed t
                                                       | None -> join_types_err e2 e3 t2 t3 e.metadata)))))))
@@ -293,21 +278,20 @@ let rec tc_expr (g:gamma) (e:expr) :eresult =
 type sresult = gamma result
 
 let rec check_type_well_formedness (g:gamma) (t:typ) :unit result =
-  let bitlen_err (n:int) = Type_error ("Incorrect bitlen, expected: " ^ (string_of_int (Config.get_bitlen ())) ^ ", found: " ^ (string_of_int n), t.metadata) in
-  let check_float_codegen (bt:secret_label) (c:codegen) : unit result =
-    if bt = Arithmetic then Well_typed ()
-    else
-    match c with
-    | SECFLOAT | CPPFLOAT -> Type_error ("Numeric type (int/float) can be arithmetic shared only", t.metadata)
-    | _ -> Well_typed ()
+  let bitlen_err (n:int) = Type_error ("Incorrecttt bitlen, expected: " ^ (string_of_int (Config.get_bitlen ())) ^ ", found: " ^ (string_of_int n), t.metadata) in
+  let check_float_label (l:secret_label) : unit result =
+    if l = Baba then Type_error ("Numeric type int cannot be Baba shared.", t.metadata)
+    else Well_typed ()
   in
   match t.data with
   (* All labels have to be inferred by this point *)
   | Base (_, None) -> Type_error ("Unlabeled type: " ^ (typ_to_string t), t.metadata)
-  | Base (Bool, Some (Secret Arithmetic)) -> Type_error ("Bool type cannot be arithmetic shared: " ^ (typ_to_string t), t.metadata)
-  | Base (Int32, Some (Secret l)) -> if Config.get_bitlen () = 32 then Config.get_codegen () |> check_float_codegen l else bitlen_err 32
-  | Base (Int64, Some (Secret l)) -> if Config.get_bitlen () = 64 then Config.get_codegen () |> check_float_codegen l else bitlen_err 64
-  | Base (t, Some (Secret Boolean)) -> if t = Bool then Well_typed () else Config.get_codegen () |> check_float_codegen Arithmetic
+  | Base (Bool, Some (Secret l)) -> if l = Boolean then Well_typed () else Type_error ("Bool type cannot be arithmetic/baba shared: " ^ (typ_to_string t), t.metadata)
+  | Base (UInt32, Some (Secret l))
+  | Base (Int32, Some (Secret l)) -> if Config.get_bitlen () = 32 then  check_float_label l else bitlen_err 32
+  | Base (UInt64, Some (Secret l))
+  | Base (Int64, Some (Secret l)) -> if Config.get_bitlen () = 64 then check_float_label l else bitlen_err 64
+  | Base (Float, Some (Secret l)) -> if l = Baba then Well_typed () else Type_error ("Float type can only be baba shared: " ^ (typ_to_string t), t.metadata)
   | Base _ -> Well_typed ()
   | Array (_, bt, e) ->
      bind (check_type_well_formedness g bt) (fun _ ->

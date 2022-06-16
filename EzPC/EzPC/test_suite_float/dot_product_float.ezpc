@@ -1,14 +1,14 @@
 uint32 dim = 5u ;
 
 def void main () {
-  input(SERVER, w, float_al[dim]) ;
-  input(SERVER, b, float_al) ;
-  input(CLIENT, x, float_al[dim]) ;
+  input(SERVER, w, float_fl[dim]) ;
+  input(SERVER, b, float_fl) ;
+  input(CLIENT, x, float_fl[dim]) ;
 
   uint32_pl lower = 0u ;
   uint32_pl upper = dim ;
 
-  float_al acc = 0.0 ;
+  float_fl acc = 0.0 ;
   for i=[lower - lower : upper] {
     acc = acc + (w[i] * x[i]) ;
   } ;

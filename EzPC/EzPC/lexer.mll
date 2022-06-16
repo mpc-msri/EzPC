@@ -120,6 +120,7 @@ rule read =
   | "al" { ARITHMETIC }
   | "bl" { BOOLEAN }
   | "pl" { PUBLIC }
+  | "fl" { BABA }
   | "output" { OUTPUT }
   | "input" { INPUT }
   | "return" { RETURN }

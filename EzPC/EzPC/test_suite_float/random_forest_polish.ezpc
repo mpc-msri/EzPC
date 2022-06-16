@@ -39,7 +39,9 @@ def void accessElementOneD(uint64_bl[noOfFeatures] arr, uint64_bl idx, uint64_bl
 	uint64_pl ctr = 0uL;
 	for i=[0:noOfFeatures]
 	{
-		result[0] = result[0] +_bl (idx == ctr?arr[i]:0uL);
+		uint64_bl r = ctr;
+		uint64_bl t = (idx == r) ? arr[i]:0uL;
+		result[0] = result[0] +_bl  t;
 		ctr = ctr + 1uL;	
 	};
 }

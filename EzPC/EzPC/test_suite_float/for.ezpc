@@ -27,10 +27,10 @@ SOFTWARE.
 *)
 
 def void main(){
-	float_al summ = 0.0;
-    float_al ctrf = 0.0 ;
+	float_fl summ = 0.0;
+    float_fl ctrf = 0.0 ;
 	int32_pl N = 100;
-	float_al[N] arr;
+	float_fl[N] arr;
 
 	(*
 		Following executes a for loop from 0 to N, both bounds inclusive.

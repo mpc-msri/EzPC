@@ -48,29 +48,12 @@ and infer_binop_label (g:gamma) (op:binop) (e1:expr) (e2:expr) (lopt:label optio
   match lopt with
   | Some _ -> Binop (op, e1, e2, lopt)
   | None ->
+     
+     
      match label_of_expr g e1, label_of_expr g e2 with
      | None, _ -> warn_label_inference_failed (Binop (op, e1, e2, lopt)) rng
      | _, None -> warn_label_inference_failed (Binop (op, e1, e2, lopt)) rng
      | Some Public, Some Public -> Binop (op, e1, e2, Some Public)
-      (* 
-      let t1, t2 = typeof_expr e1 |> get_opt, typeof_expr e2 |> get_opt in
-      (match op with
-      | Sum | Sub ->
-        (match t1 with
-        | Base (Float, Some Public) -> Binop (op, e1, e2, Some (Secret Arithmetic))
-        | _ -> Binop (op, e1, e2, Some Public))
-      | Mul | Div -> Binop (op, e1, e2, Some (Secret Arithmetic))
-      | Is_equal ->
-        (match t1 with
-        | Base (Float, Some Public) -> failwith "infer_binop_label : Equality for floating points is not supported"
-        | Base (Bool, Some Public) -> failwith "infer_binop_label : Equality for booleans is not supported"
-        (* It's an integer type *)
-        | _ -> Binop (op, e1, e2, Some (Secret Arithmetic)))
-      | Less_than | Greater_than | Less_than_equal | Greater_than_equal -> Binop (op, e1, e2, Some (Secret Arithmetic))
-      | Xor -> Binop (op, e1, e2, Some Public)
-      | And | Or -> Binop (op, e1, e2, Some (Secret Boolean))
-      | _ -> failwith ("infer_binop_label : Binop" ^ (binop_to_string op) ^ "not supported between " ^ (expr_to_string e1) ^ "and" ^ (expr_to_string e2)))
-      *)
      | Some l1, Some l2 ->
         let set_default_label (lopt:label option) :expr' =
           if l1 = Public then Binop (op, e1, e2, Some l2)
@@ -79,15 +62,25 @@ and infer_binop_label (g:gamma) (op:binop) (e1:expr) (e2:expr) (lopt:label optio
           else if is_some lopt then Binop (op, e1, e2, Some (lopt |> get_opt))
           else warn_label_inference_failed (Binop (op, e1, e2, lopt)) rng
         in
+        (* print_string(expr_to_string e1 ^ ", " );
+        print_string(typ_to_string (typeof_expr g e1 |> get_opt) ^ " ,");
+        print_string(label_to_string l1 ^ "\n");
+        print_string(expr_to_string e2 ^ ", " );
+        print_string(typ_to_string (typeof_expr g e2 |> get_opt) ^ ", ");
+        print_string(label_to_string l2  ^ "\n"); *)
+        let t1, t2= typeof_expr g e1 |> get_opt , typeof_expr g e2 |> get_opt in
+        (* print_string ("case passed \n"); *)
         match op with
-        | Sum | Sub | Div | Mod ->
-          if Config.is_codegen_float () 
-          then Binop (op, e1, e2, Some (Secret Arithmetic))
-          else set_default_label None
-        | Mul -> Binop (op, e1, e2, Some (Secret Arithmetic))
+        | Sum | Sub | Div | Mod -> set_default_label None
+        | Mul -> 
+          if is_float_bt (get_bt t1) ||  is_float_bt (get_bt t2)
+            then Binop (op, e1, e2, Some (Secret Baba))
+            else Binop(op, e1, e2, Some (Secret Arithmetic))
         | Pow -> Binop (op, e1, e2, Some Public) 
         | Greater_than | Less_than | Greater_than_equal | Less_than_equal | Is_equal ->
-           Binop (op, e1, e2, Some (Secret Arithmetic))
+          if is_float_bt (get_bt t1) ||  is_float_bt (get_bt t2)
+            then Binop (op, e1, e2, Some (Secret Baba))
+            else Binop(op, e1, e2, Some (Secret Boolean))
         | R_shift_a -> Binop (op, e1, e2, Some (Secret Boolean))
         | L_shift -> Binop (op, e1, e2, Some (Secret Boolean))
         | Bitwise_and -> Binop (op, e1, e2, Some (Secret Boolean))
@@ -133,6 +126,9 @@ let rec infer_typ_label (suff:string) (t:typ) :typ =
   | Base (Bool, None) ->
      print_string ("Assigning default label Secret Boolean to: " ^ suff ^ "\n");
      { t with data = Base (Bool, Some (Secret Boolean)) }
+  | Base (Float, None) ->
+    print_string ("Assigning default label Secret Baba to: " ^ suff ^ "\n");
+    { t with data = Base (Float, Some (Secret Baba)) }
   | Base (bt, None) ->
      print_string ("Assigning default label Secret Arithmetic to: " ^ suff ^ "\n");
      { t with data = Base (bt, Some (Secret Arithmetic)) }
@@ -249,18 +245,24 @@ let infer_op_labels_program (p:program) :program =
   p |> List.fold_left (fun (g, p) d ->
            let d, g = infer_op_labels_global g d in
            g, p @ [d]) (empty_env, []) |> snd
-    
+
+let print_label  (g:gamma) (e:expr) =
+    match label_of_expr g e with
+    |Some l -> label_to_string l
+    |None -> expr_to_string e
+
 let maybe_add_subsumption (g:gamma) (tgt:label option) (e:expr) :expr =
   let lopt = label_of_expr g e in
   match lopt, tgt with
   | Some Public, Some (Secret l) -> { e with data = Subsumption (e, Public, Secret l) }
   (* This case will never occur when codegen is SECFLOAT as int/float are always arithmetic shared, and bool is boolean shared only *)
   | Some (Secret l1), Some (Secret l2) when l1 <> l2 ->
-    if Config.is_codegen_float () then e
+    if l1==Baba || l2==Baba then e
     else { e with data = Subsumption (e, Secret l1, Secret l2) }
   | _, _ -> e
 
 let rec insert_coercions_expr (g:gamma) (e:expr) :expr =
+  let e0 = e in 
   let aux (g:gamma) (e:expr') :expr' =
     match e with
     | Role _ -> e
@@ -272,23 +274,15 @@ let rec insert_coercions_expr (g:gamma) (e:expr) :expr =
         | R_shift_l | R_shift_a | L_shift ->  (* for these binops, the second argument is public, so don't need coercions there *)
          let e1 = maybe_add_subsumption g lopt (insert_coercions_expr g e1) in
          Binop (b, e1, e2, lopt)
-        | Greater_than | Greater_than_equal | Less_than | Less_than_equal | Is_equal ->
-          let lopt_coercion = (*if Config.is_codegen_float () then Some (Secret Arithmetic) else *) lopt in
-          let e1 = maybe_add_subsumption g lopt_coercion (insert_coercions_expr g e1) in
-          let e2 = maybe_add_subsumption g lopt_coercion (insert_coercions_expr g e2) in
-          Binop (b, e1, e2, lopt)
         | _ ->
          let e1 = maybe_add_subsumption g lopt (insert_coercions_expr g e1) in
          let e2 = maybe_add_subsumption g lopt (insert_coercions_expr g e2) in
          Binop (b, e1, e2, lopt))
     | Conditional (e1, e2, e3, lopt) ->
-       let e1 = maybe_add_subsumption g lopt (insert_coercions_expr g e1) in
-       let e2 = (insert_coercions_expr g e2) in
-       let e3 = (insert_coercions_expr g e3) in
-       let l2, l3 = label_of_expr g e2, label_of_expr g e3 in
-       let label_branch = join_labels l2 l3 in
-       let e2 = maybe_add_subsumption g label_branch e2 in
-       let e3 = maybe_add_subsumption g label_branch e3 in
+      let label_branches = label_of_expr g e0 in
+      let e1 = maybe_add_subsumption g lopt (insert_coercions_expr g e1) in
+      let e2 = maybe_add_subsumption g label_branches (insert_coercions_expr g e2) in
+      let e3 = maybe_add_subsumption g label_branches (insert_coercions_expr g e3) in
        Conditional (e1, e2, e3, lopt)
     | Array_read (e1, e2) -> Array_read (insert_coercions_expr g e1, insert_coercions_expr g e2)
     | App (f, args) ->

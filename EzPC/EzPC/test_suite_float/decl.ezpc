@@ -26,15 +26,14 @@ SOFTWARE.
 	This shows an example of a declaration in ezpc.
 *)
 def void main(){
-	uint32_al x1 = 1u;
-	uint32_pl x2 = 2u;
+	uint64_al x1 = 1u;
+	(*uint32_pl x2 = 2u;
 	int32_al x3 = 1;
 	int32_pl x4 = 2;
 	uint32_bl x5 = 2;
-	int32_bl x6 = 2;
-	bool_bl x7 = false;
+	int32_al x6 = 2;
+	bool x7 = false;
 
     float pi = 3.14 ;
-    float_al e = 2.71 ; 
-    float_bl life = 42.0 ;
+    float_fl e = 2.71 ; *)
 }

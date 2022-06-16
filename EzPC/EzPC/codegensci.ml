@@ -122,6 +122,7 @@ let o_subsumption (src:label) (tgt:secret_label) (t:typ) (arg:comp) :comp =
     | Public -> o_app (o_str "funcSSCons") [arg]
     | Secret Arithmetic
     | Secret Boolean -> failwith "Codegen: Subsumption from secrets is not allowed for this backend."
+    | Secret Baba -> failwith ("SCI does not support fl : float base type. ")
 
 let o_basetyp (t:base_type) :comp =
   let uint32_basetype_str :string = if Config.get_sci_backend () = OT then "uint32_t" else "uint64_t" in
@@ -131,8 +132,8 @@ let o_basetyp (t:base_type) :comp =
   | UInt64 -> o_str "uint64_t"
   | Int32  -> o_str int32_basetype_str
   | Int64  -> o_str "int64_t"
-  | Float  -> o_str "double"
   | Bool   -> o_str uint32_basetype_str
+  | _ -> failwith ("SCI does not support fl : float base type. ")
 
 let rec o_secret_binop (g:gamma) (op:binop) (sl:secret_label) (e1:expr) (e2:expr) :comp =
   (*

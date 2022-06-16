@@ -52,6 +52,7 @@ type base_type =
 type secret_label = 
   | Arithmetic
   | Boolean
+  | Baba
 
 type label =
   | Public
@@ -145,6 +146,7 @@ let label_to_string (l:label) :string =
   | Public -> "public"
   | Secret Arithmetic -> "arithmetic"
   | Secret Boolean -> "boolean"
+  | Secret Baba -> "baba"
 
 let role_to_string (r:role) :string =
   match r with
@@ -348,6 +350,9 @@ let is_float_bt (bt:base_type) :bool =
   | Float -> true
   | _ -> false
 
+let get_bt (t:typ) : base_type =
+  let bt,l = get_bt_and_label t in
+  bt 
 (* 
 let is_pow_2 (e:expr) :bool =
   match e.data with
@@ -388,6 +393,8 @@ let join_types (t1:typ) (t2:typ) :typ option =
   | Base (Int32, Some Public), Base (Int64, Some Public) -> Some t2
   | Base (UInt64, Some Public), Base (UInt32, Some Public)
   | Base (Int64, Some Public), Base (Int32, Some Public) -> Some t1
+  | Base (_, Some Public), Base (_, Some (Secret _)) -> Some t2
+  | Base (_, Some (Secret _)), Base (_, Some Public) -> Some t1
   | Base (bt1, l1), Base (bt2, l2) when bt1 = bt2 && l1 = l2 -> Some t1
   | _, _ -> None
 

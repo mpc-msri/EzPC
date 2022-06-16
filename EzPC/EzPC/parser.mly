@@ -76,7 +76,7 @@ let match_stmt_option msg str =
 %token TFLOAT
 %token TBOOL TRUE FALSE
 %token TVOID
-%token ARITHMETIC BOOLEAN PUBLIC
+%token ARITHMETIC BOOLEAN BABA PUBLIC
 %token IF ELSE
 %token QUESTION_MARK COLON
 %token UNDERSCORE
@@ -276,4 +276,5 @@ label:
 secret_label:
   | ARITHMETIC { Ast.Arithmetic }
   | BOOLEAN { Ast.Boolean }
+  | BABA { Ast.Baba }
   ;

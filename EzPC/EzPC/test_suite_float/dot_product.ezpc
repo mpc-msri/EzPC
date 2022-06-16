@@ -36,10 +36,10 @@ def void main(){
 		The output (<w;x> > b) is calculated and output shared with client.
 	*)
 
-	input(SERVER, w, float_al[dim]);
-	input(SERVER, b, float_bl);
-	input(CLIENT, x, float_al[dim]);
-	float_al acc = 0.0 ;                    (* Just because float *)
+	input(SERVER, w, float_fl[dim]);
+	input(SERVER, b, float_fl);
+	input(CLIENT, x, float_fl[dim]);
+	float_fl acc = 0.0 ;                    (* Just because float *)
 
 	uint32_pl lower = 0u;
 	uint32_pl upper = dim;

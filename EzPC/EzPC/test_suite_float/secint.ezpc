@@ -3,14 +3,14 @@ def float f (float x) {
 }
 
 def void main () {
-  input(CLIENT, l, float_al) ;
-  input(CLIENT, r, float_al) ;
+  input(CLIENT, l, float_fl) ;
+  input(CLIENT, r, float_fl) ;
 
   int32_pl terms = 20 ;
   float_pl termsf = 20.0 ; 
-  float_al h = (r-l)/termsf ;
-  float_al acc = 0.0 ;
-  float_al x = l ;
+  float_fl h = (r-l)/termsf ;
+  float_fl acc = 0.0 ;
+  float_fl x = l ;
   for i=[0:terms] {
     acc = acc + (f(x) * h) ;
     x = x + h ;

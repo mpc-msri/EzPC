@@ -32,13 +32,13 @@ SOFTWARE.
 	for partitioning about this function and inlining respectively.
 *)
 
-def float_al hello(float_al a){
+def float_fl hello(float_fl a){
     float one = 1.0 ;
 	return a + one ;
 }
 
 def void main(){
-	float_al b = 10.0;
-	float_al c = hello(b);	
+	float_fl b = 10.0;
+	float_fl c = hello(b);	
 	output(SERVER, c);
 }

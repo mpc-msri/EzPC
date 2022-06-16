@@ -79,6 +79,7 @@ let o_slabel_maybe_coerce (coerce:bool) (sl:secret_label) :comp =
     let c = if Config.get_bool_sharing_mode () = Config.Yao then o_str "ycirc"
             else o_str "bcirc" in
     if coerce then o_paren (seq (o_str "(BooleanCircuit *) ") c) else c
+  | Baba -> failwith ("ABY does not support fl : float base type. ")
                   
 let o_slabel :secret_label -> comp = o_slabel_maybe_coerce false
 
@@ -158,6 +159,7 @@ let o_subsumption (src:label) (tgt:secret_label) (t:typ) (arg:comp) :comp =
          else "PutB2AGate", "ycirc"
        in
        o_cbfunction tgt (o_str fn_name) [arg; o_str circ_arg]
+    | Secret Baba -> failwith ("ABY does not support fl : float base type. ")
 
 let o_basetyp (t:base_type) :comp =
   match t with
@@ -165,8 +167,8 @@ let o_basetyp (t:base_type) :comp =
   | UInt64 -> o_str "uint64_t"
   | Int32  -> o_str "int32_t"
   | Int64  -> o_str "int64_t"
-  | Float  -> o_str "float"
   | Bool   -> o_str "uint32_t"
+  | _ -> failwith ("ABY does not support fl : float base type. ")
 
 let rec o_secret_binop (g:gamma) (op:binop) (sl:secret_label) (e1:expr) (e2:expr) :comp =
   (*
@@ -214,8 +216,6 @@ and o_expr (g:gamma) (e:expr) :comp =
   | Const (UInt32C n) -> seq (o_str (" (uint32_t)")) (o_uint32 n)
 
   | Const (UInt64C n) -> seq (o_str (" (uint64_t)")) (o_uint64 n)
-
-  | Const (FloatC f) -> seq (o_str (" (float)")) (o_float f)
 
   | Const (BoolC b) -> o_bool b
     

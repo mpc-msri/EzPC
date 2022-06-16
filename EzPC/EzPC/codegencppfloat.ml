@@ -96,7 +96,7 @@ let o_subsumption (src:label) (tgt:secret_label) (t:typ) (arg:comp) :comp =
     | Base (UInt64, _) -> o_app (o_str "__public_int_to_arithmetic") [arg; o_str "false"; o_str "64"]
     | Base (Int32, _) -> o_app (o_str "__public_int_to_arithmetic") [arg; o_str "true"; o_str "32"]
     | Base (Int64, _) -> o_app (o_str "__public_int_to_arithmetic") [arg; o_str "true"; o_str "64"]
-    | Base (Float, _) -> o_app (o_str "__public_float_to_arithmetic") [arg]
+    | Base (Float, _) -> o_app (o_str "__public_float_to_baba") [arg]
     | Base (Bool, _) -> o_app (o_str "__public_bool_to_boolean") [arg]
     | _ -> failwith "Impossible source type for subsumption")
   | _ -> failwith "o_subsumption : Expected impossible branch. Should have been handled by infer.ml"

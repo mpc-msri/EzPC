@@ -16,7 +16,7 @@ def void accessElementOneD(uint64_bl[noOfFeatures] arr, uint64_bl idx, uint64_bl
 	uint64_pl ctr = 0uL;
 	for i=[0:noOfFeatures]
 	{
-		result[0] = result[0] +_bl (idx == ctr?arr[i]:0uL);
+		(*result[0] = result[0] +_bl (idx == ctr?arr[i]:0uL);*)
 		ctr = ctr + 1uL;	
 	};
 }
@@ -28,7 +28,7 @@ def void accessElementTwoD(uint64_bl[noOfTrees][noOfNodes] arr, int64_pl treeId,
 	uint64_bl idxcpy = idx;
 	for i=[start:end]
 	{
-		result[0] = result[0] +_bl (idxcpy == ctr?arr[treeId][i]:0uL);
+		(*result[0] = result[0] +_bl (idxcpy == ctr?arr[treeId][i]:0uL);*)
 		ctr = ctr + 1uL;	
 	};
 }
