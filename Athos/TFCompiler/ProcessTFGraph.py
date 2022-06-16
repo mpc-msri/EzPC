@@ -110,14 +110,44 @@ def addOutputs(program, dictNodeNameToOutVarStr, output_tensors):
     assert lastLetASTNode is not None
     if output_tensors is None:
         output_name = lastLetASTNode.name
-        print(output_name.name)
+        tf_node_name = lastLetASTNode.decl.metadata[AST.ASTNode.mtdKeyTFNodeName]
+        print(
+            "Output not specified, taking output of ",
+            tf_node_name,
+            " as program output.",
+        )
         output = AST.Output(output_name, AST.Party.CLIENT)
+        mtdForCurAST = {
+            AST.ASTNode.mtdKeyTFOpName: "Output",
+            AST.ASTNode.mtdKeyTFNodeName: tf_node_name,
+        }
+        mtdAST.visit(output, mtdForCurAST)
         lastLetASTNode.expr = output
     else:
         outVarCt = 0
         outVarPrefix = "O"
         for i in range(0, len(output_tensors)):  # name, decl, expr
             t_name = output_tensors[i]
+            if t_name not in dictNodeNameToOutVarStr:
+                if ":" in t_name:
+                    try:
+                        op_name, out_n = t_name.split(":")
+                        out_n = int(out_n)
+                    except:
+                        raise ValueError(
+                            "The tensor name {} looks like a tensor name but is not a valid one".format(
+                                name
+                            )
+                        )
+                    if out_n == 0:
+                        if op_name in dictNodeNameToOutVarStr:
+                            t_name = op_name
+                        else:
+                            t_name = op_name + "_mpc_const_var"
+                    else:
+                        t_name = op_name + "_mpc_const_var" + ":" + str(out_n)
+                else:
+                    t_name += "_mpc_const_var"
             if i == len(output_tensors) - 1:
                 output_name = AST.ID(dictNodeNameToOutVarStr[t_name])
                 output = AST.Output(output_name, AST.Party.CLIENT)
@@ -307,10 +337,10 @@ def process_tf_graph(filename, output_tensors=None):
         for i, curInput in enumerate(inputsRef):
             if curInput.startswith("^"):
                 # My hypothesis from empirical observation is that inputs which have '^' ahead of the node name
-                # 	denote control flow dependency and not data dependency.
-                # 	For all purposes for this compilation, control and data dependency is considered same.
-                # 	The reasoning being that everything is serial -- and graph execution is done in a
-                # 		a topological sort.
+                #   denote control flow dependency and not data dependency.
+                #   For all purposes for this compilation, control and data dependency is considered same.
+                #   The reasoning being that everything is serial -- and graph execution is done in a
+                #       a topological sort.
                 inputsRef[i] = curInput.split("^")[-1]
 
     # Create extra info dict

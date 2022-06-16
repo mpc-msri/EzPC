@@ -151,6 +151,14 @@ inline std::string Party(int p) {
     else return "PUBLIC";
 }
 
+template<typename T>
+inline void int_to_bool(bool * data, T input, int len) {
+	for (int i = 0; i < len; ++i) {
+		data[i] = (input & 1)==1;
+		input >>= 1;
+	}
+}
+
 template<typename t>
 t bool_to_int(const bool * data, size_t len) {
     if (len != 0) len = (len > sizeof(t)*8 ? sizeof(t)*8 : len);
@@ -260,23 +268,23 @@ inline uint64_t all1Mask(int x){
 #define IO_TILL_NOW (io->counter - dataSentCtr__1);
 #define RESET_IO dataSentCtr__1 = io->counter;
 
-#define INIT_ALL_IO_DATA_SENT uint64_t __ioStartTracker[::numThreads];\
-        for(int __thrdCtr = 0; __thrdCtr < ::numThreads; __thrdCtr++){\
+#define INIT_ALL_IO_DATA_SENT uint64_t __ioStartTracker[::num_threads];\
+        for(int __thrdCtr = 0; __thrdCtr < ::num_threads; __thrdCtr++){\
             __ioStartTracker[__thrdCtr] = ::ioArr[__thrdCtr]->counter;\
         }
 #define FIND_ALL_IO_TILL_NOW(var) uint64_t __curComm = 0;\
-        for(int __thrdCtr = 0; __thrdCtr < ::numThreads; __thrdCtr++){\
+        for(int __thrdCtr = 0; __thrdCtr < ::num_threads; __thrdCtr++){\
              __curComm += ((::ioArr[__thrdCtr]->counter) - __ioStartTracker[__thrdCtr]);\
         }\
         var = __curComm;
-#define RESET_ALL_IO for(int __thrdCtr = 0; __thrdCtr < ::numThreads; __thrdCtr++){\
+#define RESET_ALL_IO for(int __thrdCtr = 0; __thrdCtr < ::num_threads; __thrdCtr++){\
             __ioStartTracker[__thrdCtr] = ::ioArr[__thrdCtr]->counter;\
         }
 
 inline void print128_num(__m128i var) 
 {
     uint64_t *v64val = (uint64_t*) &var;
-    printf("%.16lx %.16lx\n", v64val[1], v64val[0]);
+    printf("%.16llx %.16llx\n", v64val[1], v64val[0]);
 }
 
 inline void linIdxRowMInverseMapping(int cur, int s1, int s2, int& i, int& j){
@@ -422,4 +430,16 @@ static void writeToPackedArr(uint8_t* arr, int arrLen, uint64_t bitIdx, uint64_t
     // Now things are byte aligned
     uint64_t valIter = (val >> freeBitsInFirstByte); //Since val is unsigned, this is unsigned right shift
     (*((uint64_t*)(arr+firstByteIdx+1))) = valIter;
+}
+
+inline int64_t unsigned_val(uint64_t x, int bw_x) {
+    uint64_t mask_x = (bw_x == 64 ? -1: ((1ULL << bw_x) - 1));
+    return x & mask_x;
+}
+
+inline int64_t signed_val(uint64_t x, int bw_x) {
+    uint64_t pow_x = (bw_x == 64? 0ULL: (1ULL << bw_x));
+    uint64_t mask_x = pow_x - 1;
+    x = x & mask_x;
+    return int64_t(x - ((x >= (pow_x/2)) * pow_x));
 }

@@ -19,10 +19,10 @@
 #ifndef __MILLIONAIREPROB_H_
 #define __MILLIONAIREPROB_H_
 
-#include "../../../abycore/circuit/booleancircuits.h"
-#include "../../../abycore/circuit/arithmeticcircuits.h"
-#include "../../../abycore/circuit/circuit.h"
-#include "../../../abycore/aby/abyparty.h"
+#include "abycore/circuit/booleancircuits.h"
+#include "abycore/circuit/arithmeticcircuits.h"
+#include "abycore/circuit/circuit.h"
+#include "abycore/aby/abyparty.h"
 #include <math.h>
 #include <cassert>
 

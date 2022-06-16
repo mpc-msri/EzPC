@@ -1,0 +1,137 @@
+(* Random Forest implementation for inference on California Housing Dataset -- Regression *)
+
+(* These values come from a python program that I used to train the Random Forest. Accuracy on testing set (20% of full dataset) = 83.04 *)	
+int32 noOfFeatures = 
+(* This depth is the depth in python code + 1 *)
+int32 maxDepth =  
+int32 maxDepthInt = 
+int32 noOfTrees = 
+int32 noOfNodes = 
+
+(* To get secret shares of an element from array when the elements index is secret shared *)
+def void accessElementOneD(int64_bl[noOfFeatures] arr, int64_bl idx, int64_bl[1] result)
+{
+	result[0] = 0L;
+	int64_pl ctr = 0L;
+	for i=[0:noOfFeatures]
+	{
+		result[0] = result[0] +_bl (idx == ctr?arr[i]:0L);
+		ctr = ctr + 1L;	
+	};
+}
+
+def void accessElementTwoD(int64_bl[noOfTrees][noOfNodes] arr, int64_pl treeId, int64_al idx, int64_bl[1] result, int32_pl start, int32_pl end)
+{
+	result[0] = 0L;
+	int64_pl ctr = start + 0L;
+	int64_bl idxcpy = idx;
+	for i=[start:end]
+	{
+		result[0] = result[0] +_bl (idxcpy == ctr?arr[treeId][i]:0L);
+		ctr = ctr + 1L;	
+	};
+}
+
+def int32_pl pow(int32_pl base, int32_pl power)
+{
+	int32_pl result = 1;
+	for i=[0:power]
+	{
+		result = result * base;
+	};
+	return result;
+}
+
+def void infer(int64_bl[noOfTrees][noOfNodes] modelFeatureChoice, 
+		int64_bl[noOfTrees][noOfNodes] modelThresholdValue,
+		int64_bl[noOfFeatures] query,
+		int64_bl[noOfTrees] result)
+{
+	int64_al currentIndex = 0L;
+	int64_al leftOrRight = 0L;
+	int64_bl[1] currentSharedFeatureChoice;
+	int64_bl[1] currentSharedThreshold;
+	int64_bl[1] currentSharedQueryValue;
+	currentSharedFeatureChoice[0] = 0L;
+	currentSharedThreshold[0] = 0L;
+	currentSharedQueryValue[0] = 0L;
+	int32_pl startIdx = 0;
+	int32_pl endIdx = 0;
+
+	for i=[0:noOfTrees]
+	{
+		currentIndex = 0L;
+		
+		(* Root level *)
+		currentSharedFeatureChoice[0] = modelFeatureChoice[i][0];
+		currentSharedThreshold[0] = modelThresholdValue[i][0];
+		
+		accessElementOneD(query, currentSharedFeatureChoice[0], currentSharedQueryValue);
+		leftOrRight = (currentSharedThreshold[0] > currentSharedQueryValue[0])?1L:2L;
+	
+		for j=[1:maxDepthInt-1]
+		{
+			currentIndex = (currentIndex *_al 2L) +_al leftOrRight;				
+			startIdx = pow(2, j)-1;
+			endIdx = pow(2, j+1)-1;
+			accessElementTwoD(modelThresholdValue, i, currentIndex, currentSharedThreshold, startIdx, endIdx);
+			accessElementTwoD(modelFeatureChoice, i, currentIndex, currentSharedFeatureChoice, startIdx, endIdx);
+			accessElementOneD(query, currentSharedFeatureChoice[0], currentSharedQueryValue);
+			
+			
+			leftOrRight = (currentSharedThreshold[0] > currentSharedQueryValue[0])?1L:2L;
+		};
+		
+		(* Leaf level *)
+		currentIndex = (currentIndex *_al 2L) +_al leftOrRight;				
+		startIdx = pow(2, maxDepthInt-1)-1;
+		endIdx = pow(2, maxDepthInt)-1;
+		accessElementTwoD(modelThresholdValue, i, currentIndex, currentSharedThreshold, startIdx, endIdx);
+		result[i] = currentSharedThreshold[0];
+	};
+}
+
+def void main()
+{
+	(* Taking inputs as boolean shares because comparison are performed *)
+	int64_bl[noOfFeatures] inferenceQuery;
+	int64_bl[noOfTrees][noOfNodes] modelFeatureChoice;
+	(* Threshold value for leaves = inference output from that tree *)
+	int64_bl[noOfTrees][noOfNodes] modelThresholdValue;
+	int64_bl[noOfTrees] inferenceResult;
+	int64_bl finalResult = 0L;	
+
+	(* One party inputs the inference query *)
+	for i=[0:noOfFeatures]
+	{
+		input(CLIENT, temp, int64_bl);
+		inferenceQuery[i] = temp;	
+	};
+
+	(* Other party inputs the trained model in the form of the feature choice
+	at each node as well as the threshold value of the feature at that node *)
+	for i=[0:noOfTrees]
+	{
+		for j=[0:noOfNodes]
+		{
+			input(SERVER, temp, int64_bl);
+			modelFeatureChoice[i][j] = temp;
+		};
+		
+		for j=[0:noOfNodes]
+		{
+			input(SERVER, temp, int64_bl);
+			modelThresholdValue[i][j] = temp;
+		};
+	};
+
+	infer(modelFeatureChoice, modelThresholdValue, inferenceQuery, inferenceResult);	
+	
+	(* Take mean of all the values in inference result *)
+	for i=[0:noOfTrees]
+	{
+		finalResult = finalResult +_al inferenceResult[i];
+	};
+	(*finalResult = finalResult/(noOfTrees+0L);*)
+	output(CLIENT, finalResult)
+}

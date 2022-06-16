@@ -114,11 +114,31 @@ def infer_input_info(graph):
 
 def get_unsupported_ops(graph):
     ops = set([i.type for i in graph.get_operations()])
+    ops.discard("Assign")
     unsupported_ops = []
     for op in ops:
         if not hasattr(TFNodesAST, op):
             unsupported_ops.append(op)
     return unsupported_ops
+
+
+def get_op_names_from_tensors(tensor_names):
+    op_names = []
+    for name in tensor_names:
+        if ":" in name:
+            try:
+                op_name, out_n = name.split(":")
+                out_n = int(out_n)
+            except:
+                raise ValueError(
+                    "The tensor name {} looks like a tensor name but is not a valid one".format(
+                        name
+                    )
+                )
+            op_names.append(op_name)
+        else:
+            op_names.append(name)
+    return op_names
 
 
 # Generates the computation graph and tensor size metadata and saves them in
@@ -128,7 +148,18 @@ def compile(model_fname, input_t_info, output_t_names, scaling_factor, save_weig
     model_name = os.path.basename(model_fname)[:-3]
     print("Loading tf graph ", model_fname)
     graph = tf_graph_io.load_pb(model_fname)
-    assert tensors_exist(graph, output_t_names)
+    output_op_names = get_op_names_from_tensors(output_t_names)
+    assert tensors_exist(graph, output_op_names)
+
+    if input_t_info == {}:
+        input_t_info = infer_input_info(graph)
+    else:
+        tensors_exist(graph, list(input_t_info.keys()))
+        graph = set_input_shapes(graph, input_t_info)
+    input_t_names = list(input_t_info.keys())
+    graph_def = grappler.optimize(graph, input_t_names, output_op_names)
+    graph_def = grappler.convert_consts_to_var(graph_def)
+    graph = get_graph_from(graph_def)
 
     unsupported_ops = get_unsupported_ops(graph)
     if len(unsupported_ops) != 0:
@@ -138,16 +169,6 @@ def compile(model_fname, input_t_info, output_t_names, scaling_factor, save_weig
         for i in unsupported_ops:
             msg = msg + "    " + i + "\n"
         sys.exit(msg)
-
-    if input_t_info == {}:
-        input_t_info = infer_input_info(graph)
-    else:
-        tensors_exist(graph, list(input_t_info.keys()))
-        graph = set_input_shapes(graph, input_t_info)
-    input_t_names = list(input_t_info.keys())
-    graph_def = grappler.optimize(graph, input_t_names, output_t_names)
-    graph_def = grappler.convert_consts_to_var(graph_def)
-    graph = get_graph_from(graph_def)
 
     feed_dict = {}
     for name, shape in input_t_info.items():
@@ -170,7 +191,7 @@ def compile(model_fname, input_t_info, output_t_names, scaling_factor, save_weig
             # these constants. We strip them away in a new graph def which is amenable
             # to codegen but leave them in the graph.
             optimized_graph_def = DumpTFMtData.strip_variable_init_constants(
-                graph_def, input_t_names, output_t_names
+                graph_def, input_t_names, output_op_names
             )
 
             tf_graph_io.dump_graph_def_pb(

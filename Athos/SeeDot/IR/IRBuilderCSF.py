@@ -45,17 +45,18 @@ class IRBuilderCSF(IRBuilderAST):
         self._iter_cnt = 0
 
         # Global variables
-        # 	Used to note declarations which will go before any statements
-        # 	But since this affects memory consumption, use carefully
+        #   Used to note declarations which will go before any statements
+        #   But since this affects memory consumption, use carefully
         self.globalDecls = (
             {}
         )  # Mapping of (identifier name (string) -> list of [type, secret/public variable, bitlen of decl])
-        # 	The 2nd arg can be either 'secret' or 'public'.
-        # 	If public/secret unspecified, default to 'secret'.
-        # 	The 3rd arg is used to specify the bitlen of the decl.
+        #   The 2nd arg can be either 'secret' or 'public'.
+        #   If public/secret unspecified, default to 'secret'.
+        #   The 3rd arg is used to specify the bitlen of the decl.
 
         # Name mapping from SeeDot names to new names is useful for debugging
         self.name_mapping = {}
+        self.expr_mapping = {}
 
         self.actualbitwidth = Util.Config.actualWordLength
 
@@ -332,25 +333,144 @@ class IRBuilderCSF(IRBuilderAST):
 
         return (final_prog, out_arr)
 
+    def visitExpand():
+        assert False
+
+    def visitGather(self, node: AST.Gather, args=None):
+        (prog_1, expr_1) = self.visit(node.expr)
+
+        out_arr = self.getTempVar()
+        out_decl = IR.Prog(
+            [
+                IR.Decl(
+                    out_arr.idf,
+                    Type.Tensor(
+                        node.shape[1:],
+                        node.expr.type.bitlen,
+                        node.expr.type.isSecret,
+                        node.expr.type.taint,
+                    ),
+                    isSecret=node.type.isSecret,
+                )
+            ]
+        )
+
+        index_iter = self.getTempIterators(1)
+        iter_decl = IR.Prog([IR.Decl(index_iter[0].idf, Type.Int(), isSecret=False)])
+        iter_assn = IR.Prog([IR.Assn(index_iter[0], IRUtil.Int(node.index))])
+
+        loopShape = node.shape[1:]
+        loopIters = self.getTempIterators(len(node.shape) - 1)
+
+        iter_decl_lst = []
+        for var in loopIters:
+            iter_decl_lst.append(IR.Decl(var.idf, Type.Int(), isSecret=False))
+
+        loop = IRUtil.loop(
+            loopShape,
+            loopIters,
+            [
+                IR.Assn(
+                    IRUtil.addIndex(out_arr, loopIters),
+                    IRUtil.addIndex(expr_1, index_iter + loopIters),
+                )
+            ],
+        )
+
+        prog_out = IRUtil.prog_merge(prog_1, out_decl)
+        prog_out = IRUtil.prog_merge(prog_out, iter_decl)
+        prog_out = IRUtil.prog_merge(prog_out, iter_assn)
+        prog_out = IRUtil.prog_merge(prog_out, IR.Prog(iter_decl_lst))
+        prog_out = IRUtil.prog_merge(prog_out, IR.Prog(loop))
+
+        if not (Util.Config.disableTruncOpti):
+            self.scaleFacMapping[out_arr.idf] = self.scaleFacMapping[expr_1.idf]
+
+        return (prog_out, out_arr)
+
+    def visitUnsqueeze(self, node: AST.Unsqueeze, args=None):
+        (prog_1, expr_1) = self.visit(node.expr)
+
+        out_arr = self.getTempVar()
+        out_decl = IR.Prog(
+            [
+                IR.Decl(
+                    out_arr.idf,
+                    Type.Tensor(
+                        node.shape[: node.axis] + [1] + node.shape[node.axis :],
+                        node.expr.type.bitlen,
+                        node.expr.type.isSecret,
+                        node.expr.type.taint,
+                    ),
+                    isSecret=node.type.isSecret,
+                )
+            ]
+        )
+
+        index_iter = self.getTempIterators(1)
+        iter_decl = IR.Prog([IR.Decl(index_iter[0].idf, Type.Int(), isSecret=False)])
+        iter_assn = IR.Prog([IR.Assn(index_iter[0], IRUtil.zero)])
+
+        loopShape = node.shape
+        loopIters = self.getTempIterators(len(node.shape))
+
+        iter_decl_lst = []
+        for var in loopIters:
+            iter_decl_lst.append(IR.Decl(var.idf, Type.Int(), isSecret=False))
+
+        loop = IRUtil.loop(
+            loopShape,
+            loopIters,
+            [
+                IR.Assn(
+                    IRUtil.addIndex(
+                        out_arr,
+                        loopIters[: node.axis] + index_iter + loopIters[node.axis :],
+                    ),
+                    IRUtil.addIndex(expr_1, loopIters),
+                )
+            ],
+        )
+
+        prog_out = IRUtil.prog_merge(prog_1, out_decl)
+        prog_out = IRUtil.prog_merge(prog_out, iter_decl)
+        prog_out = IRUtil.prog_merge(prog_out, iter_assn)
+        prog_out = IRUtil.prog_merge(prog_out, IR.Prog(iter_decl_lst))
+        prog_out = IRUtil.prog_merge(prog_out, IR.Prog(loop))
+
+        if not (Util.Config.disableTruncOpti):
+            self.scaleFacMapping[out_arr.idf] = self.scaleFacMapping[expr_1.idf]
+
+        return (prog_out, out_arr)
+
     def visitReshape(self, node: AST.Reshape, args=None):
         (prog_1, expr_1) = self.visit(node.expr)
 
         """
-		reshape(A, n, h, w)
+        reshape(A, n, h, w)
+        cmd1:  t1 = t2 = t3 = 0;
+        loop2: for n in 0:N:
+                 for h in 0:H:
+                   for w in 0:W:
+        cmd3:        B[n][h][w] = A[t1][t2][t3]
+        cmd4:        t3++;
+        cmd5:        if (t3 == WW)
+                       t3 = 0;
+                       t2++;
+                       if (t2 == HH)
+                         t2 = 0;
+                         t1++;
+        """
 
-		cmd1:  t1 = t2 = t3 = 0;
-		loop2: for n in 0:N:
-				 for h in 0:H:
-				   for w in 0:W:
-		cmd3:        B[n][h][w] = A[t1][t2][t3]
-		cmd4:        t3++;
-		cmd5:        if (t3 == WW)
-					   t3 = 0;
-					   t2++;
-					   if (t2 == HH)
-						 t2 = 0;
-						 t1++;
-		"""
+        # print(node.expr)
+
+        t1 = node.expr.type
+        t2 = node.type
+        # [] 0
+        # [] 0
+        # print("Shapes, dim ---")
+        # print(t1.shape, t1.dim)
+        # print(t2.shape, t2.dim)
 
         typ_1 = node.expr.type
         typ_2 = node.type
@@ -364,8 +484,12 @@ class IRBuilderCSF(IRBuilderAST):
         cmd1 = [IR.Assn(var, IRUtil.zero) for var in iters_1]
 
         # Incrementing the first index
+        # print(iters_1)
         first_iter = iters_1[0]
         cmd4 = IRUtil.incCmd(first_iter)
+
+        # print("Bye")
+        # sys.exit(0)
 
         # Incrementing other indices using a loop
         cmd5 = [cmd4]
@@ -900,6 +1024,14 @@ class IRBuilderCSF(IRBuilderAST):
         (prog_1, expr_1) = self.visit(node.expr1)
         (prog_2, expr_2) = self.visit(node.expr2)
 
+        """
+        A 100
+        B 100
+
+        int64_al[100] A ;
+        int64_al[100] B ;
+        """
+
         typ_1 = node.expr1.type
         typ_2 = node.expr2.type
         typ_3 = node.type
@@ -1327,6 +1459,7 @@ class IRBuilderCSF(IRBuilderAST):
             AST.Operators.RELU,
             AST.Operators.TANH,
             AST.Operators.SIGMOID,
+            AST.Operators.HARDSIGMOID,
             AST.Operators.SQRT,
             AST.Operators.RSQRT,
             AST.Operators.ClearMemSecret,
@@ -1348,6 +1481,8 @@ class IRBuilderCSF(IRBuilderAST):
             funcName = "Tanh"
         elif node.op == AST.Operators.SIGMOID:
             funcName = "Sigmoid"
+        elif node.op == AST.Operators.HARDSIGMOID:
+            funcName = "HardSigmoid"
         elif node.op == AST.Operators.SQRT:
             funcName = "Sqrt"
         elif node.op == AST.Operators.RSQRT:
@@ -1375,6 +1510,7 @@ class IRBuilderCSF(IRBuilderAST):
         if Type.isTensor(inputType):
             for ii, curDim in enumerate(inputType.shape):
                 argsList[IR.Int(curDim, 32)] = "inShape_" + str(ii)
+
         argsList[expr1] = "inArr"
 
         if Type.isTensor(node.type):
@@ -1385,7 +1521,10 @@ class IRBuilderCSF(IRBuilderAST):
 
         progExtraBefore = IR.Prog([])
         if Util.Config.disableTruncOpti:
-            if node.op == AST.Operators.RELU:
+            if node.op in [
+                AST.Operators.RELU,
+                AST.Operators.HARDSIGMOID,
+            ]:
                 argsList[IR.Int(Util.Config.consSF, 32)] = "consSF"
                 argsList[IR.Bool(False)] = "doTruncation"
             if node.op in [
@@ -1394,11 +1533,19 @@ class IRBuilderCSF(IRBuilderAST):
                 AST.Operators.SQRT,
                 AST.Operators.RSQRT,
             ]:
+                assert (
+                    self.scaleFac > 31
+                ), "The program scaling factor {} is invalid. Should be lesser than 32 if network has tan/sig/sqrt as those only support 32 bitlengths".format(
+                    self.scaleFac
+                )
                 argsList[IR.Int(self.scaleFac, 32)] = "sA"
                 argsList[IR.Int(self.scaleFac, 32)] = "sB"
         else:
             final_sf = self.scaleFacMapping[expr1.idf]
-            if node.op == AST.Operators.RELU:
+            if node.op in [
+                AST.Operators.RELU,
+                AST.Operators.HARDSIGMOID,
+            ]:
                 argsList[IR.Int(final_sf - self.scaleFac, 32)] = "consSF"
                 if final_sf > self.scaleFac:
                     # If it can't tolerate one more mult operation, then scale down here
@@ -1413,12 +1560,24 @@ class IRBuilderCSF(IRBuilderAST):
                 AST.Operators.SQRT,
                 AST.Operators.RSQRT,
             ]:
-                # Since these class of fucntions can only handle input of 32 bitlength, we have to scale down
-                # inputs before calling them. 23 bit mantissa
-                if final_sf > 23:
+                # Since these class of functions can only handle input of 32 bitlength, we have to scale down
+                # inputs before calling them.
+                # 32 bit fixedpt |(+/-)| _ _ _ _ _ _ _ _ | _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+                # 31 bits available. For small values with max precision we can do 0.31 split
+                # Consider fp number: 2^-25 (2.98023223876953125 × 10^-8)
+                # | 1 | 1 1 0 0 1 1 0 | 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 |
+                #   = 1 * 1.0 *  2^(102 - 127) = 2^-25
+                # If we scale by mantissa number of bits i.e. 23, we get a fixedpt val
+                #   = floor(1 * (2 ^ (-25 + 23))) = floor(2^-2) = floor(0.025) = 0
+                # We have lost the precision. It is possible to scale more than mantissa bits to get precision.
+                # if we had scaled by 25 bits, we wouldve got fixedpt val = 1 and we could then do a 6.25 split while
+                # storing it. Upper bound of scaling is not mantissa, it is fixedpt bitlen available.
+                if final_sf > 31:
                     assert (
                         final_sf > self.scaleFac
-                    ), "The program scaling factor is invalid. Should be lesser than 32 if network has tan/sig/sqrt"
+                    ), "The program scaling factor {} is invalid. Should be lesser than 32 if network has tan/sig/sqrt as those only support 32 bitlengths".format(
+                        self.scaleFac
+                    )
                     assert final_sf - self.scaleFac == self.scaleFac
                     progExtraBefore = IRUtil.prog_merge(
                         progExtraBefore,
@@ -1440,6 +1599,7 @@ class IRBuilderCSF(IRBuilderAST):
             AST.Operators.RSQRT,
         ]:
             argsList[IR.Int(min(32, self.actualbitwidth), 32)] = "bwA"
+            # argsList[IR.Int(min(32, self.actualbitwidth), 32)] = "bwB"
             argsList[IR.Int(self.actualbitwidth, 32)] = "bwB"
             if node.op == AST.Operators.SQRT:
                 argsList[IR.Bool(False)] = "inverse"
@@ -1470,13 +1630,12 @@ class IRBuilderCSF(IRBuilderAST):
         (prog_1, expr_1) = self.visit(node.decl)
         typ_1 = node.decl.type
         idf = node.name.name
-        if not (Type.isInt(typ_1)):
-            self.name_mapping[idf] = expr_1.idf
         if not (Util.Config.disableTruncOpti):
             self.scaleFacMapping[idf] = self.scaleFacMapping[expr_1.idf]
         (prog_2, expr_2) = self.visit(node.expr)
-        prog_2 = prog_2.subst(idf, expr_1)
-        expr_2 = expr_2.subst(idf, expr_1)
+
+        self.name_mapping[idf] = expr_1.idf
+        self.expr_mapping[idf] = expr_1
         prog_3 = IRUtil.prog_merge(prog_1, prog_2)
         return (prog_3, expr_2)
 
@@ -1497,17 +1656,17 @@ class IRBuilderCSF(IRBuilderAST):
                 curShape = curArg.type.shape
 
                 # If len(shape) == 0 : that means its a float - no need to qualify
-                # 	the function name with 0 in that case, since its essentially
-                # 	become an int.
+                #   the function name with 0 in that case, since its essentially
+                #   become an int.
                 if len(curShape) > 0:
                     funcName += self.varNameDelim + str(len(curShape))
                 ### TODO : right now if random strings like int are passed, its being set as datatype int -- int datatype in
-                # 		   unintrepreted func call is being used in a hacky way right now
+                #          unintrepreted func call is being used in a hacky way right now
 
         # Policy :
-        # 	First output tensor sizes are inserted in args.
-        # 	Then for each input tensor, its shape is inserted in args, followed by the input tensor itself.
-        # 	If the current input tensor has the same shape as any of the previous tensors, then its shape is not inserted.
+        #   First output tensor sizes are inserted in args.
+        #   Then for each input tensor, its shape is inserted in args, followed by the input tensor itself.
+        #   If the current input tensor has the same shape as any of the previous tensors, then its shape is not inserted.
         funcArgsList = OrderedDict()
 
         if not (Util.Config.disableTruncOpti):
@@ -1638,37 +1797,37 @@ class IRBuilderCSF(IRBuilderAST):
         # We already have the output shape so we dont need to calculate with keep_dims
 
         """
-			We need to reduce across axes.
-			Example: Say reduction axes are specified as 0,3 and keep dim = false
-			output rank -> len(input_shape) - len(reduction_axes)
-			output is 2D.
-			for i1=[0:s1]
-				for i2=[0:s2]
-					sum = 0
-					for i0=[0:s0]
-						for i3=[0:s3]
-							sum  = sum + input[i0][i1][i2][i3]
-					output[i1][i2] = sum / (s0 * s3)
-			if keep dim == true, output rank is same as input. We generate:
-					output[0][i1][i2][0] = sum / (s0 * s3)
+            We need to reduce across axes.
+            Example: Say reduction axes are specified as 0,3 and keep dim = false
+            output rank -> len(input_shape) - len(reduction_axes)
+            output is 2D.
+            for i1=[0:s1]
+                for i2=[0:s2]
+                    sum = 0
+                    for i0=[0:s0]
+                        for i3=[0:s3]
+                            sum  = sum + input[i0][i1][i2][i3]
+                    output[i1][i2] = sum / (s0 * s3)
+            if keep dim == true, output rank is same as input. We generate:
+                    output[0][i1][i2][0] = sum / (s0 * s3)
 
-			Ideally the above loop nest is what we would want to generate. But since we have
-			a division, we need to make calls to the div functionality and flatten the tensors.
-			temp_flat[s1*s2];
-			out_flat[s1*s2];
-			for i1=[0:s1]
-				for i2=[0:s2]
-					sum = 0
-					for i0=[0:s0]
-						for i3=[0:s3]
-							sum  = sum + input[i0][i1][i2][i3]
-					temp_flat[i1*s2 + i2] = sum
-			ElemWiseVectorPublicDiv(size=s1*s2, inp=temp_flat, divisor=s0*s3, out=out_flat)
-			for i1=[0:s1]
-				for i2=[0:s2]
-				  output[i1][i2] = out_flat[i1*s2 + i2]
+            Ideally the above loop nest is what we would want to generate. But since we have
+            a division, we need to make calls to the div functionality and flatten the tensors.
+            temp_flat[s1*s2];
+            out_flat[s1*s2];
+            for i1=[0:s1]
+                for i2=[0:s2]
+                    sum = 0
+                    for i0=[0:s0]
+                        for i3=[0:s3]
+                            sum  = sum + input[i0][i1][i2][i3]
+                    temp_flat[i1*s2 + i2] = sum
+            ElemWiseVectorPublicDiv(size=s1*s2, inp=temp_flat, divisor=s0*s3, out=out_flat)
+            for i1=[0:s1]
+                for i2=[0:s2]
+                  output[i1][i2] = out_flat[i1*s2 + i2]
 
-		"""
+        """
         reduced_dims = node.reductionAxesList
         inputShape = node.expr.type.shape
         perm = []
@@ -1683,8 +1842,6 @@ class IRBuilderCSF(IRBuilderAST):
                 perm.append(i)
         # perm will now be [ 1 ,2 ] + [ 0, 3]
         perm.extend(reduced_dims)
-        print(perm)
-        print(reduced_dims)
         loop_shape = [inputShape[perm[i]] for i in range(len(inputShape))]
         shuffled_inputiters = [inputiters[perm[i]] for i in range(len(inputShape))]
 

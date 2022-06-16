@@ -22,20 +22,21 @@ SOFTWARE.
 #ifndef DEFINES_HE_H__
 #define DEFINES_HE_H__
 
+#include <cstdint>
+#include <cmath>
 // #define HE_DEBUG
 
 extern uint64_t prime_mod;
 extern int32_t bitlength;
-extern const int32_t numThreads;
+extern int32_t num_threads;
 
 const uint64_t POLY_MOD_DEGREE = 8192;
-const uint64_t POLY_MOD_DEGREE_LARGE = 32768;
-const int32_t SMUDGING_BITLEN = 108-bitlength;
+const uint64_t POLY_MOD_DEGREE_LARGE = 65536;
+const int32_t SMUDGING_BITLEN = 100 - bitlength;
 
 /* Helper function for rounding to the next power of 2
- * Credit: https://stackoverflow.com/questions/466204/rounding-up-to-next-power-of-2 */
-inline int next_pow2(int val) {
-    return pow(2, ceil(log(val)/log(2)));
-}
+ * Credit:
+ * https://stackoverflow.com/questions/466204/rounding-up-to-next-power-of-2 */
+inline int next_pow2(int val) { return pow(2, ceil(log(val) / log(2))); }
 
-#endif //DEFINES_HE_H__
+#endif // DEFINES_HE_H__

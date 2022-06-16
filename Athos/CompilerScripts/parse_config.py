@@ -168,11 +168,11 @@ def parse_input_tensors(config):
 def parse_config(config, sample_network=False):
     if not sample_network:
         model_fname = get_str_param(config, "model_name")
-        if not model_fname.endswith(".pb"):
+        if not model_fname.endswith(".pb") and not model_fname.endswith(".onnx"):
             sys.exit(
                 model_fname
-                + " is not a tensorflow protobuf file. Please supply "
-                + "a valid tensorflow protobuf model (.pb extension)"
+                + " is not a valid model file. Please supply "
+                + "a valid model (tensorflow protobuf model (.pb) or ONNX (.onnx)"
             )
     else:
         network_name = get_str_param(config, "network_name")

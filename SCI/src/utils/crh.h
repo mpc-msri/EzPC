@@ -31,58 +31,54 @@ Enquiries about further applications and development opportunities are welcome.
  */
 namespace sci {
 
-class CRH: public PRP { 
+class CRH : public PRP {
 public:
-	CRH(const char * seed = fix_key):PRP(seed) {
-	}
+  CRH(const char *seed = fix_key) : PRP(seed) {}
 
-	CRH(const block128& seed): PRP(seed) {
-	}
+  CRH(const block128 &seed) : PRP(seed) {}
 
-	block128 H(block128 in) {
-		block128 t = in; 
-		permute_block(&t, 1);
-		return xorBlocks(t, in);
-	}
+  block128 H(block128 in) {
+    block128 t = in;
+    permute_block(&t, 1);
+    return xorBlocks(t, in);
+  }
 
 #ifdef __GNUC__
-	#ifndef __clang__
-		#pragma GCC push_options
-		#pragma GCC optimize ("unroll-loops")
-	#endif
+#ifndef __clang__
+#pragma GCC push_options
+#pragma GCC optimize("unroll-loops")
+#endif
 #endif
 
-	template<int n>
-	void H(block128 out[n], block128 in[n]) {
-		block128 tmp[n];
-		for (int i = 0; i < n; ++i)
-			tmp[i] = in[i];
-		permute_block(tmp, n);
-		xorBlocks_arr(out, in, tmp, n);
-	}
+  template <int n> void H(block128 out[n], block128 in[n]) {
+    block128 tmp[n];
+    for (int i = 0; i < n; ++i)
+      tmp[i] = in[i];
+    permute_block(tmp, n);
+    xorBlocks_arr(out, in, tmp, n);
+  }
 #ifdef __GNUC__
-	#ifndef __clang__
-		#pragma GCC pop_options
-	#endif
+#ifndef __clang__
+#pragma GCC pop_options
+#endif
 #endif
 
-	void Hn(block128*out, block128* in, int n, block128 * scratch = nullptr) {
-		bool del = false;
-		if(scratch == nullptr) {
-			del = true;
-			scratch = new block128[n];
-		} 
-		for(int i = 0; i < n; ++i)
-			scratch[i] = in[i];
-		permute_block(scratch, n);
-		xorBlocks_arr(out, in, scratch, n);
-		if(del) {
-			delete[] scratch;
-			scratch = nullptr;
-		}
-
-	}
+  void Hn(block128 *out, block128 *in, int n, block128 *scratch = nullptr) {
+    bool del = false;
+    if (scratch == nullptr) {
+      del = true;
+      scratch = new block128[n];
+    }
+    for (int i = 0; i < n; ++i)
+      scratch[i] = in[i];
+    permute_block(scratch, n);
+    xorBlocks_arr(out, in, scratch, n);
+    if (del) {
+      delete[] scratch;
+      scratch = nullptr;
+    }
+  }
 };
-}
+} // namespace sci
 /**@}*/
-#endif// CRH_H__
+#endif // CRH_H__

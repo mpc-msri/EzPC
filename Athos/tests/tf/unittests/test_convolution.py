@@ -31,7 +31,7 @@ import os
 
 # Athos DIR
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-from tests.utils import Config, Compiler, assert_almost_equal
+from tests.utils import TFConfig, Compiler, assert_almost_equal
 
 
 @pytest.mark.parametrize(
@@ -57,11 +57,13 @@ def test_conv(test_dir, backend, tfOp, a_shape, kernel_shape, strides, padding, 
     with tf.compat.v1.Session(graph=graph) as sess:
         expected_output = sess.run(output, feed_dict={a: a_inp})
 
-    config = Config(backend).add_input(a).add_output(output)
+    config = TFConfig(backend).add_input(a).add_output(output)
     config.config["scale"] = 12
     compiler = Compiler(graph, config, test_dir)
     mpc_output = compiler.compile_and_run([a_inp])
-    assert_almost_equal(tf_output=expected_output, mpc_tensor=mpc_output, precision=2)
+    assert_almost_equal(
+        model_output=expected_output, mpc_tensor=mpc_output, precision=2
+    )
     return
 
 
@@ -89,11 +91,13 @@ def test_depthwise_conv(
     with tf.compat.v1.Session(graph=graph) as sess:
         expected_output = sess.run(output, feed_dict={a: a_inp})
 
-    config = Config(backend).add_input(a).add_output(output)
+    config = TFConfig(backend).add_input(a).add_output(output)
     config.config["scale"] = 12
     compiler = Compiler(graph, config, test_dir)
     mpc_output = compiler.compile_and_run([a_inp])
-    assert_almost_equal(tf_output=expected_output, mpc_tensor=mpc_output, precision=2)
+    assert_almost_equal(
+        model_output=expected_output, mpc_tensor=mpc_output, precision=2
+    )
     return
 
 
@@ -143,9 +147,11 @@ def test_conv_transpose(
     with tf.compat.v1.Session(graph=graph) as sess:
         expected_output = sess.run(output, feed_dict={a: a_inp})
 
-    config = Config(backend).add_input(a).add_output(output)
+    config = TFConfig(backend).add_input(a).add_output(output)
     config.config["scale"] = 12
     compiler = Compiler(graph, config, test_dir)
     mpc_output = compiler.compile_and_run([a_inp])
-    assert_almost_equal(tf_output=expected_output, mpc_tensor=mpc_output, precision=2)
+    assert_almost_equal(
+        model_output=expected_output, mpc_tensor=mpc_output, precision=2
+    )
     return

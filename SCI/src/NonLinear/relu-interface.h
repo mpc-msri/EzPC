@@ -22,16 +22,10 @@ SOFTWARE.
 #ifndef RELU_INTERFACE_H__
 #define RELU_INTERFACE_H__
 
-template<typename IO, typename intType>
-class ReLUProtocol
-{
+template <typename intType> class ReLUProtocol {
 public:
-	virtual void relu(
-			intType* outp, 
-			intType* inp, 
-			int numRelu,
-      uint8_t* drelu_res = nullptr, 
-			bool skip_ot = false) = 0;
+  virtual void relu(intType *outp, intType *inp, int numRelu,
+                    uint8_t *drelu_res = nullptr, bool skip_ot = false) = 0;
 };
 
-#endif //RELU_INTERFACE_H__
+#endif // RELU_INTERFACE_H__

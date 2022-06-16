@@ -1,7 +1,7 @@
 /*
 Authors: Nishant Kumar, Deevashwer Rathee
 Copyright:
-Copyright (c) 2020 Microsoft Research
+Copyright (c) 2021 Microsoft Research
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -22,391 +22,119 @@ SOFTWARE.
 #ifndef GLOBALS_H___
 #define GLOBALS_H___
 
-#include <cstdint> //Only keep standard headers over here
-#include <chrono>  //Keep the local repo based headers below, once constants are defined
+#include "BuildingBlocks/aux-protocols.h"
+#include "BuildingBlocks/truncation.h"
+#include "Math/math-functions.h"
+#include "NonLinear/argmax.h"
+#include "NonLinear/maxpool.h"
+#include "NonLinear/relu-interface.h"
+#include "defines.h"
+#include "defines_uniform.h"
+#include <chrono>
+#include <cstdint>
 #include <thread>
-#include <map>
-
-// #define NDEBUG //This must come first -- so that this marco is used throughout code
-			   	 //Defining this will disable all asserts throughout code
-#define LOG_LAYERWISE
-#define USE_EIGEN
-#define RUNOPTI
-#ifdef RUNOPTI
-#define MULTITHREADED_MATMUL
-#define MULTITHREADED_NONLIN
-#define MULTITHREADED_TRUNC
-#define MULTITHREADED_DOTPROD
+#ifdef SCI_OT
+#include "LinearOT/linear-ot.h"
+#include "LinearOT/linear-uniform.h"
 #endif
-#define VERIFY_LAYERWISE
-#define WRITE_LOG
-
-enum NetworkName {
-    Default, MiniONN, SqNet, ResNet18, ResNet50, DenseNet121, ResNet32_Cifar100
-};
-
-NetworkName network_name = Default;
-
-inline std::string get_network_label(NetworkName network_name) {
-    switch(network_name) {
-        case MiniONN:
-            return "MiniONN";
-        case SqNet:
-            return "SqNet";
-        case ResNet18:
-            return "ResNet18";
-        case ResNet50:
-            return "ResNet50";
-        case DenseNet121:
-            return "DenseNet121";
-        case ResNet32_Cifar100:
-            return "ResNet32_Cifar100";
-    }
-    return "Unknown-Network";
-}
-
-// To use 64 bitlen, define BITLEN_64 in the main program before including this.
-// Otherwise default to 32 bits
-#if defined(SCI_HE)
-    typedef uint64_t intType;
-    typedef int64_t signedIntType;
-    static const bool isNativeRing = false;
-#elif defined(SCI_OT)
-    #if defined(BITLEN_64)
-        typedef uint64_t intType;
-        typedef int64_t signedIntType;
-        static const bool isNativeRing = true;
-    #elif defined(BITLEN_63)
-        typedef uint64_t intType;
-        typedef int64_t signedIntType;
-        static const bool isNativeRing = true;
-    #elif defined(BITLEN_62)
-        typedef uint64_t intType;
-        typedef int64_t signedIntType;
-        static const bool isNativeRing = true;
-    #elif defined(BITLEN_61)
-        typedef uint64_t intType;
-        typedef int64_t signedIntType;
-        static const bool isNativeRing = true;
-    #elif defined(BITLEN_60)
-        typedef uint64_t intType;
-        typedef int64_t signedIntType;
-        static const bool isNativeRing = true;
-    #elif defined(BITLEN_59)
-        typedef uint64_t intType;
-        typedef int64_t signedIntType;
-        static const bool isNativeRing = true;
-    #elif defined(BITLEN_58)
-        typedef uint64_t intType;
-        typedef int64_t signedIntType;
-        static const bool isNativeRing = true;
-    #elif defined(BITLEN_57)
-        typedef uint64_t intType;
-        typedef int64_t signedIntType;
-        static const bool isNativeRing = true;
-    #elif defined(BITLEN_56)
-        typedef uint64_t intType;
-        typedef int64_t signedIntType;
-        static const bool isNativeRing = true;
-    #elif defined(BITLEN_55)
-        typedef uint64_t intType;
-        typedef int64_t signedIntType;
-        static const bool isNativeRing = true;
-    #elif defined(BITLEN_54)
-        typedef uint64_t intType;
-        typedef int64_t signedIntType;
-        static const bool isNativeRing = true;
-    #elif defined(BITLEN_53)
-        typedef uint64_t intType;
-        typedef int64_t signedIntType;
-        static const bool isNativeRing = true;
-    #elif defined(BITLEN_52)
-        typedef uint64_t intType;
-        typedef int64_t signedIntType;
-        static const bool isNativeRing = true;
-    #elif defined(BITLEN_51)
-        typedef uint64_t intType;
-        typedef int64_t signedIntType;
-        static const bool isNativeRing = true;
-    #elif defined(BITLEN_50)
-        typedef uint64_t intType;
-        typedef int64_t signedIntType;
-        static const bool isNativeRing = true;
-    #elif defined(BITLEN_49)
-        typedef uint64_t intType;
-        typedef int64_t signedIntType;
-        static const bool isNativeRing = true;
-    #elif defined(BITLEN_48)
-        typedef uint64_t intType;
-        typedef int64_t signedIntType;
-        static const bool isNativeRing = true;
-    #elif defined(BITLEN_47)
-        typedef uint64_t intType;
-        typedef int64_t signedIntType;
-        static const bool isNativeRing = true;
-    #elif defined(BITLEN_46)
-        typedef uint64_t intType;
-        typedef int64_t signedIntType;
-        static const bool isNativeRing = true;
-    #elif defined(BITLEN_45)
-        typedef uint64_t intType;
-        typedef int64_t signedIntType;
-        static const bool isNativeRing = true;
-    #elif defined(BITLEN_44)
-        typedef uint64_t intType;
-        typedef int64_t signedIntType;
-        static const bool isNativeRing = true;
-    #elif defined(BITLEN_43)
-        typedef uint64_t intType;
-        typedef int64_t signedIntType;
-        static const bool isNativeRing = true;
-    #elif defined(BITLEN_42)
-        typedef uint64_t intType;
-        typedef int64_t signedIntType;
-        static const bool isNativeRing = true;
-    #elif defined(BITLEN_41)
-        typedef uint64_t intType;
-        typedef int64_t signedIntType;
-        static const bool isNativeRing = true;
-    #elif defined(BITLEN_40)
-        typedef uint64_t intType;
-        typedef int64_t signedIntType;
-        static const bool isNativeRing = true;
-    #elif defined(BITLEN_39)
-        typedef uint64_t intType;
-        typedef int64_t signedIntType;
-        static const bool isNativeRing = true;
-    #elif defined(BITLEN_38)
-        typedef uint64_t intType;
-        typedef int64_t signedIntType;
-        static const bool isNativeRing = true;
-    #elif defined(BITLEN_37)
-        typedef uint64_t intType;
-        typedef int64_t signedIntType;
-        static const bool isNativeRing = true;
-    #elif defined(BITLEN_36)
-        typedef uint64_t intType;
-        typedef int64_t signedIntType;
-        static const bool isNativeRing = true;
-    #elif defined(BITLEN_35)
-        typedef uint64_t intType;
-        typedef int64_t signedIntType;
-        static const bool isNativeRing = true;
-    #elif defined(BITLEN_34)
-        typedef uint64_t intType;
-        typedef int64_t signedIntType;
-        static const bool isNativeRing = true;
-    #elif defined(BITLEN_33)
-        typedef uint64_t intType;
-        typedef int64_t signedIntType;
-        static const bool isNativeRing = true;
-    #else
-        typedef uint32_t intType;
-        typedef int32_t signedIntType;
-        static const bool isNativeRing = true;
-    #endif
-#endif
-
-#if defined(BITLEN_64)
-    int32_t bitlength = 64;
-#elif defined(BITLEN_63)
-    int32_t bitlength = 63;
-#elif defined(BITLEN_62)
-    int32_t bitlength = 62;
-#elif defined(BITLEN_61)
-    int32_t bitlength = 61;
-#elif defined(BITLEN_60)
-    int32_t bitlength = 60;
-#elif defined(BITLEN_59)
-    int32_t bitlength = 59;
-#elif defined(BITLEN_58)
-    int32_t bitlength = 58;
-#elif defined(BITLEN_57)
-    int32_t bitlength = 57;
-#elif defined(BITLEN_56)
-    int32_t bitlength = 56;
-#elif defined(BITLEN_55)
-    int32_t bitlength = 55;
-#elif defined(BITLEN_54)
-    int32_t bitlength = 54;
-#elif defined(BITLEN_53)
-    int32_t bitlength = 53;
-#elif defined(BITLEN_52)
-    int32_t bitlength = 52;
-#elif defined(BITLEN_51)
-    int32_t bitlength = 51;
-#elif defined(BITLEN_50)
-    int32_t bitlength = 50;
-#elif defined(BITLEN_49)
-    int32_t bitlength = 49;
-#elif defined(BITLEN_48)
-    int32_t bitlength = 48;
-#elif defined(BITLEN_47)
-    int32_t bitlength = 47;
-#elif defined(BITLEN_46)
-    int32_t bitlength = 46;
-#elif defined(BITLEN_45)
-    int32_t bitlength = 45;
-#elif defined(BITLEN_44)
-    int32_t bitlength = 44;
-#elif defined(BITLEN_43)
-    int32_t bitlength = 43;
-#elif defined(BITLEN_42)
-    int32_t bitlength = 42;
-#elif defined(BITLEN_41)
-    int32_t bitlength = 41;
-#elif defined(BITLEN_40)
-    int32_t bitlength = 40;
-#elif defined(BITLEN_39)
-    int32_t bitlength = 39;
-#elif defined(BITLEN_38)
-    int32_t bitlength = 38;
-#elif defined(BITLEN_37)
-    int32_t bitlength = 37;
-#elif defined(BITLEN_36)
-    int32_t bitlength = 36;
-#elif defined(BITLEN_35)
-    int32_t bitlength = 35;
-#elif defined(BITLEN_34)
-    int32_t bitlength = 34;
-#elif defined(BITLEN_33)
-    int32_t bitlength = 33;
-#elif defined(BITLEN_32)
-    int32_t bitlength = 32;
-#else
-    #if defined(SCI_OT)
-        int32_t bitlength = 32; //In ring case, default to 32
-    #else
-        int32_t bitlength = -1; //In field case, error condition: expecting one of the above macros
-    #endif
-#endif
-
-/*
-Bitlength 32 prime: 4293918721
-Bitlength 33 prime: 8589475841
-Bitlength 34 prime: 17179672577
-Bitlength 35 prime: 34359410689
-Bitlength 36 prime: 68718428161
-Bitlength 37 prime: 137438822401
-Bitlength 38 prime: 274876334081
-Bitlength 39 prime: 549755486209
-Bitlength 40 prime: 1099510054913
-Bitlength 41 prime: 2199023190017
-*/
-
+// Additional Headers for Athos
 #ifdef SCI_HE
-    const std::map<int32_t, uint64_t> default_prime_mod {
-        { 32, 4293918721 },
-        { 33, 8589475841 },
-        { 34, 17179672577 },
-        { 35, 34359410689 },
-        { 36, 68718428161 },
-        { 37, 137438822401 },
-        { 38, 274876334081 },
-        { 39, 549755486209 },
-        { 40, 1099510054913 },
-        { 41, 2199023190017 },
-    };
-    uint64_t prime_mod = default_prime_mod.at(bitlength);
-#else
-#if defined(BITLEN_64)
-    uint64_t prime_mod = 0ULL;
-#else
-    uint64_t prime_mod = 1ULL << bitlength;
-#endif
+#include "LinearHE/conv-field.h"
+#include "LinearHE/elemwise-prod-field.h"
+#include "LinearHE/fc-field.h"
 #endif
 
-const int32_t baseForRelu = 4;
-int32_t party = 0;
-extern const int numThreads = 4;
+// #define MULTI_THREADING
+
+#define MAX_THREADS 4
+
+extern sci::NetIO *io;
+extern sci::IOPack *iopack;
+extern sci::OTPack *otpack;
+
+extern AuxProtocols *aux;
+extern Truncation *truncation;
+extern XTProtocol *xt;
+#ifdef SCI_OT
+extern LinearOT *mult;
+#endif
+extern MathFunctions *math;
+extern ArgMaxProtocol<intType> *argmax;
+extern ReLUProtocol<intType> *relu;
+extern MaxPoolProtocol<intType> *maxpool;
+// Additional classes for Athos
+#ifdef SCI_OT
+extern MatMulUniform<sci::NetIO, intType, sci::IKNP<sci::NetIO>> *multUniform;
+#endif
+#ifdef SCI_HE
+extern ConvField *he_conv;
+extern FCField *he_fc;
+extern ElemWiseProdField *he_prod;
+#endif
+extern sci::IKNP<sci::NetIO> *iknpOT;
+extern sci::IKNP<sci::NetIO> *iknpOTRoleReversed;
+extern sci::KKOT<sci::NetIO> *kkot;
+extern sci::PRG128 *prg128Instance;
+
+extern sci::NetIO *ioArr[MAX_THREADS];
+extern sci::IOPack *iopackArr[MAX_THREADS];
+extern sci::OTPack *otpackArr[MAX_THREADS];
+extern MathFunctions *mathArr[MAX_THREADS];
+#ifdef SCI_OT
+extern LinearOT *multArr[MAX_THREADS];
+#endif
+extern AuxProtocols *auxArr[MAX_THREADS];
+extern Truncation *truncationArr[MAX_THREADS];
+extern XTProtocol *xtArr[MAX_THREADS];
+extern ReLUProtocol<intType> *reluArr[MAX_THREADS];
+extern MaxPoolProtocol<intType> *maxpoolArr[MAX_THREADS];
+// Additional classes for Athos
+#ifdef SCI_OT
+extern MatMulUniform<sci::NetIO, intType, sci::IKNP<sci::NetIO>>
+    *multUniformArr[MAX_THREADS];
+#endif
+extern sci::IKNP<sci::NetIO> *otInstanceArr[MAX_THREADS];
+extern sci::KKOT<sci::NetIO> *kkotInstanceArr[MAX_THREADS];
+extern sci::PRG128 *prgInstanceArr[MAX_THREADS];
+
+extern std::chrono::time_point<std::chrono::high_resolution_clock> start_time;
+extern uint64_t comm_threads[MAX_THREADS];
+extern uint64_t num_rounds;
 
 #ifdef LOG_LAYERWISE
-uint64_t ConvTimeInMilliSec = 0;
-uint64_t MatmulTimeInMilliSec = 0;
-uint64_t BatchNormInMilliSec = 0;
-uint64_t TruncationTimeInMilliSec = 0;
-uint64_t ReluTimeInMilliSec = 0;
-uint64_t MaxpoolTimeInMilliSec = 0;
-uint64_t AvgpoolTimeInMilliSec = 0;
-uint64_t ArgmaxTimeInMilliSec = 0;
+extern uint64_t ConvTimeInMilliSec;
+extern uint64_t MatAddTimeInMilliSec;
+extern uint64_t BatchNormInMilliSec;
+extern uint64_t TruncationTimeInMilliSec;
+extern uint64_t ReluTimeInMilliSec;
+extern uint64_t MaxpoolTimeInMilliSec;
+extern uint64_t AvgpoolTimeInMilliSec;
+extern uint64_t MatMulTimeInMilliSec;
+extern uint64_t MatAddBroadCastTimeInMilliSec;
+extern uint64_t MulCirTimeInMilliSec;
+extern uint64_t ScalarMulTimeInMilliSec;
+extern uint64_t SigmoidTimeInMilliSec;
+extern uint64_t TanhTimeInMilliSec;
+extern uint64_t SqrtTimeInMilliSec;
+extern uint64_t NormaliseL2TimeInMilliSec;
+extern uint64_t ArgMaxTimeInMilliSec;
 
-uint64_t ConvCommSent = 0;
-uint64_t MatmulCommSent = 0;
-uint64_t BatchNormCommSent = 0;
-uint64_t TruncationCommSent = 0;
-uint64_t ReluCommSent = 0;
-uint64_t MaxpoolCommSent = 0;
-uint64_t AvgpoolCommSent = 0;
-uint64_t ArgmaxCommSent = 0;
-
+extern uint64_t ConvCommSent;
+extern uint64_t MatAddCommSent;
+extern uint64_t BatchNormCommSent;
+extern uint64_t TruncationCommSent;
+extern uint64_t ReluCommSent;
+extern uint64_t MaxpoolCommSent;
+extern uint64_t AvgpoolCommSent;
+extern uint64_t MatMulCommSent;
+extern uint64_t MatAddBroadCastCommSent;
+extern uint64_t MulCirCommSent;
+extern uint64_t ScalarMulCommSent;
+extern uint64_t SigmoidCommSent;
+extern uint64_t TanhCommSent;
+extern uint64_t SqrtCommSent;
+extern uint64_t NormaliseL2CommSent;
+extern uint64_t ArgMaxCommSent;
 #endif
 
-#include "utils/constants.h"
-#include "utils/net_io_channel.h"
-#include "OT/emp-ot.h"
-const int SERVER = sci::ALICE;
-const int CLIENT = sci::BOB;
-
-// Keep above order of headers same -- constants.h has definitions of ALICE and BOB 
-// 	Other headers are needed first to define io, iknpOT etc. -- so that in rest of the files
-// 	these can be directly used.
-
-sci::NetIO* io;
-sci::IKNP<sci::NetIO>* iknpOT; //ALICE/server is the sender, Bob/client is the receiver
-sci::IKNP<sci::NetIO>* iknpOTRoleReversed;//Reverse as above 
-sci::KKOT<sci::NetIO>* kkot;
-sci::OTPack<sci::NetIO> *otpack;
-
-// For multiThreading
-// NOTE : The otInstances are defined as follows:
-// 	If threadNum is even, then ALICE is sender and BOB is receiver ; reverse if threadNum is odd
-// 	Here threadNum \in [0,numThreads)
-sci::NetIO* ioArr[numThreads];
-sci::IKNP<sci::NetIO>* otInstanceArr[numThreads];
-sci::OTPack<sci::NetIO>* otpackArr[numThreads];
-sci::KKOT<sci::NetIO>* kkotInstanceArr[numThreads];
-sci::PRG128* prg128Instance;
-sci::PRG128* prgInstanceArr[numThreads];
-
-#include "linear-primary.h"
-Matmul<sci::NetIO, intType, sci::IKNP<sci::NetIO>>* matmulInstanceArr[numThreads];
-Matmul<sci::NetIO, intType, sci::IKNP<sci::NetIO>>* matmulImpl;
-#include "NonLinear/relu-interface.h"
-ReLUProtocol<sci::NetIO, intType>* reluImplArr[numThreads];
-ReLUProtocol<sci::NetIO, intType>* reluImpl;
-#include "NonLinear/maxpool.h"
-MaxPoolProtocol<sci::NetIO, intType>* maxpoolImplArr[numThreads];
-MaxPoolProtocol<sci::NetIO, intType>* maxpoolImpl;
-#include "NonLinear/argmax.h"
-#include "LinearHE/conv-field.h"
-#include "LinearHE/fc-field.h"
-#include "LinearHE/elemwise-prod-field.h"
-//Add extra headers here
-
-
-// sci::OTIdeal<sci::NetIO>* otIdeal;
-// Matmul<sci::NetIO, intType, sci::OTIdeal<sci::NetIO>>* matmulImpl;
-
-ConvField* heConvImpl;
-FCField* heFCImpl;
-ElemWiseProdField* heProdImpl;
-
-ArgMaxProtocol<sci::NetIO, intType>* argmaxImpl;
-std::chrono::time_point<std::chrono::high_resolution_clock> startTimeTracker;
-uint64_t communicationTracker[numThreads];
-
-void checkIfUsingEigen(){
-#ifdef USE_EIGEN
-	std::cout<<"Using Eigen for Matmul"<<std::endl;
-#else
-	std::cout<<"Using normal Matmul"<<std::endl;
-#endif
-}
-
-void assertFieldRun(){
-	assert(sizeof(intType)==sizeof(uint64_t));
-	assert(sizeof(signedIntType)==sizeof(int64_t));
-	assert(bitlength>=32 && bitlength<=41);
-}
-
-#endif //GLOBALS_H__
+#endif // GLOBALS_H__

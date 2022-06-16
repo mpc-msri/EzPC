@@ -30,9 +30,11 @@ type codegen =
   | OBLIVC
   | PORTHOS
   | SCI
+  | FSS
   | CPPRING
   | CPPFLOAT
   | SECFLOAT 
+  | EMP
 
 type bool_sharing_mode =
   | Yao
@@ -55,6 +57,7 @@ type configuration = {
     modulo: uint64;
     sci_backend: sci_backend_type; 
     sf: int;
+    libmode: bool;
   }
 
 let c_private :configuration ref = ref {
@@ -70,6 +73,7 @@ let c_private :configuration ref = ref {
                                        modulo = Uint64.of_int 0;
                                        sci_backend = OT;
                                        sf = 0;
+                                       libmode = false;
                                        }
 
 let set_bitlen (bitlen:int) :unit = 
@@ -126,3 +130,6 @@ let is_codegen_float () :bool =
   match get_codegen () with
   | SECFLOAT | CPPFLOAT -> true
   | _ -> false
+let set_libmode () :unit = c_private := { !c_private with libmode = true }
+
+let get_libmode () :bool = !c_private.libmode

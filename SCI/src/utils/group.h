@@ -22,77 +22,78 @@ SOFTWARE.
 Enquiries about further applications and development opportunities are welcome.
 */
 
-#ifndef GROUP_H__
-#define GROUP_H__
+#ifndef EMP_GROUP_H__
+#define EMP_GROUP_H__
 
-#include <openssl/ec.h>
+#include "utils/utils.h"
+#include <cstring>
 #include <openssl/bn.h>
+#include <openssl/ec.h>
 #include <openssl/obj_mac.h>
 #include <string>
-#include <cstring>
-#include "utils/utils.h"
 
 //#ifdef ECC_USE_OPENSSL
 //#else
 //#include "group_relic.h"
 //#endif
-namespace sci {
-class BigInt { public:
-	BIGNUM *n = nullptr;
-	BigInt();
-	BigInt(const BigInt &oth);
-	BigInt &operator=(BigInt oth);
-	~BigInt();
+namespace emp {
+class BigInt {
+public:
+  BIGNUM *n = nullptr;
+  BigInt();
+  BigInt(const BigInt &oth);
+  BigInt &operator=(BigInt oth);
+  ~BigInt();
 
-	int size();
-	void to_bin(unsigned char * in);
-	void from_bin(const unsigned char * in, int length);
+  int size();
+  void to_bin(unsigned char *in);
+  void from_bin(const unsigned char *in, int length);
 
-	BigInt add(const BigInt &oth);
-	BigInt mul(const BigInt &oth, BN_CTX *ctx = nullptr);
-	BigInt mod(const BigInt &oth, BN_CTX *ctx = nullptr);
-	BigInt add_mod(const BigInt & b, const BigInt& m, BN_CTX *ctx = nullptr);
-	BigInt mul_mod(const BigInt & b, const BigInt& m, BN_CTX *ctx = nullptr);
+  BigInt add(const BigInt &oth);
+  BigInt mul(const BigInt &oth, BN_CTX *ctx = nullptr);
+  BigInt mod(const BigInt &oth, BN_CTX *ctx = nullptr);
+  BigInt add_mod(const BigInt &b, const BigInt &m, BN_CTX *ctx = nullptr);
+  BigInt mul_mod(const BigInt &b, const BigInt &m, BN_CTX *ctx = nullptr);
 };
 class Group;
 class Point {
-	public:
-		EC_POINT *point = nullptr;
-		Group * group = nullptr;
-		Point (Group * g = nullptr);
-		~Point();
-		Point(const Point & p);
-		Point& operator=(Point p);
+public:
+  EC_POINT *point = nullptr;
+  Group *group = nullptr;
+  Point(Group *g = nullptr);
+  ~Point();
+  Point(const Point &p);
+  Point &operator=(Point p);
 
-		void to_bin(unsigned char * buf, size_t buf_len);
-		size_t size();
-		void from_bin(Group * g, const unsigned char * buf, size_t buf_len);
+  void to_bin(unsigned char *buf, size_t buf_len);
+  size_t size();
+  void from_bin(Group *g, const unsigned char *buf, size_t buf_len);
 
-		Point add(Point & rhs);
-//		Point sub(Point & rhs);
-//		bool is_at_infinity();
-//		bool is_on_curve();
-		Point mul(const BigInt &m);
-		Point inv();
-		bool operator==(Point & rhs);
+  Point add(Point &rhs);
+  //		Point sub(Point & rhs);
+  //		bool is_at_infinity();
+  //		bool is_on_curve();
+  Point mul(const BigInt &m);
+  Point inv();
+  bool operator==(Point &rhs);
 };
 
-class Group { public:
-	EC_GROUP *ec_group = nullptr;
-	BN_CTX * bn_ctx = nullptr;
-	BigInt order;
-	unsigned char * scratch;
-	size_t scratch_size = 256;
-	Group();
-	~Group();
-	void resize_scratch(size_t size);
-	void get_rand_bn(BigInt & n);
-	Point get_generator();
-	Point mul_gen(const BigInt &m);
+class Group {
+public:
+  EC_GROUP *ec_group = nullptr;
+  BN_CTX *bn_ctx = nullptr;
+  BigInt order;
+  unsigned char *scratch;
+  size_t scratch_size = 256;
+  Group();
+  ~Group();
+  void resize_scratch(size_t size);
+  void get_rand_bn(BigInt &n);
+  Point get_generator();
+  Point mul_gen(const BigInt &m);
 };
 
-}
+} // namespace emp
 #include "group_openssl.h"
-
 
 #endif

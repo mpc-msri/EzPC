@@ -1,41 +1,22 @@
 find_package(OpenMP REQUIRED)
-# set(CMAKE_FIND_DEBUG_MODE 1)
 
-message(STATUS "SEAL 3.3.2 was not found: clone and install SEAL locally")
-if (NOT EXISTS "${PROJECT_SOURCE_DIR}/extern/SEAL/native/src/CMakeLists.txt")
-    find_package(Git REQUIRED)
-    message(STATUS "initialize Git submodule: extern/SEAL")
-    execute_process(COMMAND git submodule update --init --recursive extern/SEAL
-            WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
-endif ()
-if(APPLE)
+find_package(SEAL 3.3.2 EXACT QUIET PATHS "${PROJECT_SOURCE_DIR}/build/" NO_DEFAULT_PATH)
+if (NOT SEAL_FOUND)
+    message(STATUS "SEAL 3.3.2 was not found: clone and install SEAL locally")
+    if (NOT EXISTS "${PROJECT_SOURCE_DIR}/extern/SEAL/native/src/CMakeLists.txt")
+        find_package(Git REQUIRED)
+        message(STATUS "initialize Git submodule: extern/SEAL")
+        execute_process(COMMAND git submodule update --init --recursive extern/SEAL
+                WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
+        execute_process(COMMAND git apply "${PROJECT_SOURCE_DIR}/cmake/seal.patch"
+            WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/extern/SEAL")
+    endif ()
     execute_process(COMMAND ${CMAKE_COMMAND} -DCMAKE_INSTALL_PREFIX=${PROJECT_SOURCE_DIR}/build .
-        -DCMAKE_C_COMPILER=${MAC_GCC} -DCMAKE_CXX_COMPILER=${MAC_GPP}
+            WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/extern/SEAL/native/src")
+    execute_process(COMMAND ${CMAKE_COMMAND} --build . --target install
         WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/extern/SEAL/native/src")
-else ()
-    execute_process(COMMAND ${CMAKE_COMMAND} -DCMAKE_INSTALL_PREFIX=${PROJECT_SOURCE_DIR}/build .
-        WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/extern/SEAL/native/src")
+    find_package(SEAL 3.3.2 EXACT REQUIRED PATHS "${PROJECT_SOURCE_DIR}/build/" NO_DEFAULT_PATH)
 endif()
-execute_process(COMMAND ${CMAKE_COMMAND} --build . --target install
-    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/extern/SEAL/native/src")
-find_package(SEAL 3.3.2 EXACT REQUIRED PATHS "${PROJECT_SOURCE_DIR}/build/")
-
-message(STATUS "Eigen 3.3 was not found: clone and install Eigen3 locally")
-if (NOT EXISTS "${PROJECT_SOURCE_DIR}/extern/eigen/CMakeLists.txt")
-    find_package(Git REQUIRED)
-    message(STATUS "initialize Git submodule: extern/eigen")
-    execute_process(COMMAND git submodule update --init --recursive extern/eigen
-            WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
-endif ()
-execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory build
-    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/extern/eigen/")
-execute_process(COMMAND ${CMAKE_COMMAND} -DCMAKE_INSTALL_PREFIX=${PROJECT_SOURCE_DIR}/build ..
-    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/extern/eigen/build")
-execute_process(COMMAND ${CMAKE_COMMAND} --build .. --target install
-    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/extern/eigen/build")
-message(STATUS "${PROJECT_SOURCE_DIR}")
-find_package(Eigen3 3.3 REQUIRED NO_MODULE PATHS "${PROJECT_SOURCE_DIR}/build/")
-
 
 add_library(SCI-LinearHE
     conv-field.cpp
@@ -51,8 +32,3 @@ target_link_libraries(SCI-LinearHE
     OpenMP::OpenMP_CXX
     Eigen3::Eigen
 )
-
-if(!APPLE)
-    target_compile_options(SCI-LinearHE PRIVATE "-fopenmp")
-endif()
-target_compile_options(SCI-LinearHE PUBLIC "-fpermissive")

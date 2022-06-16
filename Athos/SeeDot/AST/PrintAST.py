@@ -72,6 +72,12 @@ class PrintAST(ASTVisitor):
         else:
             print(node.shape, end=" ")
 
+    def visitGather(self, node: AST.Gather, args=None):
+        node.expr.depth = node.depth + 1
+        print(indent * node.depth, "Gather", end=" ")
+        self.visit(node.expr)
+        print(node.shape, node.axis, node.index, end=" ")
+
     def visitPool(self, node: AST.Pool, args=None):
         node.expr.depth = node.depth + 1
         print(indent * node.depth, node.poolType, end=" ")

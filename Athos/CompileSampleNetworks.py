@@ -82,8 +82,14 @@ def generate_code(params, debug=False):
         "SqueezeNetCIFAR10",
     ], "Network must be any of ResNet/DenseNet/SqueezeNetImgNet/SqueezeNetCIFAR10"
     scale = 12 if params["scale"] is None else params["scale"]
-    bitlength = 64 if params["bitlength"] is None else params["bitlength"]
     target = params["target"]
+    if params["bitlength"] is None:
+        if target == "SCI":
+            bitlength = 41
+        else:
+            bitlength = 64
+    else:
+        bitlength = params["bitlength"]
     disable_all_hlil_opts = (
         False
         if params["disable_all_hlil_opts"] is None
@@ -262,29 +268,43 @@ def generate_code(params, debug=False):
                 "Not compiling generated code. Please follow the readme and build Porthos."
             )
     elif target == "SCI":
-        sci = os.path.join(athos_dir, "..", "SCI")
-        sci_src = os.path.join(sci, "src")
-        sci_lib = os.path.join(sci, "build", "lib")
-        eigen_path = os.path.join(sci, "extern", "eigen")
-        seal_lib_path = os.path.join(sci, "extern", "SEAL", "native", "lib")
-        if os.path.exists(sci_lib):
+        sci_install = os.path.join(athos_dir, "..", "SCI", "build", "install")
+        build_dir = "build_dir"
+        os.system("rm -rf {build_dir}".format(build_dir=build_dir))
+        os.mkdir(build_dir)
+        os.chdir(build_dir)
+        cmake_file = """
+            cmake_minimum_required (VERSION 3.0)
+            project (BUILD_IT)
+            find_package(SCI REQUIRED PATHS \"{sci_install}\")
+            add_executable({prog_name} {src_file})
+            target_link_libraries({prog_name} SCI::SCI-{backend})
+        """.format(
+            sci_install=sci_install,
+            prog_name=program_name,
+            src_file=output_file,
+            backend=backend.upper(),
+        )
+        with open("CMakeLists.txt", "w") as f:
+            f.write(cmake_file)
+
+        if os.path.exists(sci_install):
+            ret = os.system("cmake --log-level=ERROR .")
+            if ret != 0:
+                sys.exit("Compilation of generated code failed. Exiting...")
+            ret = os.system("cmake --build . --parallel")
+            if ret != 0:
+                sys.exit("Compilation of generated code failed. Exiting...")
             os.system(
-                """g++ {opt_flag} -fpermissive -pthread -w -maes -msse4.1 -mavx -mavx2 -mrdseed \
-        -faligned-new -std=c++17 -fopenmp -I \"{eigen}\" -I \"{sci_src}\" \"{file}\" \
-        -L \"{sci_lib}\" -lSCI-LinearHE -L \"{seal}\" -lseal -lssl -lcrypto \
-        -o \"{output}\"""".format(
-                    eigen=eigen_path,
-                    sci_src=sci_src,
-                    file=output_file,
-                    sci_lib=sci_lib,
-                    seal=seal_lib_path,
-                    output=program_path,
-                    opt_flag=opt_flag,
+                "mv {tmp_prog} {prog_path}".format(
+                    tmp_prog=program_name, prog_path=program_path
                 )
             )
+            os.chdir("..")
+            os.system("rm -r {build_dir}".format(build_dir=build_dir))
         else:
             print(
-                "Not compiling generated code. Please follow the readme and build SCI before running this script."
+                "Not compiling generated code. Please follow the readme and build and install SCI."
             )
 
     os.chdir(cwd)

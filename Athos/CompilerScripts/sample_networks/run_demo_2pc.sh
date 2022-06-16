@@ -46,8 +46,8 @@ TIME_CMD="/usr/bin/time --format \"%M %U %S %e\""
 PARTY0_IP="127.0.0.1"
 PORT=12345
 
-PARTY0_RUN_CMD="${MODEL_BINARY_PATH} r=1 p=${PORT} < ${MODEL_WEIGHT_PATH}"
-PARTY1_RUN_CMD="${MODEL_BINARY_PATH} r=2 ip=${PARTY0_IP} p=${PORT} < ${MODEL_INPUT_PATH}"
+PARTY0_RUN_CMD="${MODEL_BINARY_PATH} r=1 port=${PORT} < ${MODEL_WEIGHT_PATH}"
+PARTY1_RUN_CMD="${MODEL_BINARY_PATH} r=2 ip=${PARTY0_IP} port=${PORT} < ${MODEL_INPUT_PATH}"
 
 PARTY0_DUMP_CMD="> ${MODEL_DIR}/party0_mpc_output.out 2> ${MODEL_DIR}/party0_stats"
 PARTY1_DUMP_CMD="> ${MODEL_DIR}/party1_mpc_output.out 2> ${MODEL_DIR}/party1_stats"

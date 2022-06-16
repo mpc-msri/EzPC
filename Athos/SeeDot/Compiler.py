@@ -102,6 +102,12 @@ class Compiler:
         prog.cmd_l.insert(first_output_pos, IR.FuncCall("EndComputation", []))
         return (prog, expr)
 
+    def fixNames(self, res: (IR.Prog, IR.Expr), compiler: IRBuilderCSF):
+        (prog, expr) = res
+        prog = prog.updateName(compiler.expr_mapping)
+        expr = expr.updateName(compiler.expr_mapping)
+        return (prog, expr)
+
     def fixOuputScale(self, res: (IR.Prog, IR.Expr), compiler: IRBuilderCSF):
         (prog, expr) = res
         scaledown_cmd_list = []
@@ -131,6 +137,9 @@ class Compiler:
                     argsDict[IR.Int(scale_down, 32)] = "consSF"
                     funcCall = IR.FuncCall(funcName, argsDict)
                     scaledown_cmd_list.append(funcCall)
+                # ArgMax sets scale to -1
+                if output_scale == -1:
+                    continue
                 if output_scale < Util.Config.consSF:
                     assert (
                         False
@@ -166,7 +175,8 @@ class Compiler:
         # Perform type inference and annotate nodes with type information
         InferType().visit(ast)
 
-        if Util.Config.printASTBool:
+        # if Util.Config.printASTBool :
+        if False:
             PrintAST().visit(ast)
             print("\n")
             sys.stdout.flush()
@@ -175,6 +185,7 @@ class Compiler:
         compiler = IRBuilderCSF()
         res = compiler.visit(ast)
         res = self.fixOuputScale(res, compiler)
+        res = self.fixNames(res, compiler)
 
         Util.write_debug_info(compiler.name_mapping)
 

@@ -110,8 +110,6 @@ let match_stmt_option msg str =
 %left SUM SUB
 %left MUL DIV MOD
 %left POW
-%nonassoc BINOP_ASSOC
-%nonassoc BINOP_SOME_ASSOC
 %nonassoc UNOP_ASSOC
 %nonassoc UNOP_SOME_ASSOC
 %nonassoc LBRACKET
@@ -207,8 +205,26 @@ expr:
   | x = ID { let v = { name = x; index = 0; } in astnd (Ast.Var v) $startpos $endpos }
   | u = unop; e1 = expr; { astnd (Ast.Unop (u, e1, None)) $startpos $endpos }    %prec UNOP_ASSOC
   | u = unop; UNDERSCORE; l = label; e1 = expr; { astnd (Ast.Unop (u, e1, Some l)) $startpos $endpos }    %prec UNOP_SOME_ASSOC
-  | e1 = expr; b = binop; e2 = expr; { astnd (Ast.Binop(b,e1,e2,None)) $startpos $endpos }    %prec BINOP_ASSOC
-  | e1 = expr; b = binop; UNDERSCORE; l = label; e2 = expr; { astnd (Ast.Binop(b,e1,e2,Some(l))) $startpos $endpos }    %prec BINOP_SOME_ASSOC
+  | e1 = expr; OR ; p = option(preqel); e2 = expr; { astnd (Ast.Binop(Ast.Or,e1,e2,p)) $startpos $endpos }    
+  | e1 = expr; XOR ; p = option(preqel); e2 = expr; { astnd (Ast.Binop(Ast.Xor,e1,e2,p)) $startpos $endpos }    
+  | e1 = expr; AND ; p = option(preqel); e2 = expr; { astnd (Ast.Binop(Ast.And,e1,e2,p)) $startpos $endpos }    
+  | e1 = expr; BITWISE_OR ; p = option(preqel); e2 = expr; { astnd (Ast.Binop(Ast.Bitwise_or,e1,e2,p)) $startpos $endpos }    
+  | e1 = expr; BITWISE_XOR ; p = option(preqel); e2 = expr; { astnd (Ast.Binop(Ast.Bitwise_xor,e1,e2,p)) $startpos $endpos }    
+  | e1 = expr; BITWISE_AND ; p = option(preqel); e2 = expr; { astnd (Ast.Binop(Ast.Bitwise_and,e1,e2,p)) $startpos $endpos }    
+  | e1 = expr; IS_EQUAL ; p = option(preqel); e2 = expr; { astnd (Ast.Binop(Ast.Is_equal,e1,e2,p)) $startpos $endpos }    
+  | e1 = expr; GREATER_THAN ; p = option(preqel); e2 = expr; { astnd (Ast.Binop(Ast.Greater_than,e1,e2,p)) $startpos $endpos }    
+  | e1 = expr; GREATER_THAN_EQUAL ; p = option(preqel); e2 = expr; { astnd (Ast.Binop(Ast.Greater_than_equal,e1,e2,p)) $startpos $endpos }    
+  | e1 = expr; LESS_THAN ; p = option(preqel); e2 = expr; { astnd (Ast.Binop(Ast.Less_than,e1,e2,p)) $startpos $endpos }    
+  | e1 = expr; LESS_THAN_EQUAL ; p = option(preqel); e2 = expr; { astnd (Ast.Binop(Ast.Less_than_equal,e1,e2,p)) $startpos $endpos }    
+  | e1 = expr; R_SHIFT_A ; p = option(preqel); e2 = expr; { astnd (Ast.Binop(Ast.R_shift_a,e1,e2,p)) $startpos $endpos }    
+  | e1 = expr; L_SHIFT ; p = option(preqel); e2 = expr; { astnd (Ast.Binop(Ast.L_shift,e1,e2,p)) $startpos $endpos }    
+  | e1 = expr; R_SHIFT_L ; p = option(preqel); e2 = expr; { astnd (Ast.Binop(Ast.R_shift_l,e1,e2,p)) $startpos $endpos }    
+  | e1 = expr; MUL ; p = option(preqel); e2 = expr; { astnd (Ast.Binop(Ast.Mul,e1,e2,p)) $startpos $endpos }    
+  | e1 = expr; POW ; p = option(preqel); e2 = expr; { astnd (Ast.Binop(Ast.Pow,e1,e2,p)) $startpos $endpos }    
+  | e1 = expr; DIV ; p = option(preqel); e2 = expr; { astnd (Ast.Binop(Ast.Div,e1,e2,p)) $startpos $endpos }    
+  | e1 = expr; MOD ; p = option(preqel); e2 = expr; { astnd (Ast.Binop(Ast.Mod,e1,e2,p)) $startpos $endpos }    
+  | e1 = expr; SUB ;  p = option(preqel); e2 = expr; { astnd (Ast.Binop(Ast.Sub,e1,e2,p)) $startpos $endpos }    
+  | e1 = expr; SUM ; p = option(preqel); e2 = expr; { astnd (Ast.Binop(Ast.Sum,e1,e2,p)) $startpos $endpos }    
   | e1 = expr; QUESTION_MARK; e2 = expr; COLON; e3 = expr { astnd (Ast.Conditional(e1,e2,e3,None)) $startpos $endpos }  %prec CONDITIONAL
   | e1 = expr; QUESTION_MARK; UNDERSCORE; l = label; e2 = expr; COLON; e3 = expr { astnd (Ast.Conditional(e1,e2,e3,Some(l))) $startpos $endpos }  %prec LABELLED_CONDITIONAL
   | var = expr; LBRACKET; idx = expr; RBRACKET { astnd (Ast.Array_read(var, idx)) $startpos $endpos }
@@ -230,29 +246,9 @@ unop:
   | BITWISE_NEG { Ast.Bitwise_neg }
   | NOT { Ast.Not }
 
-binop:
-  | SUM { Ast.Sum }
-  | SUB { Ast.Sub }
-  | MUL { Ast.Mul }
-  | DIV { Ast.Div }
-  | MOD { Ast.Mod }
-  | POW { Ast.Pow }
-  | GREATER_THAN { Ast.Greater_than }
-  | IS_EQUAL { Ast.Is_equal }
-  | GREATER_THAN_EQUAL { Ast.Greater_than_equal }
-  | LESS_THAN { Ast.Less_than }
-  | LESS_THAN_EQUAL { Ast.Less_than_equal }
-  | R_SHIFT_A { Ast.R_shift_a }
-  | L_SHIFT { Ast.L_shift }
-  | BITWISE_AND { Ast.Bitwise_and }
-  | BITWISE_OR { Ast.Bitwise_or }
-  | BITWISE_XOR { Ast.Bitwise_xor }
-  | AND { Ast.And }
-  | OR { Ast.Or }
-  | XOR { Ast.Xor }
-  | R_SHIFT_L { Ast.R_shift_l }
+preqel:
+  | UNDERSCORE; l = label;  {l}
   ;
-
 const:
   | i = INT32 { Ast.Int32C i }
   | i = UINT32 { Ast.UInt32C i }

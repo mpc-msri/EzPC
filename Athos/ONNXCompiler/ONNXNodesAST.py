@@ -23,6 +23,7 @@ SOFTWARE.
 """
 
 import AST.AST as AST
+import sys
 from onnx import mapping
 from onnx import TensorProto
 from numbers import Number
@@ -36,6 +37,8 @@ class OnnxNode(object):
     Reimplementation of NodeProto from ONNX, but in a form
     more convenient to work with from Python.
     """
+
+    opset_version = -1
 
     def __init__(self, node):
         self.name = str(node.name)
@@ -138,20 +141,6 @@ def getOperatorsIdx(token):
     return AST.Operators.convSymbolToEnumValue(token)
 
 
-def get_seedot_shape_order(old_shape):
-    if len(old_shape) == 4:
-        # Case when spatial dimension is 2
-        # inverse of [1, 3, 4, 2] is [1, 4, 2, 3]
-        return ([old_shape[0], old_shape[2], old_shape[3], old_shape[1]], [1, 4, 2, 3])
-    else:
-        # Casr when spatial dimension is 3
-        # inverse of [1, 3, 4, 5, 2] is [1, 5, 2, 3, 4]
-        return (
-            [old_shape[0], old_shape[2], old_shape[3], old_shape[4], old_shape[1]],
-            [1, 5, 2, 3, 4],
-        )
-
-
 def get_seedot_filter_shape_order(filter_shape):
     if len(filter_shape) == 4:
         # Case when spatial dimension is 2
@@ -176,12 +165,42 @@ def get_seedot_filter_shape_order(filter_shape):
 
 
 def get_onnx_order(onnx_shape):
+    if len(onnx_shape) == 1:
+        return [1]
+    if len(onnx_shape) == 2:
+        return [1, 2]
+    if len(onnx_shape) == 3:
+        return [1, 2, 3]
     if len(onnx_shape) == 4:
         # inverse of [1, 4, 2, 3] is [1, 3, 4, 2]
         return [1, 3, 4, 2]
-    else:
+    if len(onnx_shape) == 5:
         # inverse of [1, 5, 2, 3, 4] is [1, 3, 4, 5, 2]
         return [1, 3, 4, 5, 2]
+    assert False, "Unhandle shape"
+    return None
+
+
+def get_seedot_shape_order(old_shape):
+    if len(old_shape) == 0:
+        return (old_shape, [])
+    if len(old_shape) == 1:
+        return (old_shape, [1])
+    if len(old_shape) == 2:
+        return ([old_shape[0], old_shape[1]], [1, 2])
+    if len(old_shape) == 4:
+        # Case when spatial dimension is 2
+        # inverse of [1, 3, 4, 2] is [1, 4, 2, 3]
+        return ([old_shape[0], old_shape[2], old_shape[3], old_shape[1]], [1, 4, 2, 3])
+    if len(old_shape) == 5:
+        # Casr when spatial dimension is 3
+        # inverse of [1, 3, 4, 5, 2] is [1, 5, 2, 3, 4]
+        return (
+            [old_shape[0], old_shape[2], old_shape[3], old_shape[4], old_shape[1]],
+            [1, 5, 2, 3, 4],
+        )
+    assert False, "Unhandled dimension"
+    return (None, None)
 
 
 def get_reshaped_input_ast(input_name, value_info, node_name_to_out_var_dict):
@@ -249,23 +268,12 @@ def update_program_with_new_node(
 
 
 class ONNXNodesAST:
+    def Input(node, value_info, node_name_to_out_var_dict):
+        # print(f"Input --> {node.shape}")
 
-    # value_info: dictionary of name -> (type, dimension tuple)
-    def Input(node, value_info, node_name_to_out_var_dict, party=0):
-        if DEBUG:
-            print(node.outputs[0])
-        # There are two types of inputs
-        dims = list(
-            node.dims
-            if hasattr(node, "dims")
-            else ([val.dim_value for val in node.type.tensor_type.shape.dim])
+        return AST.Input(
+            node.shape, onnx2seedot(node.data_type), inputByParty=node.party
         )
-        data_type = (
-            node.data_type
-            if hasattr(node, "data_type")
-            else node.type.tensor_type.elem_type
-        )
-        return AST.Input(dims, onnx2seedot(data_type), inputByParty=party)
 
     def Cast(
         node,
@@ -306,17 +314,38 @@ class ONNXNodesAST:
         node = OnnxNode(node)
         if DEBUG:
             print(node)
+
+        assert node.attrs["mode"] == "constant"
+
         inputsRef = node.inputs
-        # Skip constant_val input (last input)
-        inpLen = len(inputsRef) - 1
-        assert inpLen == 2
-        inputs = [
-            AST.ID(node_name_to_out_var_dict[inputsRef[x]]) for x in range(0, inpLen)
-        ]
-        mode = node.attrs["mode"]
-        assert mode == "constant"
+        if node.opset_version >= 11:
+            # input: data, pads, constant_value
+            # attrs: mode
+
+            # Skip constant_val input (last input)
+            inpLen = len(inputsRef) - 1
+            assert inpLen == 2
+            inputs = [
+                AST.ID(node_name_to_out_var_dict[inputsRef[x]])
+                for x in range(0, inpLen)
+            ]
+        else:
+            # input: data
+            # attrs: mode, pads, value
+            assert node.attrs["value"] == 0
+            assert len(inputsRef) == 1
+            data_input = AST.ID(node_name_to_out_var_dict[inputsRef[0]])
+            pads = node.attrs["pads"]
+            pad_input = AST.Decl(
+                [len(pads)],
+                None,
+                [AST.Int(i, bitLen=32, isSecret=False) for i in pads],
+                isSecret=False,
+            )
+            inputs = [data_input, pad_input]
+
         seedot_output_ast = AST.UninterpFuncCall(
-            list(value_info[node.outputs[0]][1]), "PadONNX", inputs
+            list(value_info[node.outputs[0]][1]), "PadONNX", inputs, outputDiffInpDims=1
         )
 
         output_name = get_new_var_name(out_var_count)
@@ -366,6 +395,55 @@ class ONNXNodesAST:
 
         return (innermost_let_ast_node, out_var_count)
 
+    def HardSigmoid(
+        node,
+        value_info,
+        node_name_to_out_var_dict,
+        innermost_let_ast_node,
+        out_var_count,
+        mtdAST,
+    ):
+        # print(f"\n\n-----------------------------\nHARDSIGMOID\n\n")
+
+        node = OnnxNode(node)
+
+        inputsRef = node.inputs
+        assert len(inputsRef) == 1
+
+        reshaped_input_name = get_new_var_name(out_var_count)
+        reshaped_input = get_reshaped_input_ast(
+            inputsRef[0], value_info, node_name_to_out_var_dict
+        )
+        innermost_let_ast_node = update_program_with_new_node(
+            innermost_let_ast_node, reshaped_input, reshaped_input_name, mtdAST
+        )
+        out_var_count += 1
+        seedot_output_ast = AST.Func(
+            getOperatorsIdx("hardsigmoid"), AST.ID(reshaped_input_name)
+        )
+        output_name = get_new_var_name(out_var_count)
+        innermost_let_ast_node = update_program_with_new_node(
+            innermost_let_ast_node, seedot_output_ast, output_name, mtdAST
+        )
+        out_var_count += 1
+
+        reshaped_output_name = get_new_var_name(out_var_count)
+        onnx_output_ast = get_reshaped_output_ast(
+            node.outputs[0], value_info, output_name
+        )
+        innermost_let_ast_node = update_program_with_new_node(
+            innermost_let_ast_node, onnx_output_ast, reshaped_output_name, mtdAST
+        )
+        out_var_count += 1
+        node_name_to_out_var_dict[node.outputs[0]] = reshaped_output_name
+
+        if DEBUG:
+            print(node.outputs[0])
+            print(onnx_input_shape, "->", seedot_input_shape, "->", onnx_output_shape)
+
+        return (innermost_let_ast_node, out_var_count)
+        # return AST.Func(getOperatorsIdx('relu'), AST.ID(node_name_to_out_var_dict[inputsRef[0]]))
+
     def Relu(
         node,
         value_info,
@@ -410,9 +488,136 @@ class ONNXNodesAST:
         if DEBUG:
             print(node.outputs[0])
             print(onnx_input_shape, "->", seedot_input_shape, "->", onnx_output_shape)
-
         return (innermost_let_ast_node, out_var_count)
         # return AST.Func(getOperatorsIdx('relu'), AST.ID(node_name_to_out_var_dict[inputsRef[0]]))
+
+    # def Div(
+    #     node,
+    #     value_info,
+    #     node_name_to_out_var_dict,
+    #     innermost_let_ast_node,
+    #     out_var_count,
+    #     mtdAST,
+    # ):
+    #     node = OnnxNode(node)
+    #     if DEBUG:
+    #         print(node)
+    #     inputsRef = node.inputs
+    #     assert len(inputsRef) == 2
+
+    #     print("Value_info")
+    #     print(value_info[inputsRef[0]])
+    #     print(value_info[inputsRef[1]])
+
+    #     # For mul/division by a constant which has no shape
+    #     print(f"Condition variable = {value_info[inputsRef[1]][1]}")
+    #     if len(value_info[inputsRef[1]][1]) == 0:
+    #         info = value_info[inputsRef[1]]
+    #         info = (info[0], (1,))
+    #         value_info[inputsRef[1]] = info
+    #         # print(info)
+
+    #     reshaped_input_name = get_new_var_name(out_var_count)
+    #     reshaped_input = get_reshaped_input_ast(
+    #         inputsRef[0], value_info, node_name_to_out_var_dict
+    #     )
+    #     innermost_let_ast_node = update_program_with_new_node(
+    #         innermost_let_ast_node, reshaped_input, reshaped_input_name, mtdAST
+    #     )
+    #     out_var_count += 1
+
+    #     # reshaped_input_name1 = get_new_var_name(out_var_count)
+    #     # reshaped_input1 = get_reshaped_input_ast(
+    #     #     inputsRef[1], value_info, node_name_to_out_var_dict
+    #     # )
+    #     # print("Printing reshaped_input1")
+    #     # print(reshaped_input1.expr.name, reshaped_input1.shape)
+    #     # innermost_let_ast_node = update_program_with_new_node(
+    #     #     innermost_let_ast_node, reshaped_input1, reshaped_input_name1, mtdAST
+    #     # )
+    #     # out_var_count += 1
+
+    #     # seedot_output_ast = AST.BOp(
+    #     #     AST.ID(reshaped_input_name),
+    #     #     getOperatorsIdx("/"),
+    #     #     AST.ID(reshaped_input_name1),
+    #     # )
+    #     # output_name = get_new_var_name(out_var_count)
+    #     # innermost_let_ast_node = update_program_with_new_node(
+    #     #     innermost_let_ast_node, reshaped_input_name, output_name, mtdAST
+    #     # )
+    #     # out_var_count += 1
+
+    #     reshaped_output_name = get_new_var_name(out_var_count)
+    #     onnx_output_ast = get_reshaped_output_ast(
+    #         node.outputs[0], value_info, output_name
+    #     )
+    #     innermost_let_ast_node = update_program_with_new_node(
+    #         innermost_let_ast_node, onnx_output_ast, reshaped_output_name, mtdAST
+    #     )
+    #     out_var_count += 1
+    #     node_name_to_out_var_dict[node.outputs[0]] = reshaped_output_name
+
+    #     if DEBUG:
+    #         print(node.outputs[0])
+    #         print(
+    #             onnx_input_shape,
+    #             onnx_input_shape1,
+    #             "->",
+    #             seedot_input_shape,
+    #             seedot_input_shape1,
+    #             "->",
+    #             onnx_output_shape,
+    #         )
+
+    #     return (innermost_let_ast_node, out_var_count)
+
+    def Div(
+        node,
+        value_info,
+        node_name_to_out_var_dict,
+        innermost_let_ast_node,
+        out_var_count,
+        mtdAST,
+    ):
+        node = OnnxNode(node)
+
+        inputsRef = node.inputs
+        # assert len(inputsRef) == 1
+
+        reshaped_input_name = get_new_var_name(out_var_count)
+        reshaped_input = get_reshaped_input_ast(
+            inputsRef[0], value_info, node_name_to_out_var_dict
+        )
+        innermost_let_ast_node = update_program_with_new_node(
+            innermost_let_ast_node, reshaped_input, reshaped_input_name, mtdAST
+        )
+        out_var_count += 1
+
+        seedot_output_ast = AST.Func(
+            getOperatorsIdx("relu"), AST.ID(reshaped_input_name)
+        )
+        output_name = get_new_var_name(out_var_count)
+        innermost_let_ast_node = update_program_with_new_node(
+            innermost_let_ast_node, seedot_output_ast, output_name, mtdAST
+        )
+        out_var_count += 1
+
+        reshaped_output_name = get_new_var_name(out_var_count)
+        onnx_output_ast = get_reshaped_output_ast(
+            node.outputs[0], value_info, output_name
+        )
+        innermost_let_ast_node = update_program_with_new_node(
+            innermost_let_ast_node, onnx_output_ast, reshaped_output_name, mtdAST
+        )
+        out_var_count += 1
+        node_name_to_out_var_dict[node.outputs[0]] = reshaped_output_name
+
+        if DEBUG:
+            print(node.outputs[0])
+            print(onnx_input_shape, "->", seedot_input_shape, "->", onnx_output_shape)
+
+        return (innermost_let_ast_node, out_var_count)
 
     def Add(
         node,
@@ -478,6 +683,176 @@ class ONNXNodesAST:
                 "->",
                 onnx_output_shape,
             )
+
+        return (innermost_let_ast_node, out_var_count)
+
+    def Sub(
+        node,
+        value_info,
+        node_name_to_out_var_dict,
+        innermost_let_ast_node,
+        out_var_count,
+        mtdAST,
+    ):
+        node = OnnxNode(node)
+        if DEBUG:
+            print(node)
+        inputsRef = node.inputs
+        assert len(inputsRef) == 2
+
+        reshaped_input_name = get_new_var_name(out_var_count)
+        reshaped_input = get_reshaped_input_ast(
+            inputsRef[0], value_info, node_name_to_out_var_dict
+        )
+        innermost_let_ast_node = update_program_with_new_node(
+            innermost_let_ast_node, reshaped_input, reshaped_input_name, mtdAST
+        )
+        out_var_count += 1
+
+        reshaped_input_name1 = get_new_var_name(out_var_count)
+        reshaped_input1 = get_reshaped_input_ast(
+            inputsRef[1], value_info, node_name_to_out_var_dict
+        )
+        innermost_let_ast_node = update_program_with_new_node(
+            innermost_let_ast_node, reshaped_input1, reshaped_input_name1, mtdAST
+        )
+        out_var_count += 1
+
+        seedot_output_ast = AST.BOp(
+            AST.ID(reshaped_input_name),
+            getOperatorsIdx("-"),
+            AST.ID(reshaped_input_name1),
+        )
+        output_name = get_new_var_name(out_var_count)
+        innermost_let_ast_node = update_program_with_new_node(
+            innermost_let_ast_node, seedot_output_ast, output_name, mtdAST
+        )
+        out_var_count += 1
+
+        reshaped_output_name = get_new_var_name(out_var_count)
+        onnx_output_ast = get_reshaped_output_ast(
+            node.outputs[0], value_info, output_name
+        )
+        innermost_let_ast_node = update_program_with_new_node(
+            innermost_let_ast_node, onnx_output_ast, reshaped_output_name, mtdAST
+        )
+        out_var_count += 1
+        node_name_to_out_var_dict[node.outputs[0]] = reshaped_output_name
+
+        if DEBUG:
+            print(node.outputs[0])
+            print(
+                onnx_input_shape,
+                onnx_input_shape1,
+                "->",
+                seedot_input_shape,
+                seedot_input_shape1,
+                "->",
+                onnx_output_shape,
+            )
+
+        return (innermost_let_ast_node, out_var_count)
+
+    def Mul(
+        node,
+        value_info,
+        node_name_to_out_var_dict,
+        innermost_let_ast_node,
+        out_var_count,
+        mtdAST,
+    ):
+        node = OnnxNode(node)
+        if DEBUG:
+            print(node)
+        inputsRef = node.inputs
+        assert len(inputsRef) == 2
+
+        reshaped_input_name = get_new_var_name(out_var_count)
+        reshaped_input = get_reshaped_input_ast(
+            inputsRef[0], value_info, node_name_to_out_var_dict
+        )
+        innermost_let_ast_node = update_program_with_new_node(
+            innermost_let_ast_node, reshaped_input, reshaped_input_name, mtdAST
+        )
+        out_var_count += 1
+
+        reshaped_input_name1 = get_new_var_name(out_var_count)
+        reshaped_input1 = get_reshaped_input_ast(
+            inputsRef[1], value_info, node_name_to_out_var_dict
+        )
+        innermost_let_ast_node = update_program_with_new_node(
+            innermost_let_ast_node, reshaped_input1, reshaped_input_name1, mtdAST
+        )
+        out_var_count += 1
+
+        seedot_output_ast = AST.BOp(
+            AST.ID(reshaped_input_name),
+            getOperatorsIdx(".*"),
+            AST.ID(reshaped_input_name1),
+        )
+        output_name = get_new_var_name(out_var_count)
+        innermost_let_ast_node = update_program_with_new_node(
+            innermost_let_ast_node, seedot_output_ast, output_name, mtdAST
+        )
+        out_var_count += 1
+
+        reshaped_output_name = get_new_var_name(out_var_count)
+        onnx_output_ast = get_reshaped_output_ast(
+            node.outputs[0], value_info, output_name
+        )
+        innermost_let_ast_node = update_program_with_new_node(
+            innermost_let_ast_node, onnx_output_ast, reshaped_output_name, mtdAST
+        )
+        out_var_count += 1
+        node_name_to_out_var_dict[node.outputs[0]] = reshaped_output_name
+
+        if DEBUG:
+            print(node.outputs[0])
+            print(
+                onnx_input_shape,
+                onnx_input_shape1,
+                "->",
+                seedot_input_shape,
+                seedot_input_shape1,
+                "->",
+                onnx_output_shape,
+            )
+
+        return (innermost_let_ast_node, out_var_count)
+
+    def Gather(
+        node,
+        value_info,
+        node_name_to_out_var_dict,
+        innermost_let_ast_node,
+        out_var_count,
+        mtdAST,
+        index,
+    ):
+        node = OnnxNode(node)
+        if DEBUG:
+            print(node)
+
+        inputsRef = node.inputs
+        # print(f"{node}")
+        # print(f"Gather inputs --> {node.inputs}")
+        # print(f"Gather attrs  --> {node.attrs} ")
+        # print(f"Value Info of inputs --> {value_info[inputsRef[0]]} and {value_info[inputsRef[1]]}")
+        # print(f"Value Info of output --> {value_info[node.outputs[0]]}")
+        # print(f"The bloody index --> {index}")
+
+        seedot_output_ast = AST.Gather(
+            AST.ID(node_name_to_out_var_dict[inputsRef[0]]),
+            list(value_info[inputsRef[0]][1]),
+            node.attrs["axis"],
+            index,
+        )
+        output_name = get_new_var_name(out_var_count)
+        innermost_let_ast_node = update_program_with_new_node(
+            innermost_let_ast_node, seedot_output_ast, output_name, mtdAST
+        )
+        out_var_count += 1
+        node_name_to_out_var_dict[node.outputs[0]] = output_name
 
         return (innermost_let_ast_node, out_var_count)
 
@@ -628,6 +1003,42 @@ class ONNXNodesAST:
         node_name_to_out_var_dict[node.outputs[0]] = output_name
         return (innermost_let_ast_node, out_var_count)
 
+    def MatMul(
+        node,
+        value_info,
+        node_name_to_out_var_dict,
+        innermost_let_ast_node,
+        out_var_count,
+        mtdAST,
+    ):
+        node = OnnxNode(node)
+        if DEBUG:
+            print(node)
+        inputsRef = node.inputs
+        assert len(inputsRef) == 2
+        input1AST = AST.ID(node_name_to_out_var_dict[inputsRef[0]])
+        input2AST = AST.ID(node_name_to_out_var_dict[inputsRef[1]])
+
+        if "transA" in node.attrs and node.attrs["transA"]:
+            input1AST = AST.Transpose(input1AST)
+        if "transB" in node.attrs and node.attrs["transB"]:
+            input2AST = AST.Transpose(input2AST)
+
+        # W*x + b
+        seedot_output_ast = AST.BOp(input1AST, getOperatorsIdx("*"), input2AST)
+        output_name = get_new_var_name(out_var_count)
+        innermost_let_ast_node = update_program_with_new_node(
+            innermost_let_ast_node, seedot_output_ast, output_name, mtdAST
+        )
+        out_var_count += 1
+
+        node_name_to_out_var_dict[node.outputs[0]] = output_name
+
+        return (innermost_let_ast_node, out_var_count)
+
+        # sys.exit(101)
+        pass
+
     def BatchNormalization(
         node,
         value_info,
@@ -675,6 +1086,35 @@ class ONNXNodesAST:
         if DEBUG:
             print(node.outputs[0])
             print(onnx_input_shape, "->", seedot_input_shape, "->", onnx_output_shape)
+
+        return (innermost_let_ast_node, out_var_count)
+
+    def Unsqueeze(
+        node,
+        value_info,
+        node_name_to_out_var_dict,
+        innermost_let_ast_node,
+        out_var_count,
+        mtdAST,
+    ):
+        node = OnnxNode(node)
+        if DEBUG:
+            print(node)
+
+        inputsRef = node.inputs
+
+        seedot_output_ast = AST.Unsqueeze(
+            AST.ID(node_name_to_out_var_dict[inputsRef[0]]),
+            list(value_info[inputsRef[0]][1]),
+            node.attrs["axes"][0],
+        )
+
+        output_name = get_new_var_name(out_var_count)
+        innermost_let_ast_node = update_program_with_new_node(
+            innermost_let_ast_node, seedot_output_ast, output_name, mtdAST
+        )
+        out_var_count += 1
+        node_name_to_out_var_dict[node.outputs[0]] = output_name
 
         return (innermost_let_ast_node, out_var_count)
 
@@ -1023,6 +1463,24 @@ class ONNXNodesAST:
             "AVGPOOL",
         )
 
+    def AveragePool(
+        node,
+        value_info,
+        node_name_to_out_var_dict,
+        innermost_let_ast_node,
+        out_var_count,
+        mtdAST,
+    ):
+        return ONNXNodesAST.helper_processPool(
+            node,
+            value_info,
+            node_name_to_out_var_dict,
+            innermost_let_ast_node,
+            out_var_count,
+            mtdAST,
+            "AVGPOOL",
+        )
+
     def GlobalAveragePool(
         node,
         value_info,
@@ -1088,6 +1546,8 @@ class ONNXNodesAST:
         typeOfPool,
     ):
         node = OnnxNode(node)
+        if "pads" not in node.attrs.keys():
+            node.attrs["pads"] = [0, 0, 0, 0]
         if DEBUG:
             print(node)
         inputsRef = node.inputs

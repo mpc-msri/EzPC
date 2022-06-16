@@ -52,6 +52,12 @@ class ASTVisitor:
     def visitReshape(self, node: AST.Reshape, args=None):
         self.visit(node.expr, args)
 
+    def visitGather(self, node: AST.Gather, args=None):
+        self.visit(node.expr, args)
+
+    def visitUnsqueeze(self, node: AST.Unsqueeze, args=None):
+        self.visit(node.expr, args)
+
     def visitPool(self, node: AST.Pool, args=None):
         self.visit(node.expr, args)
 
@@ -109,6 +115,10 @@ class ASTVisitor:
             return self.visitSlice(node, args)
         elif isinstance(node, AST.Reshape):
             return self.visitReshape(node, args)
+        elif isinstance(node, AST.Gather):
+            return self.visitGather(node, args)
+        elif isinstance(node, AST.Unsqueeze):
+            return self.visitUnsqueeze(node, args)
         elif isinstance(node, AST.Pool):
             return self.visitPool(node, args)
         elif isinstance(node, AST.UOp):

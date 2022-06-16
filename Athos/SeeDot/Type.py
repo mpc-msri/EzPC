@@ -194,6 +194,7 @@ class InferType(ASTVisitor):
         return node.type
 
     def visitId(self, node: AST.ID, args=None):
+        # print(f"visitId --> {node.name}")
         if node.name not in node.gamma:
             print(
                 "Error in type checking: Found id which is not contained in gamma.",
@@ -203,6 +204,9 @@ class InferType(ASTVisitor):
             assert False
         else:
             node.type = node.gamma[node.name]
+            tns = node.type
+            # print(f"The type of {node.name} --> {node.type}")
+            # print(tns.)
         return node.type
 
     def visitDecl(self, node: AST.Decl, args=None):
@@ -259,16 +263,32 @@ class InferType(ASTVisitor):
 
     def visitReshape(self, node: AST.Reshape, args=None):
         node.expr.gamma = dict(node.gamma)
+        # print(type(node.expr))
         exprType = self.visit(node.expr)
 
+        # print(exprType.shape)
+        # print(isTensor(exprType), exprType.dim >= 1)
         assert isTensor(exprType) and exprType.dim >= 1
 
         # Reshape is valid if the total number of elements remain same after reshape
+        # print(exprType.shape)
         assert reduce(operator.mul, exprType.shape, 1) == reduce(
             operator.mul, node.shape, 1
         )
         node.type = Tensor(
             node.shape, exprType.bitlen, exprType.isSecret, exprType.taint
+        )
+
+        return node.type
+
+    def visitGather(self, node: AST.Gather, args=None):
+        node.expr.gamma = dict(node.gamma)
+        exprType = self.visit(node.expr)
+
+        assert isTensor(exprType) and exprType.dim > 0
+
+        node.type = Tensor(
+            node.shape[1:], exprType.bitlen, exprType.isSecret, exprType.taint
         )
 
         return node.type
@@ -321,6 +341,8 @@ class InferType(ASTVisitor):
             return self.typeCheckBroadcastOps(node, eType, fType)
         elif node.op == AST.Operators.MUL:
             return self.visitBopMul(node, eType, fType)
+        elif node.op == AST.Operators.DIV:
+            return self.visitBopDiv(node, eType, fType)
         elif node.op == AST.Operators.CONV:
             return self.visitBopConv(node, eType, fType)
         elif node.op == AST.Operators.CONVTRANSPOSE:
@@ -340,6 +362,7 @@ class InferType(ASTVisitor):
             AST.Operators.ElemWiseMul,
             AST.Operators.ElemWiseDiv,
         ]
+
         if isInt(eType) and isInt(fType):
             node.type = Int(eType.bitlen)
         elif isTensor(eType) and isTensor(fType):
@@ -352,7 +375,7 @@ class InferType(ASTVisitor):
             output_shape, _, _ = Util.getBroadcastShapes([], fType.shape)
             node.type = Tensor(shape=output_shape, bitlen=eType.bitlen)
         else:
-            print(eType, fType)
+            # print(eType, fType)
             assert False
 
         node.type.taint = getTaint_type(eType, fType)
@@ -360,6 +383,29 @@ class InferType(ASTVisitor):
         return node.type
 
     def visitBopMul(self, node: AST.BOp, eType: Type, fType: Type, args=None):
+        if isInt(eType) and isInt(fType):
+            node.type = Int(eType.bitlen, eType.isSecret)
+        elif isTensor(eType) and isTensor(fType):
+            if eType.dim == 0:
+                node.type = copy.copy(fType)
+            elif fType.dim == 0:
+                node.type = copy.copy(eType)
+            else:
+                assert eType.dim == 2 and fType.dim == 2
+                [n1, n2] = eType.shape
+                [n3, n4] = fType.shape
+                assert n2 == n3
+                node.type = Tensor([n1, n4], eType.bitlen)
+        else:
+            print("Error: Unknown condition in type checking.", file=sys.stderr)
+            assert False
+
+        node.type.taint = getTaint_type(eType, fType)
+        node.type.isSecret = eType.isSecret | fType.isSecret
+
+        return node.type
+
+    def visitBopDiv(self, node: AST.BOp, eType: Type, fType: Type, args=None):
         if isInt(eType) and isInt(fType):
             node.type = Int(eType.bitlen, eType.isSecret)
         elif isTensor(eType) and isTensor(fType):
@@ -496,6 +542,9 @@ class InferType(ASTVisitor):
         elif node.op == AST.Operators.SIGMOID:
             assert isTensor(eType)
             node.type = copy.copy(eType)
+        elif node.op == AST.Operators.HARDSIGMOID:
+            assert isTensor(eType)
+            node.type = copy.copy(eType)
         elif node.op == AST.Operators.SQRT:
             assert isTensor(eType)
             node.type = copy.copy(eType)
@@ -558,6 +607,24 @@ class InferType(ASTVisitor):
         assert isInt(dimType) or (isTensor(dimType) and (len(dimType.shape) == 0))
 
         node.type = Tensor(node.outputShape, eType.bitlen, eType.isSecret, eType.taint)
+        return node.type
+
+    def visitUnsqueeze(self, node: AST.Unsqueeze, args=None):
+        node.expr.gamma = dict(node.gamma)
+        exprType = self.visit(node.expr)
+
+        dims = len(node.shape)
+
+        assert isTensor(exprType) and exprType.dim >= 1
+        assert 0 <= node.axis <= dims
+
+        node.type = Tensor(
+            node.shape[: node.axis] + [1] + node.shape[node.axis :],
+            exprType.bitlen,
+            exprType.isSecret,
+            exprType.taint,
+        )
+
         return node.type
 
     def visitReduce(self, node: AST.Reduce, args=None):

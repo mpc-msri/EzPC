@@ -32,6 +32,12 @@ extern void ArgMax(int32_pl s1, int32_pl s2, int64_al[s1][s2] inArr, int64_al[s1
 extern void Relu(int32_pl s1, int64_al[s1] inArr, int64_al[s1] outArr, int32_pl sf, bool_pl doTruncation);
 
 (**************************)
+extern void Clip(int32_pl s1, int32_pl alpha, int32_pl beta, int64_al[s1] inArr, int64_al[s1] outArr, int32_pl sf, bool_pl doTruncation);
+
+(**************************)
+extern void HardSigmoid(int32_pl s1, int64_al[s1] inArr, int64_al[s1] outArr, int32_pl sf, bool_pl doTruncation);
+
+(**************************)
 extern void Floor(int32_pl s1, int64_al[s1] inArr, int64_al[s1] outArr, int32_pl sf);
 
 (**************************)
@@ -124,3 +130,21 @@ extern void ConvTranspose3DWrapper(int32_pl N, int32_pl DPrime, int32_pl HPrime,
 				   int64_al[N][DPrime][HPrime][WPrime][CI] inputArr, 
 				   int64_al[FD][FH][FW][CO][CI] filterArr, 
 				   int64_al[N][D][H][W][CO] outArr);
+
+extern void TanH(int32_pl one, int32_pl size, int32_pl scaleIn, int32_pl scaleOut, int32_pl bwA, int32_pl bwB, int64_al[size] A, int64_al[size] B);
+
+def void TanhImpl(int32_pl LUTBITS, int32_pl size, int32_pl sA, int32_pl sB, int32_pl bwA, int32_pl bwB, int64_al[size] A, int64_al[size] B) {
+	TanH(1, size, sA, sB, bwA, bwB, A, B);
+}
+
+extern void Sigmoid(int32_pl one, int32_pl size, int32_pl scaleIn, int32_pl scaleOut, int32_pl bwA, int32_pl bwB, int64_al[size] A, int64_al[size] B);
+
+def void SigmoidImpl(int32_pl LUTBITS, int32_pl size, int32_pl sA, int32_pl sB, int32_pl bwA, int32_pl bwB, int64_al[size] A, int64_al[size] B) {
+	Sigmoid(1, size, sA, sB, bwA, bwB, A, B);
+}
+
+extern void Sqrt(int32_pl one, int32_pl size, int32_pl scaleIn, int32_pl scaleOut, int32_pl bwA, int32_pl bwB, bool_pl inverse, int64_al[size] A, int64_al[size] B);
+
+def void SqrtImpl(int32_pl LUTBITS, int32_pl size, int32_pl sA, int32_pl sB, int32_pl bwA, int32_pl bwB, bool_pl inverse, int64_al[size] A, int64_al[size] B) {
+	Sqrt(1, size, sA, sB, bwA, bwB, inverse, A, B);
+}

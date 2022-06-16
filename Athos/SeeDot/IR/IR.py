@@ -65,7 +65,7 @@ class Int(IntExpr):
             wordLen = Util.Config.wordLength
         self.n = DataType.getInt(n, wordLen)
 
-    def subst(self, from_idf: str, to_e: Expr):
+    def updateName(self, expr_mapping):
         if isinstance(self.n, np.int8):
             return self.__class__(self.n, 8)
         elif isinstance(self.n, np.int16):
@@ -85,11 +85,12 @@ class Var(IntExpr):
         self.idx = idx
         self.inputVar = inputVar
 
-    def subst(self, from_idf: str, to_e: Expr):
-        idx_new = list(map(lambda e: e.subst(from_idf, to_e), self.idx))
-        if self.idf != from_idf:
+    def updateName(self, expr_mapping):
+        idx_new = list(map(lambda e: e.updateName(expr_mapping), self.idx))
+        if self.idf not in expr_mapping:
             return self.__class__(self.idf, idx_new, self.inputVar)
         else:
+            to_e = expr_mapping[self.idf]
             if isinstance(to_e, Var):
                 return self.__class__(
                     to_e.idf, to_e.idx + idx_new, to_e.inputVar and self.inputVar
@@ -104,7 +105,7 @@ class Bool(BoolExpr):
     def __init__(self, b: bool):
         self.b = b
 
-    def subst(self, from_idf: str, to_e: Expr):
+    def updateName(self, expr_mapping):
         return self.__class__(self.b)
 
 
@@ -114,16 +115,16 @@ class IntUop(IntExpr):
         self.op = op
         self.e = e
 
-    def subst(self, from_idf: str, to_e: Expr):
-        return self.__class__(self.op, self.e.subst(from_idf, to_e))
+    def updateName(self, expr_mapping):
+        return self.__class__(self.op, self.e.updateName(expr_mapping))
 
 
 class Exp(IntExpr):
     def __init__(self, e: IntExpr):
         self.e = e
 
-    def subst(self, from_idf: str, to_e: Expr):
-        return self.__class__(self.e.subst(from_idf, to_e))
+    def updateName(self, expr_mapping):
+        return self.__class__(self.e.updateName(expr_mapping))
 
 
 class TypeCast(IntExpr):
@@ -131,8 +132,8 @@ class TypeCast(IntExpr):
         self.type = type
         self.expr = expr
 
-    def subst(self, from_idf: str, to_e: Expr):
-        return self.__class__(self.type, self.expr.subst(from_idf, to_e))
+    def updateName(self, expr_mapping):
+        return self.__class__(self.type, self.expr.updateName(expr_mapping))
 
 
 class IntBop(IntExpr):
@@ -142,9 +143,9 @@ class IntBop(IntExpr):
         self.op = op
         self.e2 = e2
 
-    def subst(self, from_idf: str, to_e: Expr):
+    def updateName(self, expr_mapping):
         return self.__class__(
-            self.e1.subst(from_idf, to_e), self.op, self.e2.subst(from_idf, to_e)
+            self.e1.updateName(expr_mapping), self.op, self.e2.updateName(expr_mapping)
         )
 
 
@@ -154,8 +155,8 @@ class BoolUop(BoolExpr):
         self.op = op
         self.e = e
 
-    def subst(self, from_idf: str, to_e: Expr):
-        return self.__class__(self.op, self.e.subst(from_idf, to_e))
+    def updateName(self, expr_mapping):
+        return self.__class__(self.op, self.e.updateName(expr_mapping))
 
 
 class BoolBop(BoolExpr):
@@ -165,9 +166,9 @@ class BoolBop(BoolExpr):
         self.op = op
         self.e2 = e2
 
-    def subst(self, from_idf: str, to_e: Expr):
+    def updateName(self, expr_mapping):
         return self.__class__(
-            self.e1.subst(from_idf, to_e), self.op, self.e2.subst(from_idf, to_e)
+            self.e1.updateName(expr_mapping), self.op, self.e2.updateName(expr_mapping)
         )
 
 
@@ -178,9 +179,9 @@ class BoolCop(BoolExpr):
         self.op = op
         self.e2 = e2
 
-    def subst(self, from_idf: str, to_e: Expr):
+    def updateName(self, expr_mapping):
         return self.__class__(
-            self.e1.subst(from_idf, to_e), self.op, self.e2.subst(from_idf, to_e)
+            self.e1.updateName(expr_mapping), self.op, self.e2.updateName(expr_mapping)
         )
 
 
@@ -190,11 +191,11 @@ class CExpr(Expr):
         self.et = et
         self.ef = ef
 
-    def subst(self, from_idf: str, to_e: Expr):
+    def updateName(self, expr_mapping):
         return self.__class__(
-            self.cond.subst(from_idf, to_e),
-            self.et.subst(from_idf, to_e),
-            self.ef.subst(from_idf, to_e),
+            self.cond.updateName(expr_mapping),
+            self.et.updateName(expr_mapping),
+            self.ef.updateName(expr_mapping),
         )
 
 
@@ -211,9 +212,9 @@ class Assn(Cmd):
         self.var = var
         self.e = e
 
-    def subst(self, from_idf: str, to_e: Expr):
+    def updateName(self, expr_mapping):
         return self.__class__(
-            self.var.subst(from_idf, to_e), self.e.subst(from_idf, to_e)
+            self.var.updateName(expr_mapping), self.e.updateName(expr_mapping)
         )
 
 
@@ -223,11 +224,13 @@ class If(Cmd):
         self.trueCmds = trueCmds
         self.falseCmds = falseCmds
 
-    def subst(self, from_idf: str, to_e: Expr):
-        trueCmdsNew = list(map(lambda cmd: cmd.subst(from_idf, to_e), self.trueCmds))
-        falseCmdsNew = list(map(lambda cmd: cmd.subst(from_idf, to_e), self.falseCmds))
+    def updateName(self, expr_mapping):
+        trueCmdsNew = list(map(lambda cmd: cmd.updateName(expr_mapping), self.trueCmds))
+        falseCmdsNew = list(
+            map(lambda cmd: cmd.updateName(expr_mapping), self.falseCmds)
+        )
         return self.__class__(
-            self.cond.subst(from_idf, to_e), trueCmdsNew, falseCmdsNew
+            self.cond.updateName(expr_mapping), trueCmdsNew, falseCmdsNew
         )
 
 
@@ -254,15 +257,15 @@ class For(Cmd):
         else:
             assert False
 
-    def subst(self, from_idf: str, to_e: Expr):
-        cmd_l_new = list(map(lambda cmd: cmd.subst(from_idf, to_e), self.cmd_l))
+    def updateName(self, expr_mapping):
+        cmd_l_new = list(map(lambda cmd: cmd.updateName(expr_mapping), self.cmd_l))
         if self.endCond:
             return For(
                 self.var,
                 self.st,
                 cmd_l_new,
                 self.factor,
-                endCond=self.cond.subst(from_idf, to_e),
+                endCond=self.cond.updateName(expr_mapping),
             )
         else:
             assert self.endInt is not None
@@ -274,16 +277,16 @@ class While(Cmd):
         self.expr = expr
         self.cmds = cmds
 
-    def subst(self, from_idf: str, to_e: Expr):
-        cmds_new = list(map(lambda cmd: cmd.subst(from_idf, to_e), self.cmds))
-        return While(self.expr.subst(from_idf, to_e), cmds_new)
+    def updateName(self, expr_mapping):
+        cmds_new = list(map(lambda cmd: cmd.updateName(expr_mapping), self.cmds))
+        return While(self.expr.updateName(expr_mapping), cmds_new)
 
 
 class Comment(Cmd):
     def __init__(self, msg):
         self.msg = msg
 
-    def subst(self, from_idf: str, to_e: Expr):
+    def updateName(self, expr_mapping):
         return self.__class__(self.msg)
 
 
@@ -292,7 +295,7 @@ class Pragmas(Cmd):
         self.msg = msg
         self.vital = vital
 
-    def subst(self, from_idf: str, to_e: Expr):
+    def updateName(self, expr_mapping):
         return self.__class__(self.msg, self.vital)
 
 
@@ -301,8 +304,8 @@ class Prog:
         self.cmd_l = cmd_l
         self.resource = resource
 
-    def subst(self, from_idf: str, to_e: Expr):
-        cmd_l_new = list(map(lambda cmd: cmd.subst(from_idf, to_e), self.cmd_l))
+    def updateName(self, expr_mapping):
+        cmd_l_new = list(map(lambda cmd: cmd.updateName(expr_mapping), self.cmd_l))
         return self.__class__(cmd_l_new, self.resource)
 
 
@@ -314,16 +317,16 @@ class Memset(Cmd):
         self.dim = dim
         self.lens = lens
 
-    def subst(self, from_idf: str, to_e: Expr):
-        return self.__class__(self.e.subst(from_idf, to_e), self.len)
+    def updateName(self, expr_mapping):
+        return self.__class__(self.e.updateName(expr_mapping), self.len)
 
 
 class Print(Cmd):
     def __init__(self, expr: Expr):
         self.expr = expr
 
-    def subst(self, from_idf: str, to_e: Expr):
-        return self.__class__(self.expr.subst(from_idf, to_e))
+    def updateName(self, expr_mapping):
+        return self.__class__(self.expr.updateName(expr_mapping))
 
 
 class PrintAsFloat(Cmd):
@@ -331,8 +334,8 @@ class PrintAsFloat(Cmd):
         self.expr = expr
         self.expnt = expnt
 
-    def subst(self, from_idf: str, to_e: Expr):
-        return self.__class__(self.expr.subst(from_idf, to_e), self.expnt)
+    def updateName(self, expr_mapping):
+        return self.__class__(self.expr.updateName(expr_mapping), self.expnt)
 
 
 class FuncCall(Cmd):
@@ -340,11 +343,11 @@ class FuncCall(Cmd):
         self.name = name
         self.argList = argList
 
-    def subst(self, from_idf: str, to_e: Expr):
-        # argList_new = list(map(lambda cmd: cmd.subst(from_idf, to_e), self.argList))
+    def updateName(self, expr_mapping):
         argList_new = dict(
             map(
-                lambda cmd: (cmd[0].subst(from_idf, to_e), cmd[1]), self.argList.items()
+                lambda cmd: (cmd[0].updateName(expr_mapping), cmd[1]),
+                self.argList.items(),
             )
         )
         return self.__class__(self.name, argList_new)
@@ -365,9 +368,9 @@ class Input(Cmd):
         self.isSecret = isSecret
         self.inputByParty = inputByParty
 
-    def subst(self, from_idf: str, to_e: Expr):
+    def updateName(self, expr_mapping):
         return self.__class__(
-            self.expr.subst(from_idf, to_e),
+            self.expr.updateName(expr_mapping),
             self.shape,
             self.dataType,
             self.isSecret,
@@ -380,9 +383,9 @@ class Output(Cmd):
         self.expr = expr
         self.outputToParty = outputToParty
 
-    def subst(self, from_idf: str, to_e: Expr):
+    def updateName(self, expr_mapping):
         return self.__class__(
-            self.expr.subst(from_idf, to_e),
+            self.expr.updateName(expr_mapping),
             self.outputToParty,
         )
 
@@ -404,7 +407,7 @@ class Decl(Cmd):
             assert isinstance(value, list)
         self.value = value
 
-    def subst(self, from_idf: str, to_e: Expr):
+    def updateName(self, expr_mapping):
         return self.__class__(
             self.varIdf, self.typeExpr, self.bitlen, self.isSecret, self.value
         )

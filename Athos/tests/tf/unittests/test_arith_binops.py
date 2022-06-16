@@ -32,7 +32,7 @@ import os
 
 # Athos DIR
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-from tests.utils import Config, Compiler, assert_almost_equal
+from tests.utils import TFConfig, Compiler, assert_almost_equal
 
 
 @pytest.mark.parametrize(
@@ -58,10 +58,12 @@ def test_arith_binop(test_dir, backend, tfOp, a_shape, b_shape, dtype):
     with tf.compat.v1.Session(graph=graph) as sess:
         expected_output = sess.run(output, feed_dict={a: a_inp})
 
-    config = Config(backend).add_input(a).add_output(output)
+    config = TFConfig(backend).add_input(a).add_output(output)
     compiler = Compiler(graph, config, test_dir)
     mpc_output = compiler.compile_and_run([a_inp])
-    assert_almost_equal(tf_output=expected_output, mpc_tensor=mpc_output, precision=2)
+    assert_almost_equal(
+        model_output=expected_output, mpc_tensor=mpc_output, precision=2
+    )
     return
 
 
@@ -90,10 +92,12 @@ def test_bias_add(test_dir, backend, a_shape, b_shape, data_format, dtype):
     with tf.compat.v1.Session(graph=graph) as sess:
         expected_output = sess.run(output, feed_dict={a: a_inp})
 
-    config = Config(backend).add_input(a).add_output(output)
+    config = TFConfig(backend).add_input(a).add_output(output)
     compiler = Compiler(graph, config, test_dir)
     mpc_output = compiler.compile_and_run([a_inp])
-    assert_almost_equal(tf_output=expected_output, mpc_tensor=mpc_output, precision=2)
+    assert_almost_equal(
+        model_output=expected_output, mpc_tensor=mpc_output, precision=2
+    )
     return
 
 
@@ -150,10 +154,12 @@ def test_div(test_dir, backend, tfOp, a_val, divisor, dtype):
     with tf.compat.v1.Session(graph=graph) as sess:
         expected_output = sess.run(output, feed_dict={a: a_inp})
 
-    config = Config(backend).add_input(a).add_output(output)
+    config = TFConfig(backend).add_input(a).add_output(output)
     compiler = Compiler(graph, config, test_dir)
     mpc_output = compiler.compile_and_run([a_inp])
-    assert_almost_equal(tf_output=expected_output, mpc_tensor=mpc_output, precision=2)
+    assert_almost_equal(
+        model_output=expected_output, mpc_tensor=mpc_output, precision=2
+    )
     return
 
 
@@ -171,16 +177,15 @@ def test_div(test_dir, backend, tfOp, a_val, divisor, dtype):
                 reason="[matmul] expect atleast one param to belong to model"
             ),
         ),
+        ([1, 2], [2, 3], False, False, True),
     ],
 )
 @pytest.mark.parametrize("dtype", [np.single])
 def test_matmul(
     test_dir, backend, a_shape, b_shape, transpose_a, transpose_b, bisModel, dtype
 ):
-    if backend == "2PC_HE":
-        pytest.skip(
-            "Assertion error in 2PC_HE FCField::matrix_multiplication Assertion `num_cols == 1' failed."
-        )
+    if backend == "2PC_HE" and a_shape[0] != 1:
+        pytest.skip("HE only supports vector matrix multiplication")
     graph = tf.Graph()
     a_inp = dtype(np.random.randn(*a_shape))
     b_inp = dtype(np.random.randn(*b_shape))
@@ -198,12 +203,14 @@ def test_matmul(
         if not bisModel:
             feed_dict[b] = b_inp
         expected_output = sess.run(output, feed_dict=feed_dict)
-    config = Config(backend).add_input(a).add_output(output)
+    config = TFConfig(backend).add_input(a).add_output(output)
     if not bisModel:
         config.add_input(b)
     compiler = Compiler(graph, config, test_dir)
     mpc_output = compiler.compile_and_run([a_inp])
-    assert_almost_equal(tf_output=expected_output, mpc_tensor=mpc_output, precision=2)
+    assert_almost_equal(
+        model_output=expected_output, mpc_tensor=mpc_output, precision=2
+    )
     return
 
 
@@ -228,8 +235,10 @@ def test_equal(test_dir, backend, a, b, dtype):
     with tf.compat.v1.Session(graph=graph) as sess:
         expected_output = sess.run(output, feed_dict={a: a_inp})
 
-    config = Config(backend).add_input(a).add_output(output)
+    config = TFConfig(backend).add_input(a).add_output(output)
     compiler = Compiler(graph, config, test_dir)
     mpc_output = compiler.compile_and_run([a_inp])
-    assert_almost_equal(tf_output=expected_output, mpc_tensor=mpc_output, precision=2)
+    assert_almost_equal(
+        model_output=expected_output, mpc_tensor=mpc_output, precision=2
+    )
     return
