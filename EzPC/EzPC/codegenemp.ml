@@ -130,6 +130,7 @@ let o_subsumption (src:label) (tgt:secret_label) (t:typ) (e:comp) :comp =
         | Base (Bool,_) -> o_app (o_str "Bit") [e;o_str "PUBLIC"]
         | _ -> failwith "unknown type of subsumption node")
     | Secret Arithmetic 
+    | Secret Baba 
     | Secret Boolean -> e
   
 let o_basetyp (t:base_type) :comp =
@@ -139,6 +140,7 @@ let o_basetyp (t:base_type) :comp =
   | Int32  -> o_str "int32_t"
   | Int64  -> o_str "int64_t"
   | Bool   -> o_str "bool"
+  | Float   -> o_str "float"
 
 let o_sec (bt:base_type) = 
   match bt with
@@ -171,6 +173,8 @@ let rec o_expr (g:gamma) (e:expr) :comp =
   | Const (UInt64C n) -> seq (o_str (" (uint64_t)")) (o_uint64 n)
 
   | Const (BoolC b) -> o_bool b
+
+  | Const (FloatC f) -> o_float f 
     
   | Var s -> o_var s
 
@@ -293,7 +297,7 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
      let is_arr = is_array_typ t in
      
      (* bt is the base type and l label *)
-     let bt, l = get_bt_and_label t |> (fun (bt, l) -> get_unsigned bt, l) in
+     let bt, l = get_bt_and_label t |> (fun (bt, l) -> get_inp_type bt, l) in
      let l = get_opt l in
 
      (* list of dimensions, if an array else empty *)

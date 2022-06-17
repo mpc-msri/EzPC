@@ -271,6 +271,7 @@ let o_basetyp_func_decl (t:base_type) :comp =
   | Int32  -> o_str "int32_t"
   | Int64  -> o_str "int64_t"
   | Bool   -> o_str "uint32_t"
+  | Float   -> failwith ("SCI does not support fl : float base type. ")
 
 let rec o_typ_rec_func_decl (t:typ) :comp =
   let uint32_basetype_str :string = "uint32_t" in

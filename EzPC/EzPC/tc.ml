@@ -72,7 +72,7 @@ let check_expected_typ (e:expr) (t:typ) (expected:typ) :unit result =
   | _, _ -> err
        
 let join_types_err (e1:expr) (e2:expr) (t1:typ) (t2:typ) (r:range) :eresult =
-  Type_error ("Cannott join types " ^ typ_to_string t1 ^ " and " ^ typ_to_string t2 ^
+  Type_error ("Cannot join types " ^ typ_to_string t1 ^ " and " ^ typ_to_string t2 ^
                 " for expressions " ^ expr_to_string e1 ^ " and " ^ expr_to_string e2, r)
 
 let check_base_type (t:typ) (r:range) :unit result =
@@ -104,7 +104,7 @@ let check_unop_label_is_consistent (e:expr) (op:unop) (l:label) :unit result =
  * Bitwise operators are not supported with secret labels, ABY does bad things
  *)
 let check_binop_label_is_consistent (e:expr) (op:binop) (l:label) :unit result =
-  let err = Type_error ("Binop label is inconsisssssstent: " ^ (expr_to_string e), e.metadata) in
+  let err = Type_error ("Binop label is inconsistent: " ^ (expr_to_string e), e.metadata) in
   match l with
   | Public -> Well_typed ()
   | Secret l ->
@@ -150,7 +150,7 @@ let check_expected_numeric_typ (e:expr) (t:typ) (l:label) :unit result =
   | _ -> err
 
 let check_expected_int_typ (e:expr) (t:typ) (l:label) :unit result =
-  let err = Type_error ("Expression " ^ (expr_to_string e) ^ " should havvveeee an int type with label " ^ label_to_string l ^
+  let err = Type_error ("Expression " ^ (expr_to_string e) ^ " should have an int type with label " ^ label_to_string l ^
                           ", instead got: " ^ typ_to_string t, e.metadata) in
   match t.data with
   | Base (bt, Some lt) when (bt = UInt32 || bt = UInt64 || bt = Int32 || bt = Int64) && lt = l -> Well_typed ()
@@ -278,7 +278,7 @@ let rec tc_expr (g:gamma) (e:expr) :eresult =
 type sresult = gamma result
 
 let rec check_type_well_formedness (g:gamma) (t:typ) :unit result =
-  let bitlen_err (n:int) = Type_error ("Incorrecttt bitlen, expected: " ^ (string_of_int (Config.get_bitlen ())) ^ ", found: " ^ (string_of_int n), t.metadata) in
+  let bitlen_err (n:int) = Type_error ("Incorrect bitlen, expected: " ^ (string_of_int (Config.get_bitlen ())) ^ ", found: " ^ (string_of_int n), t.metadata) in
   let check_float_label (l:secret_label) : unit result =
     if l = Baba then Type_error ("Numeric type int cannot be Baba shared.", t.metadata)
     else Well_typed ()
