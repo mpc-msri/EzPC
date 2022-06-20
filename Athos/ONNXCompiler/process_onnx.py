@@ -182,13 +182,14 @@ def generate_seedot_ast(model, value_info, model_dir, fzpc_mode=False):
         InferType().visit(program)
         PrintAST(value_info).visit(program)
         common.write_debug_info(node_name_to_out_var_dict)
+        print("Saved AST string representation in ast.txt")
+        print("Quitting early due to fzpc_mode=True parameter")
+        exit(0)
 
     with open(os.path.join(model_dir, "astOutput.pkl"), "wb") as f:
         print(program)
         pickle.dump(program, f)
         print("Dumped SeeDot AST")
-        print("Quitting early")
-        exit(0)
 
 
 def preprocess_batch_normalization(graph_def, model_name_to_val_dict):
