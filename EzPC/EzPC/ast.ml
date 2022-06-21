@@ -404,8 +404,8 @@ let join_types (t1:typ) (t2:typ) :typ option =
   | Base (Int32, Some Public), Base (Int64, Some Public) -> Some t2
   | Base (UInt64, Some Public), Base (UInt32, Some Public)
   | Base (Int64, Some Public), Base (Int32, Some Public) -> Some t1
-  | Base (_, Some Public), Base (_, Some (Secret _)) -> Some t2
-  | Base (_, Some (Secret _)), Base (_, Some Public) -> Some t1
+  | Base (bt1, Some Public), Base (bt2, Some (Secret _))  when bt1 = bt2 -> Some t2
+  | Base (bt1, Some (Secret _)), Base (bt2, Some Public)  when bt1 = bt2 -> Some t1
   | Base (bt1, l1), Base (bt2, l2) when bt1 = bt2 && l1 = l2 -> Some t1
   | _, _ -> None
 

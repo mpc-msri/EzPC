@@ -617,6 +617,23 @@ let prelude_string :string = "
 #include <fstream>\n\
 \n\
 using namespace std ;\n\
+\n\
+uint32_t public_lrshift(uint32_t x, uint32_t y){\n\
+  return (x >> y);\n\
+}\n\
+\n\
+int32_t public_lrshift(int32_t x, uint32_t y){\n\
+  return ((int32_t)(((uint32_t)x) >> y));\n\
+}\n\
+\n\
+uint64_t public_lrshift(uint64_t x, uint64_t y){\n\
+  return (x >> y);\n\
+}\n\
+\n\
+int64_t public_lrshift(int64_t x, uint64_t y){\n\
+  return ((int64_t)(((uint64_t)x) >> y));\n\
+}\n\
+\n\
 template<typename T>\n\
 vector<T> make_vector(size_t size) {\n\
   return std::vector<T>(size) ;\n\

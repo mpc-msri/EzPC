@@ -140,7 +140,7 @@ let rec o_secret_binop (g:gamma) (op:binop) (sl:secret_label) (e1:expr) (e2:expr
     | Greater_than_equal -> "GE"
     | And -> "AND"
     | Or -> "Or"
-    | _ -> failwith "o_secret_binop : This binop hasn't been implemented yet"
+    | _ -> failwith  ("o_secret_binop " ^ binop_to_string op ^ " : This binop hasn't been implemented yet")
   in
   let app = App (backend ^ "->" ^ fn_name, [e1; e2]) in
   o_expr g (app |> mk_dsyntax "")
