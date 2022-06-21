@@ -24,5 +24,7 @@ RUN apt-get -y install sudo software-properties-common git wget vim apt-utils
 RUN mkdir -p /ezpc_dir
 WORKDIR /ezpc_dir
 RUN git clone https://github.com/mpc-msri/EzPC/
+
+# This line has been changed to use the `mlcomp` branch for building EzPC
 RUN cd EzPC && git checkout mlcomp && git pull origin mlcomp
 RUN cd EzPC && ./setup_env_and_build.sh quick

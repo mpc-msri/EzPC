@@ -1,3 +1,31 @@
+# mlcomp
+
+This branch contains modified code for the AI Validation website. There are only two changes in this branch:
+
+* The [Dockerfile](Dockerfile) is modified to use the `mlcomp` branch for building the modified EzPC image used in the website.
+
+*  [SCI/src/functionalities_uniform.h](SCI/src/functionalities_uniform.h) contains modified `funcReconstruct2PCCons`,
+to not reveal outputs after a 2PC session, instead writing outputs to `secret_shares.txt` file.
+    ```cpp
+    // Hacked for mlcomp - reveals secret shares, not outputs
+    signedIntType funcReconstruct2PCCons(intType x, int revealParty) {
+    std::ofstream ofile;
+    ofile.open("secret_shares.txt", std::ios::app);
+    ofile<<x<<endl;
+    ofile.close();
+    return x;
+    ```
+
+## Build modified Docker Image
+
+To build the modified EzPC image that is used in AI validation website, use:
+
+```
+docker build -t ezpc/ezpc-modified
+```
+
+and then you can publish the image to Docker Hub.
+
 # CrypTFlow: An End-to-end System for Secure TensorFlow Inference [![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/mpc-msri/EzPC/issues)
 
 **Reference Papers:**  
