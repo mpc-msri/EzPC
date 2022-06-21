@@ -16,6 +16,10 @@ to not reveal outputs after a 2PC session, instead writing outputs to `secret_sh
     return x;
     ```
 
+## Docker Image
+
+A pre-build Docker image is available at https://hub.docker.com/r/agrawald/ezpc-modified
+
 ## Build modified Docker Image
 
 To build the modified EzPC image that is used in AI validation website, use:
