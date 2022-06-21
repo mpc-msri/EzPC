@@ -50,7 +50,7 @@ add_library(SCI-HE library_fixed_uniform.cpp globals.cpp)
 add_library(SCI-FloatML library_float.cpp globals_float.cpp cleartext_library_float.cpp)
 
 target_link_libraries(SCI-OT PUBLIC SCI-common SCI-LinearOT SCI-GC
-    SCI-BuildingBlocks SCI-Math Eigen3::Eigen)
+	SCI-Math SCI-BuildingBlocks Eigen3::Eigen)
 target_link_libraries(SCI-HE PUBLIC SCI-common SCI-LinearHE)
 target_link_libraries(SCI-FloatML PUBLIC SCI-FloatingPoint) 
 

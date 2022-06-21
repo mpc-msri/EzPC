@@ -1,0 +1,18 @@
+include(CMakeFindDependencyMacro)
+
+@PACKAGE_INIT@
+
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR})
+# include("${CMAKE_CURRENT_LIST_DIR}/source_of_randomness.cmake")
+
+# find_dependency(OpenSSL REQUIRED)
+# find_dependency(GMP REQUIRED)
+find_dependency(Threads REQUIRED)
+
+set_and_check(INSTALL_DIR "@PACKAGE_INSTALL_DIR@")
+# find_dependency(Eigen3 REQUIRED PATHS "@PACKAGE_BUILD_DIR@/../extern/eigen/build" NO_DEFAULT_PATH)
+# find_dependency(SEAL REQUIRED PATHS "@PACKAGE_BUILD_DIR@" NO_DEFAULT_PATH)
+find_dependency(OpenMP REQUIRED)
+
+# Add the targets file
+include("${CMAKE_CURRENT_LIST_DIR}/FSSTargets.cmake")

@@ -65,7 +65,12 @@ void test_hadamard_product(uint64_t *inA, uint64_t *inB,
 }
 
 int main(int argc, char **argv) {
-  party = atoi(argv[1]);
+  ArgMapping amap;
+  amap.arg("r", party, "Role of party: ALICE = 1; BOB = 2");
+  amap.arg("p", port, "Port Number");
+  amap.arg("ip", address, "IP Address of server (ALICE)");
+
+  amap.parse(argc, argv);
 
   iopack = new IOPack(party, port, address);
   otpack = new OTPack(iopack, party);

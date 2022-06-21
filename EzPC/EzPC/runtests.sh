@@ -28,6 +28,8 @@ compiledCodeExtn="cpp"
 declare genDir
 
 generateAndDiffCode () {
+	declare checks 
+	checks="Allgood"
 	compileErrorFiles=()
 	diffFailedFiles=()
 	genDir=$1
@@ -79,6 +81,8 @@ generateAndDiffCode () {
 	else
 		echo -e "Compilation failed for following files."
 		printf '%s\n' "${compileErrorFiles[@]}"
+    		checks="Failed"
+
 	fi
 	
 	if [ ${#diffFailedFiles[@]} -eq 0 ];
@@ -87,6 +91,53 @@ generateAndDiffCode () {
 	else
 		echo -e "Diff failed for following files."
 		printf '%s\n' "${diffFailedFiles[@]}"
+    		checks="Failed"
+
+	fi
+
+	echo -e "\n\n------------------------------Match Random-Forest Results-----------------------------"
+
+	./compile_aby.sh gen/random_forest0.cpp
+	./random_forest0 -r 0 &
+	./random_forest0 -r 1 > gen_val.txt &
+	wait
+
+	./compile_aby.sh test_suite/precompiled_output/random_forest0.cpp
+	./random_forest0 -r 0 &
+	./random_forest0 -r 1 > pre_val.txt &
+	wait
+
+	if cmp -s gen_val.txt pre_val.txt 
+	then
+		echo -e "No diff. Output of compiler is as expected."
+	else
+		echo -e "Diff non-zero. Please check for diff."
+		checks="Failed"
+	fi
+
+	echo -e "\n\n------------------------------Match Random-Forest-Polish Results-----------------------------"
+
+	./compile_aby.sh gen/random_forest_polish0.cpp
+	./random_forest_polish0 -r 0 &
+	./random_forest_polish0 -r 1 > gen_val.txt &
+	wait
+
+	./compile_aby.sh test_suite/precompiled_output/random_forest_polish0.cpp
+	./random_forest_polish0 -r 0 &
+	./random_forest_polish0 -r 1 > pre_val.txt &
+	wait
+
+	if cmp -s gen_val.txt pre_val.txt 
+	then
+		echo -e "No diff. Output of compiler is as expected."
+	else
+		echo -e "Diff non-zero. Please check for diff."
+		checks="Failed"
+	fi
+	echo $checks
+	if [[ "${checks}" == "Failed" ]]
+	then
+		exit 1
 	fi
 }
 

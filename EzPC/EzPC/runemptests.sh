@@ -28,7 +28,8 @@ compiledCodeExtn="cpp"
 
 declare genDir
 mkdir gen_emp
-
+declare checks 
+checks="Allgood"
 compileErrorFiles=()
 diffFailedFiles=()
 genDir="gen_emp"
@@ -80,6 +81,7 @@ then
 else
     echo -e "Compilation failed for following files."
     printf '%s\n' "${compileErrorFiles[@]}"
+    checks="Failed"
 fi
 
 if [ ${#diffFailedFiles[@]} -eq 0 ];
@@ -88,5 +90,50 @@ then
 else
     echo -e "Diff failed for following files."
     printf '%s\n' "${diffFailedFiles[@]}"
+    checks="Failed"
 fi
 
+echo -e "\n\n------------------------------Match Random-Forest Results-----------------------------"
+
+./compile_emp.sh gen_emp/random_forest0.cpp
+./random_forest0 1 12345 &
+./random_forest0 2 12345 > gen_val.txt &
+wait
+
+./compile_emp.sh test_suite/precompiled_output_emp/random_forest0.cpp
+./random_forest0 1 12345 &
+./random_forest0 2 12345 > pre_val.txt &
+wait
+
+if cmp -s gen_val.txt pre_val.txt 
+then
+    echo -e "No diff. Output of compiler is as expected."
+else
+    echo -e "Diff non-zero. Please check for diff."
+    checks="Failed"
+fi
+
+echo -e "\n\n------------------------------Match Random-Forest-Polish Results-----------------------------"
+
+./compile_emp.sh gen_emp/random_forest_polish0.cpp
+./random_forest_polish0 1 12345 &
+./random_forest_polish0 2 12345 > gen_val.txt &
+wait
+
+./compile_emp.sh test_suite/precompiled_output_emp/random_forest_polish0.cpp
+./random_forest_polish0 1 12345 &
+./random_forest_polish0 2 12345 > pre_val.txt &
+wait
+
+if cmp -s gen_val.txt pre_val.txt 
+then
+    echo -e "No diff. Output of compiler is as expected."
+else
+    echo -e "Diff non-zero. Please check for diff."
+    checks="Failed"
+fi
+echo $checks
+if [[ "${checks}" == "Failed" ]]
+then
+    exit 1
+fi
