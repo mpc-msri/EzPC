@@ -116,7 +116,7 @@ auto make_vector_int(int party, bool sign, int len, size_t first, Args... sizes)
 
 /********************* Floating Multidimensional Arrays *********************/
 
-FPArray __public_float_to_arithmetic(float f, int party=ALICE) {
+FPArray __public_float_to_baba(float f, int party=ALICE) {
 	float *_dummy = new float[1] ;
 	_dummy[0] = f ;
 	FPArray _ret = __fp_op->input(party, 1, _dummy) ;
@@ -127,7 +127,7 @@ FPArray __public_float_to_arithmetic(float f, int party=ALICE) {
 vector<FPArray> make_vector_float(int party, size_t last) {
 	vector<FPArray> _ret ;
 	for (size_t i = 0 ; i < last ; i++) {
-		_ret.push_back(__public_float_to_arithmetic(0.0, party)) ;
+		_ret.push_back(__public_float_to_baba(0.0, party)) ;
 	}
 	return _ret ;
 }
