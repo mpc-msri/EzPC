@@ -55,13 +55,23 @@ class EzPC(CodegenBase):
                 assert (
                     len(declProp) >= 2 and len(declProp) <= 3
                 )  # For now only type, label and bitlen should be present
-                variableLabel = "pl" if (declProp[1] == "public") else "al"
+                if declProp[1] == "public":
+                    variableLabel = "pl"
+                elif Util.Config.version == "fixed":
+                    variableLabel = "al"
+                else:
+                    variableLabel = "fl"
+
                 if len(declProp) == 3:
                     bitlen = declProp[2]
                     typ_str = IR.DataType.getIntStrForBitlen(bitlen)
             else:
                 # If variable unspecified, then default to secret
-                variableLabel = "al"
+                if Util.Config.version == "fixed":
+                    variableLabel = "al"
+                else:
+                    variableLabel = "fl"
+
             if Type.isInt(curType):
                 shape_str = ""
             elif Type.isTensor(curType):
@@ -151,7 +161,12 @@ class EzPC(CodegenBase):
             # print(f"EzPC.py : printDecl : ir = {ir.typeExpr.dataType}, typ_str = {typ_str}")
         # print(f"EzPC.py : printDecl : typ_str = {typ_str}")
         # print(f"EzPC.py : printDecl : {ir.varIdf}, {ir.typeExpr}")
-        variableLabel = "pl" if not (ir.isSecret) else "al"
+        if not (ir.isSecret):
+            variableLabel = "pl"
+        elif Util.Config.version == "float":
+            variableLabel = "fl"
+        else:
+            variableLabel = "al"
 
         if Type.isInt(ir.typeExpr):
             shape_str = ""
