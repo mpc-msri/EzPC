@@ -222,9 +222,14 @@ class InferType(ASTVisitor):
             print(f"{' '*self.indent}||visitFloat")
             self.indent += 1
         # Float is represented as an int in fixedpt.
-        node.type = Float(
-            isSecret=node.isSecret, taint=constantTaintsMapping[node.isSecret]
-        )
+        if Util.Config.version == "float":
+            node.type = Float(
+                isSecret=node.isSecret, taint=constantTaintsMapping[node.isSecret]
+            )
+        else:
+            node.type = Int(
+                isSecret=node.isSecret, taint=constantTaintsMapping[node.isSecret]
+            )
 
         if self.debug:
             self.indent -= 1
@@ -701,7 +706,10 @@ class InferType(ASTVisitor):
             isSecret = isSecret or eType.isSecret
             taint = getTaint_taint(taint, eType.taint)
         outputShape = node.outputShape
-        node.type = Tensor(outputShape, "float32", isSecret=isSecret, taint=taint)
+        if Util.Config.version == "float":
+            node.type = Tensor(outputShape, "float32", isSecret=isSecret, taint=taint)
+        else:
+            node.type = Tensor(outputShape, isSecret=isSecret, taint=taint)
 
         if self.debug:
             self.indent -= 1

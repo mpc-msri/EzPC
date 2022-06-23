@@ -111,7 +111,7 @@ class EzPC(CodegenBase):
         )
         # assert(ir.dataType in ["DT_INT32"]) ####TODO: fix this
         # print(f"EzPC.py : {ir.dataType}")
-        if ir.dataType == "float32":
+        if ir.dataType == "float32" and Util.Config.version == "float":
             self.out.printf("float_")
         elif Util.Config.wordLength == 32:
             self.out.printf("int32_")
@@ -120,7 +120,9 @@ class EzPC(CodegenBase):
         else:
             assert False
 
-        if ir.isSecret:
+        if ir.isSecret and ir.dataType == "float32" and Util.Config.version == "float":
+            self.out.printf("fl")
+        elif ir.isSecret:
             self.out.printf("al")
         else:
             self.out.printf("pl")
@@ -143,7 +145,7 @@ class EzPC(CodegenBase):
         if Type.isTensor(ir.typeExpr):
             typ_str = (
                 IR.DataType.floatStr
-                if ir.typeExpr.dataType == "float32"
+                if ir.typeExpr.dataType == "float32" and Util.Config.version == "float"
                 else IR.DataType.getIntStrForBitlen(ir.bitlen)
             )
             # print(f"EzPC.py : printDecl : ir = {ir.typeExpr.dataType}, typ_str = {typ_str}")

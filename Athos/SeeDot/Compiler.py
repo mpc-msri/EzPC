@@ -58,7 +58,7 @@ class Compiler:
         disableAllOpti,
         debugVar,
     ):
-        assert version == Util.Version.Fixed
+        assert version == Util.Version.Fixed or version == Util.Version.Float
         assert target == Util.Target.EzPC
         assert sfType == Util.SFType.Constant
         assert astFile is not None
@@ -83,6 +83,13 @@ class Compiler:
             Util.Config.wordLength = 64
         else:
             Util.Config.wordLength = 32
+
+    def is_target_float(self):
+        print("************>>>>>>>>>>>", Util.Config.version)
+        if Util.Config.version == "float":
+            return True
+        else:
+            return False
 
     def insertStartEndFunctionCalls(self, res: (IR.Prog, IR.Expr)):
         prog = res[0]
@@ -183,6 +190,8 @@ class Compiler:
         IRUtil.init()
         compiler = IRBuilderCSF()
         res = compiler.visit(ast)
+        if self.is_target_float() == False:
+            res = self.fixOuputScale(res, compiler)
         res = self.fixNames(res, compiler)
 
         Util.write_debug_info(compiler.name_mapping)

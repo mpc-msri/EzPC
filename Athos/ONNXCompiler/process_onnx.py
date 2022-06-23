@@ -51,7 +51,15 @@ import numpy as np
 np.set_printoptions(threshold=np.inf)
 
 DEBUG = False
+target = ""
 out_var_prefix = "J"
+
+
+def is_target_float():
+    if target not in ["SECFLOAT", "CPPFLOAT"]:
+        return False
+    else:
+        return True
 
 
 def get_unsupported_ops(model):
@@ -223,7 +231,12 @@ def preprocess_batch_normalization(graph_def, model_name_to_val_dict):
 
 def dump_model_weights(model, scaling_factor, model_dir, model_name):
     weights_path = ""
-    weights_fname = model_name + "_input_weights_float" + ".inp"
+    if not is_target_float():
+        weights_fname = (
+            model_name + "_input_weights_fixedpt_scale_" + str(scaling_factor) + ".inp"
+        )
+    else:
+        weights_fname = model_name + "_input_weights_float" + ".inp"
     weights_path = os.path.join(model_dir, weights_fname)
 
     model_name_to_val_dict = {
@@ -234,18 +247,20 @@ def dump_model_weights(model, scaling_factor, model_dir, model_name):
     preprocess_batch_normalization(model.graph, model_name_to_val_dict)
 
     chunk_n = ""
-    # cnt_n = 0
+    cnt_n = 0
     #!! Need to make changes here for floating point
     for init_vals in model.graph.initializer:
-        # (chunk_1, cnt_1) = common.numpy_float_array_to_fixed_point_val_str(
-        #     np.asarray(model_name_to_val_dict[init_vals.name], dtype=np.float32),
-        #     scaling_factor,
-        # )
-        chunk_1 = common.numpy_float_array_to_float_val_str(
-            np.asarray(model_name_to_val_dict[init_vals.name], dtype=np.float32)
-        )
+        if not is_target_float():
+            (chunk_1, cnt_1) = common.numpy_float_array_to_fixed_point_val_str(
+                np.asarray(model_name_to_val_dict[init_vals.name], dtype=np.float32),
+                scaling_factor,
+            )
+        else:
+            chunk_1 = common.numpy_float_array_to_float_val_str(
+                np.asarray(model_name_to_val_dict[init_vals.name], dtype=np.float32)
+            )
         chunk_n += chunk_1
-        # cnt_n += cnt_1
+        cnt_n += cnt_1
 
     print(
         "\nDumping model weights in ",
@@ -310,12 +325,18 @@ def strip_weights(model):
 # the model directory.
 # Optionaly dumps model weights as fixedpt in specified scaling factor
 def compile(
-    model_fname, input_t_info, output_t_names, scaling_factor, save_weights, role
+    model_fname,
+    input_t_info,
+    output_t_names,
+    scaling_factor,
+    save_weights,
+    role,
+    target_name,
 ):
     sys.setrecursionlimit(10000)
     if not model_fname.endswith(".onnx"):
         sys.exit("Please supply a valid ONNX model (.onnx extension)")
-
+    target = target_name
     model_name = os.path.basename(model_fname)[:-5]
     model_abs_dir = os.path.dirname(os.path.abspath(model_fname))
     print("Loading onnx graph: ", model_fname)
