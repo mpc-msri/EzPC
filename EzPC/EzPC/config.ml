@@ -30,6 +30,7 @@ type codegen =
   | OBLIVC
   | PORTHOS
   | SCI
+  | FSS
   | CPPRING
   | EMP
 
@@ -54,6 +55,7 @@ type configuration = {
     modulo: uint64;
     sci_backend: sci_backend_type; 
     sf: int;
+    libmode: bool;
   }
 
 let c_private :configuration ref = ref {
@@ -69,6 +71,7 @@ let c_private :configuration ref = ref {
                                        modulo = Uint64.of_int 0;
                                        sci_backend = OT;
                                        sf = 0;
+                                       libmode = false;
                                        }
 
 let set_bitlen (bitlen:int) :unit = 
@@ -120,3 +123,7 @@ let get_shares_dir () :string = !c_private.shares_dir
 let set_debug_partitions () :unit = c_private := { !c_private with debug_partitions = true }
 
 let get_debug_partitions () :bool = !c_private.debug_partitions
+
+let set_libmode () :unit = c_private := { !c_private with libmode = true }
+
+let get_libmode () :bool = !c_private.libmode
