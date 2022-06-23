@@ -1,0 +1,9 @@
+{% load static %}
+<header class="text-center">
+    <img src="{% static 'contests/mslogo.png' %}" alt="Microsoft logo" class="logo">
+    <a href="https://www.microsoft.com/en-us/research/project/ezpc-easy-secure-multi-party-computation/">Secure AI
+        validation powered by EzPC
+        - Microsoft Research</a>
+    <a href="{% url 'contests:home' %}" class="title">{{CONTEST_NAME}}
+    </a>
+</header>

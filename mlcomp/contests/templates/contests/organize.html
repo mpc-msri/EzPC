@@ -1,0 +1,29 @@
+{% extends 'contests/base.html' %}
+{% load crispy_forms_tags %}
+{% block 'body' %}
+<div class="row">
+    <div class="col small-form">
+        <h1>Organize a contest</h1>
+        <p>
+        <h3>Requirements</h3>
+        <p>You need access to a Linux machine/VM with 4 or more cores, a public IP address, and atleast 8GiB of RAM. You
+            should have
+            root access and be able to run docker in the VM.</p>
+
+        <h3>Note</h3>
+        <ul>
+            <li>Your test dataset will be private with you. It will <b>not</b> be shared with the contest participants.
+            </li>
+            <li>You will <b>not</b> get access to the participant models weights. Participant model weights are private.
+            </li>
+        </ul>
+        </p>
+        <form action="{% url 'contests:organize' %}  " enctype="multipart/form-data" method="post" class="form"
+            id="organizeform">
+            {% csrf_token %}
+            {{ form|crispy }}
+        </form>
+        <button class="btn btn-primary" type="submit" form="organizeform">Organize contest</button>
+    </div>
+</div>
+{% endblock %}

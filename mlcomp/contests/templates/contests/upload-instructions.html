@@ -1,0 +1,63 @@
+<p>You need to provide 3 files to make a submission. To get an idea of secure multi party computation, you can take a
+    look at <a href="https://github.com/mpc-msri/EzPC/tree/onnx-demo/Athos/onnx-demo">this demo</a>.</p>
+
+
+<div class="card">
+    <div class="card-body">
+        <h6>Pre process script</h6>
+        This must be a python script. It will run for each testcase. It will be run with two arguments. The
+        first argument will be the path to the input for current testcase. The second withh be the path where
+        you should save the pre-processed input as a numpy array. Output shape must match with what is declared in model
+        config.json. You need to modify the input as per your model requirements and
+        save the output as a numpy array in the output location.
+        <br>
+        <pre><code># Example python script
+input = sys.argv[1]
+output = sys.argv[2]
+file = open(input)
+arr = process_to_numpy_array(file)
+np.save(output, arr)
+</code></pre>
+    </div>
+</div>
+<br>
+<div class="card">
+    <div class="card-body">
+        <h6>Model config</h6>
+        A JSON file that looks like this<br />
+        <pre><code>{
+"model_name": "model.onnx",
+"input_tensors": { "some_input_node_name" : "1,224,320"},
+"target": "SCI",
+"backend": "OT",
+"scale": 15,
+"bitlength": 40,
+"output_tensors": [ "some_output_node_name"]
+}
+</code>
+</pre>
+        <p>Target must be "SCI" and Backend must be "OT". Model name must be "model.onnx". Run "<a
+                href="https://github.com/mpc-msri/EzPC/blob/master/Athos/CompileONNXGraph.py">CompileONNXGraph.py</a>
+            --help" for details.</p>
+
+        <ul>
+            <li>"input_tensors" - Name and shape of the input tensors</li>
+            <li>"output_tensors" - Name and shape of the output tensors</li>
+            <li>"scale" - Scaling factor used to convert floating point numbers to fixed point numbers. Choosing the
+                right value can improve accuracy of your results.</li>
+            <li>"bitlength" - Number of bits used in the crypto protocols. Larger value improves accuracy, but increases
+                cost.</li>
+        </ul>
+
+        <p>Experiment with various combinations of bitlength and scale and choose the one that gives you best accuracy.
+            Try with the defaults above to try.</p>
+    </div>
+</div>
+<br>
+<div class="card">
+    <div class="card-body">
+        <h6>Stripped model</h6>
+        The ONNX model stripped of it's weights, generated after you run
+        <code>CompileONNXGraph.py --role server ...</code>
+    </div>
+</div>

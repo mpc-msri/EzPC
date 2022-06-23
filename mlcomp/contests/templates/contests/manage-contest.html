@@ -1,0 +1,27 @@
+{% extends 'contests/base.html' %}
+{% load crispy_forms_tags %}
+{% block 'body' %}
+<div class="row">
+    <div class="col">
+        <h1>Manage contest "{{contest.contest_name}}"</h1>
+        <p>
+            This contest ends on {{contest.end_time}}
+        </p>
+        <p>Contest ID: {{contest.id}}</p>
+        <p>Num classes: {{contest.num_classes}}</p>
+        <p>Num testcases: {{contest.num_testcases}}</p>
+        <p>Website URL: {{WEBSITE_URL}}</p>
+        <h3>Instructions to setup automatic judging</h3>
+        <ul>
+            <li>Run <code>docker run -it agrawald/ezpc-modified</code></li>
+            <li>Run <code>source /ezpc_dir/EzPC/mpc_venv/activate</code></li>
+            <li>Download the organizer script using <code>rm -f organizer_script.py &amp;&amp; curl -LOJ {{WEBSITE_URL}}/static/contests/scripts/organizer_script.py</code></li>
+            <li>Learn about how to run the Organizer Script by running <code>python organizer_script.py --help</code></li>
+            <li>Create a folder for the test dataset. Files must be named 0, 1, 2, ... without extension for each item to be tested. </li>
+            <li>Create a file containing the correct labels ( integer ranging from 0 to number of labels). Each line must contain the correct lable for each testcase. Each label must end be a newline.</li>
+            <li>Run the script! For example, this is one sample command to run it: <code>python organizer_script.py --contest_id 2 --access_key defaultkey --website_url http://127.0.0.1:8000 --num_testcases 3 --labels_file labels.txt --dataset_path dataset --num_classes 5</code></li>
+            </ul>
+            
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends 'contests/base.html' %}
+{% load crispy_forms_tags %}
+{% block 'body' %}
+<div class="row">
+    <div class="col small-form">
+        <h1>Participate in {{CONTEST_NAME}}</h1>
+        <h3>Instructions</h3>
+        {% include 'contests/upload-instructions.html' %}
+
+        <br>
+
+        <h2>Submit your entry below</h2>
+        <form action="{% url 'contests:participate' %}" enctype="multipart/form-data" method="post" class="form"
+            id="participateform">
+            {% csrf_token %}
+            {{ form|crispy }}
+        </form>
+        <button class="btn btn-primary" type="submit" form="participateform">Submit</button>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,9 @@
+{
+    "model_name": "model.onnx",
+    "input_tensors": { "input" : "1,3,224,224"},
+    "target": "SCI",
+    "backend": "OT",
+    "scale": 15,
+    "bitlength": 40,
+    "output_tensors": [ "output"]
+}

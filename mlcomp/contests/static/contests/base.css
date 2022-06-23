@@ -1,0 +1,60 @@
+.small-form {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.container {
+    margin-top: 100px;
+}
+
+.nav-logo {
+    height: 30px;
+}
+
+.scroll {
+    max-width: 100%;
+    overflow-x: scroll;
+}
+
+pre code {
+    background-color: rgb(238, 228, 230);
+    border: 1px solid grey;
+    display: block;
+    padding: 5px;
+}
+
+header {
+    background-color: cadetblue;
+    padding: 100px 20px;
+    color: white !important;
+}
+
+
+header a {
+    color: beige;
+}
+
+.card img {
+    margin: 10px auto;
+    display: block;
+    max-width: 100%;
+    border: 1px solid black;
+}
+
+.logo {
+    width: 100px;
+    display: block;
+    margin: 0 auto;
+}
+
+a.title {
+    font-size: 50px !important;
+    color: white !important;
+    display: block;
+    font-weight: bolder;
+    text-decoration: none !important;
+}
+
+.instr li {
+    margin: 40px 0px;
+}

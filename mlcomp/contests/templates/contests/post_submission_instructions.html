@@ -1,0 +1,39 @@
+{% extends 'contests/base.html' %}
+{% load crispy_forms_tags %}
+{% block 'body' %}
+<div class="row">
+    <div class="col">
+        <h1>Evaluation instructions for <b>{{submission.team_name}}</b></h1>
+        In order to get your submission evaluated, follow these steps
+
+        <ol class="instr">
+            <li>Open the ports {{port_list}} on your Linux device.</li>
+            <li>
+                Create the <code>ezpc-modified</code> Docker container.
+
+                <pre><code>docker run -it -p ezpc-microsoft/ezpc-modified {{port_command_list}}</code></pre>
+            </li>
+            <li>In another terminal, copy your files ( ONNX model, model config, pre-process script ) into the container
+                using <code><a
+                    href="https://docs.docker.com/engine/reference/commandline/cp/">docker cp</a></code> command. For
+                example:
+
+                <pre><code>docker cp path/to/model.onnx container_name:/</code></pre> will copy the model from host to
+                the
+                container root.
+                Find container name using <code>docker ps</code>.
+
+            </li>
+            <li>Run the command
+                <pre><code>source /ezpc_dir/EzPC/mpc_venv/bin/activate</code></pre>
+            </li>
+            <li>
+                Run the below command to start the evaluation! Make sure to replace the paths to onnx model, config JSON
+                and pre-process script with the correct values.
+
+                <pre><code>participant_script.py --website_url {{WEBSITE_URL}} --num_testcases {{NUM_TESTCASES}} --num_classes {{NUM_TESTCASES}} --port {{submission.port}} --model_weights_file=model_input_weights_fixedpt_scale_15.inp</code></pre>
+            </li>
+        </ol>
+    </div>
+</div>
+{% endblock %}

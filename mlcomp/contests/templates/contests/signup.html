@@ -1,0 +1,14 @@
+{% extends 'contests/base.html' %}
+{% load crispy_forms_tags %}
+{% block 'body' %}
+<div class="row">
+    <div class="col small-form">
+        <h1>Sign up for a new account</h1>
+        <form action="{% url 'contests:signup' %}  " method="post" class="form" id="signupform">
+            {% csrf_token %}
+            {{ form|crispy }}
+        </form>
+        <button class="btn btn-primary" type="submit" form="signupform">Sign up</button>
+    </div>
+</div>
+{% endblock %}

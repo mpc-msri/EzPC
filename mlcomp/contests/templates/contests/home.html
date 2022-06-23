@@ -1,0 +1,40 @@
+{% extends 'contests/base.html' %}
+{% load crispy_forms_tags %}
+{% block 'body' %}
+<div class="row">
+    <div class="col-8">
+        {% include 'contests/contest-details.html' %}
+
+        <hr>
+
+        <h2>Participate</h2>
+
+        <p>
+            In order to participate, you will need a Linux device with public IP, ability to open ports, and Docker.
+        </p>
+        <a href="{% url 'contests:participate' %}" class="btn btn-primary">Participate</a>
+
+    </div>
+    <div class="col-4">
+        <h3>Leaderboard</h3>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Name</th>
+                    <th>Date</th>
+                    <th>Score</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1</td>
+                    <td>Baz00ka</td>
+                    <td>21 August 2022</td>
+                    <td>32</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

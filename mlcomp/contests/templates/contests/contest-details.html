@@ -1,0 +1,56 @@
+<h1>Contest Details</h1>
+
+<p>
+    This is an AI validation contest based on the ImageNet dataset. You need a trained model that is able to accurately
+    predict images from the 1000 <a
+        href="https://deeplearning.cms.waikato.ac.nz/user-guide/class-maps/IMAGENET/">ImageNet classes </a>.
+</p>
+
+
+<h2>Specifications</h2>
+
+<p>
+    Your ONNX model needs to predict the class of an image. It should output a <code>1x1000</code> array. The value of
+    each
+    element is
+    the probability of the image belonging to the class at that index.
+</p>
+
+<p>Your model will run inference on several test-cases, one image at a time. You can upload a pre-processing script to
+    convert a JPG image to a Numpy array of desired shape that will be fed into the model as input. Below is an example
+    Python script for the ResNet-50 model
+</p>
+
+<pre><code>
+    # Example function to pre-process input image.
+    import sys
+    import onnx
+    import numpy as np
+    import onnxruntime as ort
+    from PIL import Image
+    import cv2
+
+    # These arguments will be provided to the python script
+    input = sys.argv[1] # Location where image is
+    output = sys.argv[2] # Location where numpy array should be saved
+    
+    def preprocess(img):
+        img = img / 255.
+        img = cv2.resize(img, (256, 256))
+        h, w = img.shape[0], img.shape[1]
+        y0 = (h - 224) // 2
+        x0 = (w - 224) // 2
+        img = img[y0 : y0+224, x0 : x0+224, :]
+        img = (img - [0.485, 0.456, 0.406]) / [0.229, 0.224, 0.225]
+        img = np.transpose(img, axes=[2, 0, 1])
+        img = img.astype(np.float32)
+        img = np.expand_dims(img, axis=0)
+        return img
+    
+    with Image.open(input) as img:
+            img = np.array(img.convert('RGB'))
+            img = preprocess(img)
+            np.save(output, img)
+
+</code>
+</pre>

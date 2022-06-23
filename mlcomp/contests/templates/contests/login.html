@@ -1,0 +1,15 @@
+{% extends 'contests/base.html' %}
+{% load crispy_forms_tags %}
+{% block 'body' %}
+<div class="row">
+    <div class="col small-form">
+        <h1>Login</h1>
+        <form action="{% url 'contests:login' %}  " method="post" class="form" id="loginform">
+            {% csrf_token %}
+            {{ form|crispy }}
+        </form>
+        <button class="btn btn-primary" type="submit" form="loginform">Log in</button>
+        <a class="btn btn-secondary" href="{% url 'contests:signup' %}">Create New Account</a>
+    </div>
+</div>
+{% endblock %}
