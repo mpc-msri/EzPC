@@ -274,8 +274,6 @@ def generate_code(params, role, debug=False):
     os.system('rm "{}"'.format(ezpc_file_name))
     output_file = os.path.join(model_abs_dir, output_name)
 
-    return
-
     print("Compiling generated code to {target} target".format(target=target))
     if target == "SCI":
         program_name = model_base_name + "_" + target + "_" + backend + ".out"
