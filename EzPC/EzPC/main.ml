@@ -92,6 +92,7 @@ let tc_and_codegen (p:program) (file:string) :unit =
            if Config.get_codegen () = OBLIVC then Codegenoblivc.o_program p file
            else if Config.get_codegen () = PORTHOS then Codegenporthos.o_program p file
            else if Config.get_codegen () = SCI then Codegensci.o_program p file
+           else if Config.get_codegen () = FSS then Codegenfss.o_program p file
            else if Config.get_codegen () = CPPRING then Codegencppring.o_program p file
            else if Config.get_codegen () = EMP then Codegenemp.o_program p file
            else Codegen.o_program p file;
@@ -122,10 +123,11 @@ let specs = Arg.align [
                                                    | "OBLIVC" -> OBLIVC |> Config.set_codegen
                                                    | "PORTHOS" -> PORTHOS |> Config.set_codegen
                                                    | "SCI" -> SCI |> Config.set_codegen
+                                                   | "FSS" -> FSS |> Config.set_codegen
                                                    | "CPPRING" -> CPPRING |> Config.set_codegen
                                                    | "EMP" -> EMP |> Config.set_codegen
                                                    | _ -> failwith "Invalid codegen mode"),
-                 " Codegen mode (ABY or EMP or CPP or OBLIVC or PORTHOS or SCI or CPPRING, default ABY)");
+                 " Codegen mode (ABY or CPP or OBLIVC or PORTHOS or SCI or CPPRING or FSS or EMP, default ABY)");
                 ("--o_prefix", Arg.String (fun s -> o_prefix := s), " Prefix for output files, default is the input file prefix");
                 ("--disable-tac", Arg.Unit Config.disable_tac, " Disable 3-address code transformation (also disables the CSE optimization)");
                 ("--disable-cse", Arg.Unit Config.disable_cse, " Disable Common Subexpression Elimination optimization");
@@ -146,6 +148,7 @@ let specs = Arg.align [
                                                    | _ -> failwith "Invalid backend type"),
                  "SCI Backend Type (OT or HE, default OT).");
                 ("--sf", Arg.Int Config.set_sf, "Scale factor to be used in compilation. Valid only for PORTHOS.");
+                ("--l", Arg.Unit Config.set_libmode, "Dump library (should not contain main function, works only for FSS Mode)")
               ]
 let _ =
   Random.self_init ();
@@ -153,15 +156,18 @@ let _ =
   let _ = Arg.parse specs (fun f -> input_file := f) ("usage: ezpc [options] [input file]. options are:") in
 
   let _ =
+    if Config.get_codegen () <> FSS && Config.get_libmode () 
+    then failwith "ezpc: library mode is only supported for FSS backend";
+
     if Config.get_codegen () = CPP && Config.get_actual_bitlen () <> 32 && Config.get_actual_bitlen () <> 64
     then failwith "CPP codegen requires bitlen of 32/64.";
 
     if Config.get_codegen () <> PORTHOS && Config.get_sf () <> 0
     then failwith "sf only valid for PORTHOS.";
 
-    if Config.get_codegen () <> CPPRING && Config.get_codegen () <> SCI 
+    if Config.get_codegen () <> CPPRING && Config.get_codegen () <> SCI && Config.get_codegen () <> FSS
       && (Config.get_modulo () <> (Uint64.shift_left (Uint64.of_int 1) (Config.get_bitlen ())) || (Config.get_bitlen () <> 32 && Config.get_bitlen () <> 64)) 
-    then failwith "Modulo and {bitlen not equal to 32/64} only supported for CPPRING/SCI backend.";
+    then failwith "Modulo and {bitlen not equal to 32/64} only supported for CPPRING/SCI/FSS backend.";
 
     if Config.get_codegen () = CPPRING && (Config.get_bitlen () = 64 || Config.get_bitlen () = 32) 
       && Config.get_modulo () = (Uint64.shift_left (Uint64.of_int 1) (Config.get_bitlen ()))
@@ -186,6 +192,7 @@ let _ =
   in
 
   let file_contents = load_file !input_file in
+  let file_contents = if Config.get_libmode() then (file_contents ^ "\ndef void main() {}\n") else file_contents in
   print_msg ("Read file " ^ !input_file);
   let gen_ast = parse file_contents in
   print_msg ("Parsed file " ^ !input_file);

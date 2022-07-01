@@ -273,6 +273,12 @@ let rec get_base_lvalue (e:expr) :var =
   | Array_read (e1, e2) -> get_base_lvalue e1
   | _ -> failwith ("get_base_lvalue: expression " ^ (expr_to_string e) ^ " is not an lvalue")
 
+let rec change_array_read_var (e:expr) (new_var:var) :expr =
+  match e.data with
+  | Var x -> Var new_var |> mk_dsyntax ""
+  | Array_read (e1, e2) -> Array_read ((change_array_read_var e1 new_var), e2) |> mk_dsyntax ""
+  | _ -> failwith "wrong type encountered"
+
 let is_secret_label (l:label) :bool =
   match l with
   | Secret _ -> true
@@ -290,6 +296,11 @@ let get_array_bt_and_dimensions (t:typ) :(typ * expr list) =
     | Array (_, t, e) -> aux t (e::l)
   in
   aux t []
+
+let rec get_array_flat_size (t:typ) :expr = 
+  match t.data with
+    | Base _ -> (Const (Int32C 1l) |> mk_dsyntax "")
+    | Array (_, t, e) -> (Binop (Mul, (get_array_flat_size t), e, Some Public)) |> mk_dsyntax ""
 
 let is_const (e:expr) :bool =
   match e.data with

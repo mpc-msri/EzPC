@@ -109,7 +109,6 @@ def generate_code(params, role, debug=False):
         # CPP currently only supports 32 and 64 bitwdith
         if target == "CPP":
             bitlength = 64 if bitlength > 32 else 32
-
     save_weights = True if params["save_weights"] is None else params["save_weights"]
     disable_all_hlil_opts = (
         False
@@ -122,7 +121,7 @@ def generate_code(params, role, debug=False):
         else params["disable_relu_maxpool_opts"]
     )
     disable_garbage_collection = (
-        True
+        False
         if params["disable_garbage_collection"] is None
         else params["disable_garbage_collection"]
     )
@@ -138,7 +137,8 @@ def generate_code(params, role, debug=False):
         "ABY",
         "CPP",
         "CPPRING",
-    ], "Target must be any of ABY/CPP/CPPRING/PORTHOS/SCI"
+        "FSS",
+    ], "Target must be any of ABY/CPP/FSS/CPPRING/PORTHOS/SCI"
 
     cwd = os.getcwd()
     athos_dir = os.path.dirname(os.path.abspath(__file__))
@@ -151,12 +151,7 @@ def generate_code(params, role, debug=False):
     if role == "server":
         # Compile to seedot. Generate AST in model directory
         weights_path = compile_onnx.compile(
-            model_path,
-            input_tensor_info,
-            output_tensors,
-            scale,
-            save_weights,
-            role,
+            model_path, input_tensor_info, output_tensors, scale, save_weights, role
         )
         # Zip the pruned model, sizeInfo to send to client
         file_list = [pruned_model_path]
@@ -219,120 +214,132 @@ def generate_code(params, role, debug=False):
         )
         post = ""
     temp = os.path.join(model_abs_dir, "temp.ezpc")
-    os.system(
-        'cat "{pre}" "{common}" "{post}" "{ezpc}"> "{temp}"'.format(
-            pre=pre, common=common, post=post, ezpc=ezpc_abs_path, temp=temp
-        )
-    )
-    os.system('mv "{temp}" "{ezpc}"'.format(temp=temp, ezpc=ezpc_abs_path))
-
-    ezpc_dir = os.path.join(athos_dir, "../EzPC/EzPC/")
-    # Copy generated code to the ezpc directory
-    os.system('cp "{ezpc}" "{ezpc_dir}"'.format(ezpc=ezpc_abs_path, ezpc_dir=ezpc_dir))
-    os.chdir(ezpc_dir)
-    ezpc_args = ""
-    ezpc_args += "--bitlen {bl} --codegen {target} --disable-tac ".format(
-        bl=bitlength, target=target
-    )
-    output_name = ezpc_file_name[:-5] + "0.cpp"
-    if modulo is not None:
-        ezpc_args += "--modulo {} ".format(modulo)
-    if target == "SCI":
-        ezpc_args += "--backend {} ".format(backend.upper())
-        output_name = ezpc_file_name[:-5] + "_{}0.cpp".format(backend.upper())
-    if target in ["PORTHOS"]:
-        ezpc_args += "--sf {} ".format(scale)
-
-    os.system(
-        'eval `opam config env`; ./ezpc.sh "{}" '.format(ezpc_file_name) + ezpc_args
-    )
-    os.system(
-        'mv "{output}" "{model_dir}" '.format(
-            output=output_name, model_dir=model_abs_dir
-        )
-    )
-    os.system('rm "{}"'.format(ezpc_file_name))
-    output_file = os.path.join(model_abs_dir, output_name)
-
-    print("Compiling generated code to {target} target".format(target=target))
-    if target == "SCI":
-        program_name = model_base_name + "_" + target + "_" + backend + ".out"
-    else:
-        program_name = model_base_name + "_" + target + ".out"
-    program_path = os.path.join(model_abs_dir, program_name)
-    os.chdir(model_abs_dir)
-    if debug:
-        opt_flag = "-O0 -g"
-    else:
-        opt_flag = "-O3"
-    if target in ["CPP", "CPPRING"]:
+    if library == "fss":
         os.system(
-            'g++ {opt_flag} -w "{file}" -o "{output}"'.format(
-                file=output_file, output=program_path, opt_flag=opt_flag
+            'cat "{pre}" "{ezpc}"> "{temp}"'.format(
+                pre=pre, common=common, post=post, ezpc=ezpc_abs_path, temp=temp
             )
         )
-    elif target == "PORTHOS":
-        porthos_src = os.path.join(athos_dir, "..", "Porthos", "src")
-        porthos_lib = os.path.join(porthos_src, "build", "lib")
-        if os.path.exists(porthos_lib):
-            os.system(
-                """g++ {opt_flag} -fopenmp -pthread -w -march=native -msse4.1 -maes -mpclmul \
-        -mrdseed -fpermissive -fpic -std=c++17 -L \"{porthos_lib}\" -I \"{porthos_headers}\" \"{file}\" \
-        -lPorthos-Protocols -lssl -lcrypto -lrt -lboost_system \
-        -o \"{output}\"""".format(
-                    porthos_lib=porthos_lib,
-                    porthos_headers=porthos_src,
-                    file=output_file,
-                    output=program_path,
-                    opt_flag=opt_flag,
-                )
+    else:
+        os.system(
+            'cat "{pre}" "{common}" "{post}" "{ezpc}"> "{temp}"'.format(
+                pre=pre, common=common, post=post, ezpc=ezpc_abs_path, temp=temp
             )
-        else:
-            print(
-                "Not compiling generated code. Please follow the readme and build Porthos."
-            )
-    elif target == "SCI":
-        sci_install = os.path.join(athos_dir, "..", "SCI", "build", "install")
-        build_dir = "build_dir"
-        os.system("rm -r {build_dir}".format(build_dir=build_dir))
-        os.mkdir(build_dir)
-        os.chdir(build_dir)
-        cmake_file = """
-            cmake_minimum_required (VERSION 3.0)
-            project (BUILD_IT)
-            find_package(SCI REQUIRED PATHS \"{sci_install}\")
-            add_executable({prog_name} {src_file})
-            target_link_libraries({prog_name} SCI::SCI-{backend})
-        """.format(
-            sci_install=sci_install,
-            prog_name=program_name,
-            src_file=output_file,
-            backend=backend.upper(),
         )
-        with open("CMakeLists.txt", "w") as f:
-            f.write(cmake_file)
+    os.system('mv "{temp}" "{ezpc}"'.format(temp=temp, ezpc=ezpc_abs_path))
+    if library == "fss":
+        os.system("fssc --bitlen {bl} --disable-tac {ezpc}".format(bl=bitlength, ezpc=ezpc_abs_path))
+        print("\n\nGenerated binary: {mb}.out".format(mb=model_base_name))
+        program_name = model_base_name + "_" + target + ".out"
+        program_path = os.path.join(model_abs_dir, program_name)
+    else:
+        ezpc_dir = os.path.join(athos_dir, "../EzPC/EzPC/")
+        # Copy generated code to the ezpc directory
+        os.system('cp "{ezpc}" "{ezpc_dir}"'.format(ezpc=ezpc_abs_path, ezpc_dir=ezpc_dir))
+        os.chdir(ezpc_dir)
+        ezpc_args = ""
+        ezpc_args += "--bitlen {bl} --codegen {target} --disable-tac ".format(
+            bl=bitlength, target=target
+        )
+        output_name = ezpc_file_name[:-5] + "0.cpp"
+        if modulo is not None:
+            ezpc_args += "--modulo {} ".format(modulo)
+        if target == "SCI":
+            ezpc_args += "--backend {} ".format(backend.upper())
+            output_name = ezpc_file_name[:-5] + "_{}0.cpp".format(backend.upper())
+        if target in ["PORTHOS"]:
+            ezpc_args += "--sf {} ".format(scale)
 
-        if os.path.exists(sci_install):
-            ret = os.system("cmake --log-level=ERROR .")
-            if ret != 0:
-                sys.exit("Compilation of generated code failed. Exiting...")
-            ret = os.system("cmake --build . --parallel")
-            if ret != 0:
-                sys.exit("Compilation of generated code failed. Exiting...")
+        os.system(
+            'eval `opam config env`; ./ezpc.sh "{}" '.format(ezpc_file_name) + ezpc_args
+        )
+        os.system(
+            'mv "{output}" "{model_dir}" '.format(
+                output=output_name, model_dir=model_abs_dir
+            )
+        )
+        os.system('rm "{}"'.format(ezpc_file_name))
+        output_file = os.path.join(model_abs_dir, output_name)
+
+        print("Compiling generated code to {target} target".format(target=target))
+        if target == "SCI":
+            program_name = model_base_name + "_" + target + "_" + backend + ".out"
+        else:
+            program_name = model_base_name + "_" + target + ".out"
+        program_path = os.path.join(model_abs_dir, program_name)
+        os.chdir(model_abs_dir)
+        if debug:
+            opt_flag = "-O0 -g"
+        else:
+            opt_flag = "-O3"
+        if target in ["CPP", "CPPRING"]:
             os.system(
-                "mv {tmp_prog} {prog_path}".format(
-                    tmp_prog=program_name, prog_path=program_path
+                'g++ {opt_flag} -w "{file}" -o "{output}"'.format(
+                    file=output_file, output=program_path, opt_flag=opt_flag
                 )
             )
-            os.chdir("..")
+        elif target == "PORTHOS":
+            porthos_src = os.path.join(athos_dir, "..", "Porthos", "src")
+            porthos_lib = os.path.join(porthos_src, "build", "lib")
+            if os.path.exists(porthos_lib):
+                os.system(
+                    """g++ {opt_flag} -fopenmp -pthread -w -march=native -msse4.1 -maes -mpclmul \
+            -mrdseed -fpermissive -fpic -std=c++17 -L \"{porthos_lib}\" -I \"{porthos_headers}\" \"{file}\" \
+            -lPorthos-Protocols -lssl -lcrypto -lrt -lboost_system \
+            -o \"{output}\"""".format(
+                        porthos_lib=porthos_lib,
+                        porthos_headers=porthos_src,
+                        file=output_file,
+                        output=program_path,
+                        opt_flag=opt_flag,
+                    )
+                )
+            else:
+                print(
+                    "Not compiling generated code. Please follow the readme and build Porthos."
+                )
+        elif target == "SCI":
+            sci_install = os.path.join(athos_dir, "..", "SCI", "build", "install")
+            build_dir = "build_dir"
             os.system("rm -r {build_dir}".format(build_dir=build_dir))
-        else:
-            print(
-                "Not compiling generated code. Please follow the readme and build and install SCI."
+            os.mkdir(build_dir)
+            os.chdir(build_dir)
+            cmake_file = """
+                cmake_minimum_required (VERSION 3.0)
+                project (BUILD_IT)
+                find_package(SCI REQUIRED PATHS \"{sci_install}\")
+                add_executable({prog_name} {src_file})
+                target_link_libraries({prog_name} SCI::SCI-{backend})
+            """.format(
+                sci_install=sci_install,
+                prog_name=program_name,
+                src_file=output_file,
+                backend=backend.upper(),
             )
+            with open("CMakeLists.txt", "w") as f:
+                f.write(cmake_file)
 
-    os.chdir(cwd)
-    print("\n\nGenerated binary: {}".format(program_path))
+            if os.path.exists(sci_install):
+                ret = os.system("cmake --log-level=ERROR .")
+                if ret != 0:
+                    sys.exit("Compilation of generated code failed. Exiting...")
+                ret = os.system("cmake --build . --parallel")
+                if ret != 0:
+                    sys.exit("Compilation of generated code failed. Exiting...")
+                os.system(
+                    "mv {tmp_prog} {prog_path}".format(
+                        tmp_prog=program_name, prog_path=program_path
+                    )
+                )
+                os.chdir("..")
+                os.system("rm -r {build_dir}".format(build_dir=build_dir))
+            else:
+                print(
+                    "Not compiling generated code. Please follow the readme and build and install SCI."
+                )
+
+        os.chdir(cwd)
+        print("\n\nGenerated binary: {}".format(program_path))
     if role == "server":
         print("\n\nUse as input to server (model weights): {}".format(weights_path))
         print("Share {} file with the client".format(zip_path))

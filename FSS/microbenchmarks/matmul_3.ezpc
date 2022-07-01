@@ -1,0 +1,17 @@
+extern void MatMul(int32_pl I, int32_pl K, int32_pl J, int32_pl shrA, int32_pl shrB, int32_pl H1, int32_pl H2, int32_pl demote, int32_pl bwA, int32_pl bwB, int32_pl bwTemp, int32_pl bwC, int64_al[I*K] A, int64_al[K*J] B, int64_al[I*J] C, int64_al[K] tmp);
+extern void initialize();
+extern void finalize();
+
+def void main() {
+
+    int64_al[40000] C; int64_al[200] tmp; 
+
+    input(SERVER, A, int64_al[40000]);
+    input(SERVER, B, int64_al[40000]);
+
+    initialize();
+    MatMul(200, 200, 200, 1, 1, 0, 6, 64, 8, 8, 16, 8, A, B, C, tmp);
+    finalize();
+
+    output(CLIENT, C)
+}
