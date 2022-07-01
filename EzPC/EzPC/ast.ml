@@ -363,7 +363,13 @@ let is_float_bt (bt:base_type) :bool =
 
 let get_bt (t:typ) : base_type =
   let bt,l = get_bt_and_label t in
-  bt 
+  bt
+(**)
+let get_label (t:typ) : label =
+  let bt,label = get_bt_and_label t in
+  match label with 
+  | Some (l) -> l
+  | None -> failwith("No label")
 (* 
 let is_pow_2 (e:expr) :bool =
   match e.data with

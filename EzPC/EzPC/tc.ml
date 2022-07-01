@@ -218,7 +218,7 @@ let rec tc_expr (g:gamma) (e:expr) :eresult =
                                  | Is_equal | Greater_than | Less_than | Greater_than_equal | Less_than_equal -> 
                                     bind (check_expected_numeric_typ e1 t1 l) (fun _ ->
                                            bind (check_expected_numeric_typ e2 t2 l) (fun _ ->
-                                                  if is_float_bt (get_bt t1) &&  is_float_bt (get_bt t2) then
+                                                  if is_float_bt (get_bt t1) &&  is_float_bt (get_bt t2) && (get_label t1 = Secret Baba) then
                                                      Well_typed (Base (Bool, Some (Secret Boolean)) |> mk_syntax e.metadata)
                                                   else 
                                                     match join_types t1 t2 with
