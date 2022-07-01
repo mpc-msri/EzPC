@@ -101,7 +101,10 @@ and infer_op_labels_expr (g:gamma) (e:expr) :expr =
          if is_none lopt1 || is_none lopt2 || is_none lopt3 then warn_label_inference_failed e rng
          else
            if lopt1 = Some Public then Conditional (e1, e2, e3, Some Public)
-           else Conditional (e1, e2, e3, Some (Secret Boolean))
+           else 
+            if lopt1 = Some (Secret Baba) || lopt2 = Some (Secret Baba) || lopt3 = Some (Secret Baba)
+            then Conditional (e1, e2, e3, Some (Secret Baba))
+            else Conditional (e1, e2, e3, Some (Secret Boolean))
     | Array_read (e1, e2) -> Array_read (infer_op_labels_expr g e1, infer_op_labels_expr g e2)
     | App (f, args) -> App (f, List.map (infer_op_labels_expr g) args)
     | Subsumption _ -> warn_label_inference_failed e rng
@@ -272,11 +275,11 @@ let rec insert_coercions_expr (g:gamma) (e:expr) :expr =
          let e2 = maybe_add_subsumption g lopt (insert_coercions_expr g e2) in
          Binop (b, e1, e2, lopt))
     | Conditional (e1, e2, e3, lopt) ->
-      let label_branches = label_of_expr g e0 in
+      let label_branches =   label_of_expr g e0 in
       let e1 = maybe_add_subsumption g lopt (insert_coercions_expr g e1) in
       let e2 = maybe_add_subsumption g label_branches (insert_coercions_expr g e2) in
       let e3 = maybe_add_subsumption g label_branches (insert_coercions_expr g e3) in
-       Conditional (e1, e2, e3, lopt)
+      Conditional (e1, e2, e3, lopt)
     | Array_read (e1, e2) -> Array_read (insert_coercions_expr g e1, insert_coercions_expr g e2)
     | App (f, args) ->
        let args = List.map (insert_coercions_expr g) args in

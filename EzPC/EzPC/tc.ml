@@ -243,10 +243,10 @@ let rec tc_expr (g:gamma) (e:expr) :eresult =
   | Conditional (e1, e2, e3, lopt) ->
      bind (check_option_is_set (expr_to_string e) lopt e.metadata) (fun _ ->
             bind (tc_expr g e1) (fun t1 ->
-                   bind (check_expected_typ e1 t1 (Base (Bool, lopt) |> mk_dsyntax "")) (fun _ ->
+                   bind (check_expected_typ e1 t1 (Base (Bool, Some(Secret Boolean)) |> mk_dsyntax "")) (fun _ ->
                           bind (tc_expr g e2) (fun t2 ->
                                  bind (check_base_type_and_label e2 t2 (get_opt lopt)) (fun _ ->
-                                        bind (tc_expr g e3) (fun t3 ->
+                                   bind (tc_expr g e3) (fun t3 ->
                                                bind (check_base_type_and_label e3 t3 (get_opt lopt)) (fun _ ->
                                                       match join_types t2 t3 with
                                                       | Some t -> Well_typed t
