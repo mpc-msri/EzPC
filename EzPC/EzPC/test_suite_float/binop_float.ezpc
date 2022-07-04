@@ -23,7 +23,7 @@ e = a > b ;
     e = false || false ;
     e = false @ true ;
     e = a > b ;
-    e = (a == b) ;
+    (*e = (a == b) ;*)   (* Not available in secfloat *)
     e = a >= b ;
     e = a <= b ;
     e = a < b ;

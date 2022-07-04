@@ -32,7 +32,7 @@ SOFTWARE.
 
 def void main(){
 	input(SERVER, w, float_fl);
-	input(SERVER, x, float_pl);
+	input(ALL, x, float_pl);
 	input(SERVER, z, float_fl[10]);
 	input(CLIENT, a, float_fl); 
 	input(SERVER, b, bool_bl);

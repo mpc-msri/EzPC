@@ -240,7 +240,7 @@ let o_array_init (g:gamma) (t:typ) :comp =
     let args = o_args @ o_dimargs in
     let make_typ =
       match t with
-      | UInt32 | UInt64 | Int32 | Int64 -> "integer"
+      | UInt32 | UInt64 | Int32 | Int64 -> "int"
       | Float -> "float"
       | Bool -> "bool"
     in let s = ("make_vector_" ^ make_typ) |> o_str in
