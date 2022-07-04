@@ -21,7 +21,15 @@ To compile the library:
 
 ```
 mkdir build && cd build
-cmake -DCMAKE_INSTALL_PREFIX=./install .. [-DBUILD_TESTS=ON] [-DBUILD_NETWORKS=ON]
+cmake -DCMAKE_INSTALL_PREFIX=./install .. [-DBUILD_TESTS=ON] [-DBUILD_NETWORKS=ON] [-DNO_REVEAL_OUTPUT=ON]
+cmake --build . --target install --parallel
+```
+
+To compile for secure AI validation so that outputs are not revealed at the end of 2PC, compile with `-DNO_REVEAL_OUTPUT=ON` flag:
+
+```
+mkdir build && cd build
+cmake -DCMAKE_INSTALL_PREFIX=./install .. -DNO_REVEAL_OUTPUT=ON
 cmake --build . --target install --parallel
 ```
 

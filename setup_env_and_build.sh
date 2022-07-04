@@ -22,6 +22,9 @@
 
 mode=$1
 
+# If 2nd argument is provided, then SCI build will be modified. See SCI readme.
+NO_REVEAL_OUTPUT=$2
+
 sudo add-apt-repository ppa:deadsnakes/ppa -y
 sudo add-apt-repository ppa:avsm/ppa -y
 sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
@@ -185,7 +188,13 @@ make -j
 cd $ROOT/SCI
 mkdir -p build
 cd build
-cmake -DCMAKE_INSTALL_PREFIX=./install ../
+
+if [[ "$NO_REVEAL_OUTPUT" == "NO_REVEAL_OUTPUT" ]]; then
+	cmake -DCMAKE_INSTALL_PREFIX=./install ../ -DNO_REVEAL_OUTPUT=ON
+else
+  cmake -DCMAKE_INSTALL_PREFIX=./install ../
+fi
+
 cmake --build . --target install --parallel
 
 #Install pre-commit hook for formatting
