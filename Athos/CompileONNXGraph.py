@@ -244,7 +244,9 @@ def generate_code(params, role, debug=False):
     )
 
     os.system('mv "{temp}" "{ezpc}"'.format(temp=temp, ezpc=ezpc_abs_path))
-    # print("CompileONNXGraph.py : generate_code : SeeDot to EzPC is done. Exiting!")
+    print(
+        f"CompileONNXGraph.py : generate_code : SeeDot to EzPC is done. File : {ezpc_file_name}"
+    )
     # sys.exit(0)
 
     # EzPC to binary, no need to analyse this.
