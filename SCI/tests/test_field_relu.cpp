@@ -25,15 +25,13 @@ SOFTWARE.
 #include <iostream>
 #include <thread>
 
-#define LAN_EXEC
 #define MAX_THREADS 4
 
 using namespace sci;
 using namespace std;
 
 int party = 0;
-int num_relu = 1 << 10, port = 32000;
-int num_relu_orig = 0;
+int num_relu = 35, port = 32000;
 int b = 4;
 int batch_size = 0;
 string address = "127.0.0.1";
@@ -76,13 +74,14 @@ const std::map<std::string, std::vector<int>> layer_sizes{
 };
 
 void field_relu_thread(int tid, uint64_t *z, uint64_t *x, int lnum_relu) {
-  ReLUFieldProtocol<NetIO, uint64_t> *relu_oracle;
+  ReLUFieldProtocol<uint64_t> *relu_oracle;
   if (tid & 1) {
-    relu_oracle = new ReLUFieldProtocol<NetIO, uint64_t>(
-        3 - party, FIELD, ioArr[tid], bitlength, b, prime_mod, otpackArr[tid]);
+    relu_oracle = new ReLUFieldProtocol<uint64_t>(3 - party, FIELD,
+                                                  iopackArr[tid], bitlength, b,
+                                                  prime_mod, otpackArr[tid]);
   } else {
-    relu_oracle = new ReLUFieldProtocol<NetIO, uint64_t>(
-        party, FIELD, ioArr[tid], bitlength, b, prime_mod, otpackArr[tid]);
+    relu_oracle = new ReLUFieldProtocol<uint64_t>(
+        party, FIELD, iopackArr[tid], bitlength, b, prime_mod, otpackArr[tid]);
   }
   if (batch_size) {
     for (int j = 0; j < lnum_relu; j += batch_size) {
@@ -108,6 +107,7 @@ int main(int argc, char **argv) {
   amap.arg("r", party, "Role of party: ALICE = 1; BOB = 2");
   amap.arg("p", port, "Port Number");
   amap.arg("N", num_relu, "Number of ReLUs");
+  amap.arg("ip", address, "IP Address of server (ALICE)");
   amap.arg("b", b, "Radix base");
   amap.arg("bt", batch_size, "Batch size as a power of 2 (No batching = 0)");
   amap.arg("network", network,
@@ -123,21 +123,17 @@ int main(int argc, char **argv) {
     num_relu = 0;
     network_layer_sizes = layer_sizes.at(network);
     for (size_t i = 0; i < network_layer_sizes.size(); i++) {
-      num_relu_orig += network_layer_sizes[i];
-      num_relu += ((network_layer_sizes[i] + 7) / 8) * 8;
+      num_relu += network_layer_sizes[i];
     }
     if (network == "res")
       bitlength = 37;
     else
       bitlength = 32;
-  } else {
-    num_relu_orig = num_relu;
-    num_relu = ((num_relu + 7) / 8) * 8;
   }
 
   cout << "========================================================" << endl;
   cout << "Role: " << party << " - Bitlength: " << bitlength
-       << " - Radix Base: " << b << "\n# ReLUs: " << num_relu_orig
+       << " - Radix Base: " << b << "\n# ReLUs: " << num_relu
        << " - Batch Size: " << batch_size << " - # Threads: " << num_threads
        << endl;
   cout << "========================================================" << endl;
@@ -159,11 +155,11 @@ int main(int argc, char **argv) {
   /********************************************/
 
   for (int i = 0; i < num_threads; i++) {
-    ioArr[i] = new NetIO(party == 1 ? nullptr : address.c_str(), port + i);
+    iopackArr[i] = new IOPack(party, port + i, address);
     if (i & 1) {
-      otpackArr[i] = new OTPack<NetIO>(ioArr[i], 3 - party);
+      otpackArr[i] = new OTPack(iopackArr[i], 3 - party);
     } else {
-      otpackArr[i] = new OTPack<NetIO>(ioArr[i], party);
+      otpackArr[i] = new OTPack(iopackArr[i], party);
     }
   }
   std::cout << "All Base OTs Done" << std::endl;
@@ -174,7 +170,7 @@ int main(int argc, char **argv) {
   uint64_t comm_sent = 0;
   uint64_t multiThreadedIOStart[num_threads];
   for (int i = 0; i < num_threads; i++) {
-    multiThreadedIOStart[i] = ioArr[i]->counter;
+    multiThreadedIOStart[i] = iopackArr[i]->get_comm();
   }
   auto start = clock_start();
   if (network != "none") {
@@ -182,8 +178,8 @@ int main(int argc, char **argv) {
     for (size_t layer_idx = 0; layer_idx < network_layer_sizes.size();
          layer_idx++) {
       std::thread relu_threads[num_threads];
-      int layer_size = ((network_layer_sizes[layer_idx] + 7) / 8) * 8;
-      int chunk_size = (layer_size / (8 * num_threads)) * 8;
+      int layer_size = network_layer_sizes[layer_idx];
+      int chunk_size = layer_size / num_threads;
       cout << "Layer_idx: " << layer_idx << "; Layer_size: " << layer_size
            << endl;
       for (int i = 0; i < num_threads; ++i) {
@@ -204,7 +200,7 @@ int main(int argc, char **argv) {
     }
   } else {
     std::thread relu_threads[num_threads];
-    int chunk_size = (num_relu / (8 * num_threads)) * 8;
+    int chunk_size = num_relu / num_threads;
     for (int i = 0; i < num_threads; ++i) {
       int offset = i * chunk_size;
       int lnum_relu;
@@ -222,7 +218,7 @@ int main(int argc, char **argv) {
   }
   long long t = time_from(start);
   for (int i = 0; i < num_threads; i++) {
-    auto curComm = (ioArr[i]->counter) - multiThreadedIOStart[i];
+    auto curComm = (iopackArr[i]->get_comm()) - multiThreadedIOStart[i];
     comm_sent += curComm;
   }
   std::cout << "Comm. Sent/ell: "
@@ -233,15 +229,15 @@ int main(int argc, char **argv) {
 
   switch (party) {
   case sci::ALICE: {
-    ioArr[0]->send_data(x, sizeof(uint64_t) * num_relu);
-    ioArr[0]->send_data(z, sizeof(uint64_t) * num_relu);
+    iopackArr[0]->io->send_data(x, sizeof(uint64_t) * num_relu);
+    iopackArr[0]->io->send_data(z, sizeof(uint64_t) * num_relu);
     break;
   }
   case sci::BOB: {
     uint64_t *xi = new uint64_t[num_relu];
     uint64_t *zi = new uint64_t[num_relu];
-    ioArr[0]->recv_data(xi, sizeof(uint64_t) * num_relu);
-    ioArr[0]->recv_data(zi, sizeof(uint64_t) * num_relu);
+    iopackArr[0]->io->recv_data(xi, sizeof(uint64_t) * num_relu);
+    iopackArr[0]->io->recv_data(zi, sizeof(uint64_t) * num_relu);
 
     for (int i = 0; i < num_relu; i++) {
       xi[i] = (xi[i] + x[i]) % prime_mod;
@@ -251,12 +247,14 @@ int main(int argc, char **argv) {
     }
     delete[] xi;
     delete[] zi;
-    cout << "ReLU Tests Passing" << endl;
     break;
   }
   }
   delete[] x;
   delete[] z;
+
+  /**** Process & Write Benchmarking Data *****/
+  /********************************************/
 
   cout << "Number of ReLU/s:\t" << (double(num_relu) / t) * 1e6 << std::endl;
   cout << "ReLU Time (bitlength=" << bitlength << "; b=" << b << ")\t" << t
@@ -266,7 +264,7 @@ int main(int argc, char **argv) {
   /********************************************/
 
   for (int i = 0; i < num_threads; i++) {
-    delete ioArr[i];
+    delete iopackArr[i];
     delete otpackArr[i];
   }
   return 0;

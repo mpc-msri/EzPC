@@ -342,11 +342,15 @@ class InferType(ASTVisitor):
             self.indent += 1
 
         node.expr.gamma = dict(node.gamma)
+        # print(type(node.expr))
         exprType = self.visit(node.expr)
 
+        # print(exprType.shape)
+        # print(isTensor(exprType), exprType.dim >= 1)
         assert isTensor(exprType) and exprType.dim >= 1
 
         # Reshape is valid if the total number of elements remain same after reshape
+        # print(exprType.shape)
         assert reduce(operator.mul, exprType.shape, 1) == reduce(
             operator.mul, node.shape, 1
         )
@@ -360,6 +364,18 @@ class InferType(ASTVisitor):
 
         if self.debug:
             self.indent -= 1
+        return node.type
+
+    def visitGather(self, node: AST.Gather, args=None):
+        node.expr.gamma = dict(node.gamma)
+        exprType = self.visit(node.expr)
+
+        assert isTensor(exprType) and exprType.dim > 0
+
+        node.type = Tensor(
+            node.shape[1:], exprType.bitlen, exprType.isSecret, exprType.taint
+        )
+
         return node.type
 
     def visitPool(self, node: AST.Pool, args=None):
@@ -430,6 +446,8 @@ class InferType(ASTVisitor):
             node_type = self.typeCheckBroadcastOps(node, eType, fType)
         elif node.op == AST.Operators.MUL:
             node_type = self.visitBopMul(node, eType, fType)
+        elif node.op == AST.Operators.DIV:
+            node_type = self.visitBopDiv(node, eType, fType)
         elif node.op == AST.Operators.CONV:
             node_type = self.visitBopConv(node, eType, fType)
         elif node.op == AST.Operators.CONVTRANSPOSE:
@@ -478,7 +496,7 @@ class InferType(ASTVisitor):
                 shape=output_shape, dataType=eType.dataType, bitlen=eType.bitlen
             )
         else:
-            print(eType, fType)
+            # print(eType, fType)
             assert False
 
         node.type.taint = getTaint_type(eType, fType)
@@ -520,6 +538,29 @@ class InferType(ASTVisitor):
 
         if self.debug:
             self.indent -= 1
+        return node.type
+
+    def visitBopDiv(self, node: AST.BOp, eType: Type, fType: Type, args=None):
+        if isInt(eType) and isInt(fType):
+            node.type = Int(eType.bitlen, eType.isSecret)
+        elif isTensor(eType) and isTensor(fType):
+            if eType.dim == 0:
+                node.type = copy.copy(fType)
+            elif fType.dim == 0:
+                node.type = copy.copy(eType)
+            else:
+                assert eType.dim == 2 and fType.dim == 2
+                [n1, n2] = eType.shape
+                [n3, n4] = fType.shape
+                assert n2 == n3
+                node.type = Tensor([n1, n4], eType.bitlen)
+        else:
+            print("Error: Unknown condition in type checking.", file=sys.stderr)
+            assert False
+
+        node.type.taint = getTaint_type(eType, fType)
+        node.type.isSecret = eType.isSecret | fType.isSecret
+
         return node.type
 
     def visitBopConv(self, node: AST.BOp, eType: Type, fType: Type, args=None):
@@ -656,6 +697,9 @@ class InferType(ASTVisitor):
         elif node.op == AST.Operators.SOFTMAX:
             assert isTensor(eType)
             node.type = copy.deepcopy(eType)
+        elif node.op == AST.Operators.HARDSIGMOID:
+            assert isTensor(eType)
+            node.type = copy.deepcopy(eType)
         elif node.op == AST.Operators.SQRT:
             assert isTensor(eType)
             node.type = copy.deepcopy(eType)
@@ -749,6 +793,24 @@ class InferType(ASTVisitor):
 
         if self.debug:
             self.indent -= 1
+        return node.type
+
+    def visitUnsqueeze(self, node: AST.Unsqueeze, args=None):
+        node.expr.gamma = dict(node.gamma)
+        exprType = self.visit(node.expr)
+
+        dims = len(node.shape)
+
+        assert isTensor(exprType) and exprType.dim >= 1
+        assert 0 <= node.axis <= dims
+
+        node.type = Tensor(
+            node.shape[: node.axis] + [1] + node.shape[node.axis :],
+            exprType.bitlen,
+            exprType.isSecret,
+            exprType.taint,
+        )
+
         return node.type
 
     def visitReduce(self, node: AST.Reduce, args=None):

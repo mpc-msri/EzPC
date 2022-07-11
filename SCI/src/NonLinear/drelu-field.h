@@ -27,12 +27,12 @@ SOFTWARE.
 #include "utils/emp-tool.h"
 #include <cmath>
 
-template <typename IO> class DReLUFieldProtocol {
+class DReLUFieldProtocol {
 public:
-  IO *io = nullptr;
-  sci::OTPack<IO> *otpack;
-  TripleGenerator<IO> *triple_gen;
-  MillionaireProtocol<IO> *millionaire;
+  sci::IOPack *iopack;
+  sci::OTPack *otpack;
+  TripleGenerator *triple_gen;
+  MillionaireProtocol *millionaire;
   int party;
   int l, r, log_alpha, beta, beta_pow;
   int num_digits, num_triples_corr, num_triples_std, log_num_digits;
@@ -41,17 +41,18 @@ public:
   uint64_t p, p_2;
 
   DReLUFieldProtocol(int party, int bitlength, int log_radix_base,
-                     uint64_t prime_mod, IO *io, sci::OTPack<IO> *otpack) {
+                     uint64_t prime_mod, sci::IOPack *iopack,
+                     sci::OTPack *otpack) {
     assert(log_radix_base <= 8);
     assert(bitlength <= 64);
     this->party = party;
     this->l = bitlength;
     this->beta = log_radix_base;
-    this->io = io;
+    this->iopack = iopack;
     this->p = prime_mod;
     this->otpack = otpack;
-    this->millionaire = new MillionaireProtocol<IO>(party, io, otpack,
-                                                    bitlength, log_radix_base);
+    this->millionaire = new MillionaireProtocol(party, iopack, otpack,
+                                                bitlength, log_radix_base);
     this->triple_gen = millionaire->triple_gen;
     configure();
   }
@@ -77,7 +78,24 @@ public:
   ~DReLUFieldProtocol() { delete millionaire; }
 
   void compute_drelu(uint8_t *drelu, uint64_t *share, int num_relu) {
+    int old_num_relu = num_relu;
+    // num_relu should be a multiple of 4
+    num_relu = ceil(num_relu / 4.0) * 4;
+
+    uint64_t *share_ext;
+    uint8_t *drelu_ext;
+    if (old_num_relu == num_relu) {
+      share_ext = share;
+      drelu_ext = drelu;
+    } else {
+      share_ext = new uint64_t[num_relu];
+      drelu_ext = new uint8_t[num_relu];
+      memcpy(share_ext, share, old_num_relu * sizeof(uint64_t));
+      memset(share_ext + old_num_relu, 0,
+             (num_relu - old_num_relu) * sizeof(uint64_t));
+    }
     int num_cmps = 2 * num_relu;
+
     uint8_t *digits;       // num_digits * num_cmps
     uint8_t *leaf_res_cmp; // num_digits * num_cmps
     uint8_t *leaf_res_eq;  // num_digits * num_cmps
@@ -97,12 +115,12 @@ public:
     assert((beta <= 8) && "Base beta > 8 is not implemented");
     if (party == sci::ALICE) {
       for (int j = 0; j < num_relu; j++) {
-        uint64_t input_wrap_cmp = (p - 1 - share[j]) + p_2;
+        uint64_t input_wrap_cmp = (p - 1 - share_ext[j]) + p_2;
         uint64_t input_drelu_cmp;
-        if (share[j] > p_2) {
-          input_drelu_cmp = 2 * p - 1 - share[j];
+        if (share_ext[j] > p_2) {
+          input_drelu_cmp = 2 * p - 1 - share_ext[j];
         } else {
-          input_drelu_cmp = p - 1 - share[j];
+          input_drelu_cmp = p - 1 - share_ext[j];
         }
         for (int i = 0; i < num_digits; i++) { // Stored from LSB to MSB
           if ((i == num_digits - 1) &&
@@ -122,7 +140,7 @@ public:
     } else // party = sci::BOB
     {
       for (int j = 0; j < num_relu; j++) {
-        uint64_t input_cmp = p_2 + share[j];
+        uint64_t input_cmp = p_2 + share_ext[j];
         for (int i = 0; i < num_digits; i++) { // Stored from LSB to MSB
           if ((i == num_digits - 1) &&
               (r != 0)) { // A partially full last digit
@@ -194,18 +212,8 @@ public:
       } else if (r != 0) {
         otpack->kkot[beta - 1]->send(leaf_ot_messages + num_relu,
                                      num_relu * (num_digits - 2), 2 * 2);
-        if (r == 2) {
-          otpack->kkot[1]->send(leaf_ot_messages + num_relu * (num_digits - 1),
-                                num_relu, 2 * 2);
-        } else if (r == 3) {
-          otpack->kkot[2]->send(leaf_ot_messages + num_relu * (num_digits - 1),
-                                num_relu, 2 * 2);
-        } else if (r == 4) {
-          otpack->kkot[3]->send(leaf_ot_messages + num_relu * (num_digits - 1),
-                                num_relu, 2 * 2);
-        } else {
-          throw std::invalid_argument("Not yet implemented!");
-        }
+        otpack->kkot[r - 1]->send(
+            leaf_ot_messages + num_relu * (num_digits - 1), num_relu, 2 * 2);
       } else
         otpack->kkot[beta - 1]->send(leaf_ot_messages + num_relu,
                                      num_relu * (num_digits - 1), 2 * 2);
@@ -236,21 +244,9 @@ public:
         otpack->kkot[beta - 1]->recv(leaf_ot_recvd + num_relu,
                                      digits + num_relu,
                                      num_relu * (num_digits - 2), 2 * 2);
-        if (r == 2) {
-          otpack->kkot[1]->recv(leaf_ot_recvd + num_relu * (num_digits - 1),
-                                digits + num_relu * (num_digits - 1), num_relu,
-                                2 * 2);
-        } else if (r == 3) {
-          otpack->kkot[2]->recv(leaf_ot_recvd + num_relu * (num_digits - 1),
-                                digits + num_relu * (num_digits - 1), num_relu,
-                                2 * 2);
-        } else if (r == 4) {
-          otpack->kkot[3]->recv(leaf_ot_recvd + num_relu * (num_digits - 1),
-                                digits + num_relu * (num_digits - 1), num_relu,
-                                2 * 2);
-        } else {
-          throw std::invalid_argument("Not yet implemented!");
-        }
+        otpack->kkot[r - 1]->recv(leaf_ot_recvd + num_relu * (num_digits - 1),
+                                  digits + num_relu * (num_digits - 1),
+                                  num_relu, 2 * 2);
       } else
         otpack->kkot[beta - 1]->recv(leaf_ot_recvd + num_relu,
                                      digits + num_relu,
@@ -276,18 +272,16 @@ public:
     // comparsions
     millionaire->traverse_and_compute_ANDs(num_cmps, leaf_res_eq, leaf_res_cmp);
 
-    assert(num_relu % 8 == 0 && "Number of ReLUs should be a multiple of 8");
-
     if (party == sci::ALICE) {
       uint8_t **mux_ot_messages = new uint8_t *[num_relu];
       for (int j = 0; j < num_relu; j++) {
         mux_ot_messages[j] = new uint8_t[4];
       }
-      triple_gen->prg->random_bool((bool *)drelu, num_relu);
+      triple_gen->prg->random_bool((bool *)drelu_ext, num_relu);
       for (int j = 0; j < num_relu; j++) {
         // drelu[j] = 0;
-        bool neg_share = (share[j] > p_2);
-        set_mux_ot_messages(mux_ot_messages[j], leaf_res_cmp + j * 2, drelu[j],
+        bool neg_share = (share_ext[j] > p_2);
+        set_mux_ot_messages(mux_ot_messages[j], leaf_res_cmp + j * 2, drelu_ext[j],
                             neg_share);
       }
       otpack->kkot[1]->send(mux_ot_messages, num_relu, 1);
@@ -302,8 +296,13 @@ public:
         mux_ot_selection[j] =
             (leaf_res_cmp[j * 2 + 1] << 1) | leaf_res_cmp[j * 2];
       }
-      otpack->kkot[1]->recv(drelu, mux_ot_selection, num_relu, 1);
+      otpack->kkot[1]->recv(drelu_ext, mux_ot_selection, num_relu, 1);
       delete[] mux_ot_selection;
+    }
+    if (old_num_relu != num_relu) {
+      memcpy(drelu, drelu_ext, old_num_relu * sizeof(uint8_t));
+      delete[] share_ext;
+      delete[] drelu_ext;
     }
 
     delete[] digits;

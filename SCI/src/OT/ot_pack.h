@@ -27,30 +27,30 @@ SOFTWARE.
 #define KKOT_TYPES 8
 
 namespace sci {
-template <typename T> class OTPack {
+class OTPack {
 public:
-  SplitKKOT<T> *kkot[KKOT_TYPES];
+  SplitKKOT<NetIO> *kkot[KKOT_TYPES];
 
   // iknp_straight and iknp_reversed: party
   // acts as sender in straight and receiver in reversed.
   // Needed for MUX calls.
-  SplitIKNP<T> *iknp_straight;
-  SplitIKNP<T> *iknp_reversed;
-  T *io;
+  SplitIKNP<NetIO> *iknp_straight;
+  SplitIKNP<NetIO> *iknp_reversed;
+  IOPack *iopack;
   int party;
   bool do_setup = false;
 
-  OTPack(T *io, int party, bool do_setup = true) {
+  OTPack(IOPack *iopack, int party, bool do_setup = true) {
     this->party = party;
     this->do_setup = do_setup;
-    this->io = io;
+    this->iopack = iopack;
 
     for (int i = 0; i < KKOT_TYPES; i++) {
-      kkot[i] = new SplitKKOT<NetIO>(party, io, 1 << (i + 1));
+      kkot[i] = new SplitKKOT<NetIO>(party, iopack->io, 1 << (i + 1));
     }
 
-    iknp_straight = new SplitIKNP<NetIO>(party, io);
-    iknp_reversed = new SplitIKNP<NetIO>(3 - party, io);
+    iknp_straight = new SplitIKNP<NetIO>(party, iopack->io);
+    iknp_reversed = new SplitIKNP<NetIO>(3 - party, iopack->io_rev);
 
     if (do_setup) {
       SetupBaseOTs();
@@ -85,19 +85,20 @@ public:
     }
   }
 
-/*
- * DISCLAIMER:
- * OTPack copy method avoids computing setup keys for each OT instance by reusing the keys
- * generated (through base OTs) for another OT instance. Ideally, the PRGs within OT
- * instances, using the same keys, should use mutually exclusive counters for security.
- * However, the current implementation does not support this.
- */
+  /*
+   * DISCLAIMER:
+   * OTPack copy method avoids computing setup keys for each OT instance by
+   * reusing the keys generated (through base OTs) for another OT instance.
+   * Ideally, the PRGs within OT instances, using the same keys, should use
+   * mutually exclusive counters for security. However, the current
+   * implementation does not support this.
+   */
 
-  void copy(OTPack<T> *copy_from) {
+  void copy(OTPack *copy_from) {
     assert(this->do_setup == false && copy_from->do_setup == true);
-    SplitKKOT<T> *kkot_base = copy_from->kkot[0];
-    SplitIKNP<T> *iknp_s_base = copy_from->iknp_straight;
-    SplitIKNP<T> *iknp_r_base = copy_from->iknp_reversed;
+    SplitKKOT<NetIO> *kkot_base = copy_from->kkot[0];
+    SplitIKNP<NetIO> *iknp_s_base = copy_from->iknp_straight;
+    SplitIKNP<NetIO> *iknp_r_base = copy_from->iknp_reversed;
 
     switch (this->party) {
     case 1:

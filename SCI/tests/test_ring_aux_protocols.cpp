@@ -25,10 +25,10 @@ SOFTWARE.
 using namespace sci;
 using namespace std;
 
-int party, port = 8000, dim = 1 << 16;
+int party, port = 8000, dim = 35;
 string address = "127.0.0.1";
-NetIO *io;
-OTPack<NetIO> *otpack;
+IOPack *iopack;
+OTPack *otpack;
 AuxProtocols *aux;
 
 void test_wrap_computation() {
@@ -47,13 +47,13 @@ void test_wrap_computation() {
   aux->wrap_computation(x, y, dim, bw_x);
 
   if (party == ALICE) {
-    io->send_data(x, dim * sizeof(uint64_t));
-    io->send_data(y, dim * sizeof(uint8_t));
+    iopack->io->send_data(x, dim * sizeof(uint64_t));
+    iopack->io->send_data(y, dim * sizeof(uint8_t));
   } else {
     uint64_t *x0 = new uint64_t[dim];
     uint8_t *y0 = new uint8_t[dim];
-    io->recv_data(x0, dim * sizeof(uint64_t));
-    io->recv_data(y0, dim * sizeof(uint8_t));
+    iopack->io->recv_data(x0, dim * sizeof(uint64_t));
+    iopack->io->recv_data(y0, dim * sizeof(uint8_t));
 
     for (int i = 0; i < dim; i++) {
       assert((x0[i] > (mask_x - x[i])) == (y0[i] ^ y[i]));
@@ -87,16 +87,16 @@ void test_mux() {
   aux->multiplexer(sel, x, y, dim, bw_x, bw_y);
 
   if (party == ALICE) {
-    io->send_data(sel, dim * sizeof(uint8_t));
-    io->send_data(x, dim * sizeof(uint64_t));
-    io->send_data(y, dim * sizeof(uint64_t));
+    iopack->io->send_data(sel, dim * sizeof(uint8_t));
+    iopack->io->send_data(x, dim * sizeof(uint64_t));
+    iopack->io->send_data(y, dim * sizeof(uint64_t));
   } else {
     uint8_t *sel0 = new uint8_t[dim];
     uint64_t *x0 = new uint64_t[dim];
     uint64_t *y0 = new uint64_t[dim];
-    io->recv_data(sel0, dim * sizeof(uint8_t));
-    io->recv_data(x0, dim * sizeof(uint64_t));
-    io->recv_data(y0, dim * sizeof(uint64_t));
+    iopack->io->recv_data(sel0, dim * sizeof(uint8_t));
+    iopack->io->recv_data(x0, dim * sizeof(uint64_t));
+    iopack->io->recv_data(y0, dim * sizeof(uint64_t));
 
     for (int i = 0; i < dim; i++) {
       assert(((uint64_t(sel0[i] ^ sel[i]) * (x0[i] + x[i])) & mask_y) ==
@@ -129,13 +129,13 @@ void test_B2A() {
   aux->B2A(x, y, dim, bw_y);
 
   if (party == ALICE) {
-    io->send_data(x, dim * sizeof(uint8_t));
-    io->send_data(y, dim * sizeof(uint64_t));
+    iopack->io->send_data(x, dim * sizeof(uint8_t));
+    iopack->io->send_data(y, dim * sizeof(uint64_t));
   } else {
     uint8_t *x0 = new uint8_t[dim];
     uint64_t *y0 = new uint64_t[dim];
-    io->recv_data(x0, dim * sizeof(uint8_t));
-    io->recv_data(y0, dim * sizeof(uint64_t));
+    iopack->io->recv_data(x0, dim * sizeof(uint8_t));
+    iopack->io->recv_data(y0, dim * sizeof(uint64_t));
 
     for (int i = 0; i < dim; i++) {
       assert(((uint64_t(x0[i] ^ x[i])) & mask_y) == ((y0[i] + y[i]) & mask_y));
@@ -185,13 +185,13 @@ template <typename T> void test_lookup_table() {
   }
 
   if (party == BOB) {
-    io->send_data(x, dim * sizeof(T));
-    io->send_data(y, dim * sizeof(T));
+    iopack->io->send_data(x, dim * sizeof(T));
+    iopack->io->send_data(y, dim * sizeof(T));
   } else { // ALICE knows the correct spec
     T *x0 = new T[dim];
     T *y0 = new T[dim];
-    io->recv_data(x0, dim * sizeof(T));
-    io->recv_data(y0, dim * sizeof(T));
+    iopack->io->recv_data(x0, dim * sizeof(T));
+    iopack->io->recv_data(y0, dim * sizeof(T));
 
     for (int i = 0; i < dim; i++) {
       assert((spec[i][x0[i] & mask_x]) == (y0[i] & mask_y));
@@ -227,13 +227,13 @@ void test_MSB_computation() {
   aux->MSB(x, y, dim, bw_x);
 
   if (party == ALICE) {
-    io->send_data(x, dim * sizeof(uint64_t));
-    io->send_data(y, dim * sizeof(uint8_t));
+    iopack->io->send_data(x, dim * sizeof(uint64_t));
+    iopack->io->send_data(y, dim * sizeof(uint8_t));
   } else {
     uint64_t *x0 = new uint64_t[dim];
     uint8_t *y0 = new uint8_t[dim];
-    io->recv_data(x0, dim * sizeof(uint64_t));
-    io->recv_data(y0, dim * sizeof(uint8_t));
+    iopack->io->recv_data(x0, dim * sizeof(uint64_t));
+    iopack->io->recv_data(y0, dim * sizeof(uint8_t));
 
     for (int i = 0; i < dim; i++) {
       assert((((x0[i] + x[i]) & mask_x) >= (1ULL << (bw_x - 1))) ==
@@ -266,8 +266,8 @@ void test_MSB_to_Wrap() {
   if (party == ALICE) {
     uint64_t *x_bob = new uint64_t[dim];
     uint8_t *msb_x_bob = new uint8_t[dim];
-    io->recv_data(x_bob, dim * sizeof(uint64_t));
-    io->recv_data(msb_x_bob, dim * sizeof(uint8_t));
+    iopack->io->recv_data(x_bob, dim * sizeof(uint64_t));
+    iopack->io->recv_data(msb_x_bob, dim * sizeof(uint8_t));
 
     for (int i = 0; i < dim; i++) {
       msb_x[i] =
@@ -277,20 +277,20 @@ void test_MSB_to_Wrap() {
     delete[] x_bob;
     delete[] msb_x_bob;
   } else {
-    io->send_data(x, dim * sizeof(uint64_t));
-    io->send_data(msb_x, dim * sizeof(uint8_t));
+    iopack->io->send_data(x, dim * sizeof(uint64_t));
+    iopack->io->send_data(msb_x, dim * sizeof(uint8_t));
   }
 
   aux->MSB_to_Wrap(x, msb_x, y, dim, bw_x);
 
   if (party == ALICE) {
-    io->send_data(x, dim * sizeof(uint64_t));
-    io->send_data(y, dim * sizeof(uint8_t));
+    iopack->io->send_data(x, dim * sizeof(uint64_t));
+    iopack->io->send_data(y, dim * sizeof(uint8_t));
   } else {
     uint64_t *x0 = new uint64_t[dim];
     uint8_t *y0 = new uint8_t[dim];
-    io->recv_data(x0, dim * sizeof(uint64_t));
-    io->recv_data(y0, dim * sizeof(uint8_t));
+    iopack->io->recv_data(x0, dim * sizeof(uint64_t));
+    iopack->io->recv_data(y0, dim * sizeof(uint8_t));
 
     for (int i = 0; i < dim; i++) {
       assert((x0[i] > (mask_x - x[i])) == (y0[i] ^ y[i]));
@@ -327,9 +327,9 @@ void test_AND() {
     uint8_t *x_bob = new uint8_t[dim];
     uint8_t *y_bob = new uint8_t[dim];
     uint8_t *z_bob = new uint8_t[dim];
-    io->recv_data(x_bob, dim * sizeof(uint8_t));
-    io->recv_data(y_bob, dim * sizeof(uint8_t));
-    io->recv_data(z_bob, dim * sizeof(uint8_t));
+    iopack->io->recv_data(x_bob, dim * sizeof(uint8_t));
+    iopack->io->recv_data(y_bob, dim * sizeof(uint8_t));
+    iopack->io->recv_data(z_bob, dim * sizeof(uint8_t));
 
     for (int i = 0; i < dim; i++) {
       x_bob[i] ^= x[i];
@@ -340,9 +340,9 @@ void test_AND() {
     cout << "AND Computation Tests passed" << endl;
 
   } else {
-    io->send_data(x, dim * sizeof(uint8_t));
-    io->send_data(y, dim * sizeof(uint8_t));
-    io->send_data(z, dim * sizeof(uint8_t));
+    iopack->io->send_data(x, dim * sizeof(uint8_t));
+    iopack->io->send_data(y, dim * sizeof(uint8_t));
+    iopack->io->send_data(z, dim * sizeof(uint8_t));
   }
 
   delete[] x;
@@ -351,8 +351,8 @@ void test_AND() {
 }
 
 void test_digit_decomposition() {
-  int bw_x = 29;
-  int digit_size = 9;
+  int bw_x = 32;
+  int digit_size = 8;
   int num_digits = ceil((1.0 * bw_x) / digit_size);
   int last_digit_size = bw_x - (num_digits - 1) * digit_size;
   PRG128 prg;
@@ -373,13 +373,13 @@ void test_digit_decomposition() {
   aux->digit_decomposition_sci(dim, x, y, bw_x, digit_size);
 
   if (party == ALICE) {
-    io->send_data(x, dim * sizeof(uint64_t));
-    io->send_data(y, dim * num_digits * sizeof(uint64_t));
+    iopack->io->send_data(x, dim * sizeof(uint64_t));
+    iopack->io->send_data(y, dim * num_digits * sizeof(uint64_t));
   } else {
     uint64_t *x0 = new uint64_t[dim];
     uint64_t *y0 = new uint64_t[dim * num_digits];
-    io->recv_data(x0, dim * sizeof(uint64_t));
-    io->recv_data(y0, dim * num_digits * sizeof(uint64_t));
+    iopack->io->recv_data(x0, dim * sizeof(uint64_t));
+    iopack->io->recv_data(y0, dim * num_digits * sizeof(uint64_t));
     for (int i = 0; i < dim; i++) {
       for (int j = 0; j < num_digits - 1; j++) {
         y0[j * dim + i] += y[j * dim + i];
@@ -411,7 +411,7 @@ void test_digit_decomposition() {
 
 void test_msnzb_one_hot() {
   int bw_x = 32;
-  int digit_size = 5;
+  int digit_size = 8;
   PRG128 prg;
   uint64_t mask_x = (bw_x == 64 ? -1 : ((1ULL << bw_x) - 1));
 
@@ -426,13 +426,13 @@ void test_msnzb_one_hot() {
   aux->msnzb_one_hot(x, y, bw_x, dim, digit_size);
 
   if (party == ALICE) {
-    io->send_data(x, dim * sizeof(uint64_t));
-    io->send_data(y, dim * bw_x * sizeof(uint8_t));
+    iopack->io->send_data(x, dim * sizeof(uint64_t));
+    iopack->io->send_data(y, dim * bw_x * sizeof(uint8_t));
   } else {
     uint64_t *x0 = new uint64_t[dim];
     uint8_t *y0 = new uint8_t[dim * bw_x];
-    io->recv_data(x0, dim * sizeof(uint64_t));
-    io->recv_data(y0, dim * bw_x * sizeof(uint8_t));
+    iopack->io->recv_data(x0, dim * sizeof(uint64_t));
+    iopack->io->recv_data(y0, dim * bw_x * sizeof(uint8_t));
 
     for (int i = 0; i < dim; i++) {
       uint64_t secure_val = 0ULL;
@@ -463,21 +463,22 @@ int main(int argc, char **argv) {
   amap.arg("ip", address, "IP Address of server (ALICE)");
   amap.parse(argc, argv);
 
-  io = new NetIO(party == 1 ? nullptr : address.c_str(), port);
-  otpack = new OTPack<NetIO>(io, party);
+  iopack = new IOPack(party, port, "127.0.0.1");
+  otpack = new OTPack(iopack, party);
+  uint64_t num_rounds;
 
-  aux = new AuxProtocols(party, io, otpack);
+  aux = new AuxProtocols(party, iopack, otpack);
 
   test_MSB_computation();
   test_wrap_computation();
-  test_digit_decomposition();
-  test_msnzb_one_hot();
   test_mux();
   test_B2A();
   test_lookup_table<uint8_t>();
   test_lookup_table<uint64_t>();
   test_MSB_to_Wrap();
   test_AND();
+  test_digit_decomposition();
+  test_msnzb_one_hot();
 
   return 0;
 }

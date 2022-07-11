@@ -176,6 +176,7 @@ def generate_seedot_ast(model, value_info, model_dir):
         mtdAST,
         graph_def,
         value_info,
+        model,
     )
 
     output_tensors = [i.name for i in graph_def.output]
@@ -192,6 +193,7 @@ def generate_seedot_ast(model, value_info, model_dir):
         common.write_debug_info(node_name_to_out_var_dict)
 
     with open(os.path.join(model_dir, "astOutput.pkl"), "wb") as f:
+        # print(program)
         pickle.dump(program, f)
         print("Dumped SeeDot AST")
 
@@ -229,7 +231,11 @@ def preprocess_batch_normalization(graph_def, model_name_to_val_dict):
                 assert val == 0
 
 
-def dump_model_weights(model, scaling_factor, model_dir, model_name):
+def preprocess_winograd(graph_def, model_name_to_val_dict):
+    pass
+
+
+def dump_model_weights(model, scaling_factor, model_dir, gather_names, model_name):
     weights_path = ""
     if not is_target_float():
         weights_fname = (
@@ -245,6 +251,9 @@ def dump_model_weights(model, scaling_factor, model_dir, model_name):
     }
 
     preprocess_batch_normalization(model.graph, model_name_to_val_dict)
+    # preprocess_winograd(model.graph, model_name_to_val_dict)
+
+    print(f"Going to dump and gather names = {gather_names}")
 
     chunk_n = ""
     cnt_n = 0
@@ -376,7 +385,15 @@ def compile(
     # sys.exit(1)
 
     if role == "server" and save_weights:
-        return dump_model_weights(model, scaling_factor, model_abs_dir, model_name)
+        gather_names = []
+
+        for node in model.graph.node:
+            if node.op_type == "Gather":
+                gather_names.append(list(node.input)[1])
+
+        return dump_model_weights(
+            model, scaling_factor, model_abs_dir, gather_names, model_name
+        )
     return
 
 
@@ -473,12 +490,16 @@ def process_input_variables(
         Input(i) for i in graph_def.initializer
     ]
 
+    # print(f"Printing all the input nodes with length = {len(input_nodes)}")
     for node in input_nodes:
         if DEBUG:
             print("Node information")
             print(node)
 
         # print(f"process_onnx.py : process_input_variables : {node}")
+        if node.shape == []:
+            continue
+
         curAst = ONNXNodesAST.Input(node, value_info, node_name_to_out_var_dict)
         mtdForCurAST = {
             AST.ASTNode.mtdKeyTFOpName: "Input",
@@ -515,6 +536,7 @@ def process_onnx_nodes(
     mtdAST,
     graph_def,
     value_info,
+    model,
 ):
     for node in graph_def.node:
         if DEBUG:
@@ -529,14 +551,36 @@ def process_onnx_nodes(
         # print(f"process_onnx.py : process_onnx_nodes : {node}")
         # print(f"process_onnx.py : process_onnx_nodes : calling attr --> {node.op_type}")
         func = getattr(ONNXNodesAST, node.op_type)
-        (innermost_let_ast_node, out_var_count) = func(
-            node,
-            value_info,
-            node_name_to_out_var_dict,
-            innermost_let_ast_node,
-            out_var_count,
-            mtdAST,
-        )
+
+        # if Gather, then you need to supply the index here
+        if node.op_type == "Gather":
+            # print(f"Gonna call {func} for {type(node.op_type)}")
+            name = list(node.input)[1]
+
+            index = None
+            for lol in model.graph.initializer:
+                if lol.name == name:
+                    index = numpy_helper.to_array(lol).tolist()
+                    break
+
+            (innermost_let_ast_node, out_var_count) = func(
+                node,
+                value_info,
+                node_name_to_out_var_dict,
+                innermost_let_ast_node,
+                out_var_count,
+                mtdAST,
+                index,
+            )
+        else:
+            (innermost_let_ast_node, out_var_count) = func(
+                node,
+                value_info,
+                node_name_to_out_var_dict,
+                innermost_let_ast_node,
+                out_var_count,
+                mtdAST,
+            )
 
         assert type(innermost_let_ast_node) is AST.Let
 

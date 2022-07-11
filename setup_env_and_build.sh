@@ -116,6 +116,7 @@ pip install -U pip
 pip install tensorflow==1.15.0 keras==2.3.0 scipy==1.1.0 matplotlib scikit-learn==0.24.2
 pip install onnx onnx-simplifier onnxruntime black
 pip install pytest pytest-cov 
+python3 -m pip install onnx_graphsurgeon --index-url https://pypi.ngc.nvidia.com
 
 
 build_boost () {
@@ -167,6 +168,11 @@ if [ $? -ne 0 ]; then
   echo "ABY build failed. Check error and refer to https://github.com/encryptogroup/ABY for help";
   exit
 fi
+
+#Build EMP
+wget https://raw.githubusercontent.com/emp-toolkit/emp-readme/master/scripts/install.py
+python install.py --deps --tool --ot --sh2pc
+rm -rf install.py
 
 #Build Porthos 
 cd $ROOT/Porthos

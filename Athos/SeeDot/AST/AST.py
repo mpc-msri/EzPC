@@ -25,6 +25,8 @@ OperatorsSymbolDict = {
     "ADD": "+",
     "GEMMADD": "g+",
     "CONVADD": "c+",
+    "SUB": "-",
+    "DIV": "/",
     "ClearMemPublic": "clearmempublic",
     "ClearMemSecret": "clearmemsecret",
     "CONV": "#",
@@ -39,7 +41,10 @@ OperatorsSymbolDict = {
     "RSQRT": "rsqrt",
     "Shape": "shape",
     "SOFTMAX": "softmax",
+    "Unsqueeze": "unsqueeze",
+    "Gather": "gather",
     "SIGMOID": "sigmoid",
+    "HARDSIGMOID": "hardsigmoid",
     "SQRT": "sqrt",
     "SUB": "-",
     "TANH": "tanh",
@@ -56,6 +61,7 @@ class Operators(Enum):
     GEMMADD = auto()
     CONVADD = auto()
     SUB = auto()
+    DIV = auto()
     MUL = auto()
     CONV = auto()
     CONVTRANSPOSE = auto()
@@ -63,6 +69,7 @@ class Operators(Enum):
     TANH = auto()
     SIGMOID = auto()
     SOFTMAX = auto()
+    HARDSIGMOID = auto()
     SQRT = auto()
     RSQRT = auto()
     Equal = auto()
@@ -70,6 +77,8 @@ class Operators(Enum):
     ElemWiseDiv = auto()
     Floor = auto()
     Shape = auto()
+    Unsqueeze = auto()
+    Gather = auto()
     Mean = auto()
     ClearMemSecret = auto()
     ClearMemPublic = auto()
@@ -248,6 +257,24 @@ class Reshape(ASTNode):
         self.order = order
 
 
+class Gather(ASTNode):
+    def __init__(self, expr: ASTNode, shape: list, axis: int, index: int):
+        if assertInputTypes:
+            assert isinstance(expr, ASTNode)
+
+            for elem in shape:
+                assert isinstance(elem, int)
+
+            assert isinstance(axis, int)
+            assert isinstance(index, int)
+
+        super().__init__()
+        self.expr = expr
+        self.shape = shape
+        self.axis = axis
+        self.index = index
+
+
 # expr : ASTNode
 # options : Other options required by maxpool
 #           Order: [FH, FW, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideH, strideW]
@@ -338,13 +365,35 @@ class BOp(ASTNode):
 
 
 class Func(ASTNode):
-    def __init__(self, op: Operators, expr: ASTNode):
+    def __init__(self, op: Operators, expr: ASTNode, **kwargs):
         if assertInputTypes:
             assert isinstance(op, Operators)
             assert isinstance(expr, ASTNode)
         super().__init__()
         self.op = op
         self.expr = expr
+        for k, v in kwargs.items():
+            if k == "alpha":
+                self.alpha = v
+            elif k == "beta":
+                self.beta = v
+
+
+class Unsqueeze(ASTNode):
+    def __init__(self, expr: ID, shape: list, axis: int):
+        if assertInputTypes:
+            assert isinstance(expr, ID)
+            assert isinstance(shape, list)
+
+            for elem in shape:
+                assert isinstance(elem, int)
+
+            assert isinstance(axis, int)
+
+        super().__init__()
+        self.expr = expr
+        self.shape = shape
+        self.axis = axis
 
 
 class Let(ASTNode):

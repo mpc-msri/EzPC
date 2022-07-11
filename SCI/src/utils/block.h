@@ -129,6 +129,8 @@ inline block128 one_block() {
   return makeBlock128(0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL);
 }
 
+const block128 select_mask[2] = {zero_block(), one_block()};
+
 __attribute__((target("sse2"))) inline block128 make_delta(const block128 &a) {
   return _mm_or_si128(makeBlock128(0L, 1L), a);
 }
@@ -224,6 +226,26 @@ __attribute__((target("avx"))) inline bool isZero(const block256 *b) {
 __attribute__((target("sse4.1,sse2"))) inline bool isOne(const block128 *b) {
   __m128i neq = _mm_xor_si128(*b, one_block());
   return _mm_testz_si128(neq, neq) > 0;
+}
+
+/* Linear orthomorphism function
+ * [REF] Implementation of "Efficient and Secure Multiparty Computation from
+ * Fixed-Key Block Ciphers" https://eprint.iacr.org/2019/074.pdf
+ */
+#ifdef __x86_64__
+__attribute__((target("sse2")))
+#endif
+inline block128
+sigma(block128 a) {
+  return _mm_shuffle_epi32(a, 78) ^
+         (a & makeBlock128(0xFFFFFFFFFFFFFFFF, 0x00));
+}
+
+inline block128 set_bit(const block128 &a, int i) {
+  if (i < 64)
+    return makeBlock128(0L, 1ULL << i) | a;
+  else
+    return makeBlock128(1ULL << (i - 64), 0) | a;
 }
 
 // Modified from

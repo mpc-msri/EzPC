@@ -103,7 +103,7 @@ def test_uop(test_dir, backend, Op, a_shape, dtype):
             (3, 2, 2),
             None,
             1,
-            # marks=pytest.mark.skip(reason="axes can't be none. keepdims has to be 0"),
+            marks=pytest.mark.skip(reason="axes can't be none. keepdims has to be 0"),
             id="default_axes_keepdims",
         ),
         pytest.param(
@@ -671,12 +671,12 @@ def test_constant(test_dir, backend, shape, attribute):
         values = np.random.randn(*shape).astype(np.float32)
         kwargs[attribute] = values.flatten().astype(float)
     elif attribute == "value_int":
-        values = np.array(np.random.randint(-(2 ** 32 - 1), 2 ** 32 - 1)).astype(
+        values = np.array(np.random.randint(-(2**32 - 1), 2**32 - 1)).astype(
             np.int64
         )
         kwargs[attribute] = int(values)
     elif attribute == "value_ints":
-        values = np.random.randint(-(2 ** 32 - 1), 2 ** 32 - 1, shape).astype(np.int32)
+        values = np.random.randint(-(2**32 - 1), 2**32 - 1, shape).astype(np.int32)
         print(values)
         kwargs[attribute] = values.flatten().astype(int)
 

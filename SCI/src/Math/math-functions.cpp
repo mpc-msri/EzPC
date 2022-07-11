@@ -27,14 +27,14 @@ using namespace sci;
 #define KKOT_LIMIT 8
 #define SQRT_LOOKUP_SCALE 2
 
-MathFunctions::MathFunctions(int party, NetIO *io, OTPack<NetIO> *otpack) {
+MathFunctions::MathFunctions(int party, IOPack *iopack, OTPack *otpack) {
   this->party = party;
-  this->io = io;
+  this->iopack = iopack;
   this->otpack = otpack;
-  this->aux = new AuxProtocols(party, io, otpack);
-  this->xt = new XTProtocol(party, io, otpack, aux);
-  this->trunc = new Truncation(party, io, otpack, aux);
-  this->mult = new LinearOT(party, io, otpack);
+  this->aux = new AuxProtocols(party, iopack, otpack);
+  this->xt = new XTProtocol(party, iopack, otpack);
+  this->trunc = new Truncation(party, iopack, otpack);
+  this->mult = new LinearOT(party, iopack, otpack);
 }
 
 MathFunctions::~MathFunctions() {
@@ -319,12 +319,6 @@ void MathFunctions::div(int32_t dim, uint64_t *nm, uint64_t *dn, uint64_t *out,
     delete[] tmp_dn;
     delete[] adjust;
   }
-}
-
-void MathFunctions::taylor_series_exp(int32_t dim, uint64_t *x, uint64_t *y,
-                                      int32_t bw_x, int32_t bw_y, int32_t s_x,
-                                      int32_t s_y) {
-  return;
 }
 
 uint64_t lookup_neg_exp(uint64_t val_in, int32_t s_in, int32_t s_out) {

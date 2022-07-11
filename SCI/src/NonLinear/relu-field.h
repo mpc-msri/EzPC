@@ -28,13 +28,12 @@ SOFTWARE.
 
 #define FIELD 1
 
-template <typename IO, typename type>
-class ReLUFieldProtocol : public ReLUProtocol<IO, type> {
+template <typename type> class ReLUFieldProtocol : public ReLUProtocol<type> {
 public:
-  IO *io = nullptr;
-  sci::OTPack<IO> *otpack = nullptr;
-  TripleGenerator<IO> *triple_gen = nullptr;
-  DReLUFieldProtocol<IO> *relu_triple_compare_oracle = nullptr;
+  sci::IOPack *iopack;
+  sci::OTPack *otpack;
+  TripleGenerator *triple_gen;
+  DReLUFieldProtocol *relu_triple_compare_oracle;
   int party;
   int algeb_str;
   int l, b;
@@ -48,25 +47,25 @@ public:
   uint8_t zero_small = 0;
 
   // Constructor
-  ReLUFieldProtocol(int party, int algeb_str, IO *io, int l, int b,
-                    uint64_t mod, sci::OTPack<IO> *otpack) {
+  ReLUFieldProtocol(int party, int algeb_str, sci::IOPack *iopack, int l, int b,
+                    uint64_t mod, sci::OTPack *otpack) {
     this->party = party;
     this->algeb_str = algeb_str;
-    this->io = io;
+    this->iopack = iopack;
     this->l = l;
     this->b = b;
     this->p = mod;
     this->p_bitlen = l;
     this->p_bitlen_triple_comparison = l + 1;
     this->otpack = otpack;
-    this->triple_gen = new TripleGenerator<IO>(party, io, otpack);
+    this->triple_gen = new TripleGenerator(party, iopack, otpack);
     this->relu_triple_compare_oracle =
-        new DReLUFieldProtocol<IO>(party, l + 1, b, mod, io, otpack);
+        new DReLUFieldProtocol(party, l + 1, b, mod, iopack, otpack);
     configure();
   }
 
   // Destructor
-  virtual ~ReLUFieldProtocol() {
+  ~ReLUFieldProtocol() {
     delete triple_gen;
     delete relu_triple_compare_oracle;
   }
@@ -160,28 +159,27 @@ public:
     for (int i = 0; i < num_relu; i++) {
       additive_masks[i] %= this->p;
     }
-
-    switch (this->party) {
-    case sci::ALICE: {
-      for (int i = 0; i < num_relu; i++) {
-        set_relu_end_ot_messages(ot_messages[i], share + i, drelu_ans + i,
-                                 ((type *)additive_masks) + i);
-      }
-      otpack->iknp_straight->send(ot_messages, num_relu, this->l);
-      otpack->iknp_reversed->recv(received_shares, drelu_ans, num_relu,
-                                  this->l);
-      break;
+    for (int i = 0; i < num_relu; i++) {
+      set_relu_end_ot_messages(ot_messages[i], share + i, drelu_ans + i,
+                               ((type *)additive_masks) + i);
     }
-    case sci::BOB: {
-      for (int i = 0; i < num_relu; i++) {
-        set_relu_end_ot_messages(ot_messages[i], share + i, drelu_ans + i,
-                                 ((type *)additive_masks) + i);
+#pragma omp parallel num_threads(2)
+    {
+      if (omp_get_thread_num() == 1) {
+        if (party == sci::ALICE) {
+          otpack->iknp_reversed->recv(received_shares, drelu_ans, num_relu,
+                                      this->l);
+        } else { // party == sci::BOB
+          otpack->iknp_reversed->send(ot_messages, num_relu, this->l);
+        }
+      } else {
+        if (party == sci::ALICE) {
+          otpack->iknp_straight->send(ot_messages, num_relu, this->l);
+        } else { // party == sci::BOB
+          otpack->iknp_straight->recv(received_shares, drelu_ans, num_relu,
+                                      this->l);
+        }
       }
-      otpack->iknp_straight->recv(received_shares, drelu_ans, num_relu,
-                                  this->l);
-      otpack->iknp_reversed->send(ot_messages, num_relu, this->l);
-      break;
-    }
     }
     for (int i = 0; i < num_relu; i++) {
       result[i] = ((type *)additive_masks)[i] +

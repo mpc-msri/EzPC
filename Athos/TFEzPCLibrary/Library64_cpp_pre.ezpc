@@ -72,6 +72,21 @@ def void ArgMax(int32_pl s1, int32_pl s2, int64_al[s1][s2] inArr, int64_al[s1] o
 	};
 }
 
+def void HardSigmoid(int32_pl s1, int64_al[s1] inArr, int64_al[s1] outArr, int32_pl sf, bool_pl doTruncation) 
+{
+	for i1=[0:s1] {
+		outArr[i1] = ((inArr[i1] > 3L) ? 1L : (inArr[i1] - 3L < 0L ? 0L : ((inArr[i1] + 3L)/6L))) ;
+	} ;
+
+	if (doTruncation)
+	{
+		for i1=[0:s1] {
+			outArr[i1] = (outArr[i1] >> sf) ;
+		} ;
+	}
+
+}
+
 (**************************)
 def void Relu(int32_pl s1, int64_al[s1] inArr, int64_al[s1] outArr, int32_pl sf, bool_pl doTruncation)
 {

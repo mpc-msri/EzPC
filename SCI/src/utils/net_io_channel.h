@@ -59,8 +59,10 @@ public:
   int port;
   uint64_t counter = 0;
   uint64_t num_rounds = 0;
+  bool FBF_mode;
   LastCall last_call = LastCall::None;
-  NetIO(const char *address, int port, bool quiet = false) {
+  NetIO(const char *address, int port, bool full_buffer = false,
+        bool quiet = false) {
     this->port = port;
     is_server = (address == nullptr);
     if (address == nullptr) {
@@ -112,8 +114,12 @@ public:
     stream = fdopen(consocket, "wb+");
     buffer = new char[NETWORK_BUFFER_SIZE];
     memset(buffer, 0, NETWORK_BUFFER_SIZE);
-    // setvbuf(stream, buffer, _IOFBF, NETWORK_BUFFER_SIZE);
-    setvbuf(stream, buffer, _IONBF, NETWORK_BUFFER_SIZE);
+    if (full_buffer) {
+      setvbuf(stream, buffer, _IOFBF, NETWORK_BUFFER_SIZE);
+    } else {
+      setvbuf(stream, buffer, _IONBF, NETWORK_BUFFER_SIZE);
+    }
+    this->FBF_mode = full_buffer;
     if (!quiet)
       std::cout << "connected\n";
   }

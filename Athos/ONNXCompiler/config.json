@@ -1,9 +1,0 @@
-{
-    "model_name": "avgpool.onnx",
-    "input_tensors": { "input" : "1,3,32,32"},
-    "target": "SCI",
-    "backend": "OT",
-    "scale": 23,
-    "bitlength": 56,
-    "output_tensors": [ "output"]
-}

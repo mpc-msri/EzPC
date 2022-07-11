@@ -26,30 +26,24 @@ SOFTWARE.
 #include "utils/emp-tool.h"
 #include <cmath>
 
-template <typename IO> class MillionaireWithEquality {
+class MillionaireWithEquality {
 public:
-  IO *io = nullptr;
-  sci::OTPack<IO> *otpack;
-  TripleGenerator<IO> *triple_gen;
-  MillionaireProtocol<IO> *mill;
-  bool del_mill = false;
+  sci::IOPack *iopack;
+  sci::OTPack *otpack;
+  TripleGenerator *triple_gen;
+  MillionaireProtocol *mill;
   int party;
   int l, r, log_alpha, beta, beta_pow;
   int num_digits, num_triples, log_num_digits;
   uint8_t mask_beta, mask_r;
 
-  MillionaireWithEquality(int party, IO *io, sci::OTPack<IO> *otpack,
-                          MillionaireProtocol<IO> *mill_in = nullptr,
+  MillionaireWithEquality(int party, sci::IOPack *iopack, sci::OTPack *otpack,
                           int bitlength = 32, int radix_base = MILL_PARAM) {
     this->party = party;
-    this->io = io;
+    this->iopack = iopack;
     this->otpack = otpack;
-    this->mill = mill_in;
-    if (mill_in == nullptr) {
-      del_mill = true;
-      mill =
-          new MillionaireProtocol<IO>(party, io, otpack, bitlength, radix_base);
-    }
+    this->mill =
+        new MillionaireProtocol(party, iopack, otpack, bitlength, radix_base);
     this->triple_gen = mill->triple_gen;
     configure(bitlength, radix_base);
   }
@@ -73,11 +67,7 @@ public:
     this->beta_pow = 1 << beta;
   }
 
-  ~MillionaireWithEquality() {
-    if (del_mill) {
-      delete mill;
-    }
-  }
+  ~MillionaireWithEquality() { delete mill; }
 
   void bitlen_lt_beta(uint8_t *res_cmp, uint8_t *res_eq, uint64_t *data,
                       int num_cmps, int bitlength, bool greater_than = true,
@@ -316,29 +306,33 @@ public:
           (2 * (counter_triples_used - old_counter_triples_used) * num_cmps) /
           8;
 
-      if (party == sci::ALICE) {
-        // Send share of e and f
-        io->send_data(ei + offset, size_used);
-        io->send_data(ei + offset, size_used);
-        io->send_data(fi + offset, size_used);
-        io->send_data(fi + offset, size_used);
-        // Receive share of e and f
-        io->recv_data(e + offset, size_used);
-        io->recv_data(e + offset, size_used);
-        io->recv_data(f + offset, size_used);
-        io->recv_data(f + offset, size_used);
-      } else // party = sci::BOB
+#pragma omp parallel num_threads(2)
       {
-        // Receive share of e and f
-        io->recv_data(e + offset, size_used);
-        io->recv_data(e + offset, size_used);
-        io->recv_data(f + offset, size_used);
-        io->recv_data(f + offset, size_used);
-        // Send share of e and f
-        io->send_data(ei + offset, size_used);
-        io->send_data(ei + offset, size_used);
-        io->send_data(fi + offset, size_used);
-        io->send_data(fi + offset, size_used);
+        if (omp_get_thread_num() == 1) {
+          if (party == sci::ALICE) {
+            iopack->io_rev->recv_data(e + offset, size_used);
+            iopack->io_rev->recv_data(e + offset, size_used);
+            iopack->io_rev->recv_data(f + offset, size_used);
+            iopack->io_rev->recv_data(f + offset, size_used);
+          } else { // party == sci::BOB
+            iopack->io_rev->send_data(ei + offset, size_used);
+            iopack->io_rev->send_data(ei + offset, size_used);
+            iopack->io_rev->send_data(fi + offset, size_used);
+            iopack->io_rev->send_data(fi + offset, size_used);
+          }
+        } else {
+          if (party == sci::ALICE) {
+            iopack->io->send_data(ei + offset, size_used);
+            iopack->io->send_data(ei + offset, size_used);
+            iopack->io->send_data(fi + offset, size_used);
+            iopack->io->send_data(fi + offset, size_used);
+          } else { // party == sci::BOB
+            iopack->io->recv_data(e + offset, size_used);
+            iopack->io->recv_data(e + offset, size_used);
+            iopack->io->recv_data(f + offset, size_used);
+            iopack->io->recv_data(f + offset, size_used);
+          }
+        }
       }
 
       // Reconstruct e and f
@@ -352,7 +346,6 @@ public:
       // Step 2 of AND computation
       for (int j = 0; j < num_digits and j + i < num_digits;
            j += 2 * i) { // j=0 is LSD and j=num_digits-1 is MSD
-
         // CMP_j: Use 1 triple compute cmp_j AND eq_j+i.
         this->mill->AND_step_2(
             leaf_res_cmp + j * num_cmps,

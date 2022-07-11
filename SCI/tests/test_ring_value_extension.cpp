@@ -26,16 +26,17 @@ using namespace sci;
 using namespace std;
 
 int dim = 1024;
-int bwA = 4;
+int bwA = 32;
 int bwB = 64;
+bool precomputed_MSBs = false;
 
 uint64_t maskA = (bwA == 64 ? -1 : ((1ULL << bwA) - 1));
 uint64_t maskB = (bwB == 64 ? -1 : ((1ULL << bwB) - 1));
 
 // vars
 int party, port = 32000;
-NetIO *io;
-OTPack<NetIO> *otpack;
+IOPack *iopack;
+OTPack *otpack;
 XTProtocol *ext;
 PRG128 prg;
 
@@ -51,13 +52,21 @@ void z_ext() {
     outB[i] = 0;
   }
 
-  ext->z_extend(dim, inA, outB, bwA, bwB);
+  uint8_t *msbA = nullptr;
+  if (precomputed_MSBs) {
+    msbA = new uint8_t[dim];
+    ext->aux->MSB(inA, msbA, dim, bwA);
+  }
+  uint64_t num_rounds = iopack->get_rounds();
+  ext->z_extend(dim, inA, outB, bwA, bwB, msbA);
+  num_rounds = iopack->get_rounds() - num_rounds;
+  cout << "Num rounds (Zero-Extension): " << num_rounds << endl;
 
   if (party == ALICE) {
     uint64_t *inA_bob = new uint64_t[dim];
     uint64_t *outB_bob = new uint64_t[dim];
-    io->recv_data(inA_bob, sizeof(uint64_t) * dim);
-    io->recv_data(outB_bob, sizeof(uint64_t) * dim);
+    iopack->io->recv_data(inA_bob, sizeof(uint64_t) * dim);
+    iopack->io->recv_data(outB_bob, sizeof(uint64_t) * dim);
     for (int i = 0; i < dim; i++) {
       inA[i] = (inA[i] + inA_bob[i]) & maskA;
       outB[i] = (outB[i] + outB_bob[i]) & maskB;
@@ -69,8 +78,8 @@ void z_ext() {
     }
     cout << "Correct!" << endl;
   } else { // BOB
-    io->send_data(inA, sizeof(uint64_t) * dim);
-    io->send_data(outB, sizeof(uint64_t) * dim);
+    iopack->io->send_data(inA, sizeof(uint64_t) * dim);
+    iopack->io->send_data(outB, sizeof(uint64_t) * dim);
   }
 }
 
@@ -86,13 +95,21 @@ void s_ext() {
     outB[i] = 0;
   }
 
-  ext->s_extend(dim, inA, outB, bwA, bwB);
+  uint8_t *msbA = nullptr;
+  if (precomputed_MSBs) {
+    msbA = new uint8_t[dim];
+    ext->aux->MSB(inA, msbA, dim, bwA);
+  }
+  uint64_t num_rounds = iopack->get_rounds();
+  ext->s_extend(dim, inA, outB, bwA, bwB, msbA);
+  num_rounds = iopack->get_rounds() - num_rounds;
+  cout << "Num rounds (Signed-Extension): " << num_rounds << endl;
 
   if (party == ALICE) {
     uint64_t *inA_bob = new uint64_t[dim];
     uint64_t *outB_bob = new uint64_t[dim];
-    io->recv_data(inA_bob, sizeof(uint64_t) * dim);
-    io->recv_data(outB_bob, sizeof(uint64_t) * dim);
+    iopack->io->recv_data(inA_bob, sizeof(uint64_t) * dim);
+    iopack->io->recv_data(outB_bob, sizeof(uint64_t) * dim);
     for (int i = 0; i < dim; i++) {
       inA[i] = (inA[i] + inA_bob[i]) & maskA;
       outB[i] = (outB[i] + outB_bob[i]) & maskB;
@@ -104,17 +121,22 @@ void s_ext() {
     }
     cout << "Correct!" << endl;
   } else { // BOB
-    io->send_data(inA, sizeof(uint64_t) * dim);
-    io->send_data(outB, sizeof(uint64_t) * dim);
+    iopack->io->send_data(inA, sizeof(uint64_t) * dim);
+    iopack->io->send_data(outB, sizeof(uint64_t) * dim);
   }
 }
 
 int main(int argc, char **argv) {
-  party = atoi(argv[1]);
+  ArgMapping amap;
+  amap.arg("r", party, "Role of party: ALICE = 1; BOB = 2");
+  amap.arg("p", port, "Port Number");
+  amap.arg("m", precomputed_MSBs, "MSB_to_Wrap Optimization?");
+  amap.arg("d", dim, "Size of vector");
+  amap.parse(argc, argv);
 
-  io = new NetIO(party == 1 ? nullptr : "127.0.0.1", port);
-  otpack = new OTPack<NetIO>(io, party);
-  ext = new XTProtocol(party, io, otpack);
+  iopack = new IOPack(party, port, "127.0.0.1");
+  otpack = new OTPack(iopack, party);
+  ext = new XTProtocol(party, iopack, otpack);
 
   cout << "<><><><> Zero Extension <><><><>" << endl;
   z_ext();

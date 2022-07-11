@@ -42,8 +42,8 @@ int s_y = 12;
 uint64_t mask_x = (bw_x == 64 ? -1 : ((1ULL << bw_x) - 1));
 uint64_t mask_y = (bw_y == 64 ? -1 : ((1ULL << bw_y) - 1));
 
-sci::NetIO *ioArr[MAX_THREADS];
-sci::OTPack<sci::NetIO> *otpackArr[MAX_THREADS];
+IOPack *iopackArr[MAX_THREADS];
+OTPack *otpackArr[MAX_THREADS];
 
 uint64_t computeULPErr(double calc, double actual, int SCALE) {
   int64_t calc_fixed = (double(calc) * (1ULL << SCALE));
@@ -57,9 +57,9 @@ uint64_t computeULPErr(double calc, double actual, int SCALE) {
 void exp_thread(int tid, uint64_t *x, uint64_t *y, int num_exp) {
   MathFunctions *math;
   if (tid & 1) {
-    math = new MathFunctions(3 - party, ioArr[tid], otpackArr[tid]);
+    math = new MathFunctions(3 - party, iopackArr[tid], otpackArr[tid]);
   } else {
-    math = new MathFunctions(party, ioArr[tid], otpackArr[tid]);
+    math = new MathFunctions(party, iopackArr[tid], otpackArr[tid]);
   }
   math->lookup_table_exp(num_exp, x, y, bw_x, bw_y, s_x, s_y);
 
@@ -83,11 +83,11 @@ int main(int argc, char **argv) {
   /********** Setup IO and Base OTs ***********/
   /********************************************/
   for (int i = 0; i < num_threads; i++) {
-    ioArr[i] = new NetIO(party == 1 ? nullptr : address.c_str(), port + i);
+    iopackArr[i] = new IOPack(party, port + i, address);
     if (i & 1) {
-      otpackArr[i] = new OTPack<NetIO>(ioArr[i], 3 - party);
+      otpackArr[i] = new OTPack(iopackArr[i], 3 - party);
     } else {
-      otpackArr[i] = new OTPack<NetIO>(ioArr[i], party);
+      otpackArr[i] = new OTPack(iopackArr[i], party);
     }
   }
   std::cout << "All Base OTs Done" << std::endl;
@@ -102,10 +102,10 @@ int main(int argc, char **argv) {
   prg.random_data(x, dim * sizeof(uint64_t));
 
   if (party == ALICE) {
-    ioArr[0]->send_data(x, dim * sizeof(uint64_t));
+    iopackArr[0]->io->send_data(x, dim * sizeof(uint64_t));
   } else {
     uint64_t *x0 = new uint64_t[dim];
-    ioArr[0]->recv_data(x0, dim * sizeof(uint64_t));
+    iopackArr[0]->io->recv_data(x0, dim * sizeof(uint64_t));
     for (int i = 0; i < dim; i++) {
       // x is always negative
       x[i] = ((1ULL << (bw_x - 1)) + (x[i] & (mask_x >> 1))) - x0[i];
@@ -121,7 +121,7 @@ int main(int argc, char **argv) {
   uint64_t total_comm = 0;
   uint64_t thread_comm[num_threads];
   for (int i = 0; i < num_threads; i++) {
-    thread_comm[i] = ioArr[i]->counter;
+    thread_comm[i] = iopackArr[i]->get_comm();
   }
 
   auto start = clock_start();
@@ -144,20 +144,20 @@ int main(int argc, char **argv) {
   long long t = time_from(start);
 
   for (int i = 0; i < num_threads; i++) {
-    thread_comm[i] = ioArr[i]->counter - thread_comm[i];
+    thread_comm[i] = iopackArr[i]->get_comm() - thread_comm[i];
     total_comm += thread_comm[i];
   }
 
   /************** Verification ****************/
   /********************************************/
   if (party == ALICE) {
-    ioArr[0]->send_data(x, dim * sizeof(uint64_t));
-    ioArr[0]->send_data(y, dim * sizeof(uint64_t));
+    iopackArr[0]->io->send_data(x, dim * sizeof(uint64_t));
+    iopackArr[0]->io->send_data(y, dim * sizeof(uint64_t));
   } else { // party == BOB
     uint64_t *x0 = new uint64_t[dim];
     uint64_t *y0 = new uint64_t[dim];
-    ioArr[0]->recv_data(x0, dim * sizeof(uint64_t));
-    ioArr[0]->recv_data(y0, dim * sizeof(uint64_t));
+    iopackArr[0]->io->recv_data(x0, dim * sizeof(uint64_t));
+    iopackArr[0]->io->recv_data(y0, dim * sizeof(uint64_t));
 
     uint64_t total_err = 0;
     uint64_t max_ULP_err = 0;
@@ -186,7 +186,7 @@ int main(int argc, char **argv) {
   delete[] x;
   delete[] y;
   for (int i = 0; i < num_threads; i++) {
-    delete ioArr[i];
+    delete iopackArr[i];
     delete otpackArr[i];
   }
 }

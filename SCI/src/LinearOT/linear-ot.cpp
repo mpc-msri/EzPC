@@ -21,8 +21,9 @@ SOFTWARE.
 
 #include "LinearOT/linear-ot.h"
 #include <cmath>
+#include <omp.h>
 
-#define MAX_NUM_OT (1 << 20)
+#define MAX_NUM_OT (1 << 24)
 
 #define USE_EIGEN
 #ifdef USE_EIGEN
@@ -31,6 +32,43 @@ SOFTWARE.
 
 using namespace std;
 using namespace sci;
+
+#define START_IDX 0
+#define print_vec(ot, vec, bw, N)                                              \
+  {                                                                            \
+    uint64_t* rec_vec = new uint64_t[N];                                       \
+    reconstruct(ot, N, vec+START_IDX, rec_vec, bw);                            \
+    std::cout << #vec << "_pub:" << std::endl;                                 \
+    for (int i = 0; i < N; i++) {                                              \
+        std::cout << rec_vec[i] << " ";                                        \
+    }                                                                          \
+    std::cout << std::endl;                                                    \
+    delete[] rec_vec;                                                          \
+  }                                                                            \
+
+#define print_share(vec, bw, N)                                                \
+  {                                                                            \
+    std::cout << #vec << "_share:" << std::endl;                               \
+    for (int i = 0; i < N; i++) {                                              \
+        std::cout << vec[i] << " ";                                            \
+    }                                                                          \
+    std::cout << std::endl;                                                    \
+  }                                                                            \
+
+void reconstruct(LinearOT* ot, int dim, uint64_t *x, uint64_t *y, int bw_x) {
+  uint64_t mask = (bw_x == 64 ? -1 : ((1ULL << bw_x) - 1));
+  if (ot->party == sci::ALICE) {
+    ot->iopack->io->send_data(x, dim * sizeof(uint64_t));
+    for (int i = 0; i < dim; i++) {
+      y[i] = 0;
+    }
+  } else {
+    ot->iopack->io->recv_data(y, dim * sizeof(uint64_t));
+    for (int i = 0; i < dim; i++) {
+      y[i] = (y[i] + x[i]) & mask;
+    }
+  }
+}
 
 void matrix_transpose(uint64_t *A, int32_t m, int32_t n, int d = 1) {
   uint64_t *tmpA = new uint64_t[m * n * d];
@@ -48,18 +86,19 @@ void matrix_transpose(uint64_t *A, int32_t m, int32_t n, int d = 1) {
   delete[] tmpA;
 }
 
-LinearOT::LinearOT(int party, NetIO *io, OTPack<NetIO> *otpack) {
+LinearOT::LinearOT(int party, IOPack *iopack, OTPack *otpack) {
   this->party = party;
-  this->io = io;
+  this->iopack = iopack;
   this->otpack = otpack;
-  this->aux = new AuxProtocols(party, io, otpack);
-  this->trunc = new Truncation(party, io, otpack, aux);
-  this->xt = new XTProtocol(party, io, otpack, aux);
+  this->aux = new AuxProtocols(party, iopack, otpack);
+  this->trunc = new Truncation(party, iopack, otpack);
+  this->xt = new XTProtocol(party, iopack, otpack);
 }
 
 LinearOT::~LinearOT() {
   delete aux;
   delete trunc;
+  delete xt;
 }
 
 void LinearOT::hadamard_cleartext(int dim, uint64_t *inA, uint64_t *inB,
@@ -137,6 +176,11 @@ void LinearOT::hadamard_product(int32_t dim, uint64_t *inA, uint64_t *inB,
                         signed_arithmetic, signed_B, false, mode, msbA, msbB);
 }
 
+// Cost with matrix of dimension dim1xdim2 and bitwidth m used as OT receiver
+double cross_term_cost(int dim1, int dim2, int dim3, int m, int n, int l) {
+  return dim1*dim2*(m*128.0 + dim3*(m*(l-m) + (m*m + m)/2.0)); 
+}
+
 void LinearOT::matmul_cross_terms(int32_t dim1, int32_t dim2, int32_t dim3,
                                   uint64_t *inA, uint64_t *inB, uint64_t *outC,
                                   int32_t bwA, int32_t bwB, int32_t bwC,
@@ -163,7 +207,9 @@ void LinearOT::matmul_cross_terms(int32_t dim1, int32_t dim2, int32_t dim3,
     use_straight_ot = true;
     use_reversed_ot = true;
     // if (bwA*dim1*dim2 > bwB*dim2*dim3) {
-    if (bwA > bwB) {
+    // if (bwA > bwB) {
+    if (cross_term_cost(dim1, dim2, dim3, bwA, bwB, bwC)
+        > cross_term_cost(dim3, dim2, dim1, bwB, bwA, bwC)) {
       row_batching = false;
     } else {
       row_batching = true;
@@ -248,41 +294,43 @@ void LinearOT::matmul_cross_terms(int32_t dim1, int32_t dim2, int32_t dim3,
         tmpR[inp_idx] >>= 1;
       }
     }
-    if (use_straight_ot) {
-      if (party == sci::ALICE) {
-        if (batch_size <= num_ot - i) {
-          otpack->iknp_straight->send_batched_cot(ABs, corr, msg_len,
-                                                  batch_size, msgs_per_ot);
-        } else {
-          otpack->iknp_straight->send_batched_cot(ABs, corr, msg_len,
-                                                  num_ot - i, msgs_per_ot);
+#pragma omp parallel num_threads(2)
+    {
+      if (omp_get_thread_num() == 1 && use_reversed_ot) {
+        if (party == sci::ALICE) {
+          if (batch_size <= num_ot - i) {
+            otpack->iknp_reversed->recv_batched_cot(ABr, choice, msg_len,
+                                                    batch_size, msgs_per_ot);
+          } else {
+            otpack->iknp_reversed->recv_batched_cot(ABr, choice, msg_len,
+                                                    num_ot - i, msgs_per_ot);
+          }
+        } else { // party == sci::BOB
+          if (batch_size <= num_ot - i) {
+            otpack->iknp_reversed->send_batched_cot(ABs, corr, msg_len,
+                                                    batch_size, msgs_per_ot);
+          } else {
+            otpack->iknp_reversed->send_batched_cot(ABs, corr, msg_len,
+                                                    num_ot - i, msgs_per_ot);
+          }
         }
-      } else { // party == sci::BOB
-        if (batch_size <= num_ot - i) {
-          otpack->iknp_straight->recv_batched_cot(ABr, choice, msg_len,
-                                                  batch_size, msgs_per_ot);
-        } else {
-          otpack->iknp_straight->recv_batched_cot(ABr, choice, msg_len,
-                                                  num_ot - i, msgs_per_ot);
-        }
-      }
-    }
-    if (use_reversed_ot) {
-      if (party == sci::ALICE) {
-        if (batch_size <= num_ot - i) {
-          otpack->iknp_reversed->recv_batched_cot(ABr, choice, msg_len,
-                                                  batch_size, msgs_per_ot);
-        } else {
-          otpack->iknp_reversed->recv_batched_cot(ABr, choice, msg_len,
-                                                  num_ot - i, msgs_per_ot);
-        }
-      } else { // party == sci::BOB
-        if (batch_size <= num_ot - i) {
-          otpack->iknp_reversed->send_batched_cot(ABs, corr, msg_len,
-                                                  batch_size, msgs_per_ot);
-        } else {
-          otpack->iknp_reversed->send_batched_cot(ABs, corr, msg_len,
-                                                  num_ot - i, msgs_per_ot);
+      } else if (omp_get_thread_num() == 0 && use_straight_ot) {
+        if (party == sci::ALICE) {
+          if (batch_size <= num_ot - i) {
+            otpack->iknp_straight->send_batched_cot(ABs, corr, msg_len,
+                                                    batch_size, msgs_per_ot);
+          } else {
+            otpack->iknp_straight->send_batched_cot(ABs, corr, msg_len,
+                                                    num_ot - i, msgs_per_ot);
+          }
+        } else { // party == sci::BOB
+          if (batch_size <= num_ot - i) {
+            otpack->iknp_straight->recv_batched_cot(ABr, choice, msg_len,
+                                                    batch_size, msgs_per_ot);
+          } else {
+            otpack->iknp_straight->recv_batched_cot(ABr, choice, msg_len,
+                                                    num_ot - i, msgs_per_ot);
+          }
         }
       }
     }
@@ -445,21 +493,22 @@ void LinearOT::matmul_multiplexer(int32_t dim1, int32_t dim2, int32_t dim3,
       data[idx * 2 + 1] = (ABs[idx] + elemS * (1 - choice_bit)) & maskC;
     }
   }
-  if (party == sci::ALICE) {
-    if (use_straight_ot) {
-      otpack->iknp_straight->send_batched_got(data, dim, bwC, msgs_per_ot);
-    }
-    if (use_reversed_ot) {
-      otpack->iknp_reversed->recv_batched_got(ABr, choice, dim, bwC,
-                                              msgs_per_ot);
-    }
-  } else { // party == sci::BOB
-    if (use_straight_ot) {
-      otpack->iknp_straight->recv_batched_got(ABr, choice, dim, bwC,
-                                              msgs_per_ot);
-    }
-    if (use_reversed_ot) {
-      otpack->iknp_reversed->send_batched_got(data, dim, bwC, msgs_per_ot);
+#pragma omp parallel num_threads(2)
+  {
+    if (omp_get_thread_num() == 1 && use_reversed_ot) {
+      if (party == sci::ALICE) {
+        otpack->iknp_reversed->recv_batched_got(ABr, choice, dim, bwC,
+                                                msgs_per_ot);
+      } else { // party == sci::BOB
+        otpack->iknp_reversed->send_batched_got(data, dim, bwC, msgs_per_ot);
+      }
+    } else if (omp_get_thread_num() == 0 && use_straight_ot) {
+      if (party == sci::ALICE) {
+        otpack->iknp_straight->send_batched_got(data, dim, bwC, msgs_per_ot);
+      } else { // party == sci::BOB
+        otpack->iknp_straight->recv_batched_got(ABr, choice, dim, bwC,
+                                                msgs_per_ot);
+      }
     }
   }
   for (int h = 0; h < dim2; h++) {
@@ -517,6 +566,14 @@ void LinearOT::matmul_multiplexer(int32_t dim1, int32_t dim2, int32_t dim3,
     delete[] inS;
 }
 
+uint64_t extension_cost(int dim1, int dim2, int m, int n, uint8_t* msb) {
+  if (msb != nullptr) {
+    return dim1*dim2*(128.0*(m + 1) + 13*m + n);
+  } else {
+    return dim1*dim2*(128.0*2 - m + n + 2);
+  }
+}
+
 void LinearOT::matrix_multiplication(int32_t dim1, int32_t dim2, int32_t dim3,
                                      uint64_t *inA, uint64_t *inB,
                                      uint64_t *outC, int32_t bwA, int32_t bwB,
@@ -537,7 +594,8 @@ void LinearOT::matrix_multiplication(int32_t dim1, int32_t dim2, int32_t dim3,
   } else if (mode == MultMode::Bob_has_A || mode == MultMode::Bob_has_B) {
     sender_B = true;
   } else {
-    if (bwA > bwB) {
+    if (extension_cost(dim1, dim2, bwA, bwA + extra_bits, msbA)
+        > extension_cost(dim2, dim3, bwB, bwB + extra_bits, msbB)) {
       sender_A = true;
     } else {
       sender_B = true;
@@ -613,9 +671,14 @@ void LinearOT::matrix_multiplication(int32_t dim1, int32_t dim2, int32_t dim3,
       tmpB[i] = tmpB[i] & maskB;
     }
   }
+  /* print_share(tmpA, bwA, dim1*dim2); */
+  /* print_share(tmpB, bwB, dim2*dim3); */
+  /* print_vec(this, tmpA, bwA, dim1*dim2); */
+  /* print_vec(this, tmpB, bwB, dim2*dim3); */
   uint64_t *cross_terms = new uint64_t[dim];
   matmul_cross_terms(dim1, dim2, dim3, tmpA, tmpB, cross_terms, bwA, bwB, bwC,
                      accumulate, mode);
+  /* print_vec(this, cross_terms, bwC, dim); */
 
   uint64_t *local_terms = new uint64_t[dim];
   if (party == ALICE &&
@@ -629,6 +692,7 @@ void LinearOT::matrix_multiplication(int32_t dim1, int32_t dim2, int32_t dim3,
   } else {
     memset(local_terms, 0, dim * sizeof(uint64_t));
   }
+  /* print_vec(this, local_terms, bwC, dim); */
 
   uint8_t *wA = new uint8_t[dim1 * dim2];
   uint8_t *wB = new uint8_t[dim2 * dim3];
@@ -695,6 +759,8 @@ void LinearOT::matrix_multiplication(int32_t dim1, int32_t dim2, int32_t dim3,
       delete[] wB64;
     }
   }
+  /* print_vec(this, wA_B, bwC - bwA, dim); */
+  /* print_vec(this, wB_A, bwC - bwB, dim); */
 
   uint64_t *tmpC = new uint64_t[dim];
   int inner_loop_size = (accumulate ? dim2 : 1);
@@ -733,6 +799,7 @@ void LinearOT::matrix_multiplication(int32_t dim1, int32_t dim2, int32_t dim3,
   } else {
     memcpy(outC, tmpC, dim * sizeof(uint64_t));
   }
+  /* print_vec(this, outC, bwC, dim); */
 
   delete[] cross_terms;
   delete[] local_terms;

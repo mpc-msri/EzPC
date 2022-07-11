@@ -1,24 +1,3 @@
-/*
-Authors: Deevashwer Rathee
-Copyright:
-Copyright (c) 2021 Microsoft Research
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*/
-
 #include "LinearOT/linear-ot.h"
 #include "utils/emp-tool.h"
 #include <iostream>
@@ -28,8 +7,8 @@ using namespace std;
 
 int party, port = 32000;
 string address = "127.0.0.1";
-NetIO *io;
-OTPack<NetIO> *otpack;
+IOPack *iopack;
+OTPack *otpack;
 LinearOT *prod;
 
 int dim = 1 << 16;
@@ -48,16 +27,16 @@ void test_hadamard_product(uint64_t *inA, uint64_t *inB,
   prod->hadamard_product(dim, inA, inB, outC, bwA, bwB, bwC, signed_arithmetic);
 
   if (party == ALICE) {
-    io->send_data(inA, dim * sizeof(uint64_t));
-    io->send_data(inB, dim * sizeof(uint64_t));
-    io->send_data(outC, dim * sizeof(uint64_t));
+    iopack->io->send_data(inA, dim * sizeof(uint64_t));
+    iopack->io->send_data(inB, dim * sizeof(uint64_t));
+    iopack->io->send_data(outC, dim * sizeof(uint64_t));
   } else { // party == BOB
     uint64_t *inA0 = new uint64_t[dim];
     uint64_t *inB0 = new uint64_t[dim];
     uint64_t *outC0 = new uint64_t[dim];
-    io->recv_data(inA0, dim * sizeof(uint64_t));
-    io->recv_data(inB0, dim * sizeof(uint64_t));
-    io->recv_data(outC0, dim * sizeof(uint64_t));
+    iopack->io->recv_data(inA0, dim * sizeof(uint64_t));
+    iopack->io->recv_data(inB0, dim * sizeof(uint64_t));
+    iopack->io->recv_data(outC0, dim * sizeof(uint64_t));
 
     for (int i = 0; i < dim; i++) {
       if (signed_arithmetic) {
@@ -93,10 +72,10 @@ int main(int argc, char **argv) {
 
   amap.parse(argc, argv);
 
-  io = new NetIO(party == 1 ? nullptr : address.c_str(), port);
-  otpack = new OTPack<NetIO>(io, party);
+  iopack = new IOPack(party, port, address);
+  otpack = new OTPack(iopack, party);
 
-  prod = new LinearOT(party, io, otpack);
+  prod = new LinearOT(party, iopack, otpack);
 
   PRG128 prg;
 

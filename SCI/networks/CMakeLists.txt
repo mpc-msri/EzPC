@@ -12,6 +12,12 @@ macro (add_network_HE _name)
     target_compile_options(${_name}-HE PUBLIC "-Wno-parentheses-equality")
 endmacro()
 
+macro (add_network_float _name)
+	add_executable(${_name}-float "main_${_name}.cpp")
+    target_link_libraries(${_name}-float SCI-FloatML) 
+    target_compile_options(${_name}-float PUBLIC "-Wno-parentheses-equality")
+endmacro()
+
 # Networks
 add_network_HE(sqnet)
 add_network_OT(sqnet)
@@ -23,3 +29,4 @@ add_network_HE(minionn)
 add_network_OT(minionn)
 add_network_HE(resnet32_cifar)
 add_network_OT(resnet32_cifar)
+add_network_float(relevance)

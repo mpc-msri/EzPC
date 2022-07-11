@@ -25,16 +25,17 @@ SOFTWARE.
 #include "Millionaire/millionaire.h"
 #include "Millionaire/millionaire_with_equality.h"
 #include "OT/emp-ot.h"
+#include "GC/emp-sh2pc.h"
 
 class AuxProtocols {
 public:
   int party;
-  sci::NetIO *io;
-  sci::OTPack<sci::NetIO> *otpack;
-  MillionaireProtocol<sci::NetIO> *mill;
-  MillionaireWithEquality<sci::NetIO> *mill_and_eq;
+  sci::IOPack *iopack;
+  sci::OTPack *otpack;
+  MillionaireProtocol *mill;
+  MillionaireWithEquality *mill_and_eq;
 
-  AuxProtocols(int party, sci::NetIO *io, sci::OTPack<sci::NetIO> *otpack);
+  AuxProtocols(int party, sci::IOPack *iopack, sci::OTPack *otpack);
 
   ~AuxProtocols();
 
@@ -157,6 +158,10 @@ public:
                      // size: bw_x * size
                      uint8_t *one_hot_vector, int32_t bw_x, int32_t size,
                      int32_t digit_size = 8);
+
+  void msnzb_GC(uint64_t *x,
+                // size: bw_x * size
+                uint8_t *one_hot_vector, int32_t bw_x, int32_t size);
 };
 
 #endif
