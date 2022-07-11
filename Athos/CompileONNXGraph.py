@@ -139,12 +139,7 @@ def generate_code(params, role, debug=False):
         "ABY",
         "CPP",
         "CPPRING",
-<<<<<<< HEAD
     ], "Target must be any of ABY/CPP/CPPRING/PORTHOS/SCI/SECFLOAT/CPPFLOAT"
-=======
-        "FSS",
-    ], "Target must be any of ABY/CPP/FSS/CPPRING/PORTHOS/SCI"
->>>>>>> master
 
     cwd = os.getcwd()
     athos_dir = os.path.dirname(os.path.abspath(__file__))
@@ -237,7 +232,6 @@ def generate_code(params, role, debug=False):
         )
         post = ""
     temp = os.path.join(model_abs_dir, "temp.ezpc")
-<<<<<<< HEAD
 
     if is_target_float(target):
         common = ""
@@ -291,14 +285,12 @@ def generate_code(params, role, debug=False):
     print("Compiling generated code to {target} target".format(target=target))
     if target == "SCI":
         program_name = model_base_name + "_" + target + "_" + backend + ".out"
-=======
     if library == "fss":
         os.system(
             'cat "{pre}" "{ezpc}"> "{temp}"'.format(
                 pre=pre, common=common, post=post, ezpc=ezpc_abs_path, temp=temp
             )
         )
->>>>>>> master
     else:
         os.system(
             'cat "{pre}" "{common}" "{post}" "{ezpc}"> "{temp}"'.format(
@@ -307,19 +299,20 @@ def generate_code(params, role, debug=False):
         )
     os.system('mv "{temp}" "{ezpc}"'.format(temp=temp, ezpc=ezpc_abs_path))
     if library == "fss":
-        os.system("fssc --bitlen {bl} --disable-tac {ezpc}".format(bl=bitlength, ezpc=ezpc_abs_path))
+        os.system(
+            "fssc --bitlen {bl} --disable-tac {ezpc}".format(
+                bl=bitlength, ezpc=ezpc_abs_path
+            )
+        )
         print("\n\nGenerated binary: {mb}.out".format(mb=model_base_name))
         program_name = model_base_name + "_" + target + ".out"
         program_path = os.path.join(model_abs_dir, program_name)
     else:
-<<<<<<< HEAD
-        opt_flag = "-O3"
-
-    if target in ["CPP", "CPPRING", "CPPFLOAT"]:
-=======
         ezpc_dir = os.path.join(athos_dir, "../EzPC/EzPC/")
         # Copy generated code to the ezpc directory
-        os.system('cp "{ezpc}" "{ezpc_dir}"'.format(ezpc=ezpc_abs_path, ezpc_dir=ezpc_dir))
+        os.system(
+            'cp "{ezpc}" "{ezpc_dir}"'.format(ezpc=ezpc_abs_path, ezpc_dir=ezpc_dir)
+        )
         os.chdir(ezpc_dir)
         ezpc_args = ""
         ezpc_args += "--bitlen {bl} --codegen {target} --disable-tac ".format(
@@ -334,7 +327,6 @@ def generate_code(params, role, debug=False):
         if target in ["PORTHOS"]:
             ezpc_args += "--sf {} ".format(scale)
 
->>>>>>> master
         os.system(
             'eval `opam config env`; ./ezpc.sh "{}" '.format(ezpc_file_name) + ezpc_args
         )
@@ -342,26 +334,6 @@ def generate_code(params, role, debug=False):
             'mv "{output}" "{model_dir}" '.format(
                 output=output_name, model_dir=model_abs_dir
             )
-<<<<<<< HEAD
-    elif target in ["SCI", "SECFLOAT"]:
-        sci_install = os.path.join(athos_dir, "..", "SCI", "build", "install")
-        build_dir = "build_dir"
-        os.system("rm -r {build_dir}".format(build_dir=build_dir))
-        os.mkdir(build_dir)
-        os.chdir(build_dir)
-        cmake_file = """
-            cmake_minimum_required (VERSION 3.0)
-            project (BUILD_IT)
-            find_package(SCI REQUIRED PATHS \"{sci_install}\")
-            add_executable({prog_name} {src_file})
-            target_link_libraries({prog_name} SCI::SCI-{backend})
-        """.format(
-            sci_install=sci_install,
-            prog_name=program_name,
-            src_file=output_file,
-            backend=backend.upper(),
-=======
->>>>>>> master
         )
         os.system('rm "{}"'.format(ezpc_file_name))
         output_file = os.path.join(model_abs_dir, output_name)
