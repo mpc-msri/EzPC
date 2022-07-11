@@ -139,7 +139,7 @@ def generate_code(params, role, debug=False):
         "ABY",
         "CPP",
         "CPPRING",
-    ], "Target must be any of ABY/CPP/CPPRING/PORTHOS/SCI"
+    ], "Target must be any of ABY/CPP/CPPRING/PORTHOS/SCI/SECFLOAT/CPPFLOAT"
 
     cwd = os.getcwd()
     athos_dir = os.path.dirname(os.path.abspath(__file__))

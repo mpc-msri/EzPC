@@ -144,9 +144,14 @@ class Unit(Type):
 
 class Tensor(Type):
     def __init__(
-        self, shape: list, dataType, bitlen=-1, isSecret=True, taint=Taints.PUBLIC_C
+        self,
+        shape: list,
+        dataType="int",
+        bitlen=-1,
+        isSecret=True,
+        taint=Taints.PUBLIC_C,
     ):
-        # print(f"Type.py : Tensor : __init__ --> shape = {shape}, dataType = {dataType}")
+        # print(f"Type.py : Tensor : __init__ --> shape = {shape}, dataType = {dataType}, bitlen = {bitlen}")
         self.shape = shape
         self.dim = len(shape)
         if bitlen == -1:
@@ -412,6 +417,7 @@ class InferType(ASTVisitor):
         node.expr2.gamma = dict(node.gamma)
         fType = self.visit(node.expr2)
 
+        node_type = None
         if node.op in [
             AST.Operators.ADD,
             AST.Operators.GEMMADD,
@@ -421,16 +427,20 @@ class InferType(ASTVisitor):
             AST.Operators.ElemWiseMul,
             AST.Operators.ElemWiseDiv,
         ]:
-            # Ops supporting broadcasting
-            return self.typeCheckBroadcastOps(node, eType, fType)
+            node_type = self.typeCheckBroadcastOps(node, eType, fType)
         elif node.op == AST.Operators.MUL:
-            return self.visitBopMul(node, eType, fType)
+            node_type = self.visitBopMul(node, eType, fType)
         elif node.op == AST.Operators.CONV:
-            return self.visitBopConv(node, eType, fType)
+            node_type = self.visitBopConv(node, eType, fType)
         elif node.op == AST.Operators.CONVTRANSPOSE:
-            return self.visitBopConvTranspose(node, eType, fType)
+            node_type = self.visitBopConvTranspose(node, eType, fType)
         else:
             assert False
+
+        if self.debug:
+            self.indent -= 1
+
+        return node_type
 
     def typeCheckBroadcastOps(self, node: AST.BOp, eType: Type, fType: Type):
         # Ops which support broadcasting have different type checking
@@ -446,6 +456,7 @@ class InferType(ASTVisitor):
             AST.Operators.ElemWiseMul,
             AST.Operators.ElemWiseDiv,
         ]
+
         if isInt(eType) and isInt(fType):
             node.type = Int(eType.bitlen)
         elif isFloat(eType) and isFloat(fType):
@@ -487,15 +498,19 @@ class InferType(ASTVisitor):
             node.type = Float(eType.bitlen, eType.isSecret)
         elif isTensor(eType) and isTensor(fType):
             if eType.dim == 0:
-                node.type = copy.copy(fType)
+                node.type = copy.deepcopy(fType)
             elif fType.dim == 0:
-                node.type = copy.copy(eType)
+                node.type = copy.deepcopy(eType)
             else:
                 assert eType.dim == 2 and fType.dim == 2
                 [n1, n2] = eType.shape
                 [n3, n4] = fType.shape
                 assert n2 == n3
-                node.type = Tensor([n1, n4], eType.dataType, eType.bitlen)
+
+                # shape: list, dataType="int", bitlen=-1, isSecret=True, taint=Taints.PUBLIC_C
+                node.type = Tensor(
+                    shape=[n1, n4], dataType=eType.dataType, bitlen=eType.bitlen
+                )
         else:
             print("Error: Unknown condition in type checking.", file=sys.stderr)
             assert False
@@ -624,39 +639,39 @@ class InferType(ASTVisitor):
 
     def visitFunc(self, node: AST.Func, args=None):
         if self.debug:
-            print(f"{' '*self.indent}||visitFunc")
+            print(f"{' '*self.indent}||visitFunc {node.op}")
             self.indent += 1
         node.expr.gamma = dict(node.gamma)
         eType = self.visit(node.expr)
 
         if node.op == AST.Operators.RELU:
             assert isTensor(eType) and eType.dim >= 1
-            node.type = copy.copy(eType)
+            node.type = copy.deepcopy(eType)
         elif node.op == AST.Operators.TANH:
             assert isTensor(eType)
-            node.type = copy.copy(eType)
+            node.type = copy.deepcopy(eType)
         elif node.op == AST.Operators.SIGMOID:
             assert isTensor(eType)
-            node.type = copy.copy(eType)
+            node.type = copy.deepcopy(eType)
         elif node.op == AST.Operators.SOFTMAX:
             assert isTensor(eType)
-            node.type = copy.copy(eType)
+            node.type = copy.deepcopy(eType)
         elif node.op == AST.Operators.SQRT:
             assert isTensor(eType)
-            node.type = copy.copy(eType)
+            node.type = copy.deepcopy(eType)
         elif node.op == AST.Operators.RSQRT:
             assert isTensor(eType)
-            node.type = copy.copy(eType)
+            node.type = copy.deepcopy(eType)
         elif node.op == AST.Operators.Floor:
-            node.type = copy.copy(eType)
+            node.type = copy.deepcopy(eType)
         elif node.op == AST.Operators.Shape:
             assert isTensor(eType)
             node.type = Tensor(
-                [len(eType.shape)],
-                eType.dataType,
-                eType.bitlen,
-                eType.isSecret,
-                eType.taint,
+                shape=[len(eType.shape)],
+                dataType=eType.dataType,
+                bitlen=eType.bitlen,
+                isSecret=eType.isSecret,
+                taint=eType.taint,
             )
         elif node.op == AST.Operators.ClearMemSecret:
             node.type = Unit()
@@ -684,7 +699,7 @@ class InferType(ASTVisitor):
         node.expr.gamma[node.name.name] = eType
         fType = self.visit(node.expr)
 
-        node.type = copy.copy(fType)
+        node.type = copy.deepcopy(fType)
 
         if self.debug:
             self.indent -= 1
@@ -707,9 +722,11 @@ class InferType(ASTVisitor):
             taint = getTaint_taint(taint, eType.taint)
         outputShape = node.outputShape
         if Util.Config.version == "float":
-            node.type = Tensor(outputShape, "float32", isSecret=isSecret, taint=taint)
+            node.type = Tensor(
+                shape=outputShape, dataType="float32", isSecret=isSecret, taint=taint
+            )
         else:
-            node.type = Tensor(outputShape, isSecret=isSecret, taint=taint)
+            node.type = Tensor(shape=outputShape, isSecret=isSecret, taint=taint)
 
         if self.debug:
             self.indent -= 1
@@ -756,8 +773,8 @@ class InferType(ASTVisitor):
             self.indent += 1
         # print("Type.py : visitInput : Creating an input tensor")
         node.type = Tensor(
-            node.shape,
-            node.dataType,
+            shape=node.shape,
+            dataType=node.dataType,
             isSecret=node.isSecret,
             taint=Taints[node.inputByParty.name],
         )
@@ -803,7 +820,7 @@ class InferType(ASTVisitor):
         taint = getTaint_taint(taint, addExprType.taint)
 
         # node.type = copy.copy(exprType)
-        node.type = Tensor(exprType.shape, multExprType.dataType)
+        node.type = Tensor(shape=exprType.shape, dataType=multExprType.dataType)
         node.type.taint = taint
 
         # print(f"Type.py : FusedBatchNorm : {multExprType.dataType}, {node.shape}")

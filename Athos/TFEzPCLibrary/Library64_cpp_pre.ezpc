@@ -36,6 +36,28 @@ def void MatMul2D(int32_pl i, int32_pl j, int32_pl k, int64_al[i][j] A, int64_al
 }
 
 (**************************)
+def void GemmAdd(int32_pl s1, int32_pl s2, int64_al[s1][s2] inArr, int64_al[s2] bias, int64_al[s1][s2] outArr) {
+	for i1=[0:s1] {
+		for i2=[0:s2] {
+			outArr[i1][i2] = inArr[i1][i2] + bias[i2] ;
+		} ;
+	} ;
+}
+
+(**************************)
+def void ConvAdd(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int64_al[s1][s2][s3][s4] tmp5, int64_al[1][1][1][s4] tmp6, int64_al[s1][s2][s3][s4] tmp7) {
+	for i1=[0:s1] {
+		for i2=[0:s2] {
+			for i3=[0:s3] {
+				for i4=[0:s4] {
+					tmp7[i1][i2][i3][i4] = tmp5[i1][i2][i3][i4] + tmp6[0][0][0][i4] ;
+				}
+			}
+		}
+	}
+}
+
+(**************************)
 def void ArgMax(int32_pl s1, int32_pl s2, int64_al[s1][s2] inArr, int64_al[s1] outArr)
 {
 	for od=[0:s1]{

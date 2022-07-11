@@ -527,7 +527,7 @@ def process_onnx_nodes(
         }
 
         # print(f"process_onnx.py : process_onnx_nodes : {node}")
-        print(f"process_onnx.py : process_onnx_nodes : calling attr --> {node.op_type}")
+        # print(f"process_onnx.py : process_onnx_nodes : calling attr --> {node.op_type}")
         func = getattr(ONNXNodesAST, node.op_type)
         (innermost_let_ast_node, out_var_count) = func(
             node,

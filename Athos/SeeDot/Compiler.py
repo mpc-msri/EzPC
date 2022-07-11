@@ -85,7 +85,6 @@ class Compiler:
             Util.Config.wordLength = 32
 
     def is_target_float(self):
-        print("************>>>>>>>>>>>", Util.Config.version)
         if Util.Config.version == "float":
             return True
         else:

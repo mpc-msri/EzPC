@@ -146,8 +146,9 @@ class IRBuilderCSF(IRBuilderAST):
         prog = IRUtil.prog_merge(
             IR.Prog([IR.Decl(expr.idf, node.type, bitlen, node.isSecret, [n])]), prog
         )
-        if not (Util.Config.disableTruncOpti):
-            self.scaleFacMapping[expr.idf] = self.scaleFac if node.isScaled else 0
+        if Util.Config.version == "fixed":
+            if not (Util.Config.disableTruncOpti):
+                self.scaleFacMapping[expr.idf] = self.scaleFac if node.isScaled else 0
 
         if self._debug:
             self._indent -= 1
@@ -173,8 +174,9 @@ class IRBuilderCSF(IRBuilderAST):
         prog = IRUtil.prog_merge(
             IR.Prog([IR.Decl(expr.idf, node.type, -1, node.isSecret, [k])]), prog
         )
-        if not (Util.Config.disableTruncOpti):
-            self.scaleFacMapping[expr.idf] = self.scaleFac
+        if Util.Config.version == "fixed":
+            if not (Util.Config.disableTruncOpti):
+                self.scaleFacMapping[expr.idf] = self.scaleFac
 
         if self._debug:
             self._indent -= 1
@@ -187,8 +189,9 @@ class IRBuilderCSF(IRBuilderAST):
         idf = node.name
         prog = IR.Prog([])
         expr = IR.Var(idf)
-        if not (Util.Config.disableTruncOpti):
-            assert expr.idf in self.scaleFacMapping
+        if Util.Config.version == "fixed":
+            if not (Util.Config.disableTruncOpti):
+                assert expr.idf in self.scaleFacMapping
 
         if self._debug:
             self._indent -= 1
@@ -264,8 +267,9 @@ class IRBuilderCSF(IRBuilderAST):
             ),
             prog,
         )
-        if not (Util.Config.disableTruncOpti):
-            self.scaleFacMapping[expr.idf] = self.scaleFac if node.isScaled else 0
+        if Util.Config.version == "fixed":
+            if not (Util.Config.disableTruncOpti):
+                self.scaleFacMapping[expr.idf] = self.scaleFac if node.isScaled else 0
 
         if self._debug:
             self._indent -= 1
@@ -311,8 +315,9 @@ class IRBuilderCSF(IRBuilderAST):
         final_prog = IRUtil.prog_merge(
             IR.Prog([IR.Decl(out_arr.idf, out_type)]), final_prog
         )
-        if not (Util.Config.disableTruncOpti):
-            self.scaleFacMapping[out_arr.idf] = self.scaleFacMapping[inp_arr.idf]
+        if Util.Config.version == "fixed":
+            if not (Util.Config.disableTruncOpti):
+                self.scaleFacMapping[out_arr.idf] = self.scaleFacMapping[inp_arr.idf]
 
         if self._debug:
             self._indent -= 1
@@ -358,8 +363,9 @@ class IRBuilderCSF(IRBuilderAST):
         final_prog = IRUtil.prog_merge(
             IR.Prog([IR.Decl(out_arr.idf, out_type)]), final_prog
         )
-        if not (Util.Config.disableTruncOpti):
-            self.scaleFacMapping[out_arr.idf] = self.scaleFacMapping[inp_arr.idf]
+        if Util.Config.version == "fixed":
+            if not (Util.Config.disableTruncOpti):
+                self.scaleFacMapping[out_arr.idf] = self.scaleFacMapping[inp_arr.idf]
 
         if self._debug:
             self._indent -= 1
@@ -462,8 +468,9 @@ class IRBuilderCSF(IRBuilderAST):
                 IR.Prog([IR.Decl(var.idf, Type.Int(), isSecret=False)]), prog_2
             )
         prog_2 = IRUtil.prog_merge(IR.Prog([IR.Decl(expr_2.idf, typ_2)]), prog_2)
-        if not (Util.Config.disableTruncOpti):
-            self.scaleFacMapping[expr_2.idf] = self.scaleFacMapping[expr_1.idf]
+        if Util.Config.version == "fixed":
+            if not (Util.Config.disableTruncOpti):
+                self.scaleFacMapping[expr_2.idf] = self.scaleFacMapping[expr_1.idf]
 
         if self._debug:
             self._indent -= 1
@@ -519,8 +526,9 @@ class IRBuilderCSF(IRBuilderAST):
         prog_pool = IR.Prog([comment, funcCall])
         prog_2 = IRUtil.prog_merge(prog_1, prog_pool)
         prog_2 = IRUtil.prog_merge(IR.Prog([IR.Decl(expr_2.idf, node.type)]), prog_2)
-        if not (Util.Config.disableTruncOpti):
-            self.scaleFacMapping[expr_2.idf] = self.scaleFacMapping[expr_1.idf]
+        if Util.Config.version == "fixed":
+            if not (Util.Config.disableTruncOpti):
+                self.scaleFacMapping[expr_2.idf] = self.scaleFacMapping[expr_1.idf]
 
         if self._debug:
             self._indent -= 1
@@ -564,8 +572,9 @@ class IRBuilderCSF(IRBuilderAST):
             prog_2 = IRUtil.prog_merge(
                 IR.Prog([IR.Decl(expr_2.idf, node.type)]), prog_2
             )
-        if not (Util.Config.disableTruncOpti):
-            self.scaleFacMapping[expr_2.idf] = self.scaleFacMapping[expr_1.idf]
+        if Util.Config.version == "fixed":
+            if not (Util.Config.disableTruncOpti):
+                self.scaleFacMapping[expr_2.idf] = self.scaleFacMapping[expr_1.idf]
 
         if self._debug:
             self._indent -= 1
@@ -629,6 +638,48 @@ class IRBuilderCSF(IRBuilderAST):
         out_prog = IRUtil.prog_merge(IR.Prog([comment, cmd0, decl_out_arr]), out_prog)
         out_prog = IRUtil.prog_merge(prog_1, prog_2, out_prog)
 
+        if Util.Config.version == "fixed":
+            if not (Util.Config.disableTruncOpti):
+                expr1_sf = self.scaleFacMapping[expr_1.idf]
+                expr2_sf = self.scaleFacMapping[expr_2.idf]
+                scaleUpFactor = -1
+                if expr1_sf > expr2_sf:
+                    exprToScale = expr_2
+                    typeOfExprToScale = node.expr2.type
+                    scaleUpFactor = expr1_sf - expr2_sf
+                    self.scaleFacMapping[expr_2.idf] = expr1_sf
+                elif expr2_sf > expr1_sf:
+                    exprToScale = expr_1
+                    typeOfExprToScale = node.expr1.type
+                    scaleUpFactor = expr2_sf - expr1_sf
+                    self.scaleFacMapping[expr_1.idf] = expr2_sf
+
+                if scaleUpFactor != -1:
+                    comm = IR.Comment(
+                        "Scale up of args needed was found while doing OptimizeTruncations."
+                    )
+                    argsDict = OrderedDict()
+                    curFuncName = "ScaleUp"
+                    if not (Type.isInt(typeOfExprToScale)):
+                        outputShape = typeOfExprToScale.shape
+                        for ii, curDimSize in enumerate(outputShape):
+                            argsDict[IR.Int(curDimSize, 32)] = "size_" + str(ii)
+                        curFuncName += str(len(outputShape))
+                    argsDict[exprToScale] = "exprToScale, arg#{0}".format(
+                        2 if (expr1_sf > expr2_sf) else 1
+                    )
+                    argsDict[IR.Int(scaleUpFactor, 32)] = "ScaleUpFactor"
+                    funcCall = IR.FuncCall(curFuncName, argsDict)
+
+                    if Type.isInt(typeOfExprToScale) or typeOfExprToScale.shape == []:
+                        assn_expr = IR.Assn(exprToScale, funcCall)
+                        curProg = IR.Prog([comm, assn_expr])
+                    else:
+                        curProg = IR.Prog([comm, funcCall])
+                    prog_1 = IRUtil.prog_merge(curProg, prog_1)
+
+                self.scaleFacMapping[out_arr.idf] = self.scaleFacMapping[expr_1.idf]
+
         return (out_prog, out_arr)
 
     def visitGemmAdd(self, node: AST.BOp, args=None):
@@ -649,7 +700,12 @@ class IRBuilderCSF(IRBuilderAST):
         decl_out_arr = IR.Decl(
             out_arr.idf, node_type, node_type.bitlen, node_type.isSecret
         )
-
+        # print(
+        #     f"GEMMADD : {node.expr1.type.dataType}, {node.expr1.type.shape}"
+        # )
+        # print(node.expr1, node.expr1.type.dataType)
+        # print(node.expr2, node.expr2.type.dataType)
+        # print(node_type)
         argsDict = OrderedDict()
         argsDict[IR.Int(out_shape[0], 32)] = "dim_rows"
         argsDict[IR.Int(out_shape[1], 32)] = "dim_cols"
@@ -661,6 +717,48 @@ class IRBuilderCSF(IRBuilderAST):
         out_prog = IR.Prog([funcCall])
         out_prog = IRUtil.prog_merge(IR.Prog([comment, cmd0, decl_out_arr]), out_prog)
         out_prog = IRUtil.prog_merge(prog_1, prog_2, out_prog)
+
+        if Util.Config.version == "fixed":
+            if not (Util.Config.disableTruncOpti):
+                expr1_sf = self.scaleFacMapping[expr_1.idf]
+                expr2_sf = self.scaleFacMapping[expr_2.idf]
+                scaleUpFactor = -1
+                if expr1_sf > expr2_sf:
+                    exprToScale = expr_2
+                    typeOfExprToScale = node.expr2.type
+                    scaleUpFactor = expr1_sf - expr2_sf
+                    self.scaleFacMapping[expr_2.idf] = expr1_sf
+                elif expr2_sf > expr1_sf:
+                    exprToScale = expr_1
+                    typeOfExprToScale = node.expr1.type
+                    scaleUpFactor = expr2_sf - expr1_sf
+                    self.scaleFacMapping[expr_1.idf] = expr2_sf
+
+                if scaleUpFactor != -1:
+                    comm = IR.Comment(
+                        "Scale up of args needed was found while doing OptimizeTruncations."
+                    )
+                    argsDict = OrderedDict()
+                    curFuncName = "ScaleUp"
+                    if not (Type.isInt(typeOfExprToScale)):
+                        outputShape = typeOfExprToScale.shape
+                        for ii, curDimSize in enumerate(outputShape):
+                            argsDict[IR.Int(curDimSize, 32)] = "size_" + str(ii)
+                        curFuncName += str(len(outputShape))
+                    argsDict[exprToScale] = "exprToScale, arg#{0}".format(
+                        2 if (expr1_sf > expr2_sf) else 1
+                    )
+                    argsDict[IR.Int(scaleUpFactor, 32)] = "ScaleUpFactor"
+                    funcCall = IR.FuncCall(curFuncName, argsDict)
+
+                    if Type.isInt(typeOfExprToScale) or typeOfExprToScale.shape == []:
+                        assn_expr = IR.Assn(exprToScale, funcCall)
+                        curProg = IR.Prog([comm, assn_expr])
+                    else:
+                        curProg = IR.Prog([comm, funcCall])
+                    prog_1 = IRUtil.prog_merge(curProg, prog_1)
+
+                self.scaleFacMapping[out_arr.idf] = self.scaleFacMapping[expr_1.idf]
 
         return (out_prog, out_arr)
 
@@ -686,46 +784,47 @@ class IRBuilderCSF(IRBuilderAST):
         cmd0 = IR.Comment(expr_1.idf + " " + op_ir.name + " " + expr_2.idf)
         comment = IR.Comment(str(node.metadata))
 
-        if not (Util.Config.disableTruncOpti):
-            expr1_sf = self.scaleFacMapping[expr_1.idf]
-            expr2_sf = self.scaleFacMapping[expr_2.idf]
-            scaleUpFactor = -1
-            if expr1_sf > expr2_sf:
-                exprToScale = expr_2
-                typeOfExprToScale = node.expr2.type
-                scaleUpFactor = expr1_sf - expr2_sf
-                self.scaleFacMapping[expr_2.idf] = expr1_sf
-            elif expr2_sf > expr1_sf:
-                exprToScale = expr_1
-                typeOfExprToScale = node.expr1.type
-                scaleUpFactor = expr2_sf - expr1_sf
-                self.scaleFacMapping[expr_1.idf] = expr2_sf
+        if Util.Config.version == "fixed":
+            if not (Util.Config.disableTruncOpti):
+                expr1_sf = self.scaleFacMapping[expr_1.idf]
+                expr2_sf = self.scaleFacMapping[expr_2.idf]
+                scaleUpFactor = -1
+                if expr1_sf > expr2_sf:
+                    exprToScale = expr_2
+                    typeOfExprToScale = node.expr2.type
+                    scaleUpFactor = expr1_sf - expr2_sf
+                    self.scaleFacMapping[expr_2.idf] = expr1_sf
+                elif expr2_sf > expr1_sf:
+                    exprToScale = expr_1
+                    typeOfExprToScale = node.expr1.type
+                    scaleUpFactor = expr2_sf - expr1_sf
+                    self.scaleFacMapping[expr_1.idf] = expr2_sf
 
-            if scaleUpFactor != -1:
-                comm = IR.Comment(
-                    "Scale up of args needed was found while doing OptimizeTruncations."
-                )
-                argsDict = OrderedDict()
-                curFuncName = "ScaleUp"
-                if not (Type.isInt(typeOfExprToScale)):
-                    outputShape = typeOfExprToScale.shape
-                    for ii, curDimSize in enumerate(outputShape):
-                        argsDict[IR.Int(curDimSize, 32)] = "size_" + str(ii)
-                    curFuncName += str(len(outputShape))
-                argsDict[exprToScale] = "exprToScale, arg#{0}".format(
-                    2 if (expr1_sf > expr2_sf) else 1
-                )
-                argsDict[IR.Int(scaleUpFactor, 32)] = "ScaleUpFactor"
-                funcCall = IR.FuncCall(curFuncName, argsDict)
+                if scaleUpFactor != -1:
+                    comm = IR.Comment(
+                        "Scale up of args needed was found while doing OptimizeTruncations."
+                    )
+                    argsDict = OrderedDict()
+                    curFuncName = "ScaleUp"
+                    if not (Type.isInt(typeOfExprToScale)):
+                        outputShape = typeOfExprToScale.shape
+                        for ii, curDimSize in enumerate(outputShape):
+                            argsDict[IR.Int(curDimSize, 32)] = "size_" + str(ii)
+                        curFuncName += str(len(outputShape))
+                    argsDict[exprToScale] = "exprToScale, arg#{0}".format(
+                        2 if (expr1_sf > expr2_sf) else 1
+                    )
+                    argsDict[IR.Int(scaleUpFactor, 32)] = "ScaleUpFactor"
+                    funcCall = IR.FuncCall(curFuncName, argsDict)
 
-                if Type.isInt(typeOfExprToScale) or typeOfExprToScale.shape == []:
-                    assn_expr = IR.Assn(exprToScale, funcCall)
-                    curProg = IR.Prog([comm, assn_expr])
-                else:
-                    curProg = IR.Prog([comm, funcCall])
-                prog_1 = IRUtil.prog_merge(curProg, prog_1)
+                    if Type.isInt(typeOfExprToScale) or typeOfExprToScale.shape == []:
+                        assn_expr = IR.Assn(exprToScale, funcCall)
+                        curProg = IR.Prog([comm, assn_expr])
+                    else:
+                        curProg = IR.Prog([comm, funcCall])
+                    prog_1 = IRUtil.prog_merge(curProg, prog_1)
 
-            self.scaleFacMapping[out_arr.idf] = self.scaleFacMapping[expr_1.idf]
+                self.scaleFacMapping[out_arr.idf] = self.scaleFacMapping[expr_1.idf]
 
         print(
             f"visitBopAddOrSubLike : {node.expr1.type.dataType}, {node.expr1.type.shape}"
@@ -1155,7 +1254,7 @@ class IRBuilderCSF(IRBuilderAST):
 
         [I, J] = typ_1.shape
         [J, K] = typ_2.shape
-        typ_mul = Type.Tensor([J])
+        typ_mul = Type.Tensor(shape=[J])
 
         shrT = Util.Config.consSF
 
@@ -1731,8 +1830,10 @@ class IRBuilderCSF(IRBuilderAST):
         typ_1 = node.decl.type
         idf = node.name.name
 
-        if not (Util.Config.disableTruncOpti):
-            self.scaleFacMapping[idf] = self.scaleFacMapping[expr_1.idf]
+        if Util.Config.version == "fixed":
+            if not (Util.Config.disableTruncOpti):
+                self.scaleFacMapping[idf] = self.scaleFacMapping[expr_1.idf]
+
         (prog_2, expr_2) = self.visit(node.expr)
         self.name_mapping[idf] = expr_1.idf
         self.expr_mapping[idf] = expr_1
@@ -1864,8 +1965,9 @@ class IRBuilderCSF(IRBuilderAST):
         funcArgsList[expr2] = "dim"
         funcArgsList[tmpExpr] = "outArr"
 
-        if not (Util.Config.disableTruncOpti):
-            self.scaleFacMapping[tmpExpr.idf] = -1
+        if Util.Config.version == "fixed":
+            if not (Util.Config.disableTruncOpti):
+                self.scaleFacMapping[tmpExpr.idf] = -1
 
         funcCall = IR.FuncCall(
             "ArgMax" + self.varNameDelim + str(len(outputShape)), funcArgsList
@@ -1886,8 +1988,9 @@ class IRBuilderCSF(IRBuilderAST):
         returnExpr.inputVar = True
         comment = IR.Comment(str(node.metadata))
 
-        if not (Util.Config.disableTruncOpti):
-            self.scaleFacMapping[returnExpr.idf] = self.scaleFac
+        if Util.Config.version == "fixed":
+            if not (Util.Config.disableTruncOpti):
+                self.scaleFacMapping[returnExpr.idf] = self.scaleFac
 
         if self._debug:
             self._indent -= 1
@@ -1916,8 +2019,9 @@ class IRBuilderCSF(IRBuilderAST):
         prog = IRUtil.prog_merge(prog_0, IR.Prog([output]))
         expr = self.getTempVar()
 
-        if not (Util.Config.disableTruncOpti):
-            self.scaleFacMapping[expr.idf] = self.scaleFac
+        if Util.Config.version == "fixed":
+            if not (Util.Config.disableTruncOpti):
+                self.scaleFacMapping[expr.idf] = self.scaleFac
 
         if self._debug:
             self._indent -= 1
@@ -2012,10 +2116,10 @@ class IRBuilderCSF(IRBuilderAST):
             temp_flat_decl = IR.Decl(
                 temp_flat.idf,
                 Type.Tensor(
-                    [Util.get_volume(loop_shape[:outer_nesting])],
-                    node.type.bitlen,
-                    node.type.isSecret,
-                    node.type.taint,
+                    shape=[Util.get_volume(loop_shape[:outer_nesting])],
+                    bitlen=node.type.bitlen,
+                    isSecret=node.type.isSecret,
+                    taint=node.type.taint,
                 ),
                 isSecret=node.type.isSecret,
             )
@@ -2049,8 +2153,9 @@ class IRBuilderCSF(IRBuilderAST):
                 IR.Prog([sumExpr_decl, output_decl]),
                 IR.Prog(sum_loop),
             )
-            if not (Util.Config.disableTruncOpti):
-                self.scaleFacMapping[output.idf] = self.scaleFacMapping[expr1.idf]
+            if Util.Config.version == "fixed":
+                if not (Util.Config.disableTruncOpti):
+                    self.scaleFacMapping[output.idf] = self.scaleFacMapping[expr1.idf]
 
             if self._debug:
                 self._indent -= 1
@@ -2061,10 +2166,10 @@ class IRBuilderCSF(IRBuilderAST):
         out_flat_decl = IR.Decl(
             out_flat.idf,
             Type.Tensor(
-                [Util.get_volume(loop_shape[:outer_nesting])],
-                node.type.bitlen,
-                node.type.isSecret,
-                node.type.taint,
+                shape=[Util.get_volume(loop_shape[:outer_nesting])],
+                bitlen=node.type.bitlen,
+                isSecret=node.type.isSecret,
+                taint=node.type.taint,
             ),
             isSecret=node.type.isSecret,
         )
@@ -2098,8 +2203,9 @@ class IRBuilderCSF(IRBuilderAST):
         argsDict[out_flat] = "A"
         free_out_flat_call = IR.FuncCall("ClearMemSecret1", argsDict)
 
-        if not (Util.Config.disableTruncOpti):
-            self.scaleFacMapping[output.idf] = self.scaleFacMapping[expr1.idf]
+        if Util.Config.version == "fixed":
+            if not (Util.Config.disableTruncOpti):
+                self.scaleFacMapping[output.idf] = self.scaleFacMapping[expr1.idf]
 
         comment = IR.Comment(str(node.metadata))
         final_prog = IRUtil.prog_merge(
@@ -2136,44 +2242,45 @@ class IRBuilderCSF(IRBuilderAST):
         funcArgsList[expr3] = "addExpr"
 
         progExtraBefore = IR.Prog([])
-        if not (Util.Config.disableTruncOpti):
-            # TruncOpti is on
-            multExprScaleDownSf = 0
-            addExprScaleUpSf = 0
+        if Util.Config.version == "fixed":
+            if not (Util.Config.disableTruncOpti):
+                # TruncOpti is on
+                multExprScaleDownSf = 0
+                addExprScaleUpSf = 0
 
-            expr_sf = self.scaleFacMapping[expr1.idf]
-            multExpr_sf = self.scaleFacMapping[expr2.idf]
-            addExpr_sf = self.scaleFacMapping[expr3.idf]
-            if expr_sf > self.scaleFac:
-                # Scale down needed
-                progExtraBefore = IRUtil.prog_merge(
-                    progExtraBefore,
-                    self.addTruncateFunctionCall(
-                        node.expr, "FusedBatchNorm", expr1, expr_sf - self.scaleFac
-                    ),
-                )
-                self.scaleFacMapping[expr1.idf] = self.scaleFac
+                expr_sf = self.scaleFacMapping[expr1.idf]
+                multExpr_sf = self.scaleFacMapping[expr2.idf]
+                addExpr_sf = self.scaleFacMapping[expr3.idf]
+                if expr_sf > self.scaleFac:
+                    # Scale down needed
+                    progExtraBefore = IRUtil.prog_merge(
+                        progExtraBefore,
+                        self.addTruncateFunctionCall(
+                            node.expr, "FusedBatchNorm", expr1, expr_sf - self.scaleFac
+                        ),
+                    )
+                    self.scaleFacMapping[expr1.idf] = self.scaleFac
 
-            if multExpr_sf > self.scaleFac:
-                # Scale down needed
-                progExtraBefore = IRUtil.prog_merge(
-                    progExtraBefore,
-                    self.addTruncateFunctionCall(
-                        node.multExpr,
-                        "FusedBatchNorm",
-                        expr2,
-                        multExpr_sf - self.scaleFac,
-                    ),
-                )
-                self.scaleFacMapping[expr2.idf] = self.scaleFac
+                if multExpr_sf > self.scaleFac:
+                    # Scale down needed
+                    progExtraBefore = IRUtil.prog_merge(
+                        progExtraBefore,
+                        self.addTruncateFunctionCall(
+                            node.multExpr,
+                            "FusedBatchNorm",
+                            expr2,
+                            multExpr_sf - self.scaleFac,
+                        ),
+                    )
+                    self.scaleFacMapping[expr2.idf] = self.scaleFac
 
-            final_sf = 2 * self.scaleFac
-            assert final_sf >= addExpr_sf
-            if final_sf > addExpr_sf:
-                addExprScaleUpSf = final_sf - addExpr_sf
-                self.scaleFacMapping[expr3.idf] += addExprScaleUpSf
+                final_sf = 2 * self.scaleFac
+                assert final_sf >= addExpr_sf
+                if final_sf > addExpr_sf:
+                    addExprScaleUpSf = final_sf - addExpr_sf
+                    self.scaleFacMapping[expr3.idf] += addExprScaleUpSf
 
-            self.scaleFacMapping[returnExpr.idf] = final_sf
+                self.scaleFacMapping[returnExpr.idf] = final_sf
 
         if Util.Config.version == "fixed":
             multExprScaleDownSf = self.scaleFac

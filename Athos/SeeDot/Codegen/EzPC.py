@@ -152,15 +152,19 @@ class EzPC(CodegenBase):
 
     def printDecl(self, ir):
         typ_str = IR.DataType.getIntStrForBitlen(ir.bitlen)
+        # if ir.bitlen == True:
+        #     print("Bitlennnnnnn >>>>>>>>>>>> ", ir.bitlen)
+        #     print(ir.varIdf)
+        #     print(f"EzPC.py : printDecl : ir = {ir.typeExpr.dataType}, typ_str = {typ_str}")
+        #     print(f"EzPC.py : printDecl : typ_str = {typ_str}")
+        #     print(f"EzPC.py : printDecl : {ir.varIdf}, {ir.typeExpr}")
+
         if Type.isTensor(ir.typeExpr):
             typ_str = (
                 IR.DataType.floatStr
                 if ir.typeExpr.dataType == "float32" and Util.Config.version == "float"
                 else IR.DataType.getIntStrForBitlen(ir.bitlen)
             )
-            # print(f"EzPC.py : printDecl : ir = {ir.typeExpr.dataType}, typ_str = {typ_str}")
-        # print(f"EzPC.py : printDecl : typ_str = {typ_str}")
-        # print(f"EzPC.py : printDecl : {ir.varIdf}, {ir.typeExpr}")
         if not (ir.isSecret):
             variableLabel = "pl"
         elif Util.Config.version == "float":
