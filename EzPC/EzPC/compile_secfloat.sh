@@ -20,26 +20,46 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-EMP_CPP_FILE=$1
+SECFLOAT_CPP_FILE=$1
 EZPC_SRC_PATH=$(dirname $0)
 
-if [ ! -e ${EMP_CPP_FILE} ]; then
+if [ ! -e "$SECFLOAT_CPP_FILE" ]; then
   echo "Please specify file name of the generated .cpp file using ./ezpc.sh";
   exit;
 fi
 
-BINARY_NAME=$(basename $EMP_CPP_FILE .cpp)
+BINARY_NAME=$(basename $SECFLOAT_CPP_FILE .cpp)
+DIR="$(dirname "${SECFLOAT_CPP_FILE}")" 
+ 
 
-g++  ${EMP_CPP_FILE} \
-        -I ${EZPC_SRC_PATH}/emp-sh2pc \
-        -DEMP_CIRCUIT_PATH=/usr/local/include/emp-tool/circuits/files/ \
-        -fconcepts -pthread -funroll-loops -Wno-ignored-attributes \
-        -Wno-unused-result -Wno-write-strings -march=native -maes -mrdseed -std=c++14 -O3 \
-        -Wl,-rpath,/usr/local/lib /usr/local/lib/libemp-tool.so \
-        -lssl -lcrypto \
-	-o $BINARY_NAME
+rm -rf build_dir
+mkdir build_dir
+cp ../../SCI/tests/FindMPFR.cmake build_dir/
+cp secfloat.h $DIR/
+cd build_dir
+eval `opam config env`
+echo "
+cmake_minimum_required (VERSION 3.13) 
+project (BUILD_IT)
+set(CMAKE_MODULE_PATH \${CMAKE_CURRENT_SOURCE_DIR})
+find_package(MPFR 2.3.0 REQUIRED)
+find_package(SCI REQUIRED PATHS \"../../../SCI/build/install\") 
+add_executable($BINARY_NAME ../$SECFLOAT_CPP_FILE)
+target_include_directories($BINARY_NAME PUBLIC ${MPFR_INCLUDES})
+target_link_libraries($BINARY_NAME SCI::SCI-FloatingPoint ${MPFR_LIBRARIES})
+" > CMakeLists.txt
 
-if [ $? -ne 0 ]; then
+cmake --log-level=ERROR .
+
+cmake --build . --parallel
+rm -rf ../$BINARY_NAME 
+mv $BINARY_NAME ../
+cd ..
+rm -rf build_dir
+
+
+
+if [ -e "../$BINARY_NAME" ]; then
   echo "Compilation failed"
   exit
 else
