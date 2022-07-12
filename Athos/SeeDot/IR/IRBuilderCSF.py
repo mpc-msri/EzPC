@@ -383,10 +383,11 @@ class IRBuilderCSF(IRBuilderAST):
                 IR.Decl(
                     out_arr.idf,
                     Type.Tensor(
-                        node.shape[1:],
-                        node.expr.type.bitlen,
-                        node.expr.type.isSecret,
-                        node.expr.type.taint,
+                        shape=node.shape[1:],
+                        dataType=node.expr.type.dataType,
+                        bitlen=node.expr.type.bitlen,
+                        isSecret=node.expr.type.isSecret,
+                        taint=node.expr.type.taint,
                     ),
                     isSecret=node.type.isSecret,
                 )
@@ -421,8 +422,9 @@ class IRBuilderCSF(IRBuilderAST):
         prog_out = IRUtil.prog_merge(prog_out, IR.Prog(iter_decl_lst))
         prog_out = IRUtil.prog_merge(prog_out, IR.Prog(loop))
 
-        if not (Util.Config.disableTruncOpti):
-            self.scaleFacMapping[out_arr.idf] = self.scaleFacMapping[expr_1.idf]
+        if Util.Config.version == "fixed":
+            if not (Util.Config.disableTruncOpti):
+                self.scaleFacMapping[out_arr.idf] = self.scaleFacMapping[expr_1.idf]
 
         return (prog_out, out_arr)
 
@@ -435,10 +437,11 @@ class IRBuilderCSF(IRBuilderAST):
                 IR.Decl(
                     out_arr.idf,
                     Type.Tensor(
-                        node.shape[: node.axis] + [1] + node.shape[node.axis :],
-                        node.expr.type.bitlen,
-                        node.expr.type.isSecret,
-                        node.expr.type.taint,
+                        shape=node.shape[: node.axis] + [1] + node.shape[node.axis :],
+                        dataType=node.expr.type.dataType,
+                        bitlen=node.expr.type.bitlen,
+                        iaSecret=node.expr.type.isSecret,
+                        taint=node.expr.type.taint,
                     ),
                     isSecret=node.type.isSecret,
                 )
@@ -476,8 +479,9 @@ class IRBuilderCSF(IRBuilderAST):
         prog_out = IRUtil.prog_merge(prog_out, IR.Prog(iter_decl_lst))
         prog_out = IRUtil.prog_merge(prog_out, IR.Prog(loop))
 
-        if not (Util.Config.disableTruncOpti):
-            self.scaleFacMapping[out_arr.idf] = self.scaleFacMapping[expr_1.idf]
+        if Util.Config.version == "fixed":
+            if not (Util.Config.disableTruncOpti):
+                self.scaleFacMapping[out_arr.idf] = self.scaleFacMapping[expr_1.idf]
 
         return (prog_out, out_arr)
 
@@ -950,12 +954,12 @@ class IRBuilderCSF(IRBuilderAST):
 
                 self.scaleFacMapping[out_arr.idf] = self.scaleFacMapping[expr_1.idf]
 
-        print(
-            f"visitBopAddOrSubLike : {node.expr1.type.dataType}, {node.expr1.type.shape}"
-        )
-        print(node.expr1.name, node.expr1.type.dataType)
-        print(node.expr2.name, node.expr2.type.dataType)
-        print(node_type)
+        # print(
+        #     f"visitBopAddOrSubLike : {node.expr1.type.dataType}, {node.expr1.type.shape}"
+        # )
+        # print(node.expr1.name, node.expr1.type.dataType)
+        # print(node.expr2.name, node.expr2.type.dataType)
+        # print(node_type)
         decl = IR.Decl(out_arr.idf, node_type, node_type.bitlen, node_type.isSecret)
 
         if Type.isNumeric(node_type):
@@ -1850,39 +1854,13 @@ class IRBuilderCSF(IRBuilderAST):
             argsList[IR.Int(Util.Config.consSF, 32)] = "curScale"
 
         progExtraBefore = IR.Prog([])
-        if Util.Config.disableTruncOpti:
-            if node.op in [
-                AST.Operators.RELU,
-                AST.Operators.HARDSIGMOID,
-            ]:
-                argsList[IR.Int(Util.Config.consSF, 32)] = "consSF"
-                argsList[IR.Bool(False)] = "doTruncation"
-            if node.op in [
-                AST.Operators.TANH,
-                AST.Operators.SIGMOID,
-                AST.Operators.SQRT,
-                AST.Operators.RSQRT,
-            ]:
-                assert (
-                    self.scaleFac > 31
-                ), "The program scaling factor {} is invalid. Should be lesser than 32 if network has tan/sig/sqrt as those only support 32 bitlengths".format(
-                    self.scaleFac
-                )
-                argsList[IR.Int(self.scaleFac, 32)] = "sA"
-                argsList[IR.Int(self.scaleFac, 32)] = "sB"
-        else:
-            final_sf = self.scaleFacMapping[expr1.idf]
-            if node.op in [
-                AST.Operators.RELU,
-                AST.Operators.HARDSIGMOID,
-            ]:
-                argsList[IR.Int(final_sf - self.scaleFac, 32)] = "consSF"
-                if final_sf > self.scaleFac:
-                    # If it can't tolerate one more mult operation, then scale down here
-                    assert final_sf - self.scaleFac == self.scaleFac
-                    final_sf = self.scaleFac
-                    argsList[IR.Bool(True)] = "doTruncation"
-                else:
+        if Util.Config.version == "fixed":
+            if Util.Config.disableTruncOpti:
+                if node.op in [
+                    AST.Operators.RELU,
+                    AST.Operators.HARDSIGMOID,
+                ]:
+                    argsList[IR.Int(Util.Config.consSF, 32)] = "consSF"
                     argsList[IR.Bool(False)] = "doTruncation"
                 if node.op in [
                     AST.Operators.TANH,
@@ -1899,7 +1877,10 @@ class IRBuilderCSF(IRBuilderAST):
                     argsList[IR.Int(self.scaleFac, 32)] = "sB"
             else:
                 final_sf = self.scaleFacMapping[expr1.idf]
-                if node.op == AST.Operators.RELU:
+                if node.op in [
+                    AST.Operators.RELU,
+                    AST.Operators.HARDSIGMOID,
+                ]:
                     argsList[IR.Int(final_sf - self.scaleFac, 32)] = "consSF"
                     if final_sf > self.scaleFac:
                         # If it can't tolerate one more mult operation, then scale down here

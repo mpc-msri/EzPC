@@ -40,7 +40,7 @@ def void MatMul2D(int32_pl i, int32_pl j, int32_pl k, float_fl[i][j] A, float_fl
 		for i2=[0:k]{
 			C[i1][i2] = 0.0;
 			for i3=[0:j]{
-				C[i1][i2] = C[i1][i2] +_al (A[i1][i3]*B[i3][i2]);
+				C[i1][i2] = C[i1][i2] +_fl (A[i1][i3]*B[i3][i2]);
 			};
 		};
 	};

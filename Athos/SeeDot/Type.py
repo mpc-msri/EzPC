@@ -373,7 +373,11 @@ class InferType(ASTVisitor):
         assert isTensor(exprType) and exprType.dim > 0
 
         node.type = Tensor(
-            node.shape[1:], exprType.bitlen, exprType.isSecret, exprType.taint
+            node.shape[1:],
+            exprType.dataType,
+            exprType.bitlen,
+            exprType.isSecret,
+            exprType.taint,
         )
 
         return node.type
@@ -541,13 +545,16 @@ class InferType(ASTVisitor):
         return node.type
 
     def visitBopDiv(self, node: AST.BOp, eType: Type, fType: Type, args=None):
+        if self.debug:
+            print(f"{' '*self.indent}||visitBopDiv")
+            self.indent += 1
         if isInt(eType) and isInt(fType):
             node.type = Int(eType.bitlen, eType.isSecret)
         elif isTensor(eType) and isTensor(fType):
             if eType.dim == 0:
-                node.type = copy.copy(fType)
+                node.type = copy.deepcopy(fType)
             elif fType.dim == 0:
-                node.type = copy.copy(eType)
+                node.type = copy.deepcopy(eType)
             else:
                 assert eType.dim == 2 and fType.dim == 2
                 [n1, n2] = eType.shape
@@ -561,6 +568,8 @@ class InferType(ASTVisitor):
         node.type.taint = getTaint_type(eType, fType)
         node.type.isSecret = eType.isSecret | fType.isSecret
 
+        if self.debug:
+            self.indent -= 1
         return node.type
 
     def visitBopConv(self, node: AST.BOp, eType: Type, fType: Type, args=None):
@@ -796,6 +805,9 @@ class InferType(ASTVisitor):
         return node.type
 
     def visitUnsqueeze(self, node: AST.Unsqueeze, args=None):
+        if self.debug:
+            print(f"{' '*self.indent}||visitUnsqueeze")
+            self.indent += 1
         node.expr.gamma = dict(node.gamma)
         exprType = self.visit(node.expr)
 
@@ -806,11 +818,14 @@ class InferType(ASTVisitor):
 
         node.type = Tensor(
             node.shape[: node.axis] + [1] + node.shape[node.axis :],
+            exprType.dataType,
             exprType.bitlen,
             exprType.isSecret,
             exprType.taint,
         )
 
+        if self.debug:
+            self.indent -= 1
         return node.type
 
     def visitReduce(self, node: AST.Reduce, args=None):

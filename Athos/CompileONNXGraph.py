@@ -249,55 +249,6 @@ def generate_code(params, role, debug=False):
     )
     # sys.exit(0)
 
-    # EzPC to binary, no need to analyse this.
-    ezpc_dir = os.path.join(athos_dir, "../EzPC/EzPC/")
-    # Copy generated code to the ezpc directory
-    os.system('cp "{ezpc}" "{ezpc_dir}"'.format(ezpc=ezpc_abs_path, ezpc_dir=ezpc_dir))
-    os.chdir(ezpc_dir)
-    ezpc_args = ""
-    if not is_target_float(target):
-        ezpc_args += "--bitlen {bl} ".format(bl=bitlength)
-    ezpc_args += "--codegen {target} --disable-tac ".format(target=target)
-    output_name = ezpc_file_name[:-5] + "0.cpp"
-    if modulo is not None:
-        ezpc_args += "--modulo {} ".format(modulo)
-    if target == "SCI":
-        ezpc_args += "--backend {} ".format(backend.upper())
-        output_name = ezpc_file_name[:-5] + "_{}0.cpp".format(backend.upper())
-    if target in ["PORTHOS"]:
-        ezpc_args += "--sf {} ".format(scale)
-    # ezpc_args += "--backend {} ".format(backend.upper())
-    output_name = ezpc_file_name[:-5] + "_{}0.cpp".format(backend.upper())
-
-    os.system(
-        'eval `opam config env`; ./ezpc.sh "{}" '.format(ezpc_file_name) + ezpc_args
-    )
-    os.system(
-        'mv "{output}" "{model_dir}" '.format(
-            output=output_name, model_dir=model_abs_dir
-        )
-    )
-    # print("Compiled EzPC file")
-    # sys.exit(0)
-    os.system('rm "{}"'.format(ezpc_file_name))
-    output_file = os.path.join(model_abs_dir, output_name)
-
-    print("Compiling generated code to {target} target".format(target=target))
-    if target == "SCI":
-        program_name = model_base_name + "_" + target + "_" + backend + ".out"
-    if library == "fss":
-        os.system(
-            'cat "{pre}" "{ezpc}"> "{temp}"'.format(
-                pre=pre, common=common, post=post, ezpc=ezpc_abs_path, temp=temp
-            )
-        )
-    else:
-        os.system(
-            'cat "{pre}" "{common}" "{post}" "{ezpc}"> "{temp}"'.format(
-                pre=pre, common=common, post=post, ezpc=ezpc_abs_path, temp=temp
-            )
-        )
-    os.system('mv "{temp}" "{ezpc}"'.format(temp=temp, ezpc=ezpc_abs_path))
     if library == "fss":
         os.system(
             "fssc --bitlen {bl} --disable-tac {ezpc}".format(
@@ -310,6 +261,8 @@ def generate_code(params, role, debug=False):
     else:
         ezpc_dir = os.path.join(athos_dir, "../EzPC/EzPC/")
         # Copy generated code to the ezpc directory
+        if is_target_float(target):
+            bitlength = 32
         os.system(
             'cp "{ezpc}" "{ezpc_dir}"'.format(ezpc=ezpc_abs_path, ezpc_dir=ezpc_dir)
         )
@@ -375,23 +328,45 @@ def generate_code(params, role, debug=False):
                 print(
                     "Not compiling generated code. Please follow the readme and build Porthos."
                 )
-        elif target == "SCI":
+        elif target in ["SCI", "SECFLOAT"]:
             sci_install = os.path.join(athos_dir, "..", "SCI", "build", "install")
             build_dir = "build_dir"
-            os.system("rm -r {build_dir}".format(build_dir=build_dir))
+            os.system("rm -rf {build_dir}".format(build_dir=build_dir))
             os.mkdir(build_dir)
+            if target == "SECFLOAT":
+                backend = "FloatingPoint"
+                cmake = "set(CMAKE_MODULE_PATH .)"
+                findMPFR = "find_package(MPFR 2.3.0 REQUIRED)"
+                includeMPFR = "target_include_directories({prog_name} PUBLIC ${MPFR_INCLUDES})".format(
+                    prog_name=program_name, MPFR_INCLUDES="{MPFR_INCLUDES}"
+                )
+                MPFR = "${MPFR_LIBRARIES}"
+                os.system(f"cp {athos_dir}/../SCI/tests/FindMPFR.cmake build_dir/")
+                os.system(f"cp {ezpc_dir}secfloat.h {model_abs_dir}/")
+            else:
+                cmake = ""
+                findMPFR = ""
+                includeMPFR = ""
+                MPFR = ""
             os.chdir(build_dir)
             cmake_file = """
-                cmake_minimum_required (VERSION 3.0)
+                cmake_minimum_required (VERSION 3.13)
                 project (BUILD_IT)
+                {cmake}
+                {findMPFR}
                 find_package(SCI REQUIRED PATHS \"{sci_install}\")
                 add_executable({prog_name} {src_file})
-                target_link_libraries({prog_name} SCI::SCI-{backend})
+                {includeMPFR}
+                target_link_libraries({prog_name} SCI::SCI-{backend} {MPFR})
             """.format(
+                cmake=cmake,
+                findMPFR=findMPFR,
                 sci_install=sci_install,
                 prog_name=program_name,
                 src_file=output_file,
+                includeMPFR=includeMPFR,
                 backend=backend.upper(),
+                MPFR=MPFR,
             )
             with open("CMakeLists.txt", "w") as f:
                 f.write(cmake_file)
@@ -409,7 +384,7 @@ def generate_code(params, role, debug=False):
                     )
                 )
                 os.chdir("..")
-                os.system("rm -r {build_dir}".format(build_dir=build_dir))
+                # os.system("rm -rf {build_dir}".format(build_dir=build_dir))
             else:
                 print(
                     "Not compiling generated code. Please follow the readme and build and install SCI."

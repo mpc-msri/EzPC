@@ -181,8 +181,7 @@ class Compiler:
         # Perform type inference and annotate nodes with type information
         InferType().visit(ast)
 
-        # if Util.Config.printASTBool :
-        if False:
+        if Util.Config.printASTBool:
             PrintAST().visit(ast)
             print("\n")
             sys.stdout.flush()
