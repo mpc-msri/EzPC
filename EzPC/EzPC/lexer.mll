@@ -53,11 +53,15 @@ let cvt_uint32_literal s =
   Uint32.of_string (String.sub s 0 (String.length s - 1))
 let cvt_uint64_literal s =
   Uint64.of_string (String.sub s 0 (String.length s - 2))
+let cvt_float_literal s =
+  Float.of_string s
+
 }
 
 let white = [' ' '\t']+
 let digit = ['0'-'9']
 let int = digit+
+let flt = int '.' int
 let letter = ['a'-'z' 'A'-'Z']
 let all = ['a'-'z' 'A'-'Z' '0'-'9']
 let id = letter all*
@@ -108,6 +112,7 @@ rule read =
   | "int64" { TINT64 }
   | "uint32" { TUINT32 }
   | "uint64" { TUINT64 }
+  | "float" { TFLOAT }
   | "bool"  { TBOOL }
   | "void" {TVOID }
   | "true" { TRUE }
@@ -115,6 +120,7 @@ rule read =
   | "al" { ARITHMETIC }
   | "bl" { BOOLEAN }
   | "pl" { PUBLIC }
+  | "fl" { BABA }
   | "output" { OUTPUT }
   | "input" { INPUT }
   | "return" { RETURN }
@@ -134,6 +140,8 @@ rule read =
   | id    { ID (Lexing.lexeme lexbuf) }
   | int { try INT32 (cvt_int32_literal (Lexing.lexeme lexbuf))
           with Failure _ -> raise (Error ("literal overflow int32")) }
+  | flt { try FLOAT (cvt_float_literal (Lexing.lexeme lexbuf))
+          with Failure _ -> raise (Error ("literal overflow float")) }
   | int "u" { try UINT32 (cvt_uint32_literal (Lexing.lexeme lexbuf))
           with Failure _ -> raise (Error ("literal overflow uint32")) }
   | int "L" { try INT64 (cvt_int64_literal (Lexing.lexeme lexbuf))

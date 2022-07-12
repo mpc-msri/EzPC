@@ -32,6 +32,7 @@ open Infer
 open Tc
 open Optimizer
 open Partition
+open Codegensecfloat
 open Codegen
 open Codegenoblivc
 open Codegenemp
@@ -83,7 +84,7 @@ let tc_and_codegen (p:program) (file:string) :unit =
              else p
            in
            let p =
-             if Config.get_codegen () = CPP || Config.get_codegen () = CPPRING 
+             if Config.get_codegen () = CPP || Config.get_codegen () = CPPRING || Config.get_codegen () = CPPFLOAT 
              then p |> erase_labels_program
              else p
            in
@@ -94,6 +95,8 @@ let tc_and_codegen (p:program) (file:string) :unit =
            else if Config.get_codegen () = SCI then Codegensci.o_program p file
            else if Config.get_codegen () = FSS then Codegenfss.o_program p file
            else if Config.get_codegen () = CPPRING then Codegencppring.o_program p file
+           else if Config.get_codegen () = CPPFLOAT then Codegencppfloat.o_program p file
+           else if Config.get_codegen () = SECFLOAT then Codegensecfloat.o_program p file
            else if Config.get_codegen () = EMP then Codegenemp.o_program p file
            else Codegen.o_program p file;
            Well_typed ()) in
@@ -125,6 +128,8 @@ let specs = Arg.align [
                                                    | "SCI" -> SCI |> Config.set_codegen
                                                    | "FSS" -> FSS |> Config.set_codegen
                                                    | "CPPRING" -> CPPRING |> Config.set_codegen
+                                                   | "CPPFLOAT" -> CPPFLOAT |> Config.set_codegen
+                                                   | "SECFLOAT" -> SECFLOAT |> Config.set_codegen
                                                    | "EMP" -> EMP |> Config.set_codegen
                                                    | _ -> failwith "Invalid codegen mode"),
                  " Codegen mode (ABY or CPP or OBLIVC or PORTHOS or SCI or CPPRING or FSS or EMP, default ABY)");
@@ -173,7 +178,7 @@ let _ =
       && Config.get_modulo () = (Uint64.shift_left (Uint64.of_int 1) (Config.get_bitlen ()))
     then begin
     print_msg ("CPPRING codegen called for 1<<{32/64} ring. Switching to codegen CPP with bitlen = 32/64.");
-    Config.set_codegen CPP
+    Config.set_codegen CPP 
     end
   in
 

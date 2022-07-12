@@ -93,26 +93,38 @@ let o_sunop (l:secret_label) (op:unop) (c:comp) :comp =
   
 let o_sbinop (l:secret_label) (op:binop) (c1:comp) (c2:comp) :comp =
   let aux (s:string)  :comp = seq c1 (o_app (o_str s) [c2]) in
+  let rev_aux (s:string)  :comp = seq c2 (o_app (o_str s) [c1]) in
+  let unsup (): comp = failwith ("Operator "^ binop_to_string op ^ " not supported for Secret Float.") in
   match op with
   | Sum                -> aux ".operator+" 
   | Sub                -> aux ".operator-" 
   | Mul                -> aux ".operator*" 
-  | Greater_than       -> aux ".operator>" 
+  | Greater_than       -> 
+    if l==Baba then rev_aux ".less_than" else aux ".operator<" 
   | Div                -> aux ".operator/"
-  | Mod                -> aux ".operator%"
-  | Less_than          -> aux ".operator<"
-  | Is_equal           -> aux ".operator=="
-  | Greater_than_equal -> aux ".operator>="
-  | Less_than_equal    -> aux ".operator<="
-  | R_shift_a          -> aux ".operator>>"
-  | L_shift            -> aux ".operator<<"
-  | Bitwise_and        -> aux ".operator&" 
-  | Bitwise_or         -> aux ".operator|" 
-  | Bitwise_xor        -> aux ".operator^" 
+  | Mod                ->
+    if l==Baba then unsup() else aux ".operator%"
+  | Less_than          -> 
+    if l==Baba then aux ".less_than" else aux ".operator<"
+  | Is_equal           -> 
+    if l==Baba then aux ".equal" else aux ".operator=="
+  | Greater_than_equal -> 
+    if l == Baba 
+      then o_app (seq (o_paren(aux ".less_than")) (o_str ".operator!")) [] 
+      else aux ".operator<"
+  | Less_than_equal    ->
+    if l == Baba 
+      then o_app (seq (o_paren(rev_aux ".less_than")) (o_str ".operator!")) [] 
+      else aux ".operator<"
   | And                -> aux ".operator&" 
   | Or                 -> aux ".operator|" 
   | Xor                -> aux ".operator^" 
-  | R_shift_l          -> aux ".operator>>"
+  | R_shift_a          -> if l==Baba then unsup() else aux ".operator>>"
+  | L_shift            -> if l==Baba then unsup() else aux ".operator<<"
+  | Bitwise_and        -> if l==Baba then unsup() else aux ".operator&" 
+  | Bitwise_or         -> if l==Baba then unsup() else aux ".operator|" 
+  | Bitwise_xor        -> if l==Baba then unsup() else aux ".operator^" 
+  | R_shift_l          -> if l==Baba then unsup() else aux ".operator>>"
   | Pow                -> failwith ("Codegen cannot handle this secret binop: " ^ binop_to_string op)
                
 let o_pconditional (c1:comp) (c2:comp) (c3:comp) :comp =
@@ -128,8 +140,10 @@ let o_subsumption (src:label) (tgt:secret_label) (t:typ) (e:comp) :comp =
         | Base (UInt32,_) | Base (Int32,_)  
         | Base (UInt64,_) | Base (Int64,_) -> o_app (o_str "Integer") [o_str "bitlen" ; e ; o_str"PUBLIC"] 
         | Base (Bool,_) -> o_app (o_str "Bit") [e;o_str "PUBLIC"]
+        | Base (Float,_) -> o_app (o_str "Float") [e;o_str "PUBLIC"]
         | _ -> failwith "unknown type of subsumption node")
     | Secret Arithmetic 
+    | Secret Baba 
     | Secret Boolean -> e
   
 let o_basetyp (t:base_type) :comp =
@@ -139,10 +153,21 @@ let o_basetyp (t:base_type) :comp =
   | Int32  -> o_str "int32_t"
   | Int64  -> o_str "int64_t"
   | Bool   -> o_str "bool"
+  | Float   -> o_str "float"
+
+let o_outtyp (t:base_type) :comp =
+  match t with
+  | UInt32 -> o_str "uint32_t"
+  | UInt64 -> o_str "uint64_t"
+  | Int32  -> o_str "int32_t"
+  | Int64  -> o_str "int64_t"
+  | Bool   -> o_str "bool"
+  | Float   -> o_str "string"
 
 let o_sec (bt:base_type) = 
   match bt with
       | Bool -> o_str "Bit"
+      | Float -> o_str "Float"
       | _ -> o_str "Integer"
 
 let o_typ (t:typ) :comp =
@@ -171,6 +196,8 @@ let rec o_expr (g:gamma) (e:expr) :comp =
   | Const (UInt64C n) -> seq (o_str (" (uint64_t)")) (o_uint64 n)
 
   | Const (BoolC b) -> o_bool b
+
+  | Const (FloatC f) -> o_float f 
     
   | Var s -> o_var s
 
@@ -204,12 +231,13 @@ and o_codegen_expr (g:gamma) (e:codegen_expr) :comp =
               
   | Input_g (r, sl, s, bt) -> 
       (match bt with 
+      | Float 
       | Bool -> o_app (o_sec bt) [ o_str s.name;  o_role r]
       | _ ->  o_app (o_sec bt) [o_str "bitlen";  o_str s.name;  o_role r])
 
   | Output_g (r, sl,  Base_e e) -> 
     let bt, l = get_bt_and_label (typeof_expr g e |> get_opt) in
-    seq (o_codegen_expr (Base_e e)) (seq (o_str ".reveal") (o_cbfunction sl (o_basetyp bt) [o_role r]) )
+    seq (o_codegen_expr (Base_e e)) (seq (o_str ".reveal") (o_cbfunction sl (o_outtyp bt) [o_role r]) )
 
   | Conditional_codegen (e1, e2, e3, l) ->
      let c1, c2, c3 = o_codegen_expr e1, o_codegen_expr e2, o_codegen_expr e3 in
@@ -293,7 +321,7 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
      let is_arr = is_array_typ t in
      
      (* bt is the base type and l label *)
-     let bt, l = get_bt_and_label t |> (fun (bt, l) -> get_unsigned bt, l) in
+     let bt, l = get_bt_and_label t |> (fun (bt, l) -> get_inp_type bt, l) in
      let l = get_opt l in
 
      (* list of dimensions, if an array else empty *)

@@ -1,0 +1,30 @@
+def void main() {
+    float_fl a = 5.0 ;
+    float_fl b = 10.0 ;
+    float_fl c ;
+    bool_bl e ;
+
+
+    float_pl d ;
+e = a > b ;
+    c = 1.0 / a ;
+    c = a-b ;
+    c = a*b ;
+    c = b/4.0 ;
+    (* d = 10.0 % 4.0 ; *)      (* Uncomment to check that type error is reported *)
+    (* c = b >> 2u ; *)         (* Uncomment to check that type error is reported *)
+    (* c = b << 2u ; *)         (* Uncomment to check that type error is reported *)
+    (* c = a ^ b ; *)           (* Uncomment to check that type error is reported *)                
+    (* c = a & b ; *)           (* Uncomment to check that type error is reported *)
+    (* c = a | b ; *)           (* Uncomment to check that type error is reported *)
+    (* c = 2.0 ^^ 10.0 ; *)     (* report error *)
+    (* c = b >>> 2u ; *)        (* Uncomment to check that type error is reported *)
+    e = true && false ;
+    e = false || false ;
+    e = false @ true ;
+    e = a > b ;
+    (*e = (a == b) ;*)   (* Not available in secfloat *)
+    e = a >= b ;
+    e = a <= b ;
+    e = a < b ;
+}

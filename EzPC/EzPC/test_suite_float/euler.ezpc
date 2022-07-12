@@ -1,0 +1,11 @@
+def void main() {
+    input(ALL, terms, int32_pl) ;
+     float_fl euler = 1.0 ;
+    float_fl fact = 1.0 ;
+    float_fl ctr = 1.0 ;
+    float_pl t =2.0;
+    for i=[1:terms] {
+        euler = euler + (t/fact) ;
+    };
+    output(ALL, euler) ;
+}

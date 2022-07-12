@@ -1,0 +1,36 @@
+def void main () {
+    input(SERVER, alpha, float_fl) ;
+    input(SERVER, gamma, float_fl) ;
+    input(SERVER, zeta, float_fl) ;
+    input(SERVER, theta, float_fl) ;
+    input(SERVER, mu, float_fl) ;
+    input(CLIENT, beta, float_fl) ;
+    input(CLIENT, delta, float_fl) ;
+    input(CLIENT, eta, float_fl) ;
+    input(CLIENT, lambda, float_fl) ;
+    input(CLIENT, nu, float_fl) ;
+    input(ALL, RHS, float_pl) ;
+
+    float_fl alphaSq = alpha * alpha ;
+    float_fl twoAlphaGamma = 2.0 * alpha * gamma ;
+    float_fl gammaSq = gamma * gamma ;
+    float_fl zetaThetaSq = zeta * theta * theta ;
+    float_fl twoZetaThetaMu = 2.0 * zeta * theta * mu ;
+    float_fl zetaMuSq = zeta * mu * mu ;
+ 
+    float_fl betaSq = beta * beta ;
+    float_fl betaDelta = beta * delta ;
+    float_fl deltaSq = delta * delta ;
+    float_fl etaLambdaSq = eta * lambda * lambda ;
+    float_fl etaLambdaNu = eta * lambda * nu ;
+    float_fl etaNuSq = eta * nu * nu ;
+
+    float_fl LHS = alphaSq * betaSq ;
+    LHS = LHS - (twoAlphaGamma * betaDelta) ;
+    LHS = LHS + (gammaSq * deltaSq) ;
+    LHS = LHS + (zetaThetaSq * etaLambdaSq) ;
+    LHS = LHS - (twoZetaThetaMu * etaLambdaNu) ;
+    LHS = LHS + (zetaMuSq * etaNuSq) ;
+
+    output(ALL, LHS < RHS ? true : false) ;
+}
