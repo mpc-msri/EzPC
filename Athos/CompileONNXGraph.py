@@ -335,10 +335,10 @@ def generate_code(params, role, debug=False):
             os.mkdir(build_dir)
             if target == "SECFLOAT":
                 backend = "FloatingPoint"
-                cmake = "set(CMAKE_MODULE_PATH .)"
+                cmake = "set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})"
                 findMPFR = "find_package(MPFR 2.3.0 REQUIRED)"
-                includeMPFR = "target_include_directories({prog_name} PUBLIC ${MPFR_INCLUDES})".format(
-                    prog_name=program_name, MPFR_INCLUDES="{MPFR_INCLUDES}"
+                includeMPFR = "target_include_directories({prog_name} PUBLIC)".format(
+                    prog_name=program_name
                 )
                 MPFR = "${MPFR_LIBRARIES}"
                 os.system(f"cp {athos_dir}/../SCI/tests/FindMPFR.cmake build_dir/")
@@ -348,6 +348,7 @@ def generate_code(params, role, debug=False):
                 findMPFR = ""
                 includeMPFR = ""
                 MPFR = ""
+                backend = backend.upper()
             os.chdir(build_dir)
             cmake_file = """
                 cmake_minimum_required (VERSION 3.13)
@@ -357,7 +358,7 @@ def generate_code(params, role, debug=False):
                 find_package(SCI REQUIRED PATHS \"{sci_install}\")
                 add_executable({prog_name} {src_file})
                 {includeMPFR}
-                target_link_libraries({prog_name} SCI::SCI-{backend} {MPFR})
+                target_link_libraries({prog_name} SCI::SCI-{backend} )
             """.format(
                 cmake=cmake,
                 findMPFR=findMPFR,
@@ -365,7 +366,7 @@ def generate_code(params, role, debug=False):
                 prog_name=program_name,
                 src_file=output_file,
                 includeMPFR=includeMPFR,
-                backend=backend.upper(),
+                backend=backend,
                 MPFR=MPFR,
             )
             with open("CMakeLists.txt", "w") as f:
@@ -384,7 +385,7 @@ def generate_code(params, role, debug=False):
                     )
                 )
                 os.chdir("..")
-                # os.system("rm -rf {build_dir}".format(build_dir=build_dir))
+                os.system("rm -rf {build_dir}".format(build_dir=build_dir))
             else:
                 print(
                     "Not compiling generated code. Please follow the readme and build and install SCI."
