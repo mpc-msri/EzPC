@@ -46,6 +46,7 @@ find_package(MPFR 2.3.0 REQUIRED)
 find_package(SCI REQUIRED PATHS \"../../../SCI/build/install\") 
 add_executable($BINARY_NAME ../$SECFLOAT_CPP_FILE)
 target_include_directories($BINARY_NAME PUBLIC ${MPFR_INCLUDES})
+target_compile_options($BINARY_NAME PRIVATE -fconcepts)
 target_link_libraries($BINARY_NAME SCI::SCI-FloatingPoint ${MPFR_LIBRARIES})
 " > CMakeLists.txt
 
