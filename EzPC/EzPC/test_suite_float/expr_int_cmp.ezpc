@@ -1,5 +1,0 @@
-def void main () {
-  input(SERVER, x, int32_al) ;
-  bool_bl b = x > 3 ;
-  output(ALL, b) ;
-}

@@ -275,7 +275,7 @@ let rec insert_coercions_expr (g:gamma) (e:expr) :expr =
          let e2 = maybe_add_subsumption g lopt (insert_coercions_expr g e2) in
          Binop (b, e1, e2, lopt))
     | Conditional (e1, e2, e3, lopt) ->
-      let label_branches =   label_of_expr g e0 in
+      let label_branches = label_of_expr g e0 in
       let e1 = maybe_add_subsumption g lopt (insert_coercions_expr g e1) in
       let e2 = maybe_add_subsumption g label_branches (insert_coercions_expr g e2) in
       let e3 = maybe_add_subsumption g label_branches (insert_coercions_expr g e3) in

@@ -1,7 +1,0 @@
-def void main () {
-  input(ALL, x, int32_pl[2][2]) ;
-  input(ALL, y, int32_pl) ; 
-  input(SERVER, w, int32_al) ;
-  int32_al z = ((x[1][0] + y) * w) - 100 ;
-  output(CLIENT, z) ;
-}

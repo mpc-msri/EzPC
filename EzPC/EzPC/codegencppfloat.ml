@@ -1,6 +1,6 @@
 (*
 
-Authors: Aseem Rastogi, Nishant Kumar, Mayank Rathee.
+Authors: Anwesh Bhattacharya.
 
 Copyright:
 Copyright (c) 2020 Microsoft Research
@@ -125,6 +125,16 @@ let basetyp_to_cpptyp (t:base_type) : string =
     | Bool -> "bool"
  
 let o_basetyp (t:base_type) :comp = t |> basetyp_to_cpptyp |> o_str
+
+let basetype_to_secfloat (t:base_type) :string =
+  match t with
+  | UInt32 | UInt64 | Int32 | Int64 -> "fix"
+  | Float -> "fp"
+  | Bool -> "bool"
+
+let basetype_to_secfloat_backend (t:base_type) :string = "__" ^ (basetype_to_secfloat t) ^ "_op"
+
+let basetype_to_secfloat_pub (t:base_type) :string = "__" ^ (basetype_to_secfloat t) ^ "_pub"
 
 let rec o_secret_binop (g:gamma) (op:binop) (sl:secret_label) (e1:expr) (e2:expr) :comp =
   let backend = e1 |> typeof_expr g |> get_opt |> get_bt_and_label |> fst |> basetype_to_secfloat_backend in
