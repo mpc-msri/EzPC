@@ -95,7 +95,7 @@ let tc_and_codegen (p:program) (file:string) :unit =
            else if Config.get_codegen () = SCI then Codegensci.o_program p file
            else if Config.get_codegen () = FSS then Codegenfss.o_program p file
            else if Config.get_codegen () = CPPRING then Codegencppring.o_program p file
-           else if Config.get_codegen () = CPPFLOAT || Config.get_codegen () = CPP then Codegencppfloat.o_program p file
+           else if Config.get_codegen () = CPPFLOAT then Codegencppfloat.o_program p file
            else if Config.get_codegen () = SECFLOAT then Codegensecfloat.o_program p file
            else if Config.get_codegen () = EMP then Codegenemp.o_program p file
            else Codegen.o_program p file;
