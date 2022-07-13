@@ -64,7 +64,7 @@ let o_newline :comp = o_str "\n"
 let s_comma = seq @@ o_str ", "
 
 (* Pipe a semicolon after a series of output pipes *)
-let s_smln = seq @@ seql [o_semicol; o_newline]
+let s_smln (c:comp) = seq c (seql [o_semicol; o_newline])
 
 (* Insert a semicolon at the end of the buffer *)
 let o_smln = o_null |> s_smln
