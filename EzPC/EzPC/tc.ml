@@ -81,7 +81,6 @@ let check_base_type (t:typ) (r:range) :unit result =
   | _ -> Type_error ("Expected a base type, found: " ^ (typ_to_string t), r)
   
 let check_base_type_and_label (e:expr) (t:typ) (l:label) :eresult =
-       (* print_string(expr_to_string e ^ " \n"); *)
   match t.data with
   | Base (_, Some lt) when l = lt -> Well_typed t
   | _ -> Type_error ("Expected a base type with label " ^ (label_to_string l) ^ " for expression " ^ (expr_to_string e) ^ ", found: " ^ (typ_to_string t), e.metadata)
@@ -167,15 +166,7 @@ let check_non_void_ret_typ (f:string) (t:ret_typ) (r:range) :eresult =
   match t with
   | Typ t -> Well_typed t
   | Void _ -> Type_error ("Function " ^ f ^ " has a void return type", r)
-
-let join_types_cmp (t1:typ) (t2:typ) :typ option =
-  match t1.data, t2.data with
-  | Base (x, Some Public), Base (y, Some Public) when x <> Bool && y <> Bool -> 
-    join_types t1 t2
-  | Base (x, Some (Secret Arithmetic)), Base (y, Some (Secret Arithmetic)) when x = y -> 
-    Some (Base (Bool, Some (Secret Boolean)) |> mk_dsyntax "")
-  | _, _ -> None
-
+  
 
 let rec tc_expr (g:gamma) (e:expr) :eresult =
   match e.data with
@@ -279,7 +270,7 @@ type sresult = gamma result
 
 let rec check_type_well_formedness (g:gamma) (t:typ) :unit result =
   let bitlen_err (n:int) = Type_error ("Incorrect bitlen, expected: " ^ (string_of_int (Config.get_bitlen ())) ^ ", found: " ^ (string_of_int n), t.metadata) in
-  let check_float_label (l:secret_label) : unit result =
+  let check_int_label (l:secret_label) : unit result =
     if l = Baba then Type_error ("Numeric type int cannot be Baba shared.", t.metadata)
     else Well_typed ()
   in
@@ -288,9 +279,9 @@ let rec check_type_well_formedness (g:gamma) (t:typ) :unit result =
   | Base (_, None) -> Type_error ("Unlabeled type: " ^ (typ_to_string t), t.metadata)
   | Base (Bool, Some (Secret l)) -> if l = Boolean then Well_typed () else Type_error ("Bool type cannot be arithmetic/baba shared: " ^ (typ_to_string t), t.metadata)
   | Base (UInt32, Some (Secret l))
-  | Base (Int32, Some (Secret l)) -> if Config.get_bitlen () = 32 then  check_float_label l else bitlen_err 32
+  | Base (Int32, Some (Secret l)) -> if Config.get_bitlen () = 32 then  check_int_label l else bitlen_err 32
   | Base (UInt64, Some (Secret l))
-  | Base (Int64, Some (Secret l)) -> if Config.get_bitlen () = 64 then check_float_label l else bitlen_err 64
+  | Base (Int64, Some (Secret l)) -> if Config.get_bitlen () = 64 then check_int_label l else bitlen_err 64
   | Base (Float, Some (Secret l)) -> if l = Baba then Well_typed () else Type_error ("Float type can only be baba shared: " ^ (typ_to_string t), t.metadata)
   | Base _ -> Well_typed ()
   | Array (_, bt, e) ->

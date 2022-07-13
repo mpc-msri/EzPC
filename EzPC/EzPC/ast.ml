@@ -238,15 +238,6 @@ let rec typ_to_string (t:typ) :string =
      let qual_string = if quals |> List.mem Immutable then "const " else "" in
      qual_string ^ typ_to_string t ^ "[" ^ expr_to_string e ^ "]"
 
-let basetype_to_secfloat (t:base_type) :string =
-  match t with
-  | UInt32 | UInt64 | Int32 | Int64 -> "fix"
-  | Float -> "fp"
-  | Bool -> "bool"
-
-let basetype_to_secfloat_backend (t:base_type) :string = "__" ^ (basetype_to_secfloat t) ^ "_op"
-
-let basetype_to_secfloat_pub (t:base_type) :string = "__" ^ (basetype_to_secfloat t) ^ "_pub"
 
 let ret_typ_to_string (t:ret_typ) :string =
   match t with

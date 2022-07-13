@@ -50,8 +50,6 @@ let o_str (s:string) :comp = fun buf -> Buffer.add_string buf s
 
 let seq (f:comp) (g:comp) :comp = fun buf -> f buf; g buf
 
-let seqs (f:comp) (g:comp) :comp = seq g f
-
 let rec seql (l:comp list) : comp = 
     match l with
     | []        -> o_null
@@ -63,10 +61,10 @@ let o_semicol :comp = o_str " ;"
 
 let o_newline :comp = o_str "\n"
 
-let s_comma = seqs @@ o_str ", "
+let s_comma = seq @@ o_str ", "
 
 (* Pipe a semicolon after a series of output pipes *)
-let s_smln = seqs @@ seql [o_semicol; o_newline]
+let s_smln = seq @@ seql [o_semicol; o_newline]
 
 (* Insert a semicolon at the end of the buffer *)
 let o_smln = o_null |> s_smln
