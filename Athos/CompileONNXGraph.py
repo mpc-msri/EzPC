@@ -358,6 +358,7 @@ def generate_code(params, role, debug=False):
                 find_package(SCI REQUIRED PATHS \"{sci_install}\")
                 add_executable({prog_name} {src_file})
                 {includeMPFR}
+                target_compile_options({prog_name} PRIVATE -fconcepts)
                 target_link_libraries({prog_name} SCI::SCI-{backend} )
             """.format(
                 cmake=cmake,
