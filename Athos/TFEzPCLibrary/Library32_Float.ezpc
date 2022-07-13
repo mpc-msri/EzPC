@@ -1,4 +1,4 @@
-extern float_pl intToFloatSingle(int32_pl integer) ;
+extern float_pl intToFloat(int32_pl integer) ;
 
 
 
@@ -486,7 +486,7 @@ def void AvgPool(int32_pl N, int32_pl H, int32_pl W, int32_pl C,
 					int32_pl ksizeH64 = ksizeH;
 					int32_pl ksizeW64 = ksizeW;
 					int32_pl filterSz64 = (ksizeH64) * (ksizeW64);
-					float_fl curFilterAvg = curFilterSum/intToFloatSingle(filterSz64);
+					float_fl curFilterAvg = curFilterSum/intToFloat(filterSz64);
 					filterAvg[rowIdx] = curFilterAvg;
 					rowIdx = rowIdx + 1;
 

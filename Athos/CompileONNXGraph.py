@@ -334,7 +334,7 @@ def generate_code(params, role, debug=False):
             os.system("rm -rf {build_dir}".format(build_dir=build_dir))
             os.mkdir(build_dir)
             if target == "SECFLOAT":
-                backend = "FloatingPoint"
+                backend = "FloatML"
                 cmake = "set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})"
                 findMPFR = "find_package(MPFR 2.3.0 REQUIRED)"
                 includeMPFR = "target_include_directories({prog_name} PUBLIC)".format(
