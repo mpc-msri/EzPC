@@ -46,13 +46,7 @@ def void MatMul2D(int32_pl i, int32_pl j, int32_pl k, float_fl[i][j] A, float_fl
 	};
 }
 
-def void GemmAdd(int32_pl s1, int32_pl s2, float_fl[s1][s2] inArr, float_fl[s2] bias, float_fl[s1][s2] outArr) {
-	for i1=[0:s1] {
-		for i2=[0:s2] {
-			outArr[i1][i2] = inArr[i1][i2] + bias[i2] ;
-		} ;
-	} ;
-}
+extern void GemmAdd(int32_pl s1, int32_pl s2, float_fl[s1][s2] inArr, float_fl[s2] bias, float_fl[s1][s2] outArr); 
 
 def void ConvAdd(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, float_fl[s1][s2][s3][s4] tmp5, float_fl[1][1][1][s4] tmp6, float_fl[s1][s2][s3][s4] tmp7) {
 	for i1=[0:s1] {
@@ -118,12 +112,7 @@ def void Reassign4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, float_fl[
 
 (* Relu *)
 
-def void Relu(int32_pl s1, float_fl[s1] inArr, float_fl[s1] outArr)
-{
-	for i1=[0:s1]{
-		outArr[i1] = ((inArr[i1] > 0.0) ? inArr[i1] : 0.0);
-	};
-}
+extern void Relu(int32_pl s1, float_fl[s1] inArr, float_fl[s1] outArr);
 
 def void Relu1(int32_pl s1, float_fl[s1] inArr, float_fl[s1] outArr)
 {
