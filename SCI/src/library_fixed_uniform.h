@@ -44,6 +44,9 @@ intType funcSSCons(int64_t x);
 void funcReconstruct2PCCons(signedIntType *y, const intType *x, int len);
 signedIntType funcReconstruct2PCCons(intType x, int revealParty);
 
+// B is always the model
+void GemmAdd(int32_t s1, int32_t s2, const intType *A, const intType *B, const intType *C) ;
+
 void MatMul2D(int32_t s1, int32_t s2, int32_t s3, const intType *A,
               const intType *B, intType *C, bool modelIsA);
 

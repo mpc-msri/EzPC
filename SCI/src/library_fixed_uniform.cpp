@@ -281,6 +281,41 @@ void MatMul2D(int32_t s1, int32_t s2, int32_t s3, const intType *A,
 #endif
 }
 
+// B is model
+void GemmAdd(int32_t s1, int32_t s2, const intType *A, const intType *B, intType *C) {
+
+#ifdef LOG_LAYERWISE
+  INIT_TIMER;
+#endif
+
+  std::cout << "GemmAdd called s1,s2 = " << s1 << " " << s2
+            << std::endl;
+
+  if (party == sci::ALICE) {
+    intType *BTemp = new intType[s1 * s2];
+    for (int i = 0 ; i < s1 ; i++) {
+      for (int j = 0 ; j < s2 ; j++) {
+        BTemp[i*s2 + j] = B[j] ;
+      }
+    }
+    sci::elemWiseAdd<intType>(s1 * s2, A, BTemp, C);
+    delete[] BTemp;
+  } else {
+    // For minionn kind of hacky runs, switch this off
+#ifndef HACKY_RUN
+    for (int i = 0; i < s2; i++)
+      assert(B[i] == 0);
+#endif
+  }
+
+#ifdef LOG_LAYERWISE
+  auto temp = TIMER_TILL_NOW;
+  std::cout << "Time in sec for current gemmadd = " << (temp / 1000.0)
+            << std::endl;
+#endif
+
+}
+
 static void Conv2D(int32_t N, int32_t H, int32_t W, int32_t CI, int32_t FH,
                    int32_t FW, int32_t CO, int32_t zPadHLeft,
                    int32_t zPadHRight, int32_t zPadWLeft, int32_t zPadWRight,
