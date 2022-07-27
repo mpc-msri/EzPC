@@ -109,17 +109,6 @@ void matmul_cleartext_eigen(int dim1, int dim2, int dim3, GroupElement *inA,
 
 void MatMul(int s1, int s2, int s3, GroupElement *A, GroupElement* B, GroupElement *C)
 {
-    // for (int i = 0; i < s1; i++)
-    // {
-    //     for (int k = 0; k < s3; k++)
-    //     {
-    //         Arr2DIdxRowM(C, s1, s3, i, k).value = 0;
-    //         for (int j = 0; j < s2; j++)
-    //         {
-    //             Arr2DIdxRowM(C, s1, s3, i, k).value = Arr2DIdxRowM(C, s1, s3, i, k).value + Arr2DIdxRowM(A, s1, s2, i, j).value * Arr2DIdxRowM(B, s2, s3, j, k).value;
-    //         }
-    //     }
-    // }
     matmul_cleartext_eigen(s1, s2, s3, A, B, C);
 }
 
@@ -184,18 +173,6 @@ void Conv2DReshapeOutput(int N, int finalH, int finalW, int CO, GroupElement *in
 	}
 }
 
-
-
-void PrintMatrix(matrix<GroupElement> matrix)
-{
-    for(int i=0; i<matrix.size(); i++){
-        for(int j=0; j<matrix[0].size(); j++){
-            std::cout << matrix[i][j].value << " ";
-        }
-        std::cout << std::endl;
-    }
-}
-
 void Conv2DPlaintext(int N, int H, int W, int CI, 
 				   int FH, int FW, int CO, 
 				   int zPadHLeft, int zPadHRight, int zPadWLeft, int zPadWRight, 
@@ -235,36 +212,6 @@ void VecCopy(int s, GroupElement *input, GroupElement *output)
 
 void MatCopy(int s1, int s2, GroupElement *input, GroupElement *output){
     VecCopy(s1*s2, input, output);
-}
-
-// C = C - A*B
-void MatSubMul(int s1, int s2, int s3, GroupElement *A, GroupElement* B, GroupElement *C)
-{
-    for (int i = 0; i < s1; i++)
-    {
-        for (int k = 0; k < s3; k++)
-        {
-            for (int j = 0; j < s2; j++)
-            {
-                Arr2DIdxRowM(C, s1, s3, i, k).value = Arr2DIdxRowM(C, s1, s3, i, k).value - Arr2DIdxRowM(A, s1, s2, i, j).value * Arr2DIdxRowM(B, s2, s3, j, k).value;
-            }
-        }
-    }
-}
-
-// C = C + A*B
-void MatAddMul(int s1, int s2, int s3, GroupElement *A, GroupElement* B, GroupElement *C)
-{
-    for (int i = 0; i < s1; i++)
-    {
-        for (int k = 0; k < s3; k++)
-        {
-            for (int j = 0; j < s2; j++)
-            {
-                Arr2DIdxRowM(C, s1, s3, i, k).value = Arr2DIdxRowM(C, s1, s3, i, k).value + Arr2DIdxRowM(A, s1, s2, i, j).value * Arr2DIdxRowM(B, s2, s3, j, k).value;
-            }
-        }
-    }
 }
 
 void MatCopy4(int s1, int s2, int s3, int s4, GroupElement *input, GroupElement *output){
@@ -429,7 +376,6 @@ GroupElement changeBitsize(GroupElement x, int newbitsize) {
         if (msb == 0) return new_x;
 
         // msb(x) is 1
-        // std::cout << "msb is 1" << std::endl;
         for (int i = oldbitsize; i < newbitsize; i++) {
             new_x.value = new_x.value | ((uint64_t)1 << i);
         }
@@ -500,8 +446,6 @@ GroupElement signedDivide(GroupElement x, GroupElement y)
     // for e.g. with -5%3 we expect the answer to be 1 because -5 = 3*-2 + 1
     // but above line says -5%3 = -2
     // therefore using this if condn
-
-    // value = static_cast<uint64_t>((static_cast<int64_t>(x.value)) % (static_cast<int64_t>(y.value)) );
 
     if ((value != 0) && (static_cast<int64_t>(x.value) < 0)) {
 

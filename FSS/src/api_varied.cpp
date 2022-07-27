@@ -58,6 +58,7 @@ uint64_t inputOnlineCommVaried = 0;
 
 template <typename T> using pair = std::pair<T,T>;
 
+/// @brief Function called by EzPC compiled code before any other computation is done
 void initialize()
 {
     std::cerr << "=== COMPUTATION START ===\n\n";
@@ -97,6 +98,7 @@ void initialize()
 
 // #define PRINT_LAYERWISE_STATS
 
+/// @brief Function called by EzPC compiled code after all computations are done
 void finalize()
 {
     std::cerr << "\n=== COMPUTATION END ===\n\n";
@@ -131,6 +133,9 @@ void finalize()
 
 }
 
+/// @brief Calculates the log base 2 for a power of 2
+/// @param x a positive integer of form 2^n
+/// @return The log base 2 of x if x is a power of 2, otherwise -1
 int64_t log(int64_t x)
 {
    for(int i = 0; i < 64; i++)
@@ -143,6 +148,9 @@ int64_t log(int64_t x)
    return -1;
 }
 
+/// @brief Calculates the ceiling of log base 2
+/// @param x a positive integer
+/// @return The ceiling of log base 2 of x
 int64_t ceillog(int64_t x)
 {
     for(int i = 0; i < 64; i++)
@@ -155,6 +163,10 @@ int64_t ceillog(int64_t x)
     return -1;
 }
 
+/// @brief Calculates the starting and ending indices of an array for a thread to work on
+/// @param size The size of the array
+/// @param thread_idx The index of the thread
+/// @returns returns tuple (start, end) such that they form a uniform interval for a thread to work on
 inline std::pair<int32_t, int32_t> get_start_end(int32_t size, int32_t thread_idx)
 {
     int32_t chunk_size = size / num_threads;
@@ -168,6 +180,10 @@ inline std::pair<int32_t, int32_t> get_start_end(int32_t size, int32_t thread_id
     }
 }
 
+/// @brief Allocates a new GroupElement array
+/// @param size The size of the array
+/// @param bw The bitwidth of the elements
+/// @returns A pointer to the allocated array
 GroupElement* make_ge_array(int size, int bw)
 {
     GroupElement* arr = new GroupElement[size];
@@ -179,6 +195,7 @@ GroupElement* make_ge_array(int size, int bw)
     return arr;
 }
 
+/// @brief thread function for `fix_bitwidth`
 void fix_bitwidth_threads_helper(int thread_idx, GroupElement* arr, int size, int bw)
 {
     auto p = get_start_end(size, thread_idx);
@@ -189,6 +206,10 @@ void fix_bitwidth_threads_helper(int thread_idx, GroupElement* arr, int size, in
     }
 }
 
+/// @brief Sets the bitwidth of all elements in an array to a given value and truncates value above the bitwidth
+/// @param arr The array to fix bitwidth of
+/// @param size The size of the array
+/// @param bw The bitwidth to set the elements to
 void fix_bitwidth(GroupElement* arr, int size, int bw)
 {
     std::thread thread_pool[num_threads];
@@ -202,6 +223,11 @@ void fix_bitwidth(GroupElement* arr, int size, int bw)
     }
 }
 
+/// @brief Increases the bitwidth of a signed integer in 2s complement representation
+/// @param x The integer to increase the bitwidth of
+/// @param b1 Bitwidth of value x
+/// @param b2 The bitwidth to increase the integer to
+/// @returns The integer x with bitwidth b2
 inline uint64_t sign_extend_clear(uint64_t x, int b1, int b2)
 {
     uint64_t m1 = (1L << b1) - 1;
@@ -210,6 +236,12 @@ inline uint64_t sign_extend_clear(uint64_t x, int b1, int b2)
     return (((x + (1<<(b1- 1))) & m1) - (1<<(b1- 1))) & m2;
 }
 
+/// @brief truncates the last bits of a signed integer in 2s complement representation
+/// @param x The integer to truncate the last bits of
+/// @param b1 Bitwidth of value x
+/// @param b2 The bitwidth to truncate the integer to
+/// @param s Desired right shift amount
+/// @returns The integer x with bitwidth b2
 inline uint64_t truncate_reduce_clear(uint64_t x, int b1, int b2, int s)
 {
     if (s == 0)
@@ -223,6 +255,7 @@ inline uint64_t truncate_reduce_clear(uint64_t x, int b1, int b2, int s)
     }
 }
 
+/// @brief evaluator thread helper of `internalExtend` when output bitwidth is greater than input bitwidth
 void internalExtend_threads_helper(int thread_idx, int32_t size, int bin, int bout, GroupElement *inArr, GroupElement *outArr, DCFKeyPack *dcfKeys)
 {
     auto p = get_start_end(size, thread_idx);
@@ -238,6 +271,7 @@ void internalExtend_threads_helper(int thread_idx, int32_t size, int bin, int bo
     }
 }
 
+/// @brief evaluator thread helper of `internalExtend` when output bitwidth is less than input bitwidth
 void internalReduce_threads_helper(int thread_idx, int32_t size, int bin, int bout, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *outArr))
 {
     auto p = get_start_end(size, thread_idx);
@@ -253,6 +287,7 @@ void internalReduce_threads_helper(int thread_idx, int32_t size, int bin, int bo
     }
 }
 
+/// @brief dealer thread helper of `internalExtend` when output bitwidth is greater than input bitwidth
 void internalExtend_dealer_threads_helper(int threads_idx, int size, int bin, int bout, GroupElement *inArr_mask, GroupElement *outArr_mask, pair<DCFKeyPack> *keys)
 {
     auto p = get_start_end(size, threads_idx);
@@ -263,6 +298,13 @@ void internalExtend_dealer_threads_helper(int threads_idx, int size, int bin, in
     }
 }
 
+/// @brief Signed-Extension of a GroupElement array
+/// @param size size of the array
+/// @param bin bitwidth of the elements in the array
+/// @param bout bitwidth of the elements in the array after extension
+/// @param inArr The array to extend
+/// @param outArr The array to store the extended values in
+/// @param doReconstruct Whether to reconstruct the array after extension
 void internalExtend(int size, int bin, int bout, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *outArr), bool doReconstruct)
 {
     if (bin == bout)
@@ -376,6 +418,7 @@ void internalExtend(int size, int bin, int bout, MASK_PAIR(GroupElement *inArr),
     }
 }
 
+/// @brief evaluator thread helper function for `internalTruncateAndFix` when the shift is non zero
 void internalTF_threads_helper(int thread_idx, int32_t size, GroupElement *inArr, GroupElement *outArr, ARSKeyPack *keys)
 {
     auto p = get_start_end(size, thread_idx);
@@ -385,6 +428,7 @@ void internalTF_threads_helper(int thread_idx, int32_t size, GroupElement *inArr
     }
 }
 
+/// @brief dealer thread helper function for `internalTruncateAndFix` when the shift is non zero
 void internalTF_dealer_threads_helper(int threads_idx, int size, int bin, int bout, int shift, GroupElement *inArr_mask, GroupElement *outArr_mask, pair<ARSKeyPack> *keys)
 {
     auto p = get_start_end(size, threads_idx);
@@ -395,6 +439,13 @@ void internalTF_dealer_threads_helper(int threads_idx, int size, int bin, int bo
     }
 }
 
+/// @brief Converts a vector of GroupElements of any bitwidth and scale to arbitrary target bitwidth and scale.
+/// @param size The size of the input and output vectors.
+/// @param shift The number of bits to shift the input vector.
+/// @param bin The bitwidth of the input vector.
+/// @param bout The bitwidth of the output vector.
+/// @param inArr The input vector.
+/// @param outArr The output vector.
 void internalTruncateAndFix(int size, int shift, int bin, int bout, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *outArr), bool doReconstruct)
 {
     if (shift == 0)
@@ -472,6 +523,7 @@ void internalTruncateAndFix(int size, int shift, int bin, int bout, MASK_PAIR(Gr
     }
 }
 
+/// @brief evaluator thread helper for `ScalarMul`
 void ScalarMul_threads_helper(int thread_idx, int32_t size, uint64_t s, int bwB, int bwTemp, GroupElement *B, GroupElement *tmpC, DCFKeyPack *dcfKeys, GroupElement *r)
 {
     auto p = get_start_end(size, thread_idx);
@@ -485,6 +537,7 @@ void ScalarMul_threads_helper(int thread_idx, int32_t size, uint64_t s, int bwB,
     }
 }
 
+/// @brief dealer thread helper for `ScalarMul`
 void ScalarMul_dealer_threads_helper(int thread_idx, int size, uint64_t s, int bwB, int bwTemp, GroupElement *B_mask, GroupElement *tmpC_mask, pair<DCFKeyPack> *dcfkeys, pair<GroupElement> *r)
 {
     GroupElement one1(1, bwTemp);
@@ -496,7 +549,16 @@ void ScalarMul_dealer_threads_helper(int thread_idx, int size, uint64_t s, int b
     }
 }
 
-// A is public assuming mask is zero, for gods sake...
+/// @brief Calculates the product of a scalar with a matrix of GroupElements.
+/// @attention please check SeeDot for definition of shrA, shrB, shrC, demote
+/// @param I row size of input matrix
+/// @param J column size of input matrix
+/// @param bwA bitwidth of input scalar
+/// @param bwB bitwidth of input matrix
+/// @param bwTemp bitwidth of intermediate multiplication result
+/// @param A constant scalar to multiply, A_mask is zero
+/// @param B input matrix to multiply, B is a secret variable
+/// @param C output matrix
 void ScalarMul(int64_t I, int64_t J, int64_t shrA, int64_t shrB, int64_t demote,
                int64_t bwA, int64_t bwB, int64_t bwTemp, int64_t bwC, MASK_PAIR(GroupElement A),
                MASK_PAIR(GroupElement *B), MASK_PAIR(GroupElement *C))
@@ -704,6 +766,14 @@ void MatMul_internal(int bw, int32_t s1, int32_t s2, int32_t s3, MASK_PAIR(Group
     }
 }
 
+/// @brief Performs uniform bitwidth matrix multiplication of two masked matrices.
+/// @param bw Bitwidth of the matrixes
+/// @param s1 Number of rows in A
+/// @param s2 Number of columns in A and rows in B
+/// @param s3 Number of columns in B
+/// @param A  First matrix
+/// @param B  Second matrix
+/// @param C  Result matrix
 void MatMulUniform(int bw, int32_t s1, int32_t s2, int32_t s3, MASK_PAIR(GroupElement *A),
             MASK_PAIR(GroupElement *B), MASK_PAIR(GroupElement *C))
 {
@@ -712,6 +782,17 @@ void MatMulUniform(int bw, int32_t s1, int32_t s2, int32_t s3, MASK_PAIR(GroupEl
 
 // #define SIRNN_STYLE_TRUNCATION_MATMUL
 
+/// @brief Performs Mixed Bitwidth matrix multiplication of two masked matrices.
+/// @attention please check SeeDot for definition of shrA, shrB, shrC, H1, H2, demote
+/// @param I Number of rows in A
+/// @param J Number of columns in A and rows in B
+/// @param K Number of columns in B
+/// @param bwA Bitwidth of the first matrix
+/// @param bwB Bitwidth of the second matrix
+/// @param bwC Bitwidth of the result matrix
+/// @param A  First matrix
+/// @param B  Second matrix
+/// @param C  Result matrix
 void MatMul(int64_t I, int64_t K, int64_t J, int64_t shrA, int64_t shrB,
             int64_t H1, int64_t H2, int64_t demote, int32_t bwA, int32_t bwB,
             int32_t bwTemp, int32_t bwC, MASK_PAIR(GroupElement *A), MASK_PAIR(GroupElement *B), MASK_PAIR(GroupElement *C),
@@ -797,6 +878,16 @@ void MatAdd_threads_helper(int thread_idx, int32_t size, MASK_PAIR(GroupElement 
     }
 }
 
+/// @brief Performs Mixed Bitwidth addition of two masked matrices.
+/// @attention please check SeeDot for definition of shrA, shrB, shrC, demote
+/// @param I Number of rows in A and B
+/// @param J Number of columns in A and B
+/// @param bwA Bitwidth of the first matrix
+/// @param bwB Bitwidth of the second matrix
+/// @param bwC Bitwidth of the result matrix
+/// @param A  First matrix
+/// @param B  Second matrix
+/// @param C  Result matrix
 void MatAdd(int64_t I, int64_t J, int64_t shrA, int64_t shrB, int64_t shrC,
             int64_t demote, int64_t bwA, int64_t bwB, int64_t bwTemp,
             int64_t bwC, MASK_PAIR(GroupElement *A), MASK_PAIR(GroupElement *B), MASK_PAIR(GroupElement *C),
@@ -879,6 +970,16 @@ void MulCir_dealer_threads_helper(int thread_idx, int32_t size, int bwA, int bwB
     }
 }
 
+/// @brief Performs elementwise multiplication of two masked matrices.
+/// @attention please check SeeDot for definition of shrA, shrB, shrC, demote
+/// @param I Number of rows in A and B
+/// @param J Number of columns in A and B
+/// @param bwA Bitwidth of the first matrix
+/// @param bwB Bitwidth of the second matrix
+/// @param bwC Bitwidth of the result matrix
+/// @param A  First matrix
+/// @param B  Second matrix
+/// @param C  Result matrix
 void MulCir(int64_t I, int64_t J, int64_t shrA, int64_t shrB, int64_t demote,
             int64_t bwA, int64_t bwB, int64_t bwTemp, int64_t bwC, MASK_PAIR(GroupElement *A),
             MASK_PAIR(GroupElement *B), MASK_PAIR(GroupElement *C))
@@ -975,7 +1076,16 @@ void MatAddBroadCastA_threads_helper(int thread_idx, int size, uint64_t tmpA, Gr
     }
 }
 
-// A is public here
+/// @brief Adds a constant to a matrix.
+/// @attention please check SeeDot for definition of shrA, shrB, shrC, demote
+/// @param I Number of rows in B
+/// @param J Number of columns in B
+/// @param bwA Bitwidth of the constant
+/// @param bwB Bitwidth of the matrix
+/// @param bwC Bitwidth of the result matrix
+/// @param A  Constant to be added, A_mask is zero
+/// @param B  Input matrix
+/// @param C  Result matrix
 void MatAddBroadCastA(int64_t I, int64_t J, int64_t shrA, int64_t shrB,
                       int64_t shrC, int64_t demote, int64_t bwA, int64_t bwB,
                       int64_t bwTemp, int64_t bwC, MASK_PAIR(GroupElement A), MASK_PAIR(GroupElement *B),
@@ -1024,7 +1134,16 @@ void MatSubBroadCastA_threads_helper(int thread_idx, int size, uint64_t tmpA, Gr
     }
 }
 
-// A is public here
+/// @brief Subtracts each element of matrix from a constant.
+/// @attention please check SeeDot for definition of shrA, shrB, shrC, demote
+/// @param I Number of rows in B
+/// @param J Number of columns in B
+/// @param bwA Bitwidth of the constant
+/// @param bwB Bitwidth of the matrix
+/// @param bwC Bitwidth of the result matrix
+/// @param A  Constant to be subtracted from, A_mask is zero
+/// @param B  Input matrix
+/// @param C  Result matrix
 void MatSubBroadCastA(int64_t I, int64_t J, int64_t shrA, int64_t shrB,
                       int64_t shrC, int64_t demote, int64_t bwA, int64_t bwB,
                       int64_t bwTemp, int64_t bwC, MASK_PAIR(GroupElement A), MASK_PAIR(GroupElement *B),
@@ -1083,7 +1202,16 @@ void MatAddBroadCastB_threads_helper(int thread_idx, int size, GroupElement *tmp
     }
 }
 
-// B is public here
+/// @brief Adds a constant to a matrix.
+/// @attention please check SeeDot for definition of shrA, shrB, shrC, demote
+/// @param I Number of rows in A
+/// @param J Number of columns in A
+/// @param bwA Bitwidth of the matrix
+/// @param bwB Bitwidth of the constant
+/// @param bwC Bitwidth of the result matrix
+/// @param A  Input matrix
+/// @param B  Constant to be added, for dealer B_mask contains the value, for evaluator B contains the value
+/// @param C  Result matrix
 void MatAddBroadCastB(int64_t I, int64_t J, int64_t shrA, int64_t shrB,
                       int64_t shrC, int64_t demote, int64_t bwA, int64_t bwB,
                       int64_t bwTemp, int64_t bwC, MASK_PAIR(GroupElement *A), MASK_PAIR(GroupElement B),
@@ -1134,7 +1262,16 @@ void MatSubBroadCastB_threads_helper(int thread_idx, int size, GroupElement *tmp
     }
 }
 
-// B is public here
+/// @brief Subtract a constant from matrix.
+/// @attention please check SeeDot for definition of shrA, shrB, shrC, demote
+/// @param I Number of rows in A
+/// @param J Number of columns in A
+/// @param bwA Bitwidth of the matrix
+/// @param bwB Bitwidth of the constant
+/// @param bwC Bitwidth of the result matrix
+/// @param A  Input matrix
+/// @param B  Constant to be subtracted, for dealer B_mask contains the value, for evaluator B contains the value
+/// @param C  Result matrix
 void MatSubBroadCastB(int64_t I, int64_t J, int64_t shrA, int64_t shrB,
                       int64_t shrC, int64_t demote, int64_t bwA, int64_t bwB,
                       int64_t bwTemp, int64_t bwC, MASK_PAIR(GroupElement *A), MASK_PAIR(GroupElement B),
@@ -1177,6 +1314,11 @@ void MatSubBroadCastB(int64_t I, int64_t J, int64_t shrA, int64_t shrB,
     delete[] tmpA;
 }
 
+/// @brief Increase scale of a matrix.
+/// @param I Number of rows in A
+/// @param J Number of columns in A
+/// @param scale 2^scale value to multiplied
+/// @param A Input matrix
 void AdjustScaleShl(int64_t I, int64_t J, int64_t scale, MASK_PAIR(GroupElement *A))
 {
     if (party == DEALER) {
@@ -1198,6 +1340,13 @@ void AdjustScaleShl(int64_t I, int64_t J, int64_t scale, MASK_PAIR(GroupElement 
 }
 
 
+/// @brief Uniform bitwidth implementation of ArgMax
+/// @attention Currently we only support 1 row
+/// @param rows Number of rows in inp
+/// @param cols Number of columns in inp
+/// @param bw Bitwidth of inp
+/// @param inp Input Matrix
+/// @param out Output Matrix
 void ArgMax_internal(int32_t rows, int32_t cols, int bw, MASK_PAIR(GroupElement *inp), MASK_PAIR(GroupElement *out)) 
 {
     // inp is a vector of size rows*columns and max (resp. maxidx) is caclulated for every
@@ -1397,6 +1546,15 @@ void Sigmoid_dealer_threads_helper(int thread_idx, int size, int ib, int ob, int
     }
 }
 
+/// @brief Calculates elementwise Sigmoid of values
+/// @param I Number of rows
+/// @param J Number of columns
+/// @param bwA Bitwidth of input array A
+/// @param bwB Bitwidth of output array B
+/// @param scale_in Scale of input array A
+/// @param scale_out Scale of output array B
+/// @param A Input array
+/// @param B Output array
 void Sigmoid(int64_t I, int64_t J, int64_t scale_in, int64_t scale_out,
              int64_t bwA, int64_t bwB, MASK_PAIR(GroupElement *A), MASK_PAIR(GroupElement *B))
 {
@@ -1543,6 +1701,15 @@ void Tanh_threads_helper(int thread_idx, int size, GroupElement *A, GroupElement
     }
 }
 
+/// @brief Calculates elementwise Tanh of values
+/// @param I Number of rows
+/// @param J Number of columns
+/// @param bwA Bitwidth of input array A
+/// @param bwB Bitwidth of output array B
+/// @param scale_in Scale of input array A
+/// @param scale_out Scale of output array B
+/// @param A Input array
+/// @param B Output array
 void TanH(int64_t I, int64_t J, int64_t scale_in, int64_t scale_out,
           int64_t bwA, int64_t bwB, MASK_PAIR(GroupElement *A), MASK_PAIR(GroupElement *B))
 {
@@ -1683,6 +1850,15 @@ void Invsqrt_dealer_threads_helper(int thread_idx, int size, int ib, int ob, int
     }
 }
 
+/// @brief Calculates elementwise Reciprocal-Squareroot of values
+/// @param I Number of rows
+/// @param J Number of columns
+/// @param bwA Bitwidth of input array A
+/// @param bwB Bitwidth of output array B
+/// @param scale_in Scale of input array A
+/// @param scale_out Scale of output array B
+/// @param A Input array
+/// @param B Output array
 void Sqrt(int64_t I, int64_t J, int64_t scale_in, int64_t scale_out,
              int64_t bwA, int64_t bwB, MASK_PAIR(GroupElement *A), MASK_PAIR(GroupElement *B))
 {

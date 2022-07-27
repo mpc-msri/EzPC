@@ -38,12 +38,6 @@ void MatMul(int s1, int s2, int s3, GroupElement *A, GroupElement* B, GroupEleme
 
 void MatCopy(int s1, int s2, GroupElement *input, GroupElement *output);
 
-// C = C - A*B
-void MatSubMul(int s1, int s2, int s3, GroupElement *A, GroupElement* B, GroupElement *C);
-
-// C = C + A*B
-void MatAddMul(int s1, int s2, int s3, GroupElement *A, GroupElement* B, GroupElement *C);
-
 void MatCopy4(int s1, int s2, int s3, int s4, GroupElement *input, GroupElement *output);
 
 void MatFinalize4(int s1, int s2, int s3, int s4, GroupElement *input);
