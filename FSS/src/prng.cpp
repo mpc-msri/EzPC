@@ -19,10 +19,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "group_element.h"
 #include <cryptoTools/Crypto/PRNG.h>
-#include <iostream>
 
-osuCrypto::block seed;
 osuCrypto::PRNG prng;
 osuCrypto::PRNG prngShared;

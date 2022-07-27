@@ -35,7 +35,6 @@ SOFTWARE.
 #include "add.h"
 #include "mult.h"
 #include "pubdiv.h"
-#include "mini_aes.h"
 #include "input_prng.h"
 
 inline void fss_init()

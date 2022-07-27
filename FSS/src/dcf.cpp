@@ -20,7 +20,6 @@ SOFTWARE.
 */
 
 #include "dcf.h"
-#include "mini_aes.h"
 
 using namespace osuCrypto;
 // uint64_t aes_evals_count = 0;

@@ -27,7 +27,6 @@ SOFTWARE.
 #include "mult.h"
 #include "dcf.h"
 #include "group_element.h"
-#include "mini_aes.h"
 #include "pubdiv.h"
 #include "spline.h"
 #include "utils.h"
@@ -61,7 +60,6 @@ template <typename T> using pair = std::pair<T,T>;
 void initialize()
 {
     std::cerr << "=== COMPUTATION START ===\n\n";
-    aes_init();
 
     if (party != DEALER) {
         if (party == SERVER) {
@@ -85,7 +83,8 @@ void initialize()
     }
 
     if (party == DEALER) {
-        auto commonSeed = aes_enc(toBlock(0, time(NULL)), 0);
+        AES aesSeed(toBlock(0, time(NULL)));
+        auto commonSeed = aesSeed.ecbEncBlock(ZeroBlock);
         server->send_block(commonSeed);
         prngShared.SetSeed(commonSeed);
     }
