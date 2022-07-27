@@ -46,11 +46,13 @@ type base_type =
   | UInt64
   | Int32
   | Int64
+  | Float
   | Bool
 
 type secret_label = 
   | Arithmetic
   | Boolean
+  | Baba
 
 type label =
   | Public
@@ -62,6 +64,7 @@ type const =
   | UInt64C  of uint64
   | Int32C   of int32
   | Int64C   of int64
+  | FloatC   of float
   | BoolC    of bool
 
 type unop =
@@ -92,14 +95,14 @@ type qualifiers = qualifier list
   
 type expr' =
   | Role          of role
-  | Const	  of const
-  | Var 	  of var
+  | Const     of const
+  | Var       of var
   | Unop          of unop * expr * label option
-  | Binop 	  of binop * expr * expr * label option
+  | Binop     of binop * expr * expr * label option
   | Conditional   of expr  * expr * expr * label option
-  | Array_read	  of expr * expr
+  | Array_read    of expr * expr
   | App           of string * expr list
-  | Subsumption	  of expr * label * label
+  | Subsumption   of expr * label * label
 
 and expr = expr' syntax
                    
@@ -121,7 +124,7 @@ type stmt' =
   | While   of expr * stmt                                 (* guard, body *)
   | If_else of expr * stmt * stmt option                   (* conditional, then, optional else *)
   | Return  of expr option                                 (* return expression *)
-  | Seq	    of stmt * stmt
+  | Seq     of stmt * stmt
   | Input   of expr * expr * typ                           (* role, variable name, type *)
   | Output  of expr * expr * typ option                    (* role, expression to output, type *)
   | Skip    of string                                      (* dummy statement, repurpose it for different metadata *)
@@ -143,12 +146,19 @@ let label_to_string (l:label) :string =
   | Public -> "public"
   | Secret Arithmetic -> "arithmetic"
   | Secret Boolean -> "boolean"
+  | Secret Baba -> "baba"
 
 let role_to_string (r:role) :string =
   match r with
   | Server -> "SERVER"
   | Client -> "CLIENT"
   | Both   -> "ALL"
+
+let role_to_fpstring (r:role) :string =
+  match r with
+  | Server -> "ALICE"
+  | Client -> "BOB"
+  | Both   -> "PUBLIC"
 
 let unop_to_string (u:unop) :string =
   match u with
@@ -180,34 +190,36 @@ let binop_to_string (b:binop) :string =
   | R_shift_l -> ">>>"
             
 let rec expr_to_string (e:expr) :string =
+  let brak (s:string) :string = "(" ^ s ^ ")" in
   match e.data with
   | Role r -> role_to_string r
   | Const (UInt32C n) -> Uint32.to_string n
   | Const (UInt64C n) -> Uint64.to_string n
   | Const (Int32C n)  -> Int32.to_string n
   | Const (Int64C n)  -> Int64.to_string n
+  | Const (FloatC f)   -> Float.to_string f 
   | Const (BoolC b)   -> string_of_bool b
   | Var x -> x.name
   | Unop (op, e, lopt) ->
      let op_str = unop_to_string op ^ "_" ^
                     if is_none lopt then "<no label>" else lopt |> get_opt |> label_to_string
      in
-     op_str ^ " " ^ expr_to_string e
+     op_str ^ (expr_to_string e |> brak)
   | Binop (op, e1, e2, lopt) ->
      let op_str =
        binop_to_string op ^ "_" ^
          if is_none lopt then "<no label>" else label_to_string (get_opt lopt)
      in
-     expr_to_string e1 ^ " " ^ op_str ^ " " ^ expr_to_string e2
+     (expr_to_string e1 |> brak) ^ " " ^ op_str ^ " " ^ (expr_to_string e2 |> brak)
   | Conditional (e1, e2, e3, lopt) ->
-     expr_to_string e1 ^ " ?_" ^ (if is_none lopt then "<no label>" else label_to_string (get_opt lopt)) ^
-       " " ^ expr_to_string e2 ^ " : " ^ expr_to_string e3
+     (expr_to_string e1 |> brak) ^ " ?_" ^ (if is_none lopt then "<no label>" else label_to_string (get_opt lopt)) ^
+       " " ^ (expr_to_string e2 |> brak) ^ " : " ^ (expr_to_string e3 |> brak)
   | Array_read (e1, e2) -> expr_to_string e1 ^ "[" ^ expr_to_string e2 ^ "]"
   | App (f, args) -> f ^ "(" ^
                        if List.length args = 0 then ")"
                        else
                          (List.fold_left (fun s arg -> s ^ ", " ^ expr_to_string arg) (expr_to_string (List.hd args)) (List.tl args)) ^ ")"
-  | Subsumption (e, src, tgt) -> "<" ^ label_to_string src ^ " ~> " ^ label_to_string tgt ^ "> " ^ expr_to_string e
+  | Subsumption (e, src, tgt) -> "<" ^ label_to_string src ^ " ~> " ^ label_to_string tgt ^ "> " ^ (expr_to_string e |> brak)
 
 let rec typ_to_string (t:typ) :string =
   match t.data with
@@ -218,6 +230,7 @@ let rec typ_to_string (t:typ) :string =
        | UInt64 -> "uint64"
        | Int32  -> "int32"
        | Int64  -> "int64"
+       | Float  -> "float"
        | Bool -> "bool"
      in
      prefix ^ " " ^ bt_str
@@ -225,11 +238,13 @@ let rec typ_to_string (t:typ) :string =
      let qual_string = if quals |> List.mem Immutable then "const " else "" in
      qual_string ^ typ_to_string t ^ "[" ^ expr_to_string e ^ "]"
 
+
 let ret_typ_to_string (t:ret_typ) :string =
   match t with
   | Typ t -> t |> typ_to_string
   | Void _ -> "void"
-            
+          
+
 let rec stmt_to_string (s:stmt) :string =
   match s.data with
   | Decl (t, e, init_opt) ->
@@ -332,6 +347,21 @@ let get_role (e:expr) :role =
   | Role r -> r
   | _ -> failwith "get_role: not a Role"
 
+let is_float_bt (bt:base_type) :bool =
+  match bt with
+  | Float -> true
+  | _ -> false
+
+let get_bt (t:typ) : base_type =
+  let bt,l = get_bt_and_label t in
+  bt
+(**)
+let get_label (t:typ) : label =
+  let bt,label = get_bt_and_label t in
+  match label with 
+  | Some (l) -> l
+  | None -> failwith("No label")
+(* 
 let is_pow_2 (e:expr) :bool =
   match e.data with
   | Binop (Pow, { data = Const (UInt32C x) }, _, _) -> Uint32.to_int x = 2
@@ -351,6 +381,7 @@ let zero_expr (r:range) :expr = Const (UInt32C Uint32.zero) |> mk_syntax r
 let one_expr (r:range) :expr = Const (UInt32C Uint32.one) |> mk_syntax r
 let true_expr (r:range) :expr = Const (BoolC true) |> mk_syntax r
 let false_expr (r:range) :expr = Const (BoolC false) |> mk_syntax r
+*)
 
 let typeof_role (r:range) :typ = Base (UInt32, Some Public) |> mk_syntax r
                                
@@ -360,14 +391,18 @@ let typeof_const (c:const) (r:range) :typ =
    | UInt64C n -> Base (UInt64, Some Public)
    | Int32C n  -> Base (Int32, Some Public)
    | Int64C n  -> Base (Int64, Some Public)
+   | FloatC f   -> Base (Float, Some Public)
    | BoolC b   -> Base (Bool, Some Public)) |> mk_syntax r
 
+(* Leave this be, because we're not considering int mixed with float operations *)
 let join_types (t1:typ) (t2:typ) :typ option =
   match t1.data, t2.data with
   | Base (UInt32, Some Public), Base (UInt64, Some Public)
   | Base (Int32, Some Public), Base (Int64, Some Public) -> Some t2
   | Base (UInt64, Some Public), Base (UInt32, Some Public)
   | Base (Int64, Some Public), Base (Int32, Some Public) -> Some t1
+  | Base (bt1, Some Public), Base (bt2, Some (Secret _))  when bt1 = bt2 -> Some t2
+  | Base (bt1, Some (Secret _)), Base (bt2, Some Public)  when bt1 = bt2 -> Some t1
   | Base (bt1, l1), Base (bt2, l2) when bt1 = bt2 && l1 = l2 -> Some t1
   | _, _ -> None
 
@@ -380,7 +415,7 @@ let rec erase_labels_expr (e:expr) :expr =
   let l = Some Public in
   let aux (e:expr') :expr' =
     match e with
-    | Role _ -> e
+    | Role _ -> Role Both
     | Const _ -> e
     | Var _ -> e
     | Unop (op, e, _) -> Unop (op, erase_labels_expr e, l)
@@ -438,7 +473,7 @@ let erase_labels_program (p:program) :program = p |> List.map erase_labels_globa
   
 module SSet = Set.Make (
                   struct
-                    let compare = Pervasives.compare
+                    let compare = Stdlib.compare
                     type t = var
                   end
                 )
@@ -665,8 +700,9 @@ let rec var_used_in_stmt (s:stmt) (x:var) :bool =
   in
   aux s.data  
 
-let get_unsigned (bt:base_type) :base_type =
+let get_inp_type (bt:base_type) :base_type =
   match bt with
   | UInt32 | UInt64 | Bool -> bt
   | Int32 -> UInt32
   | Int64 -> UInt64
+  | Float -> Float

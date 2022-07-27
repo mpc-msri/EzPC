@@ -1,6 +1,6 @@
 (*
 
-Authors: Nishant Kumar, Aseem Rastogi.
+Authors: Anwesh Bhattacharya.
 
 Copyright:
 Copyright (c) 2020 Microsoft Research
@@ -23,18 +23,22 @@ SOFTWARE.
 *)
 
 (*
-	Following shows usage of input statement.
-	In general, syntax is 
-		input(<CLIENT/SERVER>, variable name, type),
-		where type can be either base type like int32_al, int32_pl, int64_al, int64_pl, bool_bl
-		or array types made of base types (like int32_al[2][2])
+	Following shows how functions are declared and used in ezpc.
+	In general, functions are declared with 
+	def <return type> <function name>(<arg1 type> <arg1 name>, ... )
+
+	The function definition can be prefixed with keywords like 
+	partition, inline 
+	for partitioning about this function and inlining respectively.
 *)
 
+def float_fl hello(float_fl a){
+    float one = 1.0 ;
+	return a + one ;
+}
+
 def void main(){
-	input(SERVER, w, uint32_al);
-	input(SERVER, x, uint32_bl);
-	input(SERVER, z, uint32_al[10]);
-	input(CLIENT, a, uint32_al[10][100]);
-	input(SERVER, b, bool_bl);
-	input(SERVER, c, bool_bl);
+	float_fl b = 10.0;
+	float_fl c = hello(b);	
+	output(SERVER, c);
 }

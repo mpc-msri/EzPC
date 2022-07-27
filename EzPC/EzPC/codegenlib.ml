@@ -42,18 +42,35 @@ let o_int32 (n:int32) :comp = fun buf -> Buffer.add_string buf (Int32.to_string 
                                                                                   
 let o_int64 (n:int64) :comp = fun buf -> Buffer.add_string buf (Int64.to_string n)
 
+let o_float (f:float) :comp = fun buf -> Buffer.add_string buf (Float.to_string f)
+
 let o_bool (b:bool) :comp = o_uint32 (if b then Uint32.of_int 1 else Uint32.of_int 0)
 
 let o_str (s:string) :comp = fun buf -> Buffer.add_string buf s
 
 let seq (f:comp) (g:comp) :comp = fun buf -> f buf; g buf
 
+let rec seql (l:comp list) : comp = 
+    match l with
+    | []        -> o_null
+    | hd::tl    -> seq hd (seql tl) 
+
 let o_space :comp = o_str " "
+
+let o_semicol :comp = o_str " ;"
 
 let o_newline :comp = o_str "\n"
 
+let s_comma = seq @@ o_str ", "
+
+(* Pipe a semicolon after a series of output pipes *)
+let s_smln (c:comp) = seq c (seql [o_semicol; o_newline])
+
+(* Insert a semicolon at the end of the buffer *)
+let o_smln = o_null |> s_smln
+
 let o_string_literal (s:string) :comp = seq (o_str "\"") (seq (o_str s) (o_str "\""))
 
-let o_paren (c:comp) :comp = seq (o_str "(") (seq c (o_str ")"))
+let o_paren (c:comp) :comp = seql [o_str "("; c; o_str ")"]
 
 let o_with_semicolon (c:comp) :comp = seq c (o_str ";")

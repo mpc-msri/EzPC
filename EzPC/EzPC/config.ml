@@ -32,6 +32,8 @@ type codegen =
   | SCI
   | FSS
   | CPPRING
+  | CPPFLOAT
+  | SECFLOAT 
   | EMP
 
 type bool_sharing_mode =
@@ -124,6 +126,10 @@ let set_debug_partitions () :unit = c_private := { !c_private with debug_partiti
 
 let get_debug_partitions () :bool = !c_private.debug_partitions
 
+let is_codegen_float () :bool =
+  match get_codegen () with
+  | SECFLOAT | CPPFLOAT -> true
+  | _ -> false
 let set_libmode () :unit = c_private := { !c_private with libmode = true }
 
 let get_libmode () :bool = !c_private.libmode

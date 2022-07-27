@@ -57,6 +57,7 @@ let o_slabel_maybe_coerce (coerce:bool) (sl:secret_label) :comp =
     let c = if Config.get_bool_sharing_mode () = Config.Yao then o_str "ycirc"
             else o_str "bcirc" in
     if coerce then o_paren (seq (o_str "(BooleanCircuit *) ") c) else c
+  | Baba -> failwith ("CPPRING does not support fl : float base type. ")
                   
 let o_slabel :secret_label -> comp = o_slabel_maybe_coerce false
 
@@ -162,6 +163,7 @@ let o_subsumption (src:label) (tgt:secret_label) (t:typ) (arg:comp) :comp =
          else "PutB2AGate", "ycirc"
        in
        o_cbfunction tgt (o_str fn_name) [arg; o_str circ_arg]
+    | Secret Baba -> failwith ("CPPRING does not support fl : float base type. ")
 
 let o_basetyp (t:base_type) :comp =
   let default_bitlen_str = ("uint" ^ (Config.get_bitlen () |> string_of_int) ^ "_t") in
@@ -171,6 +173,7 @@ let o_basetyp (t:base_type) :comp =
   | Int32  -> o_str default_bitlen_str
   | Int64  -> o_str "uint64_t"
   | Bool   -> o_str default_bitlen_str
+  | _ -> failwith ("CPPRING does not support fl : float base type. ")
 
 let rec o_secret_binop (g:gamma) (op:binop) (sl:secret_label) (e1:expr) (e2:expr) :comp =
   (*
@@ -254,6 +257,9 @@ and o_codegen_expr (g:gamma) (e:codegen_expr) :comp =
     | _ -> o_str "bitlen"
   in
   match e with
+
+  | Codegen_String s -> o_str s
+
   | Base_e e -> o_expr e
               
   | Input_g (r, sl, s, bt) -> o_cbfunction sl (o_str "PutINGate") [o_str s.name; get_bitlen bt; o_role r]
@@ -359,7 +365,7 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
      let is_arr = is_array_typ t in
      
      (* bt is the base type and l label *)
-     let bt, l = get_bt_and_label t |> (fun (bt, l) -> get_unsigned bt, l) in
+     let bt, l = get_bt_and_label t |> (fun (bt, l) -> get_inp_type bt, l) in
      let l = get_opt l in
 
      (* list of dimensions, if an array else empty *)

@@ -169,6 +169,7 @@ let o_subsumption (src:label) (tgt:secret_label) (e:expr) (t:typ) (arg:comp) :co
     | Public -> o_app (o_str "funcSSCons") [arg]
     | Secret Arithmetic
     | Secret Boolean -> failwith ("Codegen: Subsumption from secrets is not allowed for this backend. Expr: " ^ expr_to_string e ^ " line:" ^ (Global.Metadata.sprint_metadata "" e.metadata))
+    | Secret Baba -> failwith ("Sharing Baba is not allowed for this backend. Expr: " ^ expr_to_string e ^ " line:" ^ (Global.Metadata.sprint_metadata "" e.metadata))
 
 let rec o_secret_binop (g:gamma) (op:binop) (sl:secret_label) (e1:expr) (e2:expr) :comp =
   (*
@@ -285,6 +286,7 @@ and o_codegen_expr (g:gamma) (e:codegen_expr) :comp =
 
   | App_codegen_expr (f, el) -> o_app (o_str f) (List.map o_codegen_expr el)
   | Clear_val _ -> failwith ("Codegen_expr Clear_val is unsupported by this backend.") 
+  | _ -> failwith "Unbound Case (codegen_expr)"
 
 (* Types for non-Secret variables *)
 let o_basetyp (t:base_type) :comp =
@@ -294,6 +296,7 @@ let o_basetyp (t:base_type) :comp =
   | Int32  -> o_str "int32_t"
   | Int64  -> o_str "int64_t"
   | Bool   -> o_str "uint32_t"
+  | Float   -> failwith ("Float is unsupported by this backend.")
 
 let rec o_typ_rec (t:typ) :comp =
   match t.data with
@@ -487,9 +490,6 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
      if not (l |> get_opt |> is_secret_label) then o_codegen_stmt g (Cout ("cout", Base_e e, bt))
      else
        let is_arr = is_array_typ t in
-       
-       (* bt is the base type and sl is the secret label *)
-       let sl = l |> get_opt |> get_secret_label in
        
        (* list of array dimensions, if any *)
         let el = if is_arr then t |> get_array_bt_and_dimensions |> snd else [] in
