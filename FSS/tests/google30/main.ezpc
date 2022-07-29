@@ -1,3 +1,9 @@
+(*
+Name:        Google30 Test
+Author:      Kanav Gupta
+Description: This test runs the complete Google30 inference on a particular set of weights and a real-world input. The expected result is the actual result of SeeDot inference without crypto.
+*)
+
 extern void ScalarMul(int32_pl I, int32_pl J, int32_pl shrA, int32_pl shrB, int32_pl demote, int32_pl bwA, int32_pl bwB, int32_pl bwTemp, int32_pl bwC, int64_al A, int64_al[I*J] B, int64_al[I*J] C);
 
 extern void MatAdd(int32_pl I, int32_pl J, int32_pl shrA, int32_pl shrB, int32_pl shrC, int32_pl demote, int32_pl bwA, int32_pl bwB, int32_pl bwTemp, int32_pl bwC, int64_al[I*J] A, int64_al[I*J] B, int64_al[I*J] C);

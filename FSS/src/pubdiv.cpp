@@ -103,95 +103,6 @@ GroupElement evalPublicIC(int party, PublicICKeyPack key,
     return yb;
 }
 
-// std::pair<PublicDivKeyPack, PublicDivKeyPack> keyGenPublicDiv(int Bin, int Bout, GroupElement rin, GroupElement rout, 
-//                                         GroupElement rout1, GroupElement d)
-// {
-//     PublicDivKeyPack k0, k1;
-    
-//     k0.Bin = Bin; k1.Bin = Bin;
-//     k0.Bout = Bout; k1.Bout = Bout;
-
-//     GroupElement r1, r0, n1, n0;
-//     // r1 = rin / d; r0 = rin % d;
-//     r1 = signedDivide(rin, d); r0 = signedMod(rin, d);
-
-//     if (Bin == 64) {
-//         // When Bin = 64, we can use the following trick to avoid the overflow
-//         // (1L << (Bin)) = (1L << (Bin-1)) * 2
-//         // let k = (1L << (Bin-1))
-//         // we want 2k / d and 2k % d
-//         // 2k % d = (2(k % d)) % d
-//         // 2k / d = 2*(k/d) + (2* (k % d))/d
-//         uint64_t d1 = ((uint64_t)1 << 63) / d.value;
-//         uint64_t d0 = ((uint64_t)1 << 63) % d.value;
-//         n0 = GroupElement((2 * d0) % d.value, Bin);
-//         n1 = GroupElement((2 * d1) + ((2 * d0) / d.value), Bin);
-//     }
-//     else {
-//         n1 = GroupElement(((uint64_t)1 << Bin) / d.value, Bin);
-//         n0 = GroupElement(((uint64_t)1 << Bin) % d.value, Bin);
-//     }
-//     block seed;
-    
-//     auto dualDcfKeys = keyGenDualDCF(Bin, Bout, rin, 1 + rout1, rout1);
-//     auto scmpKeys = keyGenSCMP(Bin, Bout, r0 + n0*rout1, GroupElement(0, Bin), GroupElement(0, Bout));
-    
-//     k0.dualDcfKey = dualDcfKeys.first; k1.dualDcfKey = dualDcfKeys.second;
-//     k0.scmpKey = scmpKeys.first; k1.scmpKey = scmpKeys.second;
-    
-//     auto zb_split = splitShare(-r1 - n1*rout1 + rout);
-//     k0.zb = zb_split.first; k1.zb = zb_split.second;
-//     return std::make_pair(k0, k1);
-// }
-
-
-// GroupElement evalPublicDiv_First(int party, const PublicDivKeyPack &key, GroupElement x, GroupElement d)
-// {
-//     GroupElement result_evalPublicDiv_First(0, key.Bout);
-//     evalDualDCF(party, &result_evalPublicDiv_First, x, key.dualDcfKey);
-//     return result_evalPublicDiv_First;
-// }
-
-// GroupElement evalPublicDiv_Second(int party, const PublicDivKeyPack &key, GroupElement x, GroupElement d,
-//                                 GroupElement result_evalPublicDiv_First)
-// {
-//     GroupElement x1, x0, n1, n0, y_partial, yb_first, yb_second;
-//     // x1 = x / d; x0 = x % d;
-//      x1 = signedDivide(x, d); x0 = signedMod(x, d);
-
-//     if (key.Bin == 64) {
-//         // When Bin = 64, we can use the following trick to avoid the overflow
-//         // ((uint64_t)1 << (Bin)) = ((uint64_t)1 << (Bin-1)) * 2
-//         // let k = ((uint64_t)1 << (Bin-1))
-//         // we want 2k / d and 2k % d
-//         // 2k % d = (2(k % d)) % d
-//         // 2k / d = 2*(k/d) + (2* (k % d))/d
-//         uint64_t d1 = ((uint64_t)1 << 63) / d.value;
-//         uint64_t d0 = ((uint64_t)1 << 63) % d.value;
-//         n0 = GroupElement((2 * d0) % d.value, 64);
-//         n1 = GroupElement((2 * d1) + ((2 * d0) / d.value), 64);
-//     }
-//     else {
-//         n1 = GroupElement(((uint64_t)1 << key.Bin) / d.value, key.Bin);
-//         n0 = GroupElement(((uint64_t)1 << key.Bin) % d.value, key.Bin);
-//     }
-//     y_partial = x0 + result_evalPublicDiv_First*n0;
-    
-//      // we want (y_partial < 0) and (y_partial < d)
-//      // scmp gate takes input (x, y) and gives output (x >= y)
-//      // so, to get (x < y) = 1 - (x >= y) call 1 - scmpgate(x, y)
-
-//      yb_first = GroupElement(party * 1, key.Bout) - evalSCMP(party, key.scmpKey, y_partial, GroupElement(0, key.Bin));
-//      yb_second = GroupElement(party * 1, key.Bout) - evalSCMP(party, key.scmpKey, y_partial, d);
-
-//     //  std::cout << "y_partial " << y_partial << std::endl;
-//     //  std::cout << "yb_first " << yb_first << std::endl;
-//     //  std::cout << "yb_second " << yb_second << std::endl;
-
-//     GroupElement res = (party)*(x1 + 1 + result_evalPublicDiv_First*n1) + key.zb - yb_first - yb_second;
-//     return res;
-// }
-
 std::pair<ARSKeyPack, ARSKeyPack> keyGenARS(int Bin, int Bout, uint64_t shift, GroupElement rin, GroupElement rout)
 {
     ARSKeyPack k0, k1;
@@ -270,16 +181,6 @@ GroupElement evalARS(int party, GroupElement x, uint64_t shift, const ARSKeyPack
     else {
         res = party * GroupElement(x.value >> shift, k.Bout) + k.rb + t_s;
     }
-
-    
-    // std::cout << "x_n " << x_n << std::endl;
-    // std::cout << "x_s " << x_s << std::endl;
-    // std::cout << "dcfIdx " << dcfIdx << std::endl;
-    // std::cout << "dualDcfIdx " << dualDcfIdx << std::endl;
-    // std::cout << "dcf out " << t_s << std::endl;
-    // std::cout << "dualDcf out1 " << t_n << std::endl;
-    // std::cout << "dualDcf out2 " << m_n << std::endl;
-    // std::cout << "mb " << mb << std::endl;
 
     return res; 
 }
