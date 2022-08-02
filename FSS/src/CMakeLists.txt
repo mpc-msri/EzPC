@@ -25,7 +25,7 @@ add_library(fss STATIC
     deps/cryptoTools/cryptoTools/Common/Log.cpp
     deps/cryptoTools/cryptoTools/Crypto/AES.cpp
     deps/cryptoTools/cryptoTools/Crypto/PRNG.cpp
-    group_element.cpp
+    prng.cpp
     comms.cpp
     dcf.cpp
     utils.cpp
@@ -34,7 +34,6 @@ add_library(fss STATIC
     conv.cpp
     pubdiv.cpp
     spline.cpp
-    mini_aes.cpp
     input_prng.cpp
 )
 
@@ -85,7 +84,6 @@ install(FILES
         "add.h"
         "mult.h"
         "pubdiv.h"
-        "mini_aes.h"
         "input_prng.h"
         "config.h"
         DESTINATION include)

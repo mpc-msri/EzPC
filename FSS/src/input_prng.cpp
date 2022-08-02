@@ -21,7 +21,6 @@ SOFTWARE.
 
 #include "input_prng.h"
 #include "comms.h"
-#include "mini_aes.h"
 #include <chrono>
 #include <thread>
 extern int num_threads;
@@ -36,9 +35,10 @@ uint64_t accumulatedInputTimeOnline = 0;
 void input_prng_init()
 {
     if (party == DEALER) {
-        auto seed0 = aes_enc(toBlock(1, time(NULL)), 1);
+        AES aesSeed(toBlock(1, time(NULL)));
+        auto seed0 = aesSeed.ecbEncBlock(ZeroBlock);
         server->send_block(seed0);
-        auto seed1 = aes_enc(toBlock(2, time(NULL)), 2);
+        auto seed1 = aesSeed.ecbEncBlock(OneBlock);
         client->send_block(seed1);
         inputPrng[0] = AES(seed0);
         inputPrng[1] = AES(seed1);
