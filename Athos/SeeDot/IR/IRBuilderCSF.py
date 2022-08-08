@@ -894,25 +894,25 @@ class IRBuilderCSF(IRBuilderAST):
                     comm = IR.Comment(
                         "Scale up of args needed was found while doing OptimizeTruncations."
                     )
-                argsDict = OrderedDict()
-                curFuncName = "ScaleUp"
-                if not (Type.isInt(typeOfExprToScale)):
-                    outputShape = typeOfExprToScale.shape
-                    for ii, curDimSize in enumerate(outputShape):
-                        argsDict[IR.Int(curDimSize, 32)] = "size_" + str(ii)
-                    curFuncName += str(len(outputShape))
-                argsDict[exprToScale] = "exprToScale, arg#{0}".format(
-                    2 if (expr1_sf > expr2_sf) else 1
-                )
-                argsDict[IR.Int(scaleUpFactor, 32)] = "ScaleUpFactor"
-                funcCall = IR.FuncCall(curFuncName, argsDict)
+                    argsDict = OrderedDict()
+                    curFuncName = "ScaleUp"
+                    if not (Type.isInt(typeOfExprToScale)):
+                        outputShape = typeOfExprToScale.shape
+                        for ii, curDimSize in enumerate(outputShape):
+                            argsDict[IR.Int(curDimSize, 32)] = "size_" + str(ii)
+                        curFuncName += str(len(outputShape))
+                    argsDict[exprToScale] = "exprToScale, arg#{0}".format(
+                        2 if (expr1_sf > expr2_sf) else 1
+                    )
+                    argsDict[IR.Int(scaleUpFactor, 32)] = "ScaleUpFactor"
+                    funcCall = IR.FuncCall(curFuncName, argsDict)
 
-                if Type.isInt(typeOfExprToScale) or typeOfExprToScale.shape == []:
-                    assn_expr = IR.Assn(exprToScale, funcCall)
-                    curProg = IR.Prog([comm, assn_expr])
-                else:
-                    curProg = IR.Prog([comm, funcCall])
-                prog_1 = IRUtil.prog_merge(curProg, prog_1)
+                    if Type.isInt(typeOfExprToScale) or typeOfExprToScale.shape == []:
+                        assn_expr = IR.Assn(exprToScale, funcCall)
+                        curProg = IR.Prog([comm, assn_expr])
+                    else:
+                        curProg = IR.Prog([comm, funcCall])
+                    prog_1 = IRUtil.prog_merge(curProg, prog_1)
 
                 self.scaleFacMapping[out_arr.idf] = self.scaleFacMapping[expr_1.idf]
 
