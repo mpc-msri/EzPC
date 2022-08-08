@@ -808,6 +808,34 @@ class IRBuilderCSF(IRBuilderAST):
 
                 self.scaleFacMapping[out_arr.idf] = self.scaleFacMapping[expr_1.idf]
 
+        decl = IR.Decl(out_arr.idf, node_type, node_type.bitlen, node_type.isSecret)
+
+        if Type.isNumeric(node_type):
+            assign = IR.Assn(out_arr, IR.IntBop(expr_1, op_ir, expr_2))
+            out_prog = IR.Prog([assign])
+        else:
+            outputShape = node_type.shape
+            inp1_shape = (
+                [] if Type.isNumeric(node.expr1.type) else node.expr1.type.shape
+            )
+            inp2_shape = (
+                [] if Type.isNumeric(node.expr2.type) else node.expr2.type.shape
+            )
+
+            expected_output_shape, _, _ = Util.getBroadcastShapes(
+                inp1_shape, inp2_shape
+            )
+            # print(f"IRBuilderCSF.py : {inp1_shape}, {inp2_shape}, {expected_output_shape}")
+            assert outputShape == expected_output_shape
+            out_prog = IRUtil.generateBroadcastLoopBOp(
+                expr_1, inp1_shape, expr_2, inp2_shape, out_arr, op_ir
+            )
+
+        out_prog = IRUtil.prog_merge(IR.Prog([comment, cmd0, decl]), out_prog)
+        out_prog = IRUtil.prog_merge(prog_1, prog_2, out_prog)
+
+        if self._debug:
+            self._indent -= 1
         return (out_prog, out_arr)
 
     def visitGemmAdd(self, node: AST.BOp, args=None):
@@ -866,28 +894,56 @@ class IRBuilderCSF(IRBuilderAST):
                     comm = IR.Comment(
                         "Scale up of args needed was found while doing OptimizeTruncations."
                     )
-                    argsDict = OrderedDict()
-                    curFuncName = "ScaleUp"
-                    if not (Type.isInt(typeOfExprToScale)):
-                        outputShape = typeOfExprToScale.shape
-                        for ii, curDimSize in enumerate(outputShape):
-                            argsDict[IR.Int(curDimSize, 32)] = "size_" + str(ii)
-                        curFuncName += str(len(outputShape))
-                    argsDict[exprToScale] = "exprToScale, arg#{0}".format(
-                        2 if (expr1_sf > expr2_sf) else 1
-                    )
-                    argsDict[IR.Int(scaleUpFactor, 32)] = "ScaleUpFactor"
-                    funcCall = IR.FuncCall(curFuncName, argsDict)
+                argsDict = OrderedDict()
+                curFuncName = "ScaleUp"
+                if not (Type.isInt(typeOfExprToScale)):
+                    outputShape = typeOfExprToScale.shape
+                    for ii, curDimSize in enumerate(outputShape):
+                        argsDict[IR.Int(curDimSize, 32)] = "size_" + str(ii)
+                    curFuncName += str(len(outputShape))
+                argsDict[exprToScale] = "exprToScale, arg#{0}".format(
+                    2 if (expr1_sf > expr2_sf) else 1
+                )
+                argsDict[IR.Int(scaleUpFactor, 32)] = "ScaleUpFactor"
+                funcCall = IR.FuncCall(curFuncName, argsDict)
 
-                    if Type.isInt(typeOfExprToScale) or typeOfExprToScale.shape == []:
-                        assn_expr = IR.Assn(exprToScale, funcCall)
-                        curProg = IR.Prog([comm, assn_expr])
-                    else:
-                        curProg = IR.Prog([comm, funcCall])
-                    prog_1 = IRUtil.prog_merge(curProg, prog_1)
+                if Type.isInt(typeOfExprToScale) or typeOfExprToScale.shape == []:
+                    assn_expr = IR.Assn(exprToScale, funcCall)
+                    curProg = IR.Prog([comm, assn_expr])
+                else:
+                    curProg = IR.Prog([comm, funcCall])
+                prog_1 = IRUtil.prog_merge(curProg, prog_1)
 
                 self.scaleFacMapping[out_arr.idf] = self.scaleFacMapping[expr_1.idf]
 
+        decl = IR.Decl(out_arr.idf, node_type, node_type.bitlen, node_type.isSecret)
+
+        if Type.isNumeric(node_type):
+            assign = IR.Assn(out_arr, IR.IntBop(expr_1, op_ir, expr_2))
+            out_prog = IR.Prog([assign])
+        else:
+            outputShape = node_type.shape
+            inp1_shape = (
+                [] if Type.isNumeric(node.expr1.type) else node.expr1.type.shape
+            )
+            inp2_shape = (
+                [] if Type.isNumeric(node.expr2.type) else node.expr2.type.shape
+            )
+
+            expected_output_shape, _, _ = Util.getBroadcastShapes(
+                inp1_shape, inp2_shape
+            )
+            # print(f"IRBuilderCSF.py : {inp1_shape}, {inp2_shape}, {expected_output_shape}")
+            assert outputShape == expected_output_shape
+            out_prog = IRUtil.generateBroadcastLoopBOp(
+                expr_1, inp1_shape, expr_2, inp2_shape, out_arr, op_ir
+            )
+
+        out_prog = IRUtil.prog_merge(IR.Prog([comment, cmd0, decl]), out_prog)
+        out_prog = IRUtil.prog_merge(prog_1, prog_2, out_prog)
+
+        if self._debug:
+            self._indent -= 1
         return (out_prog, out_arr)
 
     def visitBopAddOrSubLike(self, node: AST.BOp, args=None):
