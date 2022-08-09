@@ -2443,6 +2443,8 @@ class IRBuilderCSF(IRBuilderAST):
         funcArgsList[expr3] = "addExpr"
 
         progExtraBefore = IR.Prog([])
+        multExprScaleDownSf = self.scaleFac
+        addExprScaleUpSf = 0
         if Util.Config.version == "fixed":
             if not (Util.Config.disableTruncOpti):
                 # TruncOpti is on
@@ -2484,8 +2486,6 @@ class IRBuilderCSF(IRBuilderAST):
                 self.scaleFacMapping[returnExpr.idf] = final_sf
 
         if Util.Config.version == "fixed":
-            multExprScaleDownSf = self.scaleFac
-            addExprScaleUpSf = 0
             funcArgsList[IR.Int(multExprScaleDownSf, 32)] = "multExprScaleDownSf"
             funcArgsList[IR.Int(addExprScaleUpSf, 32)] = "addExprScaleUpSf"
         funcArgsList[returnExpr] = "returnExpr"
