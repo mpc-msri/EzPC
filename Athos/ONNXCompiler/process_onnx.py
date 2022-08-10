@@ -234,11 +234,11 @@ def preprocess_winograd(graph_def, model_name_to_val_dict):
     )["strides"] != [1, 1]
 
     m4r3_pkl = pickle.load(
-        open(os.path.join("..", "Winograd/Transforms/WinogradM4R3_transform.pkl"), "rb")
+        open(os.path.join(__file__, "..", "Winograd/Transforms/WinogradM4R3_transform.pkl"), "rb")
     )
 
     m2r5_pkl = pickle.load(
-        open(os.path.join("..", "Winograd/Transforms/WinogradM2R5_transform.pkl"), "rb")
+        open(os.path.join(__file__, "..", "Winograd/Transforms/WinogradM2R5_transform.pkl"), "rb")
     )
 
     for node in graph_def.node:
