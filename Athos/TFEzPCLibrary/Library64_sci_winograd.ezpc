@@ -141,7 +141,7 @@ def void Conv2DWinoSingleCOT(int32_pl m, int32_pl r, int32_pl N, int32_pl H, int
 
 	WinogradHadamard(s1, s2, 1, mul1, mul2, mulout, false) ;
 	ClearMemSecret2(s1, s2, mul1) ;
-	ClearMemSecret2(s1, s2, mul2) ;
+	ClearMemSecret2(s1, 1, mul2) ;
 
 	int64_al[CO][CI][TH][TW][m][m] outputTiles ;
 	int64_al[CO][TH][TW][m][m] reducedTiles ;
