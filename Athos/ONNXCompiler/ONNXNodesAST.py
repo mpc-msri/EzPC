@@ -229,9 +229,9 @@ def get_reshaped_bias_ast(bias_name, value_info, node_name_to_out_var_dict, dim)
 
 
 def get_reshaped_filter_ast(filter_name, value_info, node_name_to_out_var_dict):
-    considered_shape = value_info[filter_name][1] 
+    considered_shape = value_info[filter_name][1]
     candidate_shape = value_info[filter_name][2]
-    if candidate_shape is not None :
+    if candidate_shape is not None:
         (seedot_filter_shape, seedot_filter_order) = get_seedot_filter_shape_order(
             list(considered_shape)
         )
@@ -239,9 +239,9 @@ def get_reshaped_filter_ast(filter_name, value_info, node_name_to_out_var_dict):
             AST.ID(node_name_to_out_var_dict[filter_name]),
             seedot_filter_shape,
             seedot_filter_order,
-            get_seedot_filter_shape_order(list(candidate_shape))[0]
+            get_seedot_filter_shape_order(list(candidate_shape))[0],
         )
-    else :
+    else:
         (seedot_filter_shape, seedot_filter_order) = get_seedot_filter_shape_order(
             list(considered_shape)
         )
@@ -282,7 +282,10 @@ def update_program_with_new_node(
 class ONNXNodesAST:
     def Input(node, value_info, node_name_to_out_var_dict):
         return AST.Input(
-           node.shape, onnx2seedot(node.data_type), inputByParty=node.party, trushape=node.trushape
+            node.shape,
+            onnx2seedot(node.data_type),
+            inputByParty=node.party,
+            trushape=node.trushape,
         )
 
     def Cast(
@@ -1118,8 +1121,12 @@ class ONNXNodesAST:
         use_winograd = value_info[inputsRef[1]][2] is not None
         # use_winograd = False
         if spatial_size == 2:
-            if use_winograd :
-                (innermost_let_ast_node, out_var_count, output_name) = ONNXNodesAST.conv2dwino(
+            if use_winograd:
+                (
+                    innermost_let_ast_node,
+                    out_var_count,
+                    output_name,
+                ) = ONNXNodesAST.conv2dwino(
                     node,
                     value_info,
                     node_name_to_out_var_dict,
@@ -1127,8 +1134,12 @@ class ONNXNodesAST:
                     out_var_count,
                     mtdAST,
                 )
-            else :
-                (innermost_let_ast_node, out_var_count, output_name) = ONNXNodesAST.conv2d(
+            else:
+                (
+                    innermost_let_ast_node,
+                    out_var_count,
+                    output_name,
+                ) = ONNXNodesAST.conv2d(
                     node,
                     value_info,
                     node_name_to_out_var_dict,
@@ -1173,10 +1184,10 @@ class ONNXNodesAST:
         stridesUsed = node.attrs["strides"]
         group = node.attrs["group"] if "group" in node.attrs else 1
         [zPadHLeft, zPadHRight, zPadWLeft, zPadWRight] = (
-        node.attrs["pads"] if "pads" in node.attrs else [0, 0, 0, 0]
+            node.attrs["pads"] if "pads" in node.attrs else [0, 0, 0, 0]
         )
         options = {}
-        options[AST.PaddingKeysDict.WinoM] = 4
+        options[AST.PaddingKeysDict.WinoM] = 4 if filterShape == 3 else 2
         options[AST.PaddingKeysDict.FH] = filterShape[2]
         options[AST.PaddingKeysDict.FW] = filterShape[3]
         options[AST.PaddingKeysDict.zPadHLeft] = zPadHLeft
@@ -1214,15 +1225,15 @@ class ONNXNodesAST:
             # AST.ID(node_name_to_out_var_dict[inputsRef[0]]),
             getOperatorsIdx("#w"),
             AST.ID(reshaped_filter_name),
-            options
+            options,
         )
         output_name = get_new_var_name(out_var_count)
         innermost_let_ast_node = update_program_with_new_node(
             innermost_let_ast_node, seedot_output_ast, output_name, mtdAST
         )
         out_var_count += 1
-  
-                # If there is bias to be added then reshape and add it
+
+        # If there is bias to be added then reshape and add it
         if len(inputsRef) == 3:
             reshaped_bias_name = get_new_var_name(out_var_count)
             reshaped_bias = get_reshaped_bias_ast(
