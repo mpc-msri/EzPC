@@ -1187,7 +1187,7 @@ class ONNXNodesAST:
             node.attrs["pads"] if "pads" in node.attrs else [0, 0, 0, 0]
         )
         options = {}
-        options[AST.PaddingKeysDict.WinoM] = 4 if filterShape == 3 else 2
+        options[AST.PaddingKeysDict.WinoM] = 4 if filterShape[2] == 3 else 2
         options[AST.PaddingKeysDict.FH] = filterShape[2]
         options[AST.PaddingKeysDict.FW] = filterShape[3]
         options[AST.PaddingKeysDict.zPadHLeft] = zPadHLeft
