@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Authors: Pratik Bhatu.
+# Authors: Pratik Bhatu, Kanav Gupta
 
 # Copyright:
 # Copyright (c) 2021 Microsoft Research
@@ -21,9 +21,7 @@
 # SOFTWARE.
 
 mode=$1
-
-# If 2nd argument is provided, then SCI build will be modified. See SCI readme.
-NO_REVEAL_OUTPUT=$2
+set -e
 
 sudo add-apt-repository ppa:deadsnakes/ppa -y
 sudo add-apt-repository ppa:avsm/ppa -y
@@ -56,7 +54,7 @@ if which cmake >/dev/null; then
   if [[ "$CMAKE_VERSION" == "$LATEST_VERSION" ]]; then
     echo "CMake already installed.."
   else
-    sudo apt purge cmake
+    sudo apt purge -y cmake
     build_cmake
   fi
 else
@@ -88,7 +86,7 @@ else
 	opam init --disable-sandboxing
 fi
 if [ $? -ne 0 ]; then
-  echo "opam init failed"; exit
+  echo "opam init failed"; exit 1
 fi
 
 # install given version of the compiler
@@ -110,17 +108,6 @@ opam install -y Stdint
 opam install -y menhir
 opam install -y ocamlbuild 
 opam install -y ocamlfind
-
-#Virtual environment
-sudo apt install -y python3.7-venv
-python3.7 -m venv mpc_venv
-source mpc_venv/bin/activate
-pip install -U pip
-pip install tensorflow==1.15.0 keras==2.3.0 scipy==1.1.0 matplotlib scikit-learn==0.24.2
-pip install onnx onnx-simplifier onnxruntime black
-pip install pytest pytest-cov 
-python3 -m pip install onnx_graphsurgeon --index-url https://pypi.ngc.nvidia.com
-
 
 build_boost () {
   sudo apt-get -y install python3.7-dev autotools-dev libicu-dev libbz2-dev
@@ -149,54 +136,3 @@ if dpkg -s libboost-dev >/dev/null; then
 else
   build_boost
 fi
-
-# Now we build all the components.
-ROOT="$(pwd)"
-#Build Ezpc
-cd EzPC/EzPC
-eval `opam env`
-make
-
-#Build ABY
-git clone --recursive https://github.com/encryptogroup/ABY.git
-cd ABY/
-mkdir build && cd build
-cmake -DCMAKE_INSTALL_PREFIX=./install -DABY_BUILD_EXE=On ..
-if [ $? -ne 0 ]; then
-  echo "ABY cmake command failed. Check error and refer to https://github.com/encryptogroup/ABY for help";
-  exit
-fi
-cmake --build . --target install --parallel
-if [ $? -ne 0 ]; then
-  echo "ABY build failed. Check error and refer to https://github.com/encryptogroup/ABY for help";
-  exit
-fi
-
-#Build EMP
-wget https://raw.githubusercontent.com/emp-toolkit/emp-readme/master/scripts/install.py
-python install.py --deps --tool --ot --sh2pc
-rm -rf install.py
-
-#Build Porthos 
-cd $ROOT/Porthos
-./setup-eigen.sh
-mkdir -p src/build
-cd src/build
-cmake ../
-make -j
-#Build SCI
-cd $ROOT/SCI
-mkdir -p build
-cd build
-
-if [[ "$NO_REVEAL_OUTPUT" == "NO_REVEAL_OUTPUT" ]]; then
-	cmake -DCMAKE_INSTALL_PREFIX=./install ../ -DNO_REVEAL_OUTPUT=ON
-else
-  cmake -DCMAKE_INSTALL_PREFIX=./install ../
-fi
-
-cmake --build . --target install --parallel
-
-#Install pre-commit hook for formatting
-cd $ROOT
-cp Athos/HelperScripts/pre_commit_format_python.sh .git/hooks/pre-commit

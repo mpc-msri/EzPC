@@ -45,6 +45,16 @@ Alternatively you can use the **setup_env_and_build.sh** script. It installs dep
 
 Please do ``source mpc_venv/bin/activate`` before using the toolchain.
 
+## Secure AI Validation
+
+To setup the repo with modified SCI build such that only secret shares are revealed at the end of 2PC, run the setup script as ``./setup_env_and_build.sh quick NO_REVEAL_OUTPUT``.
+Alternatively, just rebuild SCI. For instructions to build modified SCI, see README for SCI.
+
+To build docker image for Secure AI Validation, use the `Dockerfile_AI_Validation` dockerfile.
+
+```docker build -t ezpc_modified - < path/to/EzPC/Dockerfile_AI_Validation```
+
+
 ### Docker
 You can use a pre-built docker image from docker hub using ``docker pull ezpc/ezpc:latest``. We occasionally push stable images to that channel. However, if you want a docker image with the latest code, you can build it yourself using:
 

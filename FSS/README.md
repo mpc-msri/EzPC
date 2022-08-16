@@ -1,8 +1,12 @@
 # LLAMA: A Low Latency Math Library for Secure Inference
 
+Implementation of protocols from the paper [LLAMA](https://eprint.iacr.org/2022/793.pdf).
+
+> This is a proof-of-concept implementation and is only meant to be used for research purposes.
+
 ## Setup
 
-These steps are tested on Ubuntu 18 and 20. To quickly test and try LLAMA out, you can use the `kanav99/ezpc-llama` docker image, which comes with all the dependencies pre-installed. To create and start a container using this image, run -
+These steps are tested on Ubuntu 18 and 20 on amd64. To quickly test and try LLAMA out, you can use the `kanav99/ezpc-llama` docker image (steps to build this image are available in the [docker/](docker/) directory), which comes with all the dependencies pre-installed. To create and start a container using this image, run -
 
 ```bash
 docker run -it kanav99/ezpc-llama:latest
@@ -150,3 +154,5 @@ Assertion failed: shift_in == 9 in void TanH(int64_t, int64_t, int64_t, int64_t,
 ```
 
 3. The server-client run (with `r=2` or `r=3`) reports offline communication and time. This is the communication and time required to send the masked model weights to client and generate maskes using the PRG key.
+
+4. A description of what's there in each file is available in the README file of the [src/](src/) directory.

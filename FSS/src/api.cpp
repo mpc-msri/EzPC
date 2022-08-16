@@ -28,7 +28,6 @@ SOFTWARE.
 #include "mult.h"
 #include "pubdiv.h"
 #include "dcf.h"
-#include "mini_aes.h"
 #include "input_prng.h"
 #include <cassert>
 #include <iostream>
@@ -62,7 +61,6 @@ void StartComputation()
     std::cerr << "=== COMPUTATION START ===\n\n";
     std::cerr << "bitlength = " << bitlength << std::endl;
     std::cerr << "local truncation = " << (localTruncation ? "yes" : "no") << std::endl << std::endl;
-    aes_init();
 
     if (party != DEALER)
         peer->sync();
@@ -87,7 +85,8 @@ void StartComputation()
     }
 
     if (party == DEALER) {
-        auto commonSeed = aes_enc(toBlock(0, time(NULL)), 0);
+        AES aesSeed(toBlock(0, time(NULL)));
+        auto commonSeed = aesSeed.ecbEncBlock(ZeroBlock);
         server->send_block(commonSeed);
         prngShared.SetSeed(commonSeed);
     }

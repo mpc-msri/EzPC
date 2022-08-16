@@ -20,7 +20,6 @@ SOFTWARE.
 */
 
 #include "dcf.h"
-#include "mini_aes.h"
 
 using namespace osuCrypto;
 // uint64_t aes_evals_count = 0;
@@ -42,286 +41,36 @@ void clearAESevals()
     // aes_evals_count = 0;
 }
 
-GroupElement getDataFromBlock(int bitsize, block b, const int i)
-{
-    if (bitsize <= 8)
-    {
-        switch (i)
-        {
-        case 0:
-            return GroupElement(_mm_extract_epi8(b, 0), bitsize);
-        case 1:
-            return GroupElement(_mm_extract_epi8(b, 1), bitsize);
-        case 2:
-            return GroupElement(_mm_extract_epi8(b, 2), bitsize);
-        case 3:
-            return GroupElement(_mm_extract_epi8(b, 3), bitsize);
-        case 4:
-            return GroupElement(_mm_extract_epi8(b, 4), bitsize);
-        case 5:
-            return GroupElement(_mm_extract_epi8(b, 5), bitsize);
-        case 6:
-            return GroupElement(_mm_extract_epi8(b, 6), bitsize);
-        case 7:
-            return GroupElement(_mm_extract_epi8(b, 7), bitsize);
-        case 8:
-            return GroupElement(_mm_extract_epi8(b, 8), bitsize);
-        case 9:
-            return GroupElement(_mm_extract_epi8(b, 9), bitsize);
-        case 10:
-            return GroupElement(_mm_extract_epi8(b, 10), bitsize);
-        case 11:
-            return GroupElement(_mm_extract_epi8(b, 11), bitsize);
-        case 12:
-            return GroupElement(_mm_extract_epi8(b, 12), bitsize);
-        case 13:
-            return GroupElement(_mm_extract_epi8(b, 13), bitsize);
-        case 14:
-            return GroupElement(_mm_extract_epi8(b, 14), bitsize);
-        case 15:
-            return GroupElement(_mm_extract_epi8(b, 15), bitsize);
-        default:
-            throw std::invalid_argument("bad selector");
-        }
-    }
-    else if (bitsize <= 16)
-    {
-        switch (i)
-        {
-        case 0:
-            return GroupElement(_mm_extract_epi16(b, 0), bitsize);
-        case 1:
-            return GroupElement(_mm_extract_epi16(b, 1), bitsize);
-        case 2:
-            return GroupElement(_mm_extract_epi16(b, 2), bitsize);
-        case 3:
-            return GroupElement(_mm_extract_epi16(b, 3), bitsize);
-        case 4:
-            return GroupElement(_mm_extract_epi16(b, 4), bitsize);
-        case 5:
-            return GroupElement(_mm_extract_epi16(b, 5), bitsize);
-        case 6:
-            return GroupElement(_mm_extract_epi16(b, 6), bitsize);
-        case 7:
-            return GroupElement(_mm_extract_epi16(b, 7), bitsize);
-        default:
-            throw std::invalid_argument("bad selector");
-        }
-    }
-    else if (bitsize <= 32)
-    {
-        switch (i)
-        {
-        case 0:
-            return GroupElement(_mm_extract_epi32(b, 0), bitsize);
-        case 1:
-            return GroupElement(_mm_extract_epi32(b, 1), bitsize);
-        case 2:
-            return GroupElement(_mm_extract_epi32(b, 2), bitsize);
-        case 3:
-            return GroupElement(_mm_extract_epi32(b, 3), bitsize);
-        default:
-            throw std::invalid_argument("bad selector");
-        }
-    }
-    else if (bitsize <= 64)
-    {
-        switch (i)
-        {
-        case 0:
-            return GroupElement(_mm_extract_epi64(b, 0), bitsize);
-        case 1:
-            return GroupElement(_mm_extract_epi64(b, 1), bitsize);
-        default:
-            throw std::invalid_argument("bad selector");
-        }
-    }
-    else
-    {
-        throw std::invalid_argument("bitsize should be less than or equal to 64");
-    }
+inline int bytesize(const int bitsize) {
+    return (bitsize % 8) == 0 ? bitsize / 8 : (bitsize / 8)  + 1;
 }
 
-uint64_t getDataFromBlock_old(int bitsize, block b, const int i)
+void convert(const int bitsize, const int groupSize, const block &b, uint64_t *out)
 {
-    if (bitsize <= 8)
-    {
-        switch (i)
-        {
-        case 0:
-            return _mm_extract_epi8(b, 0);
-        case 1:
-            return _mm_extract_epi8(b, 1);
-        case 2:
-            return _mm_extract_epi8(b, 2);
-        case 3:
-            return _mm_extract_epi8(b, 3);
-        case 4:
-            return _mm_extract_epi8(b, 4);
-        case 5:
-            return _mm_extract_epi8(b, 5);
-        case 6:
-            return _mm_extract_epi8(b, 6);
-        case 7:
-            return _mm_extract_epi8(b, 7);
-        case 8:
-            return _mm_extract_epi8(b, 8);
-        case 9:
-            return _mm_extract_epi8(b, 9);
-        case 10:
-            return _mm_extract_epi8(b, 10);
-        case 11:
-            return _mm_extract_epi8(b, 11);
-        case 12:
-            return _mm_extract_epi8(b, 12);
-        case 13:
-            return _mm_extract_epi8(b, 13);
-        case 14:
-            return _mm_extract_epi8(b, 14);
-        case 15:
-            return _mm_extract_epi8(b, 15);
-        default:
-            throw std::invalid_argument("bad selector");
-        }
-    }
-    else if (bitsize <= 16)
-    {
-        switch (i)
-        {
-        case 0:
-            return _mm_extract_epi16(b, 0);
-        case 1:
-            return _mm_extract_epi16(b, 1);
-        case 2:
-            return _mm_extract_epi16(b, 2);
-        case 3:
-            return _mm_extract_epi16(b, 3);
-        case 4:
-            return _mm_extract_epi16(b, 4);
-        case 5:
-            return _mm_extract_epi16(b, 5);
-        case 6:
-            return _mm_extract_epi16(b, 6);
-        case 7:
-            return _mm_extract_epi16(b, 7);
-        default:
-            throw std::invalid_argument("bad selector");
-        }
-    }
-    else if (bitsize <= 32)
-    {
-        switch (i)
-        {
-        case 0:
-            return _mm_extract_epi32(b, 0);
-        case 1:
-            return _mm_extract_epi32(b, 1);
-        case 2:
-            return _mm_extract_epi32(b, 2);
-        case 3:
-            return _mm_extract_epi32(b, 3);
-        default:
-            throw std::invalid_argument("bad selector");
-        }
-    }
-    else if (bitsize <= 64)
-    {
-        switch (i)
-        {
-        case 0:
-            return _mm_extract_epi64(b, 0);
-        case 1:
-            return _mm_extract_epi64(b, 1);
-        default:
-            throw std::invalid_argument("bad selector");
-        }
-    }
-    else
-    {
-        throw std::invalid_argument("bitsize should be less than or equal to 64");
-    }
-}
-
-GroupElement convert_new(int bitsize, block b, block &temp, const int offset)
-{
-    int bytesize = bitsize / 8; 
     static const block notThreeBlock = toBlock(~0, ~3);
-    const int outputPerBlock = sizeof(block) / bytesize;
-    // static AES aes0(ZeroBlock);
-
-    block s = (b & notThreeBlock) ^ toBlock(offset / outputPerBlock);
-
-    if (offset == 0) {
-        temp = s;
+    const int bys = bytesize(bitsize);
+    const int totalBys = bys * groupSize;
+    if (bys * groupSize <= 16) {
+        uint8_t *bptr = (uint8_t *)&b;
+        for(int i = 0; i < groupSize; i++) {
+            out[i] = *(uint64_t *)(bptr + i * bys);
+        }
     }
-    else if (offset % outputPerBlock == 0)
-    {
-        temp = aes_enc(s, 0);
-        // aes_evals_count++;
-        temp = temp ^ s;
+    else {
+        int numblocks = totalBys % 16 == 0 ? totalBys / 16 : (totalBys / 16) + 1;
+        AES aes(b);
+        block pt[numblocks];
+        block ct[numblocks];
+        for(int i = 0; i < numblocks; i++) {
+            pt[i] = toBlock(0, i);
+        }
+        aes.ecbEncBlocks(pt, numblocks, ct);
+        uint8_t *bptr = (uint8_t *)ct;
+        for(int i = 0; i < groupSize; i++) {
+            out[i] = *(uint64_t *)(bptr + i * bys);
+        }
     }
-    else if (eq(temp, ZeroBlock)) {
-        temp = aes_enc(s, 0);
-        // aes_evals_count++;
-        temp = temp ^ s;
-    }
-
-    return getDataFromBlock(bitsize, temp, offset % outputPerBlock);
 }
-
-uint64_t convert_new_uint(int bitsize, block b, block &temp, const int offset)
-{
-    int bytesize = bitsize / 8; 
-    const block notThreeBlock = toBlock(~0, ~3);
-    const int outputPerBlock = sizeof(block) / bytesize;
-
-    block s = (b & notThreeBlock) ^ toBlock(offset / outputPerBlock);
-
-    if (offset == 0) {
-        temp = s;
-    }
-    else if (offset % outputPerBlock == 0)
-    {
-        temp = aes_enc(s, 0);
-        // aes_evals_count++;
-        temp = temp ^ s;
-    }
-    else if (eq(temp, ZeroBlock)) {
-        temp = aes_enc(s, 0);
-        // aes_evals_count++;
-        temp = temp ^ s;
-    }
-
-    return getDataFromBlock_old(bitsize, temp, offset % outputPerBlock);
-}
-
-uint64_t convert_old(int bitsize, block b, block &temp, const int offset)
-{
-    int bytesize = bitsize / 8; 
-    static const block notThreeBlock = toBlock(~0, ~3);
-    const int outputPerBlock = sizeof(block) / bytesize;
-    static AES aes0(ZeroBlock);
-
-    block s = (b & notThreeBlock) ^ toBlock(offset / outputPerBlock);
-
-    if (offset == 0) {
-        temp = s;
-    }
-    else if (offset % outputPerBlock == 0)
-    {
-        temp = aes0.ecbEncBlock(s);
-        // aes_evals_count++;
-        temp = temp ^ s;
-    }
-    else if (eq(temp, ZeroBlock)) {
-        temp = aes_enc(s, 0);
-        // aes_evals_count++;
-        temp = temp ^ s;
-    }
-
-    return getDataFromBlock_old(bitsize, temp, offset % outputPerBlock);
-}
-
 
 block traverseOneDCF(int Bin, int Bout, int groupSize, int party,
                         const block &s,
@@ -335,28 +84,29 @@ block traverseOneDCF(int Bin, int Bout, int groupSize, int party,
                         int evalGroupIdxLen)
 
 {
-    const block notThreeBlock = toBlock(~0, ~3);
-    const block TwoBlock = toBlock(0, 2);
-    const block ThreeBlock = toBlock(0, 3);
+    static const block notThreeBlock = toBlock(~0, ~3);
+    static const block TwoBlock = toBlock(0, 2);
+    static const block ThreeBlock = toBlock(0, 3);
+    static const block blocks[4] = {ZeroBlock, TwoBlock, OneBlock, ThreeBlock};
 
-    block tau, v_this_level, stcw;
+    block stcw;
+    block ct[2]; // {tau, v_this_level}
     u8 t_previous = lsb(s);
     const auto scw = (cw & notThreeBlock);
     block ds[] = { ((cw >> 1) & OneBlock), (cw & OneBlock) };
     const auto mask = zeroAndAllOne[t_previous];
     auto ss = s & notThreeBlock;
-    tau = aes_enc(ss, keep);
-    tau = tau ^ ss;
-    v_this_level = aes_enc(ss, keep + 2);
-    stcw = ((scw ^ ds[keep]) & mask) ^ tau;
-    // aes_evals_count += 2;
-    v_this_level ^= ss;
 
+    AES ak(ss);
+    ak.ecbEncTwoBlocks(blocks + 2 * keep, ct);
+
+    stcw = ((scw ^ ds[keep]) & mask) ^ ct[0];
     uint64_t sign = (party == SERVER1) ? -1 : 1;
     block temp = ZeroBlock;
+    uint64_t v_this_level_converted[groupSize];
+    convert(Bout, groupSize, ct[1], v_this_level_converted);
     GROUP_LOOP(
-        v_share[lp].value = v_share[lp].value + sign * (convert_new_uint(Bout, v_this_level, temp, lp) + t_previous * (v + ((int)level) * groupSize + lp)->value);
-        // mod(v_share[lp]);
+        v_share[lp].value = v_share[lp].value + sign * (v_this_level_converted[lp] + t_previous * (v + ((int)level) * groupSize + lp)->value);
     )
     return stcw;
 }
@@ -392,7 +142,9 @@ std::pair<DCFKeyPack, DCFKeyPack> keyGenDCF(int Bin, int Bout, int groupSize,
 
     static const block notOneBlock = toBlock(~0, ~1);
     static const block notThreeBlock = toBlock(~0, ~3);
-    block temp0, temp1, temp2, temp3;
+    static const block TwoBlock = toBlock(0, 2);
+    static const block ThreeBlock = toBlock(0, 3);
+    const static block pt[4] = {ZeroBlock, OneBlock, TwoBlock, ThreeBlock};
 
     auto s = prng.get<std::array<block, 2>>();
     block si[2][2];
@@ -412,6 +164,7 @@ std::pair<DCFKeyPack, DCFKeyPack> keyGenDCF(int Bin, int Bout, int groupSize,
     s[0] = (s[0] & notOneBlock) ^ ((s[1] & OneBlock) ^ OneBlock);
     k0[0] = s[0];
     k1[0] = s[1];
+    block ct[4];
 
     for (int i = 0; i < Bin; ++i)
     {
@@ -421,38 +174,35 @@ std::pair<DCFKeyPack, DCFKeyPack> keyGenDCF(int Bin, int Bout, int groupSize,
         auto ss0 = s[0] & notThreeBlock;
         auto ss1 = s[1] & notThreeBlock;
 
-        si[0][0] = aes_enc(ss0, 0);// aes0.ecbEncBlock(ss0, si[0][0]);
-        // aes_evals_count++;
-        si[0][1] = aes_enc(ss0, 1);// aes1.ecbEncBlock(ss0, si[0][1]);
-        // aes_evals_count++;
-        vi[0][0] = aes_enc(ss0, 2);// aes2.ecbEncBlock(ss0, vi[0][0]);
-        // aes_evals_count++;
-        vi[0][1] = aes_enc(ss0, 3);// aes3.ecbEncBlock(ss0, vi[0][1]);
-        // aes_evals_count++;
-        si[1][0] = aes_enc(ss1, 0);// aes0.ecbEncBlock(ss1, si[1][0]);
-        // aes_evals_count++;
-        si[1][1] = aes_enc(ss1, 1);// aes1.ecbEncBlock(ss1, si[1][1]);
-        // aes_evals_count++;
-        vi[1][0] = aes_enc(ss1, 2);// aes2.ecbEncBlock(ss1, vi[1][0]);
-        // aes_evals_count++;
-        vi[1][1] = aes_enc(ss1, 3);// aes3.ecbEncBlock(ss1, vi[1][1]);
-        // aes_evals_count++;
-        si[0][0] = si[0][0] ^ ss0;
-        si[0][1] = si[0][1] ^ ss0;
-        si[1][0] = si[1][0] ^ ss1;
-        si[1][1] = si[1][1] ^ ss1;
-        vi[0][0] = vi[0][0] ^ ss0;
-        vi[0][1] = vi[0][1] ^ ss0;
-        vi[1][0] = vi[1][0] ^ ss1;
-        vi[1][1] = vi[1][1] ^ ss1;
+        AES ak0(ss0);
+        AES ak1(ss1);
+        ak0.ecbEncFourBlocks(pt, ct);
+        si[0][0] = ct[0];
+        si[0][1] = ct[1];
+        vi[0][0] = ct[2];
+        vi[0][1] = ct[3];
+        ak1.ecbEncFourBlocks(pt, ct);
+        si[1][0] = ct[0];
+        si[1][1] = ct[1];
+        vi[1][0] = ct[2];
+        vi[1][1] = ct[3];
 
         auto ti0 = lsb(s[0]);
         auto ti1 = lsb(s[1]);
         GroupElement sign((ti1 == 1) ? -1 : +1, Bout);
 
+        uint64_t vi_01_converted[groupSize];
+        uint64_t vi_11_converted[groupSize];
+        uint64_t vi_10_converted[groupSize];
+        uint64_t vi_00_converted[groupSize];
+        convert(Bout, groupSize, vi[0][keep], vi_00_converted);
+        convert(Bout, groupSize, vi[1][keep], vi_10_converted);
+        convert(Bout, groupSize, vi[0][keep ^ 1], vi_01_converted);
+        convert(Bout, groupSize, vi[1][keep ^ 1], vi_11_converted);
+
         for (int lp = 0; lp < groupSize; ++lp)
         {
-            v0[i * groupSize + lp] = sign * (-v_alpha[lp] - convert_new(Bout, vi[0][keep ^ 1], temp0, lp) + convert_new(Bout, vi[1][keep ^ 1], temp1, lp));
+            v0[i * groupSize + lp] = sign * (-v_alpha[lp] - vi_01_converted[lp] + vi_11_converted[lp]);
             if (keep == 0 && greaterThan)
             {
                 // Lose is R
@@ -463,7 +213,7 @@ std::pair<DCFKeyPack, DCFKeyPack> keyGenDCF(int Bin, int Bout, int groupSize,
                 // Lose is L
                 v0[i * groupSize + lp] = v0[i * groupSize + lp] + sign * payload[lp];
             }
-            v_alpha[lp] = v_alpha[lp] - convert_new(Bout, vi[1][keep], temp3, lp) + convert_new(Bout, vi[0][keep], temp2, lp) + sign * v0[i * groupSize + lp];
+            v_alpha[lp] = v_alpha[lp] - vi_10_converted[lp] + vi_00_converted[lp] + sign * v0[i * groupSize + lp];
         }
 
         std::array<block, 2> siXOR{si[0][0] ^ si[1][0], si[0][1] ^ si[1][1]};
@@ -491,9 +241,14 @@ std::pair<DCFKeyPack, DCFKeyPack> keyGenDCF(int Bin, int Bout, int groupSize,
         s[1] = si1Keep ^ (zeroAndAllOne[ti1] & (scw ^ TKeep));
     }
 
+    uint64_t s0_converted[groupSize];
+    uint64_t s1_converted[groupSize];
+    convert(Bout, groupSize, s[0] & notThreeBlock, s0_converted);
+    convert(Bout, groupSize, s[1] & notThreeBlock, s1_converted);
+
     for (int lp = 0; lp < groupSize; ++lp)
     {
-        g0[lp] = (convert_new(Bout, s[1], temp1, lp) - convert_new(Bout, s[0], temp0, lp) - v_alpha[lp]);
+        g0[lp] = s1_converted[lp] - s0_converted[lp] - v_alpha[lp];
         if (lsb(s[1]) == 1)
         {
             g0[lp] = g0[lp] * -1;
@@ -533,8 +288,11 @@ void evalDCF(int Bin, int Bout, int groupSize,
     u8 t = lsb(s);
     block temp = ZeroBlock;
 
+    uint64_t s_converted[groupSize];
+    static const block notThreeBlock = toBlock(~0, ~3);
+    convert(Bout, groupSize, s & notThreeBlock, s_converted);
     GROUP_LOOP(
-        GroupElement final_term = convert_new(Bout, s, temp, lp);
+        GroupElement final_term = s_converted[lp];
         if (t)
             final_term.value = final_term.value + g[lp].value;
         if (party == SERVER1)

@@ -22,6 +22,8 @@ SOFTWARE.
 #include "group_element.h"
 #include "comms.h"
 
+/// @brief Adds two masked variables
+/// @returns masked variable for evaluator and effective mask for dealer
 GroupElement add_helper(uint8_t party, GroupElement x, GroupElement y, GroupElement x_mask, GroupElement y_mask)
 {
     if ((party == DEALER)) {
