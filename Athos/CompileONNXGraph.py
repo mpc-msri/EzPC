@@ -336,39 +336,24 @@ def generate_code(params, role, debug=False):
             if target == "SECFLOAT":
                 backend = "FloatML"
                 cmake = "set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})"
-                findMPFR = "find_package(MPFR 2.3.0 REQUIRED)"
-                includeMPFR = "target_include_directories({prog_name} PUBLIC)".format(
-                    prog_name=program_name
-                )
-                MPFR = "${MPFR_LIBRARIES}"
-                os.system(f"cp {athos_dir}/../SCI/tests/FindMPFR.cmake build_dir/")
-                os.system(f"cp {ezpc_dir}secfloat.h {model_abs_dir}/")
             else:
                 cmake = ""
-                findMPFR = ""
-                includeMPFR = ""
-                MPFR = ""
                 backend = backend.upper()
             os.chdir(build_dir)
             cmake_file = """
                 cmake_minimum_required (VERSION 3.13)
                 project (BUILD_IT)
                 {cmake}
-                {findMPFR}
                 find_package(SCI REQUIRED PATHS \"{sci_install}\")
                 add_executable({prog_name} {src_file})
-                {includeMPFR}
-                target_compile_options({prog_name} PRIVATE -fconcepts)
-                target_link_libraries({prog_name} SCI::SCI-{backend} )
+                target_link_libraries({prog_name} SCI::SCI-{backend}  )
+                target_compile_options({prog_name} PUBLIC -Wno-parentheses-equality -fconcepts)
             """.format(
                 cmake=cmake,
-                findMPFR=findMPFR,
                 sci_install=sci_install,
                 prog_name=program_name,
                 src_file=output_file,
-                includeMPFR=includeMPFR,
                 backend=backend,
-                MPFR=MPFR,
             )
             with open("CMakeLists.txt", "w") as f:
                 f.write(cmake_file)

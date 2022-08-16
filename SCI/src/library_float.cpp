@@ -127,7 +127,7 @@ FixArray __public_int_to_arithmetic(uint64_t i, bool sign, int len, int party=AL
 	return _ret ;
 }
 
-FPArray __public_float_to_arithmetic(float f, int party=ALICE) {
+FPArray __public_float_to_baba(float f, int party=ALICE) {
 	float *_dummy = new float[1] ;
 	_dummy[0] = f ;
 	FPArray _ret = __fp_op->input<float>(party, 1, _dummy, __m_bits, __e_bits) ;
@@ -172,7 +172,7 @@ vector<FixArray> make_vector_int(int party, bool sign, int len, size_t last) {
 vector<FPArray> make_vector_float(int party, size_t last) {
 	vector<FPArray> _ret ;
 	for (size_t i = 0 ; i < last ; i++) {
-		_ret.push_back(__public_float_to_arithmetic(0.0, party)) ;
+		_ret.push_back(__public_float_to_baba(0.0, party)) ;
 	}
 	return _ret ;
 }

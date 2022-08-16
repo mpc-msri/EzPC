@@ -122,7 +122,7 @@ auto make_vector_int(int party, bool sign, int len, size_t first, Args... sizes)
 
 /********************* Floating Multidimensional Arrays *********************/
 
-FPArray __public_float_to_arithmetic(float f, int party) ;
+FPArray __public_float_to_baba(float f, int party) ;
 
 vector<FPArray> make_vector_float(int party, size_t last) ;
 
@@ -180,11 +180,12 @@ void GemmAdd(int32_t s1, int32_t s2,
 	vector<vector<FPArray>> &outArr) ;
 
 // hotArr is positive if input is negative
+static vector<BoolArray> DEFAULT_VECTOR;
 void Relu(
 	int32_t s1, 
 	vector<FPArray> &inArr, 
 	vector<FPArray> &outArr,
-	vector<BoolArray> &hotArr) ; 
+	vector<BoolArray> &hotArr = DEFAULT_VECTOR) ; 
 
 void getBiasDer(int32_t m, int32_t s2, vector<vector<FPArray>>& batchSoftDer, vector<FPArray> &biasDer) ;
 
