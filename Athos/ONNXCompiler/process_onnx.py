@@ -51,7 +51,6 @@ import numpy as np
 np.set_printoptions(threshold=np.inf)
 
 DEBUG = False
-target = ""
 out_var_prefix = "J"
 
 
@@ -265,7 +264,7 @@ def dump_model_weights(model, scaling_factor, model_dir, gather_names, model_nam
                 scaling_factor,
             )
         else:
-            chunk_1 = common.numpy_float_array_to_float_val_str(
+            (chunk_1, cnt_1) = common.numpy_float_array_to_float_val_str(
                 np.asarray(model_name_to_val_dict[init_vals.name], dtype=np.float32)
             )
         chunk_n += chunk_1
@@ -345,6 +344,7 @@ def compile(
     sys.setrecursionlimit(10000)
     if not model_fname.endswith(".onnx"):
         sys.exit("Please supply a valid ONNX model (.onnx extension)")
+    global target
     target = target_name
     model_name = os.path.basename(model_fname)[:-5]
     model_abs_dir = os.path.dirname(os.path.abspath(model_fname))

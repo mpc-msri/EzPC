@@ -39,7 +39,7 @@ def numpy_float_array_to_fixed_point_val_str(input_array, scale):
     cnt = 0
     chunk = ""
     for val in numpy.nditer(input_array):
-        val = int(val * (2 ** scale))
+        val = int(val * (2**scale))
         chunk += str(val) + "\n"
         cnt += 1
     return (chunk, cnt)
@@ -47,9 +47,11 @@ def numpy_float_array_to_fixed_point_val_str(input_array, scale):
 
 def numpy_float_array_to_float_val_str(input_array):
     chunk = ""
+    cnt = 0
     for val in numpy.nditer(input_array):
         chunk += str(val) + "\n"
-    return chunk
+        cnt += 1
+    return (chunk, cnt)
 
 
 def write_debug_info(node_name_to_out_var_dict):
@@ -85,7 +87,7 @@ def parse_output(scale):
     for line in f:
         if line.rstrip().replace("-", "0").isdigit():
             val = float(line.rstrip())
-            val = val / (2 ** scale)
+            val = val / (2**scale)
             chunk += str(val) + "\n"
     g.write(chunk)
     g.close()
