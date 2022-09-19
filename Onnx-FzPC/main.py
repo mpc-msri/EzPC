@@ -1,4 +1,5 @@
-import argparse
+import argparse, sys, os
+from utils import logger
 
 from backend import prepare
 
@@ -6,6 +7,9 @@ from backend import prepare
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--path", required=True, type=str, help="Path to the Model.")
+    parser.add_argument(
+        "--generate", required=True, type=str, choices=["code", "executable"]
+    )
     args = parser.parse_args()
     return args
 
@@ -18,6 +22,11 @@ def main():
 
     # Export the Model as Secfloat
     backendrep.export_model()
+
+    if args.generate == "executable":
+        logger.info("Starting Compilation.")
+        os.system(f"./compile_secfloat.sh {args.path[:-5]}_secfloat.cpp")
+        logger.info(f"Output Binary generated : {args.path[:-5]}_secfloat.out")
 
 
 if __name__ == "__main__":

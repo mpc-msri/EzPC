@@ -159,7 +159,7 @@ def prepare_export(program, var_dict, value_info):
     indent = 1
     input_taken = []  # list of variables already input
     input_dict = dict()
-    code_list.append('#include "common.cpp" \n\n\n')
+    code_list.append('#include "../lib_secfloat/common.cpp" \n\n\n')
     code_list.append(
         "int main(int __argc, char **__argv)\n{\n\n      __init(__argc, __argv);\n"
     )
