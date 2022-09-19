@@ -34,20 +34,17 @@ DIR="$(dirname "${SECFLOAT_CPP_FILE}")"
 
 rm -rf build_dir
 mkdir build_dir
-pwd
-cp ../SCI/tests/FindMPFR.cmake build_dir/
 cd build_dir
 eval `opam config env`
 echo "
 cmake_minimum_required (VERSION 3.13) 
 project (BUILD_IT)
 set(CMAKE_MODULE_PATH \${CMAKE_CURRENT_SOURCE_DIR})
-find_package(MPFR 2.3.0 REQUIRED)
 find_package(SCI REQUIRED PATHS \"../../SCI/build/install\") 
 add_executable($BINARY_NAME ../$SECFLOAT_CPP_FILE)
-target_include_directories($BINARY_NAME PUBLIC ${MPFR_INCLUDES})
+target_include_directories($BINARY_NAME PUBLIC)
 target_compile_options($BINARY_NAME PRIVATE -fconcepts)
-target_link_libraries($BINARY_NAME SCI::SCI-FloatML ${MPFR_LIBRARIES})
+target_link_libraries($BINARY_NAME SCI::SCI-FloatML )
 " > CMakeLists.txt
 
 cmake --log-level=ERROR .
