@@ -29,6 +29,19 @@ class Operator:
         )
 
     @classmethod
+    def LeakyRelu(cls, attributes, inputs, outputs, value_info, var_dict, indent):
+        logger.debug("Inside Relu function call.")
+        cmmnt = comment("Call  Relu(shape,input,output)\n", indent)
+        return str(
+            cmmnt + f"{'   ' * indent}Relu("
+            f"{iterate_list(value_info[inputs[0]][1])}, "
+            f"{attributes['alpha']}, "
+            f"{iterate_list([var_dict[x] for x in inputs])}, "
+            f"{iterate_list([var_dict[x] for x in outputs])}"
+            f");"
+        )
+
+    @classmethod
     def Sigmoid(cls, attributes, inputs, outputs, value_info, var_dict, indent):
         logger.debug("Inside Sigmoid function call.")
         cmmnt = comment("Call  Sigmoid(shape,input,output)\n", indent)
@@ -61,16 +74,28 @@ class Operator:
             assert len(attributes["strides"]) == 2
             assert value_info[inputs[1]][1][2:] == tuple(attributes["kernel_shape"])
             filterShape = value_info[inputs[1]][1]
-            return str(
-                f"{'   ' * indent}Conv2DGroupWrapper("
-                f"{iterate_list(value_info[inputs[0]][1])}, "
-                f"{filterShape[2]}, {filterShape[3]}, {value_info[inputs[1]][1][0]}, "
-                f"{(iterate_list(attributes['pads'] if 'pads' in attributes else [0, 0, 0, 0]))}, "
-                f"{(iterate_list(attributes['strides']))}, "
-                f"{(attributes['group'] if 'group' in attributes else 1)}, "
-                f"{iterate_list([var_dict[x] for x in inputs[:2]])}, "
-                f"{iterate_list([var_dict[x] for x in outputs])}"
-                f");"
+            convadd = ""
+            if len(inputs) == 3:
+                convadd = str(
+                    f"{'   ' * indent}ConvAdd("
+                    f"{iterate_list(value_info[outputs[0]][1])}, "
+                    f"{var_dict[outputs[0]]}, {var_dict[inputs[2]]}, {var_dict[outputs[0]]}"
+                    f");"
+                )
+                pass
+            return (
+                str(
+                    f"{'   ' * indent}Conv2DGroupWrapper("
+                    f"{iterate_list(value_info[inputs[0]][1])}, "
+                    f"{filterShape[2]}, {filterShape[3]}, {value_info[inputs[1]][1][0]}, "
+                    f"{(iterate_list(attributes['pads'] if 'pads' in attributes else [0, 0, 0, 0]))}, "
+                    f"{(iterate_list(attributes['strides']))}, "
+                    f"{(attributes['group'] if 'group' in attributes else 1)}, "
+                    f"{iterate_list([var_dict[x] for x in inputs[:2]])}, "
+                    f"{iterate_list([var_dict[x] for x in outputs])}"
+                    f");\n"
+                )
+                + convadd
             )
 
     @classmethod

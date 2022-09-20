@@ -197,6 +197,13 @@ void Relu(
 	vector<FPArray> &outArr,
 	vector<BoolArray> &hotArr = DEFAULT_VECTOR);
 
+void Leaky_Relu(
+	int32_t s1,
+	float alpha,
+	vector<FPArray> &inArr,
+	vector<FPArray> &outArr,
+	vector<BoolArray> &hotArr);
+
 void getBiasDer(int32_t m, int32_t s2, vector<vector<FPArray>> &batchSoftDer, vector<FPArray> &biasDer);
 
 void updateWeights(int32_t sz, float lr, vector<FPArray> &inArr, vector<FPArray> &derArr);

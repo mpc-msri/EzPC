@@ -168,5 +168,9 @@ class OnnxNode:
         pass
 
     @classmethod
-    def ConvTranspose(self, node):
+    def ConvTranspose(cls, node):
+        pass
+
+    @classmethod
+    def LeakyRelu(cls, node):
         pass

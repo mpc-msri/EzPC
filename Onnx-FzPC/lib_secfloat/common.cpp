@@ -240,6 +240,23 @@ void Conv2DGroupWrapper(
     }
 }
 
+void ConvAdd(int32_t s1, int32_t s2, int32_t s3, int32_t s4, auto &tmp5, auto &tmp6, auto &tmp7)
+{
+    for (uint32_t i1 = 0; i1 < s1; i1++)
+    {
+        for (uint32_t i2 = 0; i2 < s2; i2++)
+        {
+            for (uint32_t i3 = 0; i3 < s3; i3++)
+            {
+                for (uint32_t i4 = 0; i4 < s4; i4++)
+                {
+                    tmp7[i1][i2][i3][i4] = __fp_op->add(tmp5[i1][i2][i3][i4], tmp6[0][0][0][i4]);
+                }
+            }
+        }
+    }
+}
+
 void Concat1T44(int32_t s1, int32_t s2, int32_t s3, int32_t s4, int32_t inp1s1, int32_t inp1s2, int32_t inp1s3, int32_t inp1s4, auto &inp1, int32_t axis, auto &outp)
 {
     for (uint32_t i1 = 0; i1 < s1; i1++)

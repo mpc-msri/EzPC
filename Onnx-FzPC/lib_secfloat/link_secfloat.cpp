@@ -8,6 +8,7 @@ extern void MatMul(int32_t s1, int32_t s2, int32_t s3, vector<vector<FPArray>> &
 extern void GemmAdd(int32_t s1, int32_t s2, vector<vector<FPArray>> &prod, vector<FPArray> &bias, vector<vector<FPArray>> &out);
 extern void dotProduct2(int32_t s1, int32_t s2, vector<vector<FPArray>> &arr1, vector<vector<FPArray>> &arr2, vector<FPArray> &outArr);
 extern void Relu(int32_t s1, vector<FPArray> &inArr, vector<FPArray> &outArr, vector<BoolArray> &hotArr);
+extern void LeakyRelu(int32_t s1, float alpha, vector<FPArray> &inArr, vector<FPArray> &outArr, vector<BoolArray> &hotArr);
 extern void getBiasDer(int32_t s1, int32_t s2, vector<vector<FPArray>> &der, vector<FPArray> &biasDer);
 extern void IfElse(int32_t s1, vector<FPArray> &dat, vector<BoolArray> &hot, vector<FPArray> &out, bool flip);
 extern void updateWeights(int32_t s, float lr, vector<FPArray> &bias, vector<FPArray> &der);
@@ -256,6 +257,76 @@ void Relu(int32_t s1, int32_t s2, int32_t s3, int32_t s4, auto &inArr, auto &out
         }
     }
     Relu(size, reshapedInArr, reshapedOutArr);
+    for (uint32_t i1 = 0; i1 < s1; i1++)
+    {
+        for (uint32_t i2 = 0; i2 < s2; i2++)
+        {
+            for (uint32_t i3 = 0; i3 < s3; i3++)
+            {
+                for (uint32_t i4 = 0; i4 < s4; i4++)
+                {
+                    int32_t linIdx = ((((((i1 * s2) * s3) * s4) + ((i2 * s3) * s4)) + (i3 * s4)) + i4);
+
+                    outArr[i1][i2][i3][i4] = reshapedOutArr[linIdx];
+                }
+            }
+        }
+    }
+}
+
+void Leaky_Relu(int32_t s1, int32_t s2, float alpha, auto &inArr, auto &outArr)
+{
+    int32_t size = (s1 * s2);
+
+    auto reshapedInArr = make_vector_float(ALICE, size);
+
+    auto reshapedOutArr = make_vector_float(ALICE, size);
+
+    for (uint32_t i1 = 0; i1 < s1; i1++)
+    {
+        for (uint32_t i2 = 0; i2 < s2; i2++)
+        {
+            int32_t linIdx = ((i1 * s2) + i2);
+
+            reshapedInArr[linIdx] = inArr[i1][i2];
+        }
+    }
+    Leaky_Relu(size, alpha, reshapedInArr, reshapedOutArr);
+    for (uint32_t i1 = 0; i1 < s1; i1++)
+    {
+        for (uint32_t i2 = 0; i2 < s2; i2++)
+        {
+            int32_t linIdx = ((i1 * s2) + i2);
+
+            outArr[i1][i2] = reshapedOutArr[linIdx];
+        }
+    }
+}
+
+void Leaky_Relu(int32_t s1, int32_t s2, int32_t s3, int32_t s4, float alpha, auto &inArr, auto &outArr)
+{
+    int32_t size = (((s1 * s2) * s3) * s4);
+
+    auto reshapedInArr = make_vector_float(ALICE, size);
+
+    auto reshapedOutArr = make_vector_float(ALICE, size);
+
+    for (uint32_t i1 = 0; i1 < s1; i1++)
+    {
+        for (uint32_t i2 = 0; i2 < s2; i2++)
+        {
+            for (uint32_t i3 = 0; i3 < s3; i3++)
+            {
+                for (uint32_t i4 = 0; i4 < s4; i4++)
+                {
+                    int32_t linIdx = ((((((i1 * s2) * s3) * s4) + ((i2 * s3) * s4)) + (i3 * s4)) + i4);
+
+                    reshapedInArr[linIdx] = inArr[i1][i2][i3][i4];
+                }
+            }
+        }
+    }
+    Leaky_Relu(size, alpha, reshapedInArr, reshapedOutArr);
     for (uint32_t i1 = 0; i1 < s1; i1++)
     {
         for (uint32_t i2 = 0; i2 < s2; i2++)

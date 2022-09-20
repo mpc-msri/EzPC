@@ -51,7 +51,7 @@ cmake --log-level=ERROR .
 
 cmake --build . --parallel
 rm -rf ../$BINARY_NAME 
-mv $BINARY_NAME ../
+mv $BINARY_NAME ../$DIR
 cd ..
 rm -rf build_dir
 
