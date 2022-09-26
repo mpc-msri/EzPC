@@ -99,8 +99,14 @@ def take_input(name, shape, party, indent):
     VariableGen.reset_loop_var_counter()
     dim = len(shape)
     comma = ","
+    statement = str(
+        f"{'   ' * indent}if(__party=={party.name})cout<<\"Input {name}:\";\n"
+    )
     # return nested_for_loop(0, shape, variables, name, indent)
-    return f"{'   ' * indent}auto {name} = input{dim}({comma.join(str(sh) for sh in shape)},{party.name});"
+    return (
+        statement
+        + f"{'   ' * indent}auto {name} = input{dim}({comma.join(str(sh) for sh in shape)},{party.name});"
+    )
 
 
 def give_output(name, shape, party, indent):
