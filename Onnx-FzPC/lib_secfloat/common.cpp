@@ -75,15 +75,15 @@ void FusedBatchNorm4411(int32_t s1, int32_t s2, int32_t s3, int32_t s4, auto &in
 
     for (uint32_t i1 = 0; i1 < s1; i1++)
     {
-        for (uint32_t i2 = 0; i2 < s2; i2++)
+        for (uint32_t i2 = 0; i2 < s4; i2++)
         {
             for (uint32_t i3 = 0; i3 < s3; i3++)
             {
-                for (uint32_t i4 = 0; i4 < s4; i4++)
+                for (uint32_t i4 = 0; i4 < s2; i4++)
                 {
                     int32_t linIdx = ((((((i1 * s2) * s3) * s4) + ((i2 * s3) * s4)) + (i3 * s4)) + i4);
 
-                    inArrReshaped[linIdx] = inArr[i1][i2][i3][i4];
+                    inArrReshaped[linIdx] = inArr[i1][i4][i2][i3];
 
                     multArrReshaped[linIdx] = multArr[i4];
                 }
@@ -93,15 +93,15 @@ void FusedBatchNorm4411(int32_t s1, int32_t s2, int32_t s3, int32_t s4, auto &in
     ElemWiseActModelVectorMult(inpSize, inArrReshaped, multArrReshaped, multExprAns);
     for (uint32_t i1 = 0; i1 < s1; i1++)
     {
-        for (uint32_t i2 = 0; i2 < s2; i2++)
+        for (uint32_t i2 = 0; i2 < s4; i2++)
         {
             for (uint32_t i3 = 0; i3 < s3; i3++)
             {
-                for (uint32_t i4 = 0; i4 < s4; i4++)
+                for (uint32_t i4 = 0; i4 < s2; i4++)
                 {
                     int32_t linIdx = ((((((i1 * s2) * s3) * s4) + ((i2 * s3) * s4)) + (i3 * s4)) + i4);
 
-                    outputArr[i1][i2][i3][i4] = Add(multExprAns[linIdx], biasArr[i4]);
+                    outputArr[i1][i4][i2][i3] = Add(multExprAns[linIdx], biasArr[i4]);
                 }
             }
         }
@@ -129,7 +129,7 @@ void Conv2DReshapeMatMulOPGroup(int32_t N, int32_t finalH, int32_t finalW, int32
             {
                 for (uint32_t w = 0; w < finalW; w++)
                 {
-                    outputArr[n][h][w][(co + startCO)] = inputArr[co][((((n * finalH) * finalW) + (h * finalW)) + w)];
+                    outputArr[n][(co + startCO)][h][w] = inputArr[co][((((n * finalH) * finalW) + (h * finalW)) + w)];
                 }
             }
         }
@@ -151,7 +151,7 @@ void Conv2DReshapeFilterGroup(int32_t FH, int32_t FW, int32_t CI, int32_t CO, in
                 for (uint32_t ci = 0; ci < CIG; ci++)
                 {
                     int32_t linIdx = ((((fh * FW) * CIG) + (fw * CIG)) + ci);
-                    outputArr[co][linIdx] = inputArr[fh][fw][ci][(co + startCO)];
+                    outputArr[co][linIdx] = inputArr[(co + startCO)][ci][fh][fw];
                 }
             }
         }
@@ -193,7 +193,7 @@ void Conv2DReshapeInputGroup(int32_t N, int32_t H, int32_t W, int32_t CI, int32_
                             }
                             else
                             {
-                                val = inputArr[n][curPosH][curPosW][(ci + startCI)];
+                                val = inputArr[n][(ci + startCI)][curPosH][curPosW];
                             }
 
                             outputArr[((((fh * FW) * CIG) + (fw * CIG)) + ci)][linIdxFilterMult] = val;
@@ -211,7 +211,7 @@ void Conv2DReshapeInputGroup(int32_t N, int32_t H, int32_t W, int32_t CI, int32_
 }
 
 void Conv2DGroupWrapper(
-    int32_t N, int32_t H, int32_t W, int32_t CI, int32_t FH, int32_t FW, int32_t CO,
+    int32_t N, int32_t CI, int32_t H, int32_t W, int32_t FH, int32_t FW, int32_t CO,
     int32_t zPadHLeft, int32_t zPadHRight, int32_t zPadWLeft, int32_t zPadWRight,
     int32_t strideH, int32_t strideW, int32_t G,
     vector<vector<vector<vector<FPArray>>>> &inputArr,
@@ -250,7 +250,7 @@ void ConvAdd(int32_t s1, int32_t s2, int32_t s3, int32_t s4, auto &tmp5, auto &t
             {
                 for (uint32_t i4 = 0; i4 < s4; i4++)
                 {
-                    tmp7[i1][i2][i3][i4] = __fp_op->add(tmp5[i1][i2][i3][i4], tmp6[0][0][0][i4]);
+                    tmp7[i1][i2][i3][i4] = __fp_op->add(tmp5[i1][i2][i3][i4], tmp6[i2]);
                 }
             }
         }

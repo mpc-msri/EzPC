@@ -173,4 +173,5 @@ class OnnxNode:
 
     @classmethod
     def LeakyRelu(cls, node):
-        pass
+        if "alpha" not in node.attributes:
+            node.attributes["alpha"] = 0.01

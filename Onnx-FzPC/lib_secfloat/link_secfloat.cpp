@@ -47,7 +47,7 @@ void ElemWiseActModelVectorMult(int32_t s1, auto &arr1, auto &arr2, auto &outArr
     ElemWiseSecretSharedVectorMult(s1, arr1, arr2, outArr);
 }
 
-void MaxPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t ksizeH, int32_t ksizeW, int32_t zPadHLeft, int32_t zPadHRight, int32_t zPadWLeft, int32_t zPadWRight, int32_t strideH, int32_t strideW, int32_t N1, int32_t imgH, int32_t imgW, int32_t C1, auto &inArr, auto &outArr)
+void MaxPool(int32_t N, int32_t C, int32_t H, int32_t W, int32_t ksizeH, int32_t ksizeW, int32_t zPadHLeft, int32_t zPadHRight, int32_t zPadWLeft, int32_t zPadWRight, int32_t strideH, int32_t strideW, int32_t N1, int32_t C1, int32_t imgH, int32_t imgW, auto &inArr, auto &outArr)
 {
     for (uint32_t n = 0; n < N; n++)
     {
@@ -95,12 +95,12 @@ void MaxPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t ksizeH, int32_t
                             }
                             else
                             {
-                                temp = inArr[n][curPosH][curPosW][c];
+                                temp = inArr[n][c][curPosH][curPosW];
                             }
                             maxi = __fp_op->if_else(__fp_op->LT(__fp_op->sub(maxi, temp), __public_float_to_baba(0., ALICE)), temp, maxi);
                         }
                     }
-                    outArr[n][ctH][ctW][c] = maxi;
+                    outArr[n][c][ctH][ctW] = maxi;
 
                     leftTopCornerW = (leftTopCornerW + strideW);
 
@@ -115,7 +115,7 @@ void MaxPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t ksizeH, int32_t
     }
 }
 
-void AvgPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t ksizeH, int32_t ksizeW, int32_t zPadHLeft, int32_t zPadHRight, int32_t zPadWLeft, int32_t zPadWRight, int32_t strideH, int32_t strideW, int32_t N1, int32_t imgH, int32_t imgW, int32_t C1, auto &inArr, auto &outArr)
+void AvgPool(int32_t N, int32_t C, int32_t H, int32_t W, int32_t ksizeH, int32_t ksizeW, int32_t zPadHLeft, int32_t zPadHRight, int32_t zPadWLeft, int32_t zPadWRight, int32_t strideH, int32_t strideW, int32_t N1, int32_t C1, int32_t imgH, int32_t imgW, auto &inArr, auto &outArr)
 {
     int32_t rows = (((N * C) * H) * W);
 
@@ -161,7 +161,7 @@ void AvgPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t ksizeH, int32_t
                             }
                             else
                             {
-                                temp = inArr[n][curPosH][curPosW][c];
+                                temp = inArr[n][c][curPosH][curPosW];
                             }
                             curFilterSum = __fp_op->add(curFilterSum, temp);
                         }
@@ -197,13 +197,12 @@ void AvgPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t ksizeH, int32_t
             {
                 for (uint32_t w = 0; w < W; w++)
                 {
-                    outArr[n][h][w][c] = filterAvg[((((((n * C) * H) * W) + ((c * H) * W)) + (h * W)) + w)];
+                    outArr[n][c][h][w] = filterAvg[((((((n * C) * H) * W) + ((c * H) * W)) + (h * W)) + w)];
                 }
             }
         }
     }
 }
-
 void Relu(int32_t s1, int32_t s2, auto &inArr, auto &outArr)
 {
     int32_t size = (s1 * s2);

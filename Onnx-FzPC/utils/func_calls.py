@@ -74,6 +74,7 @@ class Operator:
             assert len(attributes["strides"]) == 2
             assert value_info[inputs[1]][1][2:] == tuple(attributes["kernel_shape"])
             filterShape = value_info[inputs[1]][1]
+            N, CI, H, W = value_info[inputs[0]][1]
             convadd = ""
             if len(inputs) == 3:
                 convadd = str(
@@ -86,7 +87,7 @@ class Operator:
             return (
                 str(
                     f"{'   ' * indent}Conv2DGroupWrapper("
-                    f"{iterate_list(value_info[inputs[0]][1])}, "
+                    f"{N}, {CI}, {H}, {W}, "
                     f"{filterShape[2]}, {filterShape[3]}, {value_info[inputs[1]][1][0]}, "
                     f"{(iterate_list(attributes['pads'] if 'pads' in attributes else [0, 0, 0, 0]))}, "
                     f"{(iterate_list(attributes['strides']))}, "
