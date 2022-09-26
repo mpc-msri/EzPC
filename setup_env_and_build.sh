@@ -116,7 +116,7 @@ sudo apt install -y python3.7-venv
 python3.7 -m venv mpc_venv
 source mpc_venv/bin/activate
 pip install -U pip
-pip install tensorflow==1.15.0 keras==2.3.0 scipy==1.1.0 matplotlib scikit-learn==0.24.2
+pip install tensorflow==1.15.0 keras==2.3.0 scipy==1.1.0 matplotlib scikit-learn==0.24.2 torchvision
 pip install onnx onnx-simplifier onnxruntime black
 pip install pytest pytest-cov 
 python3 -m pip install onnx_graphsurgeon --index-url https://pypi.ngc.nvidia.com
