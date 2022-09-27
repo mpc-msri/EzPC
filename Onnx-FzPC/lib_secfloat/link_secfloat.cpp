@@ -203,6 +203,7 @@ void AvgPool(int32_t N, int32_t C, int32_t H, int32_t W, int32_t ksizeH, int32_t
         }
     }
 }
+
 void Relu(int32_t s1, int32_t s2, auto &inArr, auto &outArr)
 {
     int32_t size = (s1 * s2);

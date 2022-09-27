@@ -1,7 +1,7 @@
 #include <iostream>
 #include "link_secfloat.cpp"
 
-void MatMul2D(int32_t i, int32_t j, int32_t k, auto &A, auto &B, auto &C, bool modelIsA)
+void MatMul2D(int32_t i, int32_t j, int32_t k, auto &A, auto &B, auto &C)
 {
     for (uint32_t i1 = 0; i1 < i; i1++)
     {
@@ -234,9 +234,17 @@ void Conv2DGroupWrapper(
         vector<vector<FPArray>> matmulOP = make_vector_float(ALICE, reshapedFilterRows, reshapedIPCols);
 
         Conv2DReshapeFilterGroup(FH, FW, CI, CO, g, G, filterArr, filterReshaped);
+        cout << "here3" << endl;
+
         Conv2DReshapeInputGroup(N, H, W, CI, FH, FW, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideH, strideW, g, G, reshapedIPRows, reshapedIPCols, inputArr, inputReshaped);
+        cout << "here4" << endl;
+        cout << reshapedFilterRows << endl;
+        cout << reshapedFilterCols << endl;
+        cout << reshapedIPCols << endl;
         MatMul(reshapedFilterRows, reshapedFilterCols, reshapedIPCols, filterReshaped, inputReshaped, matmulOP);
+        cout << "here5" << endl;
         Conv2DReshapeMatMulOPGroup(N, outH, outW, CO, g, G, matmulOP, outArr);
+        cout << "here6" << endl;
     }
 }
 
