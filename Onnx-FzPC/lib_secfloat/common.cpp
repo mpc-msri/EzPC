@@ -1,7 +1,7 @@
 #include <iostream>
 #include "link_secfloat.cpp"
 
-void MatMul2D(int32_t i, int32_t j, int32_t k, auto &A, auto &B, auto &C)
+void MatMul2D(int32_t i, int32_t j, int32_t k, auto &A, auto &B, auto &C, bool isA = true)
 {
     for (uint32_t i1 = 0; i1 < i; i1++)
     {
