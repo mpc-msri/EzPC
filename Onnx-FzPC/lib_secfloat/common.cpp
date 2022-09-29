@@ -47,7 +47,7 @@ void Gemm(int32_t m, int32_t n, int32_t o, int32_t p, float alpha, float beta, i
     }
 
     auto tmp = make_vector_float(ALICE, x, k);
-    MatMul2D(m, n, p, A, B, tmp, 0);
+    MatMul(m, n, p, A, B, tmp);
 
     for (uint32_t i0 = 0; i0 < x; i0++)
     {
@@ -234,31 +234,54 @@ void Conv2DGroupWrapper(
         vector<vector<FPArray>> matmulOP = make_vector_float(ALICE, reshapedFilterRows, reshapedIPCols);
 
         Conv2DReshapeFilterGroup(FH, FW, CI, CO, g, G, filterArr, filterReshaped);
-        cout << "here3" << endl;
-
         Conv2DReshapeInputGroup(N, H, W, CI, FH, FW, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideH, strideW, g, G, reshapedIPRows, reshapedIPCols, inputArr, inputReshaped);
-        cout << "here4" << endl;
-        cout << reshapedFilterRows << endl;
-        cout << reshapedFilterCols << endl;
-        cout << reshapedIPCols << endl;
         MatMul(reshapedFilterRows, reshapedFilterCols, reshapedIPCols, filterReshaped, inputReshaped, matmulOP);
-        cout << "here5" << endl;
         Conv2DReshapeMatMulOPGroup(N, outH, outW, CO, g, G, matmulOP, outArr);
-        cout << "here6" << endl;
     }
 }
 
-void ConvAdd(int32_t s1, int32_t s2, int32_t s3, int32_t s4, auto &tmp5, auto &tmp6, auto &tmp7)
+void ConvAdd(int32_t s1, int32_t s2, int32_t s3, int32_t s4,
+             vector<vector<vector<vector<FPArray>>>> &inArr,
+             vector<FPArray> &biasArr,
+             vector<vector<vector<vector<FPArray>>>> &outArr)
 {
-    for (uint32_t i1 = 0; i1 < s1; i1++)
+    int m_bits, e_bits;
+    int sz;
+
+    m_bits = inArr[0][0][0][0].m_bits;
+    e_bits = inArr[0][0][0][0].e_bits;
+    sz = s1 * s2 * s3 * s4;
+
+    vector<FPArray> arr1 = make_vector_float(ALICE, sz);
+    vector<FPArray> arr2 = make_vector_float(ALICE, sz);
+    vector<FPArray> out = make_vector_float(ALICE, sz);
+
+    for (int i1 = 0; i1 < s1; i1++)
     {
-        for (uint32_t i2 = 0; i2 < s2; i2++)
+        for (int i2 = 0; i2 < s2; i2++)
         {
-            for (uint32_t i3 = 0; i3 < s3; i3++)
+            for (int i3 = 0; i3 < s3; i3++)
             {
-                for (uint32_t i4 = 0; i4 < s4; i4++)
+                for (int i4 = 0; i4 < s4; i4++)
                 {
-                    tmp7[i1][i2][i3][i4] = __fp_op->add(tmp5[i1][i2][i3][i4], tmp6[i2]);
+                    arr1[i1 * s2 * s3 * s4 + i2 * s3 * s4 + i3 * s4 + i4] = inArr[i1][i2][i3][i4];
+                    arr2[i1 * s2 * s3 * s4 + i2 * s3 * s4 + i3 * s4 + i4] = biasArr[i2];
+                }
+            }
+        }
+    }
+
+    ElemWiseAdd(sz, arr1, arr2, out);
+
+    for (int i1 = 0; i1 < s1; i1++)
+    {
+        for (int i2 = 0; i2 < s2; i2++)
+        {
+            for (int i3 = 0; i3 < s3; i3++)
+            {
+                for (int i4 = 0; i4 < s4; i4++)
+                {
+                    outArr[i1][i2][i3][i4] = out[i1 * s2 * s3 * s4 + i2 * s3 * s4 + i3 * s4 + i4];
                 }
             }
         }

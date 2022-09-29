@@ -77,7 +77,7 @@ void MaxPool(int32_t N, int32_t C, int32_t H, int32_t W, int32_t ksizeH, int32_t
                     }
                     else
                     {
-                        maxi = inArr[n][leftTopCornerH][leftTopCornerW][c];
+                        maxi = inArr[n][c][leftTopCornerH][leftTopCornerW];
                     }
                     for (uint32_t fh = 0; fh < ksizeH; fh++)
                     {
@@ -256,7 +256,9 @@ void Relu(int32_t s1, int32_t s2, int32_t s3, int32_t s4, auto &inArr, auto &out
             }
         }
     }
+
     Relu(size, reshapedInArr, reshapedOutArr);
+
     for (uint32_t i1 = 0; i1 < s1; i1++)
     {
         for (uint32_t i2 = 0; i2 < s2; i2++)

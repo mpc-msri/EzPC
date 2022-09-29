@@ -43,7 +43,7 @@ set(CMAKE_MODULE_PATH \${CMAKE_CURRENT_SOURCE_DIR})
 find_package(SCI REQUIRED PATHS \"../../SCI/build/install\") 
 add_executable($BINARY_NAME ../$SECFLOAT_CPP_FILE)
 target_include_directories($BINARY_NAME PUBLIC)
-target_compile_options($BINARY_NAME PRIVATE -fconcepts)
+target_compile_options($BINARY_NAME PRIVATE -fconcepts -g)
 target_link_libraries($BINARY_NAME SCI::SCI-FloatML )
 " > CMakeLists.txt
 

@@ -100,7 +100,7 @@ def take_input(name, shape, party, indent):
     dim = len(shape)
     comma = ","
     statement = str(
-        f"{'   ' * indent}if(__party=={party.name})cout<<\"Input {name}:\";\n"
+        f"{'   ' * indent}if(__party=={party.name})cout<<\"Input {name}:\"<<endl;\n"
     )
     # return nested_for_loop(0, shape, variables, name, indent)
     return (

@@ -117,6 +117,7 @@ def prepare_func(code_list, node, var_dict, value_info, input_taken, indent):
         input_taken += node.outputs
 
     operator = getattr(Operator, node.op_type)
+    code_list.append(str(f'{"   " * (indent+1)}cout<<"Inside {node.op_type}"<<endl;'))
     code_list.append(
         operator(
             node.attrs, node.inputs, node.outputs, value_info, var_dict, indent + 1
@@ -186,9 +187,9 @@ def prepare_export(program, var_dict, value_info):
                 for input_var in node.inputs
             ]
             prepare_func(code_list, node, var_dict, value_info, input_taken, indent)
-            check_variables_to_delete(
-                delete_order_list, code_list, counter, var_dict, indent
-            )
+            # check_variables_to_delete(
+            #     delete_order_list, code_list, counter, var_dict, indent
+            # )
         elif isinstance(node, Output):
             prepare_output(code_list, node, var_dict, indent)
 
