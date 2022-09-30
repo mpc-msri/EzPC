@@ -909,7 +909,7 @@ void Relu(
 		outArr[i].z[0] = out_z[i];
 		outArr[i].m[0] = out_m[i];
 		outArr[i].e[0] = out_e[i];
-		hotArr[i].data[0] = hot[i];
+		// hotArr[i].data[0] = hot[i];
 	}
 
 	delete[] in_s;

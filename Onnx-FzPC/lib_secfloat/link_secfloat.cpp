@@ -115,6 +115,195 @@ void MaxPool(int32_t N, int32_t C, int32_t H, int32_t W, int32_t ksizeH, int32_t
     }
 }
 
+// void Maxpool_thread(
+//     int tid, int chunk, int filterSize, int m_bits, int e_bits,
+//     uint8_t **Row_s, uint8_t **Row_z, uint64_t **Row_m, uint64_t **Row_e, uint8_t **Mask,
+//     uint8_t *pooled_s, uint8_t *pooled_z, uint64_t *pooled_m, uint64_t *pooled_e)
+// {
+
+//     vector<FPArray> maxs;
+//     for (int i = 0; i < chunk; i++)
+//     {
+//         maxs.push_back(
+//             fpopArr[tid]->input(
+//                 tid & 1 ? 3 - __party : __party, filterSize, Row_s[i], Row_z[i], Row_m[i], Row_e[i], m_bits, e_bits));
+//     }
+
+//     vector<BoolArray> filterMask;
+//     FPArray filterMax;
+//     tie(filterMax, filterMask) = fpopArr[tid]->max_with_mask(maxs);
+
+//     for (int i = 0; i < chunk; i++)
+//         memcpy(Mask[i], filterMask[i].data, filterSize * sizeof(uint8_t));
+
+//     memcpy(pooled_s, filterMax.s, chunk * sizeof(uint8_t));
+//     memcpy(pooled_z, filterMax.z, chunk * sizeof(uint8_t));
+//     memcpy(pooled_m, filterMax.m, chunk * sizeof(uint64_t));
+//     memcpy(pooled_e, filterMax.e, chunk * sizeof(uint64_t));
+// }
+
+// void MaxPool(
+//     int32_t N, int32_t C, int32_t H, int32_t W,
+//     int32_t ksizeH, int32_t ksizeW,
+//     int32_t imgH, int32_t imgW,
+//     vector<vector<vector<vector<FPArray>>>> &inArr,
+//     vector<vector<vector<vector<BoolArray>>>> &poolmask,
+//     vector<vector<vector<vector<FPArray>>>> &outArr)
+// {
+
+//     int m_bits = inArr[0][0][0][0].m_bits, e_bits = inArr[0][0][0][0].e_bits;
+//     int size = N * H * C * W;
+//     int filter_size = ksizeH * ksizeW;
+
+//     uint8_t **Mask = new uint8_t *[size];
+
+//     uint8_t **Row_s = new uint8_t *[size];
+//     uint8_t **Row_z = new uint8_t *[size];
+//     uint64_t **Row_m = new uint64_t *[size];
+//     uint64_t **Row_e = new uint64_t *[size];
+
+//     uint8_t *pooled_s = new uint8_t[size];
+//     uint8_t *pooled_z = new uint8_t[size];
+//     uint64_t *pooled_m = new uint64_t[size];
+//     uint64_t *pooled_e = new uint64_t[size];
+
+//     for (int i = 0; i < size; i++)
+//     {
+//         Row_s[i] = new uint8_t[filter_size];
+//         Row_z[i] = new uint8_t[filter_size];
+//         Row_m[i] = new uint64_t[filter_size];
+//         Row_e[i] = new uint64_t[filter_size];
+
+//         Mask[i] = new uint8_t[filter_size];
+//     }
+
+//     for (int n = 0, size_k = 0; n < N; n++)
+//     {
+//         for (int c = 0; c < C; c++)
+//         {
+//             for (int h = 0; h < H; h++)
+//             {
+//                 for (int w = 0; w < W; w++, size_k++)
+//                 {
+//                     for (int kh = 0, filter_k = 0; kh < ksizeH; kh++)
+//                     {
+//                         for (int kw = 0; kw < ksizeW; kw++, filter_k++)
+//                         {
+
+//                             int img_h = h * ksizeH + kh;
+//                             int img_w = w * ksizeW + kw;
+//                             uint8_t s, z;
+//                             uint64_t m, e;
+
+//                             if (img_h < 0 || img_h >= imgH || img_w < 0 || img_w >= imgW)
+//                             {
+//                                 s = 0;
+//                                 z = 1;
+//                                 m = 0;
+//                                 e = 0;
+//                             }
+//                             else
+//                             {
+//                                 s = inArr[n][c][img_h][img_w].s[0];
+//                                 z = inArr[n][c][img_h][img_w].z[0];
+//                                 m = inArr[n][c][img_h][img_w].m[0];
+//                                 e = inArr[n][c][img_h][img_w].e[0];
+//                             }
+
+//                             Row_s[size_k][filter_k] = s;
+//                             Row_z[size_k][filter_k] = z;
+//                             Row_m[size_k][filter_k] = m;
+//                             Row_e[size_k][filter_k] = e;
+//                         }
+//                     }
+//                 }
+//             }
+//         }
+//     }
+
+//     vector<int> chunks = get_chunks(size, __nt);
+//     thread threads[MAX_THREADS];
+//     int offset = 0;
+//     for (int i = 0; i < __nt; i++)
+//     {
+//         if (chunks[i] > 0)
+//         {
+//             threads[i] = thread(Maxpool_thread,
+//                                 i, chunks[i], filter_size, m_bits, e_bits,
+//                                 Row_s + offset, Row_z + offset, Row_m + offset, Row_e + offset, Mask + offset,
+//                                 pooled_s + offset, pooled_z + offset, pooled_m + offset, pooled_e + offset);
+//             offset += chunks[i];
+//         }
+//     }
+
+//     for (int i = 0; i < __nt; i++)
+//         if (chunks[i] > 0)
+//             threads[i].join();
+
+//     for (uint32_t n = 0, outarr_k = 0; n < N; n++)
+//     {
+//         for (uint32_t c = 0; c < C; c++)
+//         {
+//             for (uint32_t h = 0; h < H; h++)
+//             {
+//                 for (uint32_t w = 0; w < W; w++, outarr_k++)
+//                 {
+//                     outArr[n][c][h][w].s[0] = pooled_s[outarr_k];
+//                     outArr[n][c][h][w].z[0] = pooled_z[outarr_k];
+//                     outArr[n][c][h][w].m[0] = pooled_m[outarr_k];
+//                     outArr[n][c][h][w].e[0] = pooled_e[outarr_k];
+//                 }
+//             }
+//         }
+//     }
+
+//     // Ignored padding for convenience
+//     for (int n = 0, size_k = 0; n < N; n++)
+//     {
+//         for (int c = 0; c < C; c++)
+//         {
+//             for (int h = 0; h < H; h++)
+//             {
+//                 for (int w = 0; w < W; w++, size_k++)
+//                 {
+//                     for (int kh = 0, filter_k = 0; kh < ksizeH; kh++)
+//                     {
+//                         for (int kw = 0; kw < ksizeW; kw++, filter_k++)
+//                         {
+//                             int img_h = h * ksizeH + kh;
+//                             int img_w = w * ksizeW + kw;
+//                             uint8_t s, z;
+//                             uint64_t m, e;
+
+//                             poolmask[n][c][img_h][img_w].data[0] = Mask[size_k][filter_k];
+//                         }
+//                     }
+//                 }
+//             }
+//         }
+//     }
+
+//     for (int i = 0; i < size; i++)
+//     {
+//         delete[] Row_s[i];
+//         delete[] Row_z[i];
+//         delete[] Row_m[i];
+//         delete[] Row_e[i];
+
+//         delete[] Mask[i];
+//     }
+
+//     delete[] pooled_s;
+//     delete[] Row_s;
+//     delete[] pooled_z;
+//     delete[] Row_z;
+//     delete[] pooled_m;
+//     delete[] Row_m;
+//     delete[] pooled_e;
+//     delete[] Row_e;
+//     delete[] Mask;
+// }
+
 void AvgPool(int32_t N, int32_t C, int32_t H, int32_t W, int32_t ksizeH, int32_t ksizeW, int32_t zPadHLeft, int32_t zPadHRight, int32_t zPadWLeft, int32_t zPadWRight, int32_t strideH, int32_t strideW, int32_t N1, int32_t C1, int32_t imgH, int32_t imgW, auto &inArr, auto &outArr)
 {
     int32_t rows = (((N * C) * H) * W);
