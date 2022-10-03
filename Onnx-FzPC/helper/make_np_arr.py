@@ -5,15 +5,16 @@ import re
 
 
 def convert_raw_output_to_np(filename):
-    matcher = re.compile(r"[-]?[0-9]+")
+    matcher = re.compile(r"[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?")
     array = []
     with open(filename, "r") as f:
         for line in f:
             match = matcher.fullmatch(line.rstrip())
             if match:
-                number = int(match.group(0))
+                number = match.group(0)
 
                 array.append(float(number))
+                print(number)
     return np.array(array)
 
 

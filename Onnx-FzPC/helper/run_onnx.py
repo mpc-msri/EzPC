@@ -4,7 +4,7 @@ import sys, os
 
 if __name__ == "__main__":
     input_np_arr = np.load(sys.argv[1], allow_pickle=True)
-    sess = rt.InferenceSession("lenet.onnx")
+    sess = rt.InferenceSession("onnx_files/lenet.onnx")
     input_name = sess.get_inputs()[0].name
     pred_onx = sess.run(None, {input_name: input_np_arr})[0]
     print("Output:\n", pred_onx.flatten())
