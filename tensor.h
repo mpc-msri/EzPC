@@ -1,3 +1,4 @@
+#pragma once
 #include <cstdint>
 #include <cassert>
 
@@ -64,6 +65,14 @@ class Tensor2D : public ViewTensor2D<T> {
 public:
     Tensor2D(u64 d1, u64 d2) : ViewTensor2D<T>(new T[d1 * d2], d1, d2) {}
 
+    void randomize() {
+        for(u64 i = 0; i < this->d1; i++) {
+            for(u64 j = 0; j < this->d2; j++) {
+                this->data[i * this->d2 + j] = (T)1;
+            }
+        }
+    }
+
     ~Tensor2D() {
         delete[] this->data;
     }
@@ -126,6 +135,18 @@ public:
                         data[i * d2 * d3 * d4 + j * d3 * d4 + k * d4 + l] += bias[l];
                     }
                 }
+            }
+        }
+    }
+
+    void addBias2D(Tensor<T> bias) {
+        assert(bias.size == d2);
+        assert(d3 == 1);
+        assert(d4 == 1);
+
+        for (u64 i = 0; i < d1; i++) {
+            for (u64 j = 0; j < d2; j++) {
+                data[i * d2 + j] += bias[j];
             }
         }
     }

@@ -15,6 +15,22 @@ Tensor2D<T> matmul(Tensor2D<T> &a, Tensor2D<T> &b) {
 }
 
 template <typename T>
+Tensor4D<T> matmul(Tensor4D<T> &a, Tensor2D<T> &b) {
+    assert(a.d2 == b.d1);
+    assert(a.d3 == 1);
+    assert(a.d4 == 1);
+    Tensor4D<T> c(a.d1, b.d2, 1, 1);
+    for(int i = 0; i < a.d1; i++) {
+        for(int j = 0; j < b.d2; j++) {
+            for(int k = 0; k < a.d2; k++) {
+                c[i][j][0][0] += a[i][k][0][0] * b[k][j];
+            }
+        }
+    }
+    return c;
+}
+
+template <typename T>
 Tensor2D<T> reshapeFilter(Tensor4D<T> &filter) {
     Tensor2D<T> res(filter.d4, filter.d1 * filter.d2 * filter.d3);
     for(int i = 0; i < filter.d4; i++) {
