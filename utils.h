@@ -52,25 +52,20 @@ Tensor2D<T> matmul(const Tensor4D<T> &a, const Tensor4D<T> &b) {
 }
 
 template <typename T>
-Tensor4D<T> matmul(const Tensor4D<T> &a, const Tensor2D<T> &b, bool transposeB) {
-    if (transposeB) {
-        assert(a.d2 == b.d2);
-        assert(a.d3 == 1);
-        assert(a.d4 == 1);
-        Tensor4D<T> c(a.d1, b.d1, 1, 1);
-        c.zero();
-        for(int i = 0; i < a.d1; i++) {
-            for(int j = 0; j < b.d1; j++) {
-                for(int k = 0; k < a.d2; k++) {
-                    c(i, j, 0, 0) += a(i, k, 0, 0) * b(j, k);
-                }
+Tensor4D<T> matmulTransposeB(const Tensor4D<T> &a, const Tensor2D<T> &b) {
+    assert(a.d2 == b.d2);
+    assert(a.d3 == 1);
+    assert(a.d4 == 1);
+    Tensor4D<T> c(a.d1, b.d1, 1, 1);
+    c.zero();
+    for(int i = 0; i < a.d1; i++) {
+        for(int j = 0; j < b.d1; j++) {
+            for(int k = 0; k < a.d2; k++) {
+                c(i, j, 0, 0) += a(i, k, 0, 0) * b(j, k);
             }
         }
-        return c;
     }
-    else {
-        return matmul(a, b);
-    }
+    return c;
 }
 
 template <typename T>

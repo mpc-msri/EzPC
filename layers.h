@@ -90,7 +90,7 @@ public:
     }
 
     void backward(const Tensor4D<T> &e) {
-        Tensor4D<T> r = matmul(e, weight, true);
+        Tensor4D<T> r = matmulTransposeB(e, weight);
         this->inputDerivative.resize(r.d1, r.d2, 1, 1);
         this->inputDerivative.copy(r);
         inp.transpose2D();
