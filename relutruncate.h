@@ -1,7 +1,7 @@
 #include "tensor.h"
 
 template <typename T>
-void relutruncate(Tensor4D<T> &in, Tensor4D<T> &out, Tensor4D<T> &drelu, u64 shift) {
+void relutruncate(const Tensor4D<T> &in, const Tensor4D<T> &out, const Tensor4D<T> &drelu, u64 shift) {
     assert(in.d1 == out.d1);
     assert(in.d2 == out.d2);
     assert(in.d3 == out.d3);
@@ -23,7 +23,7 @@ void relutruncate(Tensor4D<T> &in, Tensor4D<T> &out, Tensor4D<T> &drelu, u64 shi
 }
 
 template <typename T>
-void relu(Tensor4D<T> &in, Tensor4D<T> &out, Tensor4D<T> &drelu) {
+void relu(const Tensor4D<T> &in, const Tensor4D<T> &out, const Tensor4D<T> &drelu) {
     assert(in.d1 == out.d1);
     assert(in.d2 == out.d2);
     assert(in.d3 == out.d3);
@@ -45,7 +45,7 @@ void relu(Tensor4D<T> &in, Tensor4D<T> &out, Tensor4D<T> &drelu) {
 }
 
 template <typename T>
-void truncate(Tensor4D<T> &in, Tensor4D<T> &out, u64 shift) {
+void truncate(const Tensor4D<T> &in, const Tensor4D<T> &out, u64 shift) {
     assert(in.d1 == out.d1);
     assert(in.d2 == out.d2);
     assert(in.d3 == out.d3);
@@ -63,7 +63,7 @@ void truncate(Tensor4D<T> &in, Tensor4D<T> &out, u64 shift) {
 
 
 template <typename T>
-void select(Tensor4D<T> &in, Tensor4D<T> &drelu, Tensor4D<T> &out) {
+void select(const Tensor4D<T> &in, const Tensor4D<T> &drelu, const Tensor4D<T> &out) {
     assert(in.d1 == out.d1);
     assert(in.d2 == out.d2);
     assert(in.d3 == out.d3);

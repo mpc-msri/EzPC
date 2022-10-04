@@ -49,12 +49,12 @@ public:
         delete[] this->data;
     }
 
-    void updateWeight(Tensor2D<T> &e, float lr) {
+    void updateWeight(const Tensor2D<T> &e, float lr) {
         assert(this->d1 == e.d1);
         assert(this->d2 == e.d2);
         for(u64 i = 0; i < this->d1; i++) {
             for(u64 j = 0; j < this->d2; j++) {
-                this->data[i * this->d2 + j] -= lr * e(i, j);
+                this->data[i * this->d2 + j] -= (T)(lr * e(i, j));
             }
         }
     }
@@ -63,6 +63,23 @@ public:
         assert(i < this->d1);
         assert(j < this->d2);
         return this->data[i * this->d2 + j];
+    }
+
+    void print() {
+        for(u64 i = 0; i < this->d1; i++) {
+            for(u64 j = 0; j < this->d2; j++) {
+                std::cout << this->data[i * this->d2 + j] << " ";
+            }
+            std::cout << std::endl;
+        }
+    }
+
+    void zero() {
+        for(u64 i = 0; i < this->d1; i++) {
+            for(u64 j = 0; j < this->d2; j++) {
+                this->data[i * this->d2 + j] = (T)0;
+            }
+        }
     }
 
 };
@@ -78,15 +95,11 @@ public:
         data = new T[d1 * d2 * d3 * d4];
     }
 
-    // Tensor4D(T* ptr, u64 d1, u64 d2, u64 d3, u64 d4) : d1(d1), d2(d2), d3(d3), d4(d4) {
-    //     data = ptr;
-    // }
-
     ~Tensor4D() {
         delete[] data;
     }
 
-    void addBias(Tensor<T> bias) {
+    void addBias(const Tensor<T> &bias) {
         assert(bias.size == d4);
         for (u64 i = 0; i < d1; i++) {
             for (u64 j = 0; j < d2; j++) {
@@ -99,7 +112,7 @@ public:
         }
     }
 
-    void addBias2D(Tensor<T> bias) {
+    void addBias2D(const Tensor<T> &bias) {
         assert(bias.size == d2);
         assert(d3 == 1);
         assert(d4 == 1);
@@ -157,7 +170,7 @@ public:
         std::swap(d1, d2);
     }
 
-    void updateWeight(Tensor4D<T> &grad, float learningRate) {
+    void updateWeight(const Tensor4D<T> &grad, float learningRate) {
         assert(d1 == grad.d1);
         assert(d2 == grad.d2);
         assert(d3 == grad.d3);
@@ -170,6 +183,27 @@ public:
                     }
                 }
             }
+        }
+    }
+
+    void print() const {
+        for (u64 i = 0; i < d1; i++) {
+            for (u64 j = 0; j < d2; j++) {
+                for (u64 k = 0; k < d3; k++) {
+                    for (u64 l = 0; l < d4; l++) {
+                        std::cout << data[i * d2 * d3 * d4 + j * d3 * d4 + k * d4 + l] << " ";
+                    }
+                    std::cout << std::endl;
+                }
+                std::cout << std::endl;
+            }
+            std::cout << std::endl;
+        }
+    }
+
+    void zero() {
+        for (u64 i = 0; i < d1 * d2 * d3 * d4; i++) {
+            data[i] = (T)0;
         }
     }
 

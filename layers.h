@@ -6,8 +6,8 @@
 template <typename T>
 class Layer {
 public:
-    virtual void forward(Tensor4D<T> &a) = 0;
-    virtual void backward(Tensor4D<T> &e) = 0;
+    virtual void forward(const Tensor4D<T> &a) = 0;
+    virtual void backward(const Tensor4D<T> &e) = 0;
     Tensor4D<T> activation;
     Tensor4D<T> inputDerivative;
     Layer() : activation(0,0,0,0), inputDerivative(0,0,0,0) {}
@@ -27,14 +27,14 @@ public:
         bias.randomize();
     }
 
-    void forward(Tensor4D<T> &a) {
+    void forward(const Tensor4D<T> &a) {
         Tensor4D<T> r = conv2D<T>(padding, stride, a, filter);
         r.addBias(bias);
         this->activation.resize(r.d1, r.d2, r.d3, r.d4);
         this->activation.copy(r);
     }
     
-    void backward(Tensor4D<T> &e) {
+    void backward(const Tensor4D<T> &e) {
         assert(false);
     }
 };
@@ -46,7 +46,7 @@ public:
 
     Flatten() {}
 
-    void forward(Tensor4D<T> &a) {
+    void forward(const Tensor4D<T> &a) {
         d1 = a.d1;
         d2 = a.d2;
         d3 = a.d3;
@@ -63,7 +63,7 @@ public:
         }
     }
 
-    void backward(Tensor4D<T> &e) {
+    void backward(const Tensor4D<T> &e) {
     }
 };
 
@@ -80,22 +80,22 @@ public:
         bias.randomize();
     }
 
-    void forward(Tensor4D<T> &a) {
-        // inp.resize(a.d1, a.d2, a.d3, a.d4);
-        // this->inp.copy(a);
+    void forward(const Tensor4D<T> &a) {
+        inp.resize(a.d1, a.d2, a.d3, a.d4);
+        this->inp.copy(a);
         Tensor4D<T> r = matmul(a, weight);
         r.addBias2D(bias);
         this->activation.resize(r.d1, r.d2, 1, 1);
         this->activation.copy(r);
     }
 
-    void backward(Tensor4D<T> &e) {
+    void backward(const Tensor4D<T> &e) {
         Tensor4D<T> r = matmul(e, weight, true);
         this->inputDerivative.resize(r.d1, r.d2, 1, 1);
         this->inputDerivative.copy(r);
-        // inp.transpose2D();
-        // auto g = matmul(inp, e);
-        // weight.updateWeight(g, 0.01);
+        inp.transpose2D();
+        auto g = matmul(inp, e);
+        weight.updateWeight(g, 0.06);
     }
 };
 
@@ -106,14 +106,14 @@ public:
     Tensor4D<T> drelu;
     ReLUTruncate(u64 shift) : shift(shift), drelu(0,0,0,0) {}
 
-    void forward(Tensor4D<T> &a) {
+    void forward(const Tensor4D<T> &a) {
         this->activation.resize(a.d1, a.d2, a.d3, a.d4);
         this->drelu.resize(a.d1, a.d2, a.d3, a.d4);
         this->inputDerivative.resize(a.d1, a.d2, a.d3, a.d4);
         relutruncate(a, this->activation, this->drelu, shift);
     }
 
-    void backward(Tensor4D<T> &e) {
+    void backward(const Tensor4D<T> &e) {
         select(e, this->drelu, this->inputDerivative);
         truncate(this->inputDerivative, this->inputDerivative, shift);
     }
@@ -125,14 +125,14 @@ public:
     Tensor4D<T> drelu;
     ReLU() : drelu(0,0,0,0) {}
 
-    void forward(Tensor4D<T> &a) {
+    void forward(const Tensor4D<T> &a) {
         this->activation.resize(a.d1, a.d2, a.d3, a.d4);
         this->drelu.resize(a.d1, a.d2, a.d3, a.d4);
         this->inputDerivative.resize(a.d1, a.d2, a.d3, a.d4);
         relu(a, this->activation, this->drelu);
     }
 
-    void backward(Tensor4D<T> &e) {
+    void backward(const Tensor4D<T> &e) {
         select(e, this->drelu, this->inputDerivative);
     }
 };
@@ -143,13 +143,13 @@ public:
     u64 shift;
     Truncate(u64 shift) : shift(shift) {}
 
-    void forward(Tensor4D<T> &a) {
+    void forward(const Tensor4D<T> &a) {
         this->activation.resize(a.d1, a.d2, a.d3, a.d4);
         this->inputDerivative.resize(a.d1, a.d2, a.d3, a.d4);
         truncate(a, this->activation, shift);
     }
 
-    void backward(Tensor4D<T> &e) {
+    void backward(const Tensor4D<T> &e) {
         truncate(e, this->inputDerivative, shift);
     }
 };
@@ -161,7 +161,7 @@ public:
     
     Sequential(std::vector<Layer<T>*> layers) : layers(layers) {}
     
-    void forward(Tensor4D<T> &a) {
+    void forward(const Tensor4D<T> &a) {
         layers[0]->forward(a);
         u64 size = layers.size();
         for(u64 i = 1; i < size; i++) {
@@ -171,7 +171,7 @@ public:
         this->activation.copy(layers[size-1]->activation);
 
     }
-    void backward(Tensor4D<T> &e) {
+    void backward(const Tensor4D<T> &e) {
         int size = layers.size();
         layers[size-1]->backward(e);
         for (int i = size - 2; i >= 0; i--) {

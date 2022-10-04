@@ -1,9 +1,10 @@
 #include "tensor.h"
 
 template <typename T>
-Tensor2D<T> matmul(Tensor2D<T> &a, Tensor2D<T> &b) {
+Tensor2D<T> matmul(const Tensor2D<T> &a, const Tensor2D<T> &b) {
     assert(a.d2 == b.d1);
     Tensor2D<T> c(a.d1, b.d2);
+    c.zero();
     for(int i = 0; i < a.d1; i++) {
         for(int j = 0; j < b.d2; j++) {
             for(int k = 0; k < a.d2; k++) {
@@ -15,11 +16,12 @@ Tensor2D<T> matmul(Tensor2D<T> &a, Tensor2D<T> &b) {
 }
 
 template <typename T>
-Tensor4D<T> matmul(Tensor4D<T> &a, Tensor2D<T> &b) {
+Tensor4D<T> matmul(const Tensor4D<T> &a, const Tensor2D<T> &b) {
     assert(a.d2 == b.d1);
     assert(a.d3 == 1);
     assert(a.d4 == 1);
     Tensor4D<T> c(a.d1, b.d2, 1, 1);
+    c.zero();
     for(int i = 0; i < a.d1; i++) {
         for(int j = 0; j < b.d2; j++) {
             for(int k = 0; k < a.d2; k++) {
@@ -31,13 +33,14 @@ Tensor4D<T> matmul(Tensor4D<T> &a, Tensor2D<T> &b) {
 }
 
 template <typename T>
-Tensor2D<T> matmul(Tensor4D<T> &a, Tensor4D<T> &b) {
+Tensor2D<T> matmul(const Tensor4D<T> &a, const Tensor4D<T> &b) {
     assert(a.d2 == b.d1);
     assert(a.d3 == 1);
     assert(a.d4 == 1);
     assert(b.d3 == 1);
     assert(b.d4 == 1);
     Tensor2D<T> c(a.d1, b.d2);
+    c.zero();
     for(int i = 0; i < a.d1; i++) {
         for(int j = 0; j < b.d2; j++) {
             for(int k = 0; k < a.d2; k++) {
@@ -49,12 +52,13 @@ Tensor2D<T> matmul(Tensor4D<T> &a, Tensor4D<T> &b) {
 }
 
 template <typename T>
-Tensor4D<T> matmul(Tensor4D<T> &a, Tensor2D<T> &b, bool transposeB) {
+Tensor4D<T> matmul(const Tensor4D<T> &a, const Tensor2D<T> &b, bool transposeB) {
     if (transposeB) {
         assert(a.d2 == b.d2);
         assert(a.d3 == 1);
         assert(a.d4 == 1);
         Tensor4D<T> c(a.d1, b.d1, 1, 1);
+        c.zero();
         for(int i = 0; i < a.d1; i++) {
             for(int j = 0; j < b.d1; j++) {
                 for(int k = 0; k < a.d2; k++) {
@@ -70,7 +74,7 @@ Tensor4D<T> matmul(Tensor4D<T> &a, Tensor2D<T> &b, bool transposeB) {
 }
 
 template <typename T>
-Tensor2D<T> reshapeFilter(Tensor4D<T> &filter) {
+Tensor2D<T> reshapeFilter(const Tensor4D<T> &filter) {
     Tensor2D<T> res(filter.d4, filter.d1 * filter.d2 * filter.d3);
     for(int i = 0; i < filter.d4; i++) {
         for(int j = 0; j < filter.d1; j++) {
@@ -85,7 +89,7 @@ Tensor2D<T> reshapeFilter(Tensor4D<T> &filter) {
 }
 
 template <typename T>
-Tensor2D<T> reshapeInput(Tensor4D<T> &input, u64 padding, u64 stride, u64 FH, u64 FW) {
+Tensor2D<T> reshapeInput(const Tensor4D<T> &input, u64 padding, u64 stride, u64 FH, u64 FW) {
     u64 newH = (((input.d2 + 2*padding - FH)/stride) + 1);
 	u64 newW = (((input.d3 + 2*padding - FW)/stride) + 1);
 	u64 reshapedIPCols = input.d1 * newH * newW;
@@ -125,7 +129,7 @@ Tensor2D<T> reshapeInput(Tensor4D<T> &input, u64 padding, u64 stride, u64 FH, u6
 }
 
 template <typename T>
-Tensor4D<T> reshapeOutput(Tensor2D<T> &output, u64 d1, u64 d2, u64 d3, u64 d4) {
+Tensor4D<T> reshapeOutput(const Tensor2D<T> &output, u64 d1, u64 d2, u64 d3, u64 d4) {
     Tensor4D<T> res(d1, d2, d3, d4);
     assert(output.d1 == d4);
     assert(output.d2 == d1 * d2 * d3);
@@ -142,7 +146,7 @@ Tensor4D<T> reshapeOutput(Tensor2D<T> &output, u64 d1, u64 d2, u64 d3, u64 d4) {
 }
 
 template <typename T>
-Tensor4D<T> conv2D(u64 padding, u64 stride, Tensor4D<T> &input, Tensor4D<T> &filter)
+Tensor4D<T> conv2D(u64 padding, u64 stride, const Tensor4D<T> &input, const Tensor4D<T> &filter)
 {
     Tensor2D<T> f = reshapeFilter<T>(filter);
     Tensor2D<T> i = reshapeInput<T>(input, padding, stride, filter.d1, filter.d2);
