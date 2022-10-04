@@ -19,6 +19,21 @@ int main() {
     model.forward(a);
 
     for(u64 i = 0; i < 10; i++) {
-        std::cout << model.activation[0][i][0][0] << " ";
+        std::cout << model.activation(0, i, 0, 0) << " ";
     }
+    std::cout << std::endl;
+
+    Tensor4D<i64> e(1, 10, 1, 1);
+    e.randomize();
+    model.backward(e);
+
+    model.forward(a);
+
+    for(u64 i = 0; i < 10; i++) {
+        std::cout << model.activation(0, i, 0, 0) << " ";
+    }
+
+    // for(u64 i = 0; i < 256; ++i) {
+    //     std::cout << ((ReLUTruncate<i64> *)(model.layers[4]))->drelu[0][i][0][0] << " ";
+    // }
 }

@@ -35,6 +35,7 @@ public:
     }
     
     void backward(Tensor4D<T> &e) {
+        assert(false);
     }
 };
 
@@ -55,7 +56,7 @@ public:
             for (u64 j = 0; j < d2; j++) {
                 for (u64 k = 0; k < d3; k++) {
                     for (u64 l = 0; l < d4; l++) {
-                        this->activation[i][j * d3 * d4 + k * d4 + l][0][0] = a[i][j][k][l];
+                        this->activation(i, j * d3 * d4 + k * d4 + l, 0, 0) = a(i, j, k, l);
                     }
                 }
             }
@@ -69,16 +70,19 @@ public:
 template <typename T>
 class FC : public Layer<T> {
 public:
+    Tensor4D<T> inp;
     Tensor2D<T> weight;
     Tensor<T> bias;
     u64 in, out;
 
-    FC(u64 in, u64 out) : in(in), out(out), weight(in, out), bias(out) {
+    FC(u64 in, u64 out) : in(in), out(out), weight(in, out), bias(out), inp(0,0,0,0) {
         weight.randomize();
         bias.randomize();
     }
 
     void forward(Tensor4D<T> &a) {
+        // inp.resize(a.d1, a.d2, a.d3, a.d4);
+        // this->inp.copy(a);
         Tensor4D<T> r = matmul(a, weight);
         r.addBias2D(bias);
         this->activation.resize(r.d1, r.d2, 1, 1);
@@ -86,7 +90,12 @@ public:
     }
 
     void backward(Tensor4D<T> &e) {
-
+        Tensor4D<T> r = matmul(e, weight, true);
+        this->inputDerivative.resize(r.d1, r.d2, 1, 1);
+        this->inputDerivative.copy(r);
+        // inp.transpose2D();
+        // auto g = matmul(inp, e);
+        // weight.updateWeight(g, 0.01);
     }
 };
 
@@ -94,14 +103,37 @@ template <typename T>
 class ReLUTruncate: public Layer<T> {
 public:
     u64 shift;
-    ReLUTruncate(u64 shift) : shift(shift) {}
+    Tensor4D<T> drelu;
+    ReLUTruncate(u64 shift) : shift(shift), drelu(0,0,0,0) {}
 
     void forward(Tensor4D<T> &a) {
         this->activation.resize(a.d1, a.d2, a.d3, a.d4);
-        relutruncate(a, this->activation, shift);
+        this->drelu.resize(a.d1, a.d2, a.d3, a.d4);
+        this->inputDerivative.resize(a.d1, a.d2, a.d3, a.d4);
+        relutruncate(a, this->activation, this->drelu, shift);
     }
 
     void backward(Tensor4D<T> &e) {
+        select(e, this->drelu, this->inputDerivative);
+        truncate(this->inputDerivative, this->inputDerivative, shift);
+    }
+};
+
+template <typename T>
+class ReLU: public Layer<T> {
+public:
+    Tensor4D<T> drelu;
+    ReLU() : drelu(0,0,0,0) {}
+
+    void forward(Tensor4D<T> &a) {
+        this->activation.resize(a.d1, a.d2, a.d3, a.d4);
+        this->drelu.resize(a.d1, a.d2, a.d3, a.d4);
+        this->inputDerivative.resize(a.d1, a.d2, a.d3, a.d4);
+        relu(a, this->activation, this->drelu);
+    }
+
+    void backward(Tensor4D<T> &e) {
+        select(e, this->drelu, this->inputDerivative);
     }
 };
 
@@ -113,10 +145,12 @@ public:
 
     void forward(Tensor4D<T> &a) {
         this->activation.resize(a.d1, a.d2, a.d3, a.d4);
+        this->inputDerivative.resize(a.d1, a.d2, a.d3, a.d4);
         truncate(a, this->activation, shift);
     }
 
     void backward(Tensor4D<T> &e) {
+        truncate(e, this->inputDerivative, shift);
     }
 };
 

@@ -7,7 +7,7 @@ Tensor2D<T> matmul(Tensor2D<T> &a, Tensor2D<T> &b) {
     for(int i = 0; i < a.d1; i++) {
         for(int j = 0; j < b.d2; j++) {
             for(int k = 0; k < a.d2; k++) {
-                c[i][j] += a[i][k] * b[k][j];
+                c(i,j) += a(i, k) * b(k, j);
             }
         }
     }
@@ -23,11 +23,50 @@ Tensor4D<T> matmul(Tensor4D<T> &a, Tensor2D<T> &b) {
     for(int i = 0; i < a.d1; i++) {
         for(int j = 0; j < b.d2; j++) {
             for(int k = 0; k < a.d2; k++) {
-                c[i][j][0][0] += a[i][k][0][0] * b[k][j];
+                c(i, j, 0, 0) += a(i, k, 0, 0) * b(k, j);
             }
         }
     }
     return c;
+}
+
+template <typename T>
+Tensor2D<T> matmul(Tensor4D<T> &a, Tensor4D<T> &b) {
+    assert(a.d2 == b.d1);
+    assert(a.d3 == 1);
+    assert(a.d4 == 1);
+    assert(b.d3 == 1);
+    assert(b.d4 == 1);
+    Tensor2D<T> c(a.d1, b.d2);
+    for(int i = 0; i < a.d1; i++) {
+        for(int j = 0; j < b.d2; j++) {
+            for(int k = 0; k < a.d2; k++) {
+                c(i, j) += a(i, k, 0, 0) * b(k, j, 0, 0);
+            }
+        }
+    }
+    return c;
+}
+
+template <typename T>
+Tensor4D<T> matmul(Tensor4D<T> &a, Tensor2D<T> &b, bool transposeB) {
+    if (transposeB) {
+        assert(a.d2 == b.d2);
+        assert(a.d3 == 1);
+        assert(a.d4 == 1);
+        Tensor4D<T> c(a.d1, b.d1, 1, 1);
+        for(int i = 0; i < a.d1; i++) {
+            for(int j = 0; j < b.d1; j++) {
+                for(int k = 0; k < a.d2; k++) {
+                    c(i, j, 0, 0) += a(i, k, 0, 0) * b(j, k);
+                }
+            }
+        }
+        return c;
+    }
+    else {
+        return matmul(a, b);
+    }
 }
 
 template <typename T>
@@ -37,7 +76,7 @@ Tensor2D<T> reshapeFilter(Tensor4D<T> &filter) {
         for(int j = 0; j < filter.d1; j++) {
             for(int k = 0; k < filter.d2; k++) {
                 for(int l = 0; l < filter.d3; l++) {
-                    res[i][j * filter.d2 * filter.d3 + k * filter.d3 + l] = filter[j][k][l][i];
+                    res(i, j * filter.d2 * filter.d3 + k * filter.d3 + l) = filter(j, k, l, i);
                 }
             }
         }
@@ -66,10 +105,10 @@ Tensor2D<T> reshapeInput(Tensor4D<T> &input, u64 padding, u64 stride, u64 FH, u6
 						i64 curPosW = leftTopCornerW + fw;
 						for (i64 ci = 0; ci < input.d4; ci++){
 							if ((((curPosH < 0) || (curPosH >= input.d2)) || ((curPosW < 0) || (curPosW >= input.d3)))){
-								reshaped[(fh*FW*input.d4) + (fw*input.d4) + ci][linIdxFilterMult] = 0L;
+								reshaped((fh*FW*input.d4) + (fw*input.d4) + ci, linIdxFilterMult) = 0L;
 							}
 							else{
-								reshaped[(fh*FW*input.d4) + (fw*input.d4) + ci][linIdxFilterMult] = input[n][curPosH][curPosW][ci];
+								reshaped((fh*FW*input.d4) + (fw*input.d4) + ci, linIdxFilterMult) = input(n, curPosH, curPosW, ci);
 							}
 						}
 					}
@@ -94,7 +133,7 @@ Tensor4D<T> reshapeOutput(Tensor2D<T> &output, u64 d1, u64 d2, u64 d3, u64 d4) {
         for(int j = 0; j < d2; j++) {
             for(int k = 0; k < d3; k++) {
                 for(int l = 0; l < d4; l++) {
-                    res[i][j][k][l] = output[l][i * d2 * d3 + j * d3 + k];
+                    res(i, j, k, l) = output(l, i * d2 * d3 + j * d3 + k);
                 }
             }
         }

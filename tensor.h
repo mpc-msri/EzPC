@@ -6,31 +6,12 @@ typedef uint64_t u64;
 typedef int64_t i64;
 
 template <typename T>
-class ViewTensor {
+class Tensor {
 public:
     T *data;
     u64 size;
 
-    ViewTensor(T* ptr, u64 size) : size(size) {
-        data = ptr;
-    }
-
-    T& operator[](u64 i) {
-        assert(i < size);
-        return data[i];
-    }
-
-    const T& operator[](u64 i) const {
-        assert(i < size);
-        return data[i];
-    }
-
-};
-
-template <typename T>
-class Tensor : public ViewTensor<T> {
-public:
-    Tensor(u64 s) : ViewTensor<T>(new T[s], s) {}
+    Tensor(u64 s) : size(s), data(new T[s]) {}
 
     void randomize() {
         for(u64 i = 0; i < this->size; i++) {
@@ -41,29 +22,20 @@ public:
     ~Tensor() {
         delete[] this->data;
     }
+
+    T &operator()(u64 i) const {
+        assert(i < this->size);
+        return this->data[i];
+    }
 };
 
 template <typename T>
-class ViewTensor2D {
+class Tensor2D {
 public:
     T *data;
     u64 d1, d2;
 
-    ViewTensor2D(T* ptr, u64 d1, u64 d2) : d1(d1), d2(d2) {
-        data = ptr;
-    }
-
-    ViewTensor<T> operator[](u64 i) {
-        assert(i < d1);
-        return ViewTensor<T>(&data[i * d2], d2);
-    }
-
-};
-
-template <typename T>
-class Tensor2D : public ViewTensor2D<T> {
-public:
-    Tensor2D(u64 d1, u64 d2) : ViewTensor2D<T>(new T[d1 * d2], d1, d2) {}
+    Tensor2D(u64 d1, u64 d2) : d1(d1), d2(d2), data(new T[d1 * d2]) {}
 
     void randomize() {
         for(u64 i = 0; i < this->d1; i++) {
@@ -77,34 +49,22 @@ public:
         delete[] this->data;
     }
 
-};
-
-
-template <typename T>
-class ViewTensor3D {
-public:
-    T *data;
-    u64 d1, d2, d3;
-
-    ViewTensor3D(T* ptr, u64 d1, u64 d2, u64 d3) : d1(d1), d2(d2), d3(d3) {
-        data = ptr;
+    void updateWeight(Tensor2D<T> &e, float lr) {
+        assert(this->d1 == e.d1);
+        assert(this->d2 == e.d2);
+        for(u64 i = 0; i < this->d1; i++) {
+            for(u64 j = 0; j < this->d2; j++) {
+                this->data[i * this->d2 + j] -= lr * e(i, j);
+            }
+        }
     }
 
-    ViewTensor2D<T> operator[](u64 i) {
-        assert(i < d1);
-        return ViewTensor2D<T>(&data[i * d2 * d3], d2, d3);
+    T& operator()(u64 i, u64 j) const {
+        assert(i < this->d1);
+        assert(j < this->d2);
+        return this->data[i * this->d2 + j];
     }
 
-};
-
-template <typename T>
-class Tensor3D : public ViewTensor3D<T> {
-public:
-    Tensor3D(u64 d1, u64 d2, u64 d3) : ViewTensor3D<T>(new T[d1 * d2 * d3], d1, d2, d3) {}
-
-    ~Tensor3D() {
-        delete[] this->data;
-    }
 };
 
 template <typename T>
@@ -118,9 +78,9 @@ public:
         data = new T[d1 * d2 * d3 * d4];
     }
 
-    Tensor4D(T* ptr, u64 d1, u64 d2, u64 d3, u64 d4) : d1(d1), d2(d2), d3(d3), d4(d4) {
-        data = ptr;
-    }
+    // Tensor4D(T* ptr, u64 d1, u64 d2, u64 d3, u64 d4) : d1(d1), d2(d2), d3(d3), d4(d4) {
+    //     data = ptr;
+    // }
 
     ~Tensor4D() {
         delete[] data;
@@ -146,7 +106,7 @@ public:
 
         for (u64 i = 0; i < d1; i++) {
             for (u64 j = 0; j < d2; j++) {
-                data[i * d2 + j] += bias[j];
+                data[i * d2 + j] += bias(j);
             }
         }
     }
@@ -177,9 +137,40 @@ public:
         }
     }
  
-    ViewTensor3D<T> operator[](u64 i) {
+    T& operator()(u64 i, u64 j, u64 k, u64 l) const {
         assert(i < d1);
-        return ViewTensor3D<T>(&data[i * d2 * d3 * d4], d2, d3, d4);
+        assert(j < d2);
+        assert(k < d3);
+        assert(l < d4);
+        return data[i * d2 * d3 * d4 + j * d3 * d4 + k * d4 + l];
+    }
+
+    void transpose2D()
+    {
+        assert(d3 == 1);
+        assert(d4 == 1);
+        for (u64 i = 0; i < d1; i++) {
+            for (u64 j = 0; j < d2; j++) {
+                std::swap(data[j * d1 + i], data[i * d2 + j]);
+            }
+        }
+        std::swap(d1, d2);
+    }
+
+    void updateWeight(Tensor4D<T> &grad, float learningRate) {
+        assert(d1 == grad.d1);
+        assert(d2 == grad.d2);
+        assert(d3 == grad.d3);
+        assert(d4 == grad.d4);
+        for (u64 i = 0; i < d1; i++) {
+            for (u64 j = 0; j < d2; j++) {
+                for (u64 k = 0; k < d3; k++) {
+                    for (u64 l = 0; l < d4; l++) {
+                        data[i * d2 * d3 * d4 + j * d3 * d4 + k * d4 + l] -= learningRate * grad(i, j, k, l);
+                    }
+                }
+            }
+        }
     }
 
 };
