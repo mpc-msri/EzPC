@@ -207,4 +207,19 @@ public:
         }
     }
 
+    u64 argmax(u64 i) {
+        assert(d3 == 1);
+        assert(d4 == 1);
+        assert(i < d1);
+        u64 maxIndex = 0;
+        T maxValue = data[i * d2];
+        for (u64 j = 1; j < d2; j++) {
+            if (data[i * d2 + j] > maxValue) {
+                maxValue = data[i * d2 + j];
+                maxIndex = j;
+            }
+        }
+        return maxIndex;
+    }
+
 };

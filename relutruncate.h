@@ -61,6 +61,27 @@ void truncate(const Tensor4D<T> &in, const Tensor4D<T> &out, u64 shift) {
     }
 }
 
+template <typename T>
+void truncate(const Tensor4D<T> &in, u64 shift) {
+    for (u64 i = 0; i < in.d1; i++) {
+        for (u64 j = 0; j < in.d2; j++) {
+            for (u64 k = 0; k < in.d3; k++) {
+                for (u64 l = 0; l < in.d4; l++) {
+                    in(i, j, k, l) = in(i, j, k, l) >> shift;
+                }
+            }
+        }
+    }
+}
+
+template <typename T>
+void truncate(const Tensor2D<T> &in, u64 shift) {
+    for (u64 i = 0; i < in.d1; i++) {
+        for (u64 j = 0; j < in.d2; j++) {
+            in(i, j) = in(i, j) >> shift;
+        }
+    }
+}
 
 template <typename T>
 void select(const Tensor4D<T> &in, const Tensor4D<T> &drelu, const Tensor4D<T> &out) {

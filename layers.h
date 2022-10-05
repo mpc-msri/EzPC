@@ -91,10 +91,12 @@ public:
 
     void backward(const Tensor4D<T> &e) {
         Tensor4D<T> r = matmulTransposeB(e, weight);
+        // truncate(r, 12);
         this->inputDerivative.resize(r.d1, r.d2, 1, 1);
         this->inputDerivative.copy(r);
         inp.transpose2D();
         auto g = matmul(inp, e);
+        // truncate(g, 12);
         weight.updateWeight(g, 0.06);
     }
 };
@@ -151,6 +153,7 @@ public:
 
     void backward(const Tensor4D<T> &e) {
         truncate(e, this->inputDerivative, shift);
+        // this->inputDerivative.copy(e);
     }
 };
 
