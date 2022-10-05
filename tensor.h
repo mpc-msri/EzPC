@@ -125,6 +125,9 @@ public:
     }
 
     void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
+        if (this->d1 == d1 && this->d2 == d2 && this->d3 == d3 && this->d4 == d4) {
+            return;
+        }
         delete[] data;
         this->d1 = d1;
         this->d2 = d2;
@@ -138,7 +141,6 @@ public:
         assert(d2 == other.d2);
         assert(d3 == other.d3);
         assert(d4 == other.d4);
-        data = new T[d1 * d2 * d3 * d4];
         for (u64 i = 0; i < d1 * d2 * d3 * d4; i++) {
             data[i] = other.data[i];
         }
