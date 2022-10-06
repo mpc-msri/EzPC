@@ -67,15 +67,16 @@ public:
     }
 };
 
-template <typename T, u64 scale>
+template <typename T, u64 scale, bool isFirst = false>
 class FC : public Layer<T> {
 public:
     Tensor4D<T> inp;
     Tensor2D<T> weight;
+    Tensor2D<T> weightGrad;
     Tensor<T> bias;
     u64 in, out;
 
-    FC(u64 in, u64 out) : in(in), out(out), weight(in, out), bias(out), inp(0,0,0,0) {
+    FC(u64 in, u64 out) : in(in), out(out), weight(in, out), bias(out), inp(0,0,0,0), weightGrad(0,0) {
         weight.randomize(1ULL<<scale);
         bias.randomize(1ULL<<(2*scale));
     }
@@ -85,25 +86,29 @@ public:
         // std::cout << "a: "; a.print();
         inp.resize(a.d1, a.d2, a.d3, a.d4);
         this->inp.copy(a);
-        Tensor4D<T> r = matmul(a, weight);
-        r.addBias2D(bias);
-        this->activation.resize(r.d1, r.d2, 1, 1);
-        this->activation.copy(r);
+        this->activation.resize(a.d1, weight.d2, 1, 1);
+        this->weightGrad.resize(weight.d1, weight.d2);
+        matmul(a, weight, this->activation);
+        this->activation.addBias2D(bias);
     }
 
     void backward(const Tensor4D<T> &e) {
         // std::cout << "== FC backward ==" << std::endl;
         // std::cout << "e: "; e.print();
-        Tensor4D<T> r = matmulTransposeB(e, weight);
-        truncate(r, scale);
-        this->inputDerivative.resize(r.d1, r.d2, 1, 1);
-        this->inputDerivative.copy(r);
+        if (!isFirst) {
+            this->inputDerivative.resize(e.d1, weight.d1, 1, 1);
+            matmulTransposeB(e, weight, this->inputDerivative);
+            truncate(this->inputDerivative, scale);
+        }
         // std::cout << "r: "; r.print();
         // std::cout << "weight: "; weight.print();
         inp.transpose2D();
         auto g = matmul(inp, e);
         truncate(g, scale);
         weight.updateWeight(g, 0.06);
+        // matmul(inp, e, weightGrad);
+        // truncate(weightGrad, scale);
+        // weight.updateWeight(weightGrad, 0.06);
         bias.updateBias(e, 0.06, 0);
     }
 };
@@ -169,8 +174,8 @@ public:
     }
 
     void backward(const Tensor4D<T> &e) {
-        truncate(e, this->inputDerivative, shift);
-        // this->inputDerivative.copy(e);
+        // truncate(e, this->inputDerivative, shift);
+        this->inputDerivative.copy(e);
     }
 };
 

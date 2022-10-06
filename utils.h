@@ -33,6 +33,29 @@ Tensor4D<T> matmul(const Tensor4D<T> &a, const Tensor2D<T> &b) {
 }
 
 template <typename T>
+void matmul(const Tensor4D<T> &a, const Tensor2D<T> &b, Tensor4D<T> &c) {
+    assert(a.d2 == b.d1);
+    assert(a.d3 == 1);
+    assert(a.d4 == 1);
+    assert(c.d1 == a.d1);
+    assert(c.d2 == b.d2);
+    assert(c.d3 == 1);
+    assert(c.d4 == 1);
+//    c.zero();
+    Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eA(a.data, a.d1, a.d2);
+    Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eB(b.data, b.d1, b.d2);
+    Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eC(c.data, c.d1, c.d2);
+    eC = eA * eB;
+//    for(int i = 0; i < a.d1; i++) {
+//        for(int j = 0; j < b.d2; j++) {
+//            for(int k = 0; k < a.d2; k++) {
+//                c(i, j, 0, 0) += a(i, k, 0, 0) * b(k, j);
+//            }
+//        }
+//    }
+}
+
+template <typename T>
 Tensor2D<T> matmul(const Tensor4D<T> &a, const Tensor4D<T> &b) {
     assert(a.d2 == b.d1);
     assert(a.d3 == 1);
@@ -52,6 +75,34 @@ Tensor2D<T> matmul(const Tensor4D<T> &a, const Tensor4D<T> &b) {
 }
 
 template <typename T>
+void matmul(const Tensor4D<T> &a, const Tensor4D<T> &b, Tensor2D<T> &c) {
+    assert(a.d2 == b.d1);
+    assert(a.d3 == 1);
+    assert(a.d4 == 1);
+    assert(b.d3 == 1);
+    assert(b.d4 == 1);
+//    c.zero();
+    Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eA(a.data, a.d1, a.d2);
+    Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eB(b.data, b.d1, b.d2);
+    Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eC(c.data, c.d1, c.d2);
+    eC = eA * eB;
+}
+
+template <typename T>
+void matmulTransposeA(const Tensor4D<T> &a, const Tensor4D<T> &b, Tensor2D<T> &c) {
+    assert(a.d1 == b.d1);
+    assert(a.d3 == 1);
+    assert(a.d4 == 1);
+    assert(b.d3 == 1);
+    assert(b.d4 == 1);
+//    c.zero();
+    Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>> eA(a.data, a.d2, a.d1);
+    Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eB(b.data, b.d1, b.d2);
+    Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eC(c.data, c.d1, c.d2);
+    eC = eA * eB;
+}
+
+template <typename T>
 Tensor4D<T> matmulTransposeB(const Tensor4D<T> &a, const Tensor2D<T> &b) {
     assert(a.d2 == b.d2);
     assert(a.d3 == 1);
@@ -66,6 +117,29 @@ Tensor4D<T> matmulTransposeB(const Tensor4D<T> &a, const Tensor2D<T> &b) {
         }
     }
     return c;
+}
+
+template <typename T>
+void matmulTransposeB(const Tensor4D<T> &a, const Tensor2D<T> &b, Tensor4D<T> &c) {
+    assert(a.d2 == b.d2);
+    assert(a.d3 == 1);
+    assert(a.d4 == 1);
+    assert(c.d1 == a.d1);
+    assert(c.d2 == b.d1);
+    assert(c.d3 == 1);
+    assert(c.d4 == 1);
+//    c.zero();
+    Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eA(a.data, a.d1, a.d2);
+    Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>> eB(b.data, b.d2, b.d1);
+    Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eC(c.data, c.d1, c.d2);
+    eC = eA * eB;
+//    for(int i = 0; i < a.d1; i++) {
+//        for(int j = 0; j < b.d1; j++) {
+//            for(int k = 0; k < a.d2; k++) {
+//                c(i, j, 0, 0) += a(i, k, 0, 0) * b(j, k);
+//            }
+//        }
+//    }
 }
 
 template <typename T>

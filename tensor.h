@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <cassert>
+#include <Eigen/Dense>
 
 typedef uint64_t u64;
 typedef int64_t i64;
@@ -58,6 +59,16 @@ public:
                 this->data[i * this->d2 + j] = (T)(((double) rand() / RAND_MAX) * range);
             }
         }
+    }
+
+    void resize(u64 d1, u64 d2) {
+        if (this->d1 == d1 && this->d2 == d2) {
+            return;
+        }
+        delete[] data;
+        this->d1 = d1;
+        this->d2 = d2;
+        data = new T[d1 * d2];
     }
 
     ~Tensor2D() {
@@ -156,9 +167,7 @@ public:
         assert(d2 == other.d2);
         assert(d3 == other.d3);
         assert(d4 == other.d4);
-        for (u64 i = 0; i < d1 * d2 * d3 * d4; i++) {
-            data[i] = other.data[i];
-        }
+        memcpy(data, other.data, d1 * d2 * d3 * d4 * sizeof(T));
     }
 
     void randomize() {

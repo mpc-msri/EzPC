@@ -4,9 +4,13 @@
 #include "mnist.h"
 #include <cmath>
 
-void main_float() {
-    const u64 miniBatch = 1000;
+const u64 miniBatch = 60000;
+const u64 scale = 12;
+const u64 numEpochs = 20;
 
+void main_float() {
+
+    std::cout << "=== Running Floating Point Training ===" << std::endl;
     Tensor4D<double> trainSet(miniBatch, 28, 28, 1);
 
     for(u64 i = 0; i < miniBatch; ++i) {
@@ -19,17 +23,17 @@ void main_float() {
 
     auto model = Sequential<double>({
         new Flatten<double>(),
-        new FC<double, 0>(784, 500),
-        new ReLU<double>(),
-        new FC<double, 0>(500, 10),
-        new ReLU<double>(),
+        new FC<double, 0, true>(784, 10),
+        // new ReLU<double>(),
+        // new FC<double, 0>(500, 10),
+        // new ReLU<double>(),
     });
 
     Tensor4D<double> e(1, 10, 1, 1);
-    for(int epoch = 0; epoch < 20; ++epoch) {
+    Tensor4D<double> trainImage(1, 28, 28, 1);
+    for(int epoch = 0; epoch < numEpochs; ++epoch) {
         std::cout << "Epoch " << epoch << std::endl;
         for(u64 i = 0; i < miniBatch; ++i) {
-            Tensor4D<double> trainImage(1, 28, 28, 1);
             // fetch image
             for(u64 j = 0; j < 28; ++j) {
                 for(u64 k = 0; k < 28; ++k) {
@@ -58,7 +62,7 @@ void main_float() {
         }
 
     }
-    
+
     model.forward(trainSet);
 
     u64 correct = 0;
@@ -90,9 +94,7 @@ void main_float() {
 
 void main_int() {
 
-    const u64 scale = 12;
-    const u64 miniBatch = 10000;
-
+    std::cout << "=== Running Fixed-Point Training ===" << std::endl;
     Tensor4D<i64> trainSet(miniBatch, 28, 28, 1);
 
     for(u64 i = 0; i < miniBatch; ++i) {
@@ -105,14 +107,14 @@ void main_int() {
 
     auto model = Sequential<i64>({
         new Flatten<i64>(),
-        new FC<i64, scale>(784, 500),
-        new ReLUTruncate<i64>(scale),
-        new FC<i64, scale>(500, 10),
-        new ReLUTruncate<i64>(scale)
+        new FC<i64, scale, true>(784, 10),
+        // new ReLUTruncate<i64>(scale),
+        // new FC<i64, scale>(500, 10),
+        new Truncate<i64>(scale)
     });
 
     Tensor4D<i64> e(1, 10, 1, 1);
-    for(int epoch = 0; epoch < 20; ++epoch) {
+    for(int epoch = 0; epoch < numEpochs; ++epoch) {
         std::cout << "Epoch " << epoch << std::endl;
         for(u64 i = 0; i < miniBatch; ++i) {
             Tensor4D<i64> trainImage(1, 28, 28, 1);
@@ -145,7 +147,7 @@ void main_int() {
         }
 
     }
-    
+
     model.forward(trainSet);
 
     u64 correct = 0;
@@ -217,7 +219,6 @@ void test_float() {
 }
 
 void test_int() {
-    const u64 scale = 12;
     auto model = Sequential<i64>({
         new Flatten<i64>(),
         new FC<i64, scale>(784, 500),
@@ -261,7 +262,7 @@ void test_int() {
 
 int main() {
     load_mnist();
-    // main_float();
+    main_float();
     main_int();
     // test_float();
     // test_int();

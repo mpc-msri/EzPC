@@ -68,6 +68,8 @@ void truncate(const Tensor4D<T> &in, const Tensor4D<T> &out, u64 shift) {
 
 template <typename T>
 void truncate(const Tensor4D<T> &in, u64 shift) {
+    // Eigen::Map<Eigen::ArrayX<T>> eA(in.data, in.d1 * in.d2 * in.d3 * in.d4);
+    // eA = eA / ((T)(1LL << shift));
     for (u64 i = 0; i < in.d1; i++) {
         for (u64 j = 0; j < in.d2; j++) {
             for (u64 k = 0; k < in.d3; k++) {
@@ -85,6 +87,8 @@ void truncate(const Tensor4D<T> &in, u64 shift) {
 
 template <typename T>
 void truncate(const Tensor2D<T> &in, u64 shift) {
+//    Eigen::Map<Eigen::ArrayX<T>> eA(in.data, in.d1 * in.d2);
+//    eA = eA / ((T)(1LL << shift)); // this gives bad accuracy, why?
     for (u64 i = 0; i < in.d1; i++) {
         for (u64 j = 0; j < in.d2; j++) {
             if constexpr (std::is_floating_point<T>::value) {
