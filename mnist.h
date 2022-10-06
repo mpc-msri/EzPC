@@ -45,7 +45,7 @@ int test_label[NUM_TEST];
 
 void FlipLong(unsigned char * ptr)
 {
-    register unsigned char val;
+    unsigned char val;
     
     // Swap 1st and 4th bytes
     val = *(ptr);

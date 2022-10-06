@@ -67,7 +67,7 @@ public:
     }
 };
 
-template <typename T>
+template <typename T, u64 scale>
 class FC : public Layer<T> {
 public:
     Tensor4D<T> inp;
@@ -76,11 +76,13 @@ public:
     u64 in, out;
 
     FC(u64 in, u64 out) : in(in), out(out), weight(in, out), bias(out), inp(0,0,0,0) {
-        weight.randomize();
-        bias.randomize();
+        weight.randomize(1ULL<<scale);
+        bias.randomize(1ULL<<(2*scale));
     }
 
     void forward(const Tensor4D<T> &a) {
+        // std::cout << "== FC forward ==" << std::endl;
+        // std::cout << "a: "; a.print();
         inp.resize(a.d1, a.d2, a.d3, a.d4);
         this->inp.copy(a);
         Tensor4D<T> r = matmul(a, weight);
@@ -90,14 +92,19 @@ public:
     }
 
     void backward(const Tensor4D<T> &e) {
+        // std::cout << "== FC backward ==" << std::endl;
+        // std::cout << "e: "; e.print();
         Tensor4D<T> r = matmulTransposeB(e, weight);
-        // truncate(r, 12);
+        truncate(r, scale);
         this->inputDerivative.resize(r.d1, r.d2, 1, 1);
         this->inputDerivative.copy(r);
+        // std::cout << "r: "; r.print();
+        // std::cout << "weight: "; weight.print();
         inp.transpose2D();
         auto g = matmul(inp, e);
-        // truncate(g, 12);
+        truncate(g, scale);
         weight.updateWeight(g, 0.06);
+        bias.updateBias(e, 0.06, 0);
     }
 };
 
@@ -109,6 +116,8 @@ public:
     ReLUTruncate(u64 shift) : shift(shift), drelu(0,0,0,0) {}
 
     void forward(const Tensor4D<T> &a) {
+        // std::cout << "== Truncate forward ==" << std::endl;
+        // std::cout << "a: "; a.print();
         this->activation.resize(a.d1, a.d2, a.d3, a.d4);
         this->drelu.resize(a.d1, a.d2, a.d3, a.d4);
         this->inputDerivative.resize(a.d1, a.d2, a.d3, a.d4);
@@ -116,8 +125,12 @@ public:
     }
 
     void backward(const Tensor4D<T> &e) {
+        // std::cout << "== ReLU backward ==" << std::endl;
+        // std::cout << "e: "; e.print();
         select(e, this->drelu, this->inputDerivative);
-        truncate(this->inputDerivative, this->inputDerivative, shift);
+        // std::cout << "== Truncate ==" << std::endl;
+        // std::cout << "e: "; this->inputDerivative.print();
+        // truncate(this->inputDerivative, this->inputDerivative, shift);
     }
 };
 
@@ -128,6 +141,8 @@ public:
     ReLU() : drelu(0,0,0,0) {}
 
     void forward(const Tensor4D<T> &a) {
+        // std::cout << "== ReLU forward ==" << std::endl;
+        // std::cout << "a: "; a.print();
         this->activation.resize(a.d1, a.d2, a.d3, a.d4);
         this->drelu.resize(a.d1, a.d2, a.d3, a.d4);
         this->inputDerivative.resize(a.d1, a.d2, a.d3, a.d4);
@@ -135,6 +150,8 @@ public:
     }
 
     void backward(const Tensor4D<T> &e) {
+        // std::cout << "== ReLU backward ==" << std::endl;
+        // std::cout << "e: "; e.print();
         select(e, this->drelu, this->inputDerivative);
     }
 };

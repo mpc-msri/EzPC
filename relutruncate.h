@@ -37,6 +37,7 @@ void relu(const Tensor4D<T> &in, const Tensor4D<T> &out, const Tensor4D<T> &drel
             for (u64 k = 0; k < in.d3; k++) {
                 for (u64 l = 0; l < in.d4; l++) {
                     drelu(i, j, k, l) = (T)(in(i, j, k, l) > 0);
+                    assert(drelu(i, j, k, l) == 1 || drelu(i, j, k, l) == 0);
                     out(i, j, k, l) = (drelu(i, j, k, l) == 1) ? in(i, j, k, l) : 0;
                 }
             }
@@ -54,7 +55,11 @@ void truncate(const Tensor4D<T> &in, const Tensor4D<T> &out, u64 shift) {
         for (u64 j = 0; j < in.d2; j++) {
             for (u64 k = 0; k < in.d3; k++) {
                 for (u64 l = 0; l < in.d4; l++) {
-                    out(i, j, k, l) = in(i, j, k, l) >> shift;
+                    if constexpr (std::is_floating_point<T>::value) {
+                        out(i, j, k, l) = in(i, j, k, l) / (1 << shift);
+                    } else {
+                        out(i, j, k, l) = in(i, j, k, l) >> shift;
+                    }
                 }
             }
         }
@@ -67,7 +72,11 @@ void truncate(const Tensor4D<T> &in, u64 shift) {
         for (u64 j = 0; j < in.d2; j++) {
             for (u64 k = 0; k < in.d3; k++) {
                 for (u64 l = 0; l < in.d4; l++) {
-                    in(i, j, k, l) = in(i, j, k, l) >> shift;
+                    if constexpr (std::is_floating_point<T>::value) {
+                        in(i, j, k, l) = in(i, j, k, l) / ((T)(1ULL << shift));
+                    } else {
+                        in(i, j, k, l) = in(i, j, k, l) >> shift;
+                    }
                 }
             }
         }
@@ -78,7 +87,11 @@ template <typename T>
 void truncate(const Tensor2D<T> &in, u64 shift) {
     for (u64 i = 0; i < in.d1; i++) {
         for (u64 j = 0; j < in.d2; j++) {
-            in(i, j) = in(i, j) >> shift;
+            if constexpr (std::is_floating_point<T>::value) {
+                in(i, j) = in(i, j) / ((T)(1ULL << shift));
+            } else {
+                in(i, j) = in(i, j) >> shift;
+            }
         }
     }
 }
