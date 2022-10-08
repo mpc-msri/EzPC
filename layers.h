@@ -77,8 +77,9 @@ public:
     u64 in, out;
 
     FC(u64 in, u64 out) : in(in), out(out), weight(in, out), bias(out), inp(0,0,0,0), weightGrad(0,0) {
-        weight.randomize(1ULL<<scale);
-        bias.randomize(1ULL<<(2*scale));
+        double xavier = 1.0 / sqrt(in);
+        weight.randomize((T)(xavier * (1ULL<<scale)));
+        bias.randomize((T)(xavier * (1ULL<<(2*scale))));
     }
 
     void forward(const Tensor4D<T> &a) {
@@ -102,14 +103,16 @@ public:
         }
         // std::cout << "r: "; r.print();
         // std::cout << "weight: "; weight.print();
-        inp.transpose2D();
-        auto g = matmul(inp, e);
-        truncate(g, scale);
-        weight.updateWeight(g, 0.06);
+        // inp.print();
+        // inp.transpose2D();
+        // auto g = matmul(inp, e);
+        // truncate(g, scale);
+        // weight.updateWeight(g, 0.01);
         // matmul(inp, e, weightGrad);
-        // truncate(weightGrad, scale);
-        // weight.updateWeight(weightGrad, 0.06);
-        bias.updateBias(e, 0.06, 0);
+        matmulTransposeA(inp, e, weightGrad);
+        truncate(weightGrad, scale);
+        weight.updateWeight(weightGrad, 0.01);
+        bias.updateBias(e, 0.01, 0);
     }
 };
 

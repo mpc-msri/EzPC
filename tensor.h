@@ -17,10 +17,14 @@ public:
 
     Tensor(u64 s) : size(s), data(new T[s]) {}
 
-    void randomize(u64 range) {
+    void randomize(T range) {
         for(u64 i = 0; i < this->size; i++) {
             this->data[i] = (T)(((double) rand() / RAND_MAX) * range);
+            if (rand() % 2 == 0) {
+                this->data[i] *= -1;
+            }
             // this->data[i] = (T)((i % 2) * range);
+            // this->data[i] = ((T)range) / 2;
         }
     }
 
@@ -34,13 +38,24 @@ public:
     }
 
     void updateBias(const Tensor4D<T> &e, float lr, u64 scale) {
-        assert(e.d1 == 1);
+        // assert(e.d1 == 1);
         assert(e.d2 == this->size);
         assert(e.d3 == 1);
         assert(e.d4 == 1);
         for (u64 i = 0; i < this->size; i++) {
-            this->data[i] -= lr * e(0, i, 0, 0) * (1ULL << scale);
+            T sum = 0;
+            for(u64 j = 0; j < e.d1; ++j) {
+                sum = sum + e(j, i, 0, 0);
+            }
+            this->data[i] -= lr * sum * (1ULL << scale);
         }
+    }
+
+    void print() const {
+        for (u64 i = 0; i < this->size; i++) {
+            std::cout << this->data[i] << " ";
+        }
+        std::cout << std::endl;
     }
 };
 
@@ -52,11 +67,15 @@ public:
 
     Tensor2D(u64 d1, u64 d2) : d1(d1), d2(d2), data(new T[d1 * d2]) {}
 
-    void randomize(u64 range) {
+    void randomize(T range) {
         for(u64 i = 0; i < this->d1; i++) {
             for(u64 j = 0; j < this->d2; j++) {
                 // this->data[i * this->d2 + j] = (T)((j % 2) * range);
                 this->data[i * this->d2 + j] = (T)(((double) rand() / RAND_MAX) * range);
+                if (rand() % 2 == 0) {
+                    this->data[i * this->d2 + j] = -this->data[i * this->d2 + j];
+                }
+                // this->data[i * this->d2 + j] = ((T)range) / 2;
             }
         }
     }
