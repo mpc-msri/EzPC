@@ -77,6 +77,7 @@ public:
     u64 in, out;
 
     FC(u64 in, u64 out) : in(in), out(out), weight(in, out), bias(out), inp(0,0,0,0), weightGrad(0,0) {
+        static_assert(std::is_integral<T>::value || scale == 0);
         double xavier = 1.0 / sqrt(in);
         weight.randomize(xavier * (1ULL<<scale));
         bias.randomize(xavier * (1ULL<<(2*scale)));
@@ -111,8 +112,9 @@ public:
         // matmul(inp, e, weightGrad);
         matmulTransposeA(inp, e, weightGrad);
         truncate(weightGrad, scale);
-        weight.updateWeight(weightGrad, 0.01);
-        bias.updateBias(e, 0.01, 0);
+        weight.updateWeight(weightGrad, 0.1);
+        bias.updateBias(e, 0.1, scale);
+        // bias.updateBias(e, 0.01, 0);
     }
 };
 
