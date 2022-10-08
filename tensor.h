@@ -17,7 +17,7 @@ public:
 
     Tensor(u64 s) : size(s), data(new T[s]) {}
 
-    void randomize(T range) {
+    void randomize(double range) {
         for(u64 i = 0; i < this->size; i++) {
             this->data[i] = (T)(((double) rand() / RAND_MAX) * range);
             if (rand() % 2 == 0) {
@@ -67,7 +67,7 @@ public:
 
     Tensor2D(u64 d1, u64 d2) : d1(d1), d2(d2), data(new T[d1 * d2]) {}
 
-    void randomize(T range) {
+    void randomize(double range) {
         for(u64 i = 0; i < this->d1; i++) {
             for(u64 j = 0; j < this->d2; j++) {
                 // this->data[i * this->d2 + j] = (T)((j % 2) * range);

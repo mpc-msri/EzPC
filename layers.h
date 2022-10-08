@@ -78,8 +78,8 @@ public:
 
     FC(u64 in, u64 out) : in(in), out(out), weight(in, out), bias(out), inp(0,0,0,0), weightGrad(0,0) {
         double xavier = 1.0 / sqrt(in);
-        weight.randomize((T)(xavier * (1ULL<<scale)));
-        bias.randomize((T)(xavier * (1ULL<<(2*scale))));
+        weight.randomize(xavier * (1ULL<<scale));
+        bias.randomize(xavier * (1ULL<<(2*scale)));
     }
 
     void forward(const Tensor4D<T> &a) {
