@@ -13,25 +13,31 @@ public:
     Layer() : activation(0,0,0,0), inputDerivative(0,0,0,0) {}
 };
 
-template <typename T>
+template <typename T, u64 scale>
 class Conv2D : public Layer<T> {
 public:
-    Tensor4D<T> filter;
+    Tensor4D<T> inp;
+    Tensor2D<T> filter;
     Tensor<T> bias;
     u64 ci, co, ks, padding, stride;
 
     Conv2D(u64 ci, u64 co, u64 ks, u64 padding, u64 stride) : ci(ci), co(co), ks(ks), padding(padding), 
-        stride(stride), filter(ks, ks, ci, co), bias(co)
+        stride(stride), filter(co, ks * ks * ci), bias(co), inp(0,0,0,0)
     {
-        filter.randomize();
-        bias.randomize();
+        static_assert(std::is_integral<T>::value || scale == 0);
+        filter.randomize(1);
+        bias.randomize(1);
     }
 
     void forward(const Tensor4D<T> &a) {
-        Tensor4D<T> r = conv2D<T>(padding, stride, a, filter);
-        r.addBias(bias);
-        this->activation.resize(r.d1, r.d2, r.d3, r.d4);
-        this->activation.copy(r);
+        assert(a.d4 == ci);
+        u64 newH = (((a.d2 + 2*padding - ks)/stride) + 1);
+        u64 newW = (((a.d3 + 2*padding - ks)/stride) + 1);
+        inp.resize(a.d1, a.d2, a.d3, a.d4);
+        inp.copy(a);
+        this->activation.resize(a.d1, newH, newW, co);
+        conv2D<T>(ks, ks, padding, stride, ci, co, a, filter, this->activation);
+        this->activation.addBias(bias);
     }
     
     void backward(const Tensor4D<T> &e) {

@@ -150,7 +150,7 @@ public:
             for (u64 j = 0; j < d2; j++) {
                 for (u64 k = 0; k < d3; k++) {
                     for (u64 l = 0; l < d4; l++) {
-                        data[i * d2 * d3 * d4 + j * d3 * d4 + k * d4 + l] += bias[l];
+                        data[i * d2 * d3 * d4 + j * d3 * d4 + k * d4 + l] += bias(l);
                     }
                 }
             }
@@ -189,9 +189,9 @@ public:
         memcpy(data, other.data, d1 * d2 * d3 * d4 * sizeof(T));
     }
 
-    void randomize() {
+    void randomize(double range) {
         for (u64 i = 0; i < d1 * d2 * d3 * d4; i++) {
-            data[i] = (T)1;
+            data[i] = (T)range;
         }
     }
  

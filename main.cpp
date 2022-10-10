@@ -88,6 +88,7 @@ void main_int() {
     }
 
     u64 correct = 0;
+    model.forward(testSet);
     for(u64 i = 0; i < 10000; i++) {
         if (model.activation.argmax(i) == test_label[i]) {
             correct++;
@@ -125,10 +126,25 @@ void main_int() {
     }
 }
 
+void test_conv_float()
+{
+    std::cout << "=== Running Floating Point CNN Training ===" << std::endl;
+    auto model = Sequential<double>({
+        new Conv2D<double, 0>(1, 3, 3, 1, 1),
+    });
+
+    Tensor4D<double> a(1, 28, 28, 1);
+    a.randomize(1);
+    model.forward(a);
+    model.activation.print();
+    
+}
+
 int main() {
     // std::cout << std::fixed;
     // std::cout << std::setprecision(20);
     load_mnist();
     // main_float();
-    main_int();
+    // main_int();
+    test_conv_float();
 }
