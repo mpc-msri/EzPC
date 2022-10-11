@@ -18,11 +18,13 @@ class Conv2D : public Layer<T> {
 public:
     Tensor4D<T> inp;
     Tensor2D<T> filter;
+    Tensor2D<T> filterGrad;
     Tensor<T> bias;
+    Tensor<T> biasGrad;
     u64 ci, co, ks, padding, stride;
 
     Conv2D(u64 ci, u64 co, u64 ks, u64 padding, u64 stride) : ci(ci), co(co), ks(ks), padding(padding), 
-        stride(stride), filter(co, ks * ks * ci), bias(co), inp(0,0,0,0)
+        stride(stride), filter(co, ks * ks * ci), filterGrad(co, ks * ks * ci), bias(co), biasGrad(co), inp(0,0,0,0)
     {
         static_assert(std::is_integral<T>::value || scale == 0);
         filter.randomize(1);
@@ -39,9 +41,15 @@ public:
         conv2D<T>(ks, ks, padding, stride, ci, co, a, filter, this->activation);
         this->activation.addBias(bias);
     }
-    
+
     void backward(const Tensor4D<T> &e) {
-        assert(false);
+        assert(e.d1 == this->activation.d1);
+        assert(e.d2 == this->activation.d2);
+        assert(e.d3 == this->activation.d3);
+        assert(e.d4 == this->activation.d4);
+        conv2DFilterGrad<T>(ks, ks, padding, stride, ci, co, inp, filterGrad, e);
+        conv2DBiasGrad<T>(e, biasGrad);
+        // conv2DInputGrad<T>(ks, ks, padding, stride, ci, co, inp, filter, this->inputDerivative, e); // not implemented
     }
 };
 

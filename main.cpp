@@ -136,8 +136,9 @@ void test_conv_float()
     Tensor4D<double> a(1, 28, 28, 1);
     a.randomize(1);
     model.forward(a);
-    model.activation.print();
-    
+    Tensor4D<double> e(1, 28, 28, 3);
+    // model.activation.print();
+    model.backward(e);
 }
 
 int main() {

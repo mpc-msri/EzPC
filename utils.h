@@ -74,6 +74,17 @@ void matmulTransposeB(const Tensor4D<T> &a, const Tensor2D<T> &b, Tensor4D<T> &c
 }
 
 template <typename T>
+void matmulTransposeB(const Tensor2D<T> &a, const Tensor2D<T> &b, Tensor2D<T> &c) {
+    assert(a.d2 == b.d2);
+    assert(c.d1 == a.d1);
+    assert(c.d2 == b.d1);
+    Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eA(a.data, a.d1, a.d2);
+    Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>> eB(b.data, b.d2, b.d1);
+    Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eC(c.data, c.d1, c.d2);
+    eC = eA * eB;
+}
+
+template <typename T>
 Tensor2D<T> reshapeFilter(const Tensor4D<T> &filter) {
     Tensor2D<T> res(filter.d4, filter.d1 * filter.d2 * filter.d3);
     for(int i = 0; i < filter.d4; i++) {
@@ -129,7 +140,7 @@ Tensor2D<T> reshapeInput(const Tensor4D<T> &input, u64 padding, u64 stride, u64 
 }
 
 template <typename T>
-void reshapeOutput(const Tensor2D<T> &output, u64 d1, u64 d2, u64 d3, u64 d4, Tensor4D<T> res) {
+void reshapeOutput(const Tensor2D<T> &output, u64 d1, u64 d2, u64 d3, u64 d4, Tensor4D<T> &res) {
     assert(res.d1 == d1);
     assert(res.d2 == d2);
     assert(res.d3 == d3);
@@ -148,13 +159,73 @@ void reshapeOutput(const Tensor2D<T> &output, u64 d1, u64 d2, u64 d3, u64 d4, Te
 }
 
 template <typename T>
+void reshapeOutputReversed(Tensor2D<T> &output, u64 d1, u64 d2, u64 d3, u64 d4, const Tensor4D<T> &res) {
+    assert(res.d1 == d1);
+    assert(res.d2 == d2);
+    assert(res.d3 == d3);
+    assert(res.d4 == d4);
+    assert(output.d1 == d4);
+    assert(output.d2 == d1 * d2 * d3);
+    for(int i = 0; i < d1; i++) {
+        for(int j = 0; j < d2; j++) {
+            for(int k = 0; k < d3; k++) {
+                for(int l = 0; l < d4; l++) {
+                    output(l, i * d2 * d3 + j * d3 + k) = res(i, j, k, l);
+                }
+            }
+        }
+    }
+}
+
+template <typename T>
 void conv2D(u64 fh, u64 fw, u64 padding, u64 stride, u64 ci, u64 co, const Tensor4D<T> &input, const Tensor2D<T> &filter, Tensor4D<T> &output)
 {
     assert(input.d4 == ci);
     assert(filter.d1 == co);
     assert(filter.d2 == fh * fw * ci);
+    u64 newH = (((input.d2 + 2*padding - fh)/stride) + 1);
+	u64 newW = (((input.d3 + 2*padding - fw)/stride) + 1);
+    assert(output.d1 == input.d1);
+    assert(output.d2 == newH);
+    assert(output.d3 == newW);
+    assert(output.d4 == co);
+
     Tensor2D<T> reshapedInput = reshapeInput<T>(input, padding, stride, fh, fw);
     Tensor2D<T> tempOutput(filter.d1, reshapedInput.d2);
     matmul<T>(filter, reshapedInput, tempOutput);
     reshapeOutput<T>(tempOutput, input.d1, (((input.d2 + 2*padding - fh)/stride) + 1), (((input.d3 + 2*padding - fw)/stride) + 1), co, output);
+}
+
+template <typename T>
+void conv2DFilterGrad(u64 fh, u64 fw, u64 padding, u64 stride, u64 ci, u64 co, const Tensor4D<T> &input, Tensor2D<T> &filter, const Tensor4D<T> &output)
+{
+    assert(input.d4 == ci);
+    assert(filter.d1 == co);
+    assert(filter.d2 == fh * fw * ci);
+    u64 newH = (((input.d2 + 2*padding - fh)/stride) + 1);
+	u64 newW = (((input.d3 + 2*padding - fw)/stride) + 1);
+    assert(output.d1 == input.d1);
+    assert(output.d2 == newH);
+    assert(output.d3 == newW);
+    assert(output.d4 == co);
+    
+    Tensor2D<T> tempOutput(co, input.d1 * newH * newW);
+    reshapeOutputReversed<T>(tempOutput, input.d1, (((input.d2 + 2*padding - fh)/stride) + 1), (((input.d3 + 2*padding - fw)/stride) + 1), co, output);
+    Tensor2D<T> reshapedInput = reshapeInput(input, padding, stride, fh, fw);
+    matmulTransposeB(tempOutput, reshapedInput, filter);
+}
+
+template <typename T>
+void conv2DBiasGrad(const Tensor4D<T> &e, Tensor<T> &biasGrad)
+{
+    assert(e.d4 == biasGrad.size);
+    for(int i = 0; i < e.d1; i++) {
+        for(int j = 0; j < e.d2; j++) {
+            for(int k = 0; k < e.d3; k++) {
+                for(int l = 0; l < e.d4; l++) {
+                    biasGrad(l) += e(i, j, k, l);
+                }
+            }
+        }
+    }
 }
