@@ -213,6 +213,26 @@ void conv2DFilterGrad(u64 fh, u64 fw, u64 padding, u64 stride, u64 ci, u64 co, c
     reshapeOutputReversed<T>(tempOutput, input.d1, (((input.d2 + 2*padding - fh)/stride) + 1), (((input.d3 + 2*padding - fw)/stride) + 1), co, output);
     Tensor2D<T> reshapedInput = reshapeInput(input, padding, stride, fh, fw);
     matmulTransposeB(tempOutput, reshapedInput, filter);
+
+    // assert(stride == 1);
+    // assert(padding == 0);
+    // filter.zero();
+    // for(int n = 0; n < input.d1; n++) {
+    //     for(int h = 0; h < newH; h++) {
+    //         for(int w = 0; w < newW; w++) {
+    //             for(int c = 0; c < co; c++) {
+    //                 for(int f1 = 0; f1 < fh; f1++) {
+    //                     for(int f2 = 0; f2 < fw; f2++) {
+    //                         for(int c1 = 0; c1 < ci; c1++) {
+    //                             filter(c, f1 * fw * ci + f2 * ci + c1) += input(n, h + f1, w + f2, c1) * output(n, h, w, c);
+    //                             // std::cout << input(n, h + fh, w + fw, ci) * output(n, h, w, c) << std::endl;
+    //                         }
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
 }
 
 template <typename T>
@@ -303,7 +323,7 @@ void avgPool2DInputGrad(u64 ks, u64 padding, u64 stride, Tensor4D<T> &in, const 
     u64 newW = (in.d3 + 2*padding - ks)/stride + 1;
     assert(out.d2 == newH);
     assert(out.d3 == newW);
-    // in.zero();
+    in.zero();
     for(int i = 0; i < in.d1; i++) {
         for(int j = 0; j < newH; j++) {
             for(int k = 0; k < newW; k++) {

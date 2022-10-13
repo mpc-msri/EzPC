@@ -283,4 +283,14 @@ public:
         return maxIndex;
     }
 
+    void fill(T x) {
+        for (u64 i = 0; i < d1 * d2 * d3 * d4; i++) {
+            data[i] = x;
+        }
+    }
+
+    void printshape() const {
+        std::cout << "(" << d1 << ", " << d2 << ", " << d3 << ", " << d4 << ")" << std::endl;
+    }
+
 };

@@ -19,7 +19,7 @@ void main_float() {
         new Conv2D<double, 0, true>(1, 6, 5, 1, 1),
         new ReLU<double>(),
         new AvgPool2D<double, 0>(2, 0, 2),
-        new Conv2D<double, 0, true>(6, 16, 5, 1, 1),
+        new Conv2D<double, 0>(6, 16, 5, 1, 1),
         new ReLU<double>(),
         new AvgPool2D<double, 0>(2, 0, 2),
         new Conv2D<double, 0>(16, 120, 5, 0, 1),
@@ -134,23 +134,45 @@ void main_int() {
 void test_conv_float()
 {
     std::cout << "=== Running Floating Point CNN Training ===" << std::endl;
+    auto conv1 = new Conv2D<double, 0>(1, 1, 2, 1, 1);
+    auto avgpool1 = new AvgPool2D<double, 0>(2, 0, 2);
+
     auto model = Sequential<double>({
-        new Conv2D<double, 0, true>(1, 2, 2, 0, 1),
+        conv1,
+        avgpool1,
     });
 
-    Tensor4D<double> a(1, 28, 28, 1);
-    a.randomize(1);
+    conv1->filter(0, 0) = 1;
+    conv1->filter(0, 1) = 2;
+    conv1->filter(0, 2) = 3;
+    conv1->filter(0, 3) = 4;
+    conv1->bias(0) = 0;
+
+    // std::cout << "filter: ";
+    // conv1->filter.print();
+    Tensor4D<double> a(1, 3, 3, 1);
+    a.fill(1);
+
     model.forward(a);
 
-    if (model.activation.d2 == 10 && model.activation.d3 == 1 && model.activation.d4 == 1) {
-        std::cerr << "not sus" << std::endl;
-    }
-    else {
-        std::cerr << "sus" << std::endl;
-    }
-    Tensor4D<double> e(1, 10, 1, 1);
+    // std::cout << "act: ";
+    // model.activation.print();
+
+    Tensor4D<double> e(1, 2, 2, 1);
+    e(0, 0, 0, 0) = 1;
+    e(0, 0, 1, 0) = 1;
+    e(0, 1, 0, 0) = 1;
+    e(0, 1, 1, 0) = 1;
     // // model.activation.print();
     model.backward(e);
+    model.forward(a);
+    model.backward(e);
+    std::cout << "filter grad: ";
+    conv1->filterGrad.print();
+    std::cout << "filter: ";
+    conv1->filter.print();
+    std::cout << "input grad: ";
+    conv1->inputDerivative.print();
 }
 
 int main() {
