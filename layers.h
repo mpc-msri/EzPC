@@ -13,7 +13,7 @@ public:
     Layer() : activation(0,0,0,0), inputDerivative(0,0,0,0) {}
 };
 
-template <typename T, u64 scale>
+template <typename T, u64 scale, bool isFirst = false>
 class Conv2D : public Layer<T> {
 public:
     Tensor4D<T> inp;
@@ -27,11 +27,13 @@ public:
         stride(stride), filter(co, ks * ks * ci), filterGrad(co, ks * ks * ci), bias(co), biasGrad(co), inp(0,0,0,0)
     {
         static_assert(std::is_integral<T>::value || scale == 0);
-        filter.randomize(1);
-        bias.randomize(1);
+        double xavier = 1.0 / sqrt(ci);
+        filter.randomize(xavier * (1ULL<<scale));
+        bias.randomize(xavier * (1ULL<<(2*scale)));
     }
 
     void forward(const Tensor4D<T> &a) {
+        this->inputDerivative.resize(a.d1, a.d2, a.d3, a.d4);
         assert(a.d4 == ci);
         u64 newH = (((a.d2 + 2*padding - ks)/stride) + 1);
         u64 newW = (((a.d3 + 2*padding - ks)/stride) + 1);
@@ -49,7 +51,36 @@ public:
         assert(e.d4 == this->activation.d4);
         conv2DFilterGrad<T>(ks, ks, padding, stride, ci, co, inp, filterGrad, e);
         conv2DBiasGrad<T>(e, biasGrad);
-        // conv2DInputGrad<T>(ks, ks, padding, stride, ci, co, inp, filter, this->inputDerivative, e); // not implemented
+        if (!isFirst) {
+            conv2DInputGrad<T>(ks, ks, padding, stride, ci, co, this->inputDerivative, filter, e);
+            truncate(this->inputDerivative, scale);
+        }
+        truncate(filterGrad, scale);
+        filter.updateWeight(filterGrad, 0.01);
+        bias.updateBias(biasGrad, 0.01, scale);
+    }
+};
+
+template <typename T, u64 scale>
+class AvgPool2D : public Layer<T> {
+public:
+    u64 ks, padding, stride;
+
+    AvgPool2D(u64 ks, u64 padding, u64 stride) : ks(ks), padding(padding), stride(stride) {}
+
+    void forward(const Tensor4D<T> &a) {
+        this->inputDerivative.resize(a.d1, a.d2, a.d3, a.d4);
+        this->activation.resize(a.d1, (a.d2 + 2*padding - ks)/stride + 1, (a.d3 + 2*padding - ks)/stride + 1, a.d4);
+        avgPool2D<T>(ks, padding, stride, a, this->activation);
+    }
+
+    void backward(const Tensor4D<T> &e) {
+        assert(e.d1 == this->activation.d1);
+        assert(e.d2 == this->activation.d2);
+        assert(e.d3 == this->activation.d3);
+        assert(e.d4 == this->activation.d4);
+        avgPool2DInputGrad<T>(ks, padding, stride, this->inputDerivative, e);
+        truncate(this->inputDerivative, scale);
     }
 };
 
@@ -78,6 +109,16 @@ public:
     }
 
     void backward(const Tensor4D<T> &e) {
+        this->inputDerivative.resize(d1, d2, d3, d4);
+        for (u64 i = 0; i < d1; i++) {
+            for (u64 j = 0; j < d2; j++) {
+                for (u64 k = 0; k < d3; k++) {
+                    for (u64 l = 0; l < d4; l++) {
+                        this->inputDerivative(i, j, k, l) = e(i, j * d3 * d4 + k * d4 + l, 0, 0);
+                    }
+                }
+            }
+        }
     }
 };
 

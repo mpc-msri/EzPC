@@ -216,6 +216,46 @@ void conv2DFilterGrad(u64 fh, u64 fw, u64 padding, u64 stride, u64 ci, u64 co, c
 }
 
 template <typename T>
+void transposeFilter(u64 fh, u64 fw, u64 ci, u64 co, const Tensor2D<T> &filter, Tensor2D<T> &transposedFilter)
+{
+    assert(filter.d1 == co);
+    assert(filter.d2 == fh * fw * ci);
+    assert(transposedFilter.d1 == ci);
+    assert(transposedFilter.d2 == fh * fw * co);
+
+    for(int i = 0; i < fh; i++) {
+        for(int j = 0; j < fw; j++) {
+            for(int k = 0; k < ci; k++) {
+                for(int l = 0; l < co; l++) {
+                    transposedFilter(k, i * fw * co + j * co + l) = filter(l, (fh - i - 1) * fw * ci + (fw - j - 1) * ci + k);
+                }
+            }
+        }
+    }
+}
+
+template <typename T>
+void conv2DInputGrad(u64 fh, u64 fw, u64 padding, u64 stride, u64 ci, u64 co, Tensor4D<T> &input, const Tensor2D<T> &filter, const Tensor4D<T> &output)
+{
+    if (stride != 1) {
+        std::cerr << "Stride not supported in backward pass yet!" << std::endl;
+    }
+    assert(input.d4 == ci);
+    assert(filter.d1 == co);
+    assert(filter.d2 == fh * fw * ci);
+    u64 newH = (((input.d2 + 2*padding - fh)/stride) + 1);
+	u64 newW = (((input.d3 + 2*padding - fw)/stride) + 1);
+    assert(output.d1 == input.d1);
+    assert(output.d2 == newH);
+    assert(output.d3 == newW);
+    assert(output.d4 == co);
+    
+    Tensor2D<T> transposedFilter(ci, fh * fw * co);
+    transposeFilter<T>(fh, fw, ci, co, filter, transposedFilter);
+    conv2D<T>(fh, fw, fh-padding-1, stride, co, ci, output, transposedFilter, input);
+}
+
+template <typename T>
 void conv2DBiasGrad(const Tensor4D<T> &e, Tensor<T> &biasGrad)
 {
     assert(e.d4 == biasGrad.size);
@@ -224,6 +264,55 @@ void conv2DBiasGrad(const Tensor4D<T> &e, Tensor<T> &biasGrad)
             for(int k = 0; k < e.d3; k++) {
                 for(int l = 0; l < e.d4; l++) {
                     biasGrad(l) += e(i, j, k, l);
+                }
+            }
+        }
+    }
+}
+
+template <typename T>
+void avgPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> &in, Tensor4D<T> &out) {
+    assert(in.d1 == out.d1);
+    assert(in.d4 == out.d4);
+    u64 newH = (in.d2 + 2*padding - ks)/stride + 1;
+    u64 newW = (in.d3 + 2*padding - ks)/stride + 1;
+    assert(out.d2 == newH);
+    assert(out.d3 == newW);
+    for(int i = 0; i < in.d1; i++) {
+        for(int j = 0; j < newH; j++) {
+            for(int k = 0; k < newW; k++) {
+                for(int l = 0; l < in.d4; l++) {
+                    T sum = 0;
+                    for(int m = 0; m < ks; m++) {
+                        for(int n = 0; n < ks; n++) {
+                            sum += in(i, j*stride+m, k*stride+n, l);
+                        }
+                    }
+                    out(i, j, k, l) = sum / (ks*ks);
+                }
+            }
+        }
+    }
+}
+
+template <typename T>
+void avgPool2DInputGrad(u64 ks, u64 padding, u64 stride, Tensor4D<T> &in, const Tensor4D<T> &out) {
+    assert(in.d1 == out.d1);
+    assert(in.d4 == out.d4);
+    u64 newH = (in.d2 + 2*padding - ks)/stride + 1;
+    u64 newW = (in.d3 + 2*padding - ks)/stride + 1;
+    assert(out.d2 == newH);
+    assert(out.d3 == newW);
+    // in.zero();
+    for(int i = 0; i < in.d1; i++) {
+        for(int j = 0; j < newH; j++) {
+            for(int k = 0; k < newW; k++) {
+                for(int l = 0; l < in.d4; l++) {
+                    for(int m = 0; m < ks; m++) {
+                        for(int n = 0; n < ks; n++) {
+                            in(i, j*stride+m, k*stride+n, l) += out(i, j, k, l) / (ks*ks);
+                        }
+                    }
                 }
             }
         }

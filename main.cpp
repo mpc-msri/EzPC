@@ -16,13 +16,18 @@ void main_float() {
     std::cout << "=== Running Floating Point Training ===" << std::endl;
 
     auto model = Sequential<double>({
+        new Conv2D<double, 0, true>(1, 6, 5, 1, 1),
+        new ReLU<double>(),
+        new AvgPool2D<double, 0>(2, 0, 2),
+        new Conv2D<double, 0, true>(6, 16, 5, 1, 1),
+        new ReLU<double>(),
+        new AvgPool2D<double, 0>(2, 0, 2),
+        new Conv2D<double, 0>(16, 120, 5, 0, 1),
+        new ReLU<double>(),
         new Flatten<double>(),
-        new FC<double, 0, true>(784, 500),
+        new FC<double, 0>(120, 84),
         new ReLU<double>(),
-        // new FC<double, 0>(512, 256),
-        // new ReLU<double>(),
-        new FC<double, 0>(500, 10),
-        new ReLU<double>(),
+        new FC<double, 0>(84, 10),
     });
 
     Tensor4D<double> testSet(10000, 28, 28, 1);
@@ -130,14 +135,21 @@ void test_conv_float()
 {
     std::cout << "=== Running Floating Point CNN Training ===" << std::endl;
     auto model = Sequential<double>({
-        new Conv2D<double, 0>(1, 3, 3, 1, 1),
+        new Conv2D<double, 0, true>(1, 2, 2, 0, 1),
     });
 
     Tensor4D<double> a(1, 28, 28, 1);
     a.randomize(1);
     model.forward(a);
-    Tensor4D<double> e(1, 28, 28, 3);
-    // model.activation.print();
+
+    if (model.activation.d2 == 10 && model.activation.d3 == 1 && model.activation.d4 == 1) {
+        std::cerr << "not sus" << std::endl;
+    }
+    else {
+        std::cerr << "sus" << std::endl;
+    }
+    Tensor4D<double> e(1, 10, 1, 1);
+    // // model.activation.print();
     model.backward(e);
 }
 
@@ -145,7 +157,7 @@ int main() {
     // std::cout << std::fixed;
     // std::cout << std::setprecision(20);
     load_mnist();
-    // main_float();
+    main_float();
     // main_int();
-    test_conv_float();
+    // test_conv_float();
 }

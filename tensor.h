@@ -51,6 +51,13 @@ public:
         }
     }
 
+    void updateBias(const Tensor<T> &grad, float lr, u64 scale) {
+        assert(grad.size == this->size);
+        for (u64 i = 0; i < this->size; i++) {
+            this->data[i] -= lr * grad(i) * (1ULL << scale);
+        }
+    }
+
     void print() const {
         for (u64 i = 0; i < this->size; i++) {
             std::cout << this->data[i] << " ";

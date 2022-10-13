@@ -66,7 +66,7 @@ void read_mnist_char_img(char *file_path, int num_data, int len_info, int arr_n,
     unsigned char *ptr;
 
     if ((fd = open(file_path, O_RDONLY)) == -1) {
-        fprintf(stderr, "couldn't open image file");
+        fprintf(stderr, "couldn't open image file\n");
         exit(-1);
     }
     

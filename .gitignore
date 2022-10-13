@@ -2,4 +2,5 @@
 *.out
 release/
 debug/
+build/
 datatorch/
