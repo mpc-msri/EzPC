@@ -20,7 +20,7 @@ def main():
     # Prepare a BackendRep for the Model.
     backendrep = prepare(args.path)
 
-    # Export the Model as Secfloat
+    # Export the Model as Secfloat and writes to a cpp file
     backendrep.export_model()
 
     if args.generate == "executable":
