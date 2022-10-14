@@ -101,6 +101,19 @@ void truncate(const Tensor2D<T> &in, u64 shift) {
 }
 
 template <typename T>
+void div(const Tensor4D<T> &in, T divisor) {
+    for (u64 i = 0; i < in.d1; i++) {
+        for (u64 j = 0; j < in.d2; j++) {
+            for (u64 k = 0; k < in.d3; k++) {
+                for (u64 l = 0; l < in.d4; l++) {
+                    in(i, j, k, l) = in(i, j, k, l) / divisor;
+                }
+            }
+        }
+    }
+}
+
+template <typename T>
 void select(const Tensor4D<T> &in, const Tensor4D<T> &drelu, const Tensor4D<T> &out) {
     assert(in.d1 == out.d1);
     assert(in.d2 == out.d2);

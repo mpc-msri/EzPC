@@ -308,11 +308,12 @@ void avgPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> &in, Tensor4D<
                             sum += in(i, j*stride+m, k*stride+n, l);
                         }
                     }
-                    out(i, j, k, l) = sum / (ks*ks);
+                    out(i, j, k, l) = sum;
                 }
             }
         }
     }
+    div(out, (T)(ks*ks));
 }
 
 template <typename T>
@@ -330,11 +331,12 @@ void avgPool2DInputGrad(u64 ks, u64 padding, u64 stride, Tensor4D<T> &in, const 
                 for(int l = 0; l < in.d4; l++) {
                     for(int m = 0; m < ks; m++) {
                         for(int n = 0; n < ks; n++) {
-                            in(i, j*stride+m, k*stride+n, l) += out(i, j, k, l) / (ks*ks);
+                            in(i, j*stride+m, k*stride+n, l) += out(i, j, k, l);
                         }
                     }
                 }
             }
         }
     }
+    div(in, (T)(ks*ks));
 }

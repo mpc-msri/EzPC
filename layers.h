@@ -8,6 +8,7 @@ class Layer {
 public:
     virtual void forward(const Tensor4D<T> &a) = 0;
     virtual void backward(const Tensor4D<T> &e) = 0;
+    virtual void resize(u64 d1, u64 d2, u64 d3, u64 d4) = 0;
     Tensor4D<T> activation;
     Tensor4D<T> inputDerivative;
     Layer() : activation(0,0,0,0), inputDerivative(0,0,0,0) {}
@@ -23,7 +24,7 @@ public:
     Tensor<T> biasGrad;
     u64 ci, co, ks, padding, stride;
 
-    Conv2D(u64 ci, u64 co, u64 ks, u64 padding, u64 stride) : ci(ci), co(co), ks(ks), padding(padding), 
+    Conv2D(u64 ci, u64 co, u64 ks, u64 padding = 0, u64 stride = 1) : ci(ci), co(co), ks(ks), padding(padding), 
         stride(stride), filter(co, ks * ks * ci), filterGrad(co, ks * ks * ci), bias(co), biasGrad(co), inp(0,0,0,0)
     {
         static_assert(std::is_integral<T>::value || scale == 0);
@@ -59,14 +60,23 @@ public:
         filter.updateWeight(filterGrad, 0.01);
         bias.updateBias(biasGrad, 0.01, scale);
     }
+
+    void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
+        assert(d4 == ci);
+        u64 newH = (((d2 + 2*padding - ks)/stride) + 1);
+        u64 newW = (((d3 + 2*padding - ks)/stride) + 1);
+        this->activation.resize(d1, newH, newW, co);
+        this->inputDerivative.resize(d1, d2, d3, d4);
+        this->inp.resize(d1, d2, d3, d4);
+    }
 };
 
-template <typename T, u64 scale>
+template <typename T>
 class AvgPool2D : public Layer<T> {
 public:
     u64 ks, padding, stride;
 
-    AvgPool2D(u64 ks, u64 padding, u64 stride) : ks(ks), padding(padding), stride(stride) {}
+    AvgPool2D(u64 ks, u64 padding = 0, u64 _stride = 0) : ks(ks), padding(padding), stride(_stride == 0 ? ks : _stride) {}
 
     void forward(const Tensor4D<T> &a) {
         this->inputDerivative.resize(a.d1, a.d2, a.d3, a.d4);
@@ -80,7 +90,11 @@ public:
         assert(e.d3 == this->activation.d3);
         assert(e.d4 == this->activation.d4);
         avgPool2DInputGrad<T>(ks, padding, stride, this->inputDerivative, e);
-        truncate(this->inputDerivative, scale);
+    }
+
+    void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
+        this->activation.resize(d1, (d2 + 2*padding - ks)/stride + 1, (d3 + 2*padding - ks)/stride + 1, d4);
+        this->inputDerivative.resize(d1, d2, d3, d4);
     }
 };
 
@@ -119,6 +133,11 @@ public:
                 }
             }
         }
+    }
+
+    void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
+        this->activation.resize(d1, d2 * d3 * d4, 1, 1);
+        this->inputDerivative.resize(d1, d2, d3, d4);
     }
 };
 
@@ -171,6 +190,12 @@ public:
         bias.updateBias(e, 0.1, scale);
         // bias.updateBias(e, 0.01, 0);
     }
+
+    void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
+        this->activation.resize(d1, out, 1, 1);
+        this->inputDerivative.resize(d1, in, 1, 1);
+        this->inp.resize(d1, d2, d3, d4);
+    }
 };
 
 template <typename T>
@@ -197,6 +222,12 @@ public:
         // std::cout << "e: "; this->inputDerivative.print();
         // truncate(this->inputDerivative, this->inputDerivative, shift);
     }
+
+    void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
+        this->activation.resize(d1, d2, d3, d4);
+        this->inputDerivative.resize(d1, d2, d3, d4);
+        this->drelu.resize(d1, d2, d3, d4);
+    }
 };
 
 template <typename T>
@@ -219,6 +250,12 @@ public:
         // std::cout << "e: "; e.print();
         select(e, this->drelu, this->inputDerivative);
     }
+
+    void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
+        this->activation.resize(d1, d2, d3, d4);
+        this->inputDerivative.resize(d1, d2, d3, d4);
+        this->drelu.resize(d1, d2, d3, d4);
+    }
 };
 
 template <typename T>
@@ -236,6 +273,11 @@ public:
     void backward(const Tensor4D<T> &e) {
         // truncate(e, this->inputDerivative, shift);
         this->inputDerivative.copy(e);
+    }
+
+    void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
+        this->activation.resize(d1, d2, d3, d4);
+        this->inputDerivative.resize(d1, d2, d3, d4);
     }
 };
 
@@ -261,6 +303,19 @@ public:
         layers[size-1]->backward(e);
         for (int i = size - 2; i >= 0; i--) {
             layers[i]->backward(layers[i+1]->inputDerivative);
+        }
+    }
+
+    void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
+        this->activation.resize(d1, d2, d3, d4);
+        this->inputDerivative.resize(d1, d2, d3, d4);
+        u64 size = layers.size();
+        for(u64 i = 0; i < size; i++) {
+            layers[i]->resize(d1, d2, d3, d4);
+            d1 = layers[i]->activation.d1;
+            d2 = layers[i]->activation.d2;
+            d3 = layers[i]->activation.d3;
+            d4 = layers[i]->activation.d4;
         }
     }
 };

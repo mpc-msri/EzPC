@@ -64,6 +64,12 @@ public:
         }
         std::cout << std::endl;
     }
+
+    void fill(T val) {
+        for (u64 i = 0; i < this->size; i++) {
+            this->data[i] = val;
+        }
+    }
 };
 
 template <typename T>
@@ -130,6 +136,14 @@ public:
         for(u64 i = 0; i < this->d1; i++) {
             for(u64 j = 0; j < this->d2; j++) {
                 this->data[i * this->d2 + j] = (T)0;
+            }
+        }
+    }
+
+    void fill(T val) {
+        for(u64 i = 0; i < this->d1; i++) {
+            for(u64 j = 0; j < this->d2; j++) {
+                this->data[i * this->d2 + j] = val;
             }
         }
     }

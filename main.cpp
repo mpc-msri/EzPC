@@ -18,11 +18,11 @@ void main_float() {
     auto model = Sequential<double>({
         new Conv2D<double, 0, true>(1, 6, 5, 1, 1),
         new ReLU<double>(),
-        new AvgPool2D<double, 0>(2, 0, 2),
-        new Conv2D<double, 0>(6, 16, 5, 1, 1),
+        new AvgPool2D<double>(2),
+        new Conv2D<double, 0>(6, 16, 5, 1),
         new ReLU<double>(),
-        new AvgPool2D<double, 0>(2, 0, 2),
-        new Conv2D<double, 0>(16, 120, 5, 0, 1),
+        new AvgPool2D<double>(2),
+        new Conv2D<double, 0>(16, 120, 5),
         new ReLU<double>(),
         new Flatten<double>(),
         new FC<double, 0>(120, 84),
@@ -74,13 +74,19 @@ void main_int() {
     std::cout << "=== Running Fixed-Point Training ===" << std::endl;
 
     auto model = Sequential<i64>({
+        new Conv2D<i64, scale, true>(1, 6, 5, 1, 1),
+        new ReLUTruncate<i64>(scale),
+        new AvgPool2D<i64>(2),
+        new Conv2D<i64, scale>(6, 16, 5, 1),
+        new ReLUTruncate<i64>(scale),
+        new AvgPool2D<i64>(2),
+        new Conv2D<i64, scale>(16, 120, 5),
+        new ReLUTruncate<i64>(scale),
         new Flatten<i64>(),
-        new FC<i64, scale, true>(784, 512),
+        new FC<i64, scale>(120, 84),
         new ReLUTruncate<i64>(scale),
-        new FC<i64, scale>(512, 256),
-        new ReLUTruncate<i64>(scale),
-        new FC<i64, scale>(256, 10),
-        new Truncate<i64>(scale)
+        new FC<i64, scale>(84, 10),
+        new Truncate<i64>(scale),
     });
 
     Tensor4D<i64> testSet(10000, 28, 28, 1);
@@ -135,7 +141,7 @@ void test_conv_float()
 {
     std::cout << "=== Running Floating Point CNN Training ===" << std::endl;
     auto conv1 = new Conv2D<double, 0>(1, 1, 2, 1, 1);
-    auto avgpool1 = new AvgPool2D<double, 0>(2, 0, 2);
+    auto avgpool1 = new AvgPool2D<double>(2, 0, 2);
 
     auto model = Sequential<double>({
         conv1,
@@ -179,7 +185,7 @@ int main() {
     // std::cout << std::fixed;
     // std::cout << std::setprecision(20);
     load_mnist();
-    main_float();
-    // main_int();
+    // main_float();
+    main_int();
     // test_conv_float();
 }
