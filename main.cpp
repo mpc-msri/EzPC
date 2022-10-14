@@ -1,3 +1,5 @@
+#define USE_LLAMA
+
 #include <iostream>
 #include <vector>
 #include "layers.h"
@@ -8,7 +10,7 @@
 
 const u64 trainLen = 60000;
 const u64 scale = 24;
-const u64 numEpochs = 100;
+const u64 numEpochs = 1;
 const u64 batchSize = 100;
 
 void main_float() {
@@ -98,15 +100,6 @@ void main_int() {
         }
     }
 
-    u64 correct = 0;
-    model.forward(testSet);
-    for(u64 i = 0; i < 10000; i++) {
-        if (model.activation.argmax(i) == test_label[i]) {
-            correct++;
-        }
-    }
-    std::cout << "Epoch: " << -1 << " Accuracy: " << correct/100.0 << std::endl;
-
     Tensor4D<i64> e(batchSize, 10, 1, 1);
     Tensor4D<i64> trainImage(batchSize, 28, 28, 1);
     for(int epoch = 0; epoch < numEpochs; ++epoch) {
@@ -185,7 +178,7 @@ int main() {
     // std::cout << std::fixed;
     // std::cout << std::setprecision(20);
     load_mnist();
-    // main_float();
+    main_float();
     main_int();
     // test_conv_float();
 }

@@ -1,7 +1,19 @@
 #pragma once
 #include "tensor.h"
 #include "utils.h"
-#include "relutruncate.h"
+#include "backend/cleartext.h"
+#include "backend/llama.h"
+
+template <typename T>
+#ifdef USE_CLEARTEXT
+using DefaultBackend = ClearText<T>;
+#else 
+#ifdef USE_LLAMA
+using DefaultBackend = Llama<T>;
+#else
+using DefaultBackend = ClearText<T>;
+#endif
+#endif
 
 template <typename T>
 class Layer {
@@ -14,7 +26,7 @@ public:
     Layer() : activation(0,0,0,0), inputDerivative(0,0,0,0) {}
 };
 
-template <typename T, u64 scale, bool isFirst = false>
+template <typename T, u64 scale, bool isFirst = false, class Backend = DefaultBackend<T>>
 class Conv2D : public Layer<T> {
 public:
     Tensor4D<T> inp;
@@ -41,7 +53,7 @@ public:
         inp.resize(a.d1, a.d2, a.d3, a.d4);
         inp.copy(a);
         this->activation.resize(a.d1, newH, newW, co);
-        conv2D<T>(ks, ks, padding, stride, ci, co, a, filter, this->activation);
+        Backend::conv2D(ks, ks, padding, stride, ci, co, a, filter, this->activation);
         this->activation.addBias(bias);
     }
 
@@ -50,13 +62,13 @@ public:
         assert(e.d2 == this->activation.d2);
         assert(e.d3 == this->activation.d3);
         assert(e.d4 == this->activation.d4);
-        conv2DFilterGrad<T>(ks, ks, padding, stride, ci, co, inp, filterGrad, e);
-        conv2DBiasGrad<T>(e, biasGrad);
+        Backend::conv2DFilterGrad(ks, ks, padding, stride, ci, co, inp, filterGrad, e);
+        Backend::conv2DBiasGrad(e, biasGrad);
         if (!isFirst) {
-            conv2DInputGrad<T>(ks, ks, padding, stride, ci, co, this->inputDerivative, filter, e);
-            truncate(this->inputDerivative, scale);
+            Backend::conv2DInputGrad(ks, ks, padding, stride, ci, co, this->inputDerivative, filter, e);
+            Backend::truncate(this->inputDerivative, scale);
         }
-        truncate(filterGrad, scale);
+        Backend::truncate(filterGrad, scale);
         filter.updateWeight(filterGrad, 0.01);
         bias.updateBias(biasGrad, 0.01, scale);
     }
@@ -71,7 +83,7 @@ public:
     }
 };
 
-template <typename T>
+template <typename T, class Backend = DefaultBackend<T>>
 class AvgPool2D : public Layer<T> {
 public:
     u64 ks, padding, stride;
@@ -81,7 +93,7 @@ public:
     void forward(const Tensor4D<T> &a) {
         this->inputDerivative.resize(a.d1, a.d2, a.d3, a.d4);
         this->activation.resize(a.d1, (a.d2 + 2*padding - ks)/stride + 1, (a.d3 + 2*padding - ks)/stride + 1, a.d4);
-        avgPool2D<T>(ks, padding, stride, a, this->activation);
+        Backend::avgPool2D(ks, padding, stride, a, this->activation);
     }
 
     void backward(const Tensor4D<T> &e) {
@@ -89,7 +101,7 @@ public:
         assert(e.d2 == this->activation.d2);
         assert(e.d3 == this->activation.d3);
         assert(e.d4 == this->activation.d4);
-        avgPool2DInputGrad<T>(ks, padding, stride, this->inputDerivative, e);
+        Backend::avgPool2DInputGrad(ks, padding, stride, this->inputDerivative, e);
     }
 
     void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
@@ -141,7 +153,7 @@ public:
     }
 };
 
-template <typename T, u64 scale, bool isFirst = false>
+template <typename T, u64 scale, bool isFirst = false, class Backend = DefaultBackend<T>>
 class FC : public Layer<T> {
 public:
     Tensor4D<T> inp;
@@ -158,37 +170,24 @@ public:
     }
 
     void forward(const Tensor4D<T> &a) {
-        // std::cout << "== FC forward ==" << std::endl;
-        // std::cout << "a: "; a.print();
         inp.resize(a.d1, a.d2, a.d3, a.d4);
         this->inp.copy(a);
         this->activation.resize(a.d1, weight.d2, 1, 1);
         this->weightGrad.resize(weight.d1, weight.d2);
-        matmul(a, weight, this->activation);
+        Backend::matmul(a, weight, this->activation);
         this->activation.addBias2D(bias);
     }
 
     void backward(const Tensor4D<T> &e) {
-        // std::cout << "== FC backward ==" << std::endl;
-        // std::cout << "e: "; e.print();
         if (!isFirst) {
             this->inputDerivative.resize(e.d1, weight.d1, 1, 1);
-            matmulTransposeB(e, weight, this->inputDerivative);
-            truncate(this->inputDerivative, scale);
+            Backend::matmulTransposeB(e, weight, this->inputDerivative);
+            Backend::truncate(this->inputDerivative, scale);
         }
-        // std::cout << "r: "; r.print();
-        // std::cout << "weight: "; weight.print();
-        // inp.print();
-        // inp.transpose2D();
-        // auto g = matmul(inp, e);
-        // truncate(g, scale);
-        // weight.updateWeight(g, 0.01);
-        // matmul(inp, e, weightGrad);
-        matmulTransposeA(inp, e, weightGrad);
-        truncate(weightGrad, scale);
+        Backend::matmulTransposeA(inp, e, weightGrad);
+        Backend::truncate(weightGrad, scale);
         weight.updateWeight(weightGrad, 0.1);
         bias.updateBias(e, 0.1, scale);
-        // bias.updateBias(e, 0.01, 0);
     }
 
     void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
@@ -198,7 +197,7 @@ public:
     }
 };
 
-template <typename T>
+template <typename T, class Backend = DefaultBackend<T>>
 class ReLUTruncate: public Layer<T> {
 public:
     u64 shift;
@@ -211,13 +210,13 @@ public:
         this->activation.resize(a.d1, a.d2, a.d3, a.d4);
         this->drelu.resize(a.d1, a.d2, a.d3, a.d4);
         this->inputDerivative.resize(a.d1, a.d2, a.d3, a.d4);
-        relutruncate(a, this->activation, this->drelu, shift);
+        Backend::relutruncate(a, this->activation, this->drelu, shift);
     }
 
     void backward(const Tensor4D<T> &e) {
         // std::cout << "== ReLU backward ==" << std::endl;
         // std::cout << "e: "; e.print();
-        select(e, this->drelu, this->inputDerivative);
+        Backend::select(e, this->drelu, this->inputDerivative);
         // std::cout << "== Truncate ==" << std::endl;
         // std::cout << "e: "; this->inputDerivative.print();
         // truncate(this->inputDerivative, this->inputDerivative, shift);
@@ -230,7 +229,7 @@ public:
     }
 };
 
-template <typename T>
+template <typename T, class Backend = DefaultBackend<T>>
 class ReLU: public Layer<T> {
 public:
     Tensor4D<T> drelu;
@@ -242,13 +241,13 @@ public:
         this->activation.resize(a.d1, a.d2, a.d3, a.d4);
         this->drelu.resize(a.d1, a.d2, a.d3, a.d4);
         this->inputDerivative.resize(a.d1, a.d2, a.d3, a.d4);
-        relu(a, this->activation, this->drelu);
+        Backend::relu(a, this->activation, this->drelu);
     }
 
     void backward(const Tensor4D<T> &e) {
         // std::cout << "== ReLU backward ==" << std::endl;
         // std::cout << "e: "; e.print();
-        select(e, this->drelu, this->inputDerivative);
+        Backend::select(e, this->drelu, this->inputDerivative);
     }
 
     void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
@@ -258,7 +257,7 @@ public:
     }
 };
 
-template <typename T>
+template <typename T, class Backend = DefaultBackend<T>>
 class Truncate: public Layer<T> {
 public:
     u64 shift;
@@ -267,11 +266,11 @@ public:
     void forward(const Tensor4D<T> &a) {
         this->activation.resize(a.d1, a.d2, a.d3, a.d4);
         this->inputDerivative.resize(a.d1, a.d2, a.d3, a.d4);
-        truncate(a, this->activation, shift);
+        Backend::truncate(a, this->activation, shift);
     }
 
     void backward(const Tensor4D<T> &e) {
-        // truncate(e, this->inputDerivative, shift);
+        // Backend::truncate(e, this->inputDerivative, shift);
         this->inputDerivative.copy(e);
     }
 
