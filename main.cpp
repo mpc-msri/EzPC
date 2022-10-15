@@ -177,8 +177,9 @@ void test_conv_float()
 int main() {
     // std::cout << std::fixed;
     // std::cout << std::setprecision(20);
+    srand(time(NULL));
     load_mnist();
-    main_float();
+    // main_float();
     main_int();
     // test_conv_float();
 }
