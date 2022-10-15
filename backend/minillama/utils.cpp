@@ -125,17 +125,6 @@ void matmul_cleartext_eigen(int dim1, int dim2, int dim3, GroupElement *inA,
 
 void MatMul(int s1, int s2, int s3, GroupElement *A, GroupElement *B, GroupElement *C)
 {
-    // for (int i = 0; i < s1; i++)
-    // {
-    //     for (int k = 0; k < s3; k++)
-    //     {
-    //         Arr2DIdxRowM(C, s1, s3, i, k).value = 0;
-    //         for (int j = 0; j < s2; j++)
-    //         {
-    //             Arr2DIdxRowM(C, s1, s3, i, k).value = Arr2DIdxRowM(C, s1, s3, i, k).value + Arr2DIdxRowM(A, s1, s2, i, j).value * Arr2DIdxRowM(B, s2, s3, j, k).value;
-    //         }
-    //     }
-    // }
     matmul_cleartext_eigen(s1, s2, s3, A, B, C);
 }
 
@@ -257,17 +246,6 @@ void Conv2DReshapeOutputPartial(int N, int finalH, int finalW, int CO, eigenMatr
             }
         }
 	}
-}
-
-
-void PrintMatrix(matrix<GroupElement> matrix)
-{
-    for(int i=0; i<matrix.size(); i++){
-        for(int j=0; j<matrix[0].size(); j++){
-            std::cout << matrix[i][j].value << " ";
-        }
-        std::cout << std::endl;
-    }
 }
 
 void Conv2DPlaintext(int N, int H, int W, int CI, 
@@ -472,29 +450,6 @@ void matmul_eval_helper(int party, int dim1, int dim2, int dim3, GroupElement *A
     }
 }
 
-int getPackedBytesize(const int bitsize) {
-    return (bitsize % 8) == 0 ? bitsize / 8 : (bitsize / 8)  + 1;
-}
-
-// void packGroupElementArray(GroupElement *A, int size, int bw, uint8_t *out) {
-//     int bytesize = getPackedBytesize(bw);
-//     for (int i = 0; i < size; i++) {
-//         for (int j = 0; j < bytesize; j++) {
-//             out[i * bytesize + j] = (A[i].value >> (8 * j)) & 0xFF;
-//         }
-//     }
-// }
-
-// void unpackGroupElementArray(uint8_t *in, int size, int bw, GroupElement *A) {
-//     int bytesize = getPackedBytesize(bw);
-//     for (int i = 0; i < size; i++) {
-//         A[i].bitsize = bw;
-//         for (int j = 0; j < bytesize; j++) {
-//             A[i].value = (A[i].value << 8) | in[i * bytesize + j];
-//         }
-//     }
-// }
-
 void packBitArray(GroupElement *A, int size, uint8_t *out) {
     int bytesize = (size % 8 == 0) ? (size / 8) : (size / 8 + 1);
     for (int i = 0; i < bytesize; ++i) {
@@ -504,10 +459,3 @@ void packBitArray(GroupElement *A, int size, uint8_t *out) {
         out[i / 8] = out[i / 8] | ((A[i].value & 1) << (i % 8));
     }
 }
-
-// void unpackBitArray(uint8_t *in, int size, GroupElement *A) {
-//     for (int i = 0; i < size; i++) {
-//         A[i].bitsize = 1;
-//         A[i].value = (in[i / 8] >> (i % 8)) & 1;
-//     }
-// }

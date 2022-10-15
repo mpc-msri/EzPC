@@ -107,9 +107,6 @@ GroupElement evalARS(int party, GroupElement x, uint64_t shift, const ARSKeyPack
 {
     // last shift bits of x
     uint64_t ones = ((uint64_t)1 << shift) - 1;
-    // todo: ideally x_s should have bitsize = "shift". 
-    // defining a groupelem by bitshize shift, will this cause problems?
-    // maybe in getDataFromBlock?
     GroupElement x_s(x.value & ones, shift);
 
     // last n-1 bits of x
@@ -140,16 +137,6 @@ GroupElement evalARS(int party, GroupElement x, uint64_t shift, const ARSKeyPack
     else {
         res = party * GroupElement(x.value >> shift, k.Bout) + k.rb + t_s;
     }
-
-    
-    // std::cout << "x_n " << x_n << std::endl;
-    // std::cout << "x_s " << x_s << std::endl;
-    // std::cout << "dcfIdx " << dcfIdx << std::endl;
-    // std::cout << "dualDcfIdx " << dualDcfIdx << std::endl;
-    // std::cout << "dcf out " << t_s << std::endl;
-    // std::cout << "dualDcf out1 " << t_n << std::endl;
-    // std::cout << "dualDcf out2 " << m_n << std::endl;
-    // std::cout << "mb " << mb << std::endl;
 
     return res; 
 }

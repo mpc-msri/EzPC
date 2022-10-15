@@ -25,8 +25,6 @@ SOFTWARE.
 #include "stats.h"
 #include <Eigen/Dense>
 
-template <typename T>
-using matrix = std::vector<std::vector<T>>;
 using eigenMatrix = Eigen::Matrix<uint64_t, Eigen::Dynamic, Eigen::Dynamic>;
 
 void MatAdd(int s1, int s2, GroupElement *A, GroupElement* B, GroupElement *C);
@@ -68,15 +66,7 @@ void Conv2DPlaintext(int N, int H, int W, int CI,
 void matmul_eval_helper(int party, int dim1, int dim2, int dim3, GroupElement *A,
                             GroupElement *B, GroupElement *C, GroupElement *ka, GroupElement *kb, GroupElement *kc);
 
-int getPackedBytesize(const int bitsize);
-
-void packGroupElementArray(GroupElement *A, int size, int bw, uint8_t *out);
-
-void unpackGroupElementArray(uint8_t *in, int size, int bw, GroupElement *A);
-
 void packBitArray(GroupElement *A, int size, uint8_t *out);
-
-void unpackBitArray(uint8_t *in, int size, GroupElement *A);
 
 struct Conv2DCache {
     eigenMatrix reshapedFilter;

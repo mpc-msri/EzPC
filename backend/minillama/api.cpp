@@ -26,10 +26,8 @@ SOFTWARE.
 #include "conv.h"
 #include "mult.h"
 #include "pubdiv.h"
-#include "dcf.h"
 #include "config.h"
 #include "stats.h"
-#include "input_prng.h"
 #include "relutruncate.h"
 #include <cassert>
 #include <iostream>
