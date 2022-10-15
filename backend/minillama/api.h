@@ -85,10 +85,9 @@ void Floor(int32_t s1, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *o
 void Softmax(int32_t s1, int32_t s2, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *outArr), int32_t sf);
 
 inline GroupElement funcSSCons(uint64_t val) {
-    GroupElement g(val, 64);
     // if (party == DEALER)
     //     g.value = 0;
-    return g;
+    return val;
 }
 
 void reconstruct(int32_t size, GroupElement *arr, int bw);

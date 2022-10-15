@@ -34,7 +34,7 @@ void MatAdd(int s1, int s2, GroupElement *A, GroupElement* B, GroupElement *C)
     {
         for (int j = 0; j < s2; j++)
         {
-            Arr2DIdxRowM(C, s1, s2, i, j).value = Arr2DIdxRowM(A, s1, s2, i, j).value + Arr2DIdxRowM(B, s1, s2, i, j).value;
+            Arr2DIdxRowM(C, s1, s2, i, j) = Arr2DIdxRowM(A, s1, s2, i, j) + Arr2DIdxRowM(B, s1, s2, i, j);
         }
     }
 }
@@ -49,7 +49,7 @@ void MatAdd4(int s0, int s1, int s2, int s3, GroupElement* A, GroupElement* B, G
             {
                 for (int l = 0; l < s3; l++)
                 {
-                    Arr4DIdxRowM(C, s0, s1, s2, s3, i, j, k, l).value = Arr4DIdxRowM(A, s0, s1, s2, s3, i, j, k, l).value + Arr4DIdxRowM(B, s0, s1, s2, s3, i, j, k, l).value;
+                    Arr4DIdxRowM(C, s0, s1, s2, s3, i, j, k, l) = Arr4DIdxRowM(A, s0, s1, s2, s3, i, j, k, l) + Arr4DIdxRowM(B, s0, s1, s2, s3, i, j, k, l);
                 }
             }
         }
@@ -62,7 +62,7 @@ void MatSub(int s1, int s2, GroupElement *A, GroupElement* B, GroupElement *C)
     {
         for (int j = 0; j < s2; j++)
         {
-            Arr2DIdxRowM(C, s1, s2, i, j).value = Arr2DIdxRowM(A, s1, s2, i, j).value - Arr2DIdxRowM(B, s1, s2, i, j).value;
+            Arr2DIdxRowM(C, s1, s2, i, j) = Arr2DIdxRowM(A, s1, s2, i, j) - Arr2DIdxRowM(B, s1, s2, i, j);
         }
     }
 }
@@ -77,7 +77,7 @@ void MatSub4(int s0, int s1, int s2, int s3, GroupElement* A, GroupElement* B, G
             {
                 for (int l = 0; l < s3; l++)
                 {
-                    Arr4DIdxRowM(C, s0, s1, s2, s3, i, j, k, l).value = Arr4DIdxRowM(A, s0, s1, s2, s3, i, j, k, l).value - Arr4DIdxRowM(B, s0, s1, s2, s3, i, j, k, l).value;
+                    Arr4DIdxRowM(C, s0, s1, s2, s3, i, j, k, l) = Arr4DIdxRowM(A, s0, s1, s2, s3, i, j, k, l) - Arr4DIdxRowM(B, s0, s1, s2, s3, i, j, k, l);
                 }
             }
         }
@@ -103,18 +103,18 @@ void matmul_cleartext_eigen(int dim1, int dim2, int dim3, GroupElement *inA,
 
   for (int i = 0; i < dim1; i++) {
     for (int j = 0; j < dim2; j++) {
-      eigen_A(i, j) = Arr2DIdxRowM(inA, dim1, dim2, i, j).value;
+      eigen_A(i, j) = Arr2DIdxRowM(inA, dim1, dim2, i, j);
     }
   }
   for (int i = 0; i < dim2; i++) {
     for (int j = 0; j < dim3; j++) {
-      eigen_B(i, j) = Arr2DIdxRowM(inB, dim2, dim3, i, j).value;
+      eigen_B(i, j) = Arr2DIdxRowM(inB, dim2, dim3, i, j);
     }
   }
   eigen_C = eigen_A * eigen_B;
   for (int i = 0; i < dim1; i++) {
     for (int j = 0; j < dim3; j++) {
-      Arr2DIdxRowM(outC, dim1, dim3, i, j).value = eigen_C(i, j);
+      Arr2DIdxRowM(outC, dim1, dim3, i, j) = eigen_C(i, j);
     }
   }
   auto end = std::chrono::high_resolution_clock::now();
@@ -134,7 +134,7 @@ void Conv2DReshapeFilter(int FH, int FW, int CI, int CO, GroupElement* filter, G
         for(int fh = 0; fh < FH; fh++){
             for(int fw = 0; fw < FW; fw++){
                 for(int ci = 0; ci < CI; ci++){
-                    Arr2DIdxRowM(reshapedFilter, CO, FH*FW*CI, co, (fh*FW*CI) + (fw*CI) + ci).value = Arr4DIdxRowM(filter, FH, FW, CI, CO, fh, fw, ci, co).value;
+                    Arr2DIdxRowM(reshapedFilter, CO, FH*FW*CI, co, (fh*FW*CI) + (fw*CI) + ci) = Arr4DIdxRowM(filter, FH, FW, CI, CO, fh, fw, ci, co);
                 }
             }
         }
@@ -147,7 +147,7 @@ void Conv2DReshapeFilter(int FH, int FW, int CI, int CO, GroupElement* filter, e
         for(int fh = 0; fh < FH; fh++){
             for(int fw = 0; fw < FW; fw++){
                 for(int ci = 0; ci < CI; ci++){
-                    reshapedFilter(co, (fh*FW*CI) + (fw*CI) + ci) = Arr4DIdxRowM(filter, FH, FW, CI, CO, fh, fw, ci, co).value;
+                    reshapedFilter(co, (fh*FW*CI) + (fw*CI) + ci) = Arr4DIdxRowM(filter, FH, FW, CI, CO, fh, fw, ci, co);
                 }
             }
         }
@@ -171,10 +171,10 @@ void Conv2DReshapeInput(int N, int H, int W, int CI, int FH, int FW, int zPadHLe
 						int curPosW = leftTopCornerW + fw;
 						for (int ci = 0; ci < CI; ci++){
 							if ((((curPosH < 0) || (curPosH >= H)) || ((curPosW < 0) || (curPosW >= W)))){
-								Arr2DIdxRowM(outputArr, RRows, RCols,(fh*FW*CI) + (fw*CI) + ci, linIdxFilterMult).value = 0L;
+								Arr2DIdxRowM(outputArr, RRows, RCols,(fh*FW*CI) + (fw*CI) + ci, linIdxFilterMult) = 0L;
 							}
 							else{
-								Arr2DIdxRowM(outputArr, RRows, RCols,(fh*FW*CI) + (fw*CI) + ci, linIdxFilterMult).value = Arr4DIdxRowM(inputArr, N, H, W, CI, n, curPosH, curPosW, ci).value;
+								Arr2DIdxRowM(outputArr, RRows, RCols,(fh*FW*CI) + (fw*CI) + ci, linIdxFilterMult) = Arr4DIdxRowM(inputArr, N, H, W, CI, n, curPosH, curPosW, ci);
 							}
 						}
 					}
@@ -209,7 +209,7 @@ void Conv2DReshapeInputPartial(int N, int H, int W, int CI, int FH, int FW, int 
                             outputArr((fh*FW*CI) + (fw*CI) + ci, linIdxFilterMult) = 0L;
                         }
                         else{
-                            outputArr((fh*FW*CI) + (fw*CI) + ci, linIdxFilterMult) = Arr4DIdxRowM(inputArr, N, H, W, CI, n, curPosH, curPosW, ci).value;
+                            outputArr((fh*FW*CI) + (fw*CI) + ci, linIdxFilterMult) = Arr4DIdxRowM(inputArr, N, H, W, CI, n, curPosH, curPosW, ci);
                         }
                     }
                 }
@@ -229,7 +229,7 @@ void Conv2DReshapeOutput(int N, int finalH, int finalW, int CO, GroupElement *in
 		for (int n = 0; n < N; ++n){
 			for(int h = 0; h < finalH; ++h){
 				for (int w = 0; w < finalW; ++w){
-					Arr4DIdxRowM(outputArr, N, finalH, finalW, CO, n, h, w, co).value = Arr2DIdxRowM(inputArr, CO, N*finalH*finalW, co, (n*finalH*finalW) + (h*finalW) + w).value;
+					Arr4DIdxRowM(outputArr, N, finalH, finalW, CO, n, h, w, co) = Arr2DIdxRowM(inputArr, CO, N*finalH*finalW, co, (n*finalH*finalW) + (h*finalW) + w);
 				}
 			}
 		}
@@ -242,7 +242,7 @@ void Conv2DReshapeOutputPartial(int N, int finalH, int finalW, int CO, eigenMatr
     for (int co = 0; co < CO; ++co){
         for(int h = 0; h < finalH; ++h){
             for (int w = 0; w < finalW; ++w){
-                Arr4DIdxRowM(outputArr, N, finalH, finalW, CO, batchIndex, h, w, co).value = inputArr(co, (h*finalW) + w);
+                Arr4DIdxRowM(outputArr, N, finalH, finalW, CO, batchIndex, h, w, co) = inputArr(co, (h*finalW) + w);
             }
         }
 	}
@@ -332,7 +332,7 @@ void Conv2DPlaintext(int N, int H, int W, int CI,
 void VecCopy(int s, GroupElement *input, GroupElement *output)
 {
     for(int i = 0; i < s; i++){
-        output[i].value = input[i].value;
+        output[i] = input[i];
     }
 }
 
@@ -349,7 +349,7 @@ void MatSubMul(int s1, int s2, int s3, GroupElement *A, GroupElement* B, GroupEl
         {
             for (int j = 0; j < s2; j++)
             {
-                Arr2DIdxRowM(C, s1, s3, i, k).value = Arr2DIdxRowM(C, s1, s3, i, k).value - Arr2DIdxRowM(A, s1, s2, i, j).value * Arr2DIdxRowM(B, s2, s3, j, k).value;
+                Arr2DIdxRowM(C, s1, s3, i, k) = Arr2DIdxRowM(C, s1, s3, i, k) - Arr2DIdxRowM(A, s1, s2, i, j) * Arr2DIdxRowM(B, s2, s3, j, k);
             }
         }
     }
@@ -364,7 +364,7 @@ void MatAddMul(int s1, int s2, int s3, GroupElement *A, GroupElement* B, GroupEl
         {
             for (int j = 0; j < s2; j++)
             {
-                Arr2DIdxRowM(C, s1, s3, i, k).value = Arr2DIdxRowM(C, s1, s3, i, k).value + Arr2DIdxRowM(A, s1, s2, i, j).value * Arr2DIdxRowM(B, s2, s3, j, k).value;
+                Arr2DIdxRowM(C, s1, s3, i, k) = Arr2DIdxRowM(C, s1, s3, i, k) + Arr2DIdxRowM(A, s1, s2, i, j) * Arr2DIdxRowM(B, s2, s3, j, k);
             }
         }
     }
@@ -379,14 +379,14 @@ void MatCopy4(int s1, int s2, int s3, int s4, GroupElement *input, GroupElement 
             {
                 for(int l = 0; l < s4; l++)
                 {
-                    Arr4DIdxRowM(output, s1, s2, s3, s4, i, j, k, l).value = Arr4DIdxRowM(input, s1, s2, s3, s4, i, j, k, l).value;
+                    Arr4DIdxRowM(output, s1, s2, s3, s4, i, j, k, l) = Arr4DIdxRowM(input, s1, s2, s3, s4, i, j, k, l);
                 }
             }
         }
     }
 }
 
-void MatFinalize4(int s1, int s2, int s3, int s4, GroupElement *input)
+void MatFinalize4(int bw, int s1, int s2, int s3, int s4, GroupElement *input)
 {
     for(int i = 0; i < s1; i++)
     {
@@ -396,7 +396,7 @@ void MatFinalize4(int s1, int s2, int s3, int s4, GroupElement *input)
             {
                 for(int l = 0; l < s4; l++)
                 {
-                    mod(Arr4DIdxRowM(input, s1, s2, s3, s4, i, j, k, l));
+                    mod(Arr4DIdxRowM(input, s1, s2, s3, s4, i, j, k, l), bw);
                 }
             }
         }
@@ -414,27 +414,27 @@ void matmul_eval_helper(int party, int dim1, int dim2, int dim3, GroupElement *A
 
     for (int i = 0; i < dim1; i++) {
         for (int j = 0; j < dim2; j++) {
-            eigen_A(i, j) = Arr2DIdxRowM(A, dim1, dim2, i, j).value;
+            eigen_A(i, j) = Arr2DIdxRowM(A, dim1, dim2, i, j);
         }
     }
     for (int i = 0; i < dim2; i++) {
         for (int j = 0; j < dim3; j++) {
-            eigen_B(i, j) = Arr2DIdxRowM(B, dim2, dim3, i, j).value;
+            eigen_B(i, j) = Arr2DIdxRowM(B, dim2, dim3, i, j);
         }
     }
     for (int i = 0; i < dim1; i++) {
         for (int j = 0; j < dim2; j++) {
-            eigen_ka(i, j) = Arr2DIdxRowM(ka, dim1, dim2, i, j).value;
+            eigen_ka(i, j) = Arr2DIdxRowM(ka, dim1, dim2, i, j);
         }
     }
     for (int i = 0; i < dim2; i++) {
         for (int j = 0; j < dim3; j++) {
-            eigen_kb(i, j) = Arr2DIdxRowM(kb, dim2, dim3, i, j).value;
+            eigen_kb(i, j) = Arr2DIdxRowM(kb, dim2, dim3, i, j);
         }
     }
     for (int i = 0; i < dim1; i++) {
         for (int j = 0; j < dim3; j++) {
-            eigen_kc(i, j) = Arr2DIdxRowM(kc, dim1, dim3, i, j).value;
+            eigen_kc(i, j) = Arr2DIdxRowM(kc, dim1, dim3, i, j);
         }
     }
     if (party == SERVER) {
@@ -445,7 +445,7 @@ void matmul_eval_helper(int party, int dim1, int dim2, int dim3, GroupElement *A
     }
     for (int i = 0; i < dim1; i++) {
         for (int j = 0; j < dim3; j++) {
-            Arr2DIdxRowM(C, dim1, dim3, i, j).value = eigen_C(i, j);
+            Arr2DIdxRowM(C, dim1, dim3, i, j) = eigen_C(i, j);
         }
     }
 }
@@ -456,6 +456,6 @@ void packBitArray(GroupElement *A, int size, uint8_t *out) {
         out[i] = 0;
     }
     for (int i = 0; i < size; i++) {
-        out[i / 8] = out[i / 8] | ((A[i].value & 1) << (i % 8));
+        out[i / 8] = out[i / 8] | ((A[i] & 1) << (i % 8));
     }
 }

@@ -28,220 +28,41 @@ SOFTWARE.
 #include "config.h"
 #include "prng.h"
 
-struct GroupElement {
-    int bitsize = bitlength;
-    uint64_t value;
-    GroupElement(uint64_t value = 0, int bitsize = bitlength)
-    {
-        this->value = value;
-        this->bitsize = bitsize;
-        if (bitsize != 64)
-            this->value = this->value % (uint64_t(1) << bitsize);
-    }
+using GroupElement = uint64_t;
 
-    GroupElement(const GroupElement& other)
-    {
-        this->value = other.value;
-        this->bitsize = other.bitsize;
-    }
-
-    uint8_t operator[](int index)
-    {
-        // a[0] gives msb, a[bitsize-1] gives lsb
-        return (uint8_t)(value >> (bitsize - 1 - index)) & 1;
-    }
-};
-
-inline void mod(GroupElement &a)
+inline void mod(GroupElement &a, int bw)
 {
-    if (a.bitsize != 64)
-        a.value = a.value & ((uint64_t(1) << a.bitsize) - 1); 
+    if (bw != 64)
+        a = a & ((uint64_t(1) << bw) - 1); 
 }
 
-inline GroupElement operator+(const GroupElement& a, const GroupElement& b)
-{
-    GroupElement c;
-    c.bitsize = a.bitsize;
-    c.value = a.value + b.value;
-    mod(c);
-    return c;
-}
-
-inline GroupElement operator+(const GroupElement& a, const uint64_t& b)
-{
-    GroupElement c;
-    c.bitsize = a.bitsize;
-    c.value = a.value + b;
-    mod(c);
-    return c;
-}
-
-inline GroupElement operator+(const uint64_t& a, const GroupElement& b)
-{
-    GroupElement c;
-    c.bitsize = b.bitsize;
-    c.value = (a + b.value);
-    mod(c);
-    return c;
-}
-
-inline GroupElement operator*(const GroupElement& a, const GroupElement& b)
-{
-    GroupElement c;
-    c.bitsize = a.bitsize;
-    c.value = (a.value * b.value);
-    mod(c);
-    return c;
-}
-
-inline GroupElement operator*(const GroupElement& a, const uint64_t& b)
-{
-    GroupElement c;
-    c.bitsize = a.bitsize;
-    c.value = (a.value * b);
-    mod(c);
-    return c;
-}
-
-inline GroupElement operator*(const uint64_t& a, const GroupElement& b)
-{
-    GroupElement c;
-    c.bitsize = b.bitsize;
-    c.value = (a * b.value);
-    mod(c);
-    return c;
-}
-inline GroupElement operator-(const GroupElement& a, const GroupElement& b)
-{
-    GroupElement c;
-    c.bitsize = a.bitsize;
-    c.value = (a.value - b.value);
-    mod(c);
-    return c;
-}
-
-inline GroupElement operator-(const GroupElement& a, const uint64_t& b)
-{
-    GroupElement c;
-    c.bitsize = a.bitsize;
-    c.value = (a.value - b);
-    mod(c);
-    return c;
-}
-
-inline GroupElement operator-(const uint64_t a, const GroupElement& b)
-{
-    GroupElement c;
-    c.bitsize = b.bitsize;
-    c.value = (a - b.value);
-    mod(c);
-    return c;
-}
-
-inline GroupElement operator-(const GroupElement& a)
-{
-    GroupElement c;
-    c.bitsize = a.bitsize;
-    c.value = -a.value;
-    mod(c);
-    return c;
-}
-
-inline GroupElement operator/(const GroupElement& a, const GroupElement& b)
-{
-    GroupElement c;
-    c.bitsize = a.bitsize;
-    c.value = (a.value / b.value);
-    mod(c);
-    return c;
-}
-
-inline GroupElement operator/(const GroupElement& a, const uint64_t& b)
-{
-    GroupElement c;
-    c.bitsize = a.bitsize;
-    c.value = (a.value / b);
-    mod(c);
-    return c;
-}
-
-inline GroupElement operator%(const GroupElement& a, const GroupElement& b)
-{
-    GroupElement c;
-    c.bitsize = a.bitsize;
-    c.value = (a.value % b.value);
-    mod(c);
-    return c;
-}
-
-inline bool operator==(const GroupElement &a, const GroupElement &b)
-{
-    return (a.value == b.value);
-}
-inline bool operator!=(const GroupElement &a, const GroupElement &b)
-{
-    return (a.value != b.value);
-}
-
-inline bool operator<(const GroupElement &a, const GroupElement &b)
-{
-    return (a.value < b.value);
-}
-
-inline bool operator>(const GroupElement &a, const GroupElement &b)
-{
-    return (a.value > b.value);
-}
-
-inline bool operator<=(const GroupElement &a, const GroupElement &b)
-{
-    return (a.value <= b.value);
-}
-
-inline bool operator>=(const GroupElement &a, const GroupElement &b)
-{
-    return (a.value >= b.value);
-}
-
-inline std::pair<GroupElement, GroupElement> splitShare(const GroupElement& a)
+inline std::pair<GroupElement, GroupElement> splitShare(const GroupElement& a, int bw)
 {
     GroupElement a1, a2;
-    a1.bitsize = a.bitsize;
-    a2.bitsize = a.bitsize;
-    a1.value = rand() % (1ULL << a.bitsize);
-    // a1.value = 0;
-    mod(a1);
-    a2.value = (a.value - a1.value);
-    mod(a2);
+    a1 = rand();
+    // a1 = 0;
+    mod(a1, bw);
+    a2 = a - a1;
+    mod(a2, bw);
     return std::make_pair(a1, a2);
 }
 
-inline std::pair<GroupElement, GroupElement> splitShareCommonPRNG(const GroupElement& a)
+inline std::pair<GroupElement, GroupElement> splitShareCommonPRNG(const GroupElement& a, int bw)
 {
     GroupElement a1, a2;
-    a1.bitsize = a.bitsize;
-    a2.bitsize = a.bitsize;
-    a1.value = prngShared.get<uint64_t>();
-    // a1.value = 0;
-    mod(a1);
-    a2.value = (a.value - a1.value);
-    mod(a2);
+    a1 = prngShared.get<uint64_t>();
+    // a1 = 0;
+    mod(a1, bw);
+    a2 = a - a1;
+    mod(a2, bw);
     return std::make_pair(a1, a2);
 }
-
-// inline std::pair<uint64_t, uint64_t> splitshare(uint64_t a, int bw)
-// {
-//     uint64_t a1, a2;
-//     a1 = 0;//rand() & ((1 << bw) - 1);
-//     a2 = (a - a1) & ((1 << bw) - 1);
-//     return std::make_pair(a1, a2);
-// }
 
 inline GroupElement pow(GroupElement x, uint64_t e)
 {
     if (e == 0)
     {
-        return GroupElement(1, x.bitsize);
+        return 1;
     }
     GroupElement res = pow(x, e / 2);
     if (e % 2 == 0)
@@ -254,49 +75,15 @@ inline GroupElement pow(GroupElement x, uint64_t e)
     }
 }
 
-inline GroupElement random_ge(int bitlength)
+inline GroupElement random_ge(int bw)
 {
     GroupElement a;
-    a.bitsize = bitlength;
-    a.value = prng.get<uint64_t>();
-    mod(a);
+    a = prng.get<uint64_t>();
+    mod(a, bw);
     return a;
 }
 
-inline std::istream &operator>>(std::istream &is, GroupElement &a) {
-    is >> a.value;
-    mod(a);
-    return is;
-}
-
-inline std::ostream &operator<<(std::ostream &os, const GroupElement &a) {
-    if (a.bitsize == 64) {
-        os << (int64_t)a.value;
-    }
-    else {
-        uint64_t m = (1ULL << a.bitsize) - 1;
-        int64_t v = (a.value + (1ULL << (a.bitsize - 1))) & m;
-        os << v - (1ULL << (a.bitsize - 1));
-        // os << (a.value & m);
-    }
-    return os;
-}
-
-inline GroupElement operator<<(const GroupElement& a, const int& b)
+inline GroupElement msb(GroupElement a, int bw)
 {
-    GroupElement c;
-    c.bitsize = a.bitsize;
-    c.value = (a.value << b);
-    mod(c);
-    return c;
+    return (a >> (bw - 1)) & 1;
 }
-
-inline GroupElement operator>>(const GroupElement& a, const int& b)
-{
-    GroupElement c;
-    c.bitsize = a.bitsize;
-    c.value = (a.value >> b);
-    mod(c);
-    return c;
-}
-

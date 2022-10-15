@@ -135,7 +135,7 @@ void reconstructRT(int32_t size, GroupElement *arr, int bw)
     // std::cerr << "bits = ";
     // for(int i = 0; i < size; ++i)
     // {
-    //     std::cerr << arr[i + size].value << "  ";
+    //     std::cerr << arr[i + size] << "  ";
     // }
     // std::cerr << std::endl;
     packBitArray(arr + size, size, tmp2);
@@ -369,14 +369,14 @@ void ScaleDown(int32_t size, MASK_PAIR(GroupElement *inArr), int32_t sf)
         auto start = std::chrono::high_resolution_clock::now();
         for (int i = 0; i < size; i++) {
             if (party == DEALER) {
-                auto msb = inArr_mask[i][0];
-                inArr_mask[i].value = msb ? (inArr_mask[i].value >> sf) | m : inArr_mask[i].value >> sf;
-                mod(inArr_mask[i]);
+                auto x_msb = msb(inArr_mask[i], bitlength);
+                inArr_mask[i] = x_msb ? (inArr_mask[i] >> sf) | m : inArr_mask[i] >> sf;
+                mod(inArr_mask[i], bitlength);
             }
             else {
-                auto msb = inArr[i][0];
-                inArr[i].value = msb ? (inArr[i].value >> sf) | m : inArr[i].value >> sf;
-                mod(inArr[i]);
+                auto x_msb = msb(inArr[i], bitlength);
+                inArr[i] = x_msb ? (inArr[i] >> sf) | m : inArr[i] >> sf;
+                mod(inArr[i], bitlength);
             }
         }
         auto end = std::chrono::high_resolution_clock::now();
@@ -402,12 +402,12 @@ inline void matmul2d_server_helper(int thread_idx, int s1, int s2, int s3, Group
     for(int ik = p.first; ik < p.second; ik += 1){
         int i = ik / s3;
         int k = ik % s3;
-        Arr2DIdxRowM(C, s1, s3, i, k).value = Arr2DIdxRowM(c, s1, s3, i, k).value;
+        Arr2DIdxRowM(C, s1, s3, i, k) = Arr2DIdxRowM(c, s1, s3, i, k);
         for (int j = 0; j < s2; j++)
         {
-            Arr2DIdxRowM(C, s1, s3, i, k).value = Arr2DIdxRowM(C, s1, s3, i, k).value - Arr2DIdxRowM(A, s1, s2, i, j).value * Arr2DIdxRowM(b, s2, s3, j, k).value - Arr2DIdxRowM(a, s1, s2, i, j).value * Arr2DIdxRowM(B, s2, s3, j, k).value + Arr2DIdxRowM(A, s1, s2, i, j).value * Arr2DIdxRowM(B, s2, s3, j, k).value;
+            Arr2DIdxRowM(C, s1, s3, i, k) = Arr2DIdxRowM(C, s1, s3, i, k) - Arr2DIdxRowM(A, s1, s2, i, j) * Arr2DIdxRowM(b, s2, s3, j, k) - Arr2DIdxRowM(a, s1, s2, i, j) * Arr2DIdxRowM(B, s2, s3, j, k) + Arr2DIdxRowM(A, s1, s2, i, j) * Arr2DIdxRowM(B, s2, s3, j, k);
         }
-        mod(Arr2DIdxRowM(C, s1, s3, i, k));
+        // mod(Arr2DIdxRowM(C, s1, s3, i, k));
     }
 
 }
@@ -418,12 +418,12 @@ inline void matmul2d_client_helper(int thread_idx, int s1, int s2, int s3, Group
     for(int ik = p.first; ik < p.second; ik += 1){
         int i = ik / s3;
         int k = ik % s3;
-        Arr2DIdxRowM(C, s1, s3, i, k).value = Arr2DIdxRowM(c, s1, s3, i, k).value;
+        Arr2DIdxRowM(C, s1, s3, i, k) = Arr2DIdxRowM(c, s1, s3, i, k);
         for (int j = 0; j < s2; j++)
         {
-            Arr2DIdxRowM(C, s1, s3, i, k).value = Arr2DIdxRowM(C, s1, s3, i, k).value - Arr2DIdxRowM(A, s1, s2, i, j).value * Arr2DIdxRowM(b, s2, s3, j, k).value - Arr2DIdxRowM(a, s1, s2, i, j).value * Arr2DIdxRowM(B, s2, s3, j, k).value;
+            Arr2DIdxRowM(C, s1, s3, i, k) = Arr2DIdxRowM(C, s1, s3, i, k) - Arr2DIdxRowM(A, s1, s2, i, j) * Arr2DIdxRowM(b, s2, s3, j, k) - Arr2DIdxRowM(a, s1, s2, i, j) * Arr2DIdxRowM(B, s2, s3, j, k);
         }
-        mod(Arr2DIdxRowM(C, s1, s3, i, k));
+        // mod(Arr2DIdxRowM(C, s1, s3, i, k));
     }
 
 }
@@ -509,7 +509,7 @@ void ArgMax(int32_t rows, int32_t cols, MASK_PAIR(GroupElement *inp), MASK_PAIR(
         for(int i = 0; i < rows; ++i) {
             for(int j = 0; j < cols; ++j) {
                 Arr2DIdxRowM(tmpMax_mask, rows, cols, i, j) = Arr2DIdxRowM(inp_mask, rows, cols, i, j);
-                Arr2DIdxRowM(tmpIdx_mask, rows, cols, i, j).value = 0;
+                Arr2DIdxRowM(tmpIdx_mask, rows, cols, i, j) = 0;
             }
         }
 
@@ -601,7 +601,7 @@ void ArgMax(int32_t rows, int32_t cols, MASK_PAIR(GroupElement *inp), MASK_PAIR(
         for(int i = 0; i < rows; ++i) {
             for(int j = 0; j < cols; ++j) {
                 Arr2DIdxRowM(tmpMax, rows, cols, i, j) = Arr2DIdxRowM(inp, rows, cols, i, j);
-                Arr2DIdxRowM(tmpIdx, rows, cols, i, j).value = j;
+                Arr2DIdxRowM(tmpIdx, rows, cols, i, j) = j;
             }
         }
         
@@ -664,7 +664,7 @@ void ArgMax(int32_t rows, int32_t cols, MASK_PAIR(GroupElement *inp), MASK_PAIR(
 
 void rt_threads_helper_1(int thread_idx, int32_t size, GroupElement *inArr, GroupElement *tmp, ReluTruncateKeyPack *keys)
 {
-    GroupElement cache(0, bitlength);
+    GroupElement cache = 0;
     auto p = get_start_end(size, thread_idx);
     for(int i = p.first; i < p.second; i += 1){
         tmp[i] = evalRT_lrs(party - 2, inArr[i], keys[i], cache);
@@ -857,10 +857,10 @@ void AvgPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t ksizeH,
         // todo: assuming 64 bitlen here
         for (int rowIdx = 0; rowIdx < rows; rowIdx++) {
             if (party == DEALER) {
-                filterAvg_mask[rowIdx] = static_cast<uint64_t>((static_cast<int64_t>(filterAvg_mask[rowIdx].value))/(ksizeH*ksizeW));
+                filterAvg_mask[rowIdx] = static_cast<uint64_t>((static_cast<int64_t>(filterAvg_mask[rowIdx]))/(ksizeH*ksizeW));
             }
             else {
-                filterAvg[rowIdx] = -static_cast<uint64_t>((static_cast<int64_t>(-filterAvg[rowIdx].value))/(ksizeH*ksizeW));
+                filterAvg[rowIdx] = -static_cast<uint64_t>((static_cast<int64_t>(-filterAvg[rowIdx]))/(ksizeH*ksizeW));
             } 
         }                 	
     }

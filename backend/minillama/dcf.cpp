@@ -106,7 +106,7 @@ block traverseOneDCF(int Bin, int Bout, int groupSize, int party,
     uint64_t v_this_level_converted[groupSize];
     convert(Bout, groupSize, ct[1], v_this_level_converted);
     GROUP_LOOP(
-        v_share[lp].value = v_share[lp].value + sign * (v_this_level_converted[lp] + t_previous * (v + ((int)level) * groupSize + lp)->value);
+        v_share[lp] = v_share[lp] + sign * (v_this_level_converted[lp] + t_previous * (*(v + ((int)level) * groupSize + lp)));
     )
     return stcw;
 }
@@ -122,11 +122,11 @@ block traversePathDCF(int Bin, int Bout, int groupSize, int party,
                         int evalGroupIdxLen)
 {
     block s = k[0];
-    GROUP_LOOP(v_share[lp].value = 0;)
+    GROUP_LOOP(v_share[lp] = 0;)
 
     for (int i = 0; i < Bin; ++i)
     {
-        const u8 keep = static_cast<uint8_t>(idx.value >> (Bin - 1 - i)) & 1;
+        const u8 keep = static_cast<uint8_t>(idx >> (Bin - 1 - i)) & 1;
         s = traverseOneDCF(Bin, Bout, groupSize, party, s, k[i + 1], keep, v_share, v, i, geq, evalGroupIdxStart, evalGroupIdxLen);
     }
     return s;
@@ -153,7 +153,7 @@ std::pair<DCFKeyPack, DCFKeyPack> keyGenDCF(int Bin, int Bout, int groupSize,
     GroupElement *v_alpha = new GroupElement[groupSize];
     for (int i = 0; i < groupSize; ++i)
     {
-        v_alpha[i] = GroupElement(0, Bout);
+        v_alpha[i] = 0;
     }
 
     block *k0 = new block[Bin + 1];
@@ -168,7 +168,7 @@ std::pair<DCFKeyPack, DCFKeyPack> keyGenDCF(int Bin, int Bout, int groupSize,
 
     for (int i = 0; i < Bin; ++i)
     {
-        const u8 keep = static_cast<uint8_t>(idx.value >> (Bin - 1 - i)) & 1;
+        const u8 keep = static_cast<uint8_t>(idx >> (Bin - 1 - i)) & 1;
         auto a = toBlock(keep);
 
         auto ss0 = s[0] & notThreeBlock;
@@ -189,7 +189,7 @@ std::pair<DCFKeyPack, DCFKeyPack> keyGenDCF(int Bin, int Bout, int groupSize,
 
         auto ti0 = lsb(s[0]);
         auto ti1 = lsb(s[1]);
-        GroupElement sign((ti1 == 1) ? -1 : +1, Bout);
+        GroupElement sign = (ti1 == 1) ? -1 : +1;
 
         uint64_t vi_01_converted[groupSize];
         uint64_t vi_11_converted[groupSize];
@@ -294,11 +294,11 @@ void evalDCF(int Bin, int Bout, int groupSize,
     GROUP_LOOP(
         GroupElement final_term = s_converted[lp];
         if (t)
-            final_term.value = final_term.value + g[lp].value;
+            final_term = final_term + g[lp];
         if (party == SERVER1)
         {
-            final_term.value = -final_term.value;
-        } out[lp].value = out[lp].value + final_term.value;)
+            final_term = -final_term;
+        } out[lp] = out[lp] + final_term;)
 }
 
 void evalDCF(int party, GroupElement *res, GroupElement idx, const DCFKeyPack &key)
@@ -334,7 +334,7 @@ std::pair<DualDCFKeyPack, DualDCFKeyPack> keyGenDualDCF(int Bin, int Bout, int g
     key1.sb = new GroupElement[groupSize];
 
     for (int i = 0; i < groupSize; i++) {
-        auto payload2_split = splitShare(payload2[i]);
+        auto payload2_split = splitShare(payload2[i], Bout);
         key0.sb[i] = payload2_split.first; key1.sb[i] = payload2_split.second;
     }
 

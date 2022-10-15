@@ -28,17 +28,15 @@ SOFTWARE.
 
 std::pair<MultKey, MultKey> MultGen(GroupElement rin1, GroupElement rin2, GroupElement rout)
 {
-    assert(rin1.bitsize == rin2.bitsize);
-    assert(rout.bitsize == rin2.bitsize);
     
     MultKey k1, k2;
     // k1.Bin = Bin; k2.Bin = Bin;
     // k1.Bout = Bout; k2.Bout = Bout;
 
     GroupElement c  = rin1 * rin2 + rout;
-    auto a_split = splitShare(rin1);
-    auto b_split = splitShare(rin2);
-    auto c_split = splitShare(c);
+    auto a_split = splitShare(rin1, 64);
+    auto b_split = splitShare(rin2, 64);
+    auto c_split = splitShare(c, 64);
     
     k1.a = (a_split.first);
     k1.b = (b_split.first);

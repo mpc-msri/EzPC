@@ -137,7 +137,7 @@ Peer* waitForPeer(int port) {
 
 void Peer::send_ge(const GroupElement &g, int bw) {
     if (bw > 32) {
-        char *buf = (char *)(&g.value);
+        char *buf = (char *)(&g);
         if (useFile) {
             this->file.write(buf, 8);
         } else {
@@ -146,7 +146,7 @@ void Peer::send_ge(const GroupElement &g, int bw) {
         bytesSent += 8;
     }
     else if (bw > 16) {
-        char *buf = (char *)(&g.value);
+        char *buf = (char *)(&g);
         if (useFile) {
             this->file.write(buf, 4);
         } else {
@@ -155,7 +155,7 @@ void Peer::send_ge(const GroupElement &g, int bw) {
         bytesSent += 4;
     }
     else if (bw > 8) {
-        char *buf = (char *)(&g.value);
+        char *buf = (char *)(&g);
         if (useFile) {
             this->file.write(buf, 2);
         } else {
@@ -164,7 +164,7 @@ void Peer::send_ge(const GroupElement &g, int bw) {
         bytesSent += 2;
     }
     else {
-        char *buf = (char *)(&g.value);
+        char *buf = (char *)(&g);
         if (useFile) {
             this->file.write(buf, 1);
         } else {
@@ -197,7 +197,7 @@ void Peer::send_batched_input(GroupElement *g, int size, int bw)
     if (bw > 32) {
         uint64_t *temp = new uint64_t[size];
         for (int i = 0; i < size; i++) {
-            temp[i] = g[i].value;
+            temp[i] = g[i];
         }
         char *buf = (char *)(temp);
         if (useFile) {
@@ -211,7 +211,7 @@ void Peer::send_batched_input(GroupElement *g, int size, int bw)
     else if (bw > 16) {
         uint32_t *temp = new uint32_t[size];
         for (int i = 0; i < size; i++) {
-            temp[i] = (uint32_t)g[i].value;
+            temp[i] = (uint32_t)g[i];
         }
         char *buf = (char *)(temp);
         if (useFile) {
@@ -225,7 +225,7 @@ void Peer::send_batched_input(GroupElement *g, int size, int bw)
     else if (bw > 8) {
         uint16_t *temp = new uint16_t[size];
         for (int i = 0; i < size; i++) {
-            temp[i] = (uint16_t)g[i].value;
+            temp[i] = (uint16_t)g[i];
         }
         char *buf = (char *)(temp);
         if (useFile) {
@@ -239,7 +239,7 @@ void Peer::send_batched_input(GroupElement *g, int size, int bw)
     else {
         uint8_t *temp = new uint8_t[size];
         for (int i = 0; i < size; i++) {
-            temp[i] = (uint8_t)g[i].value;
+            temp[i] = (uint8_t)g[i];
         }
         char *buf = (char *)(temp);
         if (useFile) {
@@ -547,7 +547,7 @@ GroupElement Peer::recv_input() {
     } else {
         recv(recvsocket, buf, 8, MSG_WAITALL);
     }
-    GroupElement g(*(uint64_t *)buf, bitlength);
+    GroupElement g =*(uint64_t *)buf;
     bytesReceived += 8;
     return g;
 }
@@ -596,7 +596,7 @@ GroupElement Dealer::recv_mask() {
     } else {
         recv(consocket, buf, 8, MSG_WAITALL);
     }
-    GroupElement g(*(uint64_t *)buf, bitlength);
+    GroupElement g = *(uint64_t *)buf;
     bytesReceived += 8;
     return g;
 }
@@ -633,7 +633,8 @@ GroupElement Dealer::recv_ge(int bl) {
         } else {
             recv(consocket, buf, 8, MSG_WAITALL);
         }
-        GroupElement g(*(uint64_t *)buf, bl);
+        GroupElement g(*(uint64_t *)buf);
+        mod(g, bl);
         bytesReceived += 8;
         return g;
     }
@@ -644,7 +645,8 @@ GroupElement Dealer::recv_ge(int bl) {
         } else {
             recv(consocket, buf, 4, MSG_WAITALL);
         }
-        GroupElement g(*(uint32_t *)buf, bl);
+        GroupElement g(*(uint32_t *)buf);
+        mod(g, bl);
         bytesReceived += 4;
         return g;
     }
@@ -655,7 +657,8 @@ GroupElement Dealer::recv_ge(int bl) {
         } else {
             recv(consocket, buf, 2, MSG_WAITALL);
         }
-        GroupElement g(*(uint16_t *)buf, bl);
+        GroupElement g(*(uint16_t *)buf);
+        mod(g, bl);
         bytesReceived += 2;
         return g;
     }
@@ -666,7 +669,8 @@ GroupElement Dealer::recv_ge(int bl) {
         } else {
             recv(consocket, buf, 1, MSG_WAITALL);
         }
-        GroupElement g(*(uint8_t *)buf, bl);
+        GroupElement g(*(uint8_t *)buf);
+        mod(g, bl);
         bytesReceived += 1;
         return g;
     }
@@ -734,19 +738,22 @@ MatMulKey Dealer::recv_matmul_key(int Bin, int Bout, int s1, int s2, int s3) {
 
     for(int i = 0; i < s1; ++i) {
         for(int j = 0; j < s2; ++j) {
-            Arr2DIdxRowM(k.a, s1, s2, i, j) = (party == SERVER ? GroupElement(prngShared.get<uint64_t>(), Bin) : recv_ge(Bin));
+            Arr2DIdxRowM(k.a, s1, s2, i, j) = (party == SERVER ? GroupElement(prngShared.get<uint64_t>()) : recv_ge(Bin));
+            mod(Arr2DIdxRowM(k.a, s1, s2, i, j), Bin);
         }
     }
     
     for(int i = 0; i < s2; ++i) {
         for(int j = 0; j < s3; ++j) {
-            Arr2DIdxRowM(k.b, s2, s3, i, j) = (party == SERVER ? GroupElement(prngShared.get<uint64_t>(), Bin) : recv_ge(Bin));
+            Arr2DIdxRowM(k.b, s2, s3, i, j) = (party == SERVER ? GroupElement(prngShared.get<uint64_t>()) : recv_ge(Bin));
+            mod(Arr2DIdxRowM(k.b, s2, s3, i, j), Bin);
         }
     }
 
     for(int i = 0; i < s1; ++i) {
         for(int j = 0; j < s3; ++j) {
-            Arr2DIdxRowM(k.c, s1, s3, i, j) = (party == SERVER ? GroupElement(prngShared.get<uint64_t>(), Bout) : recv_ge(Bout));
+            Arr2DIdxRowM(k.c, s1, s3, i, j) = (party == SERVER ? GroupElement(prngShared.get<uint64_t>()) : recv_ge(Bout));
+            mod(Arr2DIdxRowM(k.c, s1, s3, i, j), Bout);
         }
     }
 
@@ -789,7 +796,8 @@ Conv2DKey Dealer::recv_conv2d_key(int Bin, int Bout, int64_t N, int64_t H, int64
         for(int h = 0; h < H; ++h) {
             for(int w = 0; w < W; ++w) {
                 for(int ci = 0; ci < CI; ++ci) {
-                    Arr4DIdxRowM(k.a, N, H, W, CI, n, h, w, ci) = (party == SERVER ? GroupElement(prngShared.get<uint64_t>(), Bin) : recv_ge(Bin));
+                    Arr4DIdxRowM(k.a, N, H, W, CI, n, h, w, ci) = (party == SERVER ? GroupElement(prngShared.get<uint64_t>()) : recv_ge(Bin));
+                    mod(Arr4DIdxRowM(k.a, N, H, W, CI, n, h, w, ci), Bin);
                 }
             }
         }
@@ -799,7 +807,8 @@ Conv2DKey Dealer::recv_conv2d_key(int Bin, int Bout, int64_t N, int64_t H, int64
         for(int fw = 0; fw < FW; ++fw) {
             for(int ci = 0; ci < CI; ++ci) {
                 for(int co = 0; co < CO; ++co) {
-                    Arr4DIdxRowM(k.b, FH, FW, CI, CO, fh, fw, ci, co) = (party == SERVER ? GroupElement(prngShared.get<uint64_t>(), Bin) : recv_ge(Bin));
+                    Arr4DIdxRowM(k.b, FH, FW, CI, CO, fh, fw, ci, co) = (party == SERVER ? GroupElement(prngShared.get<uint64_t>()) : recv_ge(Bin));
+                    mod(Arr4DIdxRowM(k.b, FH, FW, CI, CO, fh, fw, ci, co), Bin);
                 }
             }
         }
@@ -810,7 +819,8 @@ Conv2DKey Dealer::recv_conv2d_key(int Bin, int Bout, int64_t N, int64_t H, int64
         for(int j = 0; j < d1; ++j) {
             for(int k = 0; k < d2; ++k) {
                 for(int l = 0; l < d3; ++l) {
-                    Arr4DIdxRowM(c, d0, d1, d2, d3, i, j, k, l) = (party == SERVER ? GroupElement(prngShared.get<uint64_t>(), Bout) : recv_ge(Bout));
+                    Arr4DIdxRowM(c, d0, d1, d2, d3, i, j, k, l) = (party == SERVER ? GroupElement(prngShared.get<uint64_t>()) : recv_ge(Bout));
+                    mod(Arr4DIdxRowM(c, d0, d1, d2, d3, i, j, k, l), Bout);
                 }
             }
         }
@@ -1039,6 +1049,6 @@ TaylorKeyPack Dealer::recv_taylor_key(int bl, int m, int sf) {
     }
     kp.lrsKeys[1] = recv_bulkylrs_key(bl, m, scales);
     GroupElement ping = recv_ge(bl);
-    always_assert(ping.value == 69);
+    always_assert(ping == 69);
     return kp;
 }

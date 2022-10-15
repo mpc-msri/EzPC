@@ -47,7 +47,7 @@ void MatAddMul(int s1, int s2, int s3, GroupElement *A, GroupElement* B, GroupEl
 
 void MatCopy4(int s1, int s2, int s3, int s4, GroupElement *input, GroupElement *output);
 
-void MatFinalize4(int s1, int s2, int s3, int s4, GroupElement *input);
+void MatFinalize4(int bw, int s1, int s2, int s3, int s4, GroupElement *input);
 
 void Conv2DReshapeFilter(int FH, int FW, int CI, int CO, GroupElement* filter, eigenMatrix &reshapedFilter);
 

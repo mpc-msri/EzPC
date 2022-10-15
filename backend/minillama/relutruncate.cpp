@@ -3,36 +3,33 @@
 pair<ReluTruncateKeyPack> keyGenReluTruncate(int bin, int bout, int s, GroupElement rin, GroupElement routTruncate, GroupElement routRelu, GroupElement rout) 
 {
     always_assert(bin == bout); // for now
-    mod(rin);
+    mod(rin, bin);
     GroupElement r1, r0;
-    r1.bitsize = bin;
-    r0.bitsize = s;
-    if (rin.value % (1ULL << s) == 0) {
-        r1.value = (rin.value >> s);
-        r0.value = 0;
+    if (rin % (1ULL << s) == 0) {
+        r1 = (rin >> s);
+        r0 = 0;
     }
     else {
-        r1.value = (rin.value >> s) + 1;
-        r0.value = (r1.value << s) - rin.value;
+        r1 = (rin >> s) + 1;
+        r0 = (r1 << s) - rin;
     }
-    GroupElement one(1, bin);
-    auto dcfN = keyGenDCF(bin, bout, rin, one);
-    auto dcfS = keyGenDCF(s,   bout, r0,  one);
-    GroupElement zTruncate(0, bin);
-    zTruncate.value = routTruncate.value - r1.value;
-    mod(zTruncate);
+    auto dcfN = keyGenDCF(bin, bout, rin, 1);
+    auto dcfS = keyGenDCF(s,   bout, r0,  1);
+    GroupElement zTruncate;
+    zTruncate = routTruncate - r1;
+    mod(zTruncate, bin);
 
-    GroupElement a(0, bin);
-    GroupElement b(0, bin);
-    GroupElement c(0, bin);
-    GroupElement d1(0, bin);
-    GroupElement d2(0, bin);
-    a.value = routRelu.value & 1;
-    b.value = routTruncate.value;
-    c.value = (routRelu.value & 1) * routTruncate.value + rout.value;
-    if (routRelu.value & 1 == 1) {
-        d1.value = 2;
-        d2.value = -2 * routTruncate.value;
+    GroupElement a;
+    GroupElement b;
+    GroupElement c;
+    GroupElement d1 = 0;
+    GroupElement d2 = 0;
+    a = routRelu & 1;
+    b = routTruncate;
+    c = (routRelu & 1) * routTruncate + rout;
+    if (routRelu & 1 == 1) {
+        d1 = 2;
+        d2 = -2 * routTruncate;
     }
 
     ReluTruncateKeyPack k0, k1;
@@ -41,74 +38,75 @@ pair<ReluTruncateKeyPack> keyGenReluTruncate(int bin, int bout, int s, GroupElem
     k0.shift = s; k1.shift = s;
     k0.dcfKeyN = dcfN.first; k1.dcfKeyN = dcfN.second;
     k0.dcfKeyS = dcfS.first; k1.dcfKeyS = dcfS.second;
-    auto zTruncateSplit = splitShare(zTruncate);
+    auto zTruncateSplit = splitShare(zTruncate, bin);
     k0.zTruncate = zTruncateSplit.first; k1.zTruncate = zTruncateSplit.second;
-    auto aSplit = splitShare(a);
+    auto aSplit = splitShare(a, bin);
     k0.a = aSplit.first; k1.a = aSplit.second;
-    auto bSplit = splitShare(b);
+    auto bSplit = splitShare(b, bin);
     k0.b = bSplit.first; k1.b = bSplit.second;
-    auto cSplit = splitShare(c);
+    auto cSplit = splitShare(c, bin);
     k0.c = cSplit.first; k1.c = cSplit.second;
-    auto d1Split = splitShare(d1);
+    auto d1Split = splitShare(d1, bin);
     k0.d1 = d1Split.first; k1.d1 = d1Split.second;
-    auto d2Split = splitShare(d2);
+    auto d2Split = splitShare(d2, bin);
     k0.d2 = d2Split.first; k1.d2 = d2Split.second;
     return std::make_pair(k0, k1);
 
 }
 
 GroupElement evalRT_lrs(int party, GroupElement x, const ReluTruncateKeyPack &key, GroupElement &cache) {
-    GroupElement x0(0, key.shift);
-    GroupElement x1(0, key.Bin);
-    x0.value = x.value % (1ULL << key.shift);
-    x1.value = x.value >> key.shift;
-    mod(x0);
-    mod(x1);
-    GroupElement xs(0, key.shift);
-    xs.value = (1ULL<<key.shift) - 1 - x0.value;
-    mod(xs);
-    GroupElement ts(0, key.Bin);
+    GroupElement x0;
+    GroupElement x1;
+    x0 = x % (1ULL << key.shift);
+    x1 = x >> key.shift;
+    mod(x0, key.shift);
+    mod(x1, key.Bin);
+    GroupElement xs;
+    xs = (1ULL<<key.shift) - 1 - x0;
+    mod(xs, key.shift);
+    GroupElement ts = 0;
     evalDCF(party, &cache, x, key.dcfKeyN);
     evalDCF(party, &ts, xs, key.dcfKeyS);
-    GroupElement res(0, key.Bin);
+    GroupElement res;
     if (party == 1) {
-        res.value = x1.value + key.zTruncate.value + (1ULL<<(key.Bin - key.shift)) * cache.value + ts.value;
+        res = x1 + key.zTruncate + (1ULL<<(key.Bin - key.shift)) * cache + ts;
     }
     else {
-        res.value = key.zTruncate.value + (1ULL<<(key.Bin - key.shift)) * cache.value + ts.value;
+        res = key.zTruncate + (1ULL<<(key.Bin - key.shift)) * cache + ts;
     }
-    mod(res);
+    mod(res, key.Bin);
     return res;
 }
 
 GroupElement evalRT_drelu(int party, GroupElement x, const ReluTruncateKeyPack &key, const GroupElement &cached) {
-    GroupElement xp(x.value + (1ULL<<(key.Bin - 1)), key.Bin);
-    GroupElement t2(0, key.Bin);
+    GroupElement xp = x + (1ULL<<(key.Bin - 1));
+    mod(xp, key.Bin);
+    GroupElement t2 =0;
     evalDCF(party, &t2, xp, key.dcfKeyN);
-    GroupElement res(0, 1);
-    res.value = t2.value - cached.value + key.a.value;
-    mod(res);
+    GroupElement res;
+    res = t2 - cached + key.a;
+    mod(res, 1);
     if (party == 1) {
-        if (xp.value >= (1ULL<<(key.Bin - 1))) {
-            res.value += 1;
+        if (xp >= (1ULL<<(key.Bin - 1))) {
+            res += 1;
         }
     }
-    mod(res);
+    mod(res, 1);
     return res;
 }
 
 GroupElement evalRT_mult(int party, GroupElement x, GroupElement y, const ReluTruncateKeyPack &key) {
-    GroupElement t1 = GroupElement(0, key.Bin);
-    GroupElement t2 = GroupElement(0, key.Bin);
-    if (x.value == 0) {
-        t1.value = key.d1.value;
-        t2.value = key.d2.value;
+    GroupElement t1 = 0;
+    GroupElement t2 = 0;
+    if (x == 0) {
+        t1 = key.d1;
+        t2 = key.d2;
     }
-    GroupElement res(0, key.Bin);
-    res.value = -key.a.value * y.value - key.b.value * x.value + key.c.value + y.value * t1.value + t2.value;
+    GroupElement res;
+    res = -key.a * y - key.b * x + key.c + y * t1 + t2;
     if (party == 1) {
-        res.value += x.value * y.value;
+        res += x * y;
     }
-    mod(res);
+    mod(res, key.Bin);
     return res;
 }

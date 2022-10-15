@@ -50,7 +50,7 @@ std::pair<MatMulKey, MatMulKey> KeyGenMatMul(int Bin, int Bout, int s1, int s2, 
     {
         for (int j = 0; j < s2; j++)
         {
-            auto rin1_split = splitShareCommonPRNG(Arr2DIdxRowM(rin1, s1, s2, i, j));
+            auto rin1_split = splitShareCommonPRNG(Arr2DIdxRowM(rin1, s1, s2, i, j), Bin);
             Arr2DIdxRowM(k0.a, s1, s2, i, j) = rin1_split.first;
             Arr2DIdxRowM(k1.a, s1, s2, i, j) = rin1_split.second;
         }
@@ -60,7 +60,7 @@ std::pair<MatMulKey, MatMulKey> KeyGenMatMul(int Bin, int Bout, int s1, int s2, 
     {
         for(int j = 0; j < s3; j++)
         {
-            auto rin2_split = splitShareCommonPRNG(Arr2DIdxRowM(rin2, s2, s3, i, j));
+            auto rin2_split = splitShareCommonPRNG(Arr2DIdxRowM(rin2, s2, s3, i, j), Bin);
             Arr2DIdxRowM(k0.b, s2, s3, i, j) = rin2_split.first;
             Arr2DIdxRowM(k1.b, s2, s3, i, j) = rin2_split.second;
         }
@@ -70,7 +70,7 @@ std::pair<MatMulKey, MatMulKey> KeyGenMatMul(int Bin, int Bout, int s1, int s2, 
     {
         for(int j = 0; j < s3; j++)
         {
-            auto rout_split = splitShareCommonPRNG(Arr2DIdxRowM(c, s1, s3, i, j));
+            auto rout_split = splitShareCommonPRNG(Arr2DIdxRowM(c, s1, s3, i, j), Bout);
             Arr2DIdxRowM(k0.c, s1, s3, i, j) = rout_split.first;
             Arr2DIdxRowM(k1.c, s1, s3, i, j) = rout_split.second;
         }
@@ -124,7 +124,7 @@ std::pair<Conv2DKey, Conv2DKey> KeyGenConv2D(
         for(int h = 0; h < H; ++h) {
             for(int w = 0; w < W; ++w) {
                 for(int ci = 0; ci < CI; ++ci) {
-                    auto rin1_split = splitShareCommonPRNG(Arr4DIdxRowM(rin1, N, H, W, CI, n, h, w, ci));
+                    auto rin1_split = splitShareCommonPRNG(Arr4DIdxRowM(rin1, N, H, W, CI, n, h, w, ci), Bin);
                     Arr4DIdxRowM(k0.a, N, H, W, CI, n, h, w, ci) = rin1_split.first;
                     Arr4DIdxRowM(k1.a, N, H, W, CI, n, h, w, ci) = rin1_split.second;
                 }
@@ -136,7 +136,7 @@ std::pair<Conv2DKey, Conv2DKey> KeyGenConv2D(
         for(int fw = 0; fw < FW; ++fw) {
             for(int ci = 0; ci < CI; ++ci) {
                 for(int co = 0; co < CO; ++co) {
-                    auto rin2_split = splitShareCommonPRNG(Arr4DIdxRowM(rin2, FH, FW, CI, CO, fh, fw, ci, co));
+                    auto rin2_split = splitShareCommonPRNG(Arr4DIdxRowM(rin2, FH, FW, CI, CO, fh, fw, ci, co), Bin);
                     Arr4DIdxRowM(k0.b, FH, FW, CI, CO, fh, fw, ci, co) = rin2_split.first;
                     Arr4DIdxRowM(k1.b, FH, FW, CI, CO, fh, fw, ci, co) = rin2_split.second;
                 }
@@ -148,7 +148,7 @@ std::pair<Conv2DKey, Conv2DKey> KeyGenConv2D(
         for(int j = 0; j < d1; ++j) {
             for(int k = 0; k < d2; ++k) {
                 for(int l = 0; l < d3; ++l) {
-                    auto c_split = splitShareCommonPRNG(Arr4DIdxRowM(c, d0, d1, d2, d3, i, j, k, l));
+                    auto c_split = splitShareCommonPRNG(Arr4DIdxRowM(c, d0, d1, d2, d3, i, j, k, l), Bout);
                     Arr4DIdxRowM(k0.c, d0, d1, d2, d3, i, j, k, l) = c_split.first;
                     Arr4DIdxRowM(k1.c, d0, d1, d2, d3, i, j, k, l) = c_split.second;
                 }
@@ -204,7 +204,7 @@ void EvalConv2D(int party, const Conv2DKey &key,
         zPadWLeft, zPadWRight,
         strideH, strideW, key.a, filter, cache.temp, cache);
     MatSub4(d0, d1, d2, d3, output, cache.temp, output);
-    MatFinalize4(d0, d1, d2, d3, output);
+    MatFinalize4(64, d0, d1, d2, d3, output);
 
     freeConv2DCache(cache);
 }
