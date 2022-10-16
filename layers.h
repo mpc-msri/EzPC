@@ -3,6 +3,7 @@
 #include "utils.h"
 #include "backend/cleartext.h"
 #include "backend/llama.h"
+#include "backend/llamakey.h"
 
 template <typename T>
 #ifdef USE_CLEARTEXT
@@ -11,7 +12,11 @@ using DefaultBackend = ClearText<T>;
 #ifdef USE_LLAMA
 using DefaultBackend = Llama<T>;
 #else
+#ifdef USE_LLAMAKEY
+using DefaultBackend = LlamaKey<T>;
+#else
 using DefaultBackend = ClearText<T>;
+#endif
 #endif
 #endif
 
@@ -68,9 +73,9 @@ public:
             Backend::conv2DInputGrad(ks, ks, padding, stride, ci, co, this->inputDerivative, filter, e);
             Backend::truncate(this->inputDerivative, scale);
         }
-        Backend::truncate(filterGrad, scale);
-        filter.updateWeight(filterGrad, 0.01);
-        bias.updateBias(biasGrad, 0.01, scale);
+        // Backend::truncate(filterGrad, scale);
+        Backend::updateWeight(filter, filterGrad, scale);
+        Backend::updateBias(bias, biasGrad, scale);
     }
 
     void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
@@ -185,9 +190,9 @@ public:
             Backend::truncate(this->inputDerivative, scale);
         }
         Backend::matmulTransposeA(inp, e, weightGrad);
-        Backend::truncate(weightGrad, scale);
-        weight.updateWeight(weightGrad, 0.1);
-        bias.updateBias(e, 0.1, scale);
+        // Backend::truncate(weightGrad, scale);
+        Backend::updateWeight(weight, weightGrad, scale);
+        Backend::updateBias(bias, e, scale);
     }
 
     void resize(u64 d1, u64 d2, u64 d3, u64 d4) {

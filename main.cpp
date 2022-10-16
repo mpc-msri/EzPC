@@ -10,11 +10,12 @@
 
 const u64 trainLen = 60000;
 const u64 scale = 24;
-const u64 numEpochs = 1;
+const u64 numEpochs = 5;
 const u64 batchSize = 100;
 
 void main_float() {
 
+    srand(time(NULL));
     std::cout << "=== Running Floating Point Training ===" << std::endl;
 
     auto model = Sequential<double>({
@@ -73,6 +74,7 @@ void main_float() {
 
 void main_int() {
 
+    srand(time(NULL));
     std::cout << "=== Running Fixed-Point Training ===" << std::endl;
 
     auto model = Sequential<i64>({
@@ -174,12 +176,101 @@ void test_conv_float()
     conv1->inputDerivative.print();
 }
 
+void keysize_llama() {
+    LlamaKey<i64>::serverkeysize = 0;
+    LlamaKey<i64>::clientkeysize = 0;
+    auto model = Sequential<i64>({
+        new Conv2D<i64, scale, true, LlamaKey<i64>>(3, 64, 5, 1),
+        new ReLUTruncate<i64, LlamaKey<i64>>(scale),
+        new AvgPool2D<i64, LlamaKey<i64>>(3, 0, 2),
+        new Conv2D<i64, scale, false, LlamaKey<i64>>(64, 64, 5, 1),
+        new ReLUTruncate<i64, LlamaKey<i64>>(scale),
+        new AvgPool2D<i64, LlamaKey<i64>>(3, 0, 2),
+        new Conv2D<i64, scale, false, LlamaKey<i64>>(64, 64, 5, 1),
+        new ReLUTruncate<i64, LlamaKey<i64>>(scale),
+        new AvgPool2D<i64, LlamaKey<i64>>(3, 0, 2),
+        new Flatten<i64>(),
+        new FC<i64, scale, false, LlamaKey<i64>>(64, 10),
+        new Truncate<i64, LlamaKey<i64>>(scale),
+    });
+
+    Tensor4D<i64> trainImage(128, 32, 32, 3);
+    Tensor4D<i64> e(128, 10, 1, 1);
+
+    model.forward(trainImage);
+    std::cout << ">>>>>>> FORWARD DONE <<<<<<<<" << std::endl;
+    model.backward(e);
+
+    double gb = 1024ULL * 1024 * 1024 * 8ULL;
+    std::cout << "Server key size: " << LlamaKey<i64>::serverkeysize / gb << std::endl;
+    std::cout << "Client key size: " << LlamaKey<i64>::clientkeysize / gb << std::endl;
+
+}
+
+void vgg16_keysize_llama() {
+    LlamaKey<i64>::serverkeysize = 0;
+    LlamaKey<i64>::clientkeysize = 0;
+    auto model = Sequential<i64>({
+        new Conv2D<i64, scale, true, LlamaKey<i64>>(3, 64, 3, 1),
+        new ReLUTruncate<i64, LlamaKey<i64>>(scale),
+        new Conv2D<i64, scale, false, LlamaKey<i64>>(64, 64, 3, 1),
+        new AvgPool2D<i64, LlamaKey<i64>>(2, 0, 2),
+        new ReLUTruncate<i64, LlamaKey<i64>>(scale),
+        new Conv2D<i64, scale, false, LlamaKey<i64>>(64, 128, 3, 1),
+        new ReLUTruncate<i64, LlamaKey<i64>>(scale),
+        new Conv2D<i64, scale, false, LlamaKey<i64>>(128, 128, 3, 1),
+        new AvgPool2D<i64, LlamaKey<i64>>(2, 0, 2),
+        new ReLUTruncate<i64, LlamaKey<i64>>(scale),
+        new Conv2D<i64, scale, false, LlamaKey<i64>>(128, 256, 3, 1),
+        new ReLUTruncate<i64, LlamaKey<i64>>(scale),
+        new Conv2D<i64, scale, false, LlamaKey<i64>>(256, 256, 3, 1),
+        new ReLUTruncate<i64, LlamaKey<i64>>(scale),
+        new Conv2D<i64, scale, false, LlamaKey<i64>>(256, 256, 3, 1),
+        new AvgPool2D<i64, LlamaKey<i64>>(2, 0, 2),
+        new ReLUTruncate<i64, LlamaKey<i64>>(scale),
+        new Conv2D<i64, scale, false, LlamaKey<i64>>(256, 512, 3, 1),
+        new ReLUTruncate<i64, LlamaKey<i64>>(scale),
+        new Conv2D<i64, scale, false, LlamaKey<i64>>(512, 512, 3, 1),
+        new ReLUTruncate<i64, LlamaKey<i64>>(scale),
+        new Conv2D<i64, scale, false, LlamaKey<i64>>(512, 512, 3, 1),
+        new AvgPool2D<i64, LlamaKey<i64>>(2, 0, 2),
+        new ReLUTruncate<i64, LlamaKey<i64>>(scale),
+        new Conv2D<i64, scale, false, LlamaKey<i64>>(512, 512, 3, 1),
+        new ReLUTruncate<i64, LlamaKey<i64>>(scale),
+        new Conv2D<i64, scale, false, LlamaKey<i64>>(512, 512, 3, 1),
+        new ReLUTruncate<i64, LlamaKey<i64>>(scale),
+        new Conv2D<i64, scale, false, LlamaKey<i64>>(512, 512, 3, 1),
+        new AvgPool2D<i64, LlamaKey<i64>>(2, 0, 2),
+        new ReLUTruncate<i64, LlamaKey<i64>>(scale),
+        new Flatten<i64>(),
+        new FC<i64, scale, false, LlamaKey<i64>>(512, 256),
+        new ReLUTruncate<i64, LlamaKey<i64>>(scale),
+        new FC<i64, scale, false, LlamaKey<i64>>(256, 256),
+        new ReLUTruncate<i64, LlamaKey<i64>>(scale),
+        new FC<i64, scale, false, LlamaKey<i64>>(256, 10),
+        new Truncate<i64, LlamaKey<i64>>(scale),
+    });
+
+    Tensor4D<i64> trainImage(128, 32, 32, 3);
+    Tensor4D<i64> e(128, 10, 1, 1);
+
+    model.forward(trainImage);
+    std::cout << ">>>>>>> FORWARD DONE <<<<<<<<" << std::endl;
+    model.backward(e);
+
+    double gb = 1024ULL * 1024 * 1024 * 8ULL;
+    std::cout << "Server key size: " << LlamaKey<i64>::serverkeysize / gb << std::endl;
+    std::cout << "Client key size: " << LlamaKey<i64>::clientkeysize / gb << std::endl;
+
+}
+
 int main() {
     // std::cout << std::fixed;
     // std::cout << std::setprecision(20);
-    srand(time(NULL));
+    // keysize_llama();
+    // vgg16_keysize_llama();
     load_mnist();
-    // main_float();
+    main_float();
     main_int();
     // test_conv_float();
 }

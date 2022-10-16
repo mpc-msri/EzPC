@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <cassert>
 #include <Eigen/Dense>
+#include <iostream>
 
 typedef uint64_t u64;
 typedef int64_t i64;
@@ -35,27 +36,6 @@ public:
     T &operator()(u64 i) const {
         assert(i < this->size);
         return this->data[i];
-    }
-
-    void updateBias(const Tensor4D<T> &e, float lr, u64 scale) {
-        // assert(e.d1 == 1);
-        assert(e.d2 == this->size);
-        assert(e.d3 == 1);
-        assert(e.d4 == 1);
-        for (u64 i = 0; i < this->size; i++) {
-            T sum = 0;
-            for(u64 j = 0; j < e.d1; ++j) {
-                sum = sum + e(j, i, 0, 0);
-            }
-            this->data[i] -= lr * sum * (1ULL << scale);
-        }
-    }
-
-    void updateBias(const Tensor<T> &grad, float lr, u64 scale) {
-        assert(grad.size == this->size);
-        for (u64 i = 0; i < this->size; i++) {
-            this->data[i] -= lr * grad(i) * (1ULL << scale);
-        }
     }
 
     void print() const {
@@ -105,16 +85,6 @@ public:
 
     ~Tensor2D() {
         delete[] this->data;
-    }
-
-    void updateWeight(const Tensor2D<T> &e, float lr) {
-        assert(this->d1 == e.d1);
-        assert(this->d2 == e.d2);
-        for(u64 i = 0; i < this->d1; i++) {
-            for(u64 j = 0; j < this->d2; j++) {
-                this->data[i * this->d2 + j] -= (T)(lr * e(i, j));
-            }
-        }
     }
 
     T& operator()(u64 i, u64 j) const {
@@ -210,12 +180,6 @@ public:
         memcpy(data, other.data, d1 * d2 * d3 * d4 * sizeof(T));
     }
 
-    void randomize(double range) {
-        for (u64 i = 0; i < d1 * d2 * d3 * d4; i++) {
-            data[i] = (T)range;
-        }
-    }
- 
     T& operator()(u64 i, u64 j, u64 k, u64 l) const {
         assert(i < d1);
         assert(j < d2);
@@ -234,22 +198,6 @@ public:
             }
         }
         std::swap(d1, d2);
-    }
-
-    void updateWeight(const Tensor4D<T> &grad, float learningRate) {
-        assert(d1 == grad.d1);
-        assert(d2 == grad.d2);
-        assert(d3 == grad.d3);
-        assert(d4 == grad.d4);
-        for (u64 i = 0; i < d1; i++) {
-            for (u64 j = 0; j < d2; j++) {
-                for (u64 k = 0; k < d3; k++) {
-                    for (u64 l = 0; l < d4; l++) {
-                        data[i * d2 * d3 * d4 + j * d3 * d4 + k * d4 + l] -= learningRate * grad(i, j, k, l);
-                    }
-                }
-            }
-        }
     }
 
     void print() const {

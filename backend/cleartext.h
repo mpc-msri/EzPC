@@ -3,6 +3,8 @@
 
 template <typename T>
 class ClearText {
+    static const u64 lr_fp = 1;
+    static const u64 lr_scale = 7;
 
 public:
 
@@ -117,6 +119,43 @@ public:
                     }
                 }
             }
+        }
+    }
+
+    static void updateWeight(Tensor2D<T> &weight, const Tensor2D<T> &e, u64 scale) {
+        assert(weight.d1 == e.d1);
+        assert(weight.d2 == e.d2);
+        for(int i = 0; i < weight.d1; i++) {
+            for(int j = 0; j < weight.d2; j++) {
+                e(i, j) = e(i, j) * lr_fp;
+            }
+        }
+        truncate(e, scale+lr_scale);
+        for(u64 i = 0; i < weight.d1; i++) {
+            for(u64 j = 0; j < weight.d2; j++) {
+                weight.data[i * weight.d2 + j] -= e(i, j);
+            }
+        }
+    }
+
+    static void updateBias(Tensor<T> &bias, const Tensor4D<T> &e, u64 scale) {
+        // assert(e.d1 == 1);
+        assert(e.d2 == bias.size);
+        assert(e.d3 == 1);
+        assert(e.d4 == 1);
+        for (u64 i = 0; i < bias.size; i++) {
+            T sum = 0;
+            for(u64 j = 0; j < e.d1; ++j) {
+                sum = sum + e(j, i, 0, 0);
+            }
+            bias.data[i] -= lr_fp * sum * (1ULL << (scale-lr_scale));
+        }
+    }
+
+    static void updateBias(Tensor<T> &bias, const Tensor<T> &grad, u64 scale) {
+        assert(grad.size == bias.size);
+        for (u64 i = 0; i < bias.size; i++) {
+            bias.data[i] -= lr_fp * grad(i) * (1ULL << (scale-lr_scale));
         }
     }
 
