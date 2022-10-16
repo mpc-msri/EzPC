@@ -352,4 +352,57 @@ public:
         div(in, (T)(ks*ks));
     }
 
+    static void maxPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> &in, Tensor4D<T> &out, Tensor4D<u64> &maxIdx) {
+        assert(in.d1 == out.d1);
+        assert(in.d4 == out.d4);
+        u64 newH = (in.d2 + 2*padding - ks)/stride + 1;
+        u64 newW = (in.d3 + 2*padding - ks)/stride + 1;
+        assert(out.d2 == newH);
+        assert(out.d3 == newW);
+        for(int i = 0; i < in.d1; i++) {
+            for(int j = 0; j < newH; j++) {
+                for(int k = 0; k < newW; k++) {
+                    for(int l = 0; l < in.d4; l++) {
+                        T max = std::numeric_limits<T>::lowest();
+                        u64 maxIdxI = 0;
+                        u64 maxIdxJ = 0;
+                        for(int m = 0; m < ks; m++) {
+                            for(int n = 0; n < ks; n++) {
+                                T val = in(i, j*stride+m, k*stride+n, l);
+                                if(val > max) {
+                                    max = val;
+                                    maxIdxI = m;
+                                    maxIdxJ = n;
+                                }
+                            }
+                        }
+                        out(i, j, k, l) = max;
+                        maxIdx(i, j, k, l) = maxIdxI * ks + maxIdxJ;
+                    }
+                }
+            }
+        }
+    }
+
+    static void maxPool2DInputGrad(u64 ks, u64 padding, u64 stride, Tensor4D<T> &in, const Tensor4D<T> &out, const Tensor4D<u64> &maxIdx) {
+        assert(in.d1 == out.d1);
+        assert(in.d4 == out.d4);
+        u64 newH = (in.d2 + 2*padding - ks)/stride + 1;
+        u64 newW = (in.d3 + 2*padding - ks)/stride + 1;
+        assert(out.d2 == newH);
+        assert(out.d3 == newW);
+        in.zero();
+        for(int i = 0; i < in.d1; i++) {
+            for(int j = 0; j < newH; j++) {
+                for(int k = 0; k < newW; k++) {
+                    for(int l = 0; l < in.d4; l++) {
+                        u64 maxIdxI = maxIdx(i, j, k, l) / ks;
+                        u64 maxIdxJ = maxIdx(i, j, k, l) % ks;
+                        in(i, j*stride+maxIdxI, k*stride+maxIdxJ, l) += out(i, j, k, l);
+                    }
+                }
+            }
+        }
+    }
+
 };
