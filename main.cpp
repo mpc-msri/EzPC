@@ -80,10 +80,10 @@ void main_int() {
     auto model = Sequential<i64>({
         new Conv2D<i64, scale, true>(1, 6, 5, 1, 1),
         new ReLUTruncate<i64>(scale),
-        new AvgPool2D<i64>(2),
+        new MaxPool2D<i64>(2),
         new Conv2D<i64, scale>(6, 16, 5, 1),
         new ReLUTruncate<i64>(scale),
-        new AvgPool2D<i64>(2),
+        new MaxPool2D<i64>(2),
         new Conv2D<i64, scale>(16, 120, 5),
         new ReLUTruncate<i64>(scale),
         new Flatten<i64>(),
@@ -207,7 +207,7 @@ void keysize_llama() {
 
 }
 
-void vgg16_keysize_llama() {
+void vgg16_piranha_keysize_llama() {
     LlamaKey<i64>::serverkeysize = 0;
     LlamaKey<i64>::clientkeysize = 0;
     auto model = Sequential<i64>({
@@ -268,9 +268,9 @@ int main() {
     // std::cout << std::fixed;
     // std::cout << std::setprecision(20);
     // keysize_llama();
-    // vgg16_keysize_llama();
+    vgg16_piranha_keysize_llama();
     load_mnist();
-    main_float();
+    // main_float();
     main_int();
     // test_conv_float();
 }

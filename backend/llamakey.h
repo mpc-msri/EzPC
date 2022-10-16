@@ -12,6 +12,7 @@ public:
     static constexpr double gb = 1024ULL * 1024ULL * 1024ULL * 8ULL;
     static const u64 lr_fp = 1;
     static const u64 lr_scale = 7;
+    static const bool verbose = false;
 
 private:
     static u64 dcfcost(u64 bin, u64 bout) {
@@ -65,7 +66,7 @@ public:
         assert(a.d2 == b.d1);
         assert(c.d1 == a.d1);
         assert(c.d2 == b.d2);
-        std::cout << "matmul key size (server) = " << bw * (a.d1 * a.d2 + b.d1 * b.d2 + c.d1 * c.d2) / gb << std::endl;
+        if (verbose) std::cout << "matmul key size (server) = " << bw * (a.d1 * a.d2 + b.d1 * b.d2 + c.d1 * c.d2) / gb << std::endl;
         serverkeysize += bw * (a.d1 * a.d2 + b.d1 * b.d2 + c.d1 * c.d2);
     }
 
@@ -77,7 +78,7 @@ public:
         assert(c.d2 == b.d2);
         assert(c.d3 == 1);
         assert(c.d4 == 1);
-        std::cout << "matmul key size (server) = " << bw * (a.d1 * a.d2 + b.d1 * b.d2 + c.d1 * c.d2) / gb << std::endl;
+        if (verbose) std::cout << "matmul key size (server) = " << bw * (a.d1 * a.d2 + b.d1 * b.d2 + c.d1 * c.d2) / gb << std::endl;
         serverkeysize += bw * (a.d1 * a.d2 + b.d1 * b.d2 + c.d1 * c.d2);
     }
 
@@ -90,7 +91,7 @@ public:
         assert(c.d1 == a.d2);
         assert(c.d2 == b.d2);
     //    c.zero();
-        std::cout << "matmul key size (server) = " << bw * (a.d1 * a.d2 + b.d1 * b.d2 + c.d1 * c.d2) / gb << std::endl;
+        if (verbose) std::cout << "matmul key size (server) = " << bw * (a.d1 * a.d2 + b.d1 * b.d2 + c.d1 * c.d2) / gb << std::endl;
         serverkeysize += bw * (a.d1 * a.d2 + b.d1 * b.d2 + c.d1 * c.d2);
     }
 
@@ -102,7 +103,7 @@ public:
         assert(c.d2 == b.d1);
         assert(c.d3 == 1);
         assert(c.d4 == 1);
-        std::cout << "matmul key size (server) = " << bw * (a.d1 * a.d2 + b.d1 * b.d2 + c.d1 * c.d2) / gb << std::endl;
+        if (verbose) std::cout << "matmul key size (server) = " << bw * (a.d1 * a.d2 + b.d1 * b.d2 + c.d1 * c.d2) / gb << std::endl;
         serverkeysize += bw * (a.d1 * a.d2 + b.d1 * b.d2 + c.d1 * c.d2);
     }
 
@@ -110,7 +111,7 @@ public:
         assert(a.d2 == b.d2);
         assert(c.d1 == a.d1);
         assert(c.d2 == b.d1);
-        std::cout << "matmul key size (server) = " << bw * (a.d1 * a.d2 + b.d1 * b.d2 + c.d1 * c.d2) / gb << std::endl;
+        if (verbose) std::cout << "matmul key size (server) = " << bw * (a.d1 * a.d2 + b.d1 * b.d2 + c.d1 * c.d2) / gb << std::endl;
         serverkeysize += bw * (a.d1 * a.d2 + b.d1 * b.d2 + c.d1 * c.d2);
     }
 
@@ -127,7 +128,7 @@ public:
         assert(output.d3 == newW);
         assert(output.d4 == co);
 
-        std::cout << "conv2D key size (server) = " << bw * (input.d1 * input.d2 * input.d3 * input.d4 + filter.d1 * filter.d2 + output.d1 * output.d2 * output.d3 * output.d4) / gb << std::endl;
+        if (verbose) std::cout << "conv2D key size (server) = " << bw * (input.d1 * input.d2 * input.d3 * input.d4 + filter.d1 * filter.d2 + output.d1 * output.d2 * output.d3 * output.d4) / gb << std::endl;
         serverkeysize += bw * (input.d1 * input.d2 * input.d3 * input.d4 + filter.d1 * filter.d2 + output.d1 * output.d2 * output.d3 * output.d4);
     }
 
@@ -143,7 +144,7 @@ public:
         assert(output.d3 == newW);
         assert(output.d4 == co);
         
-        std::cout << "conv2D key size (server) = " << bw * (input.d1 * input.d2 * input.d3 * input.d4 + filter.d1 * filter.d2 + output.d1 * output.d2 * output.d3 * output.d4) / gb << std::endl;
+        if (verbose) std::cout << "conv2D key size (server) = " << bw * (input.d1 * input.d2 * input.d3 * input.d4 + filter.d1 * filter.d2 + output.d1 * output.d2 * output.d3 * output.d4) / gb << std::endl;
         serverkeysize += 64 * (input.d1 * input.d2 * input.d3 * input.d4 + filter.d1 * filter.d2 + output.d1 * output.d2 * output.d3 * output.d4);
     }
 
@@ -159,7 +160,7 @@ public:
         // step 2 : delta = e * lr (free)
         // step 3 : truncate(delta)
         u64 cost = weight.d1 * weight.d2 * truncatecost(bw, scale+lr_scale);
-        std::cout << "updateWeight key size = " << cost / gb << std::endl;
+        if (verbose) std::cout << "updateWeight key size = " << cost / gb << std::endl;
         serverkeysize += cost;
         clientkeysize += cost;
         // step 4 : weight = weight - delta (free)
@@ -213,7 +214,7 @@ public:
         assert(in.d3 == drelu.d3);
         assert(in.d4 == drelu.d4);
         u64 cost = in.d1 * in.d2 * in.d3 * in.d4 * truncatecost(bw, shift);
-        std::cout << "relutruncate key size = " << cost / gb << std::endl;
+        if (verbose) std::cout << "relutruncate key size = " << cost / gb << std::endl;
         serverkeysize += cost;
         clientkeysize += cost;
     }
@@ -228,7 +229,7 @@ public:
         assert(in.d3 == drelu.d3);
         assert(in.d4 == drelu.d4);
         u64 cost = in.d1 * in.d2 * in.d3 * in.d4 * relucost(bw);
-        std::cout << "relu key size = " << cost / gb << std::endl;
+        if (verbose) std::cout << "relu key size = " << cost / gb << std::endl;
         serverkeysize += cost;
         clientkeysize += cost;
     }
@@ -243,7 +244,7 @@ public:
         assert(in.d3 == drelu.d3);
         assert(in.d4 == drelu.d4);
         u64 cost = in.d1 * in.d2 * in.d3 * in.d4 * selectcost(bw);
-        std::cout << "select key size = " << cost / gb << std::endl;
+        if (verbose) std::cout << "select key size = " << cost / gb << std::endl;
         serverkeysize += cost;
         clientkeysize += cost;
     }
@@ -254,7 +255,7 @@ public:
         assert(in.d3 == out.d3);
         assert(in.d4 == out.d4);
         u64 cost = in.d1 * in.d2 * in.d3 * in.d4 * truncatecost(bw, shift);
-        std::cout << "truncate key size = " << cost / gb << std::endl;
+        if (verbose) std::cout << "truncate key size = " << cost / gb << std::endl;
         serverkeysize += cost;
         clientkeysize += cost;
     }
@@ -265,7 +266,7 @@ public:
 
     static void truncate(const Tensor2D<T> &in, u64 shift) {
         u64 cost = in.d1 * in.d2 * truncatecost(bw, shift);
-        std::cout << "truncate key size = " << cost / gb << std::endl;
+        if (verbose) std::cout << "truncate key size = " << cost / gb << std::endl;
         serverkeysize += cost;
         clientkeysize += cost;
     }
