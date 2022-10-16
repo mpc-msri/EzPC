@@ -4,6 +4,7 @@
 #include "backend/cleartext.h"
 #include "backend/llama.h"
 #include "backend/llamakey.h"
+#include <string>
 
 template <typename T>
 #ifdef USE_CLEARTEXT
@@ -23,12 +24,13 @@ using DefaultBackend = ClearText<T>;
 template <typename T>
 class Layer {
 public:
+    std::string name;
     virtual void forward(const Tensor4D<T> &a) = 0;
     virtual void backward(const Tensor4D<T> &e) = 0;
     virtual void resize(u64 d1, u64 d2, u64 d3, u64 d4) = 0;
     Tensor4D<T> activation;
     Tensor4D<T> inputDerivative;
-    Layer() : activation(0,0,0,0), inputDerivative(0,0,0,0) {}
+    Layer(const std::string &id) : activation(0,0,0,0), inputDerivative(0,0,0,0), name(id) {}
 };
 
 template <typename T, u64 scale, bool isFirst = false, class Backend = DefaultBackend<T>>
@@ -41,7 +43,7 @@ public:
     Tensor<T> biasGrad;
     u64 ci, co, ks, padding, stride;
 
-    Conv2D(u64 ci, u64 co, u64 ks, u64 padding = 0, u64 stride = 1) : ci(ci), co(co), ks(ks), padding(padding), 
+    Conv2D(u64 ci, u64 co, u64 ks, u64 padding = 0, u64 stride = 1) : Layer<T>("Conv2D"), ci(ci), co(co), ks(ks), padding(padding), 
         stride(stride), filter(co, ks * ks * ci), filterGrad(co, ks * ks * ci), bias(co), biasGrad(co), inp(0,0,0,0)
     {
         static_assert(std::is_integral<T>::value || scale == 0);
@@ -93,7 +95,7 @@ class AvgPool2D : public Layer<T> {
 public:
     u64 ks, padding, stride;
 
-    AvgPool2D(u64 ks, u64 padding = 0, u64 _stride = 0) : ks(ks), padding(padding), stride(_stride == 0 ? ks : _stride) {}
+    AvgPool2D(u64 ks, u64 padding = 0, u64 _stride = 0) : Layer<T>("AvgPool2D"), ks(ks), padding(padding), stride(_stride == 0 ? ks : _stride) {}
 
     void forward(const Tensor4D<T> &a) {
         this->inputDerivative.resize(a.d1, a.d2, a.d3, a.d4);
@@ -122,7 +124,7 @@ public:
     u64 ks, padding, stride;
     Tensor4D<u64> maxIndex;
 
-    MaxPool2D(u64 ks, u64 padding = 0, u64 _stride = 0) : ks(ks), padding(padding), stride(_stride == 0 ? ks : _stride), maxIndex(0,0,0,0) {}
+    MaxPool2D(u64 ks, u64 padding = 0, u64 _stride = 0) : Layer<T>("MaxPool2D"), ks(ks), padding(padding), stride(_stride == 0 ? ks : _stride), maxIndex(0,0,0,0) {}
 
     void forward(const Tensor4D<T> &a) {
         this->inputDerivative.resize(a.d1, a.d2, a.d3, a.d4);
@@ -150,7 +152,7 @@ class Flatten : public Layer<T> {
 public:
     u64 d1, d2, d3, d4;
 
-    Flatten() {}
+    Flatten() : Layer<T>("Flatten") {}
 
     void forward(const Tensor4D<T> &a) {
         d1 = a.d1;
@@ -197,7 +199,7 @@ public:
     Tensor<T> bias;
     u64 in, out;
 
-    FC(u64 in, u64 out) : in(in), out(out), weight(in, out), bias(out), inp(0,0,0,0), weightGrad(0,0) {
+    FC(u64 in, u64 out) : Layer<T>("FC"), in(in), out(out), weight(in, out), bias(out), inp(0,0,0,0), weightGrad(0,0) {
         static_assert(std::is_integral<T>::value || scale == 0);
         double xavier = 1.0 / sqrt(in);
         weight.randomize(xavier * (1ULL<<scale));
@@ -237,7 +239,7 @@ class ReLUTruncate: public Layer<T> {
 public:
     u64 shift;
     Tensor4D<T> drelu;
-    ReLUTruncate(u64 shift) : shift(shift), drelu(0,0,0,0) {}
+    ReLUTruncate(u64 shift) : Layer<T>("ReLUTruncate"), shift(shift), drelu(0,0,0,0) {}
 
     void forward(const Tensor4D<T> &a) {
         // std::cout << "== Truncate forward ==" << std::endl;
@@ -268,7 +270,7 @@ template <typename T, class Backend = DefaultBackend<T>>
 class ReLU: public Layer<T> {
 public:
     Tensor4D<T> drelu;
-    ReLU() : drelu(0,0,0,0) {}
+    ReLU() :  Layer<T>("ReLU"), drelu(0,0,0,0) {}
 
     void forward(const Tensor4D<T> &a) {
         // std::cout << "== ReLU forward ==" << std::endl;
@@ -296,7 +298,7 @@ template <typename T, class Backend = DefaultBackend<T>>
 class Truncate: public Layer<T> {
 public:
     u64 shift;
-    Truncate(u64 shift) : shift(shift) {}
+    Truncate(u64 shift) : Layer<T>("Truncate"), shift(shift) {}
 
     void forward(const Tensor4D<T> &a) {
         this->activation.resize(a.d1, a.d2, a.d3, a.d4);
@@ -320,7 +322,19 @@ class Sequential : public Layer<T> {
 public:
     std::vector<Layer<T>*> layers;
     
-    Sequential(std::vector<Layer<T>*> layers) : layers(layers) {}
+    Sequential(std::vector<Layer<T>*> _layers) : Layer<T>("Sequential"), layers(_layers) {
+        int s = layers.size();
+        
+        // Optimization: ReLU-MaxPool
+        for(int i = 0; i < s - 1; i++) {
+            if (layers[i+1]->name == "MaxPool2D") {
+                auto &n = layers[i]->name;
+                if (n == "ReLU" || n == "ReLUTruncate" || n == "Truncate") {
+                    std::swap(layers[i], layers[i+1]);
+                }
+            }
+        }
+    }
     
     void forward(const Tensor4D<T> &a) {
         layers[0]->forward(a);

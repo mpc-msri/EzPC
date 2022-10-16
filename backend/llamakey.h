@@ -303,6 +303,32 @@ public:
         div(in, (T)(ks*ks));
     }
 
+    static void maxPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> &in, Tensor4D<T> &out, Tensor4D<u64> &maxIdx) {
+        assert(in.d1 == out.d1);
+        assert(in.d4 == out.d4);
+        u64 newH = (in.d2 + 2*padding - ks)/stride + 1;
+        u64 newW = (in.d3 + 2*padding - ks)/stride + 1;
+        assert(out.d2 == newH);
+        assert(out.d3 == newW);
+        u64 cost = out.d1 * out.d2 * out.d3 * out.d4 * (ks * ks - 1) * maxcost(bw);
+        if (verbose) std::cout << "maxpool key size = " << cost / gb << std::endl;
+        serverkeysize += cost;
+        clientkeysize += cost;
+    }
+
+    static void maxPool2DInputGrad(u64 ks, u64 padding, u64 stride, Tensor4D<T> &in, const Tensor4D<T> &out, const Tensor4D<u64> &maxIdx) {
+        assert(in.d1 == out.d1);
+        assert(in.d4 == out.d4);
+        u64 newH = (in.d2 + 2*padding - ks)/stride + 1;
+        u64 newW = (in.d3 + 2*padding - ks)/stride + 1;
+        assert(out.d2 == newH);
+        assert(out.d3 == newW);
+        u64 cost = out.d1 * out.d2 * out.d3 * out.d4 * (ks * ks - 1) * selectcost(bw);
+        if (verbose) std::cout << "maxpool key size = " << cost / gb << std::endl;
+        serverkeysize += cost;
+        clientkeysize += cost;
+    }
+
 };
 
 template<typename T>

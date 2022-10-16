@@ -1,4 +1,4 @@
-#define USE_LLAMA
+#define USE_CLEARTEXT
 
 #include <iostream>
 #include <vector>
@@ -13,7 +13,7 @@ const u64 scale = 24;
 const u64 numEpochs = 5;
 const u64 batchSize = 100;
 
-void main_float() {
+void lenet_float() {
 
     srand(time(NULL));
     std::cout << "=== Running Floating Point Training ===" << std::endl;
@@ -72,7 +72,7 @@ void main_float() {
     }
 }
 
-void main_int() {
+void lenet_int() {
 
     srand(time(NULL));
     std::cout << "=== Running Fixed-Point Training ===" << std::endl;
@@ -176,19 +176,22 @@ void test_conv_float()
     conv1->inputDerivative.print();
 }
 
-void keysize_llama() {
+void threelayer_keysize_llama() {
     LlamaKey<i64>::serverkeysize = 0;
     LlamaKey<i64>::clientkeysize = 0;
     auto model = Sequential<i64>({
         new Conv2D<i64, scale, true, LlamaKey<i64>>(3, 64, 5, 1),
         new ReLUTruncate<i64, LlamaKey<i64>>(scale),
-        new AvgPool2D<i64, LlamaKey<i64>>(3, 0, 2),
+        // new AvgPool2D<i64, LlamaKey<i64>>(3, 0, 2),
+        new MaxPool2D<i64, LlamaKey<i64>>(3, 0, 2),
         new Conv2D<i64, scale, false, LlamaKey<i64>>(64, 64, 5, 1),
         new ReLUTruncate<i64, LlamaKey<i64>>(scale),
-        new AvgPool2D<i64, LlamaKey<i64>>(3, 0, 2),
+        // new AvgPool2D<i64, LlamaKey<i64>>(3, 0, 2),
+        new MaxPool2D<i64, LlamaKey<i64>>(3, 0, 2),
         new Conv2D<i64, scale, false, LlamaKey<i64>>(64, 64, 5, 1),
         new ReLUTruncate<i64, LlamaKey<i64>>(scale),
-        new AvgPool2D<i64, LlamaKey<i64>>(3, 0, 2),
+        // new AvgPool2D<i64, LlamaKey<i64>>(3, 0, 2),
+        new MaxPool2D<i64, LlamaKey<i64>>(3, 0, 2),
         new Flatten<i64>(),
         new FC<i64, scale, false, LlamaKey<i64>>(64, 10),
         new Truncate<i64, LlamaKey<i64>>(scale),
@@ -267,10 +270,15 @@ void vgg16_piranha_keysize_llama() {
 int main() {
     // std::cout << std::fixed;
     // std::cout << std::setprecision(20);
-    // keysize_llama();
-    vgg16_piranha_keysize_llama();
+#ifdef NDEBUG
+    std::cout << "Release Build" << std::endl;
+#else
+    std::cout << "Debug Build" << std::endl;
+#endif
+    // threelayer_keysize_llama();
+    // vgg16_piranha_keysize_llama();
     load_mnist();
-    // main_float();
-    main_int();
+    // lenet_float();
+    lenet_int();
     // test_conv_float();
 }
