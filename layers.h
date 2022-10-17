@@ -33,9 +33,10 @@ public:
     Layer(const std::string &id) : activation(0,0,0,0), inputDerivative(0,0,0,0), name(id) {}
     virtual Tensor2D<T>& getweights() { throw std::runtime_error("not implemented"); };
     virtual Tensor<T>& getbias() { throw std::runtime_error("not implemented"); };
+    bool isFirst = false;
 };
 
-template <typename T, u64 scale, bool isFirst = false, class Backend = DefaultBackend<T>>
+template <typename T, u64 scale, class Backend = DefaultBackend<T>>
 class Conv2D : public Layer<T> {
 public:
     Tensor4D<T> inp;
@@ -73,7 +74,7 @@ public:
         assert(e.d4 == this->activation.d4);
         Backend::conv2DFilterGrad(ks, ks, padding, stride, ci, co, inp, filterGrad, e);
         Backend::conv2DBiasGrad(e, biasGrad);
-        if (!isFirst) {
+        if (!(this->isFirst)) {
             Backend::conv2DInputGrad(ks, ks, padding, stride, ci, co, this->inputDerivative, filter, e);
             Backend::truncate(this->inputDerivative, scale);
         }
@@ -95,7 +96,7 @@ public:
     Tensor<T>& getbias() { return bias; }
 };
 
-template <typename T, class Backend = DefaultBackend<T>>
+template <typename T, u64 scale, class Backend = DefaultBackend<T>>
 class AvgPool2D : public Layer<T> {
 public:
     u64 ks, padding, stride;
@@ -105,7 +106,7 @@ public:
     void forward(const Tensor4D<T> &a) {
         this->inputDerivative.resize(a.d1, a.d2, a.d3, a.d4);
         this->activation.resize(a.d1, (a.d2 + 2*padding - ks)/stride + 1, (a.d3 + 2*padding - ks)/stride + 1, a.d4);
-        Backend::avgPool2D(ks, padding, stride, a, this->activation);
+        Backend::avgPool2D(ks, padding, stride, a, this->activation, scale);
     }
 
     void backward(const Tensor4D<T> &e) {
@@ -113,7 +114,7 @@ public:
         assert(e.d2 == this->activation.d2);
         assert(e.d3 == this->activation.d3);
         assert(e.d4 == this->activation.d4);
-        Backend::avgPool2DInputGrad(ks, padding, stride, this->inputDerivative, e);
+        Backend::avgPool2DInputGrad(ks, padding, stride, this->inputDerivative, e, scale);
     }
 
     void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
@@ -332,6 +333,13 @@ public:
     
     Sequential(std::vector<Layer<T>*> _layers) : Layer<T>("Sequential"), layers(_layers) {
         int s = layers.size();
+        // Set isFirst
+        for(int i = 0; i < s; ++i) {
+            if (layers[i]->name == "Conv2D" || layers[i]->name == "FC") {
+                layers[i]->isFirst = true;
+                break;
+            }
+        }
         
         // Optimization: ReLU-MaxPool
         for(int i = 0; i < s - 1; i++) {

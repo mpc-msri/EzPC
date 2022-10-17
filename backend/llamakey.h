@@ -7,12 +7,12 @@ class LlamaKey {
 public:
     static u64 serverkeysize; // in bits
     static u64 clientkeysize; // in bits
-    static const u64 bw = 64;
-    static const bool probablistic = true;
+    static u64 bw;
+    static bool probablistic;
     static constexpr double gb = 1024ULL * 1024ULL * 1024ULL * 8ULL;
     static const u64 lr_fp = 1;
     static const u64 lr_scale = 7;
-    static const bool verbose = false;
+    static bool verbose;
 
 private:
     static u64 dcfcost(u64 bin, u64 bout) {
@@ -37,6 +37,7 @@ private:
             return signextcost(bin-s, bin);
         }
         return truncatereducecost(bin, s) + signextcost(bin-s, bin);
+        // return dcfcost(s, bin) + dcfcost(bin - 1, 2*bin); // this is what we currently do
     }
 
     static u64 relutruncatecost(u64 bin, u64 s) {
@@ -44,7 +45,8 @@ private:
             return dcfcost(bin, 1) + selectcost(bin);
         }
         else {
-            return dcfcost(bin, bin) + dcfcost(s, bin) + selectcost(bin) + bin;
+            // return dcfcost(bin, bin) + dcfcost(s, bin) + selectcost(bin) + bin;
+            return dcfcost(bin, s) + dcfcost(s, bin) + selectcost(bin) + bin; // after neha's fix
         }
     }
 
@@ -271,8 +273,17 @@ public:
         clientkeysize += cost;
     }
 
-    static void div(const Tensor4D<T> &in, T divisor) {
-       
+    static void div(const Tensor4D<T> &in, T divisor, u64 scale) {
+        if (__builtin_popcount(divisor) == 1) {
+            // if divisor is a power of 2, we can increase the shift of a later truncate layer and we get it for free (if we use probablistic truncation)
+            if (verbose) std::cout << "div key size = " << 0 << std::endl;
+        }
+        else {
+            u64 cost = in.d1 * in.d2 * in.d3 * in.d4 * truncatecost(bw, scale);
+            if (verbose) std::cout << "div key size = " << cost / gb << std::endl;
+            serverkeysize += cost;
+            clientkeysize += cost;
+        }
     }
 
     static void sumPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> &in, Tensor4D<T> &out) {
@@ -284,9 +295,9 @@ public:
         assert(out.d3 == newW);
     }
 
-    static void avgPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> &in, Tensor4D<T> &out) {
+    static void avgPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> &in, Tensor4D<T> &out, u64 scale) {
         sumPool2D(ks, padding, stride, in, out);
-        div(out, (T)(ks*ks));
+        div(out, (T)(ks*ks), scale);
     }
 
     static void sumPool2DInputGrad(u64 ks, u64 padding, u64 stride, Tensor4D<T> &in, const Tensor4D<T> &out) {
@@ -298,9 +309,9 @@ public:
         assert(out.d3 == newW);
     }
 
-    static void avgPool2DInputGrad(u64 ks, u64 padding, u64 stride, Tensor4D<T> &in, const Tensor4D<T> &out) {
+    static void avgPool2DInputGrad(u64 ks, u64 padding, u64 stride, Tensor4D<T> &in, const Tensor4D<T> &out, u64 scale) {
         sumPool2DInputGrad(ks, padding, stride, in, out);
-        div(in, (T)(ks*ks));
+        div(in, (T)(ks*ks), scale);
     }
 
     static void maxPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> &in, Tensor4D<T> &out, Tensor4D<u64> &maxIdx) {
@@ -311,6 +322,7 @@ public:
         assert(out.d2 == newH);
         assert(out.d3 == newW);
         u64 cost = out.d1 * out.d2 * out.d3 * out.d4 * (ks * ks - 1) * maxcost(bw);
+        cost += out.d1 * out.d2 * out.d3 * out.d4 * (2 * ks * ks - 3) * 4;
         if (verbose) std::cout << "maxpool key size = " << cost / gb << std::endl;
         serverkeysize += cost;
         clientkeysize += cost;
@@ -336,3 +348,12 @@ u64 LlamaKey<T>::serverkeysize = 0;
 
 template<typename T>
 u64 LlamaKey<T>::clientkeysize = 0;
+
+template<typename T>
+bool LlamaKey<T>::probablistic = true;
+
+template<typename T>
+bool LlamaKey<T>::verbose = false;
+
+template<typename T>
+u64 LlamaKey<T>::bw = 64;

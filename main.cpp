@@ -19,12 +19,12 @@ void lenet_float() {
     std::cout << "=== Running Floating Point Training ===" << std::endl;
 
     auto model = Sequential<double>({
-        new Conv2D<double, 0, true>(1, 6, 5, 1, 1),
+        new Conv2D<double, 0>(1, 6, 5, 1, 1),
         new ReLU<double>(),
-        new AvgPool2D<double>(2),
+        new AvgPool2D<double, 0>(2),
         new Conv2D<double, 0>(6, 16, 5, 1),
         new ReLU<double>(),
-        new AvgPool2D<double>(2),
+        new AvgPool2D<double, 0>(2),
         new Conv2D<double, 0>(16, 120, 5),
         new ReLU<double>(),
         new Flatten<double>(),
@@ -78,7 +78,7 @@ void lenet_int() {
     std::cout << "=== Running Fixed-Point Training ===" << std::endl;
 
     auto model = Sequential<i64>({
-        new Conv2D<i64, scale, true>(1, 6, 5, 1, 1),
+        new Conv2D<i64, scale>(1, 6, 5, 1, 1),
         new ReLUTruncate<i64>(scale),
         new MaxPool2D<i64>(2),
         new Conv2D<i64, scale>(6, 16, 5, 1),
@@ -136,7 +136,7 @@ void test_conv_float()
 {
     std::cout << "=== Running Floating Point CNN Training ===" << std::endl;
     auto conv1 = new Conv2D<double, 0>(1, 1, 2, 1, 1);
-    auto avgpool1 = new AvgPool2D<double>(2, 0, 2);
+    auto avgpool1 = new AvgPool2D<double, 0>(2, 0, 2);
 
     auto model = Sequential<double>({
         conv1,
@@ -176,78 +176,95 @@ void test_conv_float()
     conv1->inputDerivative.print();
 }
 
+#define useMaxPool true
 void threelayer_keysize_llama() {
-    LlamaKey<i64>::serverkeysize = 0;
-    LlamaKey<i64>::clientkeysize = 0;
+
+    LlamaKey<i64>::verbose = false;
+    LlamaKey<i64>::probablistic = true;
+    LlamaKey<i64>::bw = 43;
+    const u64 minibatch = 128;
+
     auto model = Sequential<i64>({
-        new Conv2D<i64, scale, false, LlamaKey<i64>>(3, 64, 5, 1),
+        new Conv2D<i64, scale, LlamaKey<i64>>(3, 64, 5, 1),
         new ReLUTruncate<i64, LlamaKey<i64>>(scale),
-        // // new AvgPool2D<i64, LlamaKey<i64>>(3, 0, 2),
-        // new MaxPool2D<i64, LlamaKey<i64>>(3, 0, 2),
-        // new Conv2D<i64, scale, false, LlamaKey<i64>>(64, 64, 5, 1),
-        // new ReLUTruncate<i64, LlamaKey<i64>>(scale),
-        // // new AvgPool2D<i64, LlamaKey<i64>>(3, 0, 2),
-        // new MaxPool2D<i64, LlamaKey<i64>>(3, 0, 2),
-        // new Conv2D<i64, scale, false, LlamaKey<i64>>(64, 64, 5, 1),
-        // new ReLUTruncate<i64, LlamaKey<i64>>(scale),
-        // // new AvgPool2D<i64, LlamaKey<i64>>(3, 0, 2),
-        // new MaxPool2D<i64, LlamaKey<i64>>(3, 0, 2),
-        // new Flatten<i64>(),
-        // new FC<i64, scale, false, LlamaKey<i64>>(64, 10),
-        // new Truncate<i64, LlamaKey<i64>>(scale),
+#if useMaxPool
+        new MaxPool2D<i64, LlamaKey<i64>>(3, 0, 2),
+#else
+        new AvgPool2D<i64, scale, LlamaKey<i64>>(3, 0, 2),
+#endif
+        new Conv2D<i64, scale, LlamaKey<i64>>(64, 64, 5, 1),
+        new ReLUTruncate<i64, LlamaKey<i64>>(scale),
+#if useMaxPool
+        new MaxPool2D<i64, LlamaKey<i64>>(3, 0, 2),
+#else
+        new AvgPool2D<i64, scale, LlamaKey<i64>>(3, 0, 2),
+#endif
+        new Conv2D<i64, scale, LlamaKey<i64>>(64, 64, 5, 1),
+        new ReLUTruncate<i64, LlamaKey<i64>>(scale),
+#if useMaxPool
+        new MaxPool2D<i64, LlamaKey<i64>>(3, 0, 2),
+#else
+        new AvgPool2D<i64, scale, LlamaKey<i64>>(3, 0, 2),
+#endif
+        new Flatten<i64>(),
+        new FC<i64, scale, false, LlamaKey<i64>>(64, 10),
+        new Truncate<i64, LlamaKey<i64>>(scale),
     });
 
     double gb = 1024ULL * 1024 * 1024 * 8ULL;
-    Tensor4D<i64> trainImage(2, 32, 32, 3);
 
-    model.forward(trainImage);
-    model.activation.printshape();
-    Tensor4D<i64> e(2, model.activation.d2, model.activation.d3, model.activation.d4);
-    std::cout << ">>>>>>> FORWARD DONE <<<<<<<<" << std::endl;
-    std::cout << "Server key size: " << LlamaKey<i64>::serverkeysize << std::endl;
-    std::cout << "Client key size: " << LlamaKey<i64>::clientkeysize << std::endl;
+    Tensor4D<i64> trainImage(minibatch, 32, 32, 3);
     LlamaKey<i64>::serverkeysize = 0;
     LlamaKey<i64>::clientkeysize = 0;
+    std::cout << ">>>>>>> FORWARD START<<<<<<<<" << std::endl;
+    model.forward(trainImage);
+    std::cout << ">>>>>>> FORWARD DONE <<<<<<<<" << std::endl;
+    std::cout << "Server key size: " << LlamaKey<i64>::serverkeysize / gb << " GB" << std::endl;
+    std::cout << "Client key size: " << LlamaKey<i64>::clientkeysize / gb << " GB" << std::endl;
+    Tensor4D<i64> e(minibatch, model.activation.d2, model.activation.d3, model.activation.d4);
+    LlamaKey<i64>::serverkeysize = 0;
+    LlamaKey<i64>::clientkeysize = 0;
+    std::cout << ">>>>>>> BACKWARD START <<<<<<<<" << std::endl;
     model.backward(e);
     std::cout << ">>>>>>> BACKWARD DONE <<<<<<<<" << std::endl;
-    std::cout << "Server key size: " << LlamaKey<i64>::serverkeysize << std::endl;
-    std::cout << "Client key size: " << LlamaKey<i64>::clientkeysize << std::endl;
+    std::cout << "Server key size: " << LlamaKey<i64>::serverkeysize / gb << " GB" << std::endl;
+    std::cout << "Client key size: " << LlamaKey<i64>::clientkeysize / gb << " GB" << std::endl;
 }
 
 void vgg16_piranha_keysize_llama() {
     LlamaKey<i64>::serverkeysize = 0;
     LlamaKey<i64>::clientkeysize = 0;
     auto model = Sequential<i64>({
-        new Conv2D<i64, scale, true, LlamaKey<i64>>(3, 64, 3, 1),
+        new Conv2D<i64, scale, LlamaKey<i64>>(3, 64, 3, 1),
         new ReLUTruncate<i64, LlamaKey<i64>>(scale),
-        new Conv2D<i64, scale, false, LlamaKey<i64>>(64, 64, 3, 1),
-        new AvgPool2D<i64, LlamaKey<i64>>(2, 0, 2),
+        new Conv2D<i64, scale, LlamaKey<i64>>(64, 64, 3, 1),
+        new AvgPool2D<i64, scale, LlamaKey<i64>>(2, 0, 2),
         new ReLUTruncate<i64, LlamaKey<i64>>(scale),
-        new Conv2D<i64, scale, false, LlamaKey<i64>>(64, 128, 3, 1),
+        new Conv2D<i64, scale, LlamaKey<i64>>(64, 128, 3, 1),
         new ReLUTruncate<i64, LlamaKey<i64>>(scale),
-        new Conv2D<i64, scale, false, LlamaKey<i64>>(128, 128, 3, 1),
-        new AvgPool2D<i64, LlamaKey<i64>>(2, 0, 2),
+        new Conv2D<i64, scale, LlamaKey<i64>>(128, 128, 3, 1),
+        new AvgPool2D<i64, scale, LlamaKey<i64>>(2, 0, 2),
         new ReLUTruncate<i64, LlamaKey<i64>>(scale),
-        new Conv2D<i64, scale, false, LlamaKey<i64>>(128, 256, 3, 1),
+        new Conv2D<i64, scale, LlamaKey<i64>>(128, 256, 3, 1),
         new ReLUTruncate<i64, LlamaKey<i64>>(scale),
-        new Conv2D<i64, scale, false, LlamaKey<i64>>(256, 256, 3, 1),
+        new Conv2D<i64, scale, LlamaKey<i64>>(256, 256, 3, 1),
         new ReLUTruncate<i64, LlamaKey<i64>>(scale),
-        new Conv2D<i64, scale, false, LlamaKey<i64>>(256, 256, 3, 1),
-        new AvgPool2D<i64, LlamaKey<i64>>(2, 0, 2),
+        new Conv2D<i64, scale, LlamaKey<i64>>(256, 256, 3, 1),
+        new AvgPool2D<i64, scale, LlamaKey<i64>>(2, 0, 2),
         new ReLUTruncate<i64, LlamaKey<i64>>(scale),
-        new Conv2D<i64, scale, false, LlamaKey<i64>>(256, 512, 3, 1),
+        new Conv2D<i64, scale, LlamaKey<i64>>(256, 512, 3, 1),
         new ReLUTruncate<i64, LlamaKey<i64>>(scale),
-        new Conv2D<i64, scale, false, LlamaKey<i64>>(512, 512, 3, 1),
+        new Conv2D<i64, scale, LlamaKey<i64>>(512, 512, 3, 1),
         new ReLUTruncate<i64, LlamaKey<i64>>(scale),
-        new Conv2D<i64, scale, false, LlamaKey<i64>>(512, 512, 3, 1),
-        new AvgPool2D<i64, LlamaKey<i64>>(2, 0, 2),
+        new Conv2D<i64, scale, LlamaKey<i64>>(512, 512, 3, 1),
+        new AvgPool2D<i64, scale, LlamaKey<i64>>(2, 0, 2),
         new ReLUTruncate<i64, LlamaKey<i64>>(scale),
-        new Conv2D<i64, scale, false, LlamaKey<i64>>(512, 512, 3, 1),
+        new Conv2D<i64, scale, LlamaKey<i64>>(512, 512, 3, 1),
         new ReLUTruncate<i64, LlamaKey<i64>>(scale),
-        new Conv2D<i64, scale, false, LlamaKey<i64>>(512, 512, 3, 1),
+        new Conv2D<i64, scale, LlamaKey<i64>>(512, 512, 3, 1),
         new ReLUTruncate<i64, LlamaKey<i64>>(scale),
-        new Conv2D<i64, scale, false, LlamaKey<i64>>(512, 512, 3, 1),
-        new AvgPool2D<i64, LlamaKey<i64>>(2, 0, 2),
+        new Conv2D<i64, scale, LlamaKey<i64>>(512, 512, 3, 1),
+        new AvgPool2D<i64, scale, LlamaKey<i64>>(2, 0, 2),
         new ReLUTruncate<i64, LlamaKey<i64>>(scale),
         new Flatten<i64>(),
         new FC<i64, scale, false, LlamaKey<i64>>(512, 256),
@@ -275,7 +292,7 @@ void llama_test(int party) {
     srand(time(NULL));
     LlamaConfig::party = party;
     Llama<u64>::init();
-    auto conv1 = new Conv2D<u64, scale, true, Llama<u64>>(3, 64, 5, 1);
+    auto conv1 = new Conv2D<u64, scale, Llama<u64>>(3, 64, 5, 1);
     auto relu1 = new ReLUTruncate<u64, Llama<u64>>(scale);
     auto model = Sequential<u64>({
         conv1,
@@ -303,16 +320,16 @@ int main(int argc, char** argv) {
 #else
     std::cout << "Debug Build" << std::endl;
 #endif
-    // threelayer_keysize_llama();
+    threelayer_keysize_llama();
     // vgg16_piranha_keysize_llama();
     // load_mnist();
     // lenet_float();
     // lenet_int();
     // test_conv_float();
 
-    int party = 0;
-    if (argc > 1) {
-        party = atoi(argv[1]);
-    }
-    llama_test(party);
+    // int party = 0;
+    // if (argc > 1) {
+    //     party = atoi(argv[1]);
+    // }
+    // llama_test(party);
 }

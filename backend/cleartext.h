@@ -319,7 +319,7 @@ public:
         }
     }
 
-    static void avgPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> &in, Tensor4D<T> &out) {
+    static void avgPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> &in, Tensor4D<T> &out, u64 scale) {
         sumPool2D(ks, padding, stride, in, out);
         div(out, (T)(ks*ks));
     }
@@ -347,7 +347,7 @@ public:
         }
     }
 
-    static void avgPool2DInputGrad(u64 ks, u64 padding, u64 stride, Tensor4D<T> &in, const Tensor4D<T> &out) {
+    static void avgPool2DInputGrad(u64 ks, u64 padding, u64 stride, Tensor4D<T> &in, const Tensor4D<T> &out, u64 scale) {
         sumPool2DInputGrad(ks, padding, stride, in, out);
         div(in, (T)(ks*ks));
     }
