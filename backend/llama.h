@@ -1,6 +1,13 @@
 #pragma once
 #include "../utils.h"
 #include "cleartext.h"
+#include "minillama/config.h"
+#include "minillama/input_prng.h"
+#include "minillama/comms.h"
+#include "minillama/api.h"
+
+template <typename T>
+class Sequential;
 
 template <typename T>
 class Llama {
@@ -8,6 +15,114 @@ class Llama {
     static const u64 lr_scale = 7;
 
 public:
+
+    static void init()
+    {
+        prng.SetSeed(toBlock(0, time(NULL)));
+        if (LlamaConfig::party == 1) {
+            LlamaConfig::server = new Peer("server.dat");
+            LlamaConfig::client = new Peer("client.dat");
+        }
+        else if (LlamaConfig::party == 2) {
+            LlamaConfig::dealer = new Dealer("server.dat");
+            LlamaConfig::client = waitForPeer(42002);
+            LlamaConfig::peer = LlamaConfig::client;
+        }
+        else if (LlamaConfig::party == 3) {
+            LlamaConfig::dealer = new Dealer("client.dat");
+            LlamaConfig::server = new Peer("127.0.0.1", 42002);
+            LlamaConfig::peer = LlamaConfig::server;
+        }
+        else {
+            throw std::runtime_error("Invalid party");
+        }
+        input_prng_init();
+    }
+
+    static void finalize()
+    {
+        switch (LlamaConfig::party)
+		{
+		case 1:
+				LlamaConfig::server->close();
+				LlamaConfig::client->close();
+				break;
+		case 2:
+				LlamaConfig::dealer->close();
+				LlamaConfig::client->close();
+				break;
+		case 3:
+				LlamaConfig::dealer->close();
+				LlamaConfig::server->close();
+		}
+    }
+
+    static void initializeData(Tensor4D<T> &data, u64 numImagesWithServer)
+    {
+        u64 b1 = numImagesWithServer * data.d2 * data.d3 * data.d4;
+        u64 b2 = (data.d1 - numImagesWithServer) * data.d2 * data.d3 * data.d4;
+        if (LlamaConfig::party == 1) {
+            input_layer(nullptr, data.data, b1, 2);
+            input_layer(nullptr, data.data + b1, b2, 3);
+        }
+        else {
+            if (LlamaConfig::party == 2) {
+                Tensor4D<T> tmp(numImagesWithServer, data.d2, data.d3, data.d4);
+                input_layer(data.data, tmp.data, b1, 2);
+                input_layer(data.data + b1, nullptr, b2, 3);
+            }
+            else {
+                Tensor4D<T> tmp(data.d1 - numImagesWithServer, data.d2, data.d3, data.d4);
+                input_layer(data.data, nullptr, b1, 2);
+                input_layer(data.data + b1, tmp.data, b2, 3);
+            }
+        }
+    }
+
+    static void initializeWeights(Sequential<T> &model)
+    {
+        // DEALER selects the inital weights and sends them to parties as keys
+        for(int i = 0; i < model.layers.size(); ++i)
+        {
+            if (model.layers[i]->name == "Conv2D" || model.layers[i]->name == "FC")
+            {
+                auto &weights = model.layers[i]->getweights();
+                auto &bias = model.layers[i]->getbias();
+                if (LlamaConfig::party == 1)
+                {
+                    // weights.fill(1);
+                    // bias.fill(1);
+                    LlamaConfig::server->send_ge_array(weights.data, weights.d1 * weights.d2);
+                    LlamaConfig::server->send_ge_array(bias.data, bias.size);
+                    LlamaConfig::client->send_ge_array(weights.data, weights.d1 * weights.d2);
+                    LlamaConfig::client->send_ge_array(bias.data, bias.size);
+                    weights.fill(0);
+                    bias.fill(0);
+                }
+                else
+                {
+                    LlamaConfig::dealer->recv_ge_array(weights.data, weights.d1 * weights.d2);
+                    LlamaConfig::dealer->recv_ge_array(bias.data, bias.size);
+                }
+            }
+        }
+    }
+
+    static void output(Tensor4D<T> &a) {
+        u64 sz = a.d1 * a.d2 * a.d3 * a.d4;
+        if (LlamaConfig::party == 1) {
+            for (int i = 0; i < sz; i++){
+                LlamaConfig::client->send_mask(a.data[i]);
+                LlamaConfig::server->send_mask(a.data[i]);
+            }
+        }
+        else {
+            for (int i = 0; i < sz; i++){
+                auto mask = LlamaConfig::dealer->recv_mask();
+                a.data[i] = a.data[i] - mask;
+            }
+        }
+    }
 
     static void matmul(const Tensor2D<T> &a, const Tensor2D<T> &b, Tensor2D<T> &c) {
         assert(a.d2 == b.d1);
@@ -85,10 +200,9 @@ public:
         assert(output.d3 == newW);
         assert(output.d4 == co);
 
-        Tensor2D<T> reshapedInput = reshapeInput<T>(input, padding, stride, fh, fw);
-        Tensor2D<T> tempOutput(filter.d1, reshapedInput.d2);
-        matmul(filter, reshapedInput, tempOutput);
-        reshapeOutput<T>(tempOutput, input.d1, (((input.d2 + 2*padding - fh)/stride) + 1), (((input.d3 + 2*padding - fw)/stride) + 1), co, output);
+        Conv2DWrapper(input.d1, input.d2, input.d3, input.d4, fh, fw, co, 
+            padding, padding, padding, padding, stride, stride, 
+            input.data, input.data, filter.data, filter.data, output.data, output.data);
     }
 
     static void conv2DFilterGrad(u64 fh, u64 fw, u64 padding, u64 stride, u64 ci, u64 co, const Tensor4D<T> &input, Tensor2D<T> &filter, const Tensor4D<T> &output)
@@ -189,16 +303,8 @@ public:
         assert(in.d2 == drelu.d2);
         assert(in.d3 == drelu.d3);
         assert(in.d4 == drelu.d4);
-        for (u64 i = 0; i < in.d1; i++) {
-            for (u64 j = 0; j < in.d2; j++) {
-                for (u64 k = 0; k < in.d3; k++) {
-                    for (u64 l = 0; l < in.d4; l++) {
-                        drelu(i, j, k, l) = (T)(in(i, j, k, l) > 0);
-                        out(i, j, k, l) = (drelu(i, j, k, l) == 1) ? (in(i, j, k, l) >> shift) : 0;
-                    }
-                }
-            }
-        }
+        int sz = in.d1 * in.d2 * in.d3 * in.d4;
+        ReluTruncate(sz, in.data, in.data, out.data, out.data, shift);
     }
 
     static void relu(const Tensor4D<T> &in, const Tensor4D<T> &out, const Tensor4D<T> &drelu) {

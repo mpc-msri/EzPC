@@ -23,6 +23,8 @@ SOFTWARE.
 #include "api.h"
 #include <cassert>
 
+using namespace LlamaConfig;
+
 Peer::Peer(std::string ip, int port) {
     std::cerr << "trying to connect with server...";
     {
@@ -172,6 +174,17 @@ void Peer::send_ge(const GroupElement &g, int bw) {
         }
         bytesSent += 1;
     }
+}
+
+
+void Peer::send_ge_array(const GroupElement *g, int size) {
+    char *buf = (char *)(g);
+    if (useFile) {
+        this->file.write(buf, 8*size);
+    } else {
+        send(sendsocket, buf, 8*size, 0);
+    }
+    bytesSent += (8*size);
 }
 
 void Peer::send_block(const osuCrypto::block &b) {
@@ -674,6 +687,18 @@ GroupElement Dealer::recv_ge(int bl) {
         bytesReceived += 1;
         return g;
     }
+}
+
+
+void Dealer::recv_ge_array(const GroupElement *g, int size) {
+    char *buf = (char *)g;
+    if (useFile) {
+        this->file.read(buf, 8*size);
+    } else {
+        recv(consocket, buf, 8*size, MSG_WAITALL);
+    }
+    bytesReceived += 8 * size;
+    
 }
 
 DCFKeyPack Dealer::recv_dcf_keypack(int Bin, int Bout, int groupSize) {

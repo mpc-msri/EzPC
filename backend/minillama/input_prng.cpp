@@ -27,6 +27,7 @@ SOFTWARE.
 #include "stats.h"
 
 using namespace osuCrypto;
+using namespace LlamaConfig;
 
 AES inputPrng[2];
 int counter[2] = {0, 0};

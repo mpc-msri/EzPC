@@ -40,6 +40,8 @@ template <typename T> using pair = std::pair<T,T>;
 
 bool localTruncation = false;
 
+using namespace LlamaConfig;
+
 void StartComputation()
 {
     std::cerr << "=== COMPUTATION START ===\n\n";
@@ -63,8 +65,8 @@ void StartComputation()
         peer->bytesReceived = 0;
     }
     else {
-        always_assert(server->bytesSent == 16);
-        always_assert(server->bytesSent == 16);
+        // always_assert(server->bytesSent == 16);
+        // always_assert(server->bytesSent == 16);
         server->bytesSent = 0;
         client->bytesSent = 0;
     }

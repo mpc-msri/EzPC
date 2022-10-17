@@ -63,6 +63,7 @@ public:
     void close();
 
     void send_ge(const GroupElement &g, int bw);
+    void send_ge_array(const GroupElement *g, int size);
 
     void send_block(const osuCrypto::block &b);
 
@@ -144,6 +145,8 @@ public:
     osuCrypto::block recv_block();
 
     GroupElement recv_ge(int bw);
+
+    void recv_ge_array(const GroupElement *g, int size);
 
     void recv_ge_array(int bw, int size, GroupElement *arr);
 

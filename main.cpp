@@ -180,34 +180,38 @@ void threelayer_keysize_llama() {
     LlamaKey<i64>::serverkeysize = 0;
     LlamaKey<i64>::clientkeysize = 0;
     auto model = Sequential<i64>({
-        new Conv2D<i64, scale, true, LlamaKey<i64>>(3, 64, 5, 1),
+        new Conv2D<i64, scale, false, LlamaKey<i64>>(3, 64, 5, 1),
         new ReLUTruncate<i64, LlamaKey<i64>>(scale),
-        // new AvgPool2D<i64, LlamaKey<i64>>(3, 0, 2),
-        new MaxPool2D<i64, LlamaKey<i64>>(3, 0, 2),
-        new Conv2D<i64, scale, false, LlamaKey<i64>>(64, 64, 5, 1),
-        new ReLUTruncate<i64, LlamaKey<i64>>(scale),
-        // new AvgPool2D<i64, LlamaKey<i64>>(3, 0, 2),
-        new MaxPool2D<i64, LlamaKey<i64>>(3, 0, 2),
-        new Conv2D<i64, scale, false, LlamaKey<i64>>(64, 64, 5, 1),
-        new ReLUTruncate<i64, LlamaKey<i64>>(scale),
-        // new AvgPool2D<i64, LlamaKey<i64>>(3, 0, 2),
-        new MaxPool2D<i64, LlamaKey<i64>>(3, 0, 2),
-        new Flatten<i64>(),
-        new FC<i64, scale, false, LlamaKey<i64>>(64, 10),
-        new Truncate<i64, LlamaKey<i64>>(scale),
+        // // new AvgPool2D<i64, LlamaKey<i64>>(3, 0, 2),
+        // new MaxPool2D<i64, LlamaKey<i64>>(3, 0, 2),
+        // new Conv2D<i64, scale, false, LlamaKey<i64>>(64, 64, 5, 1),
+        // new ReLUTruncate<i64, LlamaKey<i64>>(scale),
+        // // new AvgPool2D<i64, LlamaKey<i64>>(3, 0, 2),
+        // new MaxPool2D<i64, LlamaKey<i64>>(3, 0, 2),
+        // new Conv2D<i64, scale, false, LlamaKey<i64>>(64, 64, 5, 1),
+        // new ReLUTruncate<i64, LlamaKey<i64>>(scale),
+        // // new AvgPool2D<i64, LlamaKey<i64>>(3, 0, 2),
+        // new MaxPool2D<i64, LlamaKey<i64>>(3, 0, 2),
+        // new Flatten<i64>(),
+        // new FC<i64, scale, false, LlamaKey<i64>>(64, 10),
+        // new Truncate<i64, LlamaKey<i64>>(scale),
     });
 
-    Tensor4D<i64> trainImage(128, 32, 32, 3);
-    Tensor4D<i64> e(128, 10, 1, 1);
+    double gb = 1024ULL * 1024 * 1024 * 8ULL;
+    Tensor4D<i64> trainImage(2, 32, 32, 3);
 
     model.forward(trainImage);
+    model.activation.printshape();
+    Tensor4D<i64> e(2, model.activation.d2, model.activation.d3, model.activation.d4);
     std::cout << ">>>>>>> FORWARD DONE <<<<<<<<" << std::endl;
+    std::cout << "Server key size: " << LlamaKey<i64>::serverkeysize << std::endl;
+    std::cout << "Client key size: " << LlamaKey<i64>::clientkeysize << std::endl;
+    LlamaKey<i64>::serverkeysize = 0;
+    LlamaKey<i64>::clientkeysize = 0;
     model.backward(e);
-
-    double gb = 1024ULL * 1024 * 1024 * 8ULL;
-    std::cout << "Server key size: " << LlamaKey<i64>::serverkeysize / gb << std::endl;
-    std::cout << "Client key size: " << LlamaKey<i64>::clientkeysize / gb << std::endl;
-
+    std::cout << ">>>>>>> BACKWARD DONE <<<<<<<<" << std::endl;
+    std::cout << "Server key size: " << LlamaKey<i64>::serverkeysize << std::endl;
+    std::cout << "Client key size: " << LlamaKey<i64>::clientkeysize << std::endl;
 }
 
 void vgg16_piranha_keysize_llama() {
@@ -267,7 +271,31 @@ void vgg16_piranha_keysize_llama() {
 
 }
 
-int main() {
+void llama_test(int party) {
+    srand(time(NULL));
+    LlamaConfig::party = party;
+    Llama<u64>::init();
+    auto conv1 = new Conv2D<u64, scale, true, Llama<u64>>(3, 64, 5, 1);
+    auto relu1 = new ReLUTruncate<u64, Llama<u64>>(scale);
+    auto model = Sequential<u64>({
+        conv1,
+        relu1,
+    });
+
+    Tensor4D<u64> trainImage(2, 32, 32, 3); // 1 images with server and 1 with client
+
+    Llama<u64>::initializeWeights(model); // dealer initializes the weights and sends to the parties
+    Llama<u64>::initializeData(trainImage, 1); // takes input from stdin
+    StartComputation();
+    model.forward(trainImage);
+    EndComputation();
+    Llama<u64>::output(model.activation);
+    Llama<u64>::finalize();
+    if (LlamaConfig::party != 1)
+        model.activation.print();
+}
+
+int main(int argc, char** argv) {
     // std::cout << std::fixed;
     // std::cout << std::setprecision(20);
 #ifdef NDEBUG
@@ -277,8 +305,14 @@ int main() {
 #endif
     // threelayer_keysize_llama();
     // vgg16_piranha_keysize_llama();
-    load_mnist();
+    // load_mnist();
     // lenet_float();
-    lenet_int();
+    // lenet_int();
     // test_conv_float();
+
+    int party = 0;
+    if (argc > 1) {
+        party = atoi(argv[1]);
+    }
+    llama_test(party);
 }

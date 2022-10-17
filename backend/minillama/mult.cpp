@@ -25,6 +25,7 @@ SOFTWARE.
 #include "mult.h"
 #include <assert.h>
 #include <utility>
+using namespace LlamaConfig;
 
 std::pair<MultKey, MultKey> MultGen(GroupElement rin1, GroupElement rin2, GroupElement rout)
 {

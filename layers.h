@@ -31,6 +31,8 @@ public:
     Tensor4D<T> activation;
     Tensor4D<T> inputDerivative;
     Layer(const std::string &id) : activation(0,0,0,0), inputDerivative(0,0,0,0), name(id) {}
+    virtual Tensor2D<T>& getweights() { throw std::runtime_error("not implemented"); };
+    virtual Tensor<T>& getbias() { throw std::runtime_error("not implemented"); };
 };
 
 template <typename T, u64 scale, bool isFirst = false, class Backend = DefaultBackend<T>>
@@ -88,6 +90,9 @@ public:
         this->inputDerivative.resize(d1, d2, d3, d4);
         this->inp.resize(d1, d2, d3, d4);
     }
+
+    Tensor2D<T>& getweights() { return filter; }
+    Tensor<T>& getbias() { return bias; }
 };
 
 template <typename T, class Backend = DefaultBackend<T>>
@@ -232,6 +237,9 @@ public:
         this->inputDerivative.resize(d1, in, 1, 1);
         this->inp.resize(d1, d2, d3, d4);
     }
+    
+    Tensor2D<T>& getweights() { return weight; }
+    Tensor<T>& getbias() { return bias; }
 };
 
 template <typename T, class Backend = DefaultBackend<T>>

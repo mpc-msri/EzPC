@@ -4,3 +4,5 @@ release/
 debug/
 build/
 datatorch/
+client.dat
+server.dat

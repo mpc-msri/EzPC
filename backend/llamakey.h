@@ -44,7 +44,7 @@ private:
             return dcfcost(bin, 1) + selectcost(bin);
         }
         else {
-            return dcfcost(bin, s) + dcfcost(s, bin) + selectcost(bin) + bin;
+            return dcfcost(bin, bin) + dcfcost(s, bin) + selectcost(bin) + bin;
         }
     }
 
@@ -213,7 +213,7 @@ public:
         assert(in.d2 == drelu.d2);
         assert(in.d3 == drelu.d3);
         assert(in.d4 == drelu.d4);
-        u64 cost = in.d1 * in.d2 * in.d3 * in.d4 * truncatecost(bw, shift);
+        u64 cost = in.d1 * in.d2 * in.d3 * in.d4 * relutruncatecost(bw, shift);
         if (verbose) std::cout << "relutruncate key size = " << cost / gb << std::endl;
         serverkeysize += cost;
         clientkeysize += cost;

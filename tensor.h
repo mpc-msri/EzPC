@@ -118,6 +118,10 @@ public:
         }
     }
 
+    void printshape() const {
+        std::cout << "(" << d1 << ", " << d2 << ")" << std::endl;
+    }
+
 };
 
 template <typename T>
