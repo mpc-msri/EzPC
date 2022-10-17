@@ -27,7 +27,7 @@ pair<ReluTruncateKeyPack> keyGenReluTruncate(int bin, int bout, int s, GroupElem
     a = routRelu & 1;
     b = routTruncate;
     c = (routRelu & 1) * routTruncate + rout;
-    if (routRelu & 1 == 1) {
+    if ((routRelu & 1) == 1) {
         d1 = 2;
         d2 = -2 * routTruncate;
     }
