@@ -115,9 +115,9 @@ public:
         assert(output.d3 == newW);
         assert(output.d4 == co);
 
-        Tensor2D<T> reshapedInput = reshapeInput<T>(input, padding, stride, fh, fw);
-        Tensor2D<T> tempOutput(filter.d1, reshapedInput.d2);
-        matmul(filter, reshapedInput, tempOutput);
+        Tensor2D<T> reshapedInput = reshapeInputTransposed<T>(input, padding, stride, fh, fw);
+        Tensor2D<T> tempOutput(filter.d1, reshapedInput.d1);
+        matmulTransposeB(filter, reshapedInput, tempOutput);
         reshapeOutput<T>(tempOutput, input.d1, (((input.d2 + 2*padding - fh)/stride) + 1), (((input.d3 + 2*padding - fw)/stride) + 1), co, output);
     }
 
@@ -135,8 +135,8 @@ public:
         
         Tensor2D<T> tempOutput(co, input.d1 * newH * newW);
         reshapeOutputReversed<T>(tempOutput, input.d1, (((input.d2 + 2*padding - fh)/stride) + 1), (((input.d3 + 2*padding - fw)/stride) + 1), co, output);
-        Tensor2D<T> reshapedInput = reshapeInput(input, padding, stride, fh, fw);
-        matmulTransposeB(tempOutput, reshapedInput, filter);
+        Tensor2D<T> reshapedInput = reshapeInputTransposed(input, padding, stride, fh, fw);
+        matmul(tempOutput, reshapedInput, filter);
     }
 
     static void conv2DBiasGrad(const Tensor4D<T> &e, Tensor<T> &biasGrad)

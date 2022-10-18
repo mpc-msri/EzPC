@@ -17,11 +17,11 @@ Tensor2D<T> reshapeFilter(const Tensor4D<T> &filter) {
 }
 
 template <typename T>
-Tensor2D<T> reshapeInput(const Tensor4D<T> &input, u64 padding, u64 stride, u64 FH, u64 FW) {
+Tensor2D<T> reshapeInputTransposed(const Tensor4D<T> &input, u64 padding, u64 stride, u64 FH, u64 FW) {
     u64 newH = (((input.d2 + 2*padding - FH)/stride) + 1);
 	u64 newW = (((input.d3 + 2*padding - FW)/stride) + 1);
 	u64 reshapedIPCols = input.d1 * newH * newW;
-    Tensor2D<T> reshaped(FH * FW * input.d4, reshapedIPCols);
+    Tensor2D<T> reshaped(reshapedIPCols, FH * FW * input.d4);
     i64 linIdxFilterMult = 0;
 	for (i64 n = 0; n < input.d1; n++){
 		i64 leftTopCornerH = 0 - padding;
@@ -37,10 +37,10 @@ Tensor2D<T> reshapeInput(const Tensor4D<T> &input, u64 padding, u64 stride, u64 
 						i64 curPosW = leftTopCornerW + fw;
 						for (i64 ci = 0; ci < input.d4; ci++){
 							if ((((curPosH < 0) || (curPosH >= input.d2)) || ((curPosW < 0) || (curPosW >= input.d3)))){
-								reshaped((fh*FW*input.d4) + (fw*input.d4) + ci, linIdxFilterMult) = 0L;
+								reshaped(linIdxFilterMult, (fh*FW*input.d4) + (fw*input.d4) + ci) = 0L;
 							}
 							else{
-								reshaped((fh*FW*input.d4) + (fw*input.d4) + ci, linIdxFilterMult) = input(n, curPosH, curPosW, ci);
+								reshaped(linIdxFilterMult, (fh*FW*input.d4) + (fw*input.d4) + ci) = input(n, curPosH, curPosW, ci);
 							}
 						}
 					}
