@@ -1,5 +1,6 @@
 #pragma once
 #include "../utils.h"
+#include <thread>
 
 template <typename T>
 class ClearText {
@@ -13,8 +14,26 @@ class ClearText {
     template <typename Functor>
     static void fastfor(u64 size, Functor f)
     {
-        for (u64 i = 0; i < size; i++) {
-            f(i);
+        if (numThreads == 1) {
+            for (u64 i = 0; i < size; i++) {
+                f(i);
+            }
+        }
+        else {
+            std::thread threads[numThreads];
+            u64 chunkSize = size / numThreads;
+            for (u64 i = 0; i < numThreads - 1; i++) {
+                threads[i] = std::thread([=, &f]() {
+                    for (u64 j = i * chunkSize; j < (i + 1) * chunkSize; j++) {
+                        f(j);
+                    }
+                });
+            }
+            threads[numThreads-1] = std::thread([=, &f]() {
+                for (u64 j = (numThreads - 1) * chunkSize; j < size; j++) {
+                    f(j);
+                }
+            });
         }
     }
 
@@ -220,7 +239,7 @@ public:
         assert(in.d2 == drelu.d2);
         assert(in.d3 == drelu.d3);
         assert(in.d4 == drelu.d4);
-        for (u64 i = 0; i < in.d1; i++) {
+        fastfor(in.d1, [&] (u64 i) {
             for (u64 j = 0; j < in.d2; j++) {
                 for (u64 k = 0; k < in.d3; k++) {
                     for (u64 l = 0; l < in.d4; l++) {
@@ -234,7 +253,7 @@ public:
                     }
                 }
             }
-        }
+        });
     }
 
     static void relu(const Tensor4D<T> &in, const Tensor4D<T> &out, const Tensor4D<T> &drelu) {
@@ -246,7 +265,7 @@ public:
         assert(in.d2 == drelu.d2);
         assert(in.d3 == drelu.d3);
         assert(in.d4 == drelu.d4);
-        for (u64 i = 0; i < in.d1; i++) {
+        fastfor(in.d1, [&] (u64 i) {
             for (u64 j = 0; j < in.d2; j++) {
                 for (u64 k = 0; k < in.d3; k++) {
                     for (u64 l = 0; l < in.d4; l++) {
@@ -256,7 +275,7 @@ public:
                     }
                 }
             }
-        }
+        });
     }
 
     static void select(const Tensor4D<T> &in, const Tensor4D<T> &drelu, const Tensor4D<T> &out) {
@@ -268,7 +287,7 @@ public:
         assert(in.d2 == drelu.d2);
         assert(in.d3 == drelu.d3);
         assert(in.d4 == drelu.d4);
-        for (u64 i = 0; i < in.d1; i++) {
+        fastfor(in.d1, [&] (u64 i) {
             for (u64 j = 0; j < in.d2; j++) {
                 for (u64 k = 0; k < in.d3; k++) {
                     for (u64 l = 0; l < in.d4; l++) {
@@ -277,7 +296,7 @@ public:
                     }
                 }
             }
-        }
+        });
     }
 
     static void truncate(const Tensor4D<T> &in, const Tensor4D<T> &out, u64 shift) {
@@ -285,7 +304,7 @@ public:
         assert(in.d2 == out.d2);
         assert(in.d3 == out.d3);
         assert(in.d4 == out.d4);
-        for (u64 i = 0; i < in.d1; i++) {
+        fastfor(in.d1, [&] (u64 i) {
             for (u64 j = 0; j < in.d2; j++) {
                 for (u64 k = 0; k < in.d3; k++) {
                     for (u64 l = 0; l < in.d4; l++) {
@@ -302,7 +321,7 @@ public:
                     }
                 }
             }
-        }
+        });
     }
 
     static void truncate(const Tensor4D<T> &in, u64 shift) {
@@ -314,7 +333,7 @@ public:
     static void truncate(const Tensor2D<T> &in, u64 shift) {
     //    Eigen::Map<Eigen::ArrayX<T>> eA(in.data, in.d1 * in.d2);
     //    eA = eA / ((T)(1LL << shift)); // this gives bad accuracy, why?
-        for (u64 i = 0; i < in.d1; i++) {
+        fastfor(in.d1, [&] (u64 i) {
             for (u64 j = 0; j < in.d2; j++) {
                 if constexpr (std::is_floating_point<T>::value) {
                     in(i, j) = in(i, j) / ((T)(1ULL << shift));
@@ -327,11 +346,11 @@ public:
                     }
                 }
             }
-        }
+        });
     }
 
     static void div(const Tensor4D<T> &in, T divisor) {
-        for (u64 i = 0; i < in.d1; i++) {
+        fastfor(in.d1, [&] (u64 i) {
             for (u64 j = 0; j < in.d2; j++) {
                 for (u64 k = 0; k < in.d3; k++) {
                     for (u64 l = 0; l < in.d4; l++) {
@@ -339,7 +358,7 @@ public:
                     }
                 }
             }
-        }
+        });
     }
 
     static void sumPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> &in, Tensor4D<T> &out) {
@@ -349,7 +368,7 @@ public:
         u64 newW = (in.d3 + 2*padding - ks)/stride + 1;
         assert(out.d2 == newH);
         assert(out.d3 == newW);
-        for(int i = 0; i < in.d1; i++) {
+        fastfor(in.d1, [&] (int i) {
             for(int j = 0; j < newH; j++) {
                 for(int k = 0; k < newW; k++) {
                     for(int l = 0; l < in.d4; l++) {
@@ -363,7 +382,7 @@ public:
                     }
                 }
             }
-        }
+        });
     }
 
     static void avgPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> &in, Tensor4D<T> &out, u64 scale) {
@@ -379,7 +398,7 @@ public:
         assert(out.d2 == newH);
         assert(out.d3 == newW);
         in.zero();
-        for(int i = 0; i < in.d1; i++) {
+        fastfor(in.d1, [&] (int i) {
             for(int j = 0; j < newH; j++) {
                 for(int k = 0; k < newW; k++) {
                     for(int l = 0; l < in.d4; l++) {
@@ -391,7 +410,7 @@ public:
                     }
                 }
             }
-        }
+        });
     }
 
     static void avgPool2DInputGrad(u64 ks, u64 padding, u64 stride, Tensor4D<T> &in, const Tensor4D<T> &out, u64 scale) {
@@ -406,7 +425,7 @@ public:
         u64 newW = (in.d3 + 2*padding - ks)/stride + 1;
         assert(out.d2 == newH);
         assert(out.d3 == newW);
-        for(int i = 0; i < in.d1; i++) {
+        fastfor(in.d1, [&](int i) {
             for(int j = 0; j < newH; j++) {
                 for(int k = 0; k < newW; k++) {
                     for(int l = 0; l < in.d4; l++) {
@@ -428,7 +447,7 @@ public:
                     }
                 }
             }
-        }
+        });
     }
 
     static void maxPool2DInputGrad(u64 ks, u64 padding, u64 stride, Tensor4D<T> &in, const Tensor4D<T> &out, const Tensor4D<u64> &maxIdx) {
@@ -439,7 +458,7 @@ public:
         assert(out.d2 == newH);
         assert(out.d3 == newW);
         in.zero();
-        for(int i = 0; i < in.d1; i++) {
+        fastfor(in.d1, [&](int i) {
             for(int j = 0; j < newH; j++) {
                 for(int k = 0; k < newW; k++) {
                     for(int l = 0; l < in.d4; l++) {
@@ -449,7 +468,7 @@ public:
                     }
                 }
             }
-        }
+        });
     }
 
 };

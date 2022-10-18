@@ -119,6 +119,7 @@ void cifar10_int() {
     Tensor4D<i64> e(batchSize, 10, 1, 1);
     Tensor4D<i64> trainImage(batchSize, 32, 32, 3);
     for(int epoch = 0; epoch < numEpochs; ++epoch) {
+        std::cout << "Epoch " << epoch << std::endl;
         for(u64 i = 0; i < trainLen; i += batchSize) {
             // fetch image
             for(int b = 0; b < batchSize; ++b) {
@@ -136,7 +137,7 @@ void cifar10_int() {
                 e(b, dataset.training_labels[i+b], 0, 0) -= ((1ULL<<scale)/batchSize);
             }
             model.backward(e);
-            std::cerr << "Iteration: " << i << std::endl;
+            printprogress(((double)i) / trainLen);
         }
         u64 correct = 0;
         for(u64 i = 0; i < testLen; i += batchSize) {
@@ -156,7 +157,8 @@ void cifar10_int() {
                 }
             }
         }
-        std::cout << "Epoch: " << epoch << " Accuracy: " << (correct*100.0) / testLen << std::endl;
+        std::cout << " Accuracy: " << (correct*100.0) / testLen;
+        std::cout << std::endl;
     }
 }
 
@@ -225,6 +227,7 @@ void lenet_int() {
     Tensor4D<i64> trainImage(batchSize, 28, 28, 1);
     for(int epoch = 0; epoch < numEpochs; ++epoch) {
         std::cout << "Epoch: " << epoch << std::endl;
+        auto t1 = std::chrono::high_resolution_clock::now();
         for(u64 i = 0; i < trainLen; i += batchSize) {
             // fetch image
             for(int b = 0; b < batchSize; ++b) {
@@ -242,6 +245,7 @@ void lenet_int() {
             model.backward(e);
             printprogress(((double)i) / trainLen);
         }
+        auto t2 = std::chrono::high_resolution_clock::now();
         model.forward(testSet);
         u64 correct = 0;
         for(u64 i = 0; i < testLen; i++) {
@@ -249,7 +253,12 @@ void lenet_int() {
                 correct++;
             }
         }
-        std::cout << "Epoch: " << epoch << " Accuracy: " << (correct*100.0) / testLen << std::endl;
+        auto t3 = std::chrono::high_resolution_clock::now();
+        std::cout << std::endl;
+        std::cout << " Accuracy: " << (correct*100.0) / testLen;
+        std::cout << " Training Time: " << std::chrono::duration_cast<std::chrono::seconds>(t2-t1).count() << " seconds";
+        std::cout << " Testing Time: " << std::chrono::duration_cast<std::chrono::seconds>(t3-t2).count() << " seconds";
+        std::cout << std::endl;
     }
 }
 
@@ -259,6 +268,7 @@ int main(int argc, char** argv) {
 #else
     std::cout << "Debug Build" << std::endl;
 #endif
+    std::cout << "Eigen will use " << Eigen::nbThreads() << " threads" << std::endl;
     // threelayer_keysize_llama();
     load_mnist();
     lenet_int();
