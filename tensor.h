@@ -21,10 +21,8 @@ public:
 
     void randomize(double range) {
         for(u64 i = 0; i < this->size; i++) {
-            this->data[i] = (T)(((double) rand() / RAND_MAX) * range);
-            if (rand() % 2 == 0) {
-                this->data[i] *= -1;
-            }
+            auto r = (double)prngWeights.get<int32_t>();
+            this->data[i] = (T)((r / (1ULL << 32)) * range);
             // this->data[i] = (T)((i % 2) * range);
             // this->data[i] = ((T)range) / 2;
         }
@@ -65,10 +63,8 @@ public:
         for(u64 i = 0; i < this->d1; i++) {
             for(u64 j = 0; j < this->d2; j++) {
                 // this->data[i * this->d2 + j] = (T)((j % 2) * range);
-                this->data[i * this->d2 + j] = (T)(((double) rand() / RAND_MAX) * range);
-                if (rand() % 2 == 0) {
-                    this->data[i * this->d2 + j] = -this->data[i * this->d2 + j];
-                }
+                auto r = (double)prngWeights.get<int32_t>();
+                this->data[i * this->d2 + j] = (T)((r / (1ULL << 32)) * range);
                 // this->data[i * this->d2 + j] = ((T)range) / 2;
             }
         }

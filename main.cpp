@@ -192,7 +192,7 @@ void lenet_int() {
 
     const u64 trainLen = 60000;
     const u64 testLen = 10000;
-    const u64 scale = 22;
+    const u64 scale = 16;
     srand(time(NULL));
     srand(rand());
     srand(rand());
@@ -263,6 +263,7 @@ void lenet_int() {
 }
 
 int main(int argc, char** argv) {
+    prngWeights.SetSeed(osuCrypto::toBlock(time(NULL)));
 #ifdef NDEBUG
     std::cout << "Release Build" << std::endl;
 #else

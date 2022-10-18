@@ -6,3 +6,8 @@ build/
 datatorch/
 client.dat
 server.dat
+out.folded
+out.perf
+perf.data
+perf.data.old
+graph.svg

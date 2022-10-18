@@ -52,7 +52,7 @@ public:
         stride(stride), filter(co, ks * ks * ci), filterGrad(co, ks * ks * ci), Vw(co, ks * ks * ci), bias(co), biasGrad(co), Vb(co), inp(0,0,0,0)
     {
         static_assert(std::is_integral<T>::value || scale == 0);
-        double xavier = 1.0 / sqrt(ci);
+        double xavier = 1.0 / sqrt(ci * ks * ks);
         filter.randomize(xavier * (1ULL<<scale));
         bias.randomize(xavier * (1ULL<<(2*scale)));
         Vw.fill(0);
