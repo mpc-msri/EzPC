@@ -8,6 +8,7 @@ find_package(Threads REQUIRED)
 
 add_executable(fptraining 
     main.cpp 
+    random.cpp
     backend/minillama/cryptoTools/cryptoTools/Common/Defines.cpp
     backend/minillama/cryptoTools/cryptoTools/Common/Log.cpp
     backend/minillama/cryptoTools/cryptoTools/Crypto/AES.cpp

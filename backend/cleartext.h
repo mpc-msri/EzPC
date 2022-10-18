@@ -4,7 +4,19 @@
 template <typename T>
 class ClearText {
     static const u64 lr_fp = 1;
-    static const u64 lr_scale = 7;
+    static const u64 lr_scale = 6;
+    static const u64 mom_fp = 29;
+    static const u64 mom_scale = 5;
+    static const bool probablistic = false;
+    static const bool numThreads = 4;
+
+    template <typename Functor>
+    static void fastfor(u64 size, Functor f)
+    {
+        for (u64 i = 0; i < size; i++) {
+            f(i);
+        }
+    }
 
 public:
 
@@ -122,19 +134,37 @@ public:
         }
     }
 
-    static void updateWeight(Tensor2D<T> &weight, const Tensor2D<T> &e, u64 scale) {
+    static void updateWeight(Tensor2D<T> &weight, const Tensor2D<T> &e, Tensor2D<T> &Vw, u64 scale) {
         assert(weight.d1 == e.d1);
         assert(weight.d2 == e.d2);
-        for(int i = 0; i < weight.d1; i++) {
-            for(int j = 0; j < weight.d2; j++) {
-                e(i, j) = e(i, j) * lr_fp;
+        if (mom_fp == 0) {
+            for(int i = 0; i < weight.d1; i++) {
+                for(int j = 0; j < weight.d2; j++) {
+                    e(i, j) = e(i, j) * lr_fp;
+                }
+            }
+            truncate(e, scale+lr_scale);
+            for(u64 i = 0; i < weight.d1; i++) {
+                for(u64 j = 0; j < weight.d2; j++) {
+                    weight.data[i * weight.d2 + j] -= e(i, j);
+                }
             }
         }
-        truncate(e, scale+lr_scale);
-        for(u64 i = 0; i < weight.d1; i++) {
-            for(u64 j = 0; j < weight.d2; j++) {
-                weight.data[i * weight.d2 + j] -= e(i, j);
+        else {
+            assert(weight.d1 = Vw.d1);
+            assert(weight.d2 = Vw.d2);
+            for(int i = 0; i < weight.d1; i++) {
+                for(int j = 0; j < weight.d2; j++) {
+                    Vw(i, j) = mom_fp * Vw(i, j) + (1ULL<<mom_scale) * e(i, j);
+                }
             }
+            truncate(Vw, mom_scale);
+            for(int i = 0; i < weight.d1; i++) {
+                for(int j = 0; j < weight.d2; j++) {
+                    weight(i, j) = (1ULL<<(lr_scale+scale)) * weight(i, j) - lr_fp * Vw(i, j);
+                }
+            }
+            truncate(weight, lr_scale+scale);
         }
     }
 
@@ -143,6 +173,7 @@ public:
         assert(e.d2 == bias.size);
         assert(e.d3 == 1);
         assert(e.d4 == 1);
+        #pragma omp parallel for
         for (u64 i = 0; i < bias.size; i++) {
             T sum = 0;
             for(u64 j = 0; j < e.d1; ++j) {
@@ -154,6 +185,7 @@ public:
 
     static void updateBias(Tensor<T> &bias, const Tensor<T> &grad, u64 scale) {
         assert(grad.size == bias.size);
+        #pragma omp parallel for
         for (u64 i = 0; i < bias.size; i++) {
             bias.data[i] -= lr_fp * grad(i) * (1ULL << (scale-lr_scale));
         }
@@ -194,6 +226,11 @@ public:
                     for (u64 l = 0; l < in.d4; l++) {
                         drelu(i, j, k, l) = (T)(in(i, j, k, l) > 0);
                         out(i, j, k, l) = (drelu(i, j, k, l) == 1) ? (in(i, j, k, l) >> shift) : 0;
+                        if (probablistic) {
+                            u64 r = rand() % (1ULL << shift);
+                            u64 x0 = ((u64)in(i, j, k, l)) % (1ULL << shift);
+                            out(i, j, k, l) += (x0 < r ? 0 : 1); 
+                        }
                     }
                 }
             }
@@ -256,6 +293,11 @@ public:
                             out(i, j, k, l) = in(i, j, k, l) / (1 << shift);
                         } else {
                             out(i, j, k, l) = in(i, j, k, l) >> shift;
+                            if (probablistic) {
+                                u64 r = rand() % (1ULL << shift);
+                                u64 x0 = ((u64)in(i, j, k, l)) % (1ULL << shift);
+                                out(i, j, k, l) += (x0 < r ? 0 : 1); 
+                            }
                         }
                     }
                 }
@@ -278,6 +320,11 @@ public:
                     in(i, j) = in(i, j) / ((T)(1ULL << shift));
                 } else {
                     in(i, j) = in(i, j) >> shift;
+                    if (probablistic) {
+                        u64 r = rand() % (1ULL << shift);
+                        u64 x0 = ((u64)in(i, j)) % (1ULL << shift);
+                        in(i, j) += (x0 < r ? 0 : 1); 
+                    }
                 }
             }
         }

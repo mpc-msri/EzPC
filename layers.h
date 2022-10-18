@@ -42,17 +42,21 @@ public:
     Tensor4D<T> inp;
     Tensor2D<T> filter;
     Tensor2D<T> filterGrad;
+    Tensor2D<T> Vw;
     Tensor<T> bias;
     Tensor<T> biasGrad;
+    Tensor<T> Vb;
     u64 ci, co, ks, padding, stride;
 
     Conv2D(u64 ci, u64 co, u64 ks, u64 padding = 0, u64 stride = 1) : Layer<T>("Conv2D"), ci(ci), co(co), ks(ks), padding(padding), 
-        stride(stride), filter(co, ks * ks * ci), filterGrad(co, ks * ks * ci), bias(co), biasGrad(co), inp(0,0,0,0)
+        stride(stride), filter(co, ks * ks * ci), filterGrad(co, ks * ks * ci), Vw(co, ks * ks * ci), bias(co), biasGrad(co), Vb(co), inp(0,0,0,0)
     {
         static_assert(std::is_integral<T>::value || scale == 0);
         double xavier = 1.0 / sqrt(ci);
         filter.randomize(xavier * (1ULL<<scale));
         bias.randomize(xavier * (1ULL<<(2*scale)));
+        Vw.fill(0);
+        Vb.fill(0);
     }
 
     void forward(const Tensor4D<T> &a) {
@@ -79,7 +83,7 @@ public:
             Backend::truncate(this->inputDerivative, scale);
         }
         // Backend::truncate(filterGrad, scale);
-        Backend::updateWeight(filter, filterGrad, scale);
+        Backend::updateWeight(filter, filterGrad, Vw, scale);
         Backend::updateBias(bias, biasGrad, scale);
     }
 
@@ -202,10 +206,12 @@ public:
     Tensor4D<T> inp;
     Tensor2D<T> weight;
     Tensor2D<T> weightGrad;
+    Tensor2D<T> Vw;
     Tensor<T> bias;
+    Tensor<T> Vb;
     u64 in, out;
 
-    FC(u64 in, u64 out) : Layer<T>("FC"), in(in), out(out), weight(in, out), bias(out), inp(0,0,0,0), weightGrad(0,0) {
+    FC(u64 in, u64 out) : Layer<T>("FC"), in(in), out(out), weight(in, out), bias(out), inp(0,0,0,0), weightGrad(in,out), Vw(in,out), Vb(out) {
         static_assert(std::is_integral<T>::value || scale == 0);
         double xavier = 1.0 / sqrt(in);
         weight.randomize(xavier * (1ULL<<scale));
@@ -229,7 +235,8 @@ public:
         }
         Backend::matmulTransposeA(inp, e, weightGrad);
         // Backend::truncate(weightGrad, scale);
-        Backend::updateWeight(weight, weightGrad, scale);
+        Vw.resize(weightGrad.d1, weightGrad.d2);
+        Backend::updateWeight(weight, weightGrad, Vw, scale);
         Backend::updateBias(bias, e, scale);
     }
 

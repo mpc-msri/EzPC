@@ -237,7 +237,7 @@ public:
         }
     }
 
-    static void updateWeight(Tensor2D<T> &weight, const Tensor2D<T> &e, u64 scale) {
+    static void updateWeight(Tensor2D<T> &weight, const Tensor2D<T> &e, Tensor2D<T> &Vw, u64 scale) {
         assert(weight.d1 == e.d1);
         assert(weight.d2 == e.d2);
         for(int i = 0; i < weight.d1; i++) {

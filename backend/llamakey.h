@@ -155,7 +155,7 @@ public:
         assert(e.d4 == biasGrad.size);
     }
 
-    static void updateWeight(Tensor2D<T> &weight, const Tensor2D<T> &e, u64 scale) {
+    static void updateWeight(Tensor2D<T> &weight, const Tensor2D<T> &e, Tensor2D<T> &Vw, u64 scale) {
         assert(weight.d1 == e.d1);
         assert(weight.d2 == e.d2);
         // step 1 : convert lr to fixed point (free)
@@ -311,7 +311,7 @@ public:
 
     static void avgPool2DInputGrad(u64 ks, u64 padding, u64 stride, Tensor4D<T> &in, const Tensor4D<T> &out, u64 scale) {
         sumPool2DInputGrad(ks, padding, stride, in, out);
-        div(in, (T)(ks*ks), scale);
+        div(out, (T)(ks*ks), scale);
     }
 
     static void maxPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> &in, Tensor4D<T> &out, Tensor4D<u64> &maxIdx) {
