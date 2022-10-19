@@ -12,6 +12,16 @@ template <typename T>
 class Tensor4D;
 
 template <typename T>
+bool toobig(T& x) {
+    if constexpr(std::is_integral<T>::value) {
+        return false;
+    } else {
+        return std::isnan(x) || std::isinf(x);
+        // return (x > 1e-2) || (x < -1e-2);
+    }
+}
+
+template <typename T>
 class Tensor {
 public:
     T *data;
@@ -48,6 +58,15 @@ public:
         for (u64 i = 0; i < this->size; i++) {
             this->data[i] = val;
         }
+    }
+
+    bool isnan() const {
+        for (u64 i = 0; i < this->size; i++) {
+            if (toobig(this->data[i])) {
+                return true;
+            }
+        }
+        return false;
     }
 };
 
@@ -117,6 +136,17 @@ public:
 
     void printshape() const {
         std::cout << "(" << d1 << ", " << d2 << ")" << std::endl;
+    }
+
+    bool isnan() {
+        for(u64 i = 0; i < this->d1; i++) {
+            for(u64 j = 0; j < this->d2; j++) {
+                if (toobig(this->data[i * this->d2 + j])) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
 };
@@ -254,6 +284,21 @@ public:
 
     void printshape() const {
         std::cout << "(" << d1 << ", " << d2 << ", " << d3 << ", " << d4 << ")" << std::endl;
+    }
+
+    bool isnan() const {
+        for (u64 i = 0; i < d1; i++) {
+            for (u64 j = 0; j < d2; j++) {
+                for (u64 k = 0; k < d3; k++) {
+                    for (u64 l = 0; l < d4; l++) {
+                        if (toobig(data[i * d2 * d3 * d4 + j * d3 * d4 + k * d4 + l])) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
     }
 
 };

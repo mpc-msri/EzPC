@@ -6,7 +6,7 @@ template <typename T>
 class ClearText {
     static const u64 lr_fp = 1;
     static const u64 lr_scale = 6;
-    static const u64 mom_fp = 0;
+    static const u64 mom_fp = 29;
     static const u64 mom_scale = 5;
     static const bool probablistic = false;
     static const bool numThreads = 4;
@@ -141,6 +141,7 @@ public:
 
     static void conv2DBiasGrad(const Tensor4D<T> &e, Tensor<T> &biasGrad)
     {
+        biasGrad.fill(0);
         assert(e.d4 == biasGrad.size);
         for(int i = 0; i < e.d1; i++) {
             for(int j = 0; j < e.d2; j++) {
@@ -198,7 +199,12 @@ public:
             for(u64 j = 0; j < e.d1; ++j) {
                 sum = sum + e(j, i, 0, 0);
             }
-            bias.data[i] -= lr_fp * sum * (1ULL << (scale-lr_scale));
+            if (scale > lr_scale) {
+                bias.data[i] -= lr_fp * sum * (1ULL << (scale-lr_scale));
+            }
+            else {
+                bias.data[i] -= lr_fp * sum / (1ULL << (lr_scale-scale));
+            }
         }
     }
 
@@ -206,7 +212,13 @@ public:
         assert(grad.size == bias.size);
         #pragma omp parallel for
         for (u64 i = 0; i < bias.size; i++) {
-            bias.data[i] -= lr_fp * grad(i) * (1ULL << (scale-lr_scale));
+            if (scale > lr_scale) {
+                bias.data[i] -= lr_fp * grad.data[i] * (1ULL << (scale-lr_scale));
+            }
+            else {
+                bias.data[i] -= lr_fp * grad.data[i] / (1ULL << (lr_scale-scale));
+            }
+            // bias.data[i] -= lr_fp * grad(i) * (1ULL << (scale-lr_scale));
         }
     }
 

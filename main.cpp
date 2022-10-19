@@ -334,17 +334,17 @@ void cifar10_float() {
     auto fc3 = new FC<double, 0>(256, 10);
     auto model = Sequential<double>({
         /// 3 Layer from Gupta et al
-        // new Conv2D<double, 0>(3, 64, 5, 1),
-        // new ReLU<double>(),
-        // new MaxPool2D<double>(3, 0, 2),
-        // new Conv2D<double, 0>(64, 64, 5, 1),
-        // new ReLU<double>(),
-        // new MaxPool2D<double>(3, 0, 2),
-        // new Conv2D<double, 0>(64, 64, 5, 1),
-        // new ReLU<double>(),
-        // new MaxPool2D<double>(3, 0, 2),
-        // new Flatten<double>(),
-        // new FC<double, 0>(64, 10),
+        new Conv2D<double, 0>(3, 64, 5, 1),
+        new ReLU<double>(),
+        new MaxPool2D<double>(3, 0, 2),
+        new Conv2D<double, 0>(64, 64, 5, 1),
+        new ReLU<double>(),
+        new MaxPool2D<double>(3, 0, 2),
+        new Conv2D<double, 0>(64, 64, 5, 1),
+        new ReLU<double>(),
+        new MaxPool2D<double>(3, 0, 2),
+        new Flatten<double>(),
+        new FC<double, 0>(64, 10),
         /// Lenet like
         // new Conv2D<double, 0>(3, 18, 5, 1, 1),
         // new ReLU<double>(),
@@ -362,12 +362,12 @@ void cifar10_float() {
         // new ReLU<double>(),
         // new FC<double, 0>(80, 10),
         /// FC lol
-        new Flatten<double>(),
-        new FC<double, 0>(3072, 1024),
-        new ReLU<double>(),
-        new FC<double, 0>(1024, 256),
-        new ReLU<double>(),
-        fc3,
+        // new Flatten<double>(),
+        // new FC<double, 0>(3072, 1024),
+        // new ReLU<double>(),
+        // new FC<double, 0>(1024, 256),
+        // new ReLU<double>(),
+        // fc3,
     });
 
     Tensor4D<double> trainImage(batchSize, 32, 32, 3);
@@ -413,7 +413,7 @@ void cifar10_float() {
             }
         }
 
-        std::cout << "Epoch: " << epoch << " Accuracy: " << correct*100.0 / testLen << "(" << correct << "/" << testLen << ")" << std::endl;
+        std::cout << "Epoch: " << epoch << " Accuracy: " << correct*100.0 / testLen << "% (" << correct << "/" << testLen << ")" << std::endl;
 
     }
 
@@ -430,7 +430,7 @@ int main(int argc, char** argv) {
     std::cout << "> Eigen will use " << Eigen::nbThreads() << " threads" << std::endl;
     // threelayer_keysize_llama();
     load_mnist();
-    // lenet_float();
+    lenet_float();
 
     // int party = 0;
     // if (argc > 1) {
@@ -438,5 +438,5 @@ int main(int argc, char** argv) {
     // }
     // llama_test(party);
 
-    cifar10_float();
+    // cifar10_float();
 }
