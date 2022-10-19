@@ -6,7 +6,7 @@ template <typename T>
 class ClearText {
     static const u64 lr_fp = 1;
     static const u64 lr_scale = 6;
-    static const u64 mom_fp = 29;
+    static const u64 mom_fp = 0;
     static const u64 mom_scale = 5;
     static const bool probablistic = false;
     static const bool numThreads = 4;

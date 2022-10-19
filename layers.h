@@ -200,7 +200,7 @@ public:
     }
 };
 
-template <typename T, u64 scale, bool isFirst = false, class Backend = DefaultBackend<T>>
+template <typename T, u64 scale, class Backend = DefaultBackend<T>>
 class FC : public Layer<T> {
 public:
     Tensor4D<T> inp;
@@ -216,6 +216,7 @@ public:
         double xavier = 1.0 / sqrt(in);
         weight.randomize(xavier * (1ULL<<scale));
         bias.randomize(xavier * (1ULL<<(2*scale)));
+        Vw.fill(0);
     }
 
     void forward(const Tensor4D<T> &a) {
@@ -228,7 +229,7 @@ public:
     }
 
     void backward(const Tensor4D<T> &e) {
-        if (!isFirst) {
+        if (!(this->isFirst)) {
             this->inputDerivative.resize(e.d1, weight.d1, 1, 1);
             Backend::matmulTransposeB(e, weight, this->inputDerivative);
             Backend::truncate(this->inputDerivative, scale);
