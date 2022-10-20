@@ -84,7 +84,7 @@ public:
         }
         // Backend::truncate(filterGrad, scale);
         Backend::updateWeight(filter, filterGrad, Vw, scale);
-        Backend::updateBias(bias, biasGrad, scale);
+        Backend::updateBias(bias, biasGrad, Vb, scale);
     }
 
     void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
@@ -217,6 +217,7 @@ public:
         weight.randomize(xavier * (1ULL<<scale));
         bias.randomize(xavier * (1ULL<<(2*scale)));
         Vw.fill(0);
+        Vb.fill(0);
     }
 
     void forward(const Tensor4D<T> &a) {
@@ -238,7 +239,7 @@ public:
         // Backend::truncate(weightGrad, scale);
         Vw.resize(weightGrad.d1, weightGrad.d2);
         Backend::updateWeight(weight, weightGrad, Vw, scale);
-        Backend::updateBias(bias, e, scale);
+        Backend::updateBias(bias, e, Vb, scale);
     }
 
     void resize(u64 d1, u64 d2, u64 d3, u64 d4) {

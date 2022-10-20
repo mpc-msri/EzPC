@@ -8,7 +8,7 @@ class ClearText {
     static const u64 lr_scale = 6;
     static const u64 mom_fp = 29;
     static const u64 mom_scale = 5;
-    static const bool probablistic = false;
+    static const bool probablistic = true;
     static const bool numThreads = 4;
 
     template <typename Functor>
@@ -188,37 +188,89 @@ public:
         }
     }
 
-    static void updateBias(Tensor<T> &bias, const Tensor4D<T> &e, u64 scale) {
+    static void updateBias(Tensor<T> &bias, const Tensor4D<T> &e, const Tensor<T> &Vb, u64 scale) {
         // assert(e.d1 == 1);
         assert(e.d2 == bias.size);
         assert(e.d3 == 1);
         assert(e.d4 == 1);
-        #pragma omp parallel for
-        for (u64 i = 0; i < bias.size; i++) {
-            T sum = 0;
-            for(u64 j = 0; j < e.d1; ++j) {
-                sum = sum + e(j, i, 0, 0);
+        if (mom_fp == 0) {
+            for (u64 i = 0; i < bias.size; i++) {
+                T sum = 0;
+                for(u64 j = 0; j < e.d1; ++j) {
+                    sum = sum + e(j, i, 0, 0);
+                }
+                if (scale > lr_scale) {
+                    bias.data[i] -= lr_fp * sum * (1ULL << (scale-lr_scale));
+                }
+                else {
+                    bias.data[i] -= lr_fp * sum / (1ULL << (lr_scale-scale));
+                }
             }
-            if (scale > lr_scale) {
-                bias.data[i] -= lr_fp * sum * (1ULL << (scale-lr_scale));
+        }
+        else {
+            assert(bias.size == Vb.size);
+            if (scale == 0) {
+                assert(std::is_floating_point<T>::value);
+                for (u64 i = 0; i < bias.size; i++) {
+                    T sum = 0;
+                    for(u64 j = 0; j < e.d1; ++j) {
+                        sum = sum + e(j, i, 0, 0);
+                    }
+                    Vb(i) = ((mom_fp * Vb(i)) / (1ULL << mom_scale)) + sum;
+                    bias(i) = bias(i) - (lr_fp * Vb(i)) / (1UL << lr_scale);
+                }
             }
             else {
-                bias.data[i] -= lr_fp * sum / (1ULL << (lr_scale-scale));
+                for (u64 i = 0; i < bias.size; i++) {
+                    T sum = 0;
+                    for(u64 j = 0; j < e.d1; ++j) {
+                        sum = sum + e(j, i, 0, 0);
+                    }
+                    Vb(i) = mom_fp * Vb(i) + (1ULL << (scale + mom_scale - lr_scale)) * sum;
+                }
+                truncate(Vb, mom_scale);
+                fastfor(bias.size, [&](u64 i) {
+                    bias(i) = bias(i) - lr_fp * Vb(i);
+                });
             }
         }
     }
 
-    static void updateBias(Tensor<T> &bias, const Tensor<T> &grad, u64 scale) {
+    static void updateBias(Tensor<T> &bias, const Tensor<T> &grad, Tensor<T> &Vb, u64 scale) {
         assert(grad.size == bias.size);
-        #pragma omp parallel for
-        for (u64 i = 0; i < bias.size; i++) {
-            if (scale > lr_scale) {
-                bias.data[i] -= lr_fp * grad.data[i] * (1ULL << (scale-lr_scale));
+        if (mom_fp == 0) {
+            #pragma omp parallel for
+            for (u64 i = 0; i < bias.size; i++) {
+                if (scale > lr_scale) {
+
+                    bias.data[i] -= lr_fp * grad.data[i] * (1ULL << (scale-lr_scale));
+                }
+                else {
+                    assert(std::is_floating_point<T>::value);
+                    bias.data[i] -= lr_fp * grad.data[i] / (1ULL << (lr_scale-scale));
+                }
+                // bias.data[i] -= lr_fp * grad(i) * (1ULL << (scale-lr_scale));
+            }
+        }
+        else {
+            // Scale of Vb would be 2 * scale - lr_scale
+            assert(Vb.size == bias.size);
+            if (scale == 0) {
+                assert(std::is_floating_point<T>::value);
+                fastfor(bias.size, [&](u64 i) {
+                    Vb(i) = (mom_fp * Vb(i) / (1ULL << mom_scale)) + grad(i);
+                    bias(i) = bias(i) - (lr_fp * Vb(i)) / (1UL << lr_scale);
+                });
             }
             else {
-                bias.data[i] -= lr_fp * grad.data[i] / (1ULL << (lr_scale-scale));
+                fastfor(bias.size, [&](u64 i) {
+                    Vb(i) = mom_fp * Vb(i) + (1ULL << (scale + mom_scale - lr_scale)) * grad(i);
+                });
+                truncate(Vb, mom_scale);
+                fastfor(bias.size, [&](u64 i) {
+                    bias(i) = bias(i) - lr_fp * Vb(i);
+                });
             }
-            // bias.data[i] -= lr_fp * grad(i) * (1ULL << (scale-lr_scale));
         }
     }
 
@@ -356,6 +408,23 @@ public:
                         u64 x0 = ((u64)in(i, j)) % (1ULL << shift);
                         in(i, j) += (x0 < r ? 0 : 1); 
                     }
+                }
+            }
+        });
+    }
+
+    static void truncate(const Tensor<T> &in, u64 shift) {
+    //    Eigen::Map<Eigen::ArrayX<T>> eA(in.data, in.d1 * in.d2);
+    //    eA = eA / ((T)(1LL << shift)); // this gives bad accuracy, why?
+        fastfor(in.size, [&] (u64 i) {
+            if constexpr (std::is_floating_point<T>::value) {
+                in(i) = in(i) / ((T)(1ULL << shift));
+            } else {
+                in(i) = in(i) >> shift;
+                if (probablistic) {
+                    u64 r = rand() % (1ULL << shift);
+                    u64 x0 = ((u64)in(i)) % (1ULL << shift);
+                    in(i) += (x0 < r ? 0 : 1); 
                 }
             }
         });

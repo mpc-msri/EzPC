@@ -169,7 +169,7 @@ public:
 
     }
 
-    static void updateBias(Tensor<T> &bias, const Tensor4D<T> &e, u64 scale) {
+    static void updateBias(Tensor<T> &bias, const Tensor4D<T> &e, Tensor<T> &Vb, u64 scale) {
         // assert(e.d1 == 1);
         assert(e.d2 == bias.size);
         assert(e.d3 == 1);
@@ -179,7 +179,7 @@ public:
         // step 4 : bias = bias - delta (free) (bias is already with scale 2s)
     }
 
-    static void updateBias(Tensor<T> &bias, const Tensor<T> &grad, u64 scale) {
+    static void updateBias(Tensor<T> &bias, const Tensor<T> &grad, Tensor<T> &Vb, u64 scale) {
         assert(grad.size == bias.size);
         // step 1 : convert lr to fixed point (free)
         // step 2 : delta = e * lr (free)

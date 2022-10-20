@@ -253,7 +253,7 @@ public:
         }
     }
 
-    static void updateBias(Tensor<T> &bias, const Tensor4D<T> &e, u64 scale) {
+    static void updateBias(Tensor<T> &bias, const Tensor4D<T> &e, Tensor<T> &Vb, u64 scale) {
         // assert(e.d1 == 1);
         assert(e.d2 == bias.size);
         assert(e.d3 == 1);
@@ -267,7 +267,7 @@ public:
         }
     }
 
-    static void updateBias(Tensor<T> &bias, const Tensor<T> &grad, u64 scale) {
+    static void updateBias(Tensor<T> &bias, const Tensor<T> &grad, Tensor<T> &Vb, u64 scale) {
         assert(grad.size == bias.size);
         for (u64 i = 0; i < bias.size; i++) {
             bias.data[i] -= lr_fp * grad(i) * (1ULL << (scale-lr_scale));

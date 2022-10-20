@@ -19,7 +19,7 @@ void printprogress(double percent) {
     std::cout.flush();
 }
 
-const u64 numEpochs = 5;
+const u64 numEpochs = 100;
 const u64 batchSize = 100;
 
 #define useMaxPool true
@@ -80,7 +80,7 @@ void threelayer_keysize_llama() {
 
 
 void cifar10_int() {
-    const u64 scale = 16;
+    const u64 scale = 24;
     auto dataset = cifar::read_dataset<std::vector, std::vector, uint8_t, uint8_t>();
     const u64 trainLen = dataset.training_images.size();
     const u64 testLen = dataset.test_images.size();
@@ -192,7 +192,7 @@ void lenet_int() {
 
     const u64 trainLen = 60000;
     const u64 testLen = 10000;
-    const u64 scale = 16;
+    const u64 scale = 24;
     srand(time(NULL));
     srand(rand());
     srand(rand());
@@ -429,8 +429,8 @@ int main(int argc, char** argv) {
 #endif
     std::cout << "> Eigen will use " << Eigen::nbThreads() << " threads" << std::endl;
     // threelayer_keysize_llama();
-    load_mnist();
-    lenet_float();
+    // load_mnist();
+    // lenet_int();
 
     // int party = 0;
     // if (argc > 1) {
@@ -438,5 +438,5 @@ int main(int argc, char** argv) {
     // }
     // llama_test(party);
 
-    // cifar10_float();
+    cifar10_int();
 }
