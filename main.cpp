@@ -80,7 +80,7 @@ void threelayer_keysize_llama() {
 
 
 void cifar10_int() {
-    const u64 scale = 24;
+    const u64 scale = 16;
     auto dataset = cifar::read_dataset<std::vector, std::vector, uint8_t, uint8_t>();
     const u64 trainLen = dataset.training_images.size();
     const u64 testLen = dataset.test_images.size();
@@ -126,7 +126,7 @@ void cifar10_int() {
                 for(u64 j = 0; j < 32; ++j) {
                     for(u64 k = 0; k < 32; ++k) {
                         for(u64 l = 0; l < 3; ++l) {
-                            trainImage(b, j, k, l) = dataset.training_images[i+b][j * 32 * 3 + k * 3 + l] * (1ULL << (scale-8));
+                            trainImage(b, j, k, l) = (dataset.training_images[i+b][j * 32 + k + l * 32 * 32] / 255.0) * (1ULL << (scale));
                         }
                     }
                 }
@@ -145,7 +145,7 @@ void cifar10_int() {
                 for(u64 j = 0; j < 32; ++j) {
                     for(u64 k = 0; k < 32; ++k) {
                         for(u64 l = 0; l < 3; ++l) {
-                            testSet(b, j, k, l) = dataset.test_images[i+b][j * 3 * 32 + k * 3 + l] * (1ULL << (scale-8));
+                            testSet(b, j, k, l) = (dataset.test_images[i+b][j * 32 + k + l * 32 * 32] / 255.0) * (1ULL << (scale));
                         }
                     }
                 }
@@ -192,7 +192,7 @@ void lenet_int() {
 
     const u64 trainLen = 60000;
     const u64 testLen = 10000;
-    const u64 scale = 24;
+    const u64 scale = 14;
     srand(time(NULL));
     srand(rand());
     srand(rand());
@@ -380,7 +380,7 @@ void cifar10_float() {
                 for(u64 j = 0; j < 32; ++j) {
                     for(u64 k = 0; k < 32; ++k) {
                         for(u64 l = 0; l < 3; ++l) {
-                            trainImage(b, j, k, l) = dataset.training_images[i+b][j * 32 * 3 + k * 3 + l] / 256.0;
+                            trainImage(b, j, k, l) = dataset.training_images[i+b][j * 32 + k + l * 32 * 32] / 255.0;
                         }
                     }
                 }
@@ -400,7 +400,7 @@ void cifar10_float() {
                 for(u64 j = 0; j < 32; ++j) {
                     for(u64 k = 0; k < 32; ++k) {
                         for(u64 l = 0; l < 3; ++l) {
-                            testImage(b, j, k, l) = dataset.test_images[i+b][j * 32 * 3 + k * 3 + l] / 256.0;
+                            testImage(b, j, k, l) = dataset.test_images[i+b][j * 32 + k + l * 32 * 32] / 255.0;
                         }
                     }
                 }
@@ -419,6 +419,69 @@ void cifar10_float() {
 
 }
 
+
+void cifar10_float_test() {
+    auto dataset = cifar::read_dataset<std::vector, std::vector, uint8_t, uint8_t>();
+    const u64 trainLen = dataset.training_images.size();
+    const u64 testLen = dataset.test_images.size();
+
+    std::cout << "=== Running Floating-Point Training (CIFAR-10) ===" << std::endl;
+    const u64 batchSize = 2;
+
+    auto conv1 = new Conv2D<double, 0>(3, 64, 5, 1);
+    auto conv2 = new Conv2D<double, 0>(64, 64, 5, 1);
+    auto conv3 = new Conv2D<double, 0>(64, 64, 5, 1);
+    auto fc1 = new FC<double, 0>(64, 10);
+    auto model = Sequential<double>({
+        /// 3 Layer from Gupta et al
+        conv1,
+        new ReLU<double>(),
+        new MaxPool2D<double>(3, 0, 2),
+        conv2,
+        new ReLU<double>(),
+        new MaxPool2D<double>(3, 0, 2),
+        conv3,
+        new ReLU<double>(),
+        new MaxPool2D<double>(3, 0, 2),
+        new Flatten<double>(),
+        fc1,
+    });
+
+    conv1->filter.fill(0.057);
+    conv1->bias.fill(0.057);
+    conv2->filter.fill(0.0125);
+    conv2->bias.fill(0.0125);
+    conv3->filter.fill(0.0125);
+    conv3->bias.fill(0.0125);
+    fc1->weight.fill(0.0625);
+    fc1->bias.fill(0.0625);
+
+    Tensor4D<double> trainImage(batchSize, 32, 32, 3);
+    Tensor4D<double> testImage(batchSize, 32, 32, 3);
+    Tensor4D<double> e(batchSize, 10, 1, 1);
+    for(u64 i = 0; i < trainLen; i += batchSize) {
+        for(u64 b = 0; b < batchSize; ++b) {
+            for(u64 j = 0; j < 32; ++j) {
+                for(u64 k = 0; k < 32; ++k) {
+                    for(u64 l = 0; l < 3; ++l) {
+                        trainImage(b, j, k, l) = dataset.training_images[i+b][j * 32 + k + l * 32 * 32] / 255.0;
+                    }
+                }
+            }
+        }
+
+        model.forward(trainImage);
+        softmax<double, 0>(model.activation, e);
+        for(u64 b = 0; b < batchSize; ++b) {
+            e(b, dataset.training_labels[i+b], 0, 0) -= (1.0/batchSize);
+        }
+        model.backward(e);
+        if (i == 0) {
+            conv1->filter.print();
+            break;
+        }
+    }
+}
 
 int main(int argc, char** argv) {
     prngWeights.SetSeed(osuCrypto::toBlock(time(NULL)));
