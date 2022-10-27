@@ -161,7 +161,8 @@ public:
         // step 1 : convert lr to fixed point (free)
         // step 2 : delta = e * lr (free)
         // step 3 : truncate(delta)
-        u64 cost = weight.d1 * weight.d2 * truncatecost(bw, scale+lr_scale);
+        // 2 * as momentum needs two truncations
+        u64 cost = 2 * weight.d1 * weight.d2 * truncatecost(bw, scale+lr_scale);
         if (verbose) std::cout << "updateWeight key size = " << cost / gb << std::endl;
         serverkeysize += cost;
         clientkeysize += cost;

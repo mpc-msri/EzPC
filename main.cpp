@@ -8,16 +8,7 @@
 #include <cmath>
 #include <iomanip>
 #include "cifar10.hpp"
-
-void printprogress(double percent) {
-    int val = (int) (percent * 100);
-    int lpad = (int) (percent * 50);
-    int rpad = 50 - lpad;
-    std::cout << "\r" << "[" << std::setw(3) << val << "%] ["
-              << std::setw(lpad) << std::setfill('=') << ""
-              << std::setw(rpad) << std::setfill(' ') << "] ";
-    std::cout.flush();
-}
+#include "networks.h"
 
 const u64 numEpochs = 100;
 const u64 batchSize = 100;
@@ -34,25 +25,13 @@ void threelayer_keysize_llama() {
     auto model = Sequential<i64>({
         new Conv2D<i64, scale, LlamaKey<i64>>(3, 64, 5, 1),
         new ReLUTruncate<i64, LlamaKey<i64>>(scale),
-#if useMaxPool
         new MaxPool2D<i64, LlamaKey<i64>>(3, 0, 2),
-#else
-        new AvgPool2D<i64, scale, LlamaKey<i64>>(3, 0, 2),
-#endif
         new Conv2D<i64, scale, LlamaKey<i64>>(64, 64, 5, 1),
         new ReLUTruncate<i64, LlamaKey<i64>>(scale),
-#if useMaxPool
         new MaxPool2D<i64, LlamaKey<i64>>(3, 0, 2),
-#else
-        new AvgPool2D<i64, scale, LlamaKey<i64>>(3, 0, 2),
-#endif
         new Conv2D<i64, scale, LlamaKey<i64>>(64, 64, 5, 1),
         new ReLUTruncate<i64, LlamaKey<i64>>(scale),
-#if useMaxPool
         new MaxPool2D<i64, LlamaKey<i64>>(3, 0, 2),
-#else
-        new AvgPool2D<i64, scale, LlamaKey<i64>>(3, 0, 2),
-#endif
         new Flatten<i64>(),
         new FC<i64, scale, LlamaKey<i64>>(64, 10),
         new Truncate<i64, LlamaKey<i64>>(scale),
@@ -76,90 +55,6 @@ void threelayer_keysize_llama() {
     std::cout << ">>>>>>> BACKWARD DONE <<<<<<<<" << std::endl;
     std::cout << "Server key size: " << LlamaKey<i64>::serverkeysize / gb << " GB" << std::endl;
     std::cout << "Client key size: " << LlamaKey<i64>::clientkeysize / gb << " GB" << std::endl;
-}
-
-
-void cifar10_int() {
-    const u64 scale = 16;
-    auto dataset = cifar::read_dataset<std::vector, std::vector, uint8_t, uint8_t>();
-    const u64 trainLen = dataset.training_images.size();
-    const u64 testLen = dataset.test_images.size();
-    srand(time(NULL));
-    std::cout << "=== Running Fixed-Point Training (CIFAR-10) ===" << std::endl;
-
-    Tensor4D<i64> testSet(batchSize, 32, 32, 3);
-
-    auto model = Sequential<i64>({
-        new Conv2D<i64, scale>(3, 64, 5, 1),
-        new ReLUTruncate<i64>(scale),
-#if useMaxPool
-        new MaxPool2D<i64>(3, 0, 2),
-#else
-        new AvgPool2D<i64, scale>(3, 0, 2),
-#endif
-        new Conv2D<i64, scale>(64, 64, 5, 1),
-        new ReLUTruncate<i64>(scale),
-#if useMaxPool
-        new MaxPool2D<i64>(3, 0, 2),
-#else
-        new AvgPool2D<i64, scale>(3, 0, 2),
-#endif
-        new Conv2D<i64, scale>(64, 64, 5, 1),
-        new ReLUTruncate<i64>(scale),
-#if useMaxPool
-        new MaxPool2D<i64>(3, 0, 2),
-#else
-        new AvgPool2D<i64, scale>(3, 0, 2),
-#endif
-        new Flatten<i64>(),
-        new FC<i64, scale>(64, 10),
-        new Truncate<i64>(scale),
-    });
-
-    Tensor4D<i64> e(batchSize, 10, 1, 1);
-    Tensor4D<i64> trainImage(batchSize, 32, 32, 3);
-    for(int epoch = 0; epoch < numEpochs; ++epoch) {
-        std::cout << "Epoch " << epoch << std::endl;
-        for(u64 i = 0; i < trainLen; i += batchSize) {
-            // fetch image
-            for(int b = 0; b < batchSize; ++b) {
-                for(u64 j = 0; j < 32; ++j) {
-                    for(u64 k = 0; k < 32; ++k) {
-                        for(u64 l = 0; l < 3; ++l) {
-                            trainImage(b, j, k, l) = (dataset.training_images[i+b][j * 32 + k + l * 32 * 32] / 255.0) * (1ULL << (scale));
-                        }
-                    }
-                }
-            }
-            model.forward(trainImage);
-            softmax<i64, scale>(model.activation, e);
-            for(int b = 0; b < batchSize; ++b) {
-                e(b, dataset.training_labels[i+b], 0, 0) -= ((1ULL<<scale)/batchSize);
-            }
-            model.backward(e);
-            printprogress(((double)i) / trainLen);
-        }
-        u64 correct = 0;
-        for(u64 i = 0; i < testLen; i += batchSize) {
-            for(u64 b = 0; b < batchSize; ++b) {
-                for(u64 j = 0; j < 32; ++j) {
-                    for(u64 k = 0; k < 32; ++k) {
-                        for(u64 l = 0; l < 3; ++l) {
-                            testSet(b, j, k, l) = (dataset.test_images[i+b][j * 32 + k + l * 32 * 32] / 255.0) * (1ULL << (scale));
-                        }
-                    }
-                }
-            }
-            model.forward(testSet);
-            for(u64 b = 0; b < batchSize; b++) {
-                if (model.activation.argmax(b) == dataset.test_labels[i+b]) {
-                    correct++;
-                }
-            }
-        }
-        std::cout << " Accuracy: " << (correct*100.0) / testLen;
-        std::cout << std::endl;
-    }
 }
 
 void llama_test(int party) {
@@ -188,250 +83,18 @@ void llama_test(int party) {
 }
 
 
-void lenet_int() {
-
-    const u64 trainLen = 60000;
-    const u64 testLen = 10000;
-    const u64 scale = 14;
-    srand(time(NULL));
-    srand(rand());
-    srand(rand());
-    std::cout << "=== Running Fixed-Point Training ===" << std::endl;
-
-    auto model = Sequential<i64>({
-        new Conv2D<i64, scale>(1, 6, 5, 1, 1),
-        new ReLUTruncate<i64>(scale),
-        new MaxPool2D<i64>(2),
-        new Conv2D<i64, scale>(6, 16, 5, 1),
-        new ReLUTruncate<i64>(scale),
-        new MaxPool2D<i64>(2),
-        new Conv2D<i64, scale>(16, 120, 5),
-        new ReLUTruncate<i64>(scale),
-        new Flatten<i64>(),
-        new FC<i64, scale>(120, 84),
-        new ReLUTruncate<i64>(scale),
-        new FC<i64, scale>(84, 10),
-        new Truncate<i64>(scale),
-    });
-
-    Tensor4D<i64> testSet(testLen, 28, 28, 1);
-    for(u64 i = 0; i < testLen; ++i) {
-        for(u64 j = 0; j < 28; ++j) {
-            for(u64 k = 0; k < 28; ++k) {
-                testSet(i, j, k, 0) = test_image[i][j * 28 + k] * (1ULL << scale);
-            }
-        }
-    }
-
-    Tensor4D<i64> e(batchSize, 10, 1, 1);
-    Tensor4D<i64> trainImage(batchSize, 28, 28, 1);
-    for(int epoch = 0; epoch < numEpochs; ++epoch) {
-        std::cout << "Epoch: " << epoch << std::endl;
-        auto t1 = std::chrono::high_resolution_clock::now();
-        for(u64 i = 0; i < trainLen; i += batchSize) {
-            // fetch image
-            for(int b = 0; b < batchSize; ++b) {
-                for(u64 j = 0; j < 28; ++j) {
-                    for(u64 k = 0; k < 28; ++k) {
-                        trainImage(b, j, k, 0) = train_image[i+b][j * 28 + k] * (1ULL << scale);
-                    }
-                }
-            }
-            model.forward(trainImage);
-            softmax<i64, scale>(model.activation, e);
-            for(int b = 0; b < batchSize; ++b) {
-                e(b, train_label[i+b], 0, 0) -= ((1ULL<<scale)/batchSize);
-            }
-            model.backward(e);
-            printprogress(((double)i) / trainLen);
-        }
-        auto t2 = std::chrono::high_resolution_clock::now();
-        model.forward(testSet);
-        u64 correct = 0;
-        for(u64 i = 0; i < testLen; i++) {
-            if (model.activation.argmax(i) == test_label[i]) {
-                correct++;
-            }
-        }
-        auto t3 = std::chrono::high_resolution_clock::now();
-        std::cout << std::endl;
-        std::cout << " Accuracy: " << (correct*100.0) / testLen;
-        std::cout << " Training Time: " << std::chrono::duration_cast<std::chrono::seconds>(t2-t1).count() << " seconds";
-        std::cout << " Testing Time: " << std::chrono::duration_cast<std::chrono::seconds>(t3-t2).count() << " seconds";
-        std::cout << std::endl;
-    }
-}
-
-void lenet_float() {
-
-    srand(time(NULL));
-    std::cout << "=== Running Floating Point Training (MNIST) ===" << std::endl;
-
-    const u64 trainLen = 60000;
-    auto model = Sequential<double>({
-        new Conv2D<double, 0>(1, 6, 5, 1, 1),
-        new ReLU<double>(),
-        new MaxPool2D<double>(2),
-        new Conv2D<double, 0>(6, 16, 5, 1),
-        new ReLU<double>(),
-        new MaxPool2D<double>(2),
-        new Conv2D<double, 0>(16, 120, 5),
-        new ReLU<double>(),
-        new Flatten<double>(),
-        new FC<double, 0>(120, 84),
-        new ReLU<double>(),
-        new FC<double, 0>(84, 10),
-    });
-
-    const u64 testLen = 10000;
-    Tensor4D<double> testSet(testLen, 28, 28, 1);
-    for(u64 i = 0; i < testLen; ++i) {
-        for(u64 j = 0; j < 28; ++j) {
-            for(u64 k = 0; k < 28; ++k) {
-                testSet(i, j, k, 0) = test_image[i][j * 28 + k];
-            }
-        }
-    }
-
-    Tensor4D<double> e(batchSize, 10, 1, 1);
-    Tensor4D<double> trainImage(batchSize, 28, 28, 1);
-    for(int epoch = 0; epoch < numEpochs; ++epoch) {
-        for(u64 i = 0; i < trainLen; i += batchSize) {
-            // fetch image
-            for(int b = 0; b < batchSize; ++b) {
-                for(u64 j = 0; j < 28; ++j) {
-                    for(u64 k = 0; k < 28; ++k) {
-                        trainImage(b, j, k, 0) = train_image[i+b][j * 28 + k];
-                    }
-                }
-            }
-            model.forward(trainImage);
-            softmax<double, 0>(model.activation, e);
-            for(int b = 0; b < batchSize; ++b) {
-                e(b, train_label[i+b], 0, 0) -= (1.0/batchSize);
-            }
-            model.backward(e);
-            printprogress(((double)i) / trainLen);
-        }
-        model.forward(testSet);
-        u64 correct = 0;
-        for(u64 i = 0; i < testLen; i++) {
-            if (model.activation.argmax(i) == test_label[i]) {
-                correct++;
-            }
-        }
-        std::cout << "Epoch: " << epoch << " Accuracy: " << (correct*100.0)/testLen << std::endl;
-    }
-}
-
-void cifar10_float() {
-    auto dataset = cifar::read_dataset<std::vector, std::vector, uint8_t, uint8_t>();
-    const u64 trainLen = dataset.training_images.size();
-    const u64 testLen = dataset.test_images.size();
-
-    std::cout << "=== Running Floating-Point Training (CIFAR-10) ===" << std::endl;
-    
-    auto fc3 = new FC<double, 0>(256, 10);
-    auto model = Sequential<double>({
-        /// 3 Layer from Gupta et al
-        new Conv2D<double, 0>(3, 64, 5, 1),
-        new ReLU<double>(),
-        new MaxPool2D<double>(3, 0, 2),
-        new Conv2D<double, 0>(64, 64, 5, 1),
-        new ReLU<double>(),
-        new MaxPool2D<double>(3, 0, 2),
-        new Conv2D<double, 0>(64, 64, 5, 1),
-        new ReLU<double>(),
-        new MaxPool2D<double>(3, 0, 2),
-        new Flatten<double>(),
-        new FC<double, 0>(64, 10),
-        /// Lenet like
-        // new Conv2D<double, 0>(3, 18, 5, 1, 1),
-        // new ReLU<double>(),
-        // new MaxPool2D<double>(2),
-        // new Conv2D<double, 0>(18, 48, 5, 1),
-        // new ReLU<double>(),
-        // new MaxPool2D<double>(2),
-        // new Conv2D<double, 0>(48, 360, 5),
-        // new ReLU<double>(),
-        // new MaxPool2D<double>(2),
-        // new Flatten<double>(),
-        // new FC<double, 0>(360, 120),
-        // new ReLU<double>(),
-        // new FC<double, 0>(120, 80),
-        // new ReLU<double>(),
-        // new FC<double, 0>(80, 10),
-        /// FC lol
-        // new Flatten<double>(),
-        // new FC<double, 0>(3072, 1024),
-        // new ReLU<double>(),
-        // new FC<double, 0>(1024, 256),
-        // new ReLU<double>(),
-        // fc3,
-    });
-
-    Tensor4D<double> trainImage(batchSize, 32, 32, 3);
-    Tensor4D<double> testImage(batchSize, 32, 32, 3);
-    Tensor4D<double> e(batchSize, 10, 1, 1);
-    
-    for(u64 epoch = 0; epoch < numEpochs; ++epoch) {
-        for(u64 i = 0; i < trainLen; i += batchSize) {
-            for(u64 b = 0; b < batchSize; ++b) {
-                for(u64 j = 0; j < 32; ++j) {
-                    for(u64 k = 0; k < 32; ++k) {
-                        for(u64 l = 0; l < 3; ++l) {
-                            trainImage(b, j, k, l) = dataset.training_images[i+b][j * 32 + k + l * 32 * 32] / 255.0;
-                        }
-                    }
-                }
-            }
-            model.forward(trainImage);
-            softmax<double, 0>(model.activation, e);
-            for(u64 b = 0; b < batchSize; ++b) {
-                e(b, dataset.training_labels[i+b], 0, 0) -= (1.0/batchSize);
-            }
-            model.backward(e);
-            printprogress(((double)i) / trainLen);
-        }
-
-        u64 correct = 0;
-        for(u64 i = 0; i < testLen; i += batchSize) {
-            for(u64 b = 0; b < batchSize; ++b) {
-                for(u64 j = 0; j < 32; ++j) {
-                    for(u64 k = 0; k < 32; ++k) {
-                        for(u64 l = 0; l < 3; ++l) {
-                            testImage(b, j, k, l) = dataset.test_images[i+b][j * 32 + k + l * 32 * 32] / 255.0;
-                        }
-                    }
-                }
-            }
-            model.forward(testImage);
-            for(u64 b = 0; b < batchSize; ++b) {
-                if (model.activation.argmax(b) == dataset.test_labels[i+b]) {
-                    correct++;
-                }
-            }
-        }
-
-        std::cout << "Epoch: " << epoch << " Accuracy: " << correct*100.0 / testLen << "% (" << correct << "/" << testLen << ")" << std::endl;
-
-    }
-
-}
-
-
 void cifar10_float_test() {
     auto dataset = cifar::read_dataset<std::vector, std::vector, uint8_t, uint8_t>();
     const u64 trainLen = dataset.training_images.size();
     const u64 testLen = dataset.test_images.size();
-
-    std::cout << "=== Running Floating-Point Training (CIFAR-10) ===" << std::endl;
-    const u64 batchSize = 2;
+    const u64 batchSize = 100;
+    const u64 scale = 12;
 
     auto conv1 = new Conv2D<double, 0>(3, 64, 5, 1);
     auto conv2 = new Conv2D<double, 0>(64, 64, 5, 1);
     auto conv3 = new Conv2D<double, 0>(64, 64, 5, 1);
     auto fc1 = new FC<double, 0>(64, 10);
+    auto rt3 = new ReLU<double>();
     auto model = Sequential<double>({
         /// 3 Layer from Gupta et al
         conv1,
@@ -441,59 +104,390 @@ void cifar10_float_test() {
         new ReLU<double>(),
         new MaxPool2D<double>(3, 0, 2),
         conv3,
-        new ReLU<double>(),
+        rt3,
         new MaxPool2D<double>(3, 0, 2),
         new Flatten<double>(),
         fc1,
     });
 
-    conv1->filter.fill(0.057);
-    conv1->bias.fill(0.057);
-    conv2->filter.fill(0.0125);
-    conv2->bias.fill(0.0125);
-    conv3->filter.fill(0.0125);
-    conv3->bias.fill(0.0125);
-    fc1->weight.fill(0.0625);
-    fc1->bias.fill(0.0625);
+    auto conv1_fp = new Conv2D<i64, scale>(3, 64, 5, 1);
+    auto conv2_fp = new Conv2D<i64, scale>(64, 64, 5, 1);
+    auto conv3_fp = new Conv2D<i64, scale>(64, 64, 5, 1);
+    auto fc1_fp = new FC<i64, scale>(64, 10);
+    auto rt3_fp = new ReLUTruncate<i64>(scale);
+    auto t_last = new Truncate<i64>(scale);
+    auto model_fp = Sequential<i64>({
+        /// 3 Layer from Gupta et al
+        conv1_fp,
+        new ReLUTruncate<i64>(scale),
+        new MaxPool2D<i64>(3, 0, 2),
+        conv2_fp,
+        new ReLUTruncate<i64>(scale),
+        new MaxPool2D<i64>(3, 0, 2),
+        conv3_fp,
+        rt3_fp,
+        new MaxPool2D<i64>(3, 0, 2),
+        new Flatten<i64>(),
+        fc1_fp,
+        t_last,
+    });
+
+    // conv1_fp->filter.fill(0.057 * (1ULL<<scale));
+    for(int i = 0; i < conv1_fp->filter.d1; ++i) {
+        for(int j = 0; j < conv1_fp->filter.d2; ++j) {
+            conv1_fp->filter(i, j) = conv1->filter(i, j) * (1ULL<<scale) + rand_float();
+        }
+    }
+    // conv1_fp->bias.fill(0.057 * (1ULL<<(2*scale)));
+    for(int i = 0; i < conv1_fp->bias.size; ++i) {
+        conv1_fp->bias(i) = conv1->bias(i) * (1ULL<<(2*scale)) + rand_float();
+    }
+    // conv2_fp->filter.fill(0.0125 * (1ULL<<scale));
+    for(int i = 0; i < conv2_fp->filter.d1; ++i) {
+        for(int j = 0; j < conv2_fp->filter.d2; ++j) {
+            conv2_fp->filter(i, j) = conv2->filter(i, j) * (1ULL<<scale) + rand_float();
+        }
+    }
+    // conv2_fp->bias.fill(0.0125 * (1ULL<<(2*scale)));
+    for(int i = 0; i < conv2_fp->bias.size; ++i) {
+        conv2_fp->bias(i) = conv2->bias(i) * (1ULL<<(2*scale)) + rand_float();
+    }
+    // conv3_fp->filter.fill(0.0125 * (1ULL<<scale));
+    for(int i = 0; i < conv3_fp->filter.d1; ++i) {
+        for(int j = 0; j < conv3_fp->filter.d2; ++j) {
+            conv3_fp->filter(i, j) = conv3->filter(i, j) * (1ULL<<scale) + rand_float();
+        }
+    }
+    // conv3_fp->bias.fill(0.0125 * (1ULL<<(2*scale)));
+    for(int i = 0; i < conv3_fp->bias.size; ++i) {
+        conv3_fp->bias(i) = conv3->bias(i) * (1ULL<<(2*scale)) + rand_float();
+    }
+    // fc1_fp->weight.fill(0.0625 * (1ULL<<scale));
+    for(int i = 0; i < fc1_fp->weight.d1; ++i) {
+        for(int j = 0; j < fc1_fp->weight.d2; ++j) {
+            fc1_fp->weight(i, j) = fc1->weight(i, j) * (1ULL<<scale) + rand_float();
+        }
+    }
+    // fc1_fp->bias.fill(0.0625 * (1ULL<<(2*scale)));
+    for(int i = 0; i < fc1_fp->bias.size; ++i) {
+        fc1_fp->bias(i) = fc1->bias(i) * (1ULL<<(2*scale)) + rand_float();
+    }
 
     Tensor4D<double> trainImage(batchSize, 32, 32, 3);
-    Tensor4D<double> testImage(batchSize, 32, 32, 3);
+    Tensor4D<i64> trainImage_fp(batchSize, 32, 32, 3);
     Tensor4D<double> e(batchSize, 10, 1, 1);
+    Tensor4D<i64> e_fp(batchSize, 10, 1, 1);
     for(u64 i = 0; i < trainLen; i += batchSize) {
         for(u64 b = 0; b < batchSize; ++b) {
             for(u64 j = 0; j < 32; ++j) {
                 for(u64 k = 0; k < 32; ++k) {
                     for(u64 l = 0; l < 3; ++l) {
                         trainImage(b, j, k, l) = dataset.training_images[i+b][j * 32 + k + l * 32 * 32] / 255.0;
+                        trainImage_fp(b, j, k, l) = (dataset.training_images[i+b][j * 32 + k + l * 32 * 32] / 255.0) * (1ULL<<(scale));
                     }
                 }
             }
         }
 
         model.forward(trainImage);
+        model_fp.forward(trainImage_fp);
         softmax<double, 0>(model.activation, e);
+        softmax<i64, scale>(model_fp.activation, e_fp);
         for(u64 b = 0; b < batchSize; ++b) {
             e(b, dataset.training_labels[i+b], 0, 0) -= (1.0/batchSize);
+            e_fp(b, dataset.training_labels[i+b], 0, 0) -= (1ULL<<(scale))/batchSize;
         }
         model.backward(e);
-        if (i == 0) {
-            conv1->filter.print();
+        model_fp.backward(e_fp);
+        // if (i == 1000 * batchSize) break;
+        printprogress(((double)i) / trainLen);
+    }
+
+    std::cout << "FP = \n";
+    std::cout << fc1_fp->weight(0, 0) / ((double)(1ULL<<scale)) << " ";
+    std::cout << fc1_fp->weight(0, 1) / ((double)(1ULL<<scale)) << " ";
+    std::cout << fc1_fp->weight(0, 2) / ((double)(1ULL<<scale)) << " ";
+    std::cout << fc1_fp->weight(0, 3) / ((double)(1ULL<<scale)) << std::endl;
+
+    std::cout << conv1_fp->filter(0, 0) / ((double)(1ULL<<scale)) << " ";
+    std::cout << conv1_fp->filter(0, 1) / ((double)(1ULL<<scale)) << " ";
+    std::cout << conv1_fp->filter(0, 2) / ((double)(1ULL<<scale)) << " ";
+    std::cout << conv1_fp->filter(0, 3) / ((double)(1ULL<<scale)) << std::endl;
+
+    std::cout << "Float = \n";
+    std::cout << fc1->weight(0, 0) << " ";
+    std::cout << fc1->weight(0, 1) << " ";
+    std::cout << fc1->weight(0, 2) << " ";
+    std::cout << fc1->weight(0, 3) << std::endl;
+
+    std::cout << conv1->filter(0, 0) << " ";
+    std::cout << conv1->filter(0, 1) << " ";
+    std::cout << conv1->filter(0, 2) << " ";
+    std::cout << conv1->filter(0, 3) << std::endl;
+}
+
+Tensor4D<double> diff(Tensor4D<i64> &t, u64 scale, Tensor4D<double> &t2) {
+    Tensor4D<double> ret(t.d1, t.d2, t.d3, t.d4);
+    for(u64 i = 0; i < t.d1; ++i) {
+        for(u64 j = 0; j < t.d2; ++j) {
+            for(u64 k = 0; k < t.d3; ++k) {
+                for(u64 l = 0; l < t.d4; ++l) {
+                    ret(i, j, k, l) = t2(i, j, k, l) - (t(i, j, k, l) / ((double)(1ULL<<scale)));
+                }
+            }
+        }
+    }
+    return ret;
+}
+
+Tensor2D<double> diff(Tensor2D<i64> &t, u64 scale, Tensor2D<double> &t2) {
+    Tensor2D<double> ret(t.d1, t.d2);
+    for(u64 i = 0; i < t.d1; ++i) {
+        for(u64 j = 0; j < t.d2; ++j) {
+            ret(i, j) = t2(i, j) - (t(i, j) / ((double)(1ULL<<scale)));
+        }
+    }
+    return ret;
+}
+
+Tensor<double> diff(Tensor<i64> &t, u64 scale, Tensor<double> &t2) {
+    Tensor<double> ret(t.size);
+    for(u64 i = 0; i < t.size; ++i) {
+        ret(i) = t2(i) - (t(i) / ((double)(1ULL<<scale)));
+    }
+    return ret;
+}
+
+void single_layer_test() {
+    std::cout << std::fixed;
+    std::cout << std::setprecision(6);
+    auto dataset = cifar::read_dataset<std::vector, std::vector, uint8_t, uint8_t>();
+    const u64 trainLen = dataset.training_images.size();
+    const u64 testLen = dataset.test_images.size();
+    const u64 batchSize = 2;
+    const u64 scale = 12;
+
+    auto fc1 = new FC<double, 0>(3072, 10);
+    auto rt  = new ReLU<double>();
+    auto model = Sequential<double>({
+        new Flatten<double>(),
+        fc1,
+        rt,
+    });
+
+    fc1->weight.fill(0.009021);
+    fc1->bias.fill(0.009021);
+
+    auto fc1_fp = new FC<i64, scale>(3072, 10);
+    auto rt_fp  = new ReLUTruncate<i64>(scale);
+    auto model_fp = Sequential<i64>({
+        new Flatten<i64>(),
+        fc1_fp,
+        rt_fp,
+    });
+
+    fc1_fp->weight.fill(0.009021 * (1ULL<<scale));
+    fc1_fp->bias.fill(0.009021 * (1ULL<<(2*scale)));
+
+    Tensor4D<double> trainImage(batchSize, 32, 32, 3);
+    Tensor4D<i64> trainImage_fp(batchSize, 32, 32, 3);
+    Tensor4D<double> e(batchSize, 10, 1, 1);
+    Tensor4D<i64> e_fp(batchSize, 10, 1, 1);
+    Tensor<u64> dist(10);
+    dist.fill(0);
+    for(u64 i = 0; i < trainLen; i += batchSize) {
+        for(u64 b = 0; b < batchSize; ++b) {
+            for(u64 j = 0; j < 32; ++j) {
+                for(u64 k = 0; k < 32; ++k) {
+                    for(u64 l = 0; l < 3; ++l) {
+                        trainImage(b, j, k, l) = dataset.training_images[i+b][j * 32 + k + l * 32 * 32] / 255.0;
+                        auto pixel = (dataset.training_images[i+b][j * 32 + k + l * 32 * 32] / 255.0) * (1ULL<<(scale));
+                        trainImage_fp(b, j, k, l) = pixel + rand_float();
+                    }
+                }
+            }
+        }
+
+        model.forward(trainImage);
+        model_fp.forward(trainImage_fp);
+        softmax<double, 0>(model.activation, e);
+        softmax<i64, scale>(model_fp.activation, e_fp);
+        for(u64 b = 0; b < batchSize; ++b) {
+            e_fp(b, dataset.training_labels[i+b], 0, 0) -= (1ULL<<(scale))/batchSize;
+            e(b, dataset.training_labels[i+b], 0, 0) -= (1.0/batchSize);
+            dist(dataset.training_labels[i+b])++;
+            // for(u64 j = 0; j < 10; ++j) {
+            //     e(b, j, 0, 0) = e_fp(b, j, 0, 0) / ((double)(1ULL<<scale));
+            // }
+        }
+        model.backward(e);
+        model_fp.backward(e_fp);
+        // at i = 24 * batchSize, something special happens in the first element of bias - sign of the relu is flipped in fp vs float causing huge difference
+        if (i == 3 * batchSize) {
+            // auto d = diff(e_fp, scale, e);
+            // auto d = diff(fc1_fp->weight, scale, fc1->weight);
+            std::cout << "Stopping at i = " << i << std::endl;
+            std::cout << "FP\nbias = ";
+            fc1_fp->bias.print(2*scale);
+            std::cout << "e = \n";
+            // e_fp.print(scale);
+            rt_fp->inputDerivative.print(scale);
+            std::cout << "fc act =\n";
+            fc1_fp->activation.print(2*scale);
+            std::cout << "Float\nbias = ";
+            fc1->bias.print();
+            std::cout << "e = \n";
+            // e.print();
+            rt->inputDerivative.print();
+            std::cout << "fc act =\n";
+            fc1->activation.print();
+            auto d = diff(fc1_fp->bias, 2*scale, fc1->bias);
+            std::cout << "Diff\n";
+            d.print();
+            // std::cout << 1.0/(1ULL<<scale) << std::endl;
+            dist.print();
             break;
         }
     }
 }
 
+
+void single_layer_test_norelu() {
+    std::cout << std::fixed;
+    std::cout << std::setprecision(6);
+    auto dataset = cifar::read_dataset<std::vector, std::vector, uint8_t, uint8_t>();
+    const u64 trainLen = dataset.training_images.size();
+    const u64 testLen = dataset.test_images.size();
+    const u64 batchSize = 2;
+    const u64 scale = 12;
+
+    auto fc1 = new FC<double, 0>(3072, 10);
+    auto model = Sequential<double>({
+        new Flatten<double>(),
+        fc1,
+    });
+
+    fc1->weight.fill(0.009021);
+    fc1->bias.fill(0.009021);
+
+    auto fc1_fp = new FC<i64, scale>(3072, 10);
+    auto rt_fp  = new Truncate<i64>(scale);
+    auto model_fp = Sequential<i64>({
+        new Flatten<i64>(),
+        fc1_fp,
+        rt_fp,
+    });
+
+    for(u64 i = 0; i < 3072; ++i) {
+        for(u64 j = 0; j < 10; ++j) {
+            fc1_fp->weight(i, j) = (0.009021 * (1ULL<<scale)) + rand_float();
+        }
+    }
+
+    for(u64 i = 0; i < 10; ++i) {
+        fc1_fp->bias(i) = (0.009021 * (1ULL<<(2*scale))) + rand_float();
+    }
+
+    Tensor4D<double> trainImage(batchSize, 32, 32, 3);
+    Tensor4D<i64> trainImage_fp(batchSize, 32, 32, 3);
+    Tensor4D<double> e(batchSize, 10, 1, 1);
+    Tensor4D<i64> e_fp(batchSize, 10, 1, 1);
+    Tensor<u64> dist(10);
+    dist.fill(0);
+    for(u64 i = 0; i < trainLen; i += batchSize) {
+        for(u64 b = 0; b < batchSize; ++b) {
+            for(u64 j = 0; j < 32; ++j) {
+                for(u64 k = 0; k < 32; ++k) {
+                    for(u64 l = 0; l < 3; ++l) {
+                        trainImage(b, j, k, l) = dataset.training_images[i+b][j * 32 + k + l * 32 * 32] / 255.0;
+                        auto pixel = (dataset.training_images[i+b][j * 32 + k + l * 32 * 32] / 255.0) * (1ULL<<(scale));
+                        trainImage_fp(b, j, k, l) = pixel + rand_float();
+                    }
+                }
+            }
+        }
+
+        model.forward(trainImage);
+        model_fp.forward(trainImage_fp);
+        softmax<double, 0>(model.activation, e);
+        softmax<i64, scale>(model_fp.activation, e_fp);
+        for(u64 b = 0; b < batchSize; ++b) {
+            e_fp(b, dataset.training_labels[i+b], 0, 0) -= (1ULL<<(scale))/batchSize;
+            e(b, dataset.training_labels[i+b], 0, 0) -= (1.0/batchSize);
+            dist(dataset.training_labels[i+b])++;
+        }
+        model.backward(e);
+        model_fp.backward(e_fp);
+        // at i = 24 * batchSize, something special happens in the first element of bias - sign of the relu is flipped in fp vs float causing huge difference
+        if (i == 30000 * batchSize) {
+            // auto d = diff(e_fp, scale, e);
+            // auto d = diff(fc1_fp->weight, scale, fc1->weight);
+            std::cout << "Stopping at i = " << i << std::endl;
+            std::cout << "FP\n";
+            // std::cout << "bias = \n";
+            // fc1_fp->bias.print(2*scale);
+            // std::cout << "e = \n";
+            // e_fp.print(scale);
+            // std::cout << "act =\n";
+            // model_fp.activation.print(scale);
+            std::cout << "weight = \n";
+            std::cout << fc1_fp->weight(0, 0) / ((double)(1ULL<<scale)) << " ";
+            // std::cout << fc1_fp->weight(0, 0) << " ";
+            std::cout << fc1_fp->weight(0, 1) / ((double)(1ULL<<scale)) << " ";
+            std::cout << fc1_fp->weight(0, 2) / ((double)(1ULL<<scale)) << " ";
+            std::cout << fc1_fp->weight(0, 3) / ((double)(1ULL<<scale)) << std::endl;
+            // std::cout << "weightGrad = \n";
+            // std::cout << fc1_fp->weightGrad(0, 0) / ((double)(1ULL<<(2*scale))) << " ";
+            // std::cout << fc1_fp->weightGrad(0, 1) / ((double)(1ULL<<(2*scale))) << " ";
+            // std::cout << fc1_fp->weightGrad(0, 2) / ((double)(1ULL<<(2*scale))) << " ";
+            // std::cout << fc1_fp->weightGrad(0, 3) / ((double)(1ULL<<(2*scale))) << std::endl;
+            // std::cout << "Vw = \n";
+            // std::cout << fc1_fp->Vw(0, 0) / ((double)(1ULL<<(2*scale))) << " ";
+            // std::cout << fc1_fp->Vw(0, 1) / ((double)(1ULL<<(2*scale))) << " ";
+            // std::cout << fc1_fp->Vw(0, 2) / ((double)(1ULL<<(2*scale))) << " ";
+            // std::cout << fc1_fp->Vw(0, 3) / ((double)(1ULL<<(2*scale))) << std::endl;
+            std::cout << "Float\n";
+            // std::cout << "bias = \n";
+            // fc1->bias.print();
+            // std::cout << "e = \n";
+            // e.print();
+            // std::cout << "act =\n";
+            // model.activation.print();
+            std::cout << "weight = \n";
+            std::cout << fc1->weight(0, 0) << " ";
+            std::cout << fc1->weight(0, 1) << " ";
+            std::cout << fc1->weight(0, 2) << " ";
+            std::cout << fc1->weight(0, 3) << std::endl;
+            // std::cout << "weightGrad = \n";
+            // std::cout << fc1->weightGrad(0, 0) << " ";
+            // std::cout << fc1->weightGrad(0, 1) << " ";
+            // std::cout << fc1->weightGrad(0, 2) << " ";
+            // std::cout << fc1->weightGrad(0, 3) << std::endl;
+            // std::cout << "Vw = \n";
+            // std::cout << fc1->Vw(0, 0) << " ";
+            // std::cout << fc1->Vw(0, 1) << " ";
+            // std::cout << fc1->Vw(0, 2) << " ";
+            // std::cout << fc1->Vw(0, 3) << std::endl;
+            break;
+        }
+    }
+
+}
+
 int main(int argc, char** argv) {
     prngWeights.SetSeed(osuCrypto::toBlock(time(NULL)));
+    prng.SetSeed(osuCrypto::toBlock(time(NULL)));
 #ifdef NDEBUG
     std::cout << "> Release Build" << std::endl;
 #else
     std::cout << "> Debug Build" << std::endl;
 #endif
     std::cout << "> Eigen will use " << Eigen::nbThreads() << " threads" << std::endl;
-    // threelayer_keysize_llama();
+    threelayer_keysize_llama();
     // load_mnist();
     // lenet_int();
+    // lenet_float();
+    // cifar10_int();
 
     // int party = 0;
     // if (argc > 1) {
@@ -501,5 +495,5 @@ int main(int argc, char** argv) {
     // }
     // llama_test(party);
 
-    cifar10_int();
+    // cifar10_float_test();
 }

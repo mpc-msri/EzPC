@@ -4,12 +4,13 @@
 
 template <typename T>
 class ClearText {
+public:
     static const u64 lr_fp = 1;
     static const u64 lr_scale = 6;
     static const u64 mom_fp = 29;
     static const u64 mom_scale = 5;
     static const bool probablistic = true;
-    static const bool numThreads = 4;
+    static const bool numThreads = 1;
 
     template <typename Functor>
     static void fastfor(u64 size, Functor f)
@@ -402,10 +403,10 @@ public:
                 if constexpr (std::is_floating_point<T>::value) {
                     in(i, j) = in(i, j) / ((T)(1ULL << shift));
                 } else {
+                    u64 x0 = ((u64)in(i, j)) % (1ULL << shift);
                     in(i, j) = in(i, j) >> shift;
                     if (probablistic) {
                         u64 r = rand() % (1ULL << shift);
-                        u64 x0 = ((u64)in(i, j)) % (1ULL << shift);
                         in(i, j) += (x0 < r ? 0 : 1); 
                     }
                 }
@@ -420,10 +421,10 @@ public:
             if constexpr (std::is_floating_point<T>::value) {
                 in(i) = in(i) / ((T)(1ULL << shift));
             } else {
+                u64 x0 = ((u64)in(i)) % (1ULL << shift);
                 in(i) = in(i) >> shift;
                 if (probablistic) {
                     u64 r = rand() % (1ULL << shift);
-                    u64 x0 = ((u64)in(i)) % (1ULL << shift);
                     in(i) += (x0 < r ? 0 : 1); 
                 }
             }

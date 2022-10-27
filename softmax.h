@@ -37,7 +37,9 @@ void softmax(const Tensor4D<T> &in, Tensor4D<T> &out)
             if constexpr (scale == 0) {
                 out(b, j, 0, 0) = exps[j] / den;
             } else {
-                out(b, j, 0, 0) = (T)((exps[j] / den) * (1ULL << scale));
+                auto t = (exps[j] / den) * (1ULL << scale);
+                t += rand_float();
+                out(b, j, 0, 0) = (T)(t);
             }
         }
     }
