@@ -127,6 +127,32 @@ public:
     }
 };
 
+template <typename T, u64 scale, class Backend = DefaultBackend<T>>
+class SumPool2D : public Layer<T> {
+public:
+    u64 ks, padding, stride;
+
+    SumPool2D(u64 ks, u64 padding = 0, u64 _stride = 0) : Layer<T>("SumPool2D"), ks(ks), padding(padding), stride(_stride == 0 ? ks : _stride) {}
+
+    void forward(const Tensor4D<T> &a) {
+        this->inputDerivative.resize(a.d1, a.d2, a.d3, a.d4);
+        this->activation.resize(a.d1, (a.d2 + 2*padding - ks)/stride + 1, (a.d3 + 2*padding - ks)/stride + 1, a.d4);
+        Backend::sumPool2D(ks, padding, stride, a, this->activation);
+    }
+
+    void backward(const Tensor4D<T> &e) {
+        assert(e.d1 == this->activation.d1);
+        assert(e.d2 == this->activation.d2);
+        assert(e.d3 == this->activation.d3);
+        assert(e.d4 == this->activation.d4);
+        Backend::sumPool2DInputGrad(ks, padding, stride, this->inputDerivative, e);
+    }
+
+    void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
+        this->activation.resize(d1, (d2 + 2*padding - ks)/stride + 1, (d3 + 2*padding - ks)/stride + 1, d4);
+        this->inputDerivative.resize(d1, d2, d3, d4);
+    }
+};
 
 template <typename T, class Backend = DefaultBackend<T>>
 class MaxPool2D : public Layer<T> {

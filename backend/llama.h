@@ -90,8 +90,8 @@ public:
                 auto &bias = model.layers[i]->getbias();
                 if (LlamaConfig::party == 1)
                 {
-                    // weights.fill(1);
-                    // bias.fill(1);
+                    weights.fill(1);
+                    bias.fill(1);
                     LlamaConfig::server->send_ge_array(weights.data, weights.d1 * weights.d2);
                     LlamaConfig::server->send_ge_array(bias.data, bias.size);
                     LlamaConfig::client->send_ge_array(weights.data, weights.d1 * weights.d2);
@@ -142,10 +142,8 @@ public:
         assert(c.d2 == b.d2);
         assert(c.d3 == 1);
         assert(c.d4 == 1);
-        Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eA(a.data, a.d1, a.d2);
-        Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eB(b.data, b.d1, b.d2);
-        Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eC(c.data, c.d1, c.d2);
-        eC = eA * eB;
+
+        MatMul2D(a.d1, a.d2, b.d2, a.data, a.data, b.data, b.data, c.data, c.data, true);
     }
 
     static void matmulTransposeA(const Tensor4D<T> &a, const Tensor4D<T> &b, Tensor2D<T> &c) {
@@ -355,19 +353,7 @@ public:
         assert(in.d2 == out.d2);
         assert(in.d3 == out.d3);
         assert(in.d4 == out.d4);
-        for (u64 i = 0; i < in.d1; i++) {
-            for (u64 j = 0; j < in.d2; j++) {
-                for (u64 k = 0; k < in.d3; k++) {
-                    for (u64 l = 0; l < in.d4; l++) {
-                        if constexpr (std::is_floating_point<T>::value) {
-                            out(i, j, k, l) = in(i, j, k, l) / (1 << shift);
-                        } else {
-                            out(i, j, k, l) = in(i, j, k, l) >> shift;
-                        }
-                    }
-                }
-            }
-        }
+        ARS(in.d1 * in.d2 * in.d3 * in.d4, in.data, in.data, out.data, out.data, shift);
     }
 
     static void truncate(const Tensor4D<T> &in, u64 shift) {

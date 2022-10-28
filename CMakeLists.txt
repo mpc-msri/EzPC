@@ -21,11 +21,16 @@ add_executable(fptraining
     backend/minillama/conv.cpp
     backend/minillama/dcf.cpp
     backend/minillama/input_prng.cpp
+    backend/minillama/mic.cpp
+    backend/minillama/msnzb.cpp
     backend/minillama/mult.cpp
     backend/minillama/prng.cpp
     backend/minillama/pubdiv.cpp
     backend/minillama/relutruncate.cpp
+    backend/minillama/relu.cpp
     backend/minillama/stats.cpp
+    backend/minillama/taylor.cpp
+    backend/minillama/truncate.cpp
     backend/minillama/utils.cpp)
 target_link_libraries (fptraining Eigen3::Eigen Threads::Threads)
 target_include_directories(fptraining PRIVATE backend/minillama/cryptoTools)

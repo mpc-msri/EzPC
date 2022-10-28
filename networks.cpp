@@ -5,7 +5,7 @@
 #include "layers.h"
 #include "softmax.h"
 
-const u64 numEpochs = 100;
+const u64 numEpochs = 1;
 const u64 batchSize = 100;
 
 #define useMaxPool true
@@ -337,4 +337,105 @@ void cifar10_float() {
 
     }
 
+}
+
+void piranha_vgg_int()
+{
+    const u64 scale = 24;
+    std::cout << "> Scale = " << scale << std::endl;
+    std::cout << "> Probablistic = " << (ClearText<i64>::probablistic ? "true" : "false") << std::endl;
+    auto dataset = cifar::read_dataset<std::vector, std::vector, uint8_t, uint8_t>();
+    const u64 trainLen = dataset.training_images.size();
+    const u64 testLen = dataset.test_images.size();
+    srand(time(NULL));
+    std::cout << "=== Running Fixed-Point Training (CIFAR-10) ===" << std::endl;
+
+    Tensor4D<i64> testSet(batchSize, 32, 32, 3);
+
+    auto model = Sequential<i64>({
+        new Conv2D<i64, scale>(3, 64, 3, 1),
+        new ReLUTruncate<i64>(scale),
+        new Conv2D<i64, scale>(64, 64, 3, 1),
+        new SumPool2D<i64, scale>(2, 0, 2),
+        new ReLUTruncate<i64>(scale+2),
+        new Conv2D<i64, scale>(64, 128, 3, 1),
+        new ReLUTruncate<i64>(scale),
+        new Conv2D<i64, scale>(128, 128, 3, 1),
+        new SumPool2D<i64, scale>(2, 0, 2),
+        new ReLUTruncate<i64>(scale+2),
+        new Conv2D<i64, scale>(128, 256, 3, 1),
+        new ReLUTruncate<i64>(scale),
+        new Conv2D<i64, scale>(256, 256, 3, 1),
+        new ReLUTruncate<i64>(scale),
+        new Conv2D<i64, scale>(256, 256, 3, 1),
+        new SumPool2D<i64, scale>(2, 0, 2),
+        new ReLUTruncate<i64>(scale+2),
+        new Conv2D<i64, scale>(256, 512, 3, 1),
+        new ReLUTruncate<i64>(scale),
+        new Conv2D<i64, scale>(512, 512, 3, 1),
+        new ReLUTruncate<i64>(scale),
+        new Conv2D<i64, scale>(512, 512, 3, 1),
+        new SumPool2D<i64, scale>(2, 0, 2),
+        new ReLUTruncate<i64>(scale+2),
+        new Conv2D<i64, scale>(512, 512, 3, 1),
+        new ReLUTruncate<i64>(scale),
+        new Conv2D<i64, scale>(512, 512, 3, 1),
+        new ReLUTruncate<i64>(scale),
+        new Conv2D<i64, scale>(512, 512, 3, 1),
+        new SumPool2D<i64, scale>(2, 0, 2),
+        new ReLUTruncate<i64>(scale+2),
+        new Flatten<i64>(),
+        new FC<i64, scale>(512, 256),
+        new ReLUTruncate<i64>(scale),
+        new FC<i64, scale>(256, 256),
+        new ReLUTruncate<i64>(scale),
+        new FC<i64, scale>(256, 10),
+        new Truncate<i64>(scale),
+    });
+
+    Tensor4D<i64> e(batchSize, 10, 1, 1);
+    Tensor4D<i64> trainImage(batchSize, 32, 32, 3);
+    for(int epoch = 0; epoch < numEpochs; ++epoch) {
+        std::cout << "Epoch " << epoch << std::endl;
+        for(u64 i = 0; i < trainLen; i += batchSize) {
+            // fetch image
+            for(int b = 0; b < batchSize; ++b) {
+                for(u64 j = 0; j < 32; ++j) {
+                    for(u64 k = 0; k < 32; ++k) {
+                        for(u64 l = 0; l < 3; ++l) {
+                            trainImage(b, j, k, l) = (dataset.training_images[i+b][j * 32 + k + l * 32 * 32] / 255.0) * (1ULL << (scale));
+                        }
+                    }
+                }
+            }
+            model.forward(trainImage);
+            softmax<i64, scale>(model.activation, e);
+            for(int b = 0; b < batchSize; ++b) {
+                e(b, dataset.training_labels[i+b], 0, 0) -= ((1ULL<<scale)/batchSize);
+            }
+            model.backward(e);
+            printprogress(((double)i) / trainLen);
+            if (i == 0) break;
+        }
+        u64 correct = 0;
+        for(u64 i = 0; i < testLen; i += batchSize) {
+            for(u64 b = 0; b < batchSize; ++b) {
+                for(u64 j = 0; j < 32; ++j) {
+                    for(u64 k = 0; k < 32; ++k) {
+                        for(u64 l = 0; l < 3; ++l) {
+                            testSet(b, j, k, l) = (dataset.test_images[i+b][j * 32 + k + l * 32 * 32] / 255.0) * (1ULL << (scale));
+                        }
+                    }
+                }
+            }
+            model.forward(testSet);
+            for(u64 b = 0; b < batchSize; b++) {
+                if (model.activation.argmax(b) == dataset.test_labels[i+b]) {
+                    correct++;
+                }
+            }
+        }
+        std::cout << " Accuracy: " << (correct*100.0) / testLen;
+        std::cout << std::endl;
+    }
 }

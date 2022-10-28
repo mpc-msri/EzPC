@@ -29,6 +29,8 @@ SOFTWARE.
 #include "config.h"
 #include "stats.h"
 #include "relutruncate.h"
+#include "taylor.h"
+#include "relu.h"
 #include <cassert>
 #include <iostream>
 #include <assert.h>
@@ -954,4 +956,319 @@ void ElemWiseSecretSharedVectorMult(int32_t size, MASK_PAIR(GroupElement *inArr)
 
     }
     std::cerr << ">> ElemWise Mult - end" << std::endl;
+}
+
+void maxpool_threads_helper(int thread_idx, int fh, int fw, int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
+             int32_t FW, int32_t zPadHLeft, int32_t zPadHRight,
+             int32_t zPadWLeft, int32_t zPadWRight, int32_t strideH,
+             int32_t strideW, int32_t N1, int32_t imgH, int32_t imgW,
+             int32_t C1, GroupElement *inArr, GroupElement *maxUntilNow, MaxpoolKeyPack *keys)
+{
+    auto p = get_start_end(N * C * H * W, thread_idx);
+    for(int i = p.first; i < p.second; i += 1) {
+        int curr = i;
+        int ctW = curr % W;
+        curr = curr / W;
+        int ctH = curr % H;
+        curr = curr / H;
+        int c = curr % C;
+        curr = curr / C;
+        int n = curr % N;
+        curr = curr / N;
+        
+        int leftTopCornerH = ctH * strideH - zPadHLeft;
+        int leftTopCornerW = ctW * strideW - zPadWLeft;
+        int curPosH = leftTopCornerH + fh;
+        int curPosW = leftTopCornerW + fw;
+        
+        GroupElement maxi = Arr4DIdxRowM(maxUntilNow, N, H, W, C, n, ctH, ctW, c);
+        GroupElement temp;
+        if ((((curPosH < 0) || (curPosH >= imgH)) || ((curPosW < 0) || (curPosW >= imgW)))) {
+            temp = GroupElement(0);
+        }
+        else {
+            temp = Arr4DIdxRowM(inArr, N1, imgH, imgW, C1, n, curPosH, curPosW, c);
+        }
+        int kidx = (fh * FW + fw - 1) * (N * C * H * W) + i;
+        Arr4DIdxRowM(maxUntilNow, N, H, W, C, n, ctH, ctW, c) = evalMaxpool(party - 2, maxi, temp, keys[kidx]);
+        freeMaxpoolKeyPack(keys[kidx]);
+    }
+}
+
+void MaxPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
+             int32_t FW, int32_t zPadHLeft, int32_t zPadHRight,
+             int32_t zPadWLeft, int32_t zPadWRight, int32_t strideH,
+             int32_t strideW, int32_t N1, int32_t imgH, int32_t imgW,
+             int32_t C1, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *outArr)) 
+{
+    std::cerr << ">> MaxPool - Start" << std::endl;
+    int d1 = ((imgH - FH + (zPadHLeft + zPadHRight)) / strideH) + 1;
+    int d2 = ((imgW - FW + (zPadWLeft + zPadWRight)) / strideW) + 1;
+    always_assert(d1 == H);
+    always_assert(d2 == W);
+    always_assert(N1 == N);
+    always_assert(C1 == C);
+
+    GroupElement *maxUntilNow = outArr;
+    GroupElement *maxUntilNow_mask = outArr_mask;
+    
+    if (party == DEALER) {
+        uint64_t dealer_file_read_time = 0;
+        auto dealer_start = std::chrono::high_resolution_clock::now();
+        for (int fh = 0; fh < FH; fh++) {
+            for(int fw = 0; fw < FW; fw++) {
+                for (int n = 0; n < N; n++) {
+                    for (int c = 0; c < C; c++) {
+                        for(int ctH = 0; ctH < H; ctH++) {
+                            for(int ctW = 0; ctW < W; ctW++) {
+                                int leftTopCornerH = ctH * strideH - zPadHLeft;
+                                int leftTopCornerW = ctW * strideW - zPadWLeft;
+
+                                if (fh == 0 && fw == 0) {
+                                    if (leftTopCornerH < 0 || leftTopCornerW < 0 || leftTopCornerH >= imgH || leftTopCornerW >= imgW) {
+                                        Arr4DIdxRowM(maxUntilNow_mask, N, H, W, C, n, ctH, ctW, c) = GroupElement(0);
+                                    }
+                                    else {
+                                        Arr4DIdxRowM(maxUntilNow_mask, N, H, W, C, n, ctH, ctW, c) = Arr4DIdxRowM(inArr_mask, N1, imgH, imgW, C1, n, leftTopCornerH, leftTopCornerW, c);
+                                    }
+                                }
+                                else {
+                                    int curPosH = leftTopCornerH + fh;
+                                    int curPosW = leftTopCornerW + fw;
+
+                                    GroupElement maxi_mask = Arr4DIdxRowM(maxUntilNow_mask, N, H, W, C, n, ctH, ctW, c);
+                                    GroupElement temp_mask;
+                                    if ((((curPosH < 0) || (curPosH >= imgH)) || ((curPosW < 0) || (curPosW >= imgW)))) {
+                                        temp_mask = GroupElement(0);
+                                    }
+                                    else {
+                                        temp_mask = Arr4DIdxRowM(inArr_mask, N1, imgH, imgW, C1, n, curPosH, curPosW, c);
+                                    }
+                                    GroupElement rout = random_ge(bitlength);                                    
+                                    auto keys = keyGenMaxpool(bitlength, bitlength, maxi_mask, temp_mask, rout);
+                                    Arr4DIdxRowM(maxUntilNow_mask, N, H, W, C, n, ctH, ctW, c) = rout;
+
+                                    auto read_start = std::chrono::high_resolution_clock::now();
+                                    server->send_maxpool_key(keys.first);
+                                    client->send_maxpool_key(keys.second);
+                                    freeMaxpoolKeyPackPair(keys);
+                                    auto read_end = std::chrono::high_resolution_clock::now();
+                                    auto read_time = std::chrono::duration_cast<std::chrono::microseconds>(read_end - read_start).count();
+                                    dealer_file_read_time += read_time;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        auto dealer_end = std::chrono::high_resolution_clock::now();
+        auto dealer_time = std::chrono::duration_cast<std::chrono::microseconds>(dealer_end - dealer_start).count() - dealer_file_read_time;
+        dealerMicroseconds += dealer_time;
+        std::cerr << "   Dealer time: " << dealer_time / 1000.0 << " milliseconds" << std::endl;
+    }
+    else {
+        MaxpoolKeyPack *keys = new MaxpoolKeyPack[(FH * FW - 1) * N * C * H * W];
+        int kidx = 0;
+        for (int fh = 0; fh < FH; fh++) {
+            for(int fw = 0; fw < FW; fw++) {
+                if (fh == 0 && fw == 0) {
+                    continue;
+                }
+                for (int n = 0; n < N; n++) {
+                    for (int c = 0; c < C; c++) {
+                        for(int ctH = 0; ctH < H; ctH++) {
+                            for(int ctW = 0; ctW < W; ctW++) {
+                                keys[kidx] = dealer->recv_maxpool_key(bitlength, bitlength);
+                                kidx++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        peer->sync();
+        auto start_eval = std::chrono::high_resolution_clock::now();
+        for (int n = 0; n < N; n++) {
+            for (int c = 0; c < C; c++) {
+                for(int ctH = 0; ctH < H; ctH++) {
+                    for(int ctW = 0; ctW < W; ctW++) {
+                        int leftTopCornerH = ctH * strideH - zPadHLeft;
+                        int leftTopCornerW = ctW * strideW - zPadWLeft;
+                        if (leftTopCornerH < 0 || leftTopCornerW < 0 || leftTopCornerH >= imgH || leftTopCornerW >= imgW) {
+                            Arr4DIdxRowM(maxUntilNow, N, H, W, C, n, ctH, ctW, c) = 0;
+                        }
+                        else {
+                            Arr4DIdxRowM(maxUntilNow, N, H, W, C, n, ctH, ctW, c) = Arr4DIdxRowM(inArr, N1, imgH, imgW, C1, n, leftTopCornerH, leftTopCornerW, c);
+                        }
+                    }
+                }
+            }
+        }
+
+        for (int fh = 0; fh < FH; fh++) {
+            for(int fw = 0; fw < FW; fw++) {
+                if (fh == 0 && fw == 0) {
+                    continue;
+                }
+
+                std::thread thread_pool[num_threads];
+                
+                for(int i = 0; i < num_threads; ++i) {
+                    thread_pool[i] = std::thread(maxpool_threads_helper, i, fh, fw, 
+                                        N, H, W, C, FH,
+                                        FW, zPadHLeft, zPadHRight,
+                                        zPadWLeft, zPadWRight, strideH,
+                                        strideW, N1, imgH, imgW,
+                                        C1,inArr, maxUntilNow, keys);
+                }
+
+                for(int i = 0; i < num_threads; ++i) {
+                    thread_pool[i].join();
+                }
+
+                if (!(fh == 0 && fw == 0)) {
+                    reconstruct(N * C * H * W, maxUntilNow, bitlength);
+                }
+            }
+        }
+        auto end_eval = std::chrono::high_resolution_clock::now();
+        auto eval_time = std::chrono::duration_cast<std::chrono::microseconds>(end_eval - start_eval).count();
+        evalMicroseconds += eval_time;
+        maxpoolEvalMicroseconds += eval_time;
+        delete[] keys;
+        std::cerr << "   Eval Time = " << eval_time / 1000.0 << " miliseconds" << std::endl;
+    }
+
+    std::cerr << ">> MaxPool - End" << std::endl;
+}
+
+// this API is not exposed directly, so we used single array for values and masks
+// all APIs should do the same in principal
+void InsecureInverse(int32_t size, GroupElement *A, GroupElement *invA, int32_t sf, int32_t upper) 
+{
+    // KG: make sure this is inplace secure (i.e can accept invA = A)
+    uint64_t logk = log2ceil(upper);
+    uint64_t m = logk + 1;
+    std::cerr << ">> InsecureInverse - start" << std::endl;
+
+    if (party == DEALER) {
+        for(int i = 0; i < size; ++i) {
+            auto rout = random_ge(bitlength);
+            auto keys = keyGenTaylor(bitlength, bitlength, 2.630, -5.857, 4.245, A[i], rout, sf, logk);
+            server->send_taylor_key(keys.first, bitlength, m);
+            client->send_taylor_key(keys.second, bitlength, m);
+            invA[i] = rout;
+        }
+    }
+    else {
+        TaylorKeyPack *keys = new TaylorKeyPack[size];
+        for(int i = 0; i < size; ++i) {
+            keys[i] = dealer->recv_taylor_key(bitlength, m, sf);
+        }
+
+        peer->sync();
+
+        GroupElement *tmp = new GroupElement[2*size];
+        auto start = std::chrono::high_resolution_clock::now();
+        for(int i = 0; i < size; ++i) {
+            auto tup = evalTaylor_round1(party - SERVER, bitlength, bitlength, 2.630, -5.857, 4.245, A[i], keys[i], sf, logk);
+            tmp[i] = tup.first;
+            tmp[i+size] = tup.second;
+        }
+        reconstruct(2*size, tmp, bitlength);
+
+
+        for(int i = 0; i < size; ++i) {
+            auto tup = evalTaylor_round2(party - SERVER, bitlength, bitlength, 2.630, -5.857, 4.245, A[i], keys[i], sf, logk, tmp[i], tmp[i+size]);
+            tmp[i+size] = tup.first + tup.second;
+        }
+        reconstruct(size, tmp+size, bitlength);
+
+        for(int i = 0; i < size; ++i) {
+            auto tup = evalTaylor_round3(party - SERVER, bitlength, bitlength, 2.630, -5.857, 4.245, A[i], keys[i], sf, logk, tmp[i], tmp[i+size], tmp[i+size]);
+            tmp[i+size] = tup;
+        }
+        reconstruct(size, tmp+size, bitlength);
+
+        for(int i = 0; i < size; ++i) {
+            invA[i] = tmp[i+size];
+        }
+
+        auto end = std::chrono::high_resolution_clock::now();
+        auto eval_time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+        std::cerr << "   Eval Time: " << eval_time / 1000.0 << " milliseconds" << std::endl;
+        evalMicroseconds += eval_time;
+        delete[] tmp;
+    }
+    std::cerr << ">> InsecureInverse - end" << std::endl;
+}
+
+void PiranhaSoftmax(int32_t s1, int32_t s2, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *outArr), int32_t sf) 
+{
+    // s1 = batch size
+    // s2 = number of classes
+
+    std::cerr << ">> Softmax - start" << std::endl;
+    GroupElement *max = make_array<GroupElement>(s1); 
+    // step 1 - calculate max for each image in batch
+    MaxPool(s1, 1, 1, 1, s2, 1, 0, 0, 0, 0, 1, 1, s1, s2, 1, 1, MASK_PAIR(inArr), max, max);
+
+    // step 2 - subtract max from each element in each image in batch and add 2
+    if (party == DEALER) {
+        for(int i = 0; i < s1; ++i) {
+            for(int j = 0; j < s2; ++j) {
+                Arr2DIdxRowM(outArr_mask, s1, s2, i, j) = Arr2DIdxRowM(inArr_mask, s1, s2, i, j) - max[i];
+            }
+        }
+    }
+    else {
+        for(int i = 0; i < s1; ++i) {
+            for(int j = 0; j < s2; ++j) {
+                Arr2DIdxRowM(outArr, s1, s2, i, j) = Arr2DIdxRowM(inArr, s1, s2, i, j) - max[i] + (1<<(sf + 1));
+            }
+        }
+    }
+
+    // step 3 - exponentiate each element in each image in batch 
+    // e^x = RT((x+2), 1) for negative x
+    ReluTruncate(s1 * s2, MASK_PAIR(outArr), MASK_PAIR(outArr), 1); // Q: can we do this in place? can be a source of bug in future
+
+    GroupElement *denominators = max; // reuse the array
+    // // step 4 - calculate sum of exponentiated elements for each image in batch
+    if (party == DEALER) {
+        for(int i = 0; i < s1; ++i) {
+            denominators[i] = 0;
+            for(int j = 0; j < s2; ++j) {
+                denominators[i] = denominators[i] + Arr2DIdxRowM(outArr_mask, s1, s2, i, j);
+            }
+        }
+    }
+    else {
+        for(int i = 0; i < s1; ++i) {
+            denominators[i] = 0;
+            for(int j = 0; j < s2; ++j) {
+                denominators[i] = denominators[i] + Arr2DIdxRowM(outArr, s1, s2, i, j);
+            }
+        }
+    }
+
+    // step 5 - calculate inverse of all the denominators
+    InsecureInverse(s1, denominators, denominators, sf, s2);
+
+    // step 6 - multiply each element in each image in batch by the inverse of the denominator
+    GroupElement *expandedDenominator = make_array<GroupElement>(s1 * s2);
+    for(int i = 0; i < s1; ++i) {
+        for(int j = 0; j < s2; ++j) {
+            Arr2DIdxRowM(expandedDenominator, s1, s2, i, j) = denominators[i];
+        }
+    }
+    delete[] max;
+
+    ElemWiseSecretSharedVectorMult(s1 * s2, expandedDenominator, expandedDenominator, MASK_PAIR(outArr), MASK_PAIR(outArr));
+    ScaleDown(s1 * s2, MASK_PAIR(outArr), sf);
+    std::cerr << ">> Softmax - end" << std::endl;
+
+    delete[] expandedDenominator;
 }
