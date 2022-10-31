@@ -112,9 +112,9 @@ void input_layer(GroupElement *x, GroupElement *x_mask, int size, int owner)
         , true, accumulatedInputTimeOffline)
     }
     else if (party == owner) {
-        for(int i = 0; i < size; ++i) {
-            std::cin >> x[i];
-        }
+        // for(int i = 0; i < size; ++i) {
+        //     std::cin >> x[i];
+        // }
         // generate and add masks
         TIME_THIS_BLOCK_FOR_INPUT_IF(
             std::thread thread_pool[num_threads];

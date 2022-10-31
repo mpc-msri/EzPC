@@ -47,9 +47,10 @@ public:
         return this->data[i];
     }
 
+    template <typename T2 = T>
     void print() const {
         for (u64 i = 0; i < this->size; i++) {
-            std::cout << this->data[i] << " ";
+            std::cout << (T2)this->data[i] << " ";
         }
         std::cout << std::endl;
     }
@@ -74,6 +75,14 @@ public:
             }
         }
         return false;
+    }
+
+    template <typename T2>
+    void copy(const Tensor<T2> &other) {
+        assert(this->size == other.size);
+        for (u64 i = 0; i < this->size; i++) {
+            this->data[i] = (T)other.data[i];
+        }
     }
 };
 
@@ -116,10 +125,11 @@ public:
         return this->data[i * this->d2 + j];
     }
 
+    template <typename T2 = T>
     void print() {
         for(u64 i = 0; i < this->d1; i++) {
             for(u64 j = 0; j < this->d2; j++) {
-                std::cout << this->data[i * this->d2 + j] << " ";
+                std::cout << (T2)this->data[i * this->d2 + j] << " ";
             }
             std::cout << std::endl;
         }
@@ -163,6 +173,17 @@ public:
             }
         }
         return false;
+    }
+
+    template <typename T2>
+    void copy(const Tensor2D<T2> &other) {
+        assert(d1 == other.d1);
+        assert(d2 == other.d2);
+        for(u64 i = 0; i < d1; i++) {
+            for(u64 j = 0; j < d2; j++) {
+                this->data[i * this->d2 + j] = (T)other.data[i * other.d2 + j];
+            }
+        }
     }
 
 };
@@ -227,6 +248,23 @@ public:
         memcpy(data, other.data, d1 * d2 * d3 * d4 * sizeof(T));
     }
 
+    template <typename T2>
+    void copy(const Tensor4D<T2> &other) {
+        assert(d1 == other.d1);
+        assert(d2 == other.d2);
+        assert(d3 == other.d3);
+        assert(d4 == other.d4);
+        for(u64 i = 0; i < d1; i++) {
+            for(u64 j = 0; j < d2; j++) {
+                for(u64 k = 0; k < d3; k++) {
+                    for(u64 l = 0; l < d4; l++) {
+                        data[i * d2 * d3 * d4 + j * d3 * d4 + k * d4 + l] = (T)other.data[i * other.d2 * other.d3 * other.d4 + j * other.d3 * other.d4 + k * other.d4 + l];
+                    }
+                }
+            }
+        }
+    }
+
     T& operator()(u64 i, u64 j, u64 k, u64 l) const {
         assert(i < d1);
         assert(j < d2);
@@ -247,12 +285,13 @@ public:
         std::swap(d1, d2);
     }
 
+    template <typename T2 = T>
     void print() const {
         for (u64 i = 0; i < d1; i++) {
             for (u64 j = 0; j < d2; j++) {
                 for (u64 k = 0; k < d3; k++) {
                     for (u64 l = 0; l < d4; l++) {
-                        std::cout << data[i * d2 * d3 * d4 + j * d3 * d4 + k * d4 + l] << " ";
+                        std::cout << (T2)data[i * d2 * d3 * d4 + j * d3 * d4 + k * d4 + l] << " ";
                     }
                     if (d4 > 1) {
                         std::cout << std::endl;

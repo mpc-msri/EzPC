@@ -50,3 +50,41 @@ inline void pirhana_softmax(const Tensor4D<u64> &in, Tensor4D<u64> &out, u64 sca
 {
     PiranhaSoftmax(in.d1, in.d2, in.data, in.data, out.data, out.data, scale);
 }
+
+inline void pirhana_softmax_ct(const Tensor4D<i64> &in, Tensor4D<i64> &out, u64 scale)
+{
+    assert(in.d1 == out.d1);
+    assert(in.d2 == out.d2);
+    assert(in.d3 == 1);
+    assert(in.d4 == 1);
+    assert(out.d3 == 1);
+    assert(out.d4 == 1);
+    assert(std::is_integral<T>::value || (scale == 0));
+
+    auto batchSize = in.d1;
+    auto numClasses = in.d2;
+    for(int b = 0; b < batchSize; ++b) {
+        i64 max = in(b, 0, 0, 0);
+        for(u64 j = 1; j < numClasses; ++j) {
+            if(in(b, j, 0, 0) > max) {
+                max = in(b, j, 0, 0);
+            }
+        }
+        i64 den = 0;
+        i64 exps[numClasses];
+        for(u64 j = 0; j < numClasses; ++j) {
+            i64 x = in(b, j, 0, 0) - max;
+            exps[j] = (x > (-2*(1LL << scale))) ? ((x + 2*(1LL << scale)) / 2) : 0;
+            den += exps[j];
+            // std::cout << x << std::endl;
+        }
+        den = den * batchSize;
+        den = (1ULL<<(2*scale)) / den;
+
+        for(u64 j = 0; j < numClasses; ++j) {
+            auto t = exps[j] * den;
+            t >>= scale;
+            out(b, j, 0, 0) = (i64)(t);
+        }
+    }
+}

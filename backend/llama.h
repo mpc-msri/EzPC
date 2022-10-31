@@ -92,8 +92,8 @@ public:
                 auto &bias = model.layers[i]->getbias();
                 if (LlamaConfig::party == 1)
                 {
-                    weights.fill(1);
-                    bias.fill(1);
+                    // weights.fill(1);
+                    // bias.fill(1);
                     LlamaConfig::server->send_ge_array(weights.data, weights.d1 * weights.d2);
                     LlamaConfig::server->send_ge_array(bias.data, bias.size);
                     LlamaConfig::client->send_ge_array(weights.data, weights.d1 * weights.d2);
@@ -112,6 +112,38 @@ public:
 
     static void output(Tensor4D<T> &a) {
         u64 sz = a.d1 * a.d2 * a.d3 * a.d4;
+        if (LlamaConfig::party == 1) {
+            for (int i = 0; i < sz; i++){
+                LlamaConfig::client->send_mask(a.data[i]);
+                LlamaConfig::server->send_mask(a.data[i]);
+            }
+        }
+        else {
+            for (int i = 0; i < sz; i++){
+                auto mask = LlamaConfig::dealer->recv_mask();
+                a.data[i] = a.data[i] - mask;
+            }
+        }
+    }
+
+    static void output(Tensor2D<T> &a) {
+        u64 sz = a.d1 * a.d2;
+        if (LlamaConfig::party == 1) {
+            for (int i = 0; i < sz; i++){
+                LlamaConfig::client->send_mask(a.data[i]);
+                LlamaConfig::server->send_mask(a.data[i]);
+            }
+        }
+        else {
+            for (int i = 0; i < sz; i++){
+                auto mask = LlamaConfig::dealer->recv_mask();
+                a.data[i] = a.data[i] - mask;
+            }
+        }
+    }
+
+    static void output(Tensor<T> &a) {
+        u64 sz = a.size;
         if (LlamaConfig::party == 1) {
             for (int i = 0; i < sz; i++){
                 LlamaConfig::client->send_mask(a.data[i]);
