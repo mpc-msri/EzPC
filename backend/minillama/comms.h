@@ -103,6 +103,8 @@ public:
 
     void send_relu_truncate_key(const ReluTruncateKeyPack &kp);
 
+    void send_select_key(const SelectKeyPack &kp);
+
     void send_bulkylrs_key(const BulkyLRSKeyPack &kp, int bl, int m);
 
     void send_taylor_key(const TaylorKeyPack &kp, int bl, int m);
@@ -182,6 +184,8 @@ public:
     PublicICKeyPack recv_publicIC_key(int Bin, int Bout);
 
     ReluTruncateKeyPack recv_relu_truncate_key(int Bin, int Bout, int s);
+
+    SelectKeyPack recv_select_key(int Bin);
 
     TaylorKeyPack recv_taylor_key(int bl, int m, int sf);
 

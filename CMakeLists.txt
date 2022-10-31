@@ -28,6 +28,7 @@ add_executable(fptraining
     backend/minillama/pubdiv.cpp
     backend/minillama/relutruncate.cpp
     backend/minillama/relu.cpp
+    backend/minillama/select.cpp
     backend/minillama/stats.cpp
     backend/minillama/taylor.cpp
     backend/minillama/truncate.cpp

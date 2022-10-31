@@ -31,6 +31,7 @@ SOFTWARE.
 #include "relutruncate.h"
 #include "taylor.h"
 #include "relu.h"
+#include "select.h"
 #include <cassert>
 #include <iostream>
 #include <assert.h>
@@ -695,7 +696,7 @@ void rt_dealer_threads_helper(int thread_idx, int32_t size, int sf, GroupElement
     }
 }
 
-void ReluTruncate(int32_t size, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *outArr), int sf)
+void ReluTruncate(int32_t size, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *outArr), int sf, GroupElement *drelu_cache)
 {
     std::cerr << ">> ReluTruncate - Start" << std::endl;
     GroupElement *tmp = make_array<GroupElement>(2*size);
@@ -704,6 +705,8 @@ void ReluTruncate(int32_t size, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupE
         GroupElement *drelu_mask = tmp + size;
         for(int i = 0; i < size; ++i) {
             drelu_mask[i] = random_ge(1);
+            if (drelu_cache != nullptr)
+                drelu_cache[i] = drelu_mask[i];
             lrs_mask[i] = random_ge(bitlength);
             GroupElement rout = random_ge(bitlength);
             auto keys = keyGenReluTruncate(bitlength, bitlength, sf, inArr_mask[i], lrs_mask[i], drelu_mask[i], rout);
@@ -737,6 +740,10 @@ void ReluTruncate(int32_t size, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupE
         }
         auto t1 = std::chrono::high_resolution_clock::now();
         reconstructRT(size, tmp, bitlength);
+        if (drelu_cache != nullptr)
+            for(int i = 0; i < size; ++i) {
+                drelu_cache[i] = tmp[i+size];
+            }
         auto t2 = std::chrono::high_resolution_clock::now();
         {
             std::thread thread_pool[num_threads];
@@ -1233,7 +1240,7 @@ void PiranhaSoftmax(int32_t s1, int32_t s2, MASK_PAIR(GroupElement *inArr), MASK
 
     // step 3 - exponentiate each element in each image in batch 
     // e^x = RT((x+2), 1) for negative x
-    ReluTruncate(s1 * s2, MASK_PAIR(outArr), MASK_PAIR(outArr), 1); // Q: can we do this in place? can be a source of bug in future
+    ReluTruncate(s1 * s2, MASK_PAIR(outArr), MASK_PAIR(outArr), 1, nullptr); // Q: can we do this in place? can be a source of bug in future
 
     GroupElement *denominators = max; // reuse the array
     // // step 4 - calculate sum of exponentiated elements for each image in batch
@@ -1243,6 +1250,7 @@ void PiranhaSoftmax(int32_t s1, int32_t s2, MASK_PAIR(GroupElement *inArr), MASK
             for(int j = 0; j < s2; ++j) {
                 denominators[i] = denominators[i] + Arr2DIdxRowM(outArr_mask, s1, s2, i, j);
             }
+            denominators[i] = denominators[i] * s1;
         }
     }
     else {
@@ -1251,11 +1259,12 @@ void PiranhaSoftmax(int32_t s1, int32_t s2, MASK_PAIR(GroupElement *inArr), MASK
             for(int j = 0; j < s2; ++j) {
                 denominators[i] = denominators[i] + Arr2DIdxRowM(outArr, s1, s2, i, j);
             }
+            denominators[i] = denominators[i] * s1;
         }
     }
 
     // step 5 - calculate inverse of all the denominators
-    InsecureInverse(s1, denominators, denominators, sf, s2);
+    InsecureInverse(s1, denominators, denominators, sf, s2 * s1);
 
     // step 6 - multiply each element in each image in batch by the inverse of the denominator
     GroupElement *expandedDenominator = make_array<GroupElement>(s1 * s2);
@@ -1271,4 +1280,44 @@ void PiranhaSoftmax(int32_t s1, int32_t s2, MASK_PAIR(GroupElement *inArr), MASK
     std::cerr << ">> Softmax - end" << std::endl;
 
     delete[] expandedDenominator;
+}
+
+void select_threads_helper(int thread_idx, int32_t size, GroupElement *s, GroupElement *x, GroupElement *out, SelectKeyPack *keys)
+{
+    auto p = get_start_end(size, thread_idx);
+    for(int i = p.first; i < p.second; i += 1){
+        out[i] = evalSelect(party - 2, s[i], x[i], keys[i]);
+    }
+}
+
+void Select(int32_t size, GroupElement *s, GroupElement *x, GroupElement *out) {
+    std::cerr << ">> Select - start" << std::endl;
+    if (party == DEALER) {
+        for(int i = 0; i < size; ++i) {
+            auto rout = random_ge(bitlength);
+            auto keys = keyGenSelect(bitlength, s[i], x[i], rout);
+            out[i] = rout;
+            server->send_select_key(keys.first);
+            client->send_select_key(keys.second);
+        }
+    }
+    else {
+        SelectKeyPack *keys = new SelectKeyPack[size];
+        for(int i = 0; i < size; ++i) {
+            keys[i] = dealer->recv_select_key(bitlength);
+        }
+
+        std::thread thread_pool[num_threads];
+        for(int i = 0; i < num_threads; ++i) {
+            thread_pool[i] = std::thread(select_threads_helper, i, size, s, x, out, keys);
+        }
+        
+        for(int i = 0; i < num_threads; ++i) {
+            thread_pool[i].join();
+        }
+
+        delete[] keys;
+        reconstruct(size, out, bitlength);
+    }
+    std::cerr << ">> Select - end" << std::endl;
 }

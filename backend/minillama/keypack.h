@@ -384,3 +384,8 @@ inline void freeTaylorKeyPack(TaylorKeyPack &key, int m)
     freeBulkyLRSKeyPack(key.lrsKeys[0], m);
     freeBulkyLRSKeyPack(key.lrsKeys[1], m);
 }
+
+struct SelectKeyPack {
+    int Bin;
+    GroupElement a, b, c, d1, d2;
+};

@@ -98,6 +98,7 @@ GroupElement evalRT_drelu(int party, GroupElement x, const ReluTruncateKeyPack &
 GroupElement evalRT_mult(int party, GroupElement x, GroupElement y, const ReluTruncateKeyPack &key) {
     GroupElement t1 = 0;
     GroupElement t2 = 0;
+    mod(x, 1);
     if (x == 0) {
         t1 = key.d1;
         t2 = key.d2;

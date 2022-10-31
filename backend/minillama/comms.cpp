@@ -526,6 +526,14 @@ void Peer::send_relu_truncate_key(const ReluTruncateKeyPack &kp) {
     send_ge(kp.d2, kp.Bin);
 }
 
+void Peer::send_select_key(const SelectKeyPack &kp) {
+    send_ge(kp.a, kp.Bin);
+    send_ge(kp.b, kp.Bin);
+    send_ge(kp.c, kp.Bin);
+    send_ge(kp.d1, kp.Bin);
+    send_ge(kp.d2, kp.Bin);
+}
+
 void Peer::send_bulkylrs_key(const BulkyLRSKeyPack &kp, int bl, int m) {
     send_dcf_keypack(kp.dcfKeyN);
     for(int i = 0; i < m; ++i)
@@ -1001,6 +1009,17 @@ ReluTruncateKeyPack Dealer::recv_relu_truncate_key(int Bin, int Bout, int s) {
     kp.dcfKeyN = recv_dcf_keypack(Bin, Bin, 1);
     kp.dcfKeyS = recv_dcf_keypack(s, Bin, 1);
     kp.zTruncate = recv_ge(Bin);
+    kp.a = recv_ge(Bin);
+    kp.b = recv_ge(Bin);
+    kp.c = recv_ge(Bin);
+    kp.d1 = recv_ge(Bin);
+    kp.d2 = recv_ge(Bin);
+    return kp;
+}
+
+SelectKeyPack Dealer::recv_select_key(int Bin) {
+    SelectKeyPack kp;
+    kp.Bin = Bin;
     kp.a = recv_ge(Bin);
     kp.b = recv_ge(Bin);
     kp.c = recv_ge(Bin);

@@ -12,7 +12,9 @@ class Sequential;
 template <typename T>
 class Llama {
     static const u64 lr_fp = 1;
-    static const u64 lr_scale = 7;
+    static const u64 lr_scale = 6;
+    static const u64 mom_fp = 29;
+    static const u64 mom_scale = 5;
 
 public:
 
@@ -128,10 +130,7 @@ public:
         assert(a.d2 == b.d1);
         assert(c.d1 == a.d1);
         assert(c.d2 == b.d2);
-        Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eA(a.data, a.d1, a.d2);
-        Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eB(b.data, b.d1, b.d2);
-        Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eC(c.data, c.d1, c.d2);
-        eC = eA * eB;
+        MatMul2D(a.d1, a.d2, b.d2, a.data, a.data, b.data, b.data, c.data, c.data, true);
     }
 
     static void matmul(const Tensor4D<T> &a, const Tensor2D<T> &b, Tensor4D<T> &c) {
@@ -154,11 +153,12 @@ public:
         assert(b.d4 == 1);
         assert(c.d1 == a.d2);
         assert(c.d2 == b.d2);
-    //    c.zero();
-        Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>> eA(a.data, a.d2, a.d1);
-        Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eB(b.data, b.d1, b.d2);
-        Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eC(c.data, c.d1, c.d2);
-        eC = eA * eB;
+
+        Tensor2D<T> aTranspose(a.d2, a.d1);
+        for(int i = 0; i < a.d1; ++i)
+            for(int j = 0; j < a.d2; ++j)
+                aTranspose(j, i) = a(i, j, 0, 0);
+        MatMul2D(aTranspose.d1, aTranspose.d2, b.d2, aTranspose.data, aTranspose.data, b.data, b.data, c.data, c.data, true);
     }
 
     static void matmulTransposeB(const Tensor4D<T> &a, const Tensor2D<T> &b, Tensor4D<T> &c) {
@@ -169,10 +169,11 @@ public:
         assert(c.d2 == b.d1);
         assert(c.d3 == 1);
         assert(c.d4 == 1);
-        Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eA(a.data, a.d1, a.d2);
-        Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>> eB(b.data, b.d2, b.d1);
-        Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eC(c.data, c.d1, c.d2);
-        eC = eA * eB;
+        Tensor2D<T> bTranspose(b.d2, b.d1);
+        for(int i = 0; i < b.d1; ++i)
+            for(int j = 0; j < b.d2; ++j)
+                bTranspose(i, j) = b(j, i);
+        matmul(a, bTranspose, c);
     }
 
     static void matmulTransposeB(const Tensor2D<T> &a, const Tensor2D<T> &b, Tensor2D<T> &c) {
@@ -238,37 +239,95 @@ public:
     static void updateWeight(Tensor2D<T> &weight, const Tensor2D<T> &e, Tensor2D<T> &Vw, u64 scale) {
         assert(weight.d1 == e.d1);
         assert(weight.d2 == e.d2);
-        for(int i = 0; i < weight.d1; i++) {
-            for(int j = 0; j < weight.d2; j++) {
-                e(i, j) = e(i, j) * lr_fp;
+        if (mom_fp == 0) {
+            for(int i = 0; i < weight.d1; i++) {
+                for(int j = 0; j < weight.d2; j++) {
+                    e(i, j) = e(i, j) * lr_fp;
+                }
+            }
+            truncate(e, scale+lr_scale);
+            for(u64 i = 0; i < weight.d1; i++) {
+                for(u64 j = 0; j < weight.d2; j++) {
+                    weight.data[i * weight.d2 + j] -= e(i, j);
+                }
             }
         }
-        truncate(e, scale+lr_scale);
-        for(u64 i = 0; i < weight.d1; i++) {
-            for(u64 j = 0; j < weight.d2; j++) {
-                weight.data[i * weight.d2 + j] -= e(i, j);
+        else {
+            assert(weight.d1 = Vw.d1);
+            assert(weight.d2 = Vw.d2);
+            for(int i = 0; i < weight.d1; i++) {
+                for(int j = 0; j < weight.d2; j++) {
+                    Vw(i, j) = mom_fp * Vw(i, j) + (1ULL<<mom_scale) * e(i, j);
+                }
             }
+            truncate(Vw, mom_scale);
+            for(int i = 0; i < weight.d1; i++) {
+                for(int j = 0; j < weight.d2; j++) {
+                    weight(i, j) = (1ULL<<(lr_scale+scale)) * weight(i, j) - lr_fp * Vw(i, j);
+                }
+            }
+            truncate(weight, lr_scale+scale);
         }
     }
 
-    static void updateBias(Tensor<T> &bias, const Tensor4D<T> &e, Tensor<T> &Vb, u64 scale) {
+    static void updateBias(Tensor<T> &bias, const Tensor4D<T> &e, const Tensor<T> &Vb, u64 scale) {
         // assert(e.d1 == 1);
         assert(e.d2 == bias.size);
         assert(e.d3 == 1);
         assert(e.d4 == 1);
-        for (u64 i = 0; i < bias.size; i++) {
-            T sum = 0;
-            for(u64 j = 0; j < e.d1; ++j) {
-                sum = sum + e(j, i, 0, 0);
+        if (mom_fp == 0) {
+            for (u64 i = 0; i < bias.size; i++) {
+                T sum = 0;
+                for(u64 j = 0; j < e.d1; ++j) {
+                    sum = sum + e(j, i, 0, 0);
+                }
+                if (scale > lr_scale) {
+                    bias.data[i] -= lr_fp * sum * (1ULL << (scale-lr_scale));
+                }
+                else {
+                    throw std::runtime_error("scale should be greater than lr_scale");
+                }
             }
-            bias.data[i] -= lr_fp * sum * (1ULL << (scale-lr_scale));
+        }
+        else {
+            assert(bias.size == Vb.size);
+            
+            for (u64 i = 0; i < bias.size; i++) {
+                T sum = 0;
+                for(u64 j = 0; j < e.d1; ++j) {
+                    sum = sum + e(j, i, 0, 0);
+                }
+                Vb(i) = mom_fp * Vb(i) + (1ULL << (scale + mom_scale - lr_scale)) * sum;
+            }
+            truncate(Vb, mom_scale);
+            ClearText<T>::fastfor(bias.size, [&](u64 i) {
+                bias(i) = bias(i) - lr_fp * Vb(i);
+            });
+            
         }
     }
 
     static void updateBias(Tensor<T> &bias, const Tensor<T> &grad, Tensor<T> &Vb, u64 scale) {
         assert(grad.size == bias.size);
-        for (u64 i = 0; i < bias.size; i++) {
-            bias.data[i] -= lr_fp * grad(i) * (1ULL << (scale-lr_scale));
+        if (mom_fp == 0) {
+            for (u64 i = 0; i < bias.size; i++) {
+                if (scale > lr_scale) {
+                    bias.data[i] -= lr_fp * grad.data[i] * (1ULL << (scale-lr_scale));
+                }
+                else {
+                    throw std::runtime_error("scale should be greater than lr_scale");
+                }
+            }
+        }
+        else {
+            // Scale of Vb would be 2 * scale - lr_scale
+            ClearText<T>::fastfor(bias.size, [&](u64 i) {
+                Vb(i) = mom_fp * Vb(i) + (1ULL << (scale + mom_scale - lr_scale)) * grad(i);
+            });
+            truncate(Vb, mom_scale);
+            ClearText<T>::fastfor(bias.size, [&](u64 i) {
+                bias(i) = bias(i) - lr_fp * Vb(i);
+            });
         }
     }
 
@@ -302,7 +361,7 @@ public:
         assert(in.d3 == drelu.d3);
         assert(in.d4 == drelu.d4);
         int sz = in.d1 * in.d2 * in.d3 * in.d4;
-        ReluTruncate(sz, in.data, in.data, out.data, out.data, shift);
+        ReluTruncate(sz, in.data, in.data, out.data, out.data, shift, drelu.data);
     }
 
     static void relu(const Tensor4D<T> &in, const Tensor4D<T> &out, const Tensor4D<T> &drelu) {
@@ -336,16 +395,7 @@ public:
         assert(in.d2 == drelu.d2);
         assert(in.d3 == drelu.d3);
         assert(in.d4 == drelu.d4);
-        for (u64 i = 0; i < in.d1; i++) {
-            for (u64 j = 0; j < in.d2; j++) {
-                for (u64 k = 0; k < in.d3; k++) {
-                    for (u64 l = 0; l < in.d4; l++) {
-                        assert(drelu(i, j, k, l) == 0 || drelu(i, j, k, l) == 1);
-                        out(i, j, k, l) = (drelu(i, j, k, l) == 1) ? in(i, j, k, l) : 0;
-                    }
-                }
-            }
-        }
+        Select(in.d1 * in.d2 * in.d3 * in.d4, drelu.data, in.data, out.data);
     }
 
     static void truncate(const Tensor4D<T> &in, const Tensor4D<T> &out, u64 shift) {
@@ -365,15 +415,13 @@ public:
     static void truncate(const Tensor2D<T> &in, u64 shift) {
     //    Eigen::Map<Eigen::ArrayX<T>> eA(in.data, in.d1 * in.d2);
     //    eA = eA / ((T)(1LL << shift)); // this gives bad accuracy, why?
-        for (u64 i = 0; i < in.d1; i++) {
-            for (u64 j = 0; j < in.d2; j++) {
-                if constexpr (std::is_floating_point<T>::value) {
-                    in(i, j) = in(i, j) / ((T)(1ULL << shift));
-                } else {
-                    in(i, j) = in(i, j) >> shift;
-                }
-            }
-        }
+        ARS(in.d1 * in.d2, in.data, in.data, in.data, in.data, shift);
+    }
+
+    static void truncate(const Tensor<T> &in, u64 shift) {
+    //    Eigen::Map<Eigen::ArrayX<T>> eA(in.data, in.d1 * in.d2);
+    //    eA = eA / ((T)(1LL << shift)); // this gives bad accuracy, why?
+        ARS(in.size, in.data, in.data, in.data, in.data, shift);
     }
 
     static void div(const Tensor4D<T> &in, T divisor) {
@@ -417,6 +465,12 @@ public:
         div(out, (T)(ks*ks));
     }
 
+    static u64 log2(u64 x) {
+        u64 y = 0;
+        while (x >>= 1) y++;
+        return y;
+    }
+
     static void sumPool2DInputGrad(u64 ks, u64 padding, u64 stride, Tensor4D<T> &in, const Tensor4D<T> &out) {
         assert(in.d1 == out.d1);
         assert(in.d4 == out.d4);
@@ -438,6 +492,9 @@ public:
                 }
             }
         }
+        // Hack for Pirhana
+        assert(std::popcount(ks * ks) == 1);
+        truncate(in, log2(ks * ks));
     }
 
     static void avgPool2DInputGrad(u64 ks, u64 padding, u64 stride, Tensor4D<T> &in, const Tensor4D<T> &out,  u64 scale) {

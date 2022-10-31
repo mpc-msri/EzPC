@@ -143,6 +143,41 @@ void llama_test_vgg(int party) {
 }
 
 
+void llama_test_small(int party) {
+    srand(time(NULL));
+    const u64 scale = 24;
+    LlamaConfig::bitlength = 64;
+    LlamaConfig::party = party;
+    Llama<u64>::init();
+    auto rt = new ReLUTruncate<u64, Llama<u64>>(scale);
+    auto model = Sequential<u64>({
+        rt,
+    });
+
+    // Tensor4D<u64> trainImage(2, 1, 2, 1); // 1 images with server and 1 with client
+    Tensor4D<u64> trainImage(2, 10, 1, 1); // 1 images with server and 1 with client
+    Tensor4D<u64> e(2, 10, 1, 1); // 1 images with server and 1 with client
+
+    Llama<u64>::initializeWeights(model); // dealer initializes the weights and sends to the parties
+    Llama<u64>::initializeData(trainImage, 1); // takes input from stdin
+    StartComputation();
+    model.forward(trainImage);
+    pirhana_softmax(model.activation, e, scale);
+    model.backward(e);
+    EndComputation();
+    // Llama<u64>::output(rt->drelu);
+    // Llama<u64>::output(model.activation);
+    // Llama<u64>::output(e);
+    Llama<u64>::output(rt->inputDerivative);
+    if (LlamaConfig::party != 1) {
+        // rt->drelu.print();
+        // model.activation.print();
+        // e.print(); // eprint hehe
+        rt->inputDerivative.print();
+    }
+    Llama<u64>::finalize();
+}
+
 void cifar10_float_test() {
     auto dataset = cifar::read_dataset<std::vector, std::vector, uint8_t, uint8_t>();
     const u64 trainLen = dataset.training_images.size();
@@ -303,7 +338,8 @@ int main(int argc, char** argv) {
     if (argc > 1) {
         party = atoi(argv[1]);
     }
-    llama_test_vgg(party);
+    // llama_test_vgg(party);
+    llama_test_small(party);
 
     // cifar10_float_test();
 }
