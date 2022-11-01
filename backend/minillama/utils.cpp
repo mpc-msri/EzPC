@@ -134,7 +134,8 @@ void Conv2DReshapeFilter(int FH, int FW, int CI, int CO, GroupElement* filter, G
         for(int fh = 0; fh < FH; fh++){
             for(int fw = 0; fw < FW; fw++){
                 for(int ci = 0; ci < CI; ci++){
-                    Arr2DIdxRowM(reshapedFilter, CO, FH*FW*CI, co, (fh*FW*CI) + (fw*CI) + ci) = Arr4DIdxRowM(filter, FH, FW, CI, CO, fh, fw, ci, co);
+                    // Arr2DIdxRowM(reshapedFilter, CO, FH*FW*CI, co, (fh*FW*CI) + (fw*CI) + ci) = Arr4DIdxRowM(filter, FH, FW, CI, CO, fh, fw, ci, co);
+                    Arr2DIdxRowM(reshapedFilter, CO, FH*FW*CI, co, (fh*FW*CI) + (fw*CI) + ci) = Arr2DIdxRowM(filter, CO, FH*FW*CI, co, (fh*FW*CI) + (fw*CI) + ci);
                 }
             }
         }
@@ -147,7 +148,8 @@ void Conv2DReshapeFilter(int FH, int FW, int CI, int CO, GroupElement* filter, e
         for(int fh = 0; fh < FH; fh++){
             for(int fw = 0; fw < FW; fw++){
                 for(int ci = 0; ci < CI; ci++){
-                    reshapedFilter(co, (fh*FW*CI) + (fw*CI) + ci) = Arr4DIdxRowM(filter, FH, FW, CI, CO, fh, fw, ci, co);
+                    // reshapedFilter(co, (fh*FW*CI) + (fw*CI) + ci) = Arr4DIdxRowM(filter, FH, FW, CI, CO, fh, fw, ci, co);
+                    reshapedFilter(co, (fh*FW*CI) + (fw*CI) + ci) = Arr2DIdxRowM(filter, CO, FH * FW * CI, co, (fh*FW*CI) + (fw*CI) + ci);
                 }
             }
         }

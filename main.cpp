@@ -150,34 +150,35 @@ void llama_test_small(int party) {
     LlamaConfig::party = party;
     Llama<u64>::init();
     auto rt = new ReLUTruncate<u64, Llama<u64>>(scale);
-    auto fc = new FC<u64, scale, Llama<u64>>(3, 3);
+    auto fc = new Conv2D<u64, scale, Llama<u64>>(1, 1, 2);
     auto model = Sequential<u64>({
         fc,
-        rt
+        rt,
+        new Flatten<u64>(),
     });
 
-    auto fc_ct = new FC<i64, scale>(3, 3);
-    fc_ct->weight.copy(fc->weight);
+    auto fc_ct = new Conv2D<i64, scale>(1, 1, 2);
+    fc_ct->filter.copy(fc->filter);
     fc_ct->bias.copy(fc->bias);
     auto rt_ct = new ReLUTruncate<i64>(scale);
 
     auto model_ct = Sequential<i64>({
         fc_ct,
-        rt_ct
+        rt_ct,
+        new Flatten<i64>(),
     });
 
     // Tensor4D<u64> trainImage(2, 1, 2, 1); // 1 images with server and 1 with client
-    Tensor4D<u64> trainImage(2, 3, 1, 1); // 1 images with server and 1 with client
-    trainImage(0, 0, 0, 0) = (1ULL<<(scale+1));
-    trainImage(0, 1, 0, 0) = (1ULL<<(scale+1));
-    trainImage(0, 2, 0, 0) = (1ULL<<(scale+1));
-    trainImage(1, 0, 0, 0) = (1ULL<<(scale+1));
-    trainImage(1, 1, 0, 0) = -(1ULL<<(scale+1));
-    trainImage(1, 2, 0, 0) = (1ULL<<(scale+1));
-    Tensor4D<i64> trainImage_ct(2, 3, 1, 1);
+    Tensor4D<u64> trainImage(2, 4, 4, 1); // 1 images with server and 1 with client
+    trainImage.fill((1ULL<<(scale+1)));
+    trainImage(0, 0, 0, 0) = (1ULL<<(scale+2));
+    trainImage(0, 1, 2, 0) = (1ULL<<(scale+2));
+    trainImage(0, 2, 3, 0) = (1ULL<<(scale+2));
+    trainImage(0, 3, 1, 0) = (1ULL<<(scale+2));
+    Tensor4D<i64> trainImage_ct(2, 4, 4, 1);
     trainImage_ct.copy(trainImage);
-    Tensor4D<u64> e(2, 3, 1, 1); // 1 images with server and 1 with client
-    Tensor4D<i64> e_ct(2, 3, 1, 1);
+    Tensor4D<u64> e(2, 9, 1, 1); // 1 images with server and 1 with client
+    Tensor4D<i64> e_ct(2, 9, 1, 1);
 
     Llama<u64>::initializeWeights(model); // dealer initializes the weights and sends to the parties
     Llama<u64>::initializeData(trainImage, 1); // takes input from stdin
@@ -187,15 +188,16 @@ void llama_test_small(int party) {
     model.backward(e);
     EndComputation();
     // Llama<u64>::output(rt->drelu);
-    // Llama<u64>::output(model.activation);
-    // Llama<u64>::output(e);
-    Llama<u64>::output(fc->weight);
+    Llama<u64>::output(model.activation);
+    Llama<u64>::output(e);
+    Llama<u64>::output(fc->filter);
     Llama<u64>::output(fc->bias);
     if (LlamaConfig::party != 1) {
         // rt->drelu.print();
-        // model.activation.print<i64>();
-        // e.print<i64>(); // eprint hehe
-        fc->weight.print<i64>();
+        std::cout << "Secure Computation Output = \n";
+        model.activation.print<i64>();
+        e.print<i64>(); // eprint hehe
+        fc->filter.print<i64>();
         fc->bias.print<i64>();
     }
     Llama<u64>::finalize();
@@ -205,9 +207,10 @@ void llama_test_small(int party) {
     pirhana_softmax_ct(model_ct.activation, e_ct, scale);
     model_ct.backward(e_ct);
     if (LlamaConfig::party == 1) {
-        // model_ct.activation.print();
-        // e_ct.print();
-        fc_ct->weight.print();
+        std::cout << "Plaintext Computation Output = \n";
+        model_ct.activation.print();
+        e_ct.print();
+        fc_ct->filter.print();
         fc_ct->bias.print();
     }
 }

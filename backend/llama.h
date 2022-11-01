@@ -132,6 +132,7 @@ public:
             for (int i = 0; i < sz; i++){
                 LlamaConfig::client->send_mask(a.data[i]);
                 LlamaConfig::server->send_mask(a.data[i]);
+                a.data[i] = (T)0;
             }
         }
         else {
