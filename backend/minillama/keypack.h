@@ -270,6 +270,28 @@ inline void freeReluTruncateKeyPackPair(const std::pair<ReluTruncateKeyPack, Rel
     delete[] keys.first.dcfKeyS.g;
     delete[] keys.first.dcfKeyS.v;
 }
+
+struct Relu2RoundKeyPack {
+    int effectiveBin, Bin;
+    DCFKeyPack dcfKey;
+    GroupElement a, b, c, d1, d2;
+};
+
+inline void freeRelu2RoundKeyPack(const Relu2RoundKeyPack &key)
+{
+    delete[] key.dcfKey.k;
+    delete[] key.dcfKey.g;
+    delete[] key.dcfKey.v;
+}
+
+inline void freeRelu2RoundKeyPackPair(const std::pair<Relu2RoundKeyPack, Relu2RoundKeyPack> &keys)
+{
+    delete[] keys.first.dcfKey.k;
+    delete[] keys.second.dcfKey.k;
+    delete[] keys.first.dcfKey.g;
+    delete[] keys.first.dcfKey.v;
+}
+
 /*
 struct SplineOneKeyPack
 {

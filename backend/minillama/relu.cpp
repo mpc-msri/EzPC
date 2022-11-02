@@ -143,3 +143,77 @@ GroupElement evalMaxpool(int party, GroupElement x, GroupElement y, const Maxpoo
     GroupElement res = evalRelu(party, x - y, k.reluKey) + (party * y) + k.rb;
     return res;
 }
+
+std::pair<Relu2RoundKeyPack, Relu2RoundKeyPack> keyGenRelu2Round(int effectiveBw, int bin, GroupElement rin, GroupElement routRelu, GroupElement rout)
+{
+    mod(rin, bin);
+    GroupElement r1, r0;
+    
+    auto dcfN = keyGenDCF(effectiveBw, 1, rin, 1);
+
+    GroupElement a;
+    GroupElement b;
+    GroupElement c;
+    GroupElement d1 = 0;
+    GroupElement d2 = 0;
+    a = routRelu & 1;
+    b = rin;
+    c = (routRelu & 1) * rin + rout;
+    if ((routRelu & 1) == 1) {
+        d1 = 2;
+        d2 = -2 * rin;
+    }
+
+    Relu2RoundKeyPack k0, k1;
+    k0.Bin = bin; k1.Bin = bin;
+    k0.effectiveBin = effectiveBw; k1.effectiveBin = effectiveBw;
+    k0.dcfKey = dcfN.first; k1.dcfKey = dcfN.second;
+    auto aSplit = splitShare(a, bin);
+    k0.a = aSplit.first; k1.a = aSplit.second;
+    auto bSplit = splitShare(b, bin);
+    k0.b = bSplit.first; k1.b = bSplit.second;
+    auto cSplit = splitShare(c, bin);
+    k0.c = cSplit.first; k1.c = cSplit.second;
+    auto d1Split = splitShare(d1, bin);
+    k0.d1 = d1Split.first; k1.d1 = d1Split.second;
+    auto d2Split = splitShare(d2, bin);
+    k0.d2 = d2Split.first; k1.d2 = d2Split.second;
+    return std::make_pair(k0, k1);
+}
+
+GroupElement evalRelu2_drelu(int party, GroupElement x, const Relu2RoundKeyPack &key) {
+    GroupElement xp = x + (1ULL<<(key.effectiveBin - 1));
+    mod(xp, key.effectiveBin);
+    mod(x, key.effectiveBin);
+    GroupElement t2 = 0;
+    GroupElement t1 = 0;
+    evalDCF(party, &t2, xp, key.dcfKey);
+    evalDCF(party, &t1, x, key.dcfKey);
+    GroupElement res;
+    res = t2 - t1 + key.a;
+    mod(res, 1);
+    if (party == 1) {
+        if (xp >= (1ULL<<(key.effectiveBin - 1))) {
+            res += 1;
+        }
+    }
+    mod(res, 1);
+    return res;
+}
+
+GroupElement evalRelu2_mult(int party, GroupElement x, GroupElement y, const Relu2RoundKeyPack &key) {
+    GroupElement t1 = 0;
+    GroupElement t2 = 0;
+    mod(x, 1);
+    if (x == 0) {
+        t1 = key.d1;
+        t2 = key.d2;
+    }
+    GroupElement res;
+    res = -key.a * y - key.b * x + key.c + y * t1 + t2;
+    if (party == 1) {
+        res += x * y;
+    }
+    mod(res, key.Bin);
+    return res;
+}

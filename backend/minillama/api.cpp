@@ -786,6 +786,110 @@ void ReluTruncate(int32_t size, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupE
     std::cerr << ">> ReluTruncate - End" << std::endl;
 }
 
+void r2_threads_helper_1(int thread_idx, int32_t size, GroupElement *inArr, GroupElement *tmp, Relu2RoundKeyPack *keys)
+{
+    auto p = get_start_end(size, thread_idx);
+    for(int i = p.first; i < p.second; i += 1){
+        tmp[i] = evalRelu2_drelu(party - 2, inArr[i], keys[i]);
+    }
+}
+
+void r2_threads_helper_2(int thread_idx, int32_t size, GroupElement *inArr, GroupElement *tmp, GroupElement *outArr, Relu2RoundKeyPack *keys)
+{
+    auto p = get_start_end(size, thread_idx);
+    for(int i = p.first; i < p.second; i += 1){
+        outArr[i] = evalRelu2_mult(party - 2, tmp[i], inArr[i], keys[i]);
+    }
+}
+
+void Relu2Round(int32_t size, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *outArr), GroupElement *drelu_cache, int effectiveInputBw)
+{
+    std::cerr << ">> Relu2Round - Start" << std::endl;
+    GroupElement *tmp = make_array<GroupElement>(size);
+    if (party == DEALER) {
+        GroupElement *drelu_mask = tmp;
+        for(int i = 0; i < size; ++i) {
+            drelu_mask[i] = random_ge(1);
+            if (drelu_cache != nullptr)
+                drelu_cache[i] = drelu_mask[i];
+            GroupElement rout = random_ge(bitlength);
+            auto keys = keyGenRelu2Round(effectiveInputBw, bitlength, inArr_mask[i], drelu_mask[i], rout);
+            outArr_mask[i] = rout;
+            server->send_relu_2round_key(keys.first);
+            client->send_relu_2round_key(keys.second);
+            freeRelu2RoundKeyPackPair(keys);
+        }
+    }
+    else {
+        auto keyread_start = std::chrono::high_resolution_clock::now();
+        Relu2RoundKeyPack *keys = new Relu2RoundKeyPack[size];
+        for(int i = 0; i < size; ++i) {
+            keys[i] = dealer->recv_relu_2round_key(effectiveInputBw, bitlength);
+        }
+        auto keyread_end = std::chrono::high_resolution_clock::now();
+        auto keyread_time_taken = std::chrono::duration_cast<std::chrono::milliseconds>(keyread_end -
+                                                            keyread_start).count();
+
+        peer->sync();
+        auto start = std::chrono::high_resolution_clock::now();
+        {
+            std::thread thread_pool[num_threads];
+            for(int i = 0; i < num_threads; ++i) {
+                thread_pool[i] = std::thread(r2_threads_helper_1, i, size, inArr, tmp, keys);
+            }
+
+            for(int i = 0; i < num_threads; ++i) {
+                thread_pool[i].join();
+            }
+        }
+        auto t1 = std::chrono::high_resolution_clock::now();
+        reconstruct(size, tmp, 1);
+        if (drelu_cache != nullptr)
+            for(int i = 0; i < size; ++i) {
+                drelu_cache[i] = tmp[i];
+            }
+        auto t2 = std::chrono::high_resolution_clock::now();
+        {
+            std::thread thread_pool[num_threads];
+            for(int i = 0; i < num_threads; ++i) {
+                thread_pool[i] = std::thread(r2_threads_helper_2, i, size, inArr, tmp, outArr, keys);
+            }
+
+            for(int i = 0; i < num_threads; ++i) {
+                thread_pool[i].join();
+            }
+        }
+        auto t3 = std::chrono::high_resolution_clock::now();
+        reconstruct(size, outArr, bitlength);
+        auto end = std::chrono::high_resolution_clock::now();
+        
+        uint64_t time_taken = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+        reluTruncateEvalMicroseconds += time_taken;
+        evalMicroseconds += time_taken;
+        
+        uint64_t time1 = std::chrono::duration_cast<std::chrono::microseconds>(t1 - start).count();
+        uint64_t time2 = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+        uint64_t time3 = std::chrono::duration_cast<std::chrono::microseconds>(t3 - t2).count();
+        uint64_t time4 = std::chrono::duration_cast<std::chrono::microseconds>(end - t3).count();
+        // std::cerr << "   Compute time 1: " << time1 / 1000.0 << " milliseconds" << std::endl;
+        // std::cerr << "   Reconstruct time 1: " << time2 / 1000.0 << " milliseconds" << std::endl;
+        // std::cerr << "   Compute time 2: " << time3 / 1000.0 << " milliseconds" << std::endl;
+        // std::cerr << "   Reconstruct time 2: " << time4 / 1000.0 << " milliseconds" << std::endl;
+        std::cerr << "   Key Read Time = " << keyread_time_taken << " milliseconds" << std::endl;
+        std::cerr << "   Compute Time = " << (time1 + time3) / 1000.0 << " milliseconds" << std::endl;
+        std::cerr << "   Reconstruct Time = " << (time2 + time4) / 1000.0 << " milliseconds" << std::endl;
+
+
+        for(int i = 0; i < size; ++i) {
+            freeRelu2RoundKeyPack(keys[i]);
+        }
+        delete[] keys;
+    }
+
+    delete[] tmp;
+    std::cerr << ">> ReluTruncate - End" << std::endl;
+}
+
 void AvgPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t ksizeH,
              int32_t ksizeW, int32_t zPadHLeft, int32_t zPadHRight,
              int32_t zPadWLeft, int32_t zPadWRight, int32_t strideH,

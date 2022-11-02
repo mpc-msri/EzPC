@@ -90,6 +90,8 @@ void ARS(int32_t size, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *o
 
 void Select(int32_t size, GroupElement *s, GroupElement *x, GroupElement *out);
 
+void Relu2Round(int32_t size, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *outArr), GroupElement *drelu_cache, int effectiveInputBw);
+
 inline GroupElement funcSSCons(uint64_t val) {
     // if (party == DEALER)
     //     g.value = 0;

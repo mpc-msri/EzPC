@@ -78,6 +78,39 @@ void llama_test(int party) {
         model.activation.print();
 }
 
+void llama_relu2round_test(int party) {
+    srand(time(NULL));
+    const u64 scale = 16;
+    LlamaConfig::party = party;
+    Llama<u64>::init();
+    auto relu1 = new ReLU<u64, Llama<u64>>();
+    auto model = Sequential<u64>({
+        relu1,
+    });
+
+    Tensor4D<u64> trainImage(2, 2, 2, 1); // 1 images with server and 1 with client
+    trainImage(0, 0, 0, 0) = 5;
+    trainImage(0, 0, 1, 0) = 7;
+    trainImage(0, 1, 0, 0) = 12;
+    trainImage(0, 1, 1, 0) = 15;
+    trainImage(1, 0, 0, 0) = -5;
+    trainImage(1, 0, 1, 0) = -7;
+    trainImage(1, 1, 0, 0) = -12;
+    trainImage(1, 1, 1, 0) = -15;
+
+    Llama<u64>::initializeWeights(model); // dealer initializes the weights and sends to the parties
+    Llama<u64>::initializeData(trainImage, 1); // takes input from stdin
+    StartComputation();
+    model.forward(trainImage);
+    EndComputation();
+    Llama<u64>::output(model.activation);
+    Llama<u64>::output(relu1->drelu);
+    Llama<u64>::finalize();
+    if (LlamaConfig::party != 1) {
+        model.activation.print();
+        relu1->drelu.print();
+    }
+}
 
 void llama_test_vgg(int party) {
     srand(time(NULL));
@@ -572,7 +605,7 @@ int main(int argc, char** argv) {
         party = atoi(argv[1]);
     }
     // llama_test_vgg(party);
-    llama_test_vgg2(party);
+    llama_relu2round_test(party);
 
     // cifar10_float_test();
 }

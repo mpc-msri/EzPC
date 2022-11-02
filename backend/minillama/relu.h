@@ -30,3 +30,7 @@ GroupElement evalRelu(int party, GroupElement x, const ReluKeyPack &k);
 
 std::pair<MaxpoolKeyPack, MaxpoolKeyPack> keyGenMaxpool(int Bin, int Bout, GroupElement rin1, GroupElement rin2, GroupElement rout);
 GroupElement evalMaxpool(int party, GroupElement x, GroupElement y, const MaxpoolKeyPack &k);
+
+std::pair<Relu2RoundKeyPack, Relu2RoundKeyPack> keyGenRelu2Round(int effectiveBw, int bin, GroupElement rin, GroupElement routRelu, GroupElement rout);
+GroupElement evalRelu2_drelu(int party, GroupElement x, const Relu2RoundKeyPack &key);
+GroupElement evalRelu2_mult(int party, GroupElement x, GroupElement y, const Relu2RoundKeyPack &key);

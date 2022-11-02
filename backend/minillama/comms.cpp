@@ -526,6 +526,16 @@ void Peer::send_relu_truncate_key(const ReluTruncateKeyPack &kp) {
     send_ge(kp.d2, kp.Bin);
 }
 
+void Peer::send_relu_2round_key(const Relu2RoundKeyPack &kp)
+{
+    send_dcf_keypack(kp.dcfKey);
+    send_ge(kp.a, kp.Bin);
+    send_ge(kp.b, kp.Bin);
+    send_ge(kp.c, kp.Bin);
+    send_ge(kp.d1, kp.Bin);
+    send_ge(kp.d2, kp.Bin);
+}
+
 void Peer::send_select_key(const SelectKeyPack &kp) {
     send_ge(kp.a, kp.Bin);
     send_ge(kp.b, kp.Bin);
@@ -1009,6 +1019,20 @@ ReluTruncateKeyPack Dealer::recv_relu_truncate_key(int Bin, int Bout, int s) {
     kp.dcfKeyN = recv_dcf_keypack(Bin, Bin, 1);
     kp.dcfKeyS = recv_dcf_keypack(s, Bin, 1);
     kp.zTruncate = recv_ge(Bin);
+    kp.a = recv_ge(Bin);
+    kp.b = recv_ge(Bin);
+    kp.c = recv_ge(Bin);
+    kp.d1 = recv_ge(Bin);
+    kp.d2 = recv_ge(Bin);
+    return kp;
+}
+
+Relu2RoundKeyPack Dealer::recv_relu_2round_key(int effectiveBin, int Bin)
+{
+    Relu2RoundKeyPack kp;
+    kp.effectiveBin = effectiveBin;
+    kp.Bin = Bin;
+    kp.dcfKey = recv_dcf_keypack(effectiveBin, 1, 1);
     kp.a = recv_ge(Bin);
     kp.b = recv_ge(Bin);
     kp.c = recv_ge(Bin);
