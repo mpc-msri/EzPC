@@ -205,7 +205,7 @@ public:
         Tensor2D<T> bTranspose(b.d2, b.d1);
         for(int i = 0; i < b.d1; ++i)
             for(int j = 0; j < b.d2; ++j)
-                bTranspose(i, j) = b(j, i);
+                bTranspose(j, i) = b(i, j);
         matmul(a, bTranspose, c);
     }
 
@@ -526,7 +526,7 @@ public:
             }
         }
         // Hack for Pirhana
-        assert(std::popcount(ks * ks) == 1);
+        // assert(std::popcount(ks * ks) == 1);
         truncate(in, log2(ks * ks));
     }
 

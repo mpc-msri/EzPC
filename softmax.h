@@ -85,7 +85,6 @@ inline void pirhana_softmax_ct(const Tensor4D<i64> &in, Tensor4D<i64> &out, u64 
     assert(in.d4 == 1);
     assert(out.d3 == 1);
     assert(out.d4 == 1);
-    assert(std::is_integral<T>::value || (scale == 0));
 
     auto batchSize = in.d1;
     auto numClasses = in.d2;

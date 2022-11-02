@@ -472,6 +472,12 @@ public:
         div(out, (T)(ks*ks));
     }
 
+    static u64 log2(u64 x) {
+        u64 y = 0;
+        while (x >>= 1) y++;
+        return y;
+    }
+
     static void sumPool2DInputGrad(u64 ks, u64 padding, u64 stride, Tensor4D<T> &in, const Tensor4D<T> &out) {
         assert(in.d1 == out.d1);
         assert(in.d4 == out.d4);
@@ -493,6 +499,8 @@ public:
                 }
             }
         });
+        // hack for piranha
+        truncate(in, log2(ks * ks));
     }
 
     static void avgPool2DInputGrad(u64 ks, u64 padding, u64 stride, Tensor4D<T> &in, const Tensor4D<T> &out, u64 scale) {
