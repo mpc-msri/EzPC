@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.13)
+cmake_minimum_required (VERSION 3.3.2)
 
 project (SCI)
 set(NAME "SCI")
@@ -19,6 +19,10 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 if (NO_REVEAL_OUTPUT)
     add_compile_definitions(NO_REVEAL_OUTPUT=1)
+endif()
+
+if (CHUNK_SIZE)
+    add_compile_definitions(CHUNK_SIZE=${CHUNK_SIZE})
 endif()
 
 add_subdirectory(src)

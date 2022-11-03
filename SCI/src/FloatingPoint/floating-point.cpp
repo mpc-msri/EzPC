@@ -22,7 +22,9 @@ SOFTWARE.
 #include "FloatingPoint/floating-point.h"
 #include <omp.h>
 
+#ifndef CHUNK_SIZE
 #define CHUNK_SIZE (1 << 20)
+#endif
 
 using namespace std;
 using namespace sci;
@@ -1597,6 +1599,7 @@ FPMatrix FPOp::matrix_multiplication(const FPMatrix &x, const FPMatrix &y) {
   
   vector<FPArray> prod = enlist_products(this, x, y) ;
   FPMatrix ret(this->party, x.dim1, y.dim2, m_bits, e_bits) ;
+  cout<<CHUNK_SIZE<<":   "<<endl;
   int rows_per_batch = ceil(CHUNK_SIZE/double(n));
   for (int i = 0; i < N; i += rows_per_batch) {
     int j = std::min(i + rows_per_batch, N);
