@@ -1,0 +1,428 @@
+=== COMPUTATION START ===
+
+
+
+>> Conv2D - Start
+   Key Read Time = 61 milliseconds
+   Compute Time = 315.267 milliseconds
+      Eigen Time = 195.565 milliseconds
+   Reconstruct Time = 87.808 milliseconds
+>> Conv2D - End
+>> Relu2Round - Start
+   Key Read Time = 13559 milliseconds
+   Compute Time = 7738.37 milliseconds
+   Reconstruct Time = 140.712 milliseconds
+>> Relu2Round - End
+>> Conv2D - Start
+   Key Read Time = 79 milliseconds
+   Compute Time = 3985.29 milliseconds
+      Eigen Time = 3768.15 milliseconds
+   Reconstruct Time = 87.686 milliseconds
+>> Conv2D - End
+>> Relu2Round - Start
+   Key Read Time = 3258 milliseconds
+   Compute Time = 1847.41 milliseconds
+   Reconstruct Time = 42.085 milliseconds
+>> Relu2Round - End
+>> Conv2D - Start
+   Key Read Time = 43 milliseconds
+   Compute Time = 1894.35 milliseconds
+      Eigen Time = 1797.64 milliseconds
+   Reconstruct Time = 34.309 milliseconds
+>> Conv2D - End
+>> Relu2Round - Start
+   Key Read Time = 6762 milliseconds
+   Compute Time = 3872.5 milliseconds
+   Reconstruct Time = 71.28 milliseconds
+>> Relu2Round - End
+>> Conv2D - Start
+   Key Read Time = 55 milliseconds
+   Compute Time = 3742.55 milliseconds
+      Eigen Time = 3604.32 milliseconds
+   Reconstruct Time = 25.569 milliseconds
+>> Conv2D - End
+>> Relu2Round - Start
+   Key Read Time = 1640 milliseconds
+   Compute Time = 928.118 milliseconds
+   Reconstruct Time = 18.948 milliseconds
+>> Relu2Round - End
+>> Conv2D - Start
+   Key Read Time = 24 milliseconds
+   Compute Time = 1911.64 milliseconds
+      Eigen Time = 1832.62 milliseconds
+   Reconstruct Time = 15.273 milliseconds
+>> Conv2D - End
+>> Relu2Round - Start
+   Key Read Time = 3383 milliseconds
+   Compute Time = 1943.29 milliseconds
+   Reconstruct Time = 29.807 milliseconds
+>> Relu2Round - End
+>> Conv2D - Start
+   Key Read Time = 33 milliseconds
+   Compute Time = 3773.18 milliseconds
+      Eigen Time = 3683.68 milliseconds
+   Reconstruct Time = 12.728 milliseconds
+>> Conv2D - End
+>> Relu2Round - Start
+   Key Read Time = 3388 milliseconds
+   Compute Time = 1941.83 milliseconds
+   Reconstruct Time = 27.445 milliseconds
+>> Relu2Round - End
+>> Conv2D - Start
+   Key Read Time = 33 milliseconds
+   Compute Time = 3763.17 milliseconds
+      Eigen Time = 3673.16 milliseconds
+   Reconstruct Time = 13.217 milliseconds
+>> Conv2D - End
+>> Relu2Round - Start
+   Key Read Time = 817 milliseconds
+   Compute Time = 469.711 milliseconds
+   Reconstruct Time = 8.195 milliseconds
+>> Relu2Round - End
+>> Conv2D - Start
+   Key Read Time = 21 milliseconds
+   Compute Time = 2863.14 milliseconds
+      Eigen Time = 2793.9 milliseconds
+   Reconstruct Time = 6.584 milliseconds
+>> Conv2D - End
+>> Relu2Round - Start
+   Key Read Time = 1701 milliseconds
+   Compute Time = 973.776 milliseconds
+   Reconstruct Time = 16.593 milliseconds
+>> Relu2Round - End
+>> Conv2D - Start
+   Key Read Time = 35 milliseconds
+   Compute Time = 5806.86 milliseconds
+      Eigen Time = 5684.8 milliseconds
+   Reconstruct Time = 6.609 milliseconds
+>> Conv2D - End
+>> Relu2Round - Start
+   Key Read Time = 1706 milliseconds
+   Compute Time = 975.599 milliseconds
+   Reconstruct Time = 18.733 milliseconds
+>> Relu2Round - End
+>> Conv2D - Start
+   Key Read Time = 35 milliseconds
+   Compute Time = 5877.44 milliseconds
+      Eigen Time = 5756.12 milliseconds
+   Reconstruct Time = 7.836 milliseconds
+>> Conv2D - End
+>> Relu2Round - Start
+   Key Read Time = 411 milliseconds
+   Compute Time = 240.639 milliseconds
+   Reconstruct Time = 5.353 milliseconds
+>> Relu2Round - End
+>> Conv2D - Start
+   Key Read Time = 46 milliseconds
+   Compute Time = 3183.14 milliseconds
+      Eigen Time = 3096.74 milliseconds
+   Reconstruct Time = 1.243 milliseconds
+>> Conv2D - End
+>> Relu2Round - Start
+   Key Read Time = 421 milliseconds
+   Compute Time = 251.882 milliseconds
+   Reconstruct Time = 4.342 milliseconds
+>> Relu2Round - End
+>> Conv2D - Start
+   Key Read Time = 39 milliseconds
+   Compute Time = 3154.59 milliseconds
+      Eigen Time = 3071.42 milliseconds
+   Reconstruct Time = 1.522 milliseconds
+>> Conv2D - End
+>> Relu2Round - Start
+   Key Read Time = 424 milliseconds
+   Compute Time = 251.189 milliseconds
+   Reconstruct Time = 4.499 milliseconds
+>> Relu2Round - End
+>> Conv2D - Start
+   Key Read Time = 46 milliseconds
+   Compute Time = 3168.41 milliseconds
+      Eigen Time = 3083.43 milliseconds
+   Reconstruct Time = 1.276 milliseconds
+>> Conv2D - End
+>> Relu2Round - Start
+   Key Read Time = 91 milliseconds
+   Compute Time = 66.732 milliseconds
+   Reconstruct Time = 1.56 milliseconds
+>> Relu2Round - End
+>> MatMul2D - Start
+   Key Read Time = 1 milliseconds
+   Compute Time = 16.432 milliseconds
+      Eigen Time = 0 milliseconds
+   Reconstruct Time = 0.428 milliseconds
+>> MatMul2D - End
+>> Relu2Round - Start
+   Key Read Time = 55 milliseconds
+   Compute Time = 39.195 milliseconds
+   Reconstruct Time = 1.583 milliseconds
+>> Relu2Round - End
+>> MatMul2D - Start
+   Key Read Time = 2 milliseconds
+   Compute Time = 7.907 milliseconds
+      Eigen Time = 0 milliseconds
+   Reconstruct Time = 0.301 milliseconds
+>> MatMul2D - End
+>> Relu2Round - Start
+   Key Read Time = 84 milliseconds
+   Compute Time = 39.254 milliseconds
+   Reconstruct Time = 1.714 milliseconds
+>> Relu2Round - End
+>> MatMul2D - Start
+   Key Read Time = 0 milliseconds
+   Compute Time = 0.402 milliseconds
+      Eigen Time = 0 milliseconds
+   Reconstruct Time = 0.122 milliseconds
+>> MatMul2D - End
+>> Softmax - start
+>> MaxPool - Start
+   Eval Time = 7.448 miliseconds
+>> MaxPool - End
+>> ReluTruncate - Start
+   Key Read Time = 6 milliseconds
+   Compute Time = 4.644 milliseconds
+   Reconstruct Time = 0.613 milliseconds
+>> ReluTruncate - End
+>> InsecureInverse - start
+   Eval Time: 6.247 milliseconds
+>> InsecureInverse - end
+>> ElemWise Mult - start
+   Eval Time: 0.292 milliseconds
+>> ElemWise Mult - end
+>> ScaleDown - Start
+   Compute Time: 0.659 milliseconds
+   Eval Time: 4.172 milliseconds
+>> ScaleDown - End
+>> Softmax - end
+>> MatMul2D - Start
+   Key Read Time = 0 milliseconds
+   Compute Time = 0.635 milliseconds
+      Eigen Time = 0 milliseconds
+   Reconstruct Time = 0.279 milliseconds
+>> MatMul2D - End
+>> MatMul2D - Start
+   Key Read Time = 0 milliseconds
+   Compute Time = 0.567 milliseconds
+      Eigen Time = 0 milliseconds
+   Reconstruct Time = 0.139 milliseconds
+>> MatMul2D - End
+>> Select - start
+>> Select - end
+>> MatMul2D - Start
+   Key Read Time = 2 milliseconds
+   Compute Time = 7.262 milliseconds
+      Eigen Time = 0 milliseconds
+   Reconstruct Time = 0.269 milliseconds
+>> MatMul2D - End
+>> MatMul2D - Start
+   Key Read Time = 0 milliseconds
+   Compute Time = 7.533 milliseconds
+      Eigen Time = 0 milliseconds
+   Reconstruct Time = 0.861 milliseconds
+>> MatMul2D - End
+>> Select - start
+>> Select - end
+>> MatMul2D - Start
+   Key Read Time = 1 milliseconds
+   Compute Time = 14.334 milliseconds
+      Eigen Time = 0 milliseconds
+   Reconstruct Time = 0.457 milliseconds
+>> MatMul2D - End
+>> MatMul2D - Start
+   Key Read Time = 1 milliseconds
+   Compute Time = 17.023 milliseconds
+      Eigen Time = 0 milliseconds
+   Reconstruct Time = 1.54 milliseconds
+>> MatMul2D - End
+>> Select - start
+>> Select - end
+>> MatMul2D - Start
+   Key Read Time = 47 milliseconds
+   Compute Time = 980.936 milliseconds
+      Eigen Time = 0 milliseconds
+   Reconstruct Time = 18.634 milliseconds
+>> MatMul2D - End
+>> Conv2D - Start
+   Key Read Time = 22 milliseconds
+   Compute Time = 3132.2 milliseconds
+      Eigen Time = 3051.53 milliseconds
+   Reconstruct Time = 1.334 milliseconds
+>> Conv2D - End
+>> Select - start
+>> Select - end
+>> MatMul2D - Start
+   Key Read Time = 35 milliseconds
+   Compute Time = 977.185 milliseconds
+      Eigen Time = 0 milliseconds
+   Reconstruct Time = 18.578 milliseconds
+>> MatMul2D - End
+>> Conv2D - Start
+   Key Read Time = 21 milliseconds
+   Compute Time = 3152.82 milliseconds
+      Eigen Time = 3070.05 milliseconds
+   Reconstruct Time = 1.279 milliseconds
+>> Conv2D - End
+>> Select - start
+>> Select - end
+>> MatMul2D - Start
+   Key Read Time = 35 milliseconds
+   Compute Time = 975.913 milliseconds
+      Eigen Time = 0 milliseconds
+   Reconstruct Time = 18.863 milliseconds
+>> MatMul2D - End
+>> Conv2D - Start
+   Key Read Time = 22 milliseconds
+   Compute Time = 3137.26 milliseconds
+      Eigen Time = 3056.93 milliseconds
+   Reconstruct Time = 1.336 milliseconds
+>> Conv2D - End
+>> Select - start
+>> Select - end
+>> MatMul2D - Start
+   Key Read Time = 89 milliseconds
+   Compute Time = 3692.68 milliseconds
+      Eigen Time = 0 milliseconds
+   Reconstruct Time = 19.446 milliseconds
+>> MatMul2D - End
+>> Conv2D - Start
+   Key Read Time = 32 milliseconds
+   Compute Time = 5712.4 milliseconds
+      Eigen Time = 5607.35 milliseconds
+   Reconstruct Time = 6.933 milliseconds
+>> Conv2D - End
+>> Select - start
+>> Select - end
+>> MatMul2D - Start
+   Key Read Time = 80 milliseconds
+   Compute Time = 3691.96 milliseconds
+      Eigen Time = 0 milliseconds
+   Reconstruct Time = 18.745 milliseconds
+>> MatMul2D - End
+>> Conv2D - Start
+   Key Read Time = 32 milliseconds
+   Compute Time = 5732.81 milliseconds
+      Eigen Time = 5626.22 milliseconds
+   Reconstruct Time = 5.669 milliseconds
+>> Conv2D - End
+>> Select - start
+>> Select - end
+>> MatMul2D - Start
+   Key Read Time = 42 milliseconds
+   Compute Time = 1855.05 milliseconds
+      Eigen Time = 0 milliseconds
+   Reconstruct Time = 11.466 milliseconds
+>> MatMul2D - End
+>> Conv2D - Start
+   Key Read Time = 14 milliseconds
+   Compute Time = 2124.5 milliseconds
+      Eigen Time = 2086.07 milliseconds
+   Reconstruct Time = 3.035 milliseconds
+>> Conv2D - End
+>> Select - start
+>> Select - end
+>> MatMul2D - Start
+   Key Read Time = 142 milliseconds
+   Compute Time = 3777.29 milliseconds
+      Eigen Time = 0 milliseconds
+   Reconstruct Time = 4.185 milliseconds
+>> MatMul2D - End
+>> Conv2D - Start
+   Key Read Time = 29 milliseconds
+   Compute Time = 3822.51 milliseconds
+      Eigen Time = 3739.59 milliseconds
+   Reconstruct Time = 13.319 milliseconds
+>> Conv2D - End
+>> Select - start
+>> Select - end
+>> MatMul2D - Start
+   Key Read Time = 130 milliseconds
+   Compute Time = 3736.84 milliseconds
+      Eigen Time = 0 milliseconds
+   Reconstruct Time = 3.755 milliseconds
+>> MatMul2D - End
+>> Conv2D - Start
+   Key Read Time = 29 milliseconds
+   Compute Time = 3818.44 milliseconds
+      Eigen Time = 3735.59 milliseconds
+   Reconstruct Time = 12.541 milliseconds
+>> Conv2D - End
+>> Select - start
+>> Select - end
+>> MatMul2D - Start
+   Key Read Time = 70 milliseconds
+   Compute Time = 1916.2 milliseconds
+      Eigen Time = 0 milliseconds
+   Reconstruct Time = 1.823 milliseconds
+>> MatMul2D - End
+>> Conv2D - Start
+   Key Read Time = 22 milliseconds
+   Compute Time = 1894.65 milliseconds
+      Eigen Time = 1848.96 milliseconds
+   Reconstruct Time = 6.123 milliseconds
+>> Conv2D - End
+>> Select - start
+>> Select - end
+>> MatMul2D - Start
+   Key Read Time = 256 milliseconds
+   Compute Time = 4197.89 milliseconds
+      Eigen Time = 0 milliseconds
+   Reconstruct Time = 1.494 milliseconds
+>> MatMul2D - End
+>> Conv2D - Start
+   Key Read Time = 40 milliseconds
+   Compute Time = 3688.99 milliseconds
+      Eigen Time = 3564.27 milliseconds
+   Reconstruct Time = 25.804 milliseconds
+>> Conv2D - End
+>> Select - start
+>> Select - end
+>> MatMul2D - Start
+   Key Read Time = 145 milliseconds
+   Compute Time = 2164.87 milliseconds
+      Eigen Time = 0 milliseconds
+   Reconstruct Time = 0.576 milliseconds
+>> MatMul2D - End
+>> Conv2D - Start
+   Key Read Time = 34 milliseconds
+   Compute Time = 1849.72 milliseconds
+      Eigen Time = 1761.32 milliseconds
+   Reconstruct Time = 12.614 milliseconds
+>> Conv2D - End
+>> Select - start
+>> Select - end
+>> MatMul2D - Start
+   Key Read Time = 491 milliseconds
+   Compute Time = 4500.02 milliseconds
+      Eigen Time = 0 milliseconds
+   Reconstruct Time = 0.425 milliseconds
+>> MatMul2D - End
+>> Conv2D - Start
+   Key Read Time = 94 milliseconds
+   Compute Time = 3709.32 milliseconds
+      Eigen Time = 3497.37 milliseconds
+   Reconstruct Time = 92.367 milliseconds
+>> Conv2D - End
+>> Select - start
+>> Select - end
+>> MatMul2D - Start
+   Key Read Time = 79 milliseconds
+   Compute Time = 371.136 milliseconds
+      Eigen Time = 0 milliseconds
+   Reconstruct Time = 0.222 milliseconds
+>> MatMul2D - End
+
+
+
+=== COMPUTATION END ===
+
+
+
+Offline Communication = 24577 bytes
+Offline Time = 0.512 milliseconds
+Online Rounds = 108
+Online Communication = 1600755525 bytes
+Online Time = 140730 milliseconds
+Total Eigen Time = 82686.8 milliseconds
+
+
+
+Total Time (including Key Read) = 194216 milliseconds

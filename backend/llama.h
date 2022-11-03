@@ -15,6 +15,7 @@ class Llama {
     static const u64 lr_scale = 6;
     static const u64 mom_fp = 29;
     static const u64 mom_scale = 5;
+    static const bool useLocalTruncation = true;
 
 public:
 
@@ -32,6 +33,7 @@ public:
         }
         else if (LlamaConfig::party == 3) {
             LlamaConfig::dealer = new Dealer("client.dat");
+            // LlamaConfig::server = new Peer("172.31.45.173", 42002);
             LlamaConfig::server = new Peer("127.0.0.1", 42002);
             LlamaConfig::peer = LlamaConfig::server;
         }
@@ -383,10 +385,16 @@ public:
         assert(in.d3 == drelu.d3);
         assert(in.d4 == drelu.d4);
         int sz = in.d1 * in.d2 * in.d3 * in.d4;
-        ReluTruncate(sz, in.data, in.data, out.data, out.data, shift, drelu.data);
+        if (useLocalTruncation) {
+            truncate(in, out, shift);
+            relu(out, out, drelu, LlamaConfig::bitlength - shift);
+        }
+        else {
+            ReluTruncate(sz, in.data, in.data, out.data, out.data, shift, drelu.data);
+        }
     }
 
-    static void relu(const Tensor4D<T> &in, const Tensor4D<T> &out, const Tensor4D<T> &drelu) {
+    static void relu(const Tensor4D<T> &in, const Tensor4D<T> &out, const Tensor4D<T> &drelu, int effBw = LlamaConfig::bitlength) {
         assert(in.d1 == out.d1);
         assert(in.d2 == out.d2);
         assert(in.d3 == out.d3);
@@ -396,7 +404,7 @@ public:
         assert(in.d3 == drelu.d3);
         assert(in.d4 == drelu.d4);
         int sz = in.d1 * in.d2 * in.d3 * in.d4;
-        Relu2Round(sz, in.data, in.data, out.data, out.data, drelu.data, 64);
+        Relu2Round(sz, in.data, in.data, out.data, out.data, drelu.data, effBw);
     }
 
     static void select(const Tensor4D<T> &in, const Tensor4D<T> &drelu, const Tensor4D<T> &out) {
@@ -416,7 +424,14 @@ public:
         assert(in.d2 == out.d2);
         assert(in.d3 == out.d3);
         assert(in.d4 == out.d4);
-        ARS(in.d1 * in.d2 * in.d3 * in.d4, in.data, in.data, out.data, out.data, shift);
+        if (useLocalTruncation) {
+            for(u64 i = 0; i < in.d1 * in.d2 * in.d3 * in.d4; i++) {
+                out.data[i] = in.data[i] >> shift;
+            }
+        }
+        else {
+            ARS(in.d1 * in.d2 * in.d3 * in.d4, in.data, in.data, out.data, out.data, shift);
+        }
     }
 
     static void truncate(const Tensor4D<T> &in, u64 shift) {
@@ -428,13 +443,27 @@ public:
     static void truncate(const Tensor2D<T> &in, u64 shift) {
     //    Eigen::Map<Eigen::ArrayX<T>> eA(in.data, in.d1 * in.d2);
     //    eA = eA / ((T)(1LL << shift)); // this gives bad accuracy, why?
-        ARS(in.d1 * in.d2, in.data, in.data, in.data, in.data, shift);
+        if (useLocalTruncation) {
+            for(u64 i = 0; i < in.d1 * in.d2; i++) {
+                in.data[i] = in.data[i] >> shift;
+            }
+        }
+        else {
+            ARS(in.d1 * in.d2, in.data, in.data, in.data, in.data, shift);
+        }
     }
 
     static void truncate(const Tensor<T> &in, u64 shift) {
     //    Eigen::Map<Eigen::ArrayX<T>> eA(in.data, in.d1 * in.d2);
     //    eA = eA / ((T)(1LL << shift)); // this gives bad accuracy, why?
-        ARS(in.size, in.data, in.data, in.data, in.data, shift);
+        if (useLocalTruncation) {
+            for(u64 i = 0; i < in.size; i++) {
+                in.data[i] = in.data[i] >> shift;
+            }
+        }
+        else {
+            ARS(in.size, in.data, in.data, in.data, in.data, shift);
+        }
     }
 
     static void div(const Tensor4D<T> &in, T divisor) {

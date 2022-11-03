@@ -24,8 +24,8 @@ private:
     }
 
     static u64 signextcost(u64 bin, u64 bout) {
-        // return dcfcost(bin, 1) + selectcost(bout);
-        return dcfcost(bin, bout);
+        return dcfcost(bin, 1) + selectcost(bout);
+        // return dcfcost(bin, bout);
     }
 
     static u64 truncatereducecost(u64 bin, u64 s) {
@@ -42,7 +42,7 @@ private:
 
     static u64 relutruncatecost(u64 bin, u64 s) {
         if (probablistic) {
-            return dcfcost(bin, 1) + selectcost(bin);
+            return dcfcost(bin-s, 2) + selectcost(bin);
         }
         else {
             // return dcfcost(bin, bin) + dcfcost(s, bin) + selectcost(bin) + bin;
@@ -322,7 +322,7 @@ public:
         u64 newW = (in.d3 + 2*padding - ks)/stride + 1;
         assert(out.d2 == newH);
         assert(out.d3 == newW);
-        u64 cost = out.d1 * out.d2 * out.d3 * out.d4 * (ks * ks - 1) * maxcost(bw);
+        u64 cost = out.d1 * out.d2 * out.d3 * out.d4 * (ks * ks - 1) * maxcost(bw-24); // FIX: pass scale somehow!!
         cost += out.d1 * out.d2 * out.d3 * out.d4 * (2 * ks * ks - 3) * 4;
         if (verbose) std::cout << "maxpool key size = " << cost / gb << std::endl;
         serverkeysize += cost;

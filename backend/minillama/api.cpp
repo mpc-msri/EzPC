@@ -48,8 +48,6 @@ using namespace LlamaConfig;
 void StartComputation()
 {
     std::cerr << "=== COMPUTATION START ===\n\n";
-    std::cerr << "bitlength = " << bitlength << std::endl;
-    std::cerr << "local truncation = " << (localTruncation ? "yes" : "no") << std::endl << std::endl;
     startTime = std::chrono::system_clock::now().time_since_epoch().count();
 
     if (party != DEALER)
@@ -887,7 +885,7 @@ void Relu2Round(int32_t size, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupEle
     }
 
     delete[] tmp;
-    std::cerr << ">> ReluTruncate - End" << std::endl;
+    std::cerr << ">> Relu2Round - End" << std::endl;
 }
 
 void AvgPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t ksizeH,

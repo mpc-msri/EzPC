@@ -112,7 +112,7 @@ void lenet_int() {
 
     const u64 trainLen = 60000;
     const u64 testLen = 10000;
-    const u64 scale = 14;
+    const u64 scale = 16;
     srand(time(NULL));
     srand(rand());
     srand(rand());

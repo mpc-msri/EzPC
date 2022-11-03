@@ -12,7 +12,7 @@
 
 void threelayer_keysize_llama() {
 
-    const u64 scale = 16;
+    const u64 scale = 24;
     LlamaKey<i64>::verbose = true;
     LlamaKey<i64>::probablistic = true;
     LlamaKey<i64>::bw = 64;
@@ -255,6 +255,7 @@ void llama_test_vgg2(int party) {
     LlamaConfig::bitlength = 64;
     LlamaConfig::party = party;
     Llama<u64>::init();
+    const u64 bs = 2;
     
     auto conv1 = new Conv2D<u64, scale, Llama<u64>>(3, 64, 3, 1);
     auto conv2 = new Conv2D<u64, scale, Llama<u64>>(64, 64, 3, 1);
@@ -403,12 +404,12 @@ void llama_test_vgg2(int party) {
     });
 
     // Tensor4D<u64> trainImage(2, 1, 2, 1); // 1 images with server and 1 with client
-    Tensor4D<u64> trainImage(2, 32, 32, 3); // 1 images with server and 1 with client
+    Tensor4D<u64> trainImage(bs, 32, 32, 3); // 1 images with server and 1 with client
     trainImage.fill((1ULL<<(scale+1)));
-    Tensor4D<i64> trainImage_ct(2, 32, 32, 3);
+    Tensor4D<i64> trainImage_ct(bs, 32, 32, 3);
     trainImage_ct.copy(trainImage);
-    Tensor4D<u64> e(2, 10, 1, 1); // 1 images with server and 1 with client
-    Tensor4D<i64> e_ct(2, 10, 1, 1);
+    Tensor4D<u64> e(bs, 10, 1, 1); // 1 images with server and 1 with client
+    Tensor4D<i64> e_ct(bs, 10, 1, 1);
 
     Llama<u64>::initializeWeights(model); // dealer initializes the weights and sends to the parties
     Llama<u64>::initializeData(trainImage, 1); // takes input from stdin
@@ -604,8 +605,8 @@ int main(int argc, char** argv) {
     if (argc > 1) {
         party = atoi(argv[1]);
     }
-    // llama_test_vgg(party);
-    llama_relu2round_test(party);
+    llama_test_vgg2(party);
+    // llama_relu2round_test(party);
 
     // cifar10_float_test();
 }
