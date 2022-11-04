@@ -164,6 +164,7 @@ struct ReluKeyPack
     GroupElement e_b0, e_b1;		 // size: degree+1 (same as beta)
     GroupElement beta_b0, beta_b1;	 // size: degree+1 (shares of beta, which is set of poly coeffs) (beta: highest to lowest power left to right)
     GroupElement r_b;
+    GroupElement drelu;
 };
 
 inline void freeReluKeyPack(ReluKeyPack &key)

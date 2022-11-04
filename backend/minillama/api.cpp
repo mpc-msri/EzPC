@@ -94,6 +94,8 @@ void EndComputation()
         std::cerr << "Online Communication = " << peer->bytesSent + peer->bytesReceived + inputOnlineComm << " bytes\n";
         std::cerr << "Online Time = " << (evalMicroseconds + accumulatedInputTimeOnline) / 1000.0 << " milliseconds\n";
         std::cerr << "Total Eigen Time = " << eigenMicroseconds / 1000.0 << " milliseconds\n\n";
+        std::cerr << "Conv + Matmul Time = " << (convEvalMicroseconds + matmulEvalMicroseconds) / 1000.0 << " milliseconds\n";
+        std::cerr << "Relu time = " << reluEvalMicroseconds / 1000.0 << " milliseconds\n";
         auto endTime = std::chrono::system_clock::now().time_since_epoch().count();
         std::cerr << "Total Time (including Key Read) = " << (endTime - startTime) / 1000000.0 << " milliseconds\n";
     }
@@ -862,7 +864,7 @@ void Relu2Round(int32_t size, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupEle
         auto end = std::chrono::high_resolution_clock::now();
         
         uint64_t time_taken = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-        reluTruncateEvalMicroseconds += time_taken;
+        reluEvalMicroseconds += time_taken;
         evalMicroseconds += time_taken;
         
         uint64_t time1 = std::chrono::duration_cast<std::chrono::microseconds>(t1 - start).count();
@@ -1422,4 +1424,97 @@ void Select(int32_t size, GroupElement *s, GroupElement *x, GroupElement *out) {
         reconstruct(size, out, bitlength);
     }
     std::cerr << ">> Select - end" << std::endl;
+}
+
+void reluHelper(int thread_idx, int32_t size, GroupElement *inArr, GroupElement *outArr, GroupElement *drelu, ReluKeyPack *keys)
+{
+    auto thread_start = std::chrono::high_resolution_clock::now();
+    auto p = get_start_end(size, thread_idx);
+    for(int i = p.first; i < p.second; i += 1){
+        outArr[i] = evalRelu(party - 2, inArr[i], keys[i], &drelu[i]);
+        freeReluKeyPack(keys[i]);
+    }
+    auto thread_end = std::chrono::high_resolution_clock::now();
+}
+
+void relu_dealer_threads_helper(int thread_idx, int32_t size, GroupElement *inArr_mask, GroupElement *outArr_mask, GroupElement *drelu, std::pair<ReluKeyPack, ReluKeyPack> *keys)
+{
+    auto p = get_start_end(size, thread_idx);
+    for(int i = p.first; i < p.second; i += 1){
+        outArr_mask[i] = random_ge(bitlength); // prng inside multithreads, need some locking
+        drelu[i] = random_ge(1);
+        keys[i] = keyGenRelu(bitlength, bitlength, inArr_mask[i], outArr_mask[i], drelu[i]);
+    }
+}
+
+void Relu(int32_t size, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *outArr), GroupElement *drelu)
+{
+    std::cerr << ">> Relu (Spline) - Start" << std::endl;
+    // todo: handle doTruncation param
+    if (party == DEALER) {
+        uint64_t dealer_total_time = 0;
+        std::pair<ReluKeyPack, ReluKeyPack> *keys = new std::pair<ReluKeyPack, ReluKeyPack>[size];
+        auto start = std::chrono::high_resolution_clock::now();
+        std::thread thread_pool[num_threads];
+        for(int i = 0; i < num_threads; ++i) {
+            thread_pool[i] = std::thread(relu_dealer_threads_helper, i, size, inArr_mask, outArr_mask, drelu, keys);
+        }
+
+        for(int i = 0; i < num_threads; ++i) {
+            thread_pool[i].join();
+        }
+        auto end = std::chrono::high_resolution_clock::now();
+        dealer_total_time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+
+        for(int i = 0; i < size; ++i) {
+            server->send_relu_key(keys[i].first);
+            client->send_relu_key(keys[i].second);
+            freeReluKeyPackPair(keys[i]);
+        }
+        delete[] keys;
+        dealerMicroseconds += dealer_total_time;
+        std::cerr << "   Dealer time = " << dealer_total_time / 1000.0 << " milliseconds" << std::endl;
+    }
+    else {
+        // Step 1: Preprocessing Keys from Dealer
+        ReluKeyPack *keys = new ReluKeyPack[size];
+        for(int i = 0; i < size; i++){
+            keys[i] = dealer->recv_relu_key(bitlength, bitlength);
+        }
+        // Step 2: Online Local ReLU Eval
+        peer->sync();
+        auto start_eval = std::chrono::high_resolution_clock::now();
+        if (num_threads == 1) {
+            reluHelper(0, size, inArr, outArr, drelu, keys);
+        }
+        else {
+            std::thread thread_pool[num_threads];
+            for(int thread_idx = 0; thread_idx < num_threads; thread_idx++)
+            {
+                thread_pool[thread_idx] = std::thread(reluHelper, thread_idx, size, inArr, outArr, drelu, keys);
+            }
+
+            for(int thread_idx = 0; thread_idx < num_threads; thread_idx++)
+            {
+                thread_pool[thread_idx].join();
+            }
+        }
+
+        auto t1 = std::chrono::high_resolution_clock::now();
+        auto t2 = std::chrono::high_resolution_clock::now();
+
+        // Step 3: Online Communication
+        reconstruct(size, outArr, bitlength);
+        reconstruct(size, drelu, 1);
+        
+        auto end_eval = std::chrono::high_resolution_clock::now();
+        auto eval_time = std::chrono::duration_cast<std::chrono::microseconds>(end_eval - t2).count();
+        eval_time += std::chrono::duration_cast<std::chrono::microseconds>(t1 - start_eval).count();
+        evalMicroseconds += eval_time;
+        reluEvalMicroseconds += eval_time;
+        std::cerr << "   Eval time: " << eval_time / 1000.0 << " milliseconds" << std::endl;
+
+        delete[] keys;
+    }
+    std::cerr << ">> Relu (Spline) - End " << std::endl;
 }

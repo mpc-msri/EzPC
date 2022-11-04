@@ -25,7 +25,7 @@ SOFTWARE.
 #include <assert.h>
 
 std::pair<ReluKeyPack, ReluKeyPack> keyGenRelu(int Bin, int Bout,
-                        GroupElement rin, GroupElement rout)
+                        GroupElement rin, GroupElement rout, GroupElement routDrelu)
 {
     // represents offset poly p(x-rin)'s coefficients, where p(x)=x
     GroupElement beta[2];
@@ -74,6 +74,8 @@ std::pair<ReluKeyPack, ReluKeyPack> keyGenRelu(int Bin, int Bout,
 
     auto rout_split = splitShare(rout, Bout);
     k0.r_b = rout_split.first; k1.r_b = rout_split.second;
+    auto drelu_split = splitShare(routDrelu, 1);
+    k0.drelu = drelu_split.first; k1.drelu = drelu_split.second;
     k0.k = dcfKeys.first.k;
     k0.g = dcfKeys.first.g;
     k0.v = dcfKeys.first.v;
@@ -84,7 +86,7 @@ std::pair<ReluKeyPack, ReluKeyPack> keyGenRelu(int Bin, int Bout,
     return std::make_pair(k0, k1);
 }
 
-GroupElement evalRelu(int party, GroupElement x, const ReluKeyPack &k)
+GroupElement evalRelu(int party, GroupElement x, const ReluKeyPack &k, GroupElement *drelu)
 {
     int Bout = k.Bout;
     int Bin = k.Bin;
@@ -107,6 +109,10 @@ GroupElement evalRelu(int party, GroupElement x, const ReluKeyPack &k)
     
     GroupElement w_b = cx * k.beta_b0 - share_L[0] + share_R1[0] + k.e_b0;
     mod(w_b, Bout);
+    if (drelu != nullptr) {
+        *drelu = (w_b + k.drelu);
+        mod(*drelu, 1);
+    }
     sum = sum + (w_b * x);
 
     w_b = cx * k.beta_b1 - share_L[1] + share_R1[1] + k.e_b1;

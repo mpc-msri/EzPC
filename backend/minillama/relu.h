@@ -24,9 +24,10 @@ SOFTWARE.
 #include "config.h"
 
 std::pair<ReluKeyPack, ReluKeyPack> keyGenRelu(int Bin, int Bout,
-                        GroupElement rin, GroupElement rout);
+                        GroupElement rin, GroupElement rout, GroupElement routDrelu = 0);
 
-GroupElement evalRelu(int party, GroupElement x, const ReluKeyPack &k);
+// GroupElement evalRelu(int party, GroupElement x, const ReluKeyPack &k);
+GroupElement evalRelu(int party, GroupElement x, const ReluKeyPack &k, GroupElement *drelu = nullptr);
 
 std::pair<MaxpoolKeyPack, MaxpoolKeyPack> keyGenMaxpool(int Bin, int Bout, GroupElement rin1, GroupElement rin2, GroupElement rout);
 GroupElement evalMaxpool(int party, GroupElement x, GroupElement y, const MaxpoolKeyPack &k);

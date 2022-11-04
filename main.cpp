@@ -9,6 +9,7 @@
 #include <iomanip>
 #include "cifar10.hpp"
 #include "networks.h"
+#include "backend/llama_extended.h"
 
 void threelayer_keysize_llama() {
 
@@ -106,6 +107,40 @@ void llama_relu2round_test(int party) {
     Llama<u64>::output(model.activation);
     Llama<u64>::output(relu1->drelu);
     Llama<u64>::finalize();
+    if (LlamaConfig::party != 1) {
+        model.activation.print();
+        relu1->drelu.print();
+    }
+}
+
+void llama_relu_old_test(int party) {
+    srand(time(NULL));
+    const u64 scale = 16;
+    LlamaConfig::party = party;
+    LlamaExtended<u64>::init();
+    auto relu1 = new ReLU<u64, LlamaExtended<u64>>();
+    auto model = Sequential<u64>({
+        relu1,
+    });
+
+    Tensor4D<u64> trainImage(2, 2, 2, 1); // 1 images with server and 1 with client
+    trainImage(0, 0, 0, 0) = 5;
+    trainImage(0, 0, 1, 0) = 7;
+    trainImage(0, 1, 0, 0) = 12;
+    trainImage(0, 1, 1, 0) = 15;
+    trainImage(1, 0, 0, 0) = -5;
+    trainImage(1, 0, 1, 0) = -7;
+    trainImage(1, 1, 0, 0) = -12;
+    trainImage(1, 1, 1, 0) = -15;
+
+    LlamaExtended<u64>::initializeWeights(model); // dealer initializes the weights and sends to the parties
+    LlamaExtended<u64>::initializeData(trainImage, 1); // takes input from stdin
+    StartComputation();
+    model.forward(trainImage);
+    EndComputation();
+    LlamaExtended<u64>::output(model.activation);
+    LlamaExtended<u64>::output(relu1->drelu);
+    LlamaExtended<u64>::finalize();
     if (LlamaConfig::party != 1) {
         model.activation.print();
         relu1->drelu.print();
@@ -248,70 +283,70 @@ void llama_test_small(int party) {
     }
 }
 
-
+using LlamaVersion = LlamaExtended<u64>;
 void llama_test_vgg2(int party) {
     srand(time(NULL));
     const u64 scale = 24;
     LlamaConfig::bitlength = 64;
     LlamaConfig::party = party;
-    Llama<u64>::init();
-    const u64 bs = 2;
+    LlamaVersion::init();
+    const u64 bs = 100;
     
-    auto conv1 = new Conv2D<u64, scale, Llama<u64>>(3, 64, 3, 1);
-    auto conv2 = new Conv2D<u64, scale, Llama<u64>>(64, 64, 3, 1);
-    auto conv3 = new Conv2D<u64, scale, Llama<u64>>(64, 128, 3, 1);
-    auto conv4 = new Conv2D<u64, scale, Llama<u64>>(128, 128, 3, 1);
-    auto conv5 = new Conv2D<u64, scale, Llama<u64>>(128, 256, 3, 1);
-    auto conv6 = new Conv2D<u64, scale, Llama<u64>>(256, 256, 3, 1);
-    auto conv7 = new Conv2D<u64, scale, Llama<u64>>(256, 256, 3, 1);
-    auto conv8 = new Conv2D<u64, scale, Llama<u64>>(256, 512, 3, 1);
-    auto conv9 = new Conv2D<u64, scale, Llama<u64>>(512, 512, 3, 1);
-    auto conv10 = new Conv2D<u64, scale, Llama<u64>>(512, 512, 3, 1);
-    auto conv11 = new Conv2D<u64, scale, Llama<u64>>(512, 512, 3, 1);
-    auto conv12 = new Conv2D<u64, scale, Llama<u64>>(512, 512, 3, 1);
-    auto conv13 = new Conv2D<u64, scale, Llama<u64>>(512, 512, 3, 1);
-    auto fc1 = new FC<u64, scale, Llama<u64>>(512, 256);
-    auto fc2 = new FC<u64, scale, Llama<u64>>(256, 256);
-    auto fc3 = new FC<u64, scale, Llama<u64>>(256, 10);
+    auto conv1 = new Conv2D<u64, scale, LlamaVersion>(3, 64, 3, 1);
+    auto conv2 = new Conv2D<u64, scale, LlamaVersion>(64, 64, 3, 1);
+    auto conv3 = new Conv2D<u64, scale, LlamaVersion>(64, 128, 3, 1);
+    auto conv4 = new Conv2D<u64, scale, LlamaVersion>(128, 128, 3, 1);
+    auto conv5 = new Conv2D<u64, scale, LlamaVersion>(128, 256, 3, 1);
+    auto conv6 = new Conv2D<u64, scale, LlamaVersion>(256, 256, 3, 1);
+    auto conv7 = new Conv2D<u64, scale, LlamaVersion>(256, 256, 3, 1);
+    auto conv8 = new Conv2D<u64, scale, LlamaVersion>(256, 512, 3, 1);
+    auto conv9 = new Conv2D<u64, scale, LlamaVersion>(512, 512, 3, 1);
+    auto conv10 = new Conv2D<u64, scale, LlamaVersion>(512, 512, 3, 1);
+    auto conv11 = new Conv2D<u64, scale, LlamaVersion>(512, 512, 3, 1);
+    auto conv12 = new Conv2D<u64, scale, LlamaVersion>(512, 512, 3, 1);
+    auto conv13 = new Conv2D<u64, scale, LlamaVersion>(512, 512, 3, 1);
+    auto fc1 = new FC<u64, scale, LlamaVersion>(512, 256);
+    auto fc2 = new FC<u64, scale, LlamaVersion>(256, 256);
+    auto fc3 = new FC<u64, scale, LlamaVersion>(256, 10);
     auto model = Sequential<u64>({
         conv1,
-        new ReLUTruncate<u64, Llama<u64>>(scale),
+        new ReLUTruncate<u64, LlamaVersion>(scale),
         conv2,
-        new SumPool2D<u64, scale, Llama<u64>>(2, 0, 2),
-        new ReLUTruncate<u64, Llama<u64>>(scale+2),
+        new SumPool2D<u64, scale, LlamaVersion>(2, 0, 2),
+        new ReLUTruncate<u64, LlamaVersion>(scale+2),
         conv3,
-        new ReLUTruncate<u64, Llama<u64>>(scale),
+        new ReLUTruncate<u64, LlamaVersion>(scale),
         conv4,
-        new SumPool2D<u64, scale, Llama<u64>>(2, 0, 2),
-        new ReLUTruncate<u64, Llama<u64>>(scale+2),
+        new SumPool2D<u64, scale, LlamaVersion>(2, 0, 2),
+        new ReLUTruncate<u64, LlamaVersion>(scale+2),
         conv5,
-        new ReLUTruncate<u64, Llama<u64>>(scale),
+        new ReLUTruncate<u64, LlamaVersion>(scale),
         conv6,
-        new ReLUTruncate<u64, Llama<u64>>(scale),
+        new ReLUTruncate<u64, LlamaVersion>(scale),
         conv7,
-        new SumPool2D<u64, scale, Llama<u64>>(2, 0, 2),
-        new ReLUTruncate<u64, Llama<u64>>(scale+2),
+        new SumPool2D<u64, scale, LlamaVersion>(2, 0, 2),
+        new ReLUTruncate<u64, LlamaVersion>(scale+2),
         conv8,
-        new ReLUTruncate<u64, Llama<u64>>(scale),
+        new ReLUTruncate<u64, LlamaVersion>(scale),
         conv9,
-        new ReLUTruncate<u64, Llama<u64>>(scale),
+        new ReLUTruncate<u64, LlamaVersion>(scale),
         conv10,
-        new SumPool2D<u64, scale, Llama<u64>>(2, 0, 2),
-        new ReLUTruncate<u64, Llama<u64>>(scale+2),
+        new SumPool2D<u64, scale, LlamaVersion>(2, 0, 2),
+        new ReLUTruncate<u64, LlamaVersion>(scale+2),
         conv11,
-        new ReLUTruncate<u64, Llama<u64>>(scale),
+        new ReLUTruncate<u64, LlamaVersion>(scale),
         conv12,
-        new ReLUTruncate<u64, Llama<u64>>(scale),
+        new ReLUTruncate<u64, LlamaVersion>(scale),
         conv13,
-        new SumPool2D<u64, scale, Llama<u64>>(2, 0, 2),
-        new ReLUTruncate<u64, Llama<u64>>(scale+2),
+        new SumPool2D<u64, scale, LlamaVersion>(2, 0, 2),
+        new ReLUTruncate<u64, LlamaVersion>(scale+2),
         new Flatten<u64>(),
         fc1,
-        new ReLUTruncate<u64, Llama<u64>>(scale),
+        new ReLUTruncate<u64, LlamaVersion>(scale),
         fc2,
-        new ReLUTruncate<u64, Llama<u64>>(scale),
+        new ReLUTruncate<u64, LlamaVersion>(scale),
         fc3,
-        new Truncate<u64, Llama<u64>>(scale),
+        new Truncate<u64, LlamaVersion>(scale),
     });
 
     auto conv1_ct = new Conv2D<i64, scale>(3, 64, 3, 1);
@@ -411,38 +446,27 @@ void llama_test_vgg2(int party) {
     Tensor4D<u64> e(bs, 10, 1, 1); // 1 images with server and 1 with client
     Tensor4D<i64> e_ct(bs, 10, 1, 1);
 
-    Llama<u64>::initializeWeights(model); // dealer initializes the weights and sends to the parties
-    Llama<u64>::initializeData(trainImage, 1); // takes input from stdin
+    LlamaVersion::initializeWeights(model); // dealer initializes the weights and sends to the parties
+    LlamaVersion::initializeData(trainImage, 1); // takes input from stdin
     StartComputation();
     model.forward(trainImage);
+    EndComputation();
     pirhana_softmax(model.activation, e, scale);
     model.backward(e);
     EndComputation();
-    // Llama<u64>::output(rt->drelu);
-    // Llama<u64>::output(model.activation);
-    Llama<u64>::output(e);
-    Llama<u64>::output(conv1->bias);
+    // LlamaVersion::output(rt->drelu);
+    // LlamaVersion::output(model.activation);
+    // LlamaVersion::output(e);
+    // LlamaVersion::output(conv1->bias);
     if (LlamaConfig::party != 1) {
         // rt->drelu.print();
-        std::cout << "Secure Computation Output = \n";
+        // std::cout << "Secure Computation Output = \n";
         // model.activation.print<i64>();
-        e.print<i64>(); // eprint hehe
+        // e.print<i64>(); // eprint hehe
         // fc->filter.print<i64>();
-        conv1->bias.print<i64>();
+        // conv1->bias.print<i64>();
     }
-    Llama<u64>::finalize();
-
-    // comparison with ct
-    if (LlamaConfig::party == 1) {
-        model_ct.forward(trainImage_ct);
-        pirhana_softmax_ct(model_ct.activation, e_ct, scale);
-        model_ct.backward(e_ct);
-        std::cout << "Plaintext Computation Output = \n";
-        // model_ct.activation.print();
-        e_ct.print();
-        // fc_ct->filter.print();
-        conv1_ct->bias.print();
-    }
+    LlamaVersion::finalize();
 }
 
 void cifar10_float_test() {
@@ -607,6 +631,7 @@ int main(int argc, char** argv) {
     }
     llama_test_vgg2(party);
     // llama_relu2round_test(party);
+    // llama_relu_old_test(party);
 
     // cifar10_float_test();
 }

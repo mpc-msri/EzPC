@@ -451,6 +451,7 @@ void Peer::send_relu_key(const ReluKeyPack &kp) {
     send_ge(kp.beta_b0, kp.Bout);
     send_ge(kp.beta_b1, kp.Bout);
     send_ge(kp.r_b, kp.Bout);
+    send_ge(kp.drelu, 1);
 }
 
 void Peer::send_maxpool_key(const MaxpoolKeyPack &kp) {
@@ -894,6 +895,7 @@ ReluKeyPack Dealer::recv_relu_key(int Bin, int Bout) {
     kp.beta_b0 = recv_ge(Bout);
     kp.beta_b1 = recv_ge(Bout);
     kp.r_b = recv_ge(Bout);
+    kp.drelu = recv_ge(1);
     return kp;
 }
 

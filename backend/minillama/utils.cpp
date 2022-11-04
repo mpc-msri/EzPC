@@ -407,6 +407,7 @@ void MatFinalize4(int bw, int s1, int s2, int s3, int s4, GroupElement *input)
 
 void matmul_eval_helper(int party, int dim1, int dim2, int dim3, GroupElement *A,
                             GroupElement *B, GroupElement *C, GroupElement *ka, GroupElement *kb, GroupElement *kc) {
+    auto start = std::chrono::high_resolution_clock::now();
     Eigen::Matrix<uint64_t, Eigen::Dynamic, Eigen::Dynamic> eigen_A(dim1, dim2);
     Eigen::Matrix<uint64_t, Eigen::Dynamic, Eigen::Dynamic> eigen_ka(dim1, dim2);
     Eigen::Matrix<uint64_t, Eigen::Dynamic, Eigen::Dynamic> eigen_B(dim2, dim3);
@@ -450,7 +451,31 @@ void matmul_eval_helper(int party, int dim1, int dim2, int dim3, GroupElement *A
             Arr2DIdxRowM(C, dim1, dim3, i, j) = eigen_C(i, j);
         }
     }
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    eigenMicroseconds += duration.count();
 }
+
+// void matmul_eval_helper(int party, int dim1, int dim2, int dim3, GroupElement *A,
+//                             GroupElement *B, GroupElement *C, GroupElement *ka, GroupElement *kb, GroupElement *kc) {
+//     auto start = std::chrono::high_resolution_clock::now();
+//     Eigen::Map<Eigen::Matrix<uint64_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eigen_A(A, dim1, dim2);
+//     Eigen::Map<Eigen::Matrix<uint64_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eigen_ka(ka, dim1, dim2);
+//     Eigen::Map<Eigen::Matrix<uint64_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eigen_B(B, dim2, dim3);
+//     Eigen::Map<Eigen::Matrix<uint64_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eigen_kb(kb, dim2, dim3);
+//     Eigen::Map<Eigen::Matrix<uint64_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eigen_C(C, dim1, dim3);
+//     Eigen::Map<Eigen::Matrix<uint64_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eigen_kc(kc, dim1, dim3);
+
+//     if (party == SERVER) {
+//         eigen_C = eigen_A * eigen_B - eigen_ka * eigen_B - eigen_A * eigen_kb + eigen_kc;
+//     }
+//     else {
+//         eigen_C = eigen_kc - eigen_ka * eigen_B - eigen_A * eigen_kb;
+//     }
+//     auto end = std::chrono::high_resolution_clock::now();
+//     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+//     eigenMicroseconds += duration.count();
+// }
 
 void packBitArray(GroupElement *A, int size, uint8_t *out) {
     int bytesize = (size % 8 == 0) ? (size / 8) : (size / 8 + 1);
