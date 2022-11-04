@@ -22,6 +22,7 @@ class VariableGen:
 
     number = 0
     counter = 0
+    reshape_counter = 0
 
     @classmethod
     def get_var(cls):
@@ -32,6 +33,11 @@ class VariableGen:
     def get_loop_var(cls):
         VariableGen.counter += 1
         return f"i{VariableGen.counter}"
+
+    @classmethod
+    def get_reshape_var(cls):
+        VariableGen.reshape_counter += 1
+        return f"re{VariableGen.reshape_counter}"
 
     @classmethod
     def reset_loop_var_counter(cls):

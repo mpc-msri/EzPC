@@ -49,6 +49,9 @@ int __e_bits = 8;  // exponent bits
 int __nt = MAX_THREADS;
 int __party = 0;
 
+// Chunk Size for Computation breakdown
+int __chunk_size = 1<<20;
+
 // Handy globals for experiments
 int BATCH = 1;
 
@@ -70,6 +73,7 @@ void __init(int __argc, char **__argv)
 	__amap.arg("port", __port, "port");
 	__amap.arg("add", __address, "address");
 	__amap.arg("batch", BATCH, "batch size for experiments");
+	__amap.arg("chunk", __chunk_size, "Chunk Size for computations breakdown");
 	__amap.parse(__argc, __argv);
 
 	for (int i = 0; i < __nt; i++)
@@ -470,7 +474,7 @@ void MatMul_thread(
 {
 
 	FPMatrix A_chunk = fpopArr[tid]->input(WHICHPARTY, m_chunk, n, A_s, A_z, A_m, A_e, m_bits, e_bits);
-	FPMatrix res = fpopArr[tid]->matrix_multiplication(A_chunk, B);
+	FPMatrix res = fpopArr[tid]->matrix_multiplication(A_chunk, B, __chunk_size);
 
 	memcpy(res_s, res.s, m_chunk * p * sizeof(uint8_t));
 	memcpy(res_z, res.z, m_chunk * p * sizeof(uint8_t));

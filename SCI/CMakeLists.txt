@@ -21,10 +21,6 @@ if (NO_REVEAL_OUTPUT)
     add_compile_definitions(NO_REVEAL_OUTPUT=1)
 endif()
 
-if (CHUNK_SIZE)
-    add_compile_definitions(CHUNK_SIZE=${CHUNK_SIZE})
-endif()
-
 add_subdirectory(src)
 
 if (BUILD_TESTS)

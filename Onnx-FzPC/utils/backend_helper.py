@@ -17,13 +17,21 @@ def decl(name, data_type, shape, indent, party=Party.ALICE):
 
 def decl_multiple_int(variables, indent):
     need = ""
-    return str(f"{'   ' * indent}int32_t {need.join(f'{v}=0,' for v in variables)}i;\n")
+    return str(
+        f"{'   ' * indent}int32_t {need.join(f'{v}=0,' for v in variables[:-1])}{variables[-1]}=0;\n"
+    )
 
 
 def generate_loop_vars(number):
     var_list = []
     [var_list.append(VariableGen.get_loop_var()) for i in range(0, number)]
     # VariableGen.reset_loop_var_counter()
+    return var_list
+
+
+def generate_reshape_vars(number):
+    var_list = []
+    [var_list.append(VariableGen.get_reshape_var()) for i in range(0, number)]
     return var_list
 
 

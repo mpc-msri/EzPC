@@ -10,9 +10,6 @@ def parse_args():
     parser.add_argument(
         "--generate", required=True, type=str, choices=["code", "executable"]
     )
-    parser.add_argument(
-        "--chunk", type=str, help="Chunk Size for Secfloat calculations."
-    )
     args = parser.parse_args()
     return args
 
@@ -28,9 +25,7 @@ def main():
 
     if args.generate == "executable":
         logger.info("Starting Compilation.")
-        os.system(
-            f"lib_secfloat/compile_secfloat.sh {args.path[:-5]}_secfloat.cpp $(({args.chunk}))"
-        )
+        os.system(f"lib_secfloat/compile_secfloat.sh {args.path[:-5]}_secfloat.cpp")
         logger.info(f"Output Binary generated : {args.path[:-5]}_secfloat.out")
 
 

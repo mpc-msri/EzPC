@@ -24,7 +24,7 @@ FPArray __public_float_to_arithmetic(float f, int party = ALICE)
     return _ret;
 }
 
-auto Add(auto x, auto y)
+auto Add(const FPArray &x, const FPArray &y)
 {
     return __fp_op->add(x, y);
 }

@@ -2,8 +2,9 @@ from utils import logger, VariableGen
 from utils.backend_helper import (
     iterate_list,
     iterate_dict,
+    decl,
     comment,
-    generate_loop_vars,
+    generate_reshape_vars,
     decl_multiple_int,
     nested_for_reshape_loop,
     iterate_concat_list,
@@ -190,11 +191,10 @@ class Operator:
 
     @classmethod
     def Reshape(cls, attributes, inputs, outputs, value_info, var_dict, indent):
-        logger.debug("Inside Flatten function call.")
+        logger.debug("Inside Reshape function call.")
         # counter1, counter2 = len(value_info(inputs[0])[1]), len(value_info(outputs[0])[1])
-        variables1 = generate_loop_vars(len(value_info[inputs[0]][1]))
-        variables2 = generate_loop_vars(len(value_info[outputs[0]][1]))
-        VariableGen.reset_loop_var_counter()
+        variables1 = generate_reshape_vars(len(value_info[inputs[0]][1]))
+        variables2 = generate_reshape_vars(len(value_info[outputs[0]][1]))
         code = decl_multiple_int(variables1, indent)
         code += nested_for_reshape_loop(
             0,
@@ -212,7 +212,17 @@ class Operator:
     @classmethod
     def Gemm(cls, attributes, inputs, outputs, value_info, var_dict, indent):
         logger.debug("Inside Gemm function call.")
-        return str(
+        code = ""
+        if len(value_info[inputs[2]][1]) == 2:
+            code += decl("bias_mod", "fparray2d", [value_info[inputs[2]][1][1]], indent)
+            code += "\n"
+            value_info["bias_mod"] = ("fparray", [value_info[inputs[2]][1][1]])
+            var_dict["bias_mod"] = "bias_mod"
+            code += cls.Reshape(
+                attributes, [inputs[2]], ["bias_mod"], value_info, var_dict, indent
+            )
+            inputs[2] = "bias_mod"
+        code += str(
             f"{'   ' * indent}Gemm("
             f"{iterate_list(value_info[inputs[0]][1])}, "
             f"{iterate_list(value_info[inputs[1]][1])}, "
@@ -223,3 +233,4 @@ class Operator:
             f"{iterate_list([var_dict[x] for x in outputs])}"
             f");"
         )
+        return code

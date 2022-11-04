@@ -31,24 +31,18 @@ fi
 BINARY_NAME=$(basename $SECFLOAT_CPP_FILE .cpp)
 DIR="$(dirname "${SECFLOAT_CPP_FILE}")" 
 
-CHUNK_SIZE=$2
 
 rm -rf build_dir
 mkdir build_dir
 cd build_dir
 eval `opam config env`
 
-mkdir build_SCI
-cd build_SCI
-cmake -DCHUNK_SIZE=$CHUNK_SIZE -DCMAKE_INSTALL_PREFIX=./install ../../../SCI/
-cmake --build . --target install --parallel
-cd ..
 
 echo "
 cmake_minimum_required (VERSION 3.13) 
 project (BUILD_IT)
 set(CMAKE_MODULE_PATH \${CMAKE_CURRENT_SOURCE_DIR})
-find_package(SCI REQUIRED PATHS \"build_SCI/install\") 
+find_package(SCI REQUIRED PATHS \"../../SCI/build/install\") 
 add_executable($BINARY_NAME ../$SECFLOAT_CPP_FILE)
 target_include_directories($BINARY_NAME PUBLIC)
 target_compile_options($BINARY_NAME PRIVATE -fconcepts -g)

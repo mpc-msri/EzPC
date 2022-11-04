@@ -49,13 +49,16 @@ void Gemm(int32_t m, int32_t n, int32_t o, int32_t p, float alpha, float beta, i
     auto tmp = make_vector_float(ALICE, x, k);
     MatMul(m, n, p, A, B, tmp);
 
-    for (uint32_t i0 = 0; i0 < x; i0++)
-    {
-        for (uint32_t i1 = 0; i1 < k; i1++)
-        {
-            output[i0][i1] = Add(tmp[i0][i1], C[i1]);
-        }
-    }
+
+    GemmAdd(x,k,tmp,C,output);
+
+    // for (uint32_t i0 = 0; i0 < x; i0++)
+    // {
+    //     for (uint32_t i1 = 0; i1 < k; i1++)
+    //     {
+    //         output[i0][i1] = Add(tmp[i0][i1], C[i1]);
+    //     }
+    // }
 }
 
 void Flatten(int32_t x, int32_t y, auto &A, auto &output)
