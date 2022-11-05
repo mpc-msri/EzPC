@@ -1,0 +1,32 @@
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+macro (add_network_OT _name)
+	add_executable(${_name}-OT "main_${_name}.cpp")
+    target_link_libraries(${_name}-OT SCI-OT) 
+    target_compile_options(${_name}-OT PUBLIC "-Wno-parentheses-equality")
+endmacro()
+
+macro (add_network_HE _name)
+    add_executable(${_name}-HE "main_${_name}.cpp")
+    target_link_libraries(${_name}-HE SCI-HE) 
+    target_compile_options(${_name}-HE PUBLIC "-Wno-parentheses-equality")
+endmacro()
+
+macro (add_network_float _name)
+	add_executable(${_name}-float "main_${_name}.cpp")
+    target_link_libraries(${_name}-float SCI-FloatML) 
+    target_compile_options(${_name}-float PUBLIC "-Wno-parentheses-equality")
+endmacro()
+
+# Networks
+add_network_HE(sqnet)
+add_network_OT(sqnet)
+add_network_HE(resnet50)
+add_network_OT(resnet50)
+add_network_HE(densenet121)
+add_network_OT(densenet121)
+add_network_HE(minionn)
+add_network_OT(minionn)
+add_network_HE(resnet32_cifar)
+add_network_OT(resnet32_cifar)
+add_network_float(relevance)
