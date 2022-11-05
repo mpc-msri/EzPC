@@ -9,4 +9,5 @@ namespace LlamaConfig {
     Peer *peer = nullptr;
     Dealer *dealer = nullptr;
     int port = 42069;
+    bool stochasticRT = true;
 }

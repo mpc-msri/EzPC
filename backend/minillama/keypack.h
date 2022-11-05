@@ -35,7 +35,12 @@ struct DCFKeyPack{
                 block *k,
                 GroupElement *g,
                 GroupElement *v) : Bin(Bin), Bout(Bout), groupSize(groupSize), k(k), g(g), v(v){}
-    DCFKeyPack() {}
+    DCFKeyPack() {
+        Bin = Bout = groupSize = 0;
+        k = nullptr;
+        g = nullptr;
+        v = nullptr;
+    }
 };
 
 inline void freeDCFKeyPack(DCFKeyPack &key){

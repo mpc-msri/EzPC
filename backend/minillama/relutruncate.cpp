@@ -13,8 +13,10 @@ pair<ReluTruncateKeyPack> keyGenReluTruncate(int bin, int bout, int s, GroupElem
         r1 = (rin >> s) + 1;
         r0 = (r1 << s) - rin;
     }
-    auto dcfN = keyGenDCF(bin, bout, rin, 1);
-    auto dcfS = keyGenDCF(s,   bout, r0,  1);
+    if (LlamaConfig::stochasticRT) {
+        r1 = (rin >> s) + 1;
+    }
+    auto dcfN = keyGenDCF(bin, s, rin, 1);
     GroupElement zTruncate;
     zTruncate = routTruncate - r1;
     mod(zTruncate, bin);
@@ -37,7 +39,10 @@ pair<ReluTruncateKeyPack> keyGenReluTruncate(int bin, int bout, int s, GroupElem
     k0.Bout = bout; k1.Bout = bout;
     k0.shift = s; k1.shift = s;
     k0.dcfKeyN = dcfN.first; k1.dcfKeyN = dcfN.second;
-    k0.dcfKeyS = dcfS.first; k1.dcfKeyS = dcfS.second;
+    if (!LlamaConfig::stochasticRT) {
+        auto dcfS = keyGenDCF(s,   bout, r0,  1);
+        k0.dcfKeyS = dcfS.first; k1.dcfKeyS = dcfS.second;
+    }
     auto zTruncateSplit = splitShare(zTruncate, bin);
     k0.zTruncate = zTruncateSplit.first; k1.zTruncate = zTruncateSplit.second;
     auto aSplit = splitShare(a, bin);
@@ -66,7 +71,12 @@ GroupElement evalRT_lrs(int party, GroupElement x, const ReluTruncateKeyPack &ke
     mod(xs, key.shift);
     GroupElement ts = 0;
     evalDCF(party, &cache, x, key.dcfKeyN);
-    evalDCF(party, &ts, xs, key.dcfKeyS);
+    if (LlamaConfig::stochasticRT) {
+        ts = (party == 1) ? 1 : 0;
+    }
+    else {
+        evalDCF(party, &ts, xs, key.dcfKeyS);
+    }
     GroupElement res;
     if (party == 1) {
         res = x1 + key.zTruncate + (1ULL<<(key.Bin - key.shift)) * cache + ts;

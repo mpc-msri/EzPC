@@ -15,7 +15,7 @@ class Llama {
     static const u64 lr_scale = 6;
     static const u64 mom_fp = 29;
     static const u64 mom_scale = 5;
-    static const bool useLocalTruncation = true;
+    static const bool useLocalTruncation = false;
 
 public:
 
@@ -33,8 +33,8 @@ public:
         }
         else if (LlamaConfig::party == 3) {
             LlamaConfig::dealer = new Dealer("client.dat");
-            // LlamaConfig::server = new Peer("172.31.45.173", 42002);
-            LlamaConfig::server = new Peer("127.0.0.1", 42002);
+            LlamaConfig::server = new Peer("172.31.45.173", 42002);
+            // LlamaConfig::server = new Peer("127.0.0.1", 42002);
             LlamaConfig::peer = LlamaConfig::server;
         }
         else {
@@ -539,7 +539,7 @@ public:
     static void maxPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> &in, Tensor4D<T> &out, Tensor4D<u64> &maxIdx) {
         assert(in.d1 == out.d1);
         assert(in.d4 == out.d4);
-        throw std::runtime_error("Not implemented");
+        MaxPool(out.d1, out.d2, out.d3, out.d4, ks, ks, padding, padding, padding, padding, stride, stride, in.d1, in.d2, in.d3, in.d4, in.data, in.data, out.data, out.data);
     }
 
     static void maxPool2DInputGrad(u64 ks, u64 padding, u64 stride, Tensor4D<T> &in, const Tensor4D<T> &out, const Tensor4D<u64> &maxIdx) {

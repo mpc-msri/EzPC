@@ -12,4 +12,5 @@ namespace LlamaConfig {
     extern Peer *peer;
     extern Dealer *dealer;
     extern int port;
+    extern bool stochasticRT;
 }

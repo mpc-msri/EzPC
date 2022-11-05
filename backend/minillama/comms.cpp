@@ -518,7 +518,8 @@ void Peer::send_publicIC_key(const PublicICKeyPack &kp) {
 
 void Peer::send_relu_truncate_key(const ReluTruncateKeyPack &kp) {
     send_dcf_keypack(kp.dcfKeyN);
-    send_dcf_keypack(kp.dcfKeyS);
+    if (!LlamaConfig::stochasticRT)
+        send_dcf_keypack(kp.dcfKeyS);
     send_ge(kp.zTruncate, kp.Bin);
     send_ge(kp.a, kp.Bin);
     send_ge(kp.b, kp.Bin);
@@ -1018,8 +1019,9 @@ ReluTruncateKeyPack Dealer::recv_relu_truncate_key(int Bin, int Bout, int s) {
     kp.Bin = Bin;
     kp.Bout = Bout;
     kp.shift = s;
-    kp.dcfKeyN = recv_dcf_keypack(Bin, Bin, 1);
-    kp.dcfKeyS = recv_dcf_keypack(s, Bin, 1);
+    kp.dcfKeyN = recv_dcf_keypack(Bin, s, 1);
+    if (!LlamaConfig::stochasticRT)
+        kp.dcfKeyS = recv_dcf_keypack(s, Bin, 1);
     kp.zTruncate = recv_ge(Bin);
     kp.a = recv_ge(Bin);
     kp.b = recv_ge(Bin);
