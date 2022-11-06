@@ -10,6 +10,7 @@
 #include "cifar10.hpp"
 #include "networks.h"
 #include "backend/llama_extended.h"
+#include "backend/minillama/relu.h"
 
 using LlamaVersion = Llama<u64>;
 
@@ -53,6 +54,27 @@ void llama_relutruncate_test(int party) {
         // relu1->drelu.print();
         relu1->inputDerivative.print();
     }
+}
+
+void pt_test_maxpooldouble()
+{
+    auto r1 = random_ge(64);
+    auto r2 = random_ge(64);
+    auto rbit = random_ge(1);
+    auto rout = random_ge(64);
+    auto keys = keyGenMaxpoolDouble(64, 64, r1, r2, rbit, rout);
+    auto x = 66 + r1;
+    auto y = 77 + r2;
+    auto b0 = evalMaxpoolDouble_1(0, x, y, keys.first);
+    auto b1 = evalMaxpoolDouble_1(1, x, y, keys.second);
+    auto b = b0 + b1;
+    // always_assert((b % 2) == ((1 + rbit) % 2));
+    std::cout << (b - rbit) % 2 << std::endl;
+    auto max0 = evalMaxpoolDouble_2(0, x, y, b, keys.first);
+    auto max1 = evalMaxpoolDouble_2(1, x, y, b, keys.second);
+    auto max = max0 + max1;
+    // always_assert(max == ((x > y) ? x : y) + rout);
+    std::cout << (max - rout) << std::endl;
 }
 
 void llama_test_3layer(int party) {
@@ -161,5 +183,8 @@ int main(int argc, char** argv) {
     // llama_relu2round_test(party);
     // llama_relu_old_test(party);
 
+    // for(int i = 0; i < 10; ++i) {
+    //     pt_test_maxpooldouble();
+    // }
     // cifar10_float_test();
 }

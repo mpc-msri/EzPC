@@ -417,3 +417,23 @@ struct SelectKeyPack {
     int Bin;
     GroupElement a, b, c, d1, d2;
 };
+
+struct MaxpoolDoubleKeyPack
+{
+    int Bin, Bout;
+    Relu2RoundKeyPack reluKey;
+    GroupElement rb;
+};
+
+inline void freeMaxpoolDoubleKeyPack(MaxpoolDoubleKeyPack &key)
+{
+    freeRelu2RoundKeyPack(key.reluKey);
+}
+
+inline void freeMaxpoolDoubleKeyPackPair(std::pair<MaxpoolDoubleKeyPack,MaxpoolDoubleKeyPack> &keys)
+{
+    delete[] keys.first.reluKey.dcfKey.k;
+    delete[] keys.second.reluKey.dcfKey.k;
+    delete[] keys.first.reluKey.dcfKey.g;
+    delete[] keys.first.reluKey.dcfKey.v;
+}

@@ -459,6 +459,11 @@ void Peer::send_maxpool_key(const MaxpoolKeyPack &kp) {
     send_ge(kp.rb, kp.Bout);
 }
 
+void Peer::send_maxpool_double_key(const MaxpoolDoubleKeyPack &kp) {
+    send_relu_2round_key(kp.reluKey);
+    send_ge(kp.rb, kp.Bout);
+}
+
 void Peer::send_scmp_keypack(const ScmpKeyPack &kp) {
     send_ddcf_keypack(kp.dualDcfKey);
     send_ge(kp.rb, kp.Bout);
@@ -905,6 +910,15 @@ MaxpoolKeyPack Dealer::recv_maxpool_key(int Bin, int Bout) {
     kp.Bin = Bin; 
     kp.Bout = Bout;
     kp.reluKey = recv_relu_key(Bin, Bout);
+    kp.rb = recv_ge(Bout);
+    return kp;
+}
+
+MaxpoolDoubleKeyPack Dealer::recv_maxpool_double_key(int Bin, int Bout) {
+    MaxpoolDoubleKeyPack kp;
+    kp.Bin = Bin; 
+    kp.Bout = Bout;
+    kp.reluKey = recv_relu_2round_key(Bin, Bout);
     kp.rb = recv_ge(Bout);
     return kp;
 }

@@ -1518,3 +1518,245 @@ void Relu(int32_t size, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *
     }
     std::cerr << ">> Relu (Spline) - End " << std::endl;
 }
+
+void maxpool_double_threads_helper_1(int thread_idx, int fh, int fw, int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
+             int32_t FW, int32_t zPadHLeft, int32_t zPadHRight,
+             int32_t zPadWLeft, int32_t zPadWRight, int32_t strideH,
+             int32_t strideW, int32_t N1, int32_t imgH, int32_t imgW,
+             int32_t C1, GroupElement *inArr, GroupElement *maxUntilNow, GroupElement *oneHot, MaxpoolDoubleKeyPack *keys)
+{
+    auto p = get_start_end(N * C * H * W, thread_idx);
+    for(int i = p.first; i < p.second; i += 1) {
+        int curr = i;
+        int ctW = curr % W;
+        curr = curr / W;
+        int ctH = curr % H;
+        curr = curr / H;
+        int c = curr % C;
+        curr = curr / C;
+        int n = curr % N;
+        curr = curr / N;
+        
+        int leftTopCornerH = ctH * strideH - zPadHLeft;
+        int leftTopCornerW = ctW * strideW - zPadWLeft;
+        int curPosH = leftTopCornerH + fh;
+        int curPosW = leftTopCornerW + fw;
+        
+        GroupElement maxi = Arr4DIdxRowM(maxUntilNow, N, H, W, C, n, ctH, ctW, c);
+        GroupElement temp;
+        if ((((curPosH < 0) || (curPosH >= imgH)) || ((curPosW < 0) || (curPosW >= imgW)))) {
+            temp = GroupElement(0);
+        }
+        else {
+            temp = Arr4DIdxRowM(inArr, N1, imgH, imgW, C1, n, curPosH, curPosW, c);
+        }
+        int kidx = (fh * FW + fw - 1) * (N * C * H * W) + i;
+        Arr5DIdxRowM(oneHot, FH*FW-1, N, H, W, C, fh * FW + fw - 1, n, ctH, ctW, c) = evalMaxpoolDouble_1(party - 2, maxi, temp, keys[kidx]);
+        // freeMaxpoolKeyPack(keys[kidx]);
+    }
+}
+
+void maxpool_double_threads_helper_2(int thread_idx, int fh, int fw, int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
+             int32_t FW, int32_t zPadHLeft, int32_t zPadHRight,
+             int32_t zPadWLeft, int32_t zPadWRight, int32_t strideH,
+             int32_t strideW, int32_t N1, int32_t imgH, int32_t imgW,
+             int32_t C1, GroupElement *inArr, GroupElement *maxUntilNow, GroupElement *oneHot, MaxpoolDoubleKeyPack *keys)
+{
+    auto p = get_start_end(N * C * H * W, thread_idx);
+    for(int i = p.first; i < p.second; i += 1) {
+        int curr = i;
+        int ctW = curr % W;
+        curr = curr / W;
+        int ctH = curr % H;
+        curr = curr / H;
+        int c = curr % C;
+        curr = curr / C;
+        int n = curr % N;
+        curr = curr / N;
+        
+        int leftTopCornerH = ctH * strideH - zPadHLeft;
+        int leftTopCornerW = ctW * strideW - zPadWLeft;
+        int curPosH = leftTopCornerH + fh;
+        int curPosW = leftTopCornerW + fw;
+        
+        GroupElement maxi = Arr4DIdxRowM(maxUntilNow, N, H, W, C, n, ctH, ctW, c);
+        GroupElement temp;
+        if ((((curPosH < 0) || (curPosH >= imgH)) || ((curPosW < 0) || (curPosW >= imgW)))) {
+            temp = GroupElement(0);
+        }
+        else {
+            temp = Arr4DIdxRowM(inArr, N1, imgH, imgW, C1, n, curPosH, curPosW, c);
+        }
+        int kidx = (fh * FW + fw - 1) * (N * C * H * W) + i;
+        // Arr5DIdxRowM(oneHot, FH*FW-1, N, H, W, C, fh * FW + fw - 1, n, ctH, ctW, c) = evalMaxpoolDouble_1(party - 2, maxi, temp, keys[kidx]);
+        GroupElement s = Arr5DIdxRowM(oneHot, FH*FW-1, N, H, W, C, fh * FW + fw - 1, n, ctH, ctW, c);
+        Arr4DIdxRowM(maxUntilNow, N, H, W, C, n, ctH, ctW, c) = evalMaxpoolDouble_2(party - 2, maxi, temp, s, keys[kidx]);
+        freeMaxpoolDoubleKeyPack(keys[kidx]);
+    }
+}
+
+void MaxPoolDouble(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
+             int32_t FW, int32_t zPadHLeft, int32_t zPadHRight,
+             int32_t zPadWLeft, int32_t zPadWRight, int32_t strideH,
+             int32_t strideW, int32_t N1, int32_t imgH, int32_t imgW,
+             int32_t C1, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *outArr), GroupElement *oneHot) 
+{
+    std::cerr << ">> MaxPoolDouble - Start" << std::endl;
+    int d1 = ((imgH - FH + (zPadHLeft + zPadHRight)) / strideH) + 1;
+    int d2 = ((imgW - FW + (zPadWLeft + zPadWRight)) / strideW) + 1;
+    always_assert(d1 == H);
+    always_assert(d2 == W);
+    always_assert(N1 == N);
+    always_assert(C1 == C);
+
+    GroupElement *maxUntilNow = outArr;
+    GroupElement *maxUntilNow_mask = outArr_mask;
+    
+    if (party == DEALER) {
+        uint64_t dealer_file_read_time = 0;
+        auto dealer_start = std::chrono::high_resolution_clock::now();
+        for (int fh = 0; fh < FH; fh++) {
+            for(int fw = 0; fw < FW; fw++) {
+                for (int n = 0; n < N; n++) {
+                    for (int c = 0; c < C; c++) {
+                        for(int ctH = 0; ctH < H; ctH++) {
+                            for(int ctW = 0; ctW < W; ctW++) {
+                                int leftTopCornerH = ctH * strideH - zPadHLeft;
+                                int leftTopCornerW = ctW * strideW - zPadWLeft;
+
+                                if (fh == 0 && fw == 0) {
+                                    if (leftTopCornerH < 0 || leftTopCornerW < 0 || leftTopCornerH >= imgH || leftTopCornerW >= imgW) {
+                                        Arr4DIdxRowM(maxUntilNow_mask, N, H, W, C, n, ctH, ctW, c) = GroupElement(0);
+                                    }
+                                    else {
+                                        Arr4DIdxRowM(maxUntilNow_mask, N, H, W, C, n, ctH, ctW, c) = Arr4DIdxRowM(inArr_mask, N1, imgH, imgW, C1, n, leftTopCornerH, leftTopCornerW, c);
+                                    }
+                                }
+                                else {
+                                    int curPosH = leftTopCornerH + fh;
+                                    int curPosW = leftTopCornerW + fw;
+
+                                    GroupElement maxi_mask = Arr4DIdxRowM(maxUntilNow_mask, N, H, W, C, n, ctH, ctW, c);
+                                    GroupElement temp_mask;
+                                    if ((((curPosH < 0) || (curPosH >= imgH)) || ((curPosW < 0) || (curPosW >= imgW)))) {
+                                        temp_mask = GroupElement(0);
+                                    }
+                                    else {
+                                        temp_mask = Arr4DIdxRowM(inArr_mask, N1, imgH, imgW, C1, n, curPosH, curPosW, c);
+                                    }
+                                    GroupElement rout = random_ge(bitlength);
+                                    GroupElement routBit = random_ge(1);
+                                    auto keys = keyGenMaxpoolDouble(bitlength, bitlength, maxi_mask, temp_mask, routBit, rout);
+                                    Arr4DIdxRowM(maxUntilNow_mask, N, H, W, C, n, ctH, ctW, c) = rout;
+                                    Arr5DIdxRowM(oneHot, FH * FW - 1, N, H, W, C, fh * FW + fw - 1, n, ctH, ctW, c) = routBit;
+
+                                    auto read_start = std::chrono::high_resolution_clock::now();
+                                    server->send_maxpool_double_key(keys.first);
+                                    client->send_maxpool_double_key(keys.second);
+                                    freeMaxpoolDoubleKeyPackPair(keys);
+                                    auto read_end = std::chrono::high_resolution_clock::now();
+                                    auto read_time = std::chrono::duration_cast<std::chrono::microseconds>(read_end - read_start).count();
+                                    dealer_file_read_time += read_time;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        auto dealer_end = std::chrono::high_resolution_clock::now();
+        auto dealer_time = std::chrono::duration_cast<std::chrono::microseconds>(dealer_end - dealer_start).count() - dealer_file_read_time;
+        dealerMicroseconds += dealer_time;
+        std::cerr << "   Dealer time: " << dealer_time / 1000.0 << " milliseconds" << std::endl;
+    }
+    else {
+        MaxpoolDoubleKeyPack *keys = new MaxpoolDoubleKeyPack[(FH * FW - 1) * N * C * H * W];
+        int kidx = 0;
+        for (int fh = 0; fh < FH; fh++) {
+            for(int fw = 0; fw < FW; fw++) {
+                if (fh == 0 && fw == 0) {
+                    continue;
+                }
+                for (int n = 0; n < N; n++) {
+                    for (int c = 0; c < C; c++) {
+                        for(int ctH = 0; ctH < H; ctH++) {
+                            for(int ctW = 0; ctW < W; ctW++) {
+                                keys[kidx] = dealer->recv_maxpool_double_key(bitlength, bitlength);
+                                kidx++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        peer->sync();
+        auto start_eval = std::chrono::high_resolution_clock::now();
+        for (int n = 0; n < N; n++) {
+            for (int c = 0; c < C; c++) {
+                for(int ctH = 0; ctH < H; ctH++) {
+                    for(int ctW = 0; ctW < W; ctW++) {
+                        int leftTopCornerH = ctH * strideH - zPadHLeft;
+                        int leftTopCornerW = ctW * strideW - zPadWLeft;
+                        if (leftTopCornerH < 0 || leftTopCornerW < 0 || leftTopCornerH >= imgH || leftTopCornerW >= imgW) {
+                            Arr4DIdxRowM(maxUntilNow, N, H, W, C, n, ctH, ctW, c) = 0;
+                        }
+                        else {
+                            Arr4DIdxRowM(maxUntilNow, N, H, W, C, n, ctH, ctW, c) = Arr4DIdxRowM(inArr, N1, imgH, imgW, C1, n, leftTopCornerH, leftTopCornerW, c);
+                        }
+                    }
+                }
+            }
+        }
+
+        for (int fh = 0; fh < FH; fh++) {
+            for(int fw = 0; fw < FW; fw++) {
+                if (fh == 0 && fw == 0) {
+                    continue;
+                }
+
+                std::thread thread_pool[num_threads];
+                
+                for(int i = 0; i < num_threads; ++i) {
+                    thread_pool[i] = std::thread(maxpool_double_threads_helper_1, i, fh, fw, 
+                                        N, H, W, C, FH,
+                                        FW, zPadHLeft, zPadHRight,
+                                        zPadWLeft, zPadWRight, strideH,
+                                        strideW, N1, imgH, imgW,
+                                        C1,inArr, maxUntilNow, oneHot, keys);
+                }
+
+                for(int i = 0; i < num_threads; ++i) {
+                    thread_pool[i].join();
+                }
+
+                reconstruct(N * C * H * W, oneHot + (fh * FW + fw - 1) * N * C * H * W, 1);
+
+                std::thread thread_pool2[num_threads];
+
+                for(int i = 0; i < num_threads; ++i) {
+                    thread_pool2[i] = std::thread(maxpool_double_threads_helper_2, i, fh, fw, 
+                                        N, H, W, C, FH,
+                                        FW, zPadHLeft, zPadHRight,
+                                        zPadWLeft, zPadWRight, strideH,
+                                        strideW, N1, imgH, imgW,
+                                        C1,inArr, maxUntilNow, oneHot, keys);
+                }
+
+                for(int i = 0; i < num_threads; ++i) {
+                    thread_pool2[i].join();
+                }
+
+                reconstruct(N * C * H * W, maxUntilNow, bitlength);
+            }
+        }
+        auto end_eval = std::chrono::high_resolution_clock::now();
+        auto eval_time = std::chrono::duration_cast<std::chrono::microseconds>(end_eval - start_eval).count();
+        evalMicroseconds += eval_time;
+        maxpoolEvalMicroseconds += eval_time;
+        delete[] keys;
+        std::cerr << "   Eval Time = " << eval_time / 1000.0 << " miliseconds" << std::endl;
+    }
+
+    std::cerr << ">> MaxPoolDouble - End" << std::endl;
+}

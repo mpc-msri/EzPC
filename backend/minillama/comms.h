@@ -89,6 +89,8 @@ public:
 
     void send_maxpool_key(const MaxpoolKeyPack &kp);
 
+    void send_maxpool_double_key(const MaxpoolDoubleKeyPack &kp);
+
     void send_scmp_keypack(const ScmpKeyPack &kp);
 
     void send_pubdiv_key(const PublicDivKeyPack &kp);
@@ -170,6 +172,8 @@ public:
     ReluKeyPack recv_relu_key(int Bin, int Bout);
 
     MaxpoolKeyPack recv_maxpool_key(int Bin, int Bout);
+
+    MaxpoolDoubleKeyPack recv_maxpool_double_key(int Bin, int Bout);
 
     ScmpKeyPack recv_scmp_keypack(int Bin, int Bout);
 

@@ -223,3 +223,35 @@ GroupElement evalRelu2_mult(int party, GroupElement x, GroupElement y, const Rel
     mod(res, key.Bin);
     return res;
 }
+
+std::pair<MaxpoolDoubleKeyPack, MaxpoolDoubleKeyPack> keyGenMaxpoolDouble(int Bin, int Bout, GroupElement rin1, GroupElement rin2, GroupElement routBit, GroupElement rout)
+{
+    // maxpool(x, y) = relu(x - y) + y
+    // for correctness, ensure magnitude(x) + magnitude(y) in signed context < N/2
+    MaxpoolDoubleKeyPack k0, k1;
+    k0.Bin = Bin; k1.Bin = Bin;
+    k0.Bout = Bout; k1.Bout = Bout;
+
+    auto reluKeys = keyGenRelu2Round(Bin, Bout, rin2 - rin1, routBit, 0);
+    k0.reluKey = reluKeys.first; 
+    k1.reluKey = reluKeys.second;
+
+    auto rb_split = splitShare(-rin1 + rout, Bout);
+    k0.rb = rb_split.first; k1.rb = rb_split.second;
+
+    return std::make_pair(k0, k1);
+}
+
+GroupElement evalMaxpoolDouble_1(int party, GroupElement x, GroupElement y, const MaxpoolDoubleKeyPack &k)
+{
+    // maxpool(x, y) = relu(x - y) + y
+    // for correctness, ensure magnitude(x) + magnitude(y) in signed context < N/2
+    GroupElement res = evalRelu2_drelu(party, y - x, k.reluKey);// + (party * y) + k.rb;
+    return res;
+}
+
+GroupElement evalMaxpoolDouble_2(int party, GroupElement x, GroupElement y, GroupElement s, const MaxpoolDoubleKeyPack &k)
+{
+    GroupElement res = evalRelu2_mult(party, s, y - x, k.reluKey) + (party * x) + k.rb;
+    return res;
+}
