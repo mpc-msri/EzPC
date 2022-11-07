@@ -55,7 +55,7 @@ To run secure inference on networks:
 
 ```bash
 ./<network> r=1 [port=port] < <model_weights_file> // Server
-./<network> r=2 [ip=server_address] [port=port] < <image_file> // Client
+./<network> r=2 [add=server_address] [port=port] < <image_file> // Client
 ```
 
 ## Supported Nodes
@@ -98,5 +98,8 @@ Follow below steps to add support for any new node:
                    f"{iterate_list([var_dict[x] for x in outputs])}"
                    f");")
 ```
+
+## Demo
+Follow [Demo](demo/Readme.md) for Onnx-FzPC demo with Secfloat.
 
 

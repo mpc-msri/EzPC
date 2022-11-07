@@ -49,7 +49,7 @@ This generates two files:
 
 Run the following command to start client side computation and connect with server:
 ```bash
-./model_secfloat r=1  [ip=server_address] [port=port] < input_input.inp  > output.txt
+./model_secfloat r=1  [add=server_address] [port=port] < input_input.inp  > output.txt
 ```
 Raw Output will be saved in `output.txt` , to get output as numpy array do : 
 ```bash
