@@ -17,6 +17,7 @@ add_executable(fptraining
     backend/minillama/cryptoTools/cryptoTools/Common/Log.cpp
     backend/minillama/cryptoTools/cryptoTools/Crypto/AES.cpp
     backend/minillama/cryptoTools/cryptoTools/Crypto/PRNG.cpp
+    backend/minillama/and.cpp
     backend/minillama/api.cpp
     backend/minillama/comms.cpp
     backend/minillama/config.cpp

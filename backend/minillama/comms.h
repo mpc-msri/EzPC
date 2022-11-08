@@ -113,6 +113,8 @@ public:
 
     void send_taylor_key(const TaylorKeyPack &kp, int bl, int m);
 
+    void send_bitwise_and_key(const BitwiseAndKeyPack &kp);
+
     void send_uint8_array(const uint8_t *data, int size);
 
     void recv_uint8_array(uint8_t *data, int size);
@@ -198,6 +200,8 @@ public:
     TaylorKeyPack recv_taylor_key(int bl, int m, int sf);
 
     BulkyLRSKeyPack recv_bulkylrs_key(int bl, int m, uint64_t *scales);
+
+    BitwiseAndKeyPack recv_bitwise_and_key();
 
 };
 

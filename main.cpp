@@ -11,6 +11,7 @@
 #include "networks.h"
 #include "backend/llama_extended.h"
 #include "backend/minillama/relu.h"
+#include "backend/minillama/and.h"
 
 using LlamaVersion = Llama<u64>;
 
@@ -18,8 +19,9 @@ void llama_relutruncate_test(int party) {
     srand(time(NULL));
     const u64 scale = 2;
     LlamaConfig::party = party;
-    Llama<u64>::init();
-    auto relu1 = new ReLUTruncate<u64, LlamaVersion>(scale);
+    LlamaExtended<u64>::init();
+    // auto relu1 = new ReLUTruncate<u64, LlamaVersion>(scale);
+    auto relu1 = new MaxPool2D<u64, LlamaExtended<u64>>(2);
     auto model = Sequential<u64>({
         relu1,
     });
@@ -27,32 +29,33 @@ void llama_relutruncate_test(int party) {
     Tensor4D<u64> trainImage(2, 2, 2, 1); // 1 images with server and 1 with client
     trainImage(0, 0, 0, 0) = 5; // 1 or 2
     trainImage(0, 0, 1, 0) = 7; // 1 or 2
-    trainImage(0, 1, 0, 0) = 12; // 3
+    trainImage(0, 1, 0, 0) = 18; // 3
     trainImage(0, 1, 1, 0) = 15; // 3 or 4
     trainImage(1, 0, 0, 0) = -5;
     trainImage(1, 0, 1, 0) = -7;
     trainImage(1, 1, 0, 0) = -12;
     trainImage(1, 1, 1, 0) = -15;
-    Tensor4D<u64> e(2, 2, 2, 1);
+    trainImage.print<i64>();
+    Tensor4D<u64> e(2, 1, 1, 1);
     e.fill(69);
     if (LlamaConfig::party == 1) {
         e.fill(0);
     }
 
-    Llama<u64>::initializeWeights(model); // dealer initializes the weights and sends to the parties
-    Llama<u64>::initializeData(trainImage, 1); // takes input from stdin
+    LlamaExtended<u64>::initializeWeights(model); // dealer initializes the weights and sends to the parties
+    LlamaExtended<u64>::initializeData(trainImage, 1); // takes input from stdin
     StartComputation();
     model.forward(trainImage);
     model.backward(e);
     EndComputation();
-    Llama<u64>::output(model.activation);
-    // Llama<u64>::output(relu1->drelu);
+    // LlamaExtended<u64>::output(model.activation);
+    Llama<u64>::output(relu1->maxIndex);
     Llama<u64>::output(relu1->inputDerivative);
-    Llama<u64>::finalize();
+    LlamaExtended<u64>::finalize();
     if (LlamaConfig::party != 1) {
-        model.activation.print();
-        // relu1->drelu.print();
-        relu1->inputDerivative.print();
+        // model.activation.print<i64>();
+        relu1->maxIndex.print();
+        relu1->inputDerivative.print<i64>();
     }
 }
 
@@ -75,6 +78,22 @@ void pt_test_maxpooldouble()
     auto max = max0 + max1;
     // always_assert(max == ((x > y) ? x : y) + rout);
     std::cout << (max - rout) << std::endl;
+}
+
+void pt_test_bitwiseand()
+{
+    auto r1 = random_ge(64);
+    auto r2 = random_ge(64);
+    auto rout = random_ge(64);
+    auto keys = keyGenBitwiseAnd(r1, r2, rout);
+    auto x = 66 + r1;
+    auto y = 77 + r2;
+    auto b0 = evalBitwiseAnd(0, x, y, keys.first);
+    auto b1 = evalBitwiseAnd(1, x, y, keys.second);
+    auto b = b0 ^ b1;
+    // always_assert(b == ((66 & 77) ^ rout));
+    std::cout << (b ^ rout) << std::endl;
+    std::cout << (66 & 77) << std::endl;
 }
 
 void llama_test_3layer(int party) {
@@ -139,23 +158,36 @@ void llama_test_3layer(int party) {
     trainImage_ct.copy(trainImage);
     Tensor4D<u64> e(bs, 10, 1, 1); // 1 images with server and 1 with client
     Tensor4D<i64> e_ct(bs, 10, 1, 1);
+    e.fill(1ULL<<scale);
+    e_ct.copy(e);
+    if (LlamaConfig::party == 1) {
+        e_ct.fill(0);
+    }
 
     LlamaVersion::initializeWeights(model); // dealer initializes the weights and sends to the parties
     LlamaVersion::initializeData(trainImage, 1); // takes input from stdin
     StartComputation();
     model.forward(trainImage);
+    model.backward(e);
     EndComputation();
     LlamaVersion::output(model.activation);
+    LlamaVersion::output(conv1->bias);
+    LlamaVersion::output(conv1->filter);
     if (LlamaConfig::party != 1) {
         std::cout << "Secure Computation Output = \n";
         model.activation.print<i64>();
+        conv1->bias.print<i64>();
+        conv1->filter.print<i64>();
     }
     LlamaVersion::finalize();
 
     if (LlamaConfig::party == 1) {
         std::cout << "Cleartext Computation Output = \n";
         model_ct.forward(trainImage_ct);
+        model_ct.backward(e_ct);
         model_ct.activation.print<i64>();
+        conv1_ct->bias.print<i64>();
+        conv1_ct->filter.print<i64>();
     }
 }
 
@@ -184,7 +216,7 @@ int main(int argc, char** argv) {
     // llama_relu_old_test(party);
 
     // for(int i = 0; i < 10; ++i) {
-    //     pt_test_maxpooldouble();
+    //     pt_test_bitwiseand();
     // }
     // cifar10_float_test();
 }

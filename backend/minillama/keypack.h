@@ -437,3 +437,8 @@ inline void freeMaxpoolDoubleKeyPackPair(std::pair<MaxpoolDoubleKeyPack,MaxpoolD
     delete[] keys.first.reluKey.dcfKey.g;
     delete[] keys.first.reluKey.dcfKey.v;
 }
+
+struct BitwiseAndKeyPack
+{
+    GroupElement t[4];
+};

@@ -55,6 +55,14 @@ public:
         std::cout << std::endl;
     }
 
+    template <int bl>
+    void print() const {
+        for (u64 i = 0; i < this->size; i++) {
+            std::cout << this->data[i] % (1ULL << bl) << " ";
+        }
+        std::cout << std::endl;
+    }
+
     void print(u64 scale) const {
         for (u64 i = 0; i < this->size; i++) {
             std::cout << this->data[i] / ((double)(1ULL<<scale)) << " ";
@@ -292,6 +300,31 @@ public:
                 for (u64 k = 0; k < d3; k++) {
                     for (u64 l = 0; l < d4; l++) {
                         std::cout << (T2)data[i * d2 * d3 * d4 + j * d3 * d4 + k * d4 + l] << " ";
+                    }
+                    if (d4 > 1) {
+                        std::cout << std::endl;
+                    }
+                }
+                if (d3 > 1) {
+                    std::cout << std::endl;
+                }
+            }
+            if (d2 > 1) {
+                std::cout << std::endl;
+            }
+        }
+        if (d1 > 1) {
+            std::cout << std::endl;
+        }
+    }
+
+    template <int bl>
+    void print() const {
+        for (u64 i = 0; i < d1; i++) {
+            for (u64 j = 0; j < d2; j++) {
+                for (u64 k = 0; k < d3; k++) {
+                    for (u64 l = 0; l < d4; l++) {
+                        std::cout << data[i * d2 * d3 * d4 + j * d3 * d4 + k * d4 + l] % (1ULL << bl) << " ";
                     }
                     if (d4 > 1) {
                         std::cout << std::endl;

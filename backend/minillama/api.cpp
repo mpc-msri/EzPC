@@ -20,6 +20,7 @@ SOFTWARE.
 */
 
 #include "api.h"
+#include "and.h"
 #include "comms.h"
 #include "utils.h"
 #include "array.h"
@@ -1073,7 +1074,7 @@ void maxpool_threads_helper(int thread_idx, int fh, int fw, int32_t N, int32_t H
              int32_t FW, int32_t zPadHLeft, int32_t zPadHRight,
              int32_t zPadWLeft, int32_t zPadWRight, int32_t strideH,
              int32_t strideW, int32_t N1, int32_t imgH, int32_t imgW,
-             int32_t C1, GroupElement *inArr, GroupElement *maxUntilNow, MaxpoolKeyPack *keys)
+             int32_t C1, GroupElement *inArr, GroupElement *maxUntilNow, GroupElement *oneHot, MaxpoolKeyPack *keys)
 {
     auto p = get_start_end(N * C * H * W, thread_idx);
     for(int i = p.first; i < p.second; i += 1) {
@@ -1101,7 +1102,7 @@ void maxpool_threads_helper(int thread_idx, int fh, int fw, int32_t N, int32_t H
             temp = Arr4DIdxRowM(inArr, N1, imgH, imgW, C1, n, curPosH, curPosW, c);
         }
         int kidx = (fh * FW + fw - 1) * (N * C * H * W) + i;
-        Arr4DIdxRowM(maxUntilNow, N, H, W, C, n, ctH, ctW, c) = evalMaxpool(party - 2, maxi, temp, keys[kidx]);
+        Arr4DIdxRowM(maxUntilNow, N, H, W, C, n, ctH, ctW, c) = evalMaxpool(party - 2, maxi, temp, keys[kidx], Arr5DIdxRowM(oneHot, FH*FW-1, N, H, W, C, fh * FW + fw - 1, n, ctH, ctW, c));
         freeMaxpoolKeyPack(keys[kidx]);
     }
 }
@@ -1110,7 +1111,7 @@ void MaxPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
              int32_t FW, int32_t zPadHLeft, int32_t zPadHRight,
              int32_t zPadWLeft, int32_t zPadWRight, int32_t strideH,
              int32_t strideW, int32_t N1, int32_t imgH, int32_t imgW,
-             int32_t C1, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *outArr)) 
+             int32_t C1, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *outArr), GroupElement *oneHot) 
 {
     std::cerr << ">> MaxPool - Start" << std::endl;
     int d1 = ((imgH - FH + (zPadHLeft + zPadHRight)) / strideH) + 1;
@@ -1155,8 +1156,10 @@ void MaxPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
                                     else {
                                         temp_mask = Arr4DIdxRowM(inArr_mask, N1, imgH, imgW, C1, n, curPosH, curPosW, c);
                                     }
-                                    GroupElement rout = random_ge(bitlength);                                    
-                                    auto keys = keyGenMaxpool(bitlength, bitlength, maxi_mask, temp_mask, rout);
+                                    GroupElement rout = random_ge(bitlength);
+                                    GroupElement routBit = random_ge(1);
+                                    auto keys = keyGenMaxpool(bitlength, bitlength, maxi_mask, temp_mask, rout, routBit);
+                                    Arr5DIdxRowM(oneHot, FH * FW - 1, N, H, W, C, fh * FW + fw - 1, n, ctH, ctW, c) = routBit;
                                     Arr4DIdxRowM(maxUntilNow_mask, N, H, W, C, n, ctH, ctW, c) = rout;
 
                                     auto read_start = std::chrono::high_resolution_clock::now();
@@ -1232,7 +1235,7 @@ void MaxPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
                                         FW, zPadHLeft, zPadHRight,
                                         zPadWLeft, zPadWRight, strideH,
                                         strideW, N1, imgH, imgW,
-                                        C1,inArr, maxUntilNow, keys);
+                                        C1,inArr, maxUntilNow, oneHot, keys);
                 }
 
                 for(int i = 0; i < num_threads; ++i) {
@@ -1244,6 +1247,7 @@ void MaxPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
                 }
             }
         }
+        reconstruct(N * C * H * W * (FH * FW - 1), oneHot, 1);
         auto end_eval = std::chrono::high_resolution_clock::now();
         auto eval_time = std::chrono::duration_cast<std::chrono::microseconds>(end_eval - start_eval).count();
         evalMicroseconds += eval_time;
@@ -1324,7 +1328,8 @@ void PiranhaSoftmax(int32_t s1, int32_t s2, MASK_PAIR(GroupElement *inArr), MASK
     std::cerr << ">> Softmax - start" << std::endl;
     GroupElement *max = make_array<GroupElement>(s1); 
     // step 1 - calculate max for each image in batch
-    MaxPool(s1, 1, 1, 1, s2, 1, 0, 0, 0, 0, 1, 1, s1, s2, 1, 1, MASK_PAIR(inArr), max, max);
+    GroupElement *oneHot = make_array<GroupElement>(s1 * (s2 - 1));
+    MaxPool(s1, 1, 1, 1, s2, 1, 0, 0, 0, 0, 1, 1, s1, s2, 1, 1, MASK_PAIR(inArr), max, max, oneHot);
 
     // step 2 - subtract max from each element in each image in batch and add 2
     if (party == DEALER) {
@@ -1759,4 +1764,114 @@ void MaxPoolDouble(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
     }
 
     std::cerr << ">> MaxPoolDouble - End" << std::endl;
+}
+
+#define BIG_LOOPY(e) for(int n = 0; n < N; ++n) {\
+        for(int h = 0; h < H; ++h) {\
+            for(int w = 0; w < W; ++w) {\
+                for(int c = 0; c < C; ++c) {\
+                    e;\
+                }\
+            }\
+        }\
+    }
+
+// maxBits contains all the comparison bits from maxpool and converts them to one hot
+// For eg - in a filter of size 5, if the numbers where 3, 2, 5, 4, 7  MaxPool would have set the maxBits array to be 0, 1, 0, 1
+// this functionality converts this to 0, 0, 0, 1 (retains the last 1 and makes the rest 0)
+// This is compatible with both MaxPool and MaxPoolDouble
+void MaxPoolOneHot(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH, int32_t FW, GroupElement *maxBits, GroupElement *oneHot)
+{
+    GroupElement *curr = make_array<GroupElement>(N * H * W * C);
+    BIG_LOOPY(
+        auto m = Arr5DIdxRowM(maxBits, FH * FW - 1, N, H, W, C, FH * FW - 2, n, h, w, c);
+        Arr4DIdxRowM(curr, N, H, W, C, n, h, w, c) = m;
+        Arr5DIdxRowM(oneHot, FH * FW, N, H, W, C, FH * FW - 1, n, h, w, c) = m;
+    )
+
+    for(int f = FH * FW - 2; f >= 1; --f) {
+        
+        // out[f] = max[f - 1] ^ !curr
+        BIG_LOOPY(
+            auto max = Arr5DIdxRowM(maxBits, FH * FW - 1, N, H, W, C, f - 1, n, h, w, c);
+            auto c1 = Arr4DIdxRowM(curr, N, H, W, C, n, h, w, c);
+            if (party == DEALER) {
+                auto rout = random_ge(1);
+                auto keys = keyGenBitwiseAnd(max, c1, rout);
+                server->send_bitwise_and_key(keys.first);
+                client->send_bitwise_and_key(keys.second);
+                Arr5DIdxRowM(oneHot, FH * FW, N, H, W, C, f, n, h, w, c) = rout;
+            }
+            else {
+                auto key = dealer->recv_bitwise_and_key();
+                Arr5DIdxRowM(oneHot, FH * FW, N, H, W, C, f, n, h, w, c) = evalBitwiseAnd(party - 2, max, 1 ^ c1, key);
+                mod(Arr5DIdxRowM(oneHot, FH * FW, N, H, W, C, f, n, h, w, c), 1);
+            }
+        )
+
+        if (party != DEALER) {
+            reconstruct(N * H * W * C, oneHot + f * N * H * W * C, 1);
+        }
+        
+        BIG_LOOPY(
+            Arr4DIdxRowM(curr, N, H, W, C, n, h, w, c) = Arr4DIdxRowM(curr, N, H, W, C, n, h, w, c) ^ Arr5DIdxRowM(oneHot, FH * FW, N, H, W, C, f, n, h, w, c);
+        )
+    }
+
+    if (party == DEALER) {
+        BIG_LOOPY(
+            Arr5DIdxRowM(oneHot, FH * FW, N, H, W, C, 0, n, h, w, c) = Arr4DIdxRowM(curr, N, H, W, C, n, h, w, c);
+        )
+    } else {
+        BIG_LOOPY(
+            Arr5DIdxRowM(oneHot, FH * FW, N, H, W, C, 0, n, h, w, c) = Arr4DIdxRowM(curr, N, H, W, C, n, h, w, c) ^ 1;
+        )
+    }
+}
+
+void MaxPoolBackward(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
+             int32_t FW, int32_t zPadHLeft, int32_t zPadHRight,
+             int32_t zPadWLeft, int32_t zPadWRight, int32_t strideH,
+             int32_t strideW, int32_t N1, int32_t imgH, int32_t imgW,
+             int32_t C1, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *outArr), GroupElement *oneHot)
+{
+    for(int n = 0; n < N; ++n) {
+        for(int h = 0; h < imgH; ++h) {
+            for(int w = 0; w < imgW; ++w) {
+                for(int c = 0; c < C; ++c) {
+                    Arr4DIdxRowM(inArr, N1, imgH, imgW, C1, n, h, w, c) = 0;
+                }
+            }
+        }
+    }
+
+    BIG_LOOPY(
+        int leftTopCornerH = h * strideH - zPadHLeft;
+        int leftTopCornerW = w * strideW - zPadWLeft;
+        auto src = Arr4DIdxRowM(outArr, N, H, W, C, n, h, w, c);
+        for(int fh = 0; fh < FH; ++fh) {
+            for(int fw = 0; fw < FW; ++fw) {
+                if ((leftTopCornerH + fh >= 0) && (leftTopCornerH + fh < imgH) && (leftTopCornerW + fw >= 0) && (leftTopCornerW + fw < imgW)) {
+                    auto s = Arr5DIdxRowM(oneHot, FH * FW, N, H, W, C, fh * FW + fw, n, h, w, c);
+                    auto dst = Arr4DIdxRowM(inArr, N1, imgH, imgW, C1, n, leftTopCornerH + fh, leftTopCornerW + fw, c);
+                    // dst = dst + select(s, src)
+                    if (party == DEALER) {
+                        auto rout = random_ge(bitlength);
+                        auto keys = keyGenSelect(bitlength, s, src, rout);
+                        Arr4DIdxRowM(inArr, N1, imgH, imgW, C1, n, leftTopCornerH + fh, leftTopCornerW + fw, c) = dst + rout;
+                        server->send_select_key(keys.first);
+                        client->send_select_key(keys.second);
+                    }
+                    else {
+                        auto key = dealer->recv_select_key(bitlength);
+                        Arr4DIdxRowM(inArr, N1, imgH, imgW, C1, n, leftTopCornerH + fh, leftTopCornerW + fw, c) = dst + evalSelect(party - 2, s, src, key);
+                    }
+                }
+            }
+        }
+    )
+
+    if (party != DEALER) {
+        reconstruct(N1 * imgH * imgW * C1, inArr, bitlength);
+    }
 }

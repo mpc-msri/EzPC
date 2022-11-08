@@ -47,6 +47,14 @@ inline std::pair<GroupElement, GroupElement> splitShare(const GroupElement& a, i
     return std::make_pair(a1, a2);
 }
 
+inline std::pair<GroupElement, GroupElement> splitShareXor(const GroupElement& a, int bw)
+{
+    GroupElement a1, a2;
+    a1 = rand();
+    a2 = a ^ a1;
+    return std::make_pair(a1, a2);
+}
+
 inline std::pair<GroupElement, GroupElement> splitShareCommonPRNG(const GroupElement& a, int bw)
 {
     GroupElement a1, a2;

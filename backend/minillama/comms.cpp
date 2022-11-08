@@ -577,6 +577,14 @@ void Peer::send_taylor_key(const TaylorKeyPack &kp, int bl, int m) {
     send_ge(69, bl);
 }
 
+void Peer::send_bitwise_and_key(const BitwiseAndKeyPack &kp)
+{
+    send_ge(kp.t[0], 64);
+    send_ge(kp.t[1], 64);
+    send_ge(kp.t[2], 64);
+    send_ge(kp.t[3], 64);
+}
+
 GroupElement Peer::recv_input() {
     char buf[8];
     if (useFile) {
@@ -1136,5 +1144,15 @@ TaylorKeyPack Dealer::recv_taylor_key(int bl, int m, int sf) {
     kp.lrsKeys[1] = recv_bulkylrs_key(bl, m, scales);
     GroupElement ping = recv_ge(bl);
     always_assert(ping == 69);
+    return kp;
+}
+
+BitwiseAndKeyPack Dealer::recv_bitwise_and_key()
+{
+    BitwiseAndKeyPack kp;
+    kp.t[0] = recv_ge(64);
+    kp.t[1] = recv_ge(64);
+    kp.t[2] = recv_ge(64);
+    kp.t[3] = recv_ge(64);
     return kp;
 }

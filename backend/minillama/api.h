@@ -63,7 +63,7 @@ void MaxPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t ksizeH,
              int32_t ksizeW, int32_t zPadHLeft, int32_t zPadHRight,
              int32_t zPadWLeft, int32_t zPadWRight, int32_t strideH,
              int32_t strideW, int32_t N1, int32_t imgH, int32_t imgW,
-             int32_t C1, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *outArr));
+             int32_t C1, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *outArr), GroupElement *oneHot);
 
 void AvgPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t ksizeH,
              int32_t ksizeW, int32_t zPadHLeft, int32_t zPadHRight,
@@ -92,6 +92,14 @@ void Select(int32_t size, GroupElement *s, GroupElement *x, GroupElement *out);
 void Relu2Round(int32_t size, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *outArr), GroupElement *drelu_cache, int effectiveInputBw);
 
 void MaxPoolDouble(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
+             int32_t FW, int32_t zPadHLeft, int32_t zPadHRight,
+             int32_t zPadWLeft, int32_t zPadWRight, int32_t strideH,
+             int32_t strideW, int32_t N1, int32_t imgH, int32_t imgW,
+             int32_t C1, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *outArr), GroupElement *oneHot);
+
+void MaxPoolOneHot(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH, int32_t FW, GroupElement *maxBits, GroupElement *oneHot);
+
+void MaxPoolBackward(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
              int32_t FW, int32_t zPadHLeft, int32_t zPadHRight,
              int32_t zPadWLeft, int32_t zPadWRight, int32_t strideH,
              int32_t strideW, int32_t N1, int32_t imgH, int32_t imgW,
