@@ -19,6 +19,7 @@ extern uint64_t pubdivEvalMicroseconds;
 extern uint64_t argmaxEvalMicroseconds;
 extern uint64_t multEvalMicroseconds;
 extern uint64_t reluTruncateEvalMicroseconds;
+extern uint64_t selectEvalMicroseconds;
 extern uint64_t dealerMicroseconds;
 extern uint64_t inputOfflineComm;
 extern uint64_t inputOnlineComm;

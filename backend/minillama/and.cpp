@@ -43,3 +43,12 @@ GroupElement evalBitwiseAnd(int party, GroupElement x, GroupElement y, const Bit
     }
     return res;
 }
+
+GroupElement evalAnd(int party, GroupElement x, GroupElement y, const BitwiseAndKeyPack &key)
+{
+    uint8_t xBit = x & 1;
+    uint8_t yBit = y & 1;
+    GroupElement t = key.t[xBit * 2 + yBit] & 1;
+    GroupElement res = res ^ t;
+    return res;
+}

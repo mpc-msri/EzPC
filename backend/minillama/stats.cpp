@@ -17,6 +17,7 @@ uint64_t pubdivEvalMicroseconds = 0;
 uint64_t argmaxEvalMicroseconds = 0;
 uint64_t multEvalMicroseconds = 0;
 uint64_t reluTruncateEvalMicroseconds = 0;
+uint64_t selectEvalMicroseconds = 0;
 uint64_t dealerMicroseconds = 0;
 uint64_t inputOfflineComm = 0;
 uint64_t inputOnlineComm = 0;

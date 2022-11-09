@@ -97,6 +97,7 @@ void pt_test_bitwiseand()
 }
 
 void llama_test_3layer(int party) {
+    using LlamaVersion = LlamaExtended<u64>;
     srand(time(NULL));
     const u64 scale = 24;
     LlamaConfig::bitlength = 64;

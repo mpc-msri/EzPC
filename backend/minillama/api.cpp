@@ -97,6 +97,9 @@ void EndComputation()
         std::cerr << "Total Eigen Time = " << eigenMicroseconds / 1000.0 << " milliseconds\n\n";
         std::cerr << "Conv + Matmul Time = " << (convEvalMicroseconds + matmulEvalMicroseconds) / 1000.0 << " milliseconds\n";
         std::cerr << "Relu time = " << reluEvalMicroseconds / 1000.0 << " milliseconds\n";
+        std::cerr << "MaxPool time = " << maxpoolEvalMicroseconds / 1000.0 << " milliseconds\n";
+        std::cerr << "Select/Bit operations Time = " << selectEvalMicroseconds / 1000.0 << " milliseconds\n";
+        std::cerr << "Truncate time = " << arsEvalMicroseconds / 1000.0 << " milliseconds\n";
         auto endTime = std::chrono::system_clock::now().time_since_epoch().count();
         std::cerr << "Total Time (including Key Read) = " << (endTime - startTime) / 1000000.0 << " milliseconds\n";
     }
@@ -257,6 +260,7 @@ void Conv2DWrapper(int32_t N, int32_t H, int32_t W,
         std::cerr << "   Compute Time = " << compute_time / 1000.0 << " milliseconds\n";
         std::cerr << "      Eigen Time = " << (eigenMicroseconds - eigen_start) / 1000.0 << " milliseconds\n";
         std::cerr << "   Reconstruct Time = " << reconstruct_time / 1000.0 << " milliseconds\n";
+        std::cerr << "   Online Time = " << (reconstruct_time + compute_time) / 1000.0 << " milliseconds\n";
     }
 
     std::cerr << ">> Conv2D - End" << std::endl;
@@ -311,9 +315,26 @@ void ars_dealer_helper(int thread_idx, int size, int shift, GroupElement *inArr_
         keys[i] = keyGenARS(bitlength, bitlength, shift, inArr_mask[i], outArr_mask[i]);
     }
 }
-
+/*
+        auto keyread_start = std::chrono::high_resolution_clock::now();
+        auto keyread_end = std::chrono::high_resolution_clock::now();
+        auto keyread_time_taken = std::chrono::duration_cast<std::chrono::milliseconds>(keyread_end -
+                                                            keyread_start).count();
+        auto start = std::chrono::high_resolution_clock::now();
+        auto mid = std::chrono::high_resolution_clock::now();
+        auto end = std::chrono::high_resolution_clock::now();
+        auto compute_time = std::chrono::duration_cast<std::chrono::microseconds>(mid - start).count();
+        auto reconstruct_time = std::chrono::duration_cast<std::chrono::microseconds>(end - mid).count();
+        std::cerr << "   Key Read Time = " << keyread_time_taken << " milliseconds\n";
+        std::cerr << "   Compute Time = " << compute_time / 1000.0 << " milliseconds\n";
+        std::cerr << "   Reconstruct Time = " << reconstruct_time / 1000.0 << " milliseconds\n";
+        std::cerr << "   Online Time = " << (reconstruct_time + compute_time) / 1000.0 << " milliseconds\n";
+        evalMicroseconds += (reconstruct_time + compute_time);
+        lolEvalMicroseconds += (reconstruct_time + compute_time);
+*/
 void ARS(int32_t size, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *outArr), int32_t shift)
 {
+    std::cerr << ">> Truncate - Start" << std::endl;
     if (party == DEALER) {
         uint64_t dealer_time_taken = 0;
         for (int i = 0; i < size; i++) {
@@ -334,9 +355,13 @@ void ARS(int32_t size, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *o
     }
     else {
         ARSKeyPack *keys = new ARSKeyPack[size];
+        auto keyread_start = std::chrono::high_resolution_clock::now();
         for (int i = 0; i < size; i++) {
             keys[i] = dealer->recv_ars_key(bitlength, bitlength, shift);
         }
+        auto keyread_end = std::chrono::high_resolution_clock::now();
+        auto keyread_time_taken = std::chrono::duration_cast<std::chrono::milliseconds>(keyread_end -
+                                                            keyread_start).count();
 
         peer->sync();
         auto start = std::chrono::high_resolution_clock::now();
@@ -348,22 +373,22 @@ void ARS(int32_t size, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *o
         for(int i = 0; i < num_threads; ++i) {
             thread_pool[i].join();
         }
-        auto t1 = std::chrono::high_resolution_clock::now();
-        peer->sync();
-        auto t2 = std::chrono::high_resolution_clock::now();
+        auto mid = std::chrono::high_resolution_clock::now();
 
         reconstruct(size, outArr, bitlength);
         
         auto end = std::chrono::high_resolution_clock::now();
-        auto time_taken = std::chrono::duration_cast<std::chrono::microseconds>(end -
-                                                            t2).count();
-        std::cerr << "   Compute Time: " << time_taken / 1000.0 << " milliseconds\n";
-        time_taken += std::chrono::duration_cast<std::chrono::microseconds>(t1 - start).count();
-        std::cerr << "   Eval Time: " << time_taken / 1000.0 << " milliseconds" << std::endl;
-        evalMicroseconds += time_taken;
-        arsEvalMicroseconds += time_taken;
+        auto compute_time = std::chrono::duration_cast<std::chrono::microseconds>(mid - start).count();
+        auto reconstruct_time = std::chrono::duration_cast<std::chrono::microseconds>(end - mid).count();
+        std::cerr << "   Key Read Time = " << keyread_time_taken << " milliseconds\n";
+        std::cerr << "   Compute Time = " << compute_time / 1000.0 << " milliseconds\n";
+        std::cerr << "   Reconstruct Time = " << reconstruct_time / 1000.0 << " milliseconds\n";
+        std::cerr << "   Online Time = " << (reconstruct_time + compute_time) / 1000.0 << " milliseconds\n";
+        evalMicroseconds += (reconstruct_time + compute_time);
+        arsEvalMicroseconds += (reconstruct_time + compute_time);
         delete[] keys;
     }
+    std::cerr << ">> Truncate - End" << std::endl;
 }
 
 void ScaleDown(int32_t size, MASK_PAIR(GroupElement *inArr), int32_t sf)
@@ -467,20 +492,21 @@ void MatMul2D(int32_t s1, int32_t s2, int32_t s3, MASK_PAIR(GroupElement *A),
 
         peer->sync();
         uint64_t eigen_start = eigenMicroseconds;
-        auto start_eval = std::chrono::high_resolution_clock::now();
+        auto start = std::chrono::high_resolution_clock::now();
         matmul_eval_helper(party, s1, s2, s3, A, B, C, key.a, key.b, key.c);
-        auto t1 = std::chrono::high_resolution_clock::now();
+        auto mid = std::chrono::high_resolution_clock::now();
         reconstruct(s1 * s3, C, bitlength);
-        auto end_eval = std::chrono::high_resolution_clock::now();
+        auto end = std::chrono::high_resolution_clock::now();
 
-        auto compute_time = std::chrono::duration_cast<std::chrono::microseconds>(t1 - start_eval).count();
-        auto reconstruct_time = std::chrono::duration_cast<std::chrono::microseconds>(end_eval - t1).count();
+        auto compute_time = std::chrono::duration_cast<std::chrono::microseconds>(mid - start).count();
+        auto reconstruct_time = std::chrono::duration_cast<std::chrono::microseconds>(end - mid).count();
         evalMicroseconds += (compute_time + reconstruct_time);
         matmulEvalMicroseconds += (compute_time + reconstruct_time);
-        std::cerr << "   Key Read Time = " << keyread_time_taken << " milliseconds" << std::endl;
-        std::cerr << "   Compute Time = " << compute_time / 1000.0 << " milliseconds" << std::endl;
-        std::cerr << "      Eigen Time = " << (eigenMicroseconds - eigen_start) / 1000.0 << " milliseconds" << std::endl;
-        std::cerr << "   Reconstruct Time = " << reconstruct_time / 1000.0 << " milliseconds" << std::endl;
+        std::cerr << "   Key Read Time = " << keyread_time_taken << " milliseconds\n";
+        std::cerr << "   Compute Time = " << compute_time / 1000.0 << " milliseconds\n";
+        std::cerr << "      Eigen Time = " << (eigenMicroseconds - eigen_start) / 1000.0 << " milliseconds\n";
+        std::cerr << "   Reconstruct Time = " << reconstruct_time / 1000.0 << " milliseconds\n";
+        std::cerr << "   Online Time = " << (reconstruct_time + compute_time) / 1000.0 << " milliseconds\n";
         
         freeMatMulKey(key);
     }
@@ -775,6 +801,7 @@ void ReluTruncate(int32_t size, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupE
         std::cerr << "   Key Read Time = " << keyread_time_taken << " milliseconds" << std::endl;
         std::cerr << "   Compute Time = " << (time1 + time3) / 1000.0 << " milliseconds" << std::endl;
         std::cerr << "   Reconstruct Time = " << (time2 + time4) / 1000.0 << " milliseconds" << std::endl;
+        std::cerr << "   Online Time = " << (time1 + time2 + time3 + time4) / 1000.0 << " milliseconds" << std::endl;
 
 
         for(int i = 0; i < size; ++i) {
@@ -879,6 +906,7 @@ void Relu2Round(int32_t size, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupEle
         std::cerr << "   Key Read Time = " << keyread_time_taken << " milliseconds" << std::endl;
         std::cerr << "   Compute Time = " << (time1 + time3) / 1000.0 << " milliseconds" << std::endl;
         std::cerr << "   Reconstruct Time = " << (time2 + time4) / 1000.0 << " milliseconds" << std::endl;
+        std::cerr << "   Online Time = " << time_taken / 1000.0 << " milliseconds" << std::endl;
 
 
         for(int i = 0; i < size; ++i) {
@@ -1038,10 +1066,13 @@ void ElemWiseSecretSharedVectorMult(int32_t size, MASK_PAIR(GroupElement *inArr)
     }
     else {
         MultKey *keys = new MultKey[size];
-
+        auto keyread_start = std::chrono::high_resolution_clock::now();
         for(int i = 0; i < size; ++i) {
             keys[i] = dealer->recv_mult_key();
         }
+        auto keyread_end = std::chrono::high_resolution_clock::now();
+        auto keyread_time_taken = std::chrono::duration_cast<std::chrono::milliseconds>(keyread_end -
+                                                            keyread_start).count();
 
         peer->sync();
         auto start = std::chrono::high_resolution_clock::now();
@@ -1053,17 +1084,17 @@ void ElemWiseSecretSharedVectorMult(int32_t size, MASK_PAIR(GroupElement *inArr)
         for(int i = 0; i < num_threads; ++i) {
             thread_pool[i].join();
         }
-
-        auto t1 = std::chrono::high_resolution_clock::now();
-        peer->sync();
-        auto t2 = std::chrono::high_resolution_clock::now();
-
+        auto mid = std::chrono::high_resolution_clock::now();
         reconstruct(size, outputArr, bitlength);
         auto end = std::chrono::high_resolution_clock::now();
-        auto eval_time = std::chrono::duration_cast<std::chrono::microseconds>(end - t2).count() + std::chrono::duration_cast<std::chrono::microseconds>(t1 - start).count();
-        std::cerr << "   Eval Time: " << eval_time / 1000.0 << " milliseconds" << std::endl;
-        evalMicroseconds += eval_time;
-        multEvalMicroseconds += eval_time;
+        auto compute_time = std::chrono::duration_cast<std::chrono::microseconds>(mid - start).count();
+        auto reconstruct_time = std::chrono::duration_cast<std::chrono::microseconds>(end - mid).count();
+        std::cerr << "   Key Read Time = " << keyread_time_taken << " milliseconds\n";
+        std::cerr << "   Compute Time = " << compute_time / 1000.0 << " milliseconds\n";
+        std::cerr << "   Reconstruct Time = " << reconstruct_time / 1000.0 << " milliseconds\n";
+        std::cerr << "   Online Time = " << (reconstruct_time + compute_time) / 1000.0 << " milliseconds\n";
+        evalMicroseconds += (reconstruct_time + compute_time);
+        multEvalMicroseconds += (reconstruct_time + compute_time);
         delete[] keys;
 
     }
@@ -1184,6 +1215,7 @@ void MaxPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
     else {
         MaxpoolKeyPack *keys = new MaxpoolKeyPack[(FH * FW - 1) * N * C * H * W];
         int kidx = 0;
+        auto keyread_start = std::chrono::high_resolution_clock::now();
         for (int fh = 0; fh < FH; fh++) {
             for(int fw = 0; fw < FW; fw++) {
                 if (fh == 0 && fw == 0) {
@@ -1201,9 +1233,13 @@ void MaxPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
                 }
             }
         }
+        auto keyread_end = std::chrono::high_resolution_clock::now();
+        auto keyread_time = std::chrono::duration_cast<std::chrono::microseconds>(keyread_end - keyread_start).count();
 
         peer->sync();
-        auto start_eval = std::chrono::high_resolution_clock::now();
+        uint64_t timeCompute = 0;
+        uint64_t timeReconstruct = 0;
+        auto start = std::chrono::high_resolution_clock::now();
         for (int n = 0; n < N; n++) {
             for (int c = 0; c < C; c++) {
                 for(int ctH = 0; ctH < H; ctH++) {
@@ -1220,6 +1256,8 @@ void MaxPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
                 }
             }
         }
+        auto t0 = std::chrono::high_resolution_clock::now();
+        timeCompute += std::chrono::duration_cast<std::chrono::microseconds>(t0 - start).count();
 
         for (int fh = 0; fh < FH; fh++) {
             for(int fw = 0; fw < FW; fw++) {
@@ -1227,6 +1265,7 @@ void MaxPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
                     continue;
                 }
 
+                auto t1 = std::chrono::high_resolution_clock::now();
                 std::thread thread_pool[num_threads];
                 
                 for(int i = 0; i < num_threads; ++i) {
@@ -1242,18 +1281,29 @@ void MaxPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
                     thread_pool[i].join();
                 }
 
+                auto t2 = std::chrono::high_resolution_clock::now();
+
                 if (!(fh == 0 && fw == 0)) {
                     reconstruct(N * C * H * W, maxUntilNow, bitlength);
                 }
+                auto t3 = std::chrono::high_resolution_clock::now();
+                timeCompute += std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+                timeReconstruct += std::chrono::duration_cast<std::chrono::microseconds>(t3 - t2).count();
+                
             }
         }
+        auto t4 = std::chrono::high_resolution_clock::now();
         reconstruct(N * C * H * W * (FH * FW - 1), oneHot, 1);
-        auto end_eval = std::chrono::high_resolution_clock::now();
-        auto eval_time = std::chrono::duration_cast<std::chrono::microseconds>(end_eval - start_eval).count();
+        auto end = std::chrono::high_resolution_clock::now();
+        timeReconstruct += std::chrono::duration_cast<std::chrono::microseconds>(end - t4).count();
+        auto eval_time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
         evalMicroseconds += eval_time;
         maxpoolEvalMicroseconds += eval_time;
         delete[] keys;
-        std::cerr << "   Eval Time = " << eval_time / 1000.0 << " miliseconds" << std::endl;
+        std::cerr << "   Key Read Time = " << keyread_time / 1000.0 << " milliseconds" << std::endl;
+        std::cerr << "   Compute Time = " << timeCompute / 1000.0 << " milliseconds" << std::endl;
+        std::cerr << "   Reconstruct Time = " << timeReconstruct / 1000.0 << " milliseconds" << std::endl;
+        std::cerr << "   Online Time = " << eval_time / 1000.0 << " miliseconds" << std::endl;
     }
 
     std::cerr << ">> MaxPool - End" << std::endl;
@@ -1313,7 +1363,7 @@ void InsecureInverse(int32_t size, GroupElement *A, GroupElement *invA, int32_t 
 
         auto end = std::chrono::high_resolution_clock::now();
         auto eval_time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-        std::cerr << "   Eval Time: " << eval_time / 1000.0 << " milliseconds" << std::endl;
+        std::cerr << "   Online Time = " << eval_time / 1000.0 << " milliseconds" << std::endl;
         evalMicroseconds += eval_time;
         delete[] tmp;
     }
@@ -1330,6 +1380,7 @@ void PiranhaSoftmax(int32_t s1, int32_t s2, MASK_PAIR(GroupElement *inArr), MASK
     // step 1 - calculate max for each image in batch
     GroupElement *oneHot = make_array<GroupElement>(s1 * (s2 - 1));
     MaxPool(s1, 1, 1, 1, s2, 1, 0, 0, 0, 0, 1, 1, s1, s2, 1, 1, MASK_PAIR(inArr), max, max, oneHot);
+    delete[] oneHot; // TODO: support passing oneHot as nullptr
 
     // step 2 - subtract max from each element in each image in batch and add 2
     if (party == DEALER) {
@@ -1412,10 +1463,15 @@ void Select(int32_t size, GroupElement *s, GroupElement *x, GroupElement *out) {
     }
     else {
         SelectKeyPack *keys = new SelectKeyPack[size];
+        auto keyread_start = std::chrono::high_resolution_clock::now();
         for(int i = 0; i < size; ++i) {
             keys[i] = dealer->recv_select_key(bitlength);
         }
+        auto keyread_end = std::chrono::high_resolution_clock::now();
+        auto keyread_time_taken = std::chrono::duration_cast<std::chrono::milliseconds>(keyread_end -
+                                                            keyread_start).count();
 
+        auto start = std::chrono::high_resolution_clock::now();
         std::thread thread_pool[num_threads];
         for(int i = 0; i < num_threads; ++i) {
             thread_pool[i] = std::thread(select_threads_helper, i, size, s, x, out, keys);
@@ -1424,9 +1480,19 @@ void Select(int32_t size, GroupElement *s, GroupElement *x, GroupElement *out) {
         for(int i = 0; i < num_threads; ++i) {
             thread_pool[i].join();
         }
-
-        delete[] keys;
+        auto mid = std::chrono::high_resolution_clock::now();
         reconstruct(size, out, bitlength);
+
+        auto end = std::chrono::high_resolution_clock::now();
+        auto compute_time = std::chrono::duration_cast<std::chrono::microseconds>(mid - start).count();
+        auto reconstruct_time = std::chrono::duration_cast<std::chrono::microseconds>(end - mid).count();
+        std::cerr << "   Key Read Time = " << keyread_time_taken << " milliseconds\n";
+        std::cerr << "   Compute Time = " << compute_time / 1000.0 << " milliseconds\n";
+        std::cerr << "   Reconstruct Time = " << reconstruct_time / 1000.0 << " milliseconds\n";
+        std::cerr << "   Online Time = " << (reconstruct_time + compute_time) / 1000.0 << " milliseconds\n";
+        evalMicroseconds += (reconstruct_time + compute_time);
+        selectEvalMicroseconds += (reconstruct_time + compute_time);
+        delete[] keys;
     }
     std::cerr << ">> Select - end" << std::endl;
 }
@@ -1446,9 +1512,10 @@ void relu_dealer_threads_helper(int thread_idx, int32_t size, GroupElement *inAr
 {
     auto p = get_start_end(size, thread_idx);
     for(int i = p.first; i < p.second; i += 1){
-        outArr_mask[i] = random_ge(bitlength); // prng inside multithreads, need some locking
+        auto rout = random_ge(bitlength); // prng inside multithreads, need some locking
         drelu[i] = random_ge(1);
-        keys[i] = keyGenRelu(bitlength, bitlength, inArr_mask[i], outArr_mask[i], drelu[i]);
+        keys[i] = keyGenRelu(bitlength, bitlength, inArr_mask[i], rout, drelu[i]);
+        outArr_mask[i] = rout;
     }
 }
 
@@ -1483,12 +1550,16 @@ void Relu(int32_t size, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *
     else {
         // Step 1: Preprocessing Keys from Dealer
         ReluKeyPack *keys = new ReluKeyPack[size];
+        auto keyread_start = std::chrono::high_resolution_clock::now();
         for(int i = 0; i < size; i++){
             keys[i] = dealer->recv_relu_key(bitlength, bitlength);
         }
+        auto keyread_end = std::chrono::high_resolution_clock::now();
+        auto keyread_time_taken = std::chrono::duration_cast<std::chrono::milliseconds>(keyread_end -
+                                                            keyread_start).count();
         // Step 2: Online Local ReLU Eval
         peer->sync();
-        auto start_eval = std::chrono::high_resolution_clock::now();
+        auto start = std::chrono::high_resolution_clock::now();
         if (num_threads == 1) {
             reluHelper(0, size, inArr, outArr, drelu, keys);
         }
@@ -1505,20 +1576,19 @@ void Relu(int32_t size, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *
             }
         }
 
-        auto t1 = std::chrono::high_resolution_clock::now();
-        auto t2 = std::chrono::high_resolution_clock::now();
-
+        auto mid = std::chrono::high_resolution_clock::now();
         // Step 3: Online Communication
         reconstruct(size, outArr, bitlength);
         reconstruct(size, drelu, 1);
-        
-        auto end_eval = std::chrono::high_resolution_clock::now();
-        auto eval_time = std::chrono::duration_cast<std::chrono::microseconds>(end_eval - t2).count();
-        eval_time += std::chrono::duration_cast<std::chrono::microseconds>(t1 - start_eval).count();
-        evalMicroseconds += eval_time;
-        reluEvalMicroseconds += eval_time;
-        std::cerr << "   Eval time: " << eval_time / 1000.0 << " milliseconds" << std::endl;
-
+        auto end = std::chrono::high_resolution_clock::now();
+        auto compute_time = std::chrono::duration_cast<std::chrono::microseconds>(mid - start).count();
+        auto reconstruct_time = std::chrono::duration_cast<std::chrono::microseconds>(end - mid).count();
+        std::cerr << "   Key Read Time = " << keyread_time_taken << " milliseconds\n";
+        std::cerr << "   Compute Time = " << compute_time / 1000.0 << " milliseconds\n";
+        std::cerr << "   Reconstruct Time = " << reconstruct_time / 1000.0 << " milliseconds\n";
+        std::cerr << "   Online Time = " << (reconstruct_time + compute_time) / 1000.0 << " milliseconds\n";
+        evalMicroseconds += (reconstruct_time + compute_time);
+        reluEvalMicroseconds += (reconstruct_time + compute_time);
         delete[] keys;
     }
     std::cerr << ">> Relu (Spline) - End " << std::endl;
@@ -1760,7 +1830,7 @@ void MaxPoolDouble(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
         evalMicroseconds += eval_time;
         maxpoolEvalMicroseconds += eval_time;
         delete[] keys;
-        std::cerr << "   Eval Time = " << eval_time / 1000.0 << " miliseconds" << std::endl;
+        std::cerr << "   Online Time = " << eval_time / 1000.0 << " miliseconds" << std::endl;
     }
 
     std::cerr << ">> MaxPoolDouble - End" << std::endl;
@@ -1776,57 +1846,123 @@ void MaxPoolDouble(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
         }\
     }
 
+
+void maxpool_onehot_threads_helper(int thread_idx, int f, int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
+             int32_t FW, GroupElement *maxBits, GroupElement *curr, GroupElement *oneHot, BitwiseAndKeyPack *keys)
+{
+    auto p = get_start_end(N * H * W * C, thread_idx);
+    for(int i = p.first; i < p.second; i += 1) {
+        int curridx = i;
+        int c = curridx % C;
+        curridx = curridx / C;
+        int w = curridx % W;
+        curridx = curridx / W;
+        int h = curridx % H;
+        curridx = curridx / H;
+        int n = curridx % N;
+        curridx = curridx / N;
+
+        auto max = Arr5DIdxRowM(maxBits, FH * FW - 1, N, H, W, C, f - 1, n, h, w, c);
+        auto c1 = Arr4DIdxRowM(curr, N, H, W, C, n, h, w, c);
+        auto key = keys[(FH * FW - 2 - f) * N * H * W * C + n * H * W * C + h * W * C + w * C + c];
+        Arr5DIdxRowM(oneHot, FH * FW, N, H, W, C, f, n, h, w, c) = evalAnd(party - 2, max, 1 ^ c1, key);
+        mod(Arr5DIdxRowM(oneHot, FH * FW, N, H, W, C, f, n, h, w, c), 1);
+    }
+}
+
 // maxBits contains all the comparison bits from maxpool and converts them to one hot
 // For eg - in a filter of size 5, if the numbers where 3, 2, 5, 4, 7  MaxPool would have set the maxBits array to be 0, 1, 0, 1
 // this functionality converts this to 0, 0, 0, 1 (retains the last 1 and makes the rest 0)
 // This is compatible with both MaxPool and MaxPoolDouble
 void MaxPoolOneHot(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH, int32_t FW, GroupElement *maxBits, GroupElement *oneHot)
 {
+    std::cerr << ">> MaxPoolOneHot - Start" << std::endl;
     GroupElement *curr = make_array<GroupElement>(N * H * W * C);
-    BIG_LOOPY(
-        auto m = Arr5DIdxRowM(maxBits, FH * FW - 1, N, H, W, C, FH * FW - 2, n, h, w, c);
-        Arr4DIdxRowM(curr, N, H, W, C, n, h, w, c) = m;
-        Arr5DIdxRowM(oneHot, FH * FW, N, H, W, C, FH * FW - 1, n, h, w, c) = m;
-    )
-
-    for(int f = FH * FW - 2; f >= 1; --f) {
-        
-        // out[f] = max[f - 1] ^ !curr
+    if (party == DEALER) {
         BIG_LOOPY(
-            auto max = Arr5DIdxRowM(maxBits, FH * FW - 1, N, H, W, C, f - 1, n, h, w, c);
-            auto c1 = Arr4DIdxRowM(curr, N, H, W, C, n, h, w, c);
-            if (party == DEALER) {
+            auto m = Arr5DIdxRowM(maxBits, FH * FW - 1, N, H, W, C, FH * FW - 2, n, h, w, c);
+            Arr4DIdxRowM(curr, N, H, W, C, n, h, w, c) = m;
+            Arr5DIdxRowM(oneHot, FH * FW, N, H, W, C, FH * FW - 1, n, h, w, c) = m;
+        )
+
+        for(int f = FH * FW - 2; f >= 1; --f) {
+            // out[f] = max[f - 1] ^ !curr
+            BIG_LOOPY(
+                auto max = Arr5DIdxRowM(maxBits, FH * FW - 1, N, H, W, C, f - 1, n, h, w, c);
+                auto c1 = Arr4DIdxRowM(curr, N, H, W, C, n, h, w, c);
                 auto rout = random_ge(1);
                 auto keys = keyGenBitwiseAnd(max, c1, rout);
                 server->send_bitwise_and_key(keys.first);
                 client->send_bitwise_and_key(keys.second);
                 Arr5DIdxRowM(oneHot, FH * FW, N, H, W, C, f, n, h, w, c) = rout;
-            }
-            else {
-                auto key = dealer->recv_bitwise_and_key();
-                Arr5DIdxRowM(oneHot, FH * FW, N, H, W, C, f, n, h, w, c) = evalBitwiseAnd(party - 2, max, 1 ^ c1, key);
-                mod(Arr5DIdxRowM(oneHot, FH * FW, N, H, W, C, f, n, h, w, c), 1);
-            }
-        )
-
-        if (party != DEALER) {
-            reconstruct(N * H * W * C, oneHot + f * N * H * W * C, 1);
+            )
+            
+            BIG_LOOPY(
+                Arr4DIdxRowM(curr, N, H, W, C, n, h, w, c) = Arr4DIdxRowM(curr, N, H, W, C, n, h, w, c) ^ Arr5DIdxRowM(oneHot, FH * FW, N, H, W, C, f, n, h, w, c);
+            )
         }
-        
-        BIG_LOOPY(
-            Arr4DIdxRowM(curr, N, H, W, C, n, h, w, c) = Arr4DIdxRowM(curr, N, H, W, C, n, h, w, c) ^ Arr5DIdxRowM(oneHot, FH * FW, N, H, W, C, f, n, h, w, c);
-        )
-    }
 
-    if (party == DEALER) {
         BIG_LOOPY(
             Arr5DIdxRowM(oneHot, FH * FW, N, H, W, C, 0, n, h, w, c) = Arr4DIdxRowM(curr, N, H, W, C, n, h, w, c);
         )
-    } else {
+    }
+    else {
+        BitwiseAndKeyPack *keys = new BitwiseAndKeyPack[(FH * FW - 2) * N * H * W * C];
+        auto keyread_start = std::chrono::high_resolution_clock::now();
+        for(int i = 0; i < (FH * FW - 2) * N * H * W * C; ++i) {
+            keys[i] = dealer->recv_bitwise_and_key();
+        }
+        auto keyread_end = std::chrono::high_resolution_clock::now();
+        auto keyread_time = std::chrono::duration_cast<std::chrono::microseconds>(keyread_end - keyread_start).count();
+
+        peer->sync();
+        auto start = std::chrono::high_resolution_clock::now();
+        BIG_LOOPY(
+            auto m = Arr5DIdxRowM(maxBits, FH * FW - 1, N, H, W, C, FH * FW - 2, n, h, w, c);
+            Arr4DIdxRowM(curr, N, H, W, C, n, h, w, c) = m;
+            Arr5DIdxRowM(oneHot, FH * FW, N, H, W, C, FH * FW - 1, n, h, w, c) = m;
+        )
+
+        for(int f = FH * FW - 2; f >= 1; --f) {
+            
+            // out[f] = max[f - 1] ^ !curr
+            BIG_LOOPY(
+                auto max = Arr5DIdxRowM(maxBits, FH * FW - 1, N, H, W, C, f - 1, n, h, w, c);
+                auto c1 = Arr4DIdxRowM(curr, N, H, W, C, n, h, w, c);
+                auto key = keys[(FH * FW - 2 - f) * N * H * W * C + n * H * W * C + h * W * C + w * C + c];
+                Arr5DIdxRowM(oneHot, FH * FW, N, H, W, C, f, n, h, w, c) = evalAnd(party - 2, max, 1 ^ c1, key);
+                mod(Arr5DIdxRowM(oneHot, FH * FW, N, H, W, C, f, n, h, w, c), 1);
+            )
+
+            // std::thread thread_pool[num_threads];
+            // for(int i = 0; i < num_threads; ++i) {
+            //     thread_pool[i] = std::thread(maxpool_onehot_threads_helper, i, f, N, H, W, C, FH, FW, maxBits, curr, oneHot, keys);
+            // }
+
+            // for(int i = 0; i < num_threads; ++i) {
+            //     thread_pool[i].join();
+            // }
+
+            reconstruct(N * H * W * C, oneHot + f * N * H * W * C, 1);
+            
+            BIG_LOOPY(
+                Arr4DIdxRowM(curr, N, H, W, C, n, h, w, c) = Arr4DIdxRowM(curr, N, H, W, C, n, h, w, c) ^ Arr5DIdxRowM(oneHot, FH * FW, N, H, W, C, f, n, h, w, c);
+            )
+        }
+
         BIG_LOOPY(
             Arr5DIdxRowM(oneHot, FH * FW, N, H, W, C, 0, n, h, w, c) = Arr4DIdxRowM(curr, N, H, W, C, n, h, w, c) ^ 1;
         )
+        auto end = std::chrono::high_resolution_clock::now();
+        auto eval_time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+        evalMicroseconds += eval_time;
+        selectEvalMicroseconds += eval_time;
+        std::cerr << "   Key Read Time = " << keyread_time / 1000.0 << " miliseconds" << std::endl;
+        std::cerr << "   Online Time = " << eval_time / 1000.0 << " miliseconds" << std::endl;
+        delete[] keys;
     }
+    delete[] curr;
+    std::cerr << ">> MaxPoolOneHot - End" << std::endl;
 }
 
 void MaxPoolBackward(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
@@ -1835,43 +1971,99 @@ void MaxPoolBackward(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
              int32_t strideW, int32_t N1, int32_t imgH, int32_t imgW,
              int32_t C1, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *outArr), GroupElement *oneHot)
 {
-    for(int n = 0; n < N; ++n) {
-        for(int h = 0; h < imgH; ++h) {
-            for(int w = 0; w < imgW; ++w) {
-                for(int c = 0; c < C; ++c) {
-                    Arr4DIdxRowM(inArr, N1, imgH, imgW, C1, n, h, w, c) = 0;
+    std::cerr << ">> MaxPoolBackward - Start" << std::endl;
+    // currently not very confident about maxpool with padding, hence this assert
+    always_assert((zPadHLeft == 0) && (zPadHRight == 0) && (zPadWLeft == 0) && (zPadWRight == 0));
+
+    if (party == DEALER)
+    {
+        for(int n = 0; n < N; ++n) {
+            for(int h = 0; h < imgH; ++h) {
+                for(int w = 0; w < imgW; ++w) {
+                    for(int c = 0; c < C; ++c) {
+                        Arr4DIdxRowM(inArr, N1, imgH, imgW, C1, n, h, w, c) = 0;
+                    }
                 }
             }
         }
-    }
 
-    BIG_LOOPY(
-        int leftTopCornerH = h * strideH - zPadHLeft;
-        int leftTopCornerW = w * strideW - zPadWLeft;
-        auto src = Arr4DIdxRowM(outArr, N, H, W, C, n, h, w, c);
-        for(int fh = 0; fh < FH; ++fh) {
-            for(int fw = 0; fw < FW; ++fw) {
-                if ((leftTopCornerH + fh >= 0) && (leftTopCornerH + fh < imgH) && (leftTopCornerW + fw >= 0) && (leftTopCornerW + fw < imgW)) {
-                    auto s = Arr5DIdxRowM(oneHot, FH * FW, N, H, W, C, fh * FW + fw, n, h, w, c);
-                    auto dst = Arr4DIdxRowM(inArr, N1, imgH, imgW, C1, n, leftTopCornerH + fh, leftTopCornerW + fw, c);
-                    // dst = dst + select(s, src)
-                    if (party == DEALER) {
+        BIG_LOOPY(
+            int leftTopCornerH = h * strideH - zPadHLeft;
+            int leftTopCornerW = w * strideW - zPadWLeft;
+            auto src = Arr4DIdxRowM(outArr, N, H, W, C, n, h, w, c);
+            for(int fh = 0; fh < FH; ++fh) {
+                for(int fw = 0; fw < FW; ++fw) {
+                    if ((leftTopCornerH + fh >= 0) && (leftTopCornerH + fh < imgH) && (leftTopCornerW + fw >= 0) && (leftTopCornerW + fw < imgW)) {
+                        auto s = Arr5DIdxRowM(oneHot, FH * FW, N, H, W, C, fh * FW + fw, n, h, w, c);
+                        auto dst = Arr4DIdxRowM(inArr, N1, imgH, imgW, C1, n, leftTopCornerH + fh, leftTopCornerW + fw, c);
+                        // dst = dst + select(s, src)
                         auto rout = random_ge(bitlength);
                         auto keys = keyGenSelect(bitlength, s, src, rout);
                         Arr4DIdxRowM(inArr, N1, imgH, imgW, C1, n, leftTopCornerH + fh, leftTopCornerW + fw, c) = dst + rout;
                         server->send_select_key(keys.first);
                         client->send_select_key(keys.second);
                     }
-                    else {
-                        auto key = dealer->recv_select_key(bitlength);
-                        Arr4DIdxRowM(inArr, N1, imgH, imgW, C1, n, leftTopCornerH + fh, leftTopCornerW + fw, c) = dst + evalSelect(party - 2, s, src, key);
+                }
+            }
+        )
+    }
+    else 
+    {
+        SelectKeyPack *keys = new SelectKeyPack[FH * FW * N * H * W * C];
+        auto keyread_start = std::chrono::high_resolution_clock::now();
+        for(int i = 0; i < FH * FW * N * H * W * C; ++i) {
+            keys[i] = dealer->recv_select_key(bitlength);
+        }
+        auto keyread_end = std::chrono::high_resolution_clock::now();
+        auto keyread_time = std::chrono::duration_cast<std::chrono::microseconds>(keyread_end - keyread_start).count();
+
+        peer->sync();
+
+        auto start = std::chrono::high_resolution_clock::now();
+        for(int n = 0; n < N; ++n) {
+            for(int h = 0; h < imgH; ++h) {
+                for(int w = 0; w < imgW; ++w) {
+                    for(int c = 0; c < C; ++c) {
+                        Arr4DIdxRowM(inArr, N1, imgH, imgW, C1, n, h, w, c) = 0;
+                    }
+                }
+            }
+
+            for(int h = 0; h < H; ++h) {
+                for(int w = 0; w < W; ++w) {
+                    for(int c = 0; c < C; ++c) {
+                        int leftTopCornerH = h * strideH - zPadHLeft;
+                        int leftTopCornerW = w * strideW - zPadWLeft;
+                        auto src = Arr4DIdxRowM(outArr, N, H, W, C, n, h, w, c);
+                        for(int fh = 0; fh < FH; ++fh) {
+                            for(int fw = 0; fw < FW; ++fw) {
+                                auto s = Arr5DIdxRowM(oneHot, FH * FW, N, H, W, C, fh * FW + fw, n, h, w, c);
+                                auto dst = Arr4DIdxRowM(inArr, N1, imgH, imgW, C1, n, leftTopCornerH + fh, leftTopCornerW + fw, c);
+                                // dst = dst + select(s, src)
+                                auto key = keys[n * H * W * C * FH * FW + h * W * C * FH * FW + w * C * FH * FW + c * FH * FW + fh * FW + fw];
+                                // auto key = dealer->recv_select_key(bitlength);
+                                Arr4DIdxRowM(inArr, N1, imgH, imgW, C1, n, leftTopCornerH + fh, leftTopCornerW + fw, c) = dst + evalSelect(party - 2, s, src, key);
+                            }
+                        }
                     }
                 }
             }
         }
-    )
 
-    if (party != DEALER) {
+        auto mid = std::chrono::high_resolution_clock::now();
         reconstruct(N1 * imgH * imgW * C1, inArr, bitlength);
+        auto end = std::chrono::high_resolution_clock::now();
+        auto eval_time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+        auto reconstruct_time = std::chrono::duration_cast<std::chrono::microseconds>(end - mid).count();
+        auto compute_time = std::chrono::duration_cast<std::chrono::microseconds>(mid - start).count();
+        evalMicroseconds += eval_time;
+        selectEvalMicroseconds += eval_time;
+        std::cerr << "   Key Read Time = " << keyread_time / 1000.0 << " miliseconds" << std::endl;
+        std::cerr << "   Compute Time = " << compute_time / 1000.0 << " miliseconds" << std::endl;
+        std::cerr << "   Reconstruct Time = " << reconstruct_time / 1000.0 << " miliseconds" << std::endl;
+        std::cerr << "   Online Time = " << eval_time / 1000.0 << " miliseconds" << std::endl;
+
+        delete[] keys;
     }
+    std::cerr << ">> MaxPoolBackward - End" << std::endl;
 }
