@@ -97,6 +97,7 @@ void EndComputation()
         std::cerr << "Total Eigen Time = " << eigenMicroseconds / 1000.0 << " milliseconds\n\n";
         std::cerr << "Conv + Matmul Time = " << (convEvalMicroseconds + matmulEvalMicroseconds) / 1000.0 << " milliseconds\n";
         std::cerr << "Relu time = " << reluEvalMicroseconds / 1000.0 << " milliseconds\n";
+        std::cerr << "ReluTruncate time = " << reluTruncateEvalMicroseconds / 1000.0 << " milliseconds\n";
         std::cerr << "MaxPool time = " << maxpoolEvalMicroseconds / 1000.0 << " milliseconds\n";
         std::cerr << "Select/Bit operations Time = " << selectEvalMicroseconds / 1000.0 << " milliseconds\n";
         std::cerr << "Truncate time = " << arsEvalMicroseconds / 1000.0 << " milliseconds\n";
@@ -334,7 +335,7 @@ void ars_dealer_helper(int thread_idx, int size, int shift, GroupElement *inArr_
 */
 void ARS(int32_t size, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *outArr), int32_t shift)
 {
-    std::cerr << ">> Truncate - Start" << std::endl;
+    std::cerr << ">> Truncate" << (LlamaConfig::stochasticT ? " (stochastic)" : "") << " - Start" << std::endl;
     if (party == DEALER) {
         uint64_t dealer_time_taken = 0;
         for (int i = 0; i < size; i++) {
@@ -1215,6 +1216,7 @@ void MaxPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
     else {
         MaxpoolKeyPack *keys = new MaxpoolKeyPack[(FH * FW - 1) * N * C * H * W];
         int kidx = 0;
+        uint64_t keysize_start = dealer->bytesReceived;
         auto keyread_start = std::chrono::high_resolution_clock::now();
         for (int fh = 0; fh < FH; fh++) {
             for(int fw = 0; fw < FW; fw++) {
@@ -1235,6 +1237,7 @@ void MaxPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
         }
         auto keyread_end = std::chrono::high_resolution_clock::now();
         auto keyread_time = std::chrono::duration_cast<std::chrono::microseconds>(keyread_end - keyread_start).count();
+        auto keysize = dealer->bytesReceived - keysize_start;
 
         peer->sync();
         uint64_t timeCompute = 0;
@@ -1301,6 +1304,7 @@ void MaxPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
         maxpoolEvalMicroseconds += eval_time;
         delete[] keys;
         std::cerr << "   Key Read Time = " << keyread_time / 1000.0 << " milliseconds" << std::endl;
+        std::cerr << "   Key Size = " << keysize / (1024.0 * 1024.0) << " MB" << std::endl;
         std::cerr << "   Compute Time = " << timeCompute / 1000.0 << " milliseconds" << std::endl;
         std::cerr << "   Reconstruct Time = " << timeReconstruct / 1000.0 << " milliseconds" << std::endl;
         std::cerr << "   Online Time = " << eval_time / 1000.0 << " miliseconds" << std::endl;

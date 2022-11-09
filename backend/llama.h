@@ -19,7 +19,7 @@ class Llama {
 
 public:
 
-    static void init()
+    static void init(std::string ip)
     {
         prng.SetSeed(toBlock(0, time(NULL)));
         if (LlamaConfig::party == 1) {
@@ -33,8 +33,7 @@ public:
         }
         else if (LlamaConfig::party == 3) {
             LlamaConfig::dealer = new Dealer("client.dat");
-            LlamaConfig::server = new Peer("172.31.45.173", 42002);
-            // LlamaConfig::server = new Peer("127.0.0.1", 42002);
+            LlamaConfig::server = new Peer(ip, 42002);
             LlamaConfig::peer = LlamaConfig::server;
         }
         else {

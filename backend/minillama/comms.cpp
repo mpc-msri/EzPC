@@ -476,7 +476,8 @@ void Peer::send_pubdiv_key(const PublicDivKeyPack &kp) {
 }
 
 void Peer::send_ars_key(const ARSKeyPack &kp) {
-    send_dcf_keypack(kp.dcfKey);
+    if (!LlamaConfig::stochasticT)
+        send_dcf_keypack(kp.dcfKey);
     if (kp.Bout > kp.Bin - kp.shift) {
         send_ddcf_keypack(kp.dualDcfKey);
     }
@@ -959,7 +960,8 @@ ARSKeyPack Dealer::recv_ars_key(int Bin, int Bout, int shift) {
     kp.shift = shift;
 
     int dcfGroupSize = 1, ddcfGroupSize = 2;
-    kp.dcfKey = recv_dcf_keypack(shift, Bout, dcfGroupSize);
+    if (!LlamaConfig::stochasticT)
+        kp.dcfKey = recv_dcf_keypack(shift, Bout, dcfGroupSize);
     if (Bout > Bin - shift) {
         kp.dualDcfKey = recv_ddcf_keypack(Bin - 1, Bout, ddcfGroupSize);
     }

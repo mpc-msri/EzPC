@@ -10,4 +10,5 @@ namespace LlamaConfig {
     Dealer *dealer = nullptr;
     int port = 42069;
     bool stochasticRT = false;
+    bool stochasticT  = false;
 }

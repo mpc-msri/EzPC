@@ -19,7 +19,7 @@ void llama_relutruncate_test(int party) {
     srand(time(NULL));
     const u64 scale = 2;
     LlamaConfig::party = party;
-    LlamaExtended<u64>::init();
+    LlamaExtended<u64>::init("127.0.0.1");
     // auto relu1 = new ReLUTruncate<u64, LlamaVersion>(scale);
     auto relu1 = new MaxPool2D<u64, LlamaExtended<u64>>(2);
     auto model = Sequential<u64>({
@@ -97,12 +97,14 @@ void pt_test_bitwiseand()
 }
 
 void llama_test_3layer(int party) {
-    using LlamaVersion = LlamaExtended<u64>;
+    using LlamaVersion = Llama<u64>;
     srand(time(NULL));
     const u64 scale = 24;
     LlamaConfig::bitlength = 64;
     LlamaConfig::party = party;
-    LlamaVersion::init();
+    LlamaConfig::stochasticT = true;
+    LlamaConfig::stochasticRT = true;
+    LlamaVersion::init("172.31.45.173");
     const u64 bs = 100;
     
     auto conv1 = new Conv2D<u64, scale, LlamaVersion>(3, 64, 5, 1);
@@ -174,11 +176,13 @@ void llama_test_3layer(int party) {
     LlamaVersion::output(model.activation);
     LlamaVersion::output(conv1->bias);
     LlamaVersion::output(conv1->filter);
+    LlamaVersion::output(conv1->filterGrad);
     if (LlamaConfig::party != 1) {
         std::cout << "Secure Computation Output = \n";
         model.activation.print<i64>();
         conv1->bias.print<i64>();
         conv1->filter.print<i64>();
+        conv1->filterGrad.print<i64>();
     }
     LlamaVersion::finalize();
 
@@ -189,6 +193,7 @@ void llama_test_3layer(int party) {
         model_ct.activation.print<i64>();
         conv1_ct->bias.print<i64>();
         conv1_ct->filter.print<i64>();
+        conv1_ct->filterGrad.print<i64>();
     }
 }
 

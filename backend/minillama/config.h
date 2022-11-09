@@ -13,4 +13,5 @@ namespace LlamaConfig {
     extern Dealer *dealer;
     extern int port;
     extern bool stochasticRT;
+    extern bool stochasticT;
 }
