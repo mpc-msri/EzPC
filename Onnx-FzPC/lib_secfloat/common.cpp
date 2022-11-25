@@ -261,14 +261,14 @@ void ConvAdd(int32_t s1, int32_t s2, int32_t s3, int32_t s4,
 
     for (int i1 = 0; i1 < s1; i1++)
     {
-        for (int i2 = 0; i2 < s2; i2++)
+        for (int i2 = 0; i2 < s3; i2++)
         {
-            for (int i3 = 0; i3 < s3; i3++)
+            for (int i3 = 0; i3 < s4; i3++)
             {
-                for (int i4 = 0; i4 < s4; i4++)
+                for (int i4 = 0; i4 < s2; i4++)
                 {
-                    arr1[i1 * s2 * s3 * s4 + i2 * s3 * s4 + i3 * s4 + i4] = inArr[i1][i2][i3][i4];
-                    arr2[i1 * s2 * s3 * s4 + i2 * s3 * s4 + i3 * s4 + i4] = biasArr[i2];
+                    arr1[i1*s3*s4*s2 + i2*s4*s2 + i3*s2 + i4] = inArr[i1][i4][i2][i3] ;
+					arr2[i1*s3*s4*s2 + i2*s4*s2 + i3*s2 + i4] = biasArr[i4] ;
                 }
             }
         }
@@ -278,13 +278,13 @@ void ConvAdd(int32_t s1, int32_t s2, int32_t s3, int32_t s4,
 
     for (int i1 = 0; i1 < s1; i1++)
     {
-        for (int i2 = 0; i2 < s2; i2++)
+        for (int i2 = 0; i2 < s3; i2++)
         {
-            for (int i3 = 0; i3 < s3; i3++)
+            for (int i3 = 0; i3 < s4; i3++)
             {
-                for (int i4 = 0; i4 < s4; i4++)
+                for (int i4 = 0; i4 < s2; i4++)
                 {
-                    outArr[i1][i2][i3][i4] = out[i1 * s2 * s3 * s4 + i2 * s3 * s4 + i3 * s4 + i4];
+                    outArr[i1][i4][i2][i3] = out[i1*s3*s4*s2 + i2*s4*s2 + i3*s2 + i4];
                 }
             }
         }

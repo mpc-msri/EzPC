@@ -33,29 +33,20 @@ To compile SecFloat Code generated from above step and get executable use:
 ```bash
 lib_secfloat/compile_secfloat.sh "/path/to/file.cpp"
 ```
-Alternatively to manually specify the Chunk Size for SecFloat calculations use (default is (1<<20)):
-```bash
-lib_secfloat/compile_secfloat.sh "/path/to/file.cpp" $((1<<20))
-```
+
 ---
 ### To directly generate executable from Onnx File use:
 ```bash
 cd Onnx-FzPC 
 python3 main.py --path "/path/to/onnx-file" --generate "executable"
 ```
-
-Alternatively to manually specify the Chunk Size for SecFloat calculations use (default is (1<<20)):
-```bash
-cd Onnx-FzPC 
-python3 main.py --path "/path/to/onnx-file" --generate "executable" --chunk "1<<20"
-```
 ---
 ### Run Inference:
 To run secure inference on networks:
 
 ```bash
-./<network> r=1 [port=port] < <model_weights_file> // Server
-./<network> r=2 [add=server_address] [port=port] < <image_file> // Client
+./<network> r=2 [port=port] [chunk=chunk] < <model_weights_file> // Server
+./<network> r=1 [add=server_address] [port=port] [chunk=chunk] < <image_file> // Client
 ```
 
 ## Supported Nodes

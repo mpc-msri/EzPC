@@ -59,8 +59,9 @@ def convert_np_to_floatpt(path_to_numpy_arr):
     np_inp = np.load(path_to_numpy_arr, allow_pickle=True)
     with open(output_path, "w") as ff:
         for xx in np.nditer(np_inp, order="C"):
-            ff.write(str(int(xx)) + " ")
-        ff.write("\n")
+            # print(xx)
+            ff.write(str((xx)) + " ")
+            ff.write("\n")
     return output_path
 
 

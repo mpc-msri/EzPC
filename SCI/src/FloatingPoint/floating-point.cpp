@@ -1596,7 +1596,6 @@ FPMatrix FPOp::matrix_multiplication(const FPMatrix &x, const FPMatrix &y,int ch
   
   vector<FPArray> prod = enlist_products(this, x, y) ;
   FPMatrix ret(this->party, x.dim1, y.dim2, m_bits, e_bits) ;
-  cout<<chunk_size<<":   "<<endl;
   int rows_per_batch = ceil(chunk_size/double(n));
   for (int i = 0; i < N; i += rows_per_batch) {
     int j = std::min(i + rows_per_batch, N);

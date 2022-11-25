@@ -69,6 +69,9 @@ class Operator:
     @classmethod
     def Conv(cls, attributes, inputs, outputs, value_info, var_dict, indent):
         logger.debug("Inside Conv function call.")
+        if "auto_pad" in attributes.keys():
+            pads = [2, 2, 2, 2]
+
         spatial_size = len(value_info[inputs[0]][1]) - 2
         if spatial_size == 2:
             assert len(inputs) == 2 or len(inputs) == 3
@@ -90,7 +93,7 @@ class Operator:
                     f"{'   ' * indent}Conv2DGroupWrapper("
                     f"{N}, {CI}, {H}, {W}, "
                     f"{filterShape[2]}, {filterShape[3]}, {value_info[inputs[1]][1][0]}, "
-                    f"{(iterate_list(attributes['pads'] if 'pads' in attributes else [0, 0, 0, 0]))}, "
+                    f"{(iterate_list(attributes['pads'] if 'pads' in attributes else pads))}, "
                     f"{(iterate_list(attributes['strides']))}, "
                     f"{(attributes['group'] if 'group' in attributes else 1)}, "
                     f"{iterate_list([var_dict[x] for x in inputs[:2]])}, "

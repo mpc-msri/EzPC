@@ -68,6 +68,17 @@ def dump_model_weights(model, model_dir, model_name):
     weights_fname = model_name + "_input_weights_.inp"
     weights_path = os.path.join(model_dir, weights_fname)
 
+    # needed because initializers are not in sequential order and we need to strip them and dump in file
+    exclude = [
+        val for node in model.graph.node for val in node.output
+    ]  # list to store variables that are not initializers
+    exclude.append(
+        model.graph.input[0].name
+    )  # because we want to exclude input in initializers
+    initializers = [
+        inp for node in model.graph.node for inp in node.input if inp not in exclude
+    ]
+
     model_name_to_val_dict = {
         init_vals.name: numpy_helper.to_array(init_vals).tolist()
         for init_vals in model.graph.initializer
@@ -75,9 +86,9 @@ def dump_model_weights(model, model_dir, model_name):
     preprocess_batch_normalization(model.graph, model_name_to_val_dict)
 
     chunk_n = ""
-    for init_vals in model.graph.initializer:
+    for init_name in initializers:
         chunk_1 = numpy_float_array_to_float_val_str(
-            np.asarray(model_name_to_val_dict[init_vals.name], dtype=np.float32)
+            np.asarray(model_name_to_val_dict[init_name], dtype=np.float32)
         )
         chunk_n += chunk_1
 

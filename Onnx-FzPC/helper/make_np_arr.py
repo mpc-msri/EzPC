@@ -24,5 +24,5 @@ if __name__ == "__main__":
     output_fname = sys.argv[1]
     path = os.path.dirname(output_fname)
     np_arr = convert_raw_output_to_np(output_fname)
-    np.save(path + "output.npy", np.array(np_arr))
+    np.save(path + "/output.npy", np.array(np_arr))
     print(f"Saved at {path}/output.npy")
