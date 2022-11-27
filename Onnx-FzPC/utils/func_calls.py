@@ -1,3 +1,4 @@
+import math
 from utils import logger, VariableGen
 from utils.backend_helper import (
     iterate_list,
@@ -10,6 +11,39 @@ from utils.backend_helper import (
     iterate_concat_list,
     concat_list,
 )
+
+
+def get_padding(attributes, inputs, output, value_info, var_dict):
+    if "auto_pad" in attributes.keys():
+        if (
+            str(attributes["auto_pad"], "UTF-8") == "NOTSET"
+            or str(attributes["auto_pad"], "UTF-8") == "VALID"
+        ):
+            return attributes["pads"] if "pads" in attributes.keys() else [0, 0, 0, 0]
+        else:
+            stride_h = attributes["strides"][0]
+            stride_w = attributes["strides"][1]
+            out_h = value_info[output[0]][1][2]
+            out_w = value_info[output[0]][1][3]
+            in_h = value_info[inputs[0]][1][2]
+            in_w = value_info[inputs[0]][1][3]
+            ker_h = (
+                value_info[inputs[1]][1][2]
+                if "kernel_shape" not in attributes.keys()
+                else attributes["kernel_shape"][0]
+            )
+            ker_w = (
+                value_info[inputs[1]][1][3]
+                if "kernel_shape" not in attributes.keys()
+                else attributes["kernel_shape"][0]
+            )
+            pad_h = math.ceil(((out_h - 1) * stride_h + ker_h - in_h) / 2)
+            pad_w = math.ceil(((out_w - 1) * stride_w + ker_w - in_w) / 2)
+            pads = [pad_h, pad_w, pad_h, pad_w]
+            return pads
+    else:
+        return attributes["pads"]
+    pass
 
 
 class Operator:
@@ -70,7 +104,7 @@ class Operator:
     def Conv(cls, attributes, inputs, outputs, value_info, var_dict, indent):
         logger.debug("Inside Conv function call.")
         if "auto_pad" in attributes.keys():
-            pads = [2, 2, 2, 2]
+            pads = get_padding(attributes, inputs, outputs, value_info, var_dict)
 
         spatial_size = len(value_info[inputs[0]][1]) - 2
         if spatial_size == 2:
@@ -93,7 +127,7 @@ class Operator:
                     f"{'   ' * indent}Conv2DGroupWrapper("
                     f"{N}, {CI}, {H}, {W}, "
                     f"{filterShape[2]}, {filterShape[3]}, {value_info[inputs[1]][1][0]}, "
-                    f"{(iterate_list(attributes['pads'] if 'pads' in attributes else pads))}, "
+                    f"{(iterate_list(pads))}, "
                     f"{(iterate_list(attributes['strides']))}, "
                     f"{(attributes['group'] if 'group' in attributes else 1)}, "
                     f"{iterate_list([var_dict[x] for x in inputs[:2]])}, "
@@ -106,13 +140,13 @@ class Operator:
     @classmethod
     def MaxPool(cls, attributes, inputs, outputs, value_info, var_dict, indent):
         logger.debug("Inside MaxPool function call.")
-        if "pads" not in attributes.keys():
-            attributes["pads"] = [0, 0, 0, 0]
+        if "auto_pad" in attributes.keys():
+            pads = get_padding(attributes, inputs, outputs, value_info, var_dict)
         return str(
             f"{'   ' * indent}MaxPool("
             f"{iterate_list(value_info[outputs[0]][1])}, "
             f"{attributes['kernel_shape'][0]}, {attributes['kernel_shape'][1]}, "
-            f"{iterate_list(attributes['pads'])}, "
+            f"{iterate_list(pads)}, "
             f"{attributes['strides'][0]}, {attributes['strides'][1]}, "
             f"{iterate_list(value_info[inputs[0]][1])}, "
             f"{iterate_list([var_dict[x] for x in inputs])}, "
