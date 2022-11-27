@@ -184,13 +184,13 @@ class Operator:
     @classmethod
     def AveragePool(cls, attributes, inputs, outputs, value_info, var_dict, indent):
         logger.debug("Inside AveragePool function call.")
-        if "pads" not in attributes.keys():
-            attributes["pads"] = [0, 0, 0, 0]
+        if "auto_pad" in attributes.keys():
+            pads = get_padding(attributes, inputs, outputs, value_info, var_dict)
         return str(
             f"{'   ' * indent}AvgPool("
             f"{iterate_list(value_info[outputs[0]][1])}, "
             f"{attributes['kernel_shape'][0]}, {attributes['kernel_shape'][1]}, "
-            f"{iterate_list(attributes['pads'])}, "
+            f"{iterate_list(pads)}, "
             f"{attributes['strides'][0]}, {attributes['strides'][1]}, "
             f"{iterate_list(value_info[inputs[0]][1])}, "
             f"{iterate_list([var_dict[x] for x in inputs])}, "
