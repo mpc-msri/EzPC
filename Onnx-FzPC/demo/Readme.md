@@ -13,14 +13,8 @@ Setup the env manually using:
 ```bash
 cd ..
 pip install requirements.txt
-
-#build SecFloat
-cd ../SCI
-mkdir build && cd build
-cmake -DCMAKE_INSTALL_PREFIX=./install .. [-DBUILD_TESTS=ON] [-DBUILD_NETWORKS=ON] [-DNO_REVEAL_OUTPUT=ON]
-cmake --build . --target install --parallel
-cd ../../Onnx-FzPC
 ```
+Build SecFloat following [SCI](https://github.com/mpc-msri/EzPC/blob/onnx-fzpc/SCI/README.md).
 ## Compile the Model
 ### Server Side
 Run the following command to compile the model:
