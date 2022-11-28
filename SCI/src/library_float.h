@@ -223,4 +223,6 @@ void getLoss(int32_t s, vector<FPArray> &arr, vector<FPArray> &outArr);
 
 void computeMSELoss(int32_t m, int32_t s, vector<vector<FPArray>> &target, vector<vector<FPArray>> &fwdOut, vector<FPArray> &loss);
 
+void Sigmoid(int32_t s1, vector<FPArray>& inArr, vector<FPArray>& outArr) ; 
+
 #endif
