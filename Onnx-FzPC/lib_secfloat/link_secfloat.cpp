@@ -14,6 +14,7 @@ extern void IfElse(int32_t s1, vector<FPArray> &dat, vector<BoolArray> &hot, vec
 extern void updateWeights(int32_t s, float lr, vector<FPArray> &bias, vector<FPArray> &der);
 extern void getLoss(int32_t m, vector<FPArray> &lossTerms, vector<FPArray> &loss);
 extern void computeMSELoss(int32_t m, int32_t s, vector<vector<FPArray>> &target, vector<vector<FPArray>> &fwdOut, vector<FPArray> &loss);
+extern void Sigmoid(int32_t s1, vector<FPArray> &inArr, vector<FPArray> &outArr);
 
 FPArray __public_float_to_arithmetic(float f, int party = ALICE)
 {
@@ -330,6 +331,78 @@ void Leaky_Relu(int32_t s1, int32_t s2, int32_t s3, int32_t s4, float alpha, aut
         }
     }
     Leaky_Relu(size, alpha, reshapedInArr, reshapedOutArr);
+    for (uint32_t i1 = 0; i1 < s1; i1++)
+    {
+        for (uint32_t i2 = 0; i2 < s2; i2++)
+        {
+            for (uint32_t i3 = 0; i3 < s3; i3++)
+            {
+                for (uint32_t i4 = 0; i4 < s4; i4++)
+                {
+                    int32_t linIdx = ((((((i1 * s2) * s3) * s4) + ((i2 * s3) * s4)) + (i3 * s4)) + i4);
+
+                    outArr[i1][i2][i3][i4] = reshapedOutArr[linIdx];
+                }
+            }
+        }
+    }
+}
+
+void Sigmoid(int32_t s1, int32_t s2, auto &inArr, auto &outArr)
+{
+    int32_t size = (s1 * s2);
+
+    auto reshapedInArr = make_vector_float(ALICE, size);
+
+    auto reshapedOutArr = make_vector_float(ALICE, size);
+
+    for (uint32_t i1 = 0; i1 < s1; i1++)
+    {
+        for (uint32_t i2 = 0; i2 < s2; i2++)
+        {
+            int32_t linIdx = ((i1 * s2) + i2);
+
+            reshapedInArr[linIdx] = inArr[i1][i2];
+        }
+    }
+    Sigmoid(size, reshapedInArr, reshapedOutArr);
+    for (uint32_t i1 = 0; i1 < s1; i1++)
+    {
+        for (uint32_t i2 = 0; i2 < s2; i2++)
+        {
+            int32_t linIdx = ((i1 * s2) + i2);
+
+            outArr[i1][i2] = reshapedOutArr[linIdx];
+        }
+    }
+}
+
+void Sigmoid(int32_t s1, int32_t s2, int32_t s3, int32_t s4, auto &inArr, auto &outArr)
+{
+    int32_t size = (((s1 * s2) * s3) * s4);
+
+    auto reshapedInArr = make_vector_float(ALICE, size);
+
+    auto reshapedOutArr = make_vector_float(ALICE, size);
+
+    for (uint32_t i1 = 0; i1 < s1; i1++)
+    {
+        for (uint32_t i2 = 0; i2 < s2; i2++)
+        {
+            for (uint32_t i3 = 0; i3 < s3; i3++)
+            {
+                for (uint32_t i4 = 0; i4 < s4; i4++)
+                {
+                    int32_t linIdx = ((((((i1 * s2) * s3) * s4) + ((i2 * s3) * s4)) + (i3 * s4)) + i4);
+
+                    reshapedInArr[linIdx] = inArr[i1][i2][i3][i4];
+                }
+            }
+        }
+    }
+
+    Sigmoid(size, reshapedInArr, reshapedOutArr);
+
     for (uint32_t i1 = 0; i1 < s1; i1++)
     {
         for (uint32_t i2 = 0; i2 < s2; i2++)

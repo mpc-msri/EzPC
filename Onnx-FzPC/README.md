@@ -10,7 +10,7 @@ If you used the `setup_env_and_build.sh` script the below would already have bee
 - onnx==1.12.0
 - onnxruntime==1.12.1
 - onnxsim==0.4.8
-- numpy==1.23.4
+- numpy==1.21.0
 - protobuf==3.20.1
 
 Above dependencies can be installed using the `requirements.txt` file as below:
