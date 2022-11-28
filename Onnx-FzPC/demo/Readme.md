@@ -28,6 +28,7 @@ This generates :
 
 Run the following command to start server side computation and wait for client connection:
 ```bash
+cd demo
 ./model_secfloat r=2  [port=port] < model_input_weights_.inp
 ```
 
@@ -62,5 +63,5 @@ python ../helper/compare_np_arrs.py -i onnx_output/input.npy output.npy
 ```
 You should get output similar to:
 ```bash
-Arrays matched upto 2 decimal points
+Arrays matched upto 6 decimal points
 ```
