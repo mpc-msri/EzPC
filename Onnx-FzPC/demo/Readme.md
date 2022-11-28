@@ -12,7 +12,7 @@ source ~/EzPC/mpc_venv/bin/activate
 Setup the env manually using:
 ```bash
 cd ..
-pip install requirements.txt
+pip install -r requirements.txt
 ```
 Build SecFloat following [SCI](https://github.com/mpc-msri/EzPC/blob/onnx-fzpc/SCI/README.md).
 ## Compile the Model

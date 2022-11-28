@@ -15,7 +15,7 @@ If you used the `setup_env_and_build.sh` script the below would already have bee
 
 Above dependencies can be installed using the `requirements.txt` file as below:
 ```bash
-pip3 install requirements.txt
+pip3 install -r requirements.txt
 ```
 
 #### Along with this SecFloat Backend also need to be build for Onnx-FzPC to work. Follow the steps from `../SCI/` to build SecFloat.
