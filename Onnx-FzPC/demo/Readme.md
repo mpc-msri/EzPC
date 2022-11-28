@@ -63,5 +63,5 @@ python ../helper/compare_np_arrs.py -i onnx_output/input.npy output.npy
 ```
 You should get output similar to:
 ```bash
-Arrays matched upto 6 decimal points
+Arrays matched upto 5 decimal points
 ```
