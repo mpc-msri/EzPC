@@ -1,9 +1,5 @@
-## Download Model
-```bash
-./fetch_model.sh 
-```
 
-## Setup Env
+# Setup Env
 After having setup the environment using ./setup_env_and_build.sh quick, load the environment:
 ```bash
 source ~/EzPC/mpc_venv/bin/activate
@@ -15,8 +11,15 @@ cd ..
 pip install -r requirements.txt
 ```
 Build SecFloat following [SCI](https://github.com/mpc-msri/EzPC/blob/onnx-fzpc/SCI/README.md).
+
+
+# Server Side
+
+## Download Model
+```bash
+./fetch_model.sh 
+```
 ## Compile the Model
-### Server Side
 Run the following command to compile the model:
 ```bash
 cd ..
@@ -32,7 +35,12 @@ cd demo
 ./model_secfloat r=2  [port=port] < model_input_weights_.inp
 ```
 
-### Client Side
+# Client Side
+
+## Download Image
+```bash
+./fetch_image.sh 
+```
 
 Client needs to preprocess the image before computation starts:
 ```bash
