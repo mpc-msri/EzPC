@@ -175,3 +175,11 @@ class OnnxNode:
     def LeakyRelu(cls, node):
         if "alpha" not in node.attributes:
             node.attributes["alpha"] = 0.01
+
+    @classmethod
+    def Tanh(cls, node):
+        assert len(node.inputs) == 1
+        assert len(node.outputs) == 1
+        # we can print the node at this step and get info on all node parameters
+        # additionaly based on your node implementation add assertions or modification on node attributes.
+        logger.debug("Tanh is OK!")

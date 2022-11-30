@@ -30,7 +30,7 @@ auto Add(const FPArray &x, const FPArray &y)
     return __fp_op->add(x, y);
 }
 
-auto Mul(auto x, auto y)
+auto Mul(const FPArray &x, const FPArray &y)
 {
     return __fp_op->mul(x, y);
 }
@@ -402,6 +402,103 @@ void Sigmoid(int32_t s1, int32_t s2, int32_t s3, int32_t s4, auto &inArr, auto &
     }
 
     Sigmoid(size, reshapedInArr, reshapedOutArr);
+
+    for (uint32_t i1 = 0; i1 < s1; i1++)
+    {
+        for (uint32_t i2 = 0; i2 < s2; i2++)
+        {
+            for (uint32_t i3 = 0; i3 < s3; i3++)
+            {
+                for (uint32_t i4 = 0; i4 < s4; i4++)
+                {
+                    int32_t linIdx = ((((((i1 * s2) * s3) * s4) + ((i2 * s3) * s4)) + (i3 * s4)) + i4);
+
+                    outArr[i1][i2][i3][i4] = reshapedOutArr[linIdx];
+                }
+            }
+        }
+    }
+}
+
+// tanh(x) = 2 * sigmoid(2 * x) - 1 
+void Tanh(int32_t s1, vector<FPArray> &inArr, vector<FPArray> &outArr){
+
+    const FPArray one = __public_float_to_baba(1.0, ALICE);
+    const FPArray two = __public_float_to_baba(2.0, ALICE);
+
+    // 2 * x
+    auto twice_input = make_vector_float(ALICE, s1);
+    for(int i=0; i<s1; i++){
+        twice_input[i] = Mul(inArr[i],two);
+    }
+
+    // sigmoid(2 * x)
+    auto sigmoid_twice_input = make_vector_float(ALICE, s1);
+    Sigmoid(s1, twice_input, sigmoid_twice_input);
+
+
+    // tanh(x) = 2 * sigmoid(2 * x) - 1
+    for(int i=0; i<s1; i++){
+        outArr[i] = Mul(two , sigmoid_twice_input[i]);
+        outArr[i] = __fp_op->sub(outArr[i], one);
+    }
+
+}
+
+void Tanh(int32_t s1, int32_t s2, auto &inArr, auto &outArr)
+{
+    int32_t size = (s1 * s2);
+
+    auto reshapedInArr = make_vector_float(ALICE, size);
+
+    auto reshapedOutArr = make_vector_float(ALICE, size);
+
+    for (uint32_t i1 = 0; i1 < s1; i1++)
+    {
+        for (uint32_t i2 = 0; i2 < s2; i2++)
+        {
+            int32_t linIdx = ((i1 * s2) + i2);
+
+            reshapedInArr[linIdx] = inArr[i1][i2];
+        }
+    }
+    Tanh(size, reshapedInArr, reshapedOutArr);
+    for (uint32_t i1 = 0; i1 < s1; i1++)
+    {
+        for (uint32_t i2 = 0; i2 < s2; i2++)
+        {
+            int32_t linIdx = ((i1 * s2) + i2);
+
+            outArr[i1][i2] = reshapedOutArr[linIdx];
+        }
+    }
+}
+
+void Tanh(int32_t s1, int32_t s2, int32_t s3, int32_t s4, auto &inArr, auto &outArr)
+{
+    int32_t size = (((s1 * s2) * s3) * s4);
+
+    auto reshapedInArr = make_vector_float(ALICE, size);
+
+    auto reshapedOutArr = make_vector_float(ALICE, size);
+
+    for (uint32_t i1 = 0; i1 < s1; i1++)
+    {
+        for (uint32_t i2 = 0; i2 < s2; i2++)
+        {
+            for (uint32_t i3 = 0; i3 < s3; i3++)
+            {
+                for (uint32_t i4 = 0; i4 < s4; i4++)
+                {
+                    int32_t linIdx = ((((((i1 * s2) * s3) * s4) + ((i2 * s3) * s4)) + (i3 * s4)) + i4);
+
+                    reshapedInArr[linIdx] = inArr[i1][i2][i3][i4];
+                }
+            }
+        }
+    }
+
+    Tanh(size, reshapedInArr, reshapedOutArr);
 
     for (uint32_t i1 = 0; i1 < s1; i1++)
     {

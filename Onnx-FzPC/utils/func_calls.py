@@ -271,3 +271,15 @@ class Operator:
             f");"
         )
         return code
+
+    @classmethod
+    def Tanh(cls, attributes, inputs, outputs, value_info, var_dict, indent):
+        logger.debug("Inside Tanh function call.")
+        cmmnt = comment("Call  Tanh(shape,input,output)\n", indent)
+        return str(
+            cmmnt + f"{'   ' * indent}Tanh("
+            f"{iterate_list(value_info[inputs[0]][1])}, "
+            f"{iterate_list([var_dict[x] for x in inputs])}, "
+            f"{iterate_list([var_dict[x] for x in outputs])}"
+            f");"
+        )
