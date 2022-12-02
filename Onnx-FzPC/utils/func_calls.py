@@ -103,8 +103,7 @@ class Operator:
     @classmethod
     def Conv(cls, attributes, inputs, outputs, value_info, var_dict, indent):
         logger.debug("Inside Conv function call.")
-        if "auto_pad" in attributes.keys():
-            pads = get_padding(attributes, inputs, outputs, value_info, var_dict)
+        pads = get_padding(attributes, inputs, outputs, value_info, var_dict)
 
         spatial_size = len(value_info[inputs[0]][1]) - 2
         if spatial_size == 2:
@@ -140,8 +139,7 @@ class Operator:
     @classmethod
     def MaxPool(cls, attributes, inputs, outputs, value_info, var_dict, indent):
         logger.debug("Inside MaxPool function call.")
-        if "auto_pad" in attributes.keys():
-            pads = get_padding(attributes, inputs, outputs, value_info, var_dict)
+        pads = get_padding(attributes, inputs, outputs, value_info, var_dict)
         return str(
             f"{'   ' * indent}MaxPool("
             f"{iterate_list(value_info[outputs[0]][1])}, "
@@ -184,8 +182,7 @@ class Operator:
     @classmethod
     def AveragePool(cls, attributes, inputs, outputs, value_info, var_dict, indent):
         logger.debug("Inside AveragePool function call.")
-        if "auto_pad" in attributes.keys():
-            pads = get_padding(attributes, inputs, outputs, value_info, var_dict)
+        pads = get_padding(attributes, inputs, outputs, value_info, var_dict)
         return str(
             f"{'   ' * indent}AvgPool("
             f"{iterate_list(value_info[outputs[0]][1])}, "
