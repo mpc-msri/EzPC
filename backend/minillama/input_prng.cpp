@@ -26,32 +26,31 @@ SOFTWARE.
 #include <thread>
 #include "stats.h"
 
-using namespace osuCrypto;
 using namespace LlamaConfig;
 
-AES inputPrng[2];
+osuCrypto::AES inputPrng[2];
 int counter[2] = {0, 0};
 
 void input_prng_init()
 {
     if (party == DEALER) {
-        AES aesSeed(toBlock(1, time(NULL)));
-        auto seed0 = aesSeed.ecbEncBlock(ZeroBlock);
+        osuCrypto::AES aesSeed(osuCrypto::toBlock(1, time(NULL)));
+        auto seed0 = aesSeed.ecbEncBlock(osuCrypto::ZeroBlock);
         server->send_block(seed0);
-        auto seed1 = aesSeed.ecbEncBlock(OneBlock);
+        auto seed1 = aesSeed.ecbEncBlock(osuCrypto::OneBlock);
         client->send_block(seed1);
-        inputPrng[0] = AES(seed0);
-        inputPrng[1] = AES(seed1);
+        inputPrng[0] = osuCrypto::AES(seed0);
+        inputPrng[1] = osuCrypto::AES(seed1);
     }
     else {
         auto seed = dealer->recv_block();
-        inputPrng[party - SERVER] = AES(seed);
+        inputPrng[party - SERVER] = osuCrypto::AES(seed);
     }
 }
 
-block get_input_mask_pair(int idx, int owner)
+osuCrypto::block get_input_mask_pair(int idx, int owner)
 {
-    block val = inputPrng[owner - SERVER].ecbEncBlock(toBlock(0, counter[owner - SERVER] + idx));
+    osuCrypto::block val = inputPrng[owner - SERVER].ecbEncBlock(osuCrypto::toBlock(0, counter[owner - SERVER] + idx));
     return val;
 }
 

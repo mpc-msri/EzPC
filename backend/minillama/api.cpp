@@ -75,8 +75,8 @@ void StartComputation()
     }
 
     if (party == DEALER) {
-        AES aesSeed(toBlock(0, time(NULL)));
-        auto commonSeed = aesSeed.ecbEncBlock(ZeroBlock);
+        osuCrypto::AES aesSeed(osuCrypto::toBlock(0, time(NULL)));
+        auto commonSeed = aesSeed.ecbEncBlock(osuCrypto::ZeroBlock);
         server->send_block(commonSeed);
         prngShared.SetSeed(commonSeed);
     }
@@ -1319,7 +1319,7 @@ void MaxPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
 void InsecureInverse(int32_t size, GroupElement *A, GroupElement *invA, int32_t sf, int32_t upper) 
 {
     // KG: make sure this is inplace secure (i.e can accept invA = A)
-    uint64_t logk = log2ceil(upper);
+    uint64_t logk = osuCrypto::log2ceil(upper);
     uint64_t m = logk + 1;
     std::cerr << ">> InsecureInverse - start" << std::endl;
 

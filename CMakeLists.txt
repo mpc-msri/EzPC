@@ -37,5 +37,5 @@ add_executable(fptraining
     backend/minillama/taylor.cpp
     backend/minillama/truncate.cpp
     backend/minillama/utils.cpp)
-target_link_libraries (fptraining Eigen3::Eigen Threads::Threads)
-target_include_directories(fptraining PRIVATE backend/minillama/cryptoTools)
+target_link_libraries (fptraining Eigen3::Eigen Threads::Threads SCI-FloatML)
+target_include_directories(fptraining PRIVATE backend/minillama/cryptoTools backend/sci/src)

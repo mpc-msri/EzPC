@@ -760,7 +760,7 @@ DCFKeyPack Dealer::recv_dcf_keypack(int Bin, int Bout, int groupSize) {
     kp.Bout = Bout;
     kp.groupSize = groupSize;
 
-    kp.k = new block[Bin + 1];
+    kp.k = new osuCrypto::block[Bin + 1];
     for (int i = 0; i < Bin + 1; ++i) {
         kp.k[i] = recv_block();
     }

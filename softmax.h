@@ -1,5 +1,6 @@
 #pragma once
 #include "tensor.h"
+#include "backend/sci/src/library_float.h"
 
 template <typename T, u64 scale>
 void softmax(const Tensor4D<T> &in, Tensor4D<T> &out)
@@ -112,4 +113,30 @@ inline void pirhana_softmax_ct(const Tensor4D<i64> &in, Tensor4D<i64> &out, u64 
             out(b, j, 0, 0) = (i64)(t);
         }
     }
+}
+
+inline void secfloat_init(int secfloatParty, std::string secfloatAddr)
+{
+    __party = secfloatParty;
+    __address = secfloatAddr;
+    __init(0, nullptr);
+}
+
+inline void softmax_secfloat(const Tensor4D<u64> &in, Tensor4D<u64> &out, u64 scale, int llamaParty)
+{
+    assert(in.d1 == out.d1);
+    assert(in.d2 == out.d2);
+    assert(in.d3 == 1);
+    assert(in.d4 == 1);
+    assert(out.d3 == 1);
+    assert(out.d4 == 1);
+
+    Tensor4D<u64> inFloat(in.d1, in.d2, 4, 1);
+    FixToFloat(in.d1 * in.d2, in.data, inFloat.data, scale);
+    if (llamaParty != 1) {
+        vector < vector < FPArray > > inpFloatSecfloat = make_vector_float(ALICE, in.d1, in.d2);
+        vector < vector < FPArray > > outFloatSecfloat = make_vector_float(ALICE, in.d1, in.d2);
+        Softmax2(in.d1, in.d2, inpFloatSecfloat, outFloatSecfloat);
+    }
+
 }

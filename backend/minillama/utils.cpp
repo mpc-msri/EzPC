@@ -94,7 +94,7 @@ void MatMul(int s1, int s2, int s3, eigenMatrix &A, eigenMatrix &B, eigenMatrix 
 }
 
 
-void matmul_cleartext_eigen(int dim1, int dim2, int dim3, GroupElement *inA,
+void matmul_cleartext_eigen_llama(int dim1, int dim2, int dim3, GroupElement *inA,
                             GroupElement *inB, GroupElement *outC) {
   auto start = std::chrono::high_resolution_clock::now();
   Eigen::Matrix<uint64_t, Eigen::Dynamic, Eigen::Dynamic> eigen_A(dim1, dim2);
@@ -125,7 +125,7 @@ void matmul_cleartext_eigen(int dim1, int dim2, int dim3, GroupElement *inA,
 
 void MatMul(int s1, int s2, int s3, GroupElement *A, GroupElement *B, GroupElement *C)
 {
-    matmul_cleartext_eigen(s1, s2, s3, A, B, C);
+    matmul_cleartext_eigen_llama(s1, s2, s3, A, B, C);
 }
 
 void Conv2DReshapeFilter(int FH, int FW, int CI, int CO, GroupElement* filter, GroupElement* reshapedFilter)

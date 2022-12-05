@@ -24,15 +24,13 @@ SOFTWARE.
 #include <cryptoTools/Common/Defines.h>
 #include "group_element.h"
 
-using namespace osuCrypto;
-
 struct DCFKeyPack{
     int Bin, Bout, groupSize;
-    block *k;   // size Bin+1
+    osuCrypto::block *k;   // size Bin+1
     GroupElement *g;    // bitsize Bout, size groupSize
     GroupElement *v;   // bitsize Bout, size Bin x groupSize
     DCFKeyPack(int Bin, int Bout, int groupSize,
-                block *k,
+                osuCrypto::block *k,
                 GroupElement *g,
                 GroupElement *v) : Bin(Bin), Bout(Bout), groupSize(groupSize), k(k), g(g), v(v){}
     DCFKeyPack() {
@@ -164,7 +162,7 @@ struct SignedPublicDivKeyPack
 struct ReluKeyPack
 {
     int Bin, Bout;
-    block *k;
+    osuCrypto::block *k;
     GroupElement *g, *v;
     GroupElement e_b0, e_b1;		 // size: degree+1 (same as beta)
     GroupElement beta_b0, beta_b1;	 // size: degree+1 (shares of beta, which is set of poly coeffs) (beta: highest to lowest power left to right)

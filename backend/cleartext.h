@@ -9,7 +9,7 @@ public:
     static const u64 lr_scale = 6;
     static const u64 mom_fp = 29;
     static const u64 mom_scale = 5;
-    static const bool probablistic = false;
+    static const bool probablistic = true;
     static const bool numThreads = 1;
 
     template <typename Functor>

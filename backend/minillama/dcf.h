@@ -30,10 +30,8 @@ SOFTWARE.
 #include "group_element.h"
 #include "keypack.h"
 
-using namespace osuCrypto;
-
 void clearAESevals();
-inline u8 lsb(const block &b)
+inline osuCrypto::u8 lsb(const osuCrypto::block &b)
 {
     return _mm_cvtsi128_si64x(b) & 1;
 }
@@ -48,7 +46,7 @@ void evalDCF(int party, GroupElement *res, GroupElement idx, const DCFKeyPack &k
 void evalDCF(int Bin, int Bout, int groupSize, 
                 GroupElement *out, // groupSize
                 int party, GroupElement idx, 
-                block *k, // bin + 1
+                osuCrypto::block *k, // bin + 1
                 GroupElement *g , // groupSize
                 GroupElement *v, // bin * groupSize
                 bool geq = false, int evalGroupIdxStart = 0,
