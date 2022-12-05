@@ -33,6 +33,7 @@ SOFTWARE.
 #include "taylor.h"
 #include "relu.h"
 #include "select.h"
+#include "float.h"
 #include <cassert>
 #include <iostream>
 #include <assert.h>
@@ -2070,4 +2071,71 @@ void MaxPoolBackward(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
         delete[] keys;
     }
     std::cerr << ">> MaxPoolBackward - End" << std::endl;
+}
+
+void FixToFloat(int size, GroupElement *inp, GroupElement *out, int scale)
+{
+    std::cerr << ">> FixToFloat - Start" << std::endl;
+    GroupElement *p = new GroupElement[2*bitlength];
+    GroupElement *q = new GroupElement[2*bitlength];
+    fill_pq(p, q, bitlength);
+    // std::cout << "intervals = {" << std::endl;
+    // for(int i = 0; i < 2*bitlength; ++i) {
+    //     std::cout << "  " << i + 1 << "= [" << p[i] << ", " << q[i] << "]" << std::endl;
+    // }
+    // std::cout << "}" << std::endl;
+
+    if (party == DEALER) {
+        for(int i = 0; i < size; ++i) {
+            auto keys = keyGenFixToFloat(bitlength, scale, inp[i], p, q);
+            out[4*i] = 0;
+            out[4*i+1] = 0;
+            out[4*i+2] = 0;
+            out[4*i+3] = 0;
+            server->send_fix_to_float_key(keys.first, bitlength);
+            client->send_fix_to_float_key(keys.second, bitlength);
+        }
+    }
+    else {
+        FixToFloatKeyPack *keys = new FixToFloatKeyPack[size];
+        for(int i = 0; i < size; ++i) {
+            keys[i] = dealer->recv_fix_to_float_key(bitlength);
+        }
+        GroupElement *pow = new GroupElement[size];
+        GroupElement *sm = new GroupElement[size];
+        GroupElement *ym = new GroupElement[size];
+
+        peer->sync();
+        for(int i = 0; i < size; ++i) {
+            evalFixToFloat_1(party - 2, bitlength, scale, inp[i], keys[i], p, q, out[i*4 + 0], out[i*4 + 1], out[i*4 + 2], out[i*4 + 3], pow[i], sm[i]);
+        }
+
+        delete[] keys;
+
+        reconstruct(size, sm, 1);
+        reconstruct(size, pow, bitlength);
+
+        for(int i = 0; i < size; ++i) {
+            ym[i] = 2 * evalSelect(party - 2, 1 ^ sm[i], inp[i], keys[i].selectKey);
+            if (party == 2) {
+                ym[i] = ym[i] - inp[i];
+            }
+        }
+
+        reconstruct(size, ym, bitlength);
+
+        for(int i = 0; i < size; ++i) {
+            out[i*4 + 0] = -keys[i].ry * pow[i] - keys[i].rpow * ym[i] + keys[i].rm; 
+            if (party == 2) {
+                out[i*4 + 0] = out[i*4 + 0] + ym[i] * pow[i];
+                out[i*4 + 0] = -((-out[i*4+0]) >> (bitlength - scale));
+            }
+            else {
+                out[i*4 + 0] = out[i*4 + 0] >> (bitlength - scale);
+            }
+        }
+
+        reconstruct(4*size, out, bitlength);
+    }
+    std::cerr << ">> FixToFloat - End" << std::endl;
 }

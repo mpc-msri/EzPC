@@ -23,6 +23,7 @@ add_executable(fptraining
     backend/minillama/config.cpp
     backend/minillama/conv.cpp
     backend/minillama/dcf.cpp
+    backend/minillama/float.cpp
     backend/minillama/input_prng.cpp
     backend/minillama/mic.cpp
     backend/minillama/msnzb.cpp

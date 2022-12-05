@@ -586,6 +586,25 @@ void Peer::send_bitwise_and_key(const BitwiseAndKeyPack &kp)
     send_ge(kp.t[3], 64);
 }
 
+void Peer::send_mic_key(const MICKeyPack &kp, int bin, int bout, int m)
+{
+    send_dcf_keypack(kp.dcfKey);
+    for(int i = 0; i < m; ++i)
+    {
+        send_ge(kp.z[i], bout);
+    }
+}
+
+void Peer::send_fix_to_float_key(const FixToFloatKeyPack &kp, int bl)
+{
+    send_mic_key(kp.micKey, bl, bl, 2*bl);
+    send_ge(kp.rs, 1);
+    send_ge(kp.rpow, bl);
+    send_ge(kp.ry, bl);
+    send_select_key(kp.selectKey);
+    send_ge(kp.rm, bl);
+}
+
 GroupElement Peer::recv_input() {
     char buf[8];
     if (useFile) {
@@ -1156,5 +1175,43 @@ BitwiseAndKeyPack Dealer::recv_bitwise_and_key()
     kp.t[1] = recv_ge(64);
     kp.t[2] = recv_ge(64);
     kp.t[3] = recv_ge(64);
+    return kp;
+}
+
+// void Peer::send_mic_key(const MICKeyPack &kp, int bl, int m)
+// {
+//     send_dcf_keypack(kp.dcfKey);
+//     for(int i = 0; i < m; ++i)
+//     {
+//         send_ge(kp.z[i], bl);
+//     }
+// }
+
+// void Peer::send_fix_to_float_key(const FixToFloatKeyPack &kp, int bl)
+// {
+//     send_mic_key(kp.micKey, bl, 2*bl);
+// }
+
+MICKeyPack Dealer::recv_mic_key(int bin, int bout, int m)
+{
+    MICKeyPack kp;
+    kp.dcfKey = recv_dcf_keypack(bin, bout, 1);
+    kp.z = new GroupElement[m];
+    for(int i = 0; i < m; ++i)
+    {
+        kp.z[i] = recv_ge(bout);
+    }
+    return kp;
+}
+
+FixToFloatKeyPack Dealer::recv_fix_to_float_key(int bl)
+{
+    FixToFloatKeyPack kp;
+    kp.micKey = recv_mic_key(bl, bl, 2*bl);
+    kp.rs = recv_ge(1);
+    kp.rpow = recv_ge(bl);
+    kp.ry = recv_ge(bl);
+    kp.selectKey = recv_select_key(bl);
+    kp.rm = recv_ge(bl);
     return kp;
 }

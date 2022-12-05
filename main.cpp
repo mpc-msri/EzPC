@@ -59,6 +59,43 @@ void llama_relutruncate_test(int party) {
     }
 }
 
+void llama_fixtofloat_test(int party) {
+    srand(time(NULL));
+    const u64 scale = 24;
+    LlamaConfig::party = party;
+    LlamaConfig::bitlength = 64;
+    LlamaExtended<u64>::init("127.0.0.1");
+    
+    Tensor4D<u64> e(2, 2, 1, 1);
+    Tensor4D<u64> y(2, 2, 4, 1);
+    
+    e(0, 0, 0, 0) = 0;
+    e(0, 1, 0, 0) = 1 * (1ULL << scale);
+    e(1, 0, 0, 0) = 5 * (1ULL << scale);
+    e(1, 1, 0, 0) = -12 * (1ULL << scale);
+    if (LlamaConfig::party == 1) {
+        e.fill(0);
+    }
+    y.fill(0);
+
+    LlamaExtended<u64>::initializeData(e, 1);
+    StartComputation();
+    FixToFloat(e.d1 * e.d2, e.data, y.data, scale);
+    EndComputation();
+    Llama<u64>::output(y);
+    LlamaExtended<u64>::finalize();
+    for(int i = 0; i < y.d1; ++i) {
+        for(int j = 0; j < y.d2; ++j) {
+            y(i, j, 0, 0) = y(i, j, 0, 0) % (1ULL << 24);
+            y(i, j, 2, 0) = y(i, j, 2, 0) % 2;
+            y(i, j, 3, 0) = y(i, j, 3, 0) % 2;
+        }
+    }
+    if (LlamaConfig::party != 1) {
+        y.print<i64>();
+    }
+}
+
 void pt_test_maxpooldouble()
 {
     auto r1 = random_ge(64);
@@ -415,10 +452,11 @@ int main(int argc, char** argv) {
     if (argc > 1) {
         party = atoi(argv[1]);
     }
-    llama_test_3layer(party);
+    // llama_test_3layer(party);
     // llama_relutruncate_test(party);
     // llama_relu2round_test(party);
     // llama_relu_old_test(party);
+    llama_fixtofloat_test(party);
 
     // for(int i = 0; i < 10; ++i) {
     //     pt_test_bitwiseand();

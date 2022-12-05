@@ -442,3 +442,10 @@ struct BitwiseAndKeyPack
 {
     GroupElement t[4];
 };
+
+struct FixToFloatKeyPack
+{
+    MICKeyPack micKey;
+    GroupElement rs, rpow, ry, rm;
+    SelectKeyPack selectKey;
+};

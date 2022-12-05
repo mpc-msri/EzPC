@@ -115,6 +115,10 @@ public:
 
     void send_bitwise_and_key(const BitwiseAndKeyPack &kp);
 
+    void send_mic_key(const MICKeyPack &kp, int bin, int bout, int m);
+
+    void send_fix_to_float_key(const FixToFloatKeyPack &kp, int bl);
+
     void send_uint8_array(const uint8_t *data, int size);
 
     void recv_uint8_array(uint8_t *data, int size);
@@ -202,6 +206,10 @@ public:
     BulkyLRSKeyPack recv_bulkylrs_key(int bl, int m, uint64_t *scales);
 
     BitwiseAndKeyPack recv_bitwise_and_key();
+
+    MICKeyPack recv_mic_key(int bin, int bout, int m);
+
+    FixToFloatKeyPack recv_fix_to_float_key(int bl);
 
 };
 
