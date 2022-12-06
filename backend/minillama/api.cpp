@@ -2095,6 +2095,8 @@ void FixToFloat(int size, GroupElement *inp, GroupElement *out, int scale)
             server->send_fix_to_float_key(keys.first, bitlength);
             client->send_fix_to_float_key(keys.second, bitlength);
         }
+        std::cout << server->bytesSent << std::endl;
+        std::cout << client->bytesSent << std::endl;
     }
     else {
         FixToFloatKeyPack *keys = new FixToFloatKeyPack[size];
@@ -2107,10 +2109,16 @@ void FixToFloat(int size, GroupElement *inp, GroupElement *out, int scale)
 
         peer->sync();
         for(int i = 0; i < size; ++i) {
-            evalFixToFloat_1(party - 2, bitlength, scale, inp[i], keys[i], p, q, out[i*4 + 0], out[i*4 + 1], out[i*4 + 2], out[i*4 + 3], pow[i], sm[i]);
+            // std::cout << i << std::endl;
+            // if (i == 38) {
+                // std::cout << dealer->bytesReceived << std::endl;
+                // for(int j = 0; j < bitlength + 1; ++j) {
+                //     std::cout << j << " = " << keys[i].micKey.dcfKey.g[0] << std::endl;
+                // }
+            // }
+            evalFixToFloat_1(party - 2, bitlength, scale, inp[i], keys[i], p, q, 
+                out[i*4 + 0], out[i*4 + 1], out[i*4 + 2], out[i*4 + 3], pow[i], sm[i]);
         }
-
-        delete[] keys;
 
         reconstruct(size, sm, 1);
         reconstruct(size, pow, bitlength);
@@ -2134,8 +2142,8 @@ void FixToFloat(int size, GroupElement *inp, GroupElement *out, int scale)
                 out[i*4 + 0] = out[i*4 + 0] >> (bitlength - scale);
             }
         }
-
-        reconstruct(4*size, out, bitlength);
+        // delete[] keys;
+        std::cout << dealer->bytesReceived << std::endl;
     }
     std::cerr << ">> FixToFloat - End" << std::endl;
 }

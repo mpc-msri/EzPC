@@ -64,6 +64,10 @@ pair<FixToFloatKeyPack> keyGenFixToFloat(int bin, int scale, GroupElement rin, G
     return keys;
 }
 
+inline uint64_t fp32_bias(uint64_t x) {
+    return (x + 127) % 256;
+}
+
 void evalFixToFloat_1(int party, int bin, int scale, GroupElement x, const FixToFloatKeyPack &key, GroupElement *p, GroupElement *q, GroupElement &m, GroupElement &e, GroupElement &z, GroupElement &s, GroupElement &pow, GroupElement &sm)
 {
     mod(x, bin);
@@ -78,10 +82,10 @@ void evalFixToFloat_1(int party, int bin, int scale, GroupElement x, const FixTo
     }
     mod(s, 1);
     sm = s + key.rs;
-    e = -126 * t[0] + (bin - scale - 1) * t[bin];
+    e = fp32_bias(-126) * t[0] + fp32_bias(bin - scale - 1) * t[bin];
     pow = key.rpow + t[bin];
     for (int i = 2; i <= bin; ++i) {
-        e += (t[i-1] + t[2*bin + 1 - i]) * (i - scale - 2);
+        e += (t[i-1] + t[2*bin + 1 - i]) * fp32_bias(i - scale - 2);
         pow += (t[i-1] + t[2*bin + 1 - i]) * (1ULL<<(bin - i + 1));
     }
 }

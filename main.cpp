@@ -65,35 +65,41 @@ void llama_fixtofloat_test(int party) {
     LlamaConfig::party = party;
     LlamaConfig::bitlength = 64;
     LlamaExtended<u64>::init("127.0.0.1");
+    int numClasses = 20;
+    int batchSize = 1;
+    // if (party != 1)
+    //     secfloat_init(party - 1, "127.0.0.1");
     
-    Tensor4D<u64> e(2, 2, 1, 1);
-    Tensor4D<u64> y(2, 2, 4, 1);
+    Tensor4D<u64> e(batchSize, numClasses, 1, 1);
+    Tensor4D<u64> y(batchSize, numClasses, 1, 1);
     
-    e(0, 0, 0, 0) = 0;
-    e(0, 1, 0, 0) = 1 * (1ULL << scale);
-    e(1, 0, 0, 0) = 5 * (1ULL << scale);
-    e(1, 1, 0, 0) = -12 * (1ULL << scale);
+    for(int i = 0; i < numClasses; ++i) {
+        e(0, i, 0, 0) = i * (1ULL << scale);
+        // e(1, i, 0, 0) = 5 * (1ULL << scale);
+    }
+    
     if (LlamaConfig::party == 1) {
         e.fill(0);
     }
     y.fill(0);
 
-    LlamaExtended<u64>::initializeData(e, 1);
+    // LlamaExtended<u64>::initializeData(e, 1);
     StartComputation();
-    FixToFloat(e.d1 * e.d2, e.data, y.data, scale);
-    EndComputation();
-    Llama<u64>::output(y);
-    LlamaExtended<u64>::finalize();
-    for(int i = 0; i < y.d1; ++i) {
-        for(int j = 0; j < y.d2; ++j) {
-            y(i, j, 0, 0) = y(i, j, 0, 0) % (1ULL << 24);
-            y(i, j, 2, 0) = y(i, j, 2, 0) % 2;
-            y(i, j, 3, 0) = y(i, j, 3, 0) % 2;
-        }
-    }
-    if (LlamaConfig::party != 1) {
-        y.print<i64>();
-    }
+    softmax_secfloat(e, y, scale, party);
+    // FixToFloat(e.d1 * e.d2, e.data, y.data, scale);
+    // EndComputation();
+    // Llama<u64>::output(y);
+    // LlamaExtended<u64>::finalize();
+    // for(int i = 0; i < y.d1; ++i) {
+    //     for(int j = 0; j < y.d2; ++j) {
+    //         y(i, j, 0, 0) = y(i, j, 0, 0) % (1ULL << 24);
+    //         y(i, j, 2, 0) = y(i, j, 2, 0) % 2;
+    //         y(i, j, 3, 0) = y(i, j, 3, 0) % 2;
+    //     }
+    // }
+    // if (LlamaConfig::party != 1) {
+    //     y.print<i64>();
+    // }
 }
 
 void pt_test_maxpooldouble()
