@@ -5,7 +5,7 @@
 #include "layers.h"
 #include "softmax.h"
 
-const u64 numEpochs = 1;
+const u64 numEpochs = 10;
 const u64 batchSize = 100;
 
 #define useMaxPool true
@@ -22,7 +22,7 @@ void printprogress(double percent) {
 
 
 void cifar10_int() {
-    const u64 scale = 16;
+    const u64 scale = 24;
     std::cout << "> Scale = " << scale << std::endl;
     std::cout << "> Probablistic = " << (ClearText<i64>::probablistic ? "true" : "false") << std::endl;
     auto dataset = cifar::read_dataset<std::vector, std::vector, uint8_t, uint8_t>();
@@ -112,27 +112,52 @@ void lenet_int() {
 
     const u64 trainLen = 60000;
     const u64 testLen = 10000;
-    const u64 scale = 16;
+    const u64 scale = 24;
+    const u64 batchSize = 100;
     srand(time(NULL));
     srand(rand());
     srand(rand());
     std::cout << "=== Running Fixed-Point Training ===" << std::endl;
+    std::cout << "> Scale = " << scale << std::endl;
+    std::cout << "> Probablistic = " << (ClearText<i64>::probablistic ? "true" : "false") << std::endl;
 
+    // auto model = Sequential<i64>({
+    //     new Conv2D<i64, scale>(1, 6, 5, 1, 1),
+    //     new ReLUTruncate<i64>(scale),
+    //     new MaxPool2D<i64>(2),
+    //     new Conv2D<i64, scale>(6, 16, 5, 1),
+    //     new ReLUTruncate<i64>(scale),
+    //     new MaxPool2D<i64>(2),
+    //     new Conv2D<i64, scale>(16, 120, 5),
+    //     new ReLUTruncate<i64>(scale),
+    //     new Flatten<i64>(),
+    //     new FC<i64, scale>(120, 84),
+    //     new ReLUTruncate<i64>(scale),
+    //     new FC<i64, scale>(84, 10),
+    //     new Truncate<i64>(scale),
+    // });
+
+    // LeNet-5
     auto model = Sequential<i64>({
-        new Conv2D<i64, scale>(1, 6, 5, 1, 1),
+        new Conv2D<i64, scale>(1, 8, 5),
         new ReLUTruncate<i64>(scale),
         new MaxPool2D<i64>(2),
-        new Conv2D<i64, scale>(6, 16, 5, 1),
+        new Conv2D<i64, scale>(8, 16, 5),
         new ReLUTruncate<i64>(scale),
         new MaxPool2D<i64>(2),
-        new Conv2D<i64, scale>(16, 120, 5),
-        new ReLUTruncate<i64>(scale),
         new Flatten<i64>(),
-        new FC<i64, scale>(120, 84),
+        new FC<i64, scale>(256, 128),
         new ReLUTruncate<i64>(scale),
-        new FC<i64, scale>(84, 10),
+        new FC<i64, scale>(128, 10),
         new Truncate<i64>(scale),
     });
+
+    // Fully Connected
+    // auto model = Sequential<i64>({
+    //     new Flatten<i64>(),
+    //     new FC<i64, scale>(784, 10),
+    //     new Truncate<i64>(scale),
+    // });
 
     Tensor4D<i64> testSet(testLen, 28, 28, 1);
     for(u64 i = 0; i < testLen; ++i) {
@@ -142,6 +167,17 @@ void lenet_int() {
             }
         }
     }
+
+    model.forward(testSet);
+    // model.activation.print<i64>();
+    u64 correct = 0;
+    for(u64 i = 0; i < testLen; i++) {
+        if (model.activation.argmax(i) == test_label[i]) {
+            correct++;
+        }
+    }
+    std::cout << "> Initial Accuracy = " << (correct*100.0) / testLen;
+    std::cout << std::endl;
 
     Tensor4D<i64> e(batchSize, 10, 1, 1);
     Tensor4D<i64> trainImage(batchSize, 28, 28, 1);

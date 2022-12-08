@@ -133,46 +133,46 @@ inline void softmax_secfloat(const Tensor4D<u64> &in, Tensor4D<u64> &out, u64 sc
 
     Tensor4D<u64> inFloat(in.d1, in.d2, 4, 1);
     FixToFloat(in.d1 * in.d2, in.data, inFloat.data, scale);
-    if (llamaParty != 1) {
-        reconstruct(in.d1 * in.d2 * 4, inFloat.data, 64);
-        for(int i = 0; i < in.d1; ++i) {
-            for(int j = 0; j < in.d2; ++j) {
-                std::cout << "fp = " << in(i, j, 0, 0);
-                std::cout << " m = " << inFloat(i, j, 0, 0) % (1ULL<<24);
-                std::cout << " e = " << inFloat(i, j, 1, 0) % (1024);
-                std::cout << " z = " << inFloat(i, j, 2, 0) % 2;
-                std::cout << " s = " << inFloat(i, j, 3, 0) % 2 << std::endl;
-            }
-        }
-    }
-    return;
-    // Tensor4D<u64> outFloat(in.d1, in.d2, 4, 1);
     // if (llamaParty != 1) {
-    //     vector < vector < FPArray > > inpFloatSecfloat = make_vector_float(llamaParty-1, in.d1, in.d2);
+    //     reconstruct(in.d1 * in.d2 * 4, inFloat.data, 64);
     //     for(int i = 0; i < in.d1; ++i) {
     //         for(int j = 0; j < in.d2; ++j) {
-    //             inpFloatSecfloat[i][j].m[0] = inFloat(i, j, 0, 0);
-    //             inpFloatSecfloat[i][j].e[0] = inFloat(i, j, 1, 0);
-    //             inpFloatSecfloat[i][j].z[0] = inFloat(i, j, 2, 0);
-    //             inpFloatSecfloat[i][j].s[0] = inFloat(i, j, 3, 0);
-    //         }
-    //     }
-    //     vector < vector < FPArray > > outFloatSecfloat = make_vector_float(llamaParty-1, in.d1, in.d2);
-    //     Softmax2(in.d1, in.d2, inpFloatSecfloat, outFloatSecfloat);
-    //     for(int i = 0; i < in.d1; ++i) {
-    //         for(int j = 0; j < in.d2; ++j) {
-    //             outFloat(i, j, 0, 0) = outFloatSecfloat[i][j].m[0];
-    //             outFloat(i, j, 1, 0) = outFloatSecfloat[i][j].e[0];
-    //             outFloat(i, j, 2, 0) = outFloatSecfloat[i][j].z[0];
-    //             outFloat(i, j, 3, 0) = outFloatSecfloat[i][j].s[0];
-    //         }
-    //     }
-    //     reconstruct(in.d1 * in.d2 * 4, outFloat.data, 64);
-    //     for(int i = 0; i < in.d1; ++i) {
-    //         for(int j = 0; j < in.d2; ++j) {
-    //             std::cout << "m = " << outFloat(i, j, 0, 0) % (1ULL<<24) << " e = " << outFloat(i, j, 1, 0) % (1024) << " z = " << outFloat(i, j, 2, 0) % 2 << " s = " << outFloat(i, j, 3, 0) % 2 << std::endl;
+    //             std::cout << "fp = " << in(i, j, 0, 0);
+    //             std::cout << " m = " << inFloat(i, j, 0, 0) % (1ULL<<24);
+    //             std::cout << " e = " << inFloat(i, j, 1, 0) % (1024);
+    //             std::cout << " z = " << inFloat(i, j, 2, 0) % 2;
+    //             std::cout << " s = " << inFloat(i, j, 3, 0) % 2 << std::endl;
     //         }
     //     }
     // }
+    // return;
+    Tensor4D<u64> outFloat(in.d1, in.d2, 4, 1);
+    if (llamaParty != 1) {
+        vector < vector < FPArray > > inpFloatSecfloat = make_vector_float(llamaParty-1, in.d1, in.d2);
+        for(int i = 0; i < in.d1; ++i) {
+            for(int j = 0; j < in.d2; ++j) {
+                inpFloatSecfloat[i][j].m[0] = inFloat(i, j, 0, 0);
+                inpFloatSecfloat[i][j].e[0] = inFloat(i, j, 1, 0);
+                inpFloatSecfloat[i][j].z[0] = inFloat(i, j, 2, 0);
+                inpFloatSecfloat[i][j].s[0] = inFloat(i, j, 3, 0);
+            }
+        }
+        vector < vector < FPArray > > outFloatSecfloat = make_vector_float(llamaParty-1, in.d1, in.d2);
+        Softmax2(in.d1, in.d2, inpFloatSecfloat, outFloatSecfloat);
+        for(int i = 0; i < in.d1; ++i) {
+            for(int j = 0; j < in.d2; ++j) {
+                outFloat(i, j, 0, 0) = outFloatSecfloat[i][j].m[0];
+                outFloat(i, j, 1, 0) = outFloatSecfloat[i][j].e[0];
+                outFloat(i, j, 2, 0) = outFloatSecfloat[i][j].z[0];
+                outFloat(i, j, 3, 0) = outFloatSecfloat[i][j].s[0];
+            }
+        }
+        // reconstruct(in.d1 * in.d2 * 4, outFloat.data, 64);
+        // for(int i = 0; i < in.d1; ++i) {
+        //     for(int j = 0; j < in.d2; ++j) {
+        //         std::cout << "m = " << outFloat(i, j, 0, 0) % (1ULL<<24) << " e = " << outFloat(i, j, 1, 0) % (1024) << " z = " << outFloat(i, j, 2, 0) % 2 << " s = " << outFloat(i, j, 3, 0) % 2 << std::endl;
+        //     }
+        // }
+    }
 
 }
