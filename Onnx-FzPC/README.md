@@ -155,6 +155,24 @@ This completes the node implementation in backend.
             f");"
         )
 ```
+4. Lastly add node name i.e "Tanh" to the `implemented` list in function `is_compatible` inside class `FzpcBackend` located in `Onnx-FzPC/backend.py`.
+```python
+    implemented = [
+        "Relu",
+        "Sigmoid",
+        "Softmax",
+        "Conv",
+        "MaxPool",
+        "Concat",
+        "BatchNormalization",
+        "AveragePool",
+        "GlobalAveragePool",
+        "Flatten",
+        "Reshape",
+        "Gemm",
+        "Tanh"
+    ]
+```
 
 ## Demo
 Follow [Demo](demo/Readme.md) for Onnx-FzPC demo with Secfloat.

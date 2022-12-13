@@ -121,6 +121,7 @@ class FzpcBackend(Backend):
             "Flatten",
             "Reshape",
             "Gemm",
+            "Tanh"
         ]
         for node in model.graph.node:
             if node.op_type not in implemented:
