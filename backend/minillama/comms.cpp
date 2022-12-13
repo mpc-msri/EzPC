@@ -605,6 +605,22 @@ void Peer::send_fix_to_float_key(const FixToFloatKeyPack &kp, int bl)
     send_ge(kp.rm, bl);
 }
 
+void Peer::send_float_to_fix_key(const FloatToFixKeyPack &kp, int bl)
+{
+    send_ge(kp.rm, 24);
+    send_ge(kp.re, 10);
+    send_dcf_keypack(kp.dcfKey);
+    send_ge(kp.rw, 1);
+    send_ge(kp.rt, bl);
+    send_select_key(kp.selectKey);
+    for(int i = 0; i < 1024; ++i) {
+        send_ge(kp.p[i], bl);
+    }
+    for(int i = 0; i < 1024; ++i) {
+        send_ge(kp.q[i], bl);
+    }
+}
+
 GroupElement Peer::recv_input() {
     char buf[8];
     if (useFile) {
@@ -1213,5 +1229,23 @@ FixToFloatKeyPack Dealer::recv_fix_to_float_key(int bl)
     kp.ry = recv_ge(bl);
     kp.selectKey = recv_select_key(bl);
     kp.rm = recv_ge(bl);
+    return kp;
+}
+
+FloatToFixKeyPack Dealer::recv_float_to_fix_key(int bl)
+{
+    FloatToFixKeyPack kp;
+    kp.rm = recv_ge(24);
+    kp.re = recv_ge(10);
+    kp.dcfKey = recv_dcf_keypack(24, 1, 1);
+    kp.rw = recv_ge(1);
+    kp.rt = recv_ge(bl);
+    kp.selectKey = recv_select_key(bl);
+    for(int i = 0; i < 1024; ++i) {
+        kp.p[i] = recv_ge(bl);
+    }
+    for(int i = 0; i < 1024; ++i) {
+        kp.q[i] = recv_ge(bl);
+    }
     return kp;
 }

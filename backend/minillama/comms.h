@@ -119,6 +119,8 @@ public:
 
     void send_fix_to_float_key(const FixToFloatKeyPack &kp, int bl);
 
+    void send_float_to_fix_key(const FloatToFixKeyPack &kp, int bl);
+
     void send_uint8_array(const uint8_t *data, int size);
 
     void recv_uint8_array(uint8_t *data, int size);
@@ -210,6 +212,8 @@ public:
     MICKeyPack recv_mic_key(int bin, int bout, int m);
 
     FixToFloatKeyPack recv_fix_to_float_key(int bl);
+
+    FloatToFixKeyPack recv_float_to_fix_key(int bl);
 
 };
 

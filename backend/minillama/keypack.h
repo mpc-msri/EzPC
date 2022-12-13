@@ -447,3 +447,12 @@ struct FixToFloatKeyPack
     GroupElement rs, rpow, ry, rm;
     SelectKeyPack selectKey;
 };
+
+struct FloatToFixKeyPack
+{
+    GroupElement rm, re, rw, rt;
+    DCFKeyPack dcfKey;
+    SelectKeyPack selectKey;
+    GroupElement p[1024];
+    GroupElement q[1024];
+};

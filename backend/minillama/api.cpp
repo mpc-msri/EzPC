@@ -2143,7 +2143,81 @@ void FixToFloat(int size, GroupElement *inp, GroupElement *out, int scale)
             }
         }
         // delete[] keys;
-        std::cout << dealer->bytesReceived << std::endl;
+        // std::cout << dealer->bytesReceived << std::endl;
     }
     std::cerr << ">> FixToFloat - End" << std::endl;
+}
+
+void FloatToFix(int size, GroupElement *inp, GroupElement *out, int scale)
+{
+    std::cerr << ">> FloatToFix - Start" << std::endl;
+
+    if (party == DEALER) {
+        for(int i = 0; i < size; ++i) {
+            auto rout = 0;//random_ge(bitlength);
+            auto keys = keyGenFloatToFix(bitlength, scale, rout);
+            out[i] = rout;
+            server->send_float_to_fix_key(keys.first, bitlength);
+            client->send_float_to_fix_key(keys.second, bitlength);
+        }
+    }
+    else {
+        FloatToFixKeyPack *keys = new FloatToFixKeyPack[size];
+        for(int i = 0; i < size; ++i) {
+            keys[i] = dealer->recv_float_to_fix_key(bitlength);
+        }
+
+        GroupElement *m = new GroupElement[2*size];
+        GroupElement *e = m + size;
+        GroupElement *w = new GroupElement[2*size];
+        GroupElement *t = w + size;
+
+        peer->sync();
+        for(int i = 0; i < size; ++i) {
+            m[i] = inp[4*i + 0] + keys[i].rm;
+            e[i] = inp[4*i + 1] + keys[i].re;
+            if (party == 2) {
+                e[i] += (scale - 23);
+                e[i] -= 127; // fp32 bias
+            }
+        }
+
+        reconstruct(2*size, m, 24);
+
+        // for(int i = 0; i < size; ++i) {
+        //     std::cout << (e[i] % 1024) << std::endl;
+        // }
+
+        for(int i = 0; i < size; ++i) {
+            evalDCF(party - 2, &w[i], m[i], keys[i].dcfKey);
+            w[i] = w[i] + keys[i].rw;
+            t[i] = keys[i].rt;
+            for(int j = 1001; j < 1024; ++j) {
+                t[i] = t[i] + (1ULL<<(j-1000)) * keys[i].p[(j-e[i])%1024];
+            }
+        }
+
+        reconstruct(2*size, w, bitlength);
+
+        // for(int i = 0; i < size; ++i) {
+        //     std::cout << t[i] << std::endl;
+        // }
+
+        for(int i = 0; i < size; ++i) {
+            out[i] = 0;
+            for(int j = 0; j < 1024; ++j) {
+                out[i] += adjust(m[i], j) * keys[i].p[(j-e[i])%1024];
+            }
+            out[i] += keys[i].q[e[i]%1024];
+            out[i] += evalSelect(party - 2, w[i], t[i], keys[i].selectKey);
+        }
+
+        reconstruct(size, out, bitlength);
+
+        for(int i = 0; i < size; ++i) {
+            std::cout << out[i] << std::endl;
+        }
+
+    }
+    std::cerr << ">> FloatToFix - End" << std::endl;
 }

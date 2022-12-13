@@ -106,6 +106,7 @@ void MaxPoolBackward(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
              int32_t C1, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *outArr), GroupElement *oneHot);
 
 void FixToFloat(int size, GroupElement *inp, GroupElement *out, int scale);
+void FloatToFix(int size, GroupElement *inp, GroupElement *out, int scale);
 
 inline GroupElement funcSSCons(uint64_t val) {
     // if (party == DEALER)
