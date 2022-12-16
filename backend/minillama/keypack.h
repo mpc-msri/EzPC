@@ -448,6 +448,19 @@ struct FixToFloatKeyPack
     SelectKeyPack selectKey;
 };
 
+inline void freeFixToFloatKeyPack(FixToFloatKeyPack &key)
+{
+    freeMICKeyPack(key.micKey);
+}
+
+inline void freeFixToFloatKeyPackPair(std::pair<FixToFloatKeyPack, FixToFloatKeyPack> &keys)
+{
+    delete[] keys.first.micKey.dcfKey.k;
+    delete[] keys.second.micKey.dcfKey.k;
+    delete[] keys.first.micKey.dcfKey.g;
+    delete[] keys.first.micKey.dcfKey.v;
+}
+
 struct FloatToFixKeyPack
 {
     GroupElement rm, re, rw, rt;
@@ -456,3 +469,16 @@ struct FloatToFixKeyPack
     GroupElement p[1024];
     GroupElement q[1024];
 };
+
+inline void freeFloatToFixKeyPack(FloatToFixKeyPack &key)
+{
+    freeDCFKeyPack(key.dcfKey);
+}
+
+inline void freeFloatToFixKeyPackPair(std::pair<FloatToFixKeyPack, FloatToFixKeyPack> &keys)
+{
+    delete[] keys.first.dcfKey.k;
+    delete[] keys.second.dcfKey.k;
+    delete[] keys.first.dcfKey.g;
+    delete[] keys.first.dcfKey.v;
+}

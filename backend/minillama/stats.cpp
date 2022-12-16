@@ -22,3 +22,4 @@ uint64_t dealerMicroseconds = 0;
 uint64_t inputOfflineComm = 0;
 uint64_t inputOnlineComm = 0;
 uint64_t startTime = 0;
+uint64_t secFloatComm = 0;

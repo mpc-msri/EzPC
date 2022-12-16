@@ -149,7 +149,6 @@ pair<FloatToFixKeyPack> keyGenFloatToFix(int bin, int scale, GroupElement rout)
     for(int i = 0; i < 1024; ++i) {
         if (i == ((1024 - re) % 1024)) {
             p = 1;
-            std::cout << "idx = " << i << std::endl;
         }
         else {
             p = 0;

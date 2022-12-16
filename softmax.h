@@ -1,6 +1,7 @@
 #pragma once
 #include "tensor.h"
 #include "backend/sci/src/library_float.h"
+#include "backend/minillama/stats.h"
 
 template <typename T, u64 scale>
 void softmax(const Tensor4D<T> &in, Tensor4D<T> &out)
@@ -145,7 +146,22 @@ inline void softmax_secfloat(const Tensor4D<u64> &in, Tensor4D<u64> &out, u64 sc
             }
         }
         vector < vector < FPArray > > outFloatSecfloat = make_vector_float(llamaParty-1, in.d1, in.d2);
+
+        std::cerr << ">> Softmax (SecFloat) - Start" << std::endl;
+        auto secfloat_start = std::chrono::high_resolution_clock::now();
+        auto secfloat_comm_start = __get_comm();
+        auto secfloat_round_start = __iopack->get_rounds();
         Softmax2(in.d1, in.d2, inpFloatSecfloat, outFloatSecfloat);
+        auto secfloat_round_end = __iopack->get_rounds();
+        auto secfloat_comm_end = __get_comm();
+        auto secfloat_end = std::chrono::high_resolution_clock::now();
+        auto eval_time = std::chrono::duration_cast<std::chrono::microseconds>(secfloat_end - secfloat_start).count();
+        evalMicroseconds += eval_time;
+        secFloatComm += (uint64_t)(secfloat_comm_end - secfloat_comm_start);
+        numRounds += (secfloat_round_end - secfloat_round_start);
+        std::cerr << "   Online Time = " << eval_time / 1000.0 << " miliseconds" << std::endl;
+        std::cerr << ">> Softmax (SecFloat) - End" << std::endl;
+
         for(int i = 0; i < in.d1; ++i) {
             for(int j = 0; j < in.d2; ++j) {
                 outFloat(i, j, 0, 0) = outFloatSecfloat[i][j].m[0];

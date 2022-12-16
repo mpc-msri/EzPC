@@ -24,3 +24,4 @@ extern uint64_t dealerMicroseconds;
 extern uint64_t inputOfflineComm;
 extern uint64_t inputOnlineComm;
 extern uint64_t startTime;
+extern uint64_t secFloatComm;

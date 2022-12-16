@@ -66,11 +66,12 @@ void llama_fixtofloat_test(int party) {
     LlamaConfig::bitlength = 64;
     LlamaExtended<u64>::init("127.0.0.1");
     int numClasses = 10;
-    int batchSize = 2;
+    int batchSize = 100;
     if (party != 1)
         secfloat_init(party - 1, "127.0.0.1");
     
     Tensor4D<u64> e(batchSize, numClasses, 1, 1);
+    e.fill(0);
     Tensor4D<u64> y(batchSize, numClasses, 1, 1);
     
     for(int i = 0; i < numClasses; ++i) {
@@ -86,10 +87,12 @@ void llama_fixtofloat_test(int party) {
     // LlamaExtended<u64>::initializeData(e, 1);
     StartComputation();
     softmax_secfloat(e, y, scale, party);
-    // EndComputation();
+    EndComputation();
     Llama<u64>::output(y);
     LlamaVersion::finalize();
-    y.print();
+    if (LlamaConfig::party != 1) {
+        y.print();
+    }
     // LlamaExtended<u64>::finalize();
     // for(int i = 0; i < y.d1; ++i) {
     //     for(int j = 0; j < y.d2; ++j) {

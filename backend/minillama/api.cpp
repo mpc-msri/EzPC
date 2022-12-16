@@ -50,7 +50,7 @@ using namespace LlamaConfig;
 void StartComputation()
 {
     std::cerr << "=== COMPUTATION START ===\n\n";
-    startTime = std::chrono::system_clock::now().time_since_epoch().count();
+    startTime = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
     if (party != DEALER)
         peer->sync();
@@ -93,7 +93,7 @@ void EndComputation()
         std::cerr << "Offline Communication = " << inputOfflineComm << " bytes\n";
         std::cerr << "Offline Time = " << accumulatedInputTimeOffline / 1000.0 << " milliseconds\n";
         std::cerr << "Online Rounds = " << numRounds << "\n";
-        std::cerr << "Online Communication = " << peer->bytesSent + peer->bytesReceived + inputOnlineComm << " bytes\n";
+        std::cerr << "Online Communication = " << peer->bytesSent + peer->bytesReceived + inputOnlineComm + secFloatComm << " bytes\n";
         std::cerr << "Online Time = " << (evalMicroseconds + accumulatedInputTimeOnline) / 1000.0 << " milliseconds\n";
         std::cerr << "Total Eigen Time = " << eigenMicroseconds / 1000.0 << " milliseconds\n\n";
         std::cerr << "Conv + Matmul Time = " << (convEvalMicroseconds + matmulEvalMicroseconds) / 1000.0 << " milliseconds\n";
@@ -102,7 +102,7 @@ void EndComputation()
         std::cerr << "MaxPool time = " << maxpoolEvalMicroseconds / 1000.0 << " milliseconds\n";
         std::cerr << "Select/Bit operations Time = " << selectEvalMicroseconds / 1000.0 << " milliseconds\n";
         std::cerr << "Truncate time = " << arsEvalMicroseconds / 1000.0 << " milliseconds\n";
-        auto endTime = std::chrono::system_clock::now().time_since_epoch().count();
+        auto endTime = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         std::cerr << "Total Time (including Key Read) = " << (endTime - startTime) / 1000000.0 << " milliseconds\n";
     }
     else {
@@ -2073,6 +2073,16 @@ void MaxPoolBackward(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
     std::cerr << ">> MaxPoolBackward - End" << std::endl;
 }
 
+void fixtofloat_threads_helper(int thread_idx, int32_t size, int scale, GroupElement *inp, GroupElement *out, GroupElement *pl, GroupElement *q, 
+    GroupElement *pow, GroupElement *sm, FixToFloatKeyPack *keys)
+{
+    auto p = get_start_end(size, thread_idx);
+    for(int i = p.first; i < p.second; i += 1){
+        evalFixToFloat_1(party - 2, bitlength, scale, inp[i], keys[i], pl, q, 
+                out[i*4 + 0], out[i*4 + 1], out[i*4 + 2], out[i*4 + 3], pow[i], sm[i]);
+    }
+}
+
 void FixToFloat(int size, GroupElement *inp, GroupElement *out, int scale)
 {
     std::cerr << ">> FixToFloat - Start" << std::endl;
@@ -2094,30 +2104,32 @@ void FixToFloat(int size, GroupElement *inp, GroupElement *out, int scale)
             out[4*i+3] = 0;
             server->send_fix_to_float_key(keys.first, bitlength);
             client->send_fix_to_float_key(keys.second, bitlength);
+            freeFixToFloatKeyPackPair(keys);
         }
-        std::cout << server->bytesSent << std::endl;
-        std::cout << client->bytesSent << std::endl;
     }
     else {
+        auto keyread_start = std::chrono::high_resolution_clock::now();
         FixToFloatKeyPack *keys = new FixToFloatKeyPack[size];
         for(int i = 0; i < size; ++i) {
             keys[i] = dealer->recv_fix_to_float_key(bitlength);
         }
+        auto keyread_end = std::chrono::high_resolution_clock::now();
+        auto keyread_time_taken = std::chrono::duration_cast<std::chrono::milliseconds>(keyread_end -
+                                                            keyread_start).count();
         GroupElement *pow = new GroupElement[size];
         GroupElement *sm = new GroupElement[size];
         GroupElement *ym = new GroupElement[size];
 
         peer->sync();
-        for(int i = 0; i < size; ++i) {
-            // std::cout << i << std::endl;
-            // if (i == 38) {
-                // std::cout << dealer->bytesReceived << std::endl;
-                // for(int j = 0; j < bitlength + 1; ++j) {
-                //     std::cout << j << " = " << keys[i].micKey.dcfKey.g[0] << std::endl;
-                // }
-            // }
-            evalFixToFloat_1(party - 2, bitlength, scale, inp[i], keys[i], p, q, 
-                out[i*4 + 0], out[i*4 + 1], out[i*4 + 2], out[i*4 + 3], pow[i], sm[i]);
+        auto eval_start = std::chrono::high_resolution_clock::now();
+
+        std::thread thread_pool[num_threads];
+        for(int i = 0; i < num_threads; ++i) {
+            thread_pool[i] = std::thread(fixtofloat_threads_helper, i, size, scale, inp, out, p, q, pow, sm, keys);
+        }
+
+        for(int i = 0; i < num_threads; ++i) {
+            thread_pool[i].join();
         }
 
         reconstruct(size, sm, 1);
@@ -2142,8 +2154,20 @@ void FixToFloat(int size, GroupElement *inp, GroupElement *out, int scale)
                 out[i*4 + 0] = out[i*4 + 0] >> (bitlength - scale);
             }
         }
-        // delete[] keys;
-        // std::cout << dealer->bytesReceived << std::endl;
+
+        auto eval_end = std::chrono::high_resolution_clock::now();
+        auto eval_time_taken = std::chrono::duration_cast<std::chrono::microseconds>(eval_end -
+                                                            eval_start).count();
+        std::cerr << "   Key Read Time = " << keyread_time_taken << " miliseconds" << std::endl;
+        std::cerr << "   Online Time = " << eval_time_taken / 1000.0 << " miliseconds" << std::endl;
+        evalMicroseconds += eval_time_taken;
+        delete[] sm;
+        delete[] pow;
+        delete[] ym;
+        for(int i = 0; i < size; ++i) {
+            freeFixToFloatKeyPack(keys[i]);
+        }
+        delete[] keys;
     }
     std::cerr << ">> FixToFloat - End" << std::endl;
 }
@@ -2159,13 +2183,18 @@ void FloatToFix(int size, GroupElement *inp, GroupElement *out, int scale)
             out[i] = rout;
             server->send_float_to_fix_key(keys.first, bitlength);
             client->send_float_to_fix_key(keys.second, bitlength);
+            freeFloatToFixKeyPackPair(keys);
         }
     }
     else {
+        auto keyread_start = std::chrono::high_resolution_clock::now();
         FloatToFixKeyPack *keys = new FloatToFixKeyPack[size];
         for(int i = 0; i < size; ++i) {
             keys[i] = dealer->recv_float_to_fix_key(bitlength);
         }
+        auto keyread_end = std::chrono::high_resolution_clock::now();
+        auto keyread_time_taken = std::chrono::duration_cast<std::chrono::milliseconds>(keyread_end -
+                                                            keyread_start).count();
 
         GroupElement *m = new GroupElement[2*size];
         GroupElement *e = m + size;
@@ -2173,6 +2202,7 @@ void FloatToFix(int size, GroupElement *inp, GroupElement *out, int scale)
         GroupElement *t = w + size;
 
         peer->sync();
+        auto eval_start = std::chrono::high_resolution_clock::now();
         for(int i = 0; i < size; ++i) {
             m[i] = inp[4*i + 0] + keys[i].rm;
             e[i] = inp[4*i + 1] + keys[i].re;
@@ -2183,10 +2213,6 @@ void FloatToFix(int size, GroupElement *inp, GroupElement *out, int scale)
         }
 
         reconstruct(2*size, m, 24);
-
-        // for(int i = 0; i < size; ++i) {
-        //     std::cout << (e[i] % 1024) << std::endl;
-        // }
 
         for(int i = 0; i < size; ++i) {
             evalDCF(party - 2, &w[i], m[i], keys[i].dcfKey);
@@ -2200,10 +2226,6 @@ void FloatToFix(int size, GroupElement *inp, GroupElement *out, int scale)
 
         reconstruct(2*size, w, bitlength);
 
-        // for(int i = 0; i < size; ++i) {
-        //     std::cout << t[i] << std::endl;
-        // }
-
         for(int i = 0; i < size; ++i) {
             out[i] = 0;
             for(int j = 0; j < 1024; ++j) {
@@ -2215,9 +2237,18 @@ void FloatToFix(int size, GroupElement *inp, GroupElement *out, int scale)
 
         reconstruct(size, out, bitlength);
 
-        // for(int i = 0; i < size; ++i) {
-        //     std::cout << out[i] << std::endl;
-        // }
+        auto eval_end = std::chrono::high_resolution_clock::now();
+        auto eval_time_taken = std::chrono::duration_cast<std::chrono::microseconds>(eval_end -
+                                                            eval_start).count();
+        std::cerr << "   Key Read Time = " << keyread_time_taken << " miliseconds" << std::endl;
+        std::cerr << "   Online Time = " << eval_time_taken / 1000.0 << " miliseconds" << std::endl;
+        evalMicroseconds += eval_time_taken;
+        delete[] m;
+        delete[] w;
+        for(int i = 0; i < size; ++i) {
+            freeFloatToFixKeyPack(keys[i]);
+        }
+        delete[] keys;
 
     }
     std::cerr << ">> FloatToFix - End" << std::endl;
