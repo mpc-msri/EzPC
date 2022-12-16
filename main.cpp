@@ -87,8 +87,9 @@ void llama_fixtofloat_test(int party) {
     StartComputation();
     softmax_secfloat(e, y, scale, party);
     // EndComputation();
+    Llama<u64>::output(y);
     LlamaVersion::finalize();
-    // Llama<u64>::output(y);
+    y.print();
     // LlamaExtended<u64>::finalize();
     // for(int i = 0; i < y.d1; ++i) {
     //     for(int j = 0; j < y.d2; ++j) {
@@ -437,6 +438,28 @@ void llama_test_vgg2(int party) {
         model_ct.activation.print<i64>();
         conv1_ct->bias.print<i64>();
     }
+}
+
+void relu_real_keysize() {
+    using LlamaVersion = LlamaExtended<u64>;
+    srand(time(NULL));
+    const u64 scale = 24;
+    LlamaConfig::bitlength = 16;
+    LlamaConfig::party = 1;
+    LlamaVersion::init("172.31.45.173");
+    const u64 bs = 1;
+
+    auto model = Sequential<u64>({
+        new ReLU<u64, LlamaVersion>(),
+    });
+
+    Tensor4D<u64> trainImage(bs, 1, 1, 1);
+    trainImage.fill(0);
+
+    StartComputation();
+    model.forward(trainImage);
+    EndComputation();
+    LlamaVersion::finalize();
 }
 
 int main(int argc, char** argv) {

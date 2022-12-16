@@ -2154,7 +2154,7 @@ void FloatToFix(int size, GroupElement *inp, GroupElement *out, int scale)
 
     if (party == DEALER) {
         for(int i = 0; i < size; ++i) {
-            auto rout = 0;//random_ge(bitlength);
+            auto rout = random_ge(bitlength);
             auto keys = keyGenFloatToFix(bitlength, scale, rout);
             out[i] = rout;
             server->send_float_to_fix_key(keys.first, bitlength);
@@ -2195,6 +2195,7 @@ void FloatToFix(int size, GroupElement *inp, GroupElement *out, int scale)
             for(int j = 1001; j < 1024; ++j) {
                 t[i] = t[i] + (1ULL<<(j-1000)) * keys[i].p[(j-e[i])%1024];
             }
+            t[i] = t[i] + (1ULL<<24) * keys[i].p[(1024-e[i])%1024];
         }
 
         reconstruct(2*size, w, bitlength);
@@ -2214,9 +2215,9 @@ void FloatToFix(int size, GroupElement *inp, GroupElement *out, int scale)
 
         reconstruct(size, out, bitlength);
 
-        for(int i = 0; i < size; ++i) {
-            std::cout << out[i] << std::endl;
-        }
+        // for(int i = 0; i < size; ++i) {
+        //     std::cout << out[i] << std::endl;
+        // }
 
     }
     std::cerr << ">> FloatToFix - End" << std::endl;
