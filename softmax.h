@@ -133,7 +133,11 @@ inline void softmax_secfloat(const Tensor4D<u64> &in, Tensor4D<u64> &out, u64 sc
     assert(out.d4 == 1);
 
     Tensor4D<u64> inFloat(in.d1, in.d2, 4, 1);
+    // This hack only works when last layer is truncation layer, which is usually the case
+    int origBitlength = LlamaConfig::bitlength;
+    LlamaConfig::bitlength = origBitlength - scale;
     FixToFloat(in.d1 * in.d2, in.data, inFloat.data, scale);
+    LlamaConfig::bitlength = origBitlength;
     Tensor4D<u64> outFloat(in.d1, in.d2, 4, 1);
     if (llamaParty != 1) {
         vector < vector < FPArray > > inpFloatSecfloat = make_vector_float(llamaParty-1, in.d1, in.d2);

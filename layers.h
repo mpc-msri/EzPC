@@ -366,9 +366,10 @@ class Sequential : public Layer<T> {
 public:
     std::vector<Layer<T>*> layers;
     
-    Sequential(std::vector<Layer<T>*> _layers) : Layer<T>("Sequential"), layers(_layers) {
+    Sequential(std::vector<Layer<T>*> _layers, bool outermost = true) : Layer<T>("Sequential"), layers(_layers) {
         int s = layers.size();
         // Set isFirst
+        if (outermost)
         for(int i = 0; i < s; ++i) {
             if (layers[i]->name == "Conv2D" || layers[i]->name == "FC") {
                 layers[i]->isFirst = true;
@@ -403,6 +404,8 @@ public:
         for (int i = size - 2; i >= 0; i--) {
             layers[i]->backward(layers[i+1]->inputDerivative);
         }
+        this->inputDerivative.resize(layers[0]->inputDerivative.d1, layers[0]->inputDerivative.d2, layers[0]->inputDerivative.d3, layers[0]->inputDerivative.d4);
+        this->inputDerivative.copy(layers[0]->inputDerivative);
     }
 
     void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
@@ -418,3 +421,69 @@ public:
         }
     }
 };
+
+template <typename T, class Backend = DefaultBackend<T>>
+class Identity: public Layer<T> {
+public:
+    Identity() :  Layer<T>("Identity") {}
+
+    void forward(const Tensor4D<T> &a) {
+        this->activation.resize(a.d1, a.d2, a.d3, a.d4);
+        this->inputDerivative.resize(a.d1, a.d2, a.d3, a.d4);
+        this->activation.copy(a);
+    }
+
+    void backward(const Tensor4D<T> &e) {
+        this->inputDerivative.copy(e);
+    }
+
+    void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
+        
+    }
+};
+
+template <typename T>
+class BranchAdd : public Layer<T> {
+public:
+    Layer<T>* left;
+    Layer<T>* right;
+
+    BranchAdd(Layer<T>* left, Layer<T>* right) : Layer<T>("BranchAdd"), left(left), right(right) {
+        
+    }
+    
+    void forward(const Tensor4D<T> &a) {
+        left->forward(a);
+        right->forward(a);
+        this->activation.resize(left->activation.d1, left->activation.d2, left->activation.d3, left->activation.d4);
+        this->inputDerivative.resize(a.d1, a.d2, a.d3, a.d4);
+        for(int i = 0; i < this->activation.d1; ++i) {
+            for(int j = 0; j < this->activation.d2; ++j) {
+                for(int k = 0; k < this->activation.d3; ++k) {
+                    for(int l = 0; l < this->activation.d4; ++l) {
+                        this->activation(i, j, k, l) = left->activation(i, j, k, l) + right->activation(i, j, k, l);
+                    }
+                }
+            }
+        }
+    }
+
+    void backward(const Tensor4D<T> &e) {
+        left->backward(e);
+        right->backward(e);
+        for(int i = 0; i < this->inputDerivative.d1; ++i) {
+            for(int j = 0; j < this->inputDerivative.d2; ++j) {
+                for(int k = 0; k < this->inputDerivative.d3; ++k) {
+                    for(int l = 0; l < this->inputDerivative.d4; ++l) {
+                        this->inputDerivative(i, j, k, l) = left->inputDerivative(i, j, k, l) + right->inputDerivative(i, j, k, l);
+                    }
+                }
+            }
+        }
+    }
+
+    void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
+        
+    }
+};
+

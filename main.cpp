@@ -64,10 +64,12 @@ void llama_fixtofloat_test(int party) {
     const u64 scale = 24;
     LlamaConfig::party = party;
     LlamaConfig::bitlength = 64;
+    // LlamaExtended<u64>::init("172.31.45.158");
     LlamaExtended<u64>::init("127.0.0.1");
     int numClasses = 10;
     int batchSize = 100;
     if (party != 1)
+        // secfloat_init(party - 1, "172.31.45.158");
         secfloat_init(party - 1, "127.0.0.1");
     
     Tensor4D<u64> e(batchSize, numClasses, 1, 1);
@@ -479,6 +481,7 @@ int main(int argc, char** argv) {
     // lenet_int();
     // lenet_float();
     // cifar10_int();
+    branching_test();
 
     int party = 0;
     if (argc > 1) {
@@ -488,7 +491,7 @@ int main(int argc, char** argv) {
     // llama_relutruncate_test(party);
     // llama_relu2round_test(party);
     // llama_relu_old_test(party);
-    llama_fixtofloat_test(party);
+    // llama_fixtofloat_test(party);
 
     // for(int i = 0; i < 10; ++i) {
     //     pt_test_bitwiseand();

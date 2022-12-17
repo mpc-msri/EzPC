@@ -108,6 +108,35 @@ void cifar10_int() {
 
 
 
+void branching_test() {
+    const u64 scale = 1;
+    std::cout << "> Scale = " << scale << std::endl;
+    std::cout << "> Probablistic = " << (ClearText<i64>::probablistic ? "true" : "false") << std::endl;
+    srand(time(NULL));
+    
+    auto fc = new FC<i64, scale>(5, 5);
+    fc->weight.fill(1 * (1ULL << scale));
+    fc->bias.fill(1 * (1ULL << (2*scale)));
+    auto model = Sequential<i64>({
+        new BranchAdd<i64>(
+            new Sequential<i64> ({
+                fc,
+                new Truncate<i64>(scale),
+            }, false),
+            new Identity<i64>()
+        ),
+    });
+
+    Tensor4D<i64> x(1, 5, 1, 1);
+    x.fill(1 * (1ULL << scale));
+
+    model.forward(x);
+    model.activation.print();
+    model.backward(x);
+    // fc->weight.print();
+    model.inputDerivative.print();
+}
+
 void lenet_int() {
 
     const u64 trainLen = 60000;
