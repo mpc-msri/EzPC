@@ -11,3 +11,4 @@ out.perf
 perf.data
 perf.data.old
 graph.svg
+.venv

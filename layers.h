@@ -25,9 +25,8 @@ template <typename T>
 class Layer {
 public:
     std::string name;
-    virtual void forward(const Tensor4D<T> &a) = 0;
+    virtual void forward(const Tensor4D<T> &a, bool train = true) = 0;
     virtual void backward(const Tensor4D<T> &e) = 0;
-    virtual void resize(u64 d1, u64 d2, u64 d3, u64 d4) = 0;
     Tensor4D<T> activation;
     Tensor4D<T> inputDerivative;
     Layer(const std::string &id) : activation(0,0,0,0), inputDerivative(0,0,0,0), name(id) {}
@@ -59,7 +58,7 @@ public:
         Vb.fill(0);
     }
 
-    void forward(const Tensor4D<T> &a) {
+    void forward(const Tensor4D<T> &a, bool train = true) {
         this->inputDerivative.resize(a.d1, a.d2, a.d3, a.d4);
         assert(a.d4 == ci);
         u64 newH = (((a.d2 + 2*padding - ks)/stride) + 1);
@@ -87,15 +86,6 @@ public:
         Backend::updateBias(bias, biasGrad, Vb, scale);
     }
 
-    void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
-        assert(d4 == ci);
-        u64 newH = (((d2 + 2*padding - ks)/stride) + 1);
-        u64 newW = (((d3 + 2*padding - ks)/stride) + 1);
-        this->activation.resize(d1, newH, newW, co);
-        this->inputDerivative.resize(d1, d2, d3, d4);
-        this->inp.resize(d1, d2, d3, d4);
-    }
-
     Tensor2D<T>& getweights() { return filter; }
     Tensor<T>& getbias() { return bias; }
 };
@@ -107,7 +97,7 @@ public:
 
     AvgPool2D(u64 ks, u64 padding = 0, u64 _stride = 0) : Layer<T>("AvgPool2D"), ks(ks), padding(padding), stride(_stride == 0 ? ks : _stride) {}
 
-    void forward(const Tensor4D<T> &a) {
+    void forward(const Tensor4D<T> &a, bool train = true) {
         this->inputDerivative.resize(a.d1, a.d2, a.d3, a.d4);
         this->activation.resize(a.d1, (a.d2 + 2*padding - ks)/stride + 1, (a.d3 + 2*padding - ks)/stride + 1, a.d4);
         Backend::avgPool2D(ks, padding, stride, a, this->activation, scale);
@@ -120,11 +110,6 @@ public:
         assert(e.d4 == this->activation.d4);
         Backend::avgPool2DInputGrad(ks, padding, stride, this->inputDerivative, e, scale);
     }
-
-    void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
-        this->activation.resize(d1, (d2 + 2*padding - ks)/stride + 1, (d3 + 2*padding - ks)/stride + 1, d4);
-        this->inputDerivative.resize(d1, d2, d3, d4);
-    }
 };
 
 template <typename T, u64 scale, class Backend = DefaultBackend<T>>
@@ -134,7 +119,7 @@ public:
 
     SumPool2D(u64 ks, u64 padding = 0, u64 _stride = 0) : Layer<T>("SumPool2D"), ks(ks), padding(padding), stride(_stride == 0 ? ks : _stride) {}
 
-    void forward(const Tensor4D<T> &a) {
+    void forward(const Tensor4D<T> &a, bool train = true) {
         this->inputDerivative.resize(a.d1, a.d2, a.d3, a.d4);
         this->activation.resize(a.d1, (a.d2 + 2*padding - ks)/stride + 1, (a.d3 + 2*padding - ks)/stride + 1, a.d4);
         Backend::sumPool2D(ks, padding, stride, a, this->activation);
@@ -147,11 +132,6 @@ public:
         assert(e.d4 == this->activation.d4);
         Backend::sumPool2DInputGrad(ks, padding, stride, this->inputDerivative, e);
     }
-
-    void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
-        this->activation.resize(d1, (d2 + 2*padding - ks)/stride + 1, (d3 + 2*padding - ks)/stride + 1, d4);
-        this->inputDerivative.resize(d1, d2, d3, d4);
-    }
 };
 
 template <typename T, class Backend = DefaultBackend<T>>
@@ -162,7 +142,7 @@ public:
 
     MaxPool2D(u64 ks, u64 padding = 0, u64 _stride = 0) : Layer<T>("MaxPool2D"), ks(ks), padding(padding), stride(_stride == 0 ? ks : _stride), maxIndex(0,0,0,0) {}
 
-    void forward(const Tensor4D<T> &a) {
+    void forward(const Tensor4D<T> &a, bool train = true) {
         this->inputDerivative.resize(a.d1, a.d2, a.d3, a.d4);
         this->activation.resize(a.d1, (a.d2 + 2*padding - ks)/stride + 1, (a.d3 + 2*padding - ks)/stride + 1, a.d4);
         this->maxIndex.resize(a.d1, (a.d2 + 2*padding - ks)/stride + 1, (a.d3 + 2*padding - ks)/stride + 1, a.d4);
@@ -176,11 +156,6 @@ public:
         assert(e.d4 == this->activation.d4);
         Backend::maxPool2DInputGrad(ks, padding, stride, this->inputDerivative, e, maxIndex);
     }
-
-    void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
-        this->activation.resize(d1, (d2 + 2*padding - ks)/stride + 1, (d3 + 2*padding - ks)/stride + 1, d4);
-        this->inputDerivative.resize(d1, d2, d3, d4);
-    }
 };
 
 template <typename T>
@@ -190,7 +165,7 @@ public:
 
     Flatten() : Layer<T>("Flatten") {}
 
-    void forward(const Tensor4D<T> &a) {
+    void forward(const Tensor4D<T> &a, bool train = true) {
         d1 = a.d1;
         d2 = a.d2;
         d3 = a.d3;
@@ -219,11 +194,6 @@ public:
             }
         }
     }
-
-    void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
-        this->activation.resize(d1, d2 * d3 * d4, 1, 1);
-        this->inputDerivative.resize(d1, d2, d3, d4);
-    }
 };
 
 template <typename T, u64 scale, class Backend = DefaultBackend<T>>
@@ -246,7 +216,7 @@ public:
         Vb.fill(0);
     }
 
-    void forward(const Tensor4D<T> &a) {
+    void forward(const Tensor4D<T> &a, bool train = true) {
         inp.resize(a.d1, a.d2, a.d3, a.d4);
         this->inp.copy(a);
         this->activation.resize(a.d1, weight.d2, 1, 1);
@@ -267,12 +237,6 @@ public:
         Backend::updateWeight(weight, weightGrad, Vw, scale);
         Backend::updateBias(bias, e, Vb, scale);
     }
-
-    void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
-        this->activation.resize(d1, out, 1, 1);
-        this->inputDerivative.resize(d1, in, 1, 1);
-        this->inp.resize(d1, d2, d3, d4);
-    }
     
     Tensor2D<T>& getweights() { return weight; }
     Tensor<T>& getbias() { return bias; }
@@ -285,7 +249,7 @@ public:
     Tensor4D<T> drelu;
     ReLUTruncate(u64 shift) : Layer<T>("ReLUTruncate"), shift(shift), drelu(0,0,0,0) {}
 
-    void forward(const Tensor4D<T> &a) {
+    void forward(const Tensor4D<T> &a, bool train = true) {
         // std::cout << "== Truncate forward ==" << std::endl;
         // std::cout << "a: "; a.print();
         this->activation.resize(a.d1, a.d2, a.d3, a.d4);
@@ -302,12 +266,6 @@ public:
         // std::cout << "e: "; this->inputDerivative.print();
         // truncate(this->inputDerivative, this->inputDerivative, shift);
     }
-
-    void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
-        this->activation.resize(d1, d2, d3, d4);
-        this->inputDerivative.resize(d1, d2, d3, d4);
-        this->drelu.resize(d1, d2, d3, d4);
-    }
 };
 
 template <typename T, class Backend = DefaultBackend<T>>
@@ -316,7 +274,7 @@ public:
     Tensor4D<T> drelu;
     ReLU() :  Layer<T>("ReLU"), drelu(0,0,0,0) {}
 
-    void forward(const Tensor4D<T> &a) {
+    void forward(const Tensor4D<T> &a, bool train = true) {
         // std::cout << "== ReLU forward ==" << std::endl;
         // std::cout << "a: "; a.print();
         this->activation.resize(a.d1, a.d2, a.d3, a.d4);
@@ -330,12 +288,6 @@ public:
         // std::cout << "e: "; e.print();
         Backend::select(e, this->drelu, this->inputDerivative);
     }
-
-    void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
-        this->activation.resize(d1, d2, d3, d4);
-        this->inputDerivative.resize(d1, d2, d3, d4);
-        this->drelu.resize(d1, d2, d3, d4);
-    }
 };
 
 template <typename T, class Backend = DefaultBackend<T>>
@@ -344,7 +296,7 @@ public:
     u64 shift;
     Truncate(u64 shift) : Layer<T>("Truncate"), shift(shift) {}
 
-    void forward(const Tensor4D<T> &a) {
+    void forward(const Tensor4D<T> &a, bool train = true) {
         this->activation.resize(a.d1, a.d2, a.d3, a.d4);
         this->inputDerivative.resize(a.d1, a.d2, a.d3, a.d4);
         Backend::truncate(a, this->activation, shift);
@@ -353,11 +305,6 @@ public:
     void backward(const Tensor4D<T> &e) {
         // Backend::truncate(e, this->inputDerivative, shift);
         this->inputDerivative.copy(e);
-    }
-
-    void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
-        this->activation.resize(d1, d2, d3, d4);
-        this->inputDerivative.resize(d1, d2, d3, d4);
     }
 };
 
@@ -388,11 +335,11 @@ public:
         }
     }
     
-    void forward(const Tensor4D<T> &a) {
-        layers[0]->forward(a);
+    void forward(const Tensor4D<T> &a, bool train = true) {
+        layers[0]->forward(a, train);
         u64 size = layers.size();
         for(u64 i = 1; i < size; i++) {
-            layers[i]->forward(layers[i-1]->activation);
+            layers[i]->forward(layers[i-1]->activation, train);
         }
         this->activation.resize(layers[size-1]->activation.d1, layers[size-1]->activation.d2, layers[size-1]->activation.d3, layers[size-1]->activation.d4);
         this->activation.copy(layers[size-1]->activation);
@@ -407,19 +354,6 @@ public:
         this->inputDerivative.resize(layers[0]->inputDerivative.d1, layers[0]->inputDerivative.d2, layers[0]->inputDerivative.d3, layers[0]->inputDerivative.d4);
         this->inputDerivative.copy(layers[0]->inputDerivative);
     }
-
-    void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
-        this->activation.resize(d1, d2, d3, d4);
-        this->inputDerivative.resize(d1, d2, d3, d4);
-        u64 size = layers.size();
-        for(u64 i = 0; i < size; i++) {
-            layers[i]->resize(d1, d2, d3, d4);
-            d1 = layers[i]->activation.d1;
-            d2 = layers[i]->activation.d2;
-            d3 = layers[i]->activation.d3;
-            d4 = layers[i]->activation.d4;
-        }
-    }
 };
 
 template <typename T, class Backend = DefaultBackend<T>>
@@ -427,7 +361,7 @@ class Identity: public Layer<T> {
 public:
     Identity() :  Layer<T>("Identity") {}
 
-    void forward(const Tensor4D<T> &a) {
+    void forward(const Tensor4D<T> &a, bool train = true) {
         this->activation.resize(a.d1, a.d2, a.d3, a.d4);
         this->inputDerivative.resize(a.d1, a.d2, a.d3, a.d4);
         this->activation.copy(a);
@@ -435,10 +369,6 @@ public:
 
     void backward(const Tensor4D<T> &e) {
         this->inputDerivative.copy(e);
-    }
-
-    void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
-        
     }
 };
 
@@ -452,9 +382,9 @@ public:
         
     }
     
-    void forward(const Tensor4D<T> &a) {
-        left->forward(a);
-        right->forward(a);
+    void forward(const Tensor4D<T> &a, bool train = true) {
+        left->forward(a, train);
+        right->forward(a, train);
         this->activation.resize(left->activation.d1, left->activation.d2, left->activation.d3, left->activation.d4);
         this->inputDerivative.resize(a.d1, a.d2, a.d3, a.d4);
         for(int i = 0; i < this->activation.d1; ++i) {
@@ -481,9 +411,52 @@ public:
             }
         }
     }
-
-    void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
-        
-    }
 };
 
+template <typename T, u64 scale, class Backend = DefaultBackend<T>>
+class BatchNorm2d : public Layer<T> {
+public:
+    Tensor<T> running_mean;
+    Tensor<T> running_variance;
+    Tensor<T> gamma;
+    Tensor<T> beta;
+    Tensor<T> Vgamma;
+    Tensor<T> Vbeta;
+
+    Tensor4D<T> x_normalized;
+    Tensor<T> std;
+
+    // Momentum is 0.1 and epsilon is 1e-5
+    BatchNorm2d(u64 channels) : Layer<T>("BatchNorm2d"), running_mean(channels), running_variance(channels), gamma(channels), beta(channels),
+    x_normalized(0, 0, 0, 0), std(channels), Vgamma(channels), Vbeta(channels) {
+        this->running_mean.fill(0);
+        this->running_variance.fill(1);
+        this->gamma.fill(1);
+        this->beta.fill(0);
+        this->Vgamma.fill(0);
+        this->Vbeta.fill(0);
+    }
+
+    void forward(const Tensor4D<T> &a, bool train = true) {
+        assert(a.d4 == this->running_mean.size);
+        this->activation.resize(a.d1, a.d2, a.d3, a.d4);
+        this->inputDerivative.resize(a.d1, a.d2, a.d3, a.d4);
+        x_normalized.resize(a.d1, a.d2, a.d3, a.d4);
+        if (train) {
+            Backend::batchNorm2dForwardTrain(a, this->activation, this->running_mean, this->running_variance, this->gamma, this->beta, this->x_normalized, this->std);
+        }
+        else {
+            Backend::batchNorm2dForwardTest(a, this->activation, this->running_mean, this->running_variance, this->gamma, this->beta);
+        }
+    }
+
+    void backward(const Tensor4D<T> &e) {
+        assert(e.d4 == this->running_mean.size);
+        const u64 C = e.d4;
+        Tensor<T> dgamma(C);
+        Tensor<T> dbeta(C);
+        Backend::batchNorm2dBackward(this->inputDerivative, e, dgamma, dbeta, this->x_normalized, gamma, std);
+        Backend::updateBias(this->gamma, dgamma, Vgamma, scale);
+        Backend::updateBias(this->beta, dbeta, Vbeta, scale);
+    }
+};

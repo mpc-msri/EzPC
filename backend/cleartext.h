@@ -561,4 +561,138 @@ public:
         });
     }
 
+    static void batchNorm2dForwardTrain(const Tensor4D<T> &in, Tensor4D<T> &out, 
+        const Tensor<T> &running_mean, const Tensor<T> &running_var, const Tensor<T> &gamma, const Tensor<T> &beta,
+        Tensor4D<T> &x_normalized, Tensor<T> &std) {
+        assert(in.d1 == out.d1);
+        assert(in.d2 == out.d2);
+        assert(in.d3 == out.d3);
+        assert(in.d4 == out.d4);
+        assert(in.d4 == gamma.size);
+        assert(in.d4 == beta.size);
+        assert(in.d4 == running_mean.size);
+        assert(in.d4 == running_var.size);
+
+        Tensor<T> mean(in.d4); mean.fill(0);
+        Tensor<T> var(in.d4); var.fill(0);
+        
+        fastfor(in.d4, [&](int l) {
+            for(int i = 0; i < in.d1; i++) {
+                for(int j = 0; j < in.d2; j++) {
+                    for(int k = 0; k < in.d3; k++) {
+                        mean(l) += in(i, j, k, l);
+                    }
+                }
+            }
+            mean(l) /= (in.d1 * in.d2 * in.d3);
+
+            for(int i = 0; i < in.d1; i++) {
+                for(int j = 0; j < in.d2; j++) {
+                    for(int k = 0; k < in.d3; k++) {
+                        var(l) += (in(i, j, k, l) - mean(l)) * (in(i, j, k, l) - mean(l));
+                    }
+                }
+            }
+            // var(l) /= ((in.d1 * in.d2 * in.d3) - 1);
+            std(l) = sqrt((var(l) / (in.d1 * in.d2 * in.d3)) + 1e-5);
+
+            running_mean(l) = 0.9 * running_mean(l) + 0.1 * mean(l);
+            running_var(l) = 0.9 * running_var(l) + 0.1 * (var(l) / (in.d1 * in.d2 * in.d3 - 1));
+
+            for(int i = 0; i < in.d1; i++) {
+                for(int j = 0; j < in.d2; j++) {
+                    for(int k = 0; k < in.d3; k++) {
+                        x_normalized(i, j, k, l) = (in(i, j, k, l) - mean(l)) / std(l);
+                        out(i, j, k, l) = gamma(l) * x_normalized(i, j, k, l) + beta(l);
+                    }
+                }
+            }
+        });
+    }
+
+    static void batchNorm2dForwardTest(const Tensor4D<T> &in, Tensor4D<T> &out, const Tensor<T> &running_mean, const Tensor<T> &running_var, const Tensor<T> &gamma, const Tensor<T> &beta) {
+        assert(in.d1 == out.d1);
+        assert(in.d2 == out.d2);
+        assert(in.d3 == out.d3);
+        assert(in.d4 == out.d4);
+        assert(in.d4 == gamma.size);
+        assert(in.d4 == beta.size);
+        assert(in.d4 == running_mean.size);
+        assert(in.d4 == running_var.size);
+
+        fastfor(in.d4, [&](int l) {
+            for(int i = 0; i < in.d1; i++) {
+                for(int j = 0; j < in.d2; j++) {
+                    for(int k = 0; k < in.d3; k++) {
+                        out(i, j, k, l) = gamma(l) * (in(i, j, k, l) - running_mean(l)) / sqrt(running_var(l) + 1e-5) + beta(l);
+                    }
+                }
+            }
+        });
+    }
+
+    static Tensor2D<T> channelReshape(const Tensor4D<T> &x) {
+        Tensor2D<T> res(x.d4, x.d1 * x.d2 * x.d3);
+        for(int i = 0; i < x.d1; i++) {
+            for(int j = 0; j < x.d2; j++) {
+                for(int k = 0; k < x.d3; k++) {
+                    for(int l = 0; l < x.d4; l++) {
+                        res(l, i*x.d2*x.d3 + j*x.d3 + k) = x(i, j, k, l);
+                    }
+                }
+            }
+        }
+        return res;
+    }
+
+    static void batchNorm2dBackward(Tensor4D<T> &din, const Tensor4D<T> &dout, Tensor<T> &dgamma, Tensor<T> &dbeta,
+        const Tensor4D<T> &normalized, const Tensor<T> &gamma, const Tensor<T> &std) {
+        const u64 M = din.d1 * din.d2 * din.d3;
+        const u64 C = din.d4;
+        assert(din.d1 == dout.d1);
+        assert(din.d2 == dout.d2);
+        assert(din.d3 == dout.d3);
+        assert(din.d4 == dout.d4);
+        assert(C == dgamma.size);
+        assert(C == dbeta.size);
+        Tensor2D<T> dinReshaped(C, M);
+        Tensor2D<T> doutReshaped = channelReshape(dout);
+        Tensor2D<T> xcap = channelReshape(normalized);
+        // normalized.print();
+        // dout.print();
+        Tensor2D<T> dxcap(C, M);
+        dgamma.fill(0);
+        dbeta.fill(0);
+
+        fastfor(C, [&](int c) {
+            for(int i = 0; i < M; ++i) {
+                dgamma(c) += doutReshaped(c, i) * xcap(c, i);
+                dbeta(c) += doutReshaped(c, i);
+                dxcap(c, i) = doutReshaped(c, i) * gamma(c);
+            }
+
+            T tmp1 = 0;
+            T tmp2 = 0;
+            for(int i = 0; i < M; ++i) {
+                tmp1 += dxcap(c, i);
+                tmp2 += dxcap(c, i) * xcap(c, i);
+            }
+
+            for(int i = 0; i < M; ++i) {
+                dinReshaped(c, i) = M * dxcap(c, i) - tmp1 - xcap(c, i) * tmp2;
+                dinReshaped(c, i) = dinReshaped(c, i) / std(c);
+            }
+        });
+
+        for(int i = 0; i < din.d1; i++) {
+            for(int j = 0; j < din.d2; j++) {
+                for(int k = 0; k < din.d3; k++) {
+                    for(int l = 0; l < din.d4; l++) {
+                        din(i, j, k, l) = dinReshaped(l, i*din.d2*din.d3 + j*din.d3 + k);
+                    }
+                }
+            }
+        }
+    }
+
 };

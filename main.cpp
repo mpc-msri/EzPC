@@ -467,9 +467,58 @@ void relu_real_keysize() {
     LlamaVersion::finalize();
 }
 
+void bn_float() {
+    auto bn = new BatchNorm2d<double, 0>(3);
+    auto model = Sequential<double>({
+        bn,
+        new Flatten<double>(),
+    });
+
+    Tensor4D<double> trainImage(3, 1, 1, 3);
+    trainImage(0, 0, 0, 0) = 4567;
+    trainImage(0, 0, 0, 1) = 328;
+    trainImage(0, 0, 0, 2) = 9785;
+    trainImage(1, 0, 0, 0) = 3109;
+    trainImage(1, 0, 0, 1) = 2389;
+    trainImage(1, 0, 0, 2) = 238;
+    trainImage(2, 0, 0, 0) = 5478;
+    trainImage(2, 0, 0, 1) = 623;
+    trainImage(2, 0, 0, 2) = 2349;
+    Tensor4D<double> e(3, 3, 1, 1);
+    // Tensor4D<double> trainImage(2, 1, 1, 3);
+    // trainImage(0, 0, 0, 0) = 0;
+    // trainImage(0, 0, 0, 1) = 1;
+    // trainImage(0, 0, 0, 2) = 2;
+    // trainImage(1, 0, 0, 0) = 3;
+    // trainImage(1, 0, 0, 1) = 4;
+    // trainImage(1, 0, 0, 2) = 5;
+    // Tensor4D<double> e(2, 1, 1, 3);
+
+    // model.forward(trainImage, false);
+    // model.activation.print();
+    // model.activation.print();
+    // bn->running_mean.print();
+    // bn->running_variance.print();
+    int numIters = 5;
+    for (int i = 0; i < numIters; ++i) {
+        model.forward(trainImage);
+        softmax<double, 0>(model.activation, e);
+        for(u64 b = 0; b < 3; ++b) {
+            e(b, 0, 0, 0) -= (1.0/3);
+        }
+        model.backward(e);
+    }
+    bn->gamma.print();
+    bn->beta.print();
+    model.forward(trainImage, false);
+    model.activation.print();
+}
+
 int main(int argc, char** argv) {
     prngWeights.SetSeed(osuCrypto::toBlock(time(NULL)));
     prng.SetSeed(osuCrypto::toBlock(time(NULL)));
+    // set floating point precision
+    std::cout << std::fixed  << std::setprecision(20);
 #ifdef NDEBUG
     std::cout << "> Release Build" << std::endl;
 #else
@@ -481,7 +530,7 @@ int main(int argc, char** argv) {
     // lenet_int();
     // lenet_float();
     // cifar10_int();
-    branching_test();
+    // branching_test();
 
     int party = 0;
     if (argc > 1) {
@@ -496,5 +545,6 @@ int main(int argc, char** argv) {
     // for(int i = 0; i < 10; ++i) {
     //     pt_test_bitwiseand();
     // }
-    // cifar10_float_test();
+    // cifar10_float();
+    bn_float();
 }
