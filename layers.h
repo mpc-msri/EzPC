@@ -424,11 +424,11 @@ public:
     Tensor<T> Vbeta;
 
     Tensor4D<T> x_normalized;
-    Tensor<T> std;
+    Tensor<T> invstd;
 
     // Momentum is 0.1 and epsilon is 1e-5
     BatchNorm2d(u64 channels) : Layer<T>("BatchNorm2d"), running_mean(channels), running_variance(channels), gamma(channels), beta(channels),
-    x_normalized(0, 0, 0, 0), std(channels), Vgamma(channels), Vbeta(channels) {
+    x_normalized(0, 0, 0, 0), invstd(channels), Vgamma(channels), Vbeta(channels) {
         this->running_mean.fill(0);
         this->running_variance.fill(1);
         this->gamma.fill(1);
@@ -443,7 +443,7 @@ public:
         this->inputDerivative.resize(a.d1, a.d2, a.d3, a.d4);
         x_normalized.resize(a.d1, a.d2, a.d3, a.d4);
         if (train) {
-            Backend::batchNorm2dForwardTrain(a, this->activation, this->running_mean, this->running_variance, this->gamma, this->beta, this->x_normalized, this->std);
+            Backend::batchNorm2dForwardTrain(a, this->activation, this->running_mean, this->running_variance, this->gamma, this->beta, this->x_normalized, this->invstd);
         }
         else {
             Backend::batchNorm2dForwardTest(a, this->activation, this->running_mean, this->running_variance, this->gamma, this->beta);
@@ -455,7 +455,7 @@ public:
         const u64 C = e.d4;
         Tensor<T> dgamma(C);
         Tensor<T> dbeta(C);
-        Backend::batchNorm2dBackward(this->inputDerivative, e, dgamma, dbeta, this->x_normalized, gamma, std);
+        Backend::batchNorm2dBackward(this->inputDerivative, e, dgamma, dbeta, this->x_normalized, gamma, invstd);
         Backend::updateBias(this->gamma, dgamma, Vgamma, scale);
         Backend::updateBias(this->beta, dbeta, Vbeta, scale);
     }

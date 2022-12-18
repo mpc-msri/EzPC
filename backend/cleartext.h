@@ -563,7 +563,7 @@ public:
 
     static void batchNorm2dForwardTrain(const Tensor4D<T> &in, Tensor4D<T> &out, 
         const Tensor<T> &running_mean, const Tensor<T> &running_var, const Tensor<T> &gamma, const Tensor<T> &beta,
-        Tensor4D<T> &x_normalized, Tensor<T> &std) {
+        Tensor4D<T> &x_normalized, Tensor<T> &invstd) {
         assert(in.d1 == out.d1);
         assert(in.d2 == out.d2);
         assert(in.d3 == out.d3);
@@ -575,6 +575,7 @@ public:
 
         Tensor<T> mean(in.d4); mean.fill(0);
         Tensor<T> var(in.d4); var.fill(0);
+        u64 m = in.d1 * in.d2 * in.d3;
         
         fastfor(in.d4, [&](int l) {
             for(int i = 0; i < in.d1; i++) {
@@ -584,7 +585,7 @@ public:
                     }
                 }
             }
-            mean(l) /= (in.d1 * in.d2 * in.d3);
+            mean(l) /= m;
 
             for(int i = 0; i < in.d1; i++) {
                 for(int j = 0; j < in.d2; j++) {
@@ -594,15 +595,15 @@ public:
                 }
             }
             // var(l) /= ((in.d1 * in.d2 * in.d3) - 1);
-            std(l) = sqrt((var(l) / (in.d1 * in.d2 * in.d3)) + 1e-5);
+            invstd(l) = 1 / sqrt((var(l) / m) + 1e-5);
 
             running_mean(l) = 0.9 * running_mean(l) + 0.1 * mean(l);
-            running_var(l) = 0.9 * running_var(l) + 0.1 * (var(l) / (in.d1 * in.d2 * in.d3 - 1));
+            running_var(l) = 0.9 * running_var(l) + 0.1 * (var(l) / (m - 1));
 
             for(int i = 0; i < in.d1; i++) {
                 for(int j = 0; j < in.d2; j++) {
                     for(int k = 0; k < in.d3; k++) {
-                        x_normalized(i, j, k, l) = (in(i, j, k, l) - mean(l)) / std(l);
+                        x_normalized(i, j, k, l) = (in(i, j, k, l) - mean(l)) * invstd(l);
                         out(i, j, k, l) = gamma(l) * x_normalized(i, j, k, l) + beta(l);
                     }
                 }
@@ -646,7 +647,7 @@ public:
     }
 
     static void batchNorm2dBackward(Tensor4D<T> &din, const Tensor4D<T> &dout, Tensor<T> &dgamma, Tensor<T> &dbeta,
-        const Tensor4D<T> &normalized, const Tensor<T> &gamma, const Tensor<T> &std) {
+        const Tensor4D<T> &normalized, const Tensor<T> &gamma, const Tensor<T> &invstd) {
         const u64 M = din.d1 * din.d2 * din.d3;
         const u64 C = din.d4;
         assert(din.d1 == dout.d1);
@@ -680,7 +681,7 @@ public:
 
             for(int i = 0; i < M; ++i) {
                 dinReshaped(c, i) = M * dxcap(c, i) - tmp1 - xcap(c, i) * tmp2;
-                dinReshaped(c, i) = dinReshaped(c, i) / std(c);
+                dinReshaped(c, i) = dinReshaped(c, i) * invstd(c);
             }
         });
 

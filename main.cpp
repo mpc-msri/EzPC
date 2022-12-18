@@ -474,17 +474,26 @@ void bn_float() {
         new Flatten<double>(),
     });
 
-    Tensor4D<double> trainImage(3, 1, 1, 3);
+    Tensor4D<double> trainImage(3, 1, 2, 3);
     trainImage(0, 0, 0, 0) = 4567;
+    trainImage(0, 0, 1, 0) = 4567;
     trainImage(0, 0, 0, 1) = 328;
+    trainImage(0, 0, 1, 1) = 328;
     trainImage(0, 0, 0, 2) = 9785;
+    trainImage(0, 0, 1, 2) = 9785;
     trainImage(1, 0, 0, 0) = 3109;
+    trainImage(1, 0, 1, 0) = 3109;
     trainImage(1, 0, 0, 1) = 2389;
+    trainImage(1, 0, 1, 1) = 2389;
     trainImage(1, 0, 0, 2) = 238;
+    trainImage(1, 0, 1, 2) = 238;
     trainImage(2, 0, 0, 0) = 5478;
+    trainImage(2, 0, 1, 0) = 5478;
     trainImage(2, 0, 0, 1) = 623;
+    trainImage(2, 0, 1, 1) = 623;
     trainImage(2, 0, 0, 2) = 2349;
-    Tensor4D<double> e(3, 3, 1, 1);
+    trainImage(2, 0, 1, 2) = 2349;
+    Tensor4D<double> e(3, 6, 1, 1);
     // Tensor4D<double> trainImage(2, 1, 1, 3);
     // trainImage(0, 0, 0, 0) = 0;
     // trainImage(0, 0, 0, 1) = 1;
