@@ -121,13 +121,13 @@ block traversePathDCF(int Bin, int Bout, int groupSize, int party,
                         int evalGroupIdxStart,
                         int evalGroupIdxLen)
 {
-    block s = k[0];
+    block s = _mm_loadu_si128(k);
     GROUP_LOOP(v_share[lp] = 0;)
 
     for (int i = 0; i < Bin; ++i)
     {
         const u8 keep = static_cast<uint8_t>(idx >> (Bin - 1 - i)) & 1;
-        s = traverseOneDCF(Bin, Bout, groupSize, party, s, k[i + 1], keep, v_share, v, i, geq, evalGroupIdxStart, evalGroupIdxLen);
+        s = traverseOneDCF(Bin, Bout, groupSize, party, s, _mm_loadu_si128(k + (i + 1)), keep, v_share, v, i, geq, evalGroupIdxStart, evalGroupIdxLen);
     }
     return s;
 }

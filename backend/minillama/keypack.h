@@ -41,39 +41,12 @@ struct DCFKeyPack{
     }
 };
 
-inline void freeDCFKeyPack(DCFKeyPack &key){
-    delete[] key.k;
-    delete[] key.g;
-    delete[] key.v;
-}
-
-inline void freeDCFKeyPackPair(std::pair<DCFKeyPack, DCFKeyPack> &keys){
-    delete[] keys.first.k;
-    delete[] keys.second.k;
-    delete[] keys.first.g;
-    delete[] keys.first.v;
-}
-
 struct DualDCFKeyPack{  
     int Bin, Bout, groupSize;
     DCFKeyPack dcfKey;
     GroupElement *sb;   // size: groupSize
     DualDCFKeyPack() {}
 };
-
-inline void freeDualDCFKeyPack(DualDCFKeyPack &key){
-    freeDCFKeyPack(key.dcfKey);
-    delete[] key.sb;
-}
-
-inline void freeDualDCFKeyPackPair(std::pair<DualDCFKeyPack, DualDCFKeyPack> &keys){
-    delete[] keys.first.dcfKey.k;
-    delete[] keys.second.dcfKey.k;
-    delete[] keys.first.dcfKey.g;
-    delete[] keys.first.dcfKey.v;
-    delete[] keys.first.sb;
-    delete[] keys.second.sb;
-}
 
 struct AddKey{
     int Bin, Bout;
@@ -91,21 +64,6 @@ struct MatMulKey{
     GroupElement *a, *b, *c;    
 };
 
-inline void freeMatMulKey(MatMulKey &key){
-    delete[] key.a;
-    delete[] key.b;
-    delete[] key.c;
-}
-
-inline void freeMatMulKeyPair(std::pair<MatMulKey, MatMulKey> &keys){
-    delete[] keys.first.a;
-    delete[] keys.first.b;
-    delete[] keys.first.c;
-    delete[] keys.second.a;
-    delete[] keys.second.b;
-    delete[] keys.second.c;
-}
-
 struct MultKeyNew {
     GroupElement a, b, c;
     DCFKeyPack k1, k2, k3, k4;
@@ -119,12 +77,6 @@ struct Conv2DKey{
         strideH, strideW;
     GroupElement *a, *b, *c;    
 };
-
-inline void freeConv2dKey(Conv2DKey &key){
-    delete[] key.a;
-    delete[] key.b;
-    delete[] key.c;
-}
 
 struct ScmpKeyPack
 {
@@ -170,41 +122,12 @@ struct ReluKeyPack
     GroupElement drelu;
 };
 
-inline void freeReluKeyPack(ReluKeyPack &key)
-{
-    delete[] key.k;
-    delete[] key.g;
-    delete[] key.v;
-}
-
-inline void freeReluKeyPackPair(std::pair<ReluKeyPack,ReluKeyPack> &keys)
-{
-    delete[] keys.first.k;
-    delete[] keys.second.k;
-    delete[] keys.first.g;
-    delete[] keys.first.v;
-    // other key shares g and v, dont delete again
-}
-
 struct MaxpoolKeyPack
 {
     int Bin, Bout;
     ReluKeyPack reluKey;
     GroupElement rb;
 };
-
-inline void freeMaxpoolKeyPack(MaxpoolKeyPack &key)
-{
-    freeReluKeyPack(key.reluKey);
-}
-
-inline void freeMaxpoolKeyPackPair(std::pair<MaxpoolKeyPack,MaxpoolKeyPack> &keys)
-{
-    delete[] keys.first.reluKey.k;
-    delete[] keys.second.reluKey.k;
-    delete[] keys.first.reluKey.g;
-    delete[] keys.first.reluKey.v;
-}
 
 struct ARSKeyPack
 {
@@ -216,34 +139,6 @@ struct ARSKeyPack
     ARSKeyPack() {}
 };
 
-inline void freeARSKeyPack(ARSKeyPack &key)
-{
-    delete[] key.dcfKey.k;
-    delete[] key.dcfKey.g;
-    delete[] key.dcfKey.v;
-    if (key.Bout > key.Bin - key.shift) {
-        delete[] key.dualDcfKey.sb;
-        delete[] key.dualDcfKey.dcfKey.k;
-        delete[] key.dualDcfKey.dcfKey.g;
-        delete[] key.dualDcfKey.dcfKey.v;
-    }
-}
-inline void freeARSKeyPackPair(std::pair<ARSKeyPack, ARSKeyPack> &keys)
-{
-    delete[] keys.first.dcfKey.k;
-    delete[] keys.second.dcfKey.k;
-    delete[] keys.first.dcfKey.g;
-    delete[] keys.first.dcfKey.v;
-    if (keys.first.Bout > keys.first.Bin - keys.first.shift) {
-        delete[] keys.first.dualDcfKey.sb;
-        delete[] keys.second.dualDcfKey.sb;
-        delete[] keys.first.dualDcfKey.dcfKey.k;
-        delete[] keys.second.dualDcfKey.dcfKey.k;
-        delete[] keys.first.dualDcfKey.dcfKey.g;
-        delete[] keys.first.dualDcfKey.dcfKey.v;
-    }
-}
-
 struct ReluTruncateKeyPack {
     int Bin, Bout, shift;
     DCFKeyPack dcfKeyN;
@@ -252,49 +147,11 @@ struct ReluTruncateKeyPack {
     GroupElement a, b, c, d1, d2;
 };
 
-inline void freeReluTruncateKeyPack(const ReluTruncateKeyPack &key)
-{
-    delete[] key.dcfKeyN.k;
-    delete[] key.dcfKeyN.g;
-    delete[] key.dcfKeyN.v;
-    delete[] key.dcfKeyS.k;
-    delete[] key.dcfKeyS.g;
-    delete[] key.dcfKeyS.v;
-}
-
-inline void freeReluTruncateKeyPackPair(const std::pair<ReluTruncateKeyPack, ReluTruncateKeyPack> &keys)
-{
-    delete[] keys.first.dcfKeyN.k;
-    delete[] keys.second.dcfKeyN.k;
-    delete[] keys.first.dcfKeyN.g;
-    delete[] keys.first.dcfKeyN.v;
-
-    delete[] keys.first.dcfKeyS.k;
-    delete[] keys.second.dcfKeyS.k;
-    delete[] keys.first.dcfKeyS.g;
-    delete[] keys.first.dcfKeyS.v;
-}
-
 struct Relu2RoundKeyPack {
     int effectiveBin, Bin;
     DCFKeyPack dcfKey;
     GroupElement a, b, c, d1, d2;
 };
-
-inline void freeRelu2RoundKeyPack(const Relu2RoundKeyPack &key)
-{
-    delete[] key.dcfKey.k;
-    delete[] key.dcfKey.g;
-    delete[] key.dcfKey.v;
-}
-
-inline void freeRelu2RoundKeyPackPair(const std::pair<Relu2RoundKeyPack, Relu2RoundKeyPack> &keys)
-{
-    delete[] keys.first.dcfKey.k;
-    delete[] keys.second.dcfKey.k;
-    delete[] keys.first.dcfKey.g;
-    delete[] keys.first.dcfKey.v;
-}
 
 /*
 struct SplineOneKeyPack
@@ -318,29 +175,6 @@ struct SplineKeyPack
     GroupElement r_b;
 };
 
-
-inline void freeSplineKey(SplineKeyPack &key)
-{
-    freeDCFKeyPack(key.dcfKey);
-    key.p.clear();
-    key.e_b.clear();
-    key.beta_b.clear();
-}
-
-inline void freeSplineKeyPair(std::pair<SplineKeyPack, SplineKeyPack> &keys)
-{
-    delete[] keys.first.dcfKey.k;
-    delete[] keys.second.dcfKey.k;
-    delete[] keys.first.dcfKey.g;
-    delete[] keys.first.dcfKey.v;
-    keys.first.p.clear();
-    keys.second.p.clear();
-    keys.first.e_b.clear();
-    keys.second.e_b.clear();
-    keys.first.beta_b.clear();
-    keys.second.beta_b.clear();
-}
-
 struct PrivateScaleKeyPack
 {
     GroupElement rin;
@@ -357,23 +191,10 @@ struct MICKeyPack {
     GroupElement *z;
 };
 
-inline void freeMICKeyPack(MICKeyPack &key)
-{
-    delete[] key.dcfKey.k;
-    delete[] key.dcfKey.g;
-    delete[] key.dcfKey.v;
-    delete[] key.z;
-}
-
 struct MSNZBKeyPack {
     MICKeyPack micKey;
     GroupElement r;
 };
-
-inline void freeMSNZBKeyPack(MSNZBKeyPack &key)
-{
-    freeMICKeyPack(key.micKey);
-}
 
 struct BulkyLRSKeyPack
 {
@@ -383,33 +204,12 @@ struct BulkyLRSKeyPack
     GroupElement out;
 };
 
-inline void freeBulkyLRSKeyPack(BulkyLRSKeyPack &key, int m)
-{
-    delete[] key.dcfKeyN.k;
-    delete[] key.dcfKeyN.g;
-    delete[] key.dcfKeyN.v;
-    delete[] key.z;
-    for(int i = 0; i < m; i++) {
-        delete[] key.dcfKeyS[i].k;
-        delete[] key.dcfKeyS[i].g;
-        delete[] key.dcfKeyS[i].v;
-    }
-    delete[] key.dcfKeyS;
-}
-
 struct TaylorKeyPack {
     MSNZBKeyPack msnzbKey;
     SquareKey squareKey;
     BulkyLRSKeyPack lrsKeys[2];
     PrivateScaleKeyPack privateScaleKey;
 };
-
-inline void freeTaylorKeyPack(TaylorKeyPack &key, int m)
-{
-    freeMSNZBKeyPack(key.msnzbKey);
-    freeBulkyLRSKeyPack(key.lrsKeys[0], m);
-    freeBulkyLRSKeyPack(key.lrsKeys[1], m);
-}
 
 struct SelectKeyPack {
     int Bin;
@@ -423,19 +223,6 @@ struct MaxpoolDoubleKeyPack
     GroupElement rb;
 };
 
-inline void freeMaxpoolDoubleKeyPack(MaxpoolDoubleKeyPack &key)
-{
-    freeRelu2RoundKeyPack(key.reluKey);
-}
-
-inline void freeMaxpoolDoubleKeyPackPair(std::pair<MaxpoolDoubleKeyPack,MaxpoolDoubleKeyPack> &keys)
-{
-    delete[] keys.first.reluKey.dcfKey.k;
-    delete[] keys.second.reluKey.dcfKey.k;
-    delete[] keys.first.reluKey.dcfKey.g;
-    delete[] keys.first.reluKey.dcfKey.v;
-}
-
 struct BitwiseAndKeyPack
 {
     GroupElement t[4];
@@ -448,19 +235,6 @@ struct FixToFloatKeyPack
     SelectKeyPack selectKey;
 };
 
-inline void freeFixToFloatKeyPack(FixToFloatKeyPack &key)
-{
-    freeMICKeyPack(key.micKey);
-}
-
-inline void freeFixToFloatKeyPackPair(std::pair<FixToFloatKeyPack, FixToFloatKeyPack> &keys)
-{
-    delete[] keys.first.micKey.dcfKey.k;
-    delete[] keys.second.micKey.dcfKey.k;
-    delete[] keys.first.micKey.dcfKey.g;
-    delete[] keys.first.micKey.dcfKey.v;
-}
-
 struct FloatToFixKeyPack
 {
     GroupElement rm, re, rw, rt;
@@ -469,16 +243,3 @@ struct FloatToFixKeyPack
     GroupElement p[1024];
     GroupElement q[1024];
 };
-
-inline void freeFloatToFixKeyPack(FloatToFixKeyPack &key)
-{
-    freeDCFKeyPack(key.dcfKey);
-}
-
-inline void freeFloatToFixKeyPackPair(std::pair<FloatToFixKeyPack, FloatToFixKeyPack> &keys)
-{
-    delete[] keys.first.dcfKey.k;
-    delete[] keys.second.dcfKey.k;
-    delete[] keys.first.dcfKey.g;
-    delete[] keys.first.dcfKey.v;
-}

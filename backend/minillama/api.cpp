@@ -34,6 +34,7 @@ SOFTWARE.
 #include "relu.h"
 #include "select.h"
 #include "float.h"
+#include "freekey.h"
 #include <cassert>
 #include <iostream>
 #include <assert.h>

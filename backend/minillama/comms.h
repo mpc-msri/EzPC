@@ -32,6 +32,9 @@ SOFTWARE.
 #include <netinet/tcp.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/mman.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -142,12 +145,30 @@ public:
     std::fstream file;
     uint64_t bytesSent = 0;
     uint64_t bytesReceived = 0;
+    bool ramdisk = false;
+    char *ramdiskBuffer;
+    char *ramdiskStart;
+    int ramdiskSize;
 
     Dealer(std::string ip, int port);
 
-    Dealer(std::string filename) {
+    Dealer(std::string filename, bool ramdisk) {
         this->useFile = true;
-        this->file.open(filename, std::ios::in | std::ios::binary);
+        this->ramdisk = ramdisk;
+        if (ramdisk) {
+            int fd = open(filename.c_str(), O_RDWR | O_CREAT, 0);
+            struct stat sb;
+            fstat(fd, &sb);
+            std::cerr << "Key Size: " << sb.st_size << " bytes" << std::endl;
+            ramdiskSize = sb.st_size;
+            ramdiskBuffer = (char*)mmap(NULL, sb.st_size, PROT_READ, MAP_SHARED, fd, 0);
+            ramdiskStart = ramdiskBuffer;
+            // std::cout << "RAMDISK: " << (int *)ramdiskBuffer << std::endl;
+            ::close(fd);
+        }
+        else {
+            this->file.open(filename, std::ios::in | std::ios::binary);
+        }
     }
 
     void close();

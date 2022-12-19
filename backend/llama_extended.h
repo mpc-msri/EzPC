@@ -19,7 +19,7 @@ class LlamaExtended {
 
 public:
 
-    static void init(std::string ip)
+    static void init(std::string ip, bool ramdisk = false)
     {
         prng.SetSeed(toBlock(0, time(NULL)));
         if (LlamaConfig::party == 1) {
@@ -27,12 +27,12 @@ public:
             LlamaConfig::client = new Peer("client.dat");
         }
         else if (LlamaConfig::party == 2) {
-            LlamaConfig::dealer = new Dealer("server.dat");
+            LlamaConfig::dealer = new Dealer("server.dat", ramdisk);
             LlamaConfig::client = waitForPeer(42002);
             LlamaConfig::peer = LlamaConfig::client;
         }
         else if (LlamaConfig::party == 3) {
-            LlamaConfig::dealer = new Dealer("client.dat");
+            LlamaConfig::dealer = new Dealer("client.dat", ramdisk);
             LlamaConfig::server = new Peer(ip, 42002);
             LlamaConfig::peer = LlamaConfig::server;
         }

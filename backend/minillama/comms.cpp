@@ -414,6 +414,7 @@ void Peer::send_dcf_keypack(const DCFKeyPack &kp) {
     for (int i = 0; i < kp.groupSize * kp.Bin; ++i) {
         send_ge(kp.v[i], kp.Bout);
     }
+    send_ge(42, 64);
 }
 
 void Peer::send_ddcf_keypack(const DualDCFKeyPack &kp) {
@@ -664,7 +665,13 @@ Dealer::Dealer(std::string ip, int port) {
 
 void Dealer::close() {
     if (useFile) {
-        file.close();
+        if (!ramdisk) {
+            file.close();
+        }
+        else {
+            std::cout << (int)(ramdiskBuffer - ramdiskStart) << "bytes read" << std::endl;
+            always_assert(ramdiskBuffer - ramdiskStart == ramdiskSize);
+        }
     }
     else {
         ::close(consocket);
@@ -674,6 +681,12 @@ void Dealer::close() {
 GroupElement Dealer::recv_mask() {
     char buf[8];
     if (useFile) {
+        if (ramdisk) {
+            GroupElement g = *(uint64_t *)ramdiskBuffer;
+            ramdiskBuffer += 8;
+            bytesReceived += 8;
+            return g;
+        }
         this->file.read(buf, 8);
     } else {
         recv(consocket, buf, 8, MSG_WAITALL);
@@ -686,6 +699,12 @@ GroupElement Dealer::recv_mask() {
 MultKey Dealer::recv_mult_key() {
     char buf[sizeof(MultKey)];
     if (useFile) {
+        if (ramdisk) {
+            MultKey k(*(MultKey *)ramdiskBuffer);
+            ramdiskBuffer += sizeof(MultKey);
+            bytesReceived += sizeof(MultKey);
+            return k;
+        }
         this->file.read(buf, sizeof(MultKey));
     } else {
         recv(consocket, buf, sizeof(MultKey), MSG_WAITALL);
@@ -698,6 +717,14 @@ MultKey Dealer::recv_mult_key() {
 osuCrypto::block Dealer::recv_block() {
     char buf[sizeof(osuCrypto::block)];
     if (useFile) {
+        if (ramdisk) {
+            // std::cout << *(uint64_t *) ramdiskBuffer << std::endl;
+            // Kanav: This could break when the endianness of the machine changes
+            osuCrypto::block b = osuCrypto::toBlock(*(uint64_t *) (ramdiskBuffer + 8), *(uint64_t *) ramdiskBuffer);
+            ramdiskBuffer += sizeof(osuCrypto::block);
+            bytesReceived += sizeof(osuCrypto::block);
+            return b;
+        }
         this->file.read(buf, sizeof(osuCrypto::block));
     } else {
         recv(consocket, buf, sizeof(osuCrypto::block), MSG_WAITALL);
@@ -711,6 +738,13 @@ GroupElement Dealer::recv_ge(int bl) {
     if (bl > 32) {
         char buf[8];
         if (useFile) {
+            if (ramdisk) {
+                GroupElement g = *(uint64_t *)ramdiskBuffer;
+                ramdiskBuffer += 8;
+                bytesReceived += 8;
+                mod(g, bl);
+                return g;
+            }
             this->file.read(buf, 8);
         } else {
             recv(consocket, buf, 8, MSG_WAITALL);
@@ -723,6 +757,13 @@ GroupElement Dealer::recv_ge(int bl) {
     else if (bl > 16) {
         char buf[4];
         if (useFile) {
+            if (ramdisk) {
+                GroupElement g = *(uint32_t *)ramdiskBuffer;
+                ramdiskBuffer += 4;
+                bytesReceived += 4;
+                mod(g, bl);
+                return g;
+            }
             this->file.read(buf, 4);
         } else {
             recv(consocket, buf, 4, MSG_WAITALL);
@@ -735,6 +776,13 @@ GroupElement Dealer::recv_ge(int bl) {
     else if (bl > 8) {
         char buf[2];
         if (useFile) {
+            if (ramdisk) {
+                GroupElement g = *(uint16_t *)ramdiskBuffer;
+                ramdiskBuffer += 2;
+                bytesReceived += 2;
+                mod(g, bl);
+                return g;
+            }
             this->file.read(buf, 2);
         } else {
             recv(consocket, buf, 2, MSG_WAITALL);
@@ -747,6 +795,13 @@ GroupElement Dealer::recv_ge(int bl) {
     else {
         char buf[1];
         if (useFile) {
+            if (ramdisk) {
+                GroupElement g = *(uint8_t *)ramdiskBuffer;
+                ramdiskBuffer += 1;
+                bytesReceived += 1;
+                mod(g, bl);
+                return g;
+            }
             this->file.read(buf, 1);
         } else {
             recv(consocket, buf, 1, MSG_WAITALL);
@@ -762,6 +817,12 @@ GroupElement Dealer::recv_ge(int bl) {
 void Dealer::recv_ge_array(const GroupElement *g, int size) {
     char *buf = (char *)g;
     if (useFile) {
+        if (ramdisk) {
+            memcpy(buf, ramdiskBuffer, 8*size);
+            ramdiskBuffer += 8*size;
+            bytesReceived += 8*size;
+            return;
+        }
         this->file.read(buf, 8*size);
     } else {
         recv(consocket, buf, 8*size, MSG_WAITALL);
@@ -776,18 +837,32 @@ DCFKeyPack Dealer::recv_dcf_keypack(int Bin, int Bout, int groupSize) {
     kp.Bout = Bout;
     kp.groupSize = groupSize;
 
-    kp.k = new osuCrypto::block[Bin + 1];
-    for (int i = 0; i < Bin + 1; ++i) {
-        kp.k[i] = recv_block();
+    if (ramdisk) {
+        kp.k = (osuCrypto::block *)ramdiskBuffer;
+        ramdiskBuffer += sizeof(osuCrypto::block) * (Bin + 1);
+    } else {
+        kp.k = new osuCrypto::block[Bin + 1];
+        for (int i = 0; i < Bin + 1; ++i) {
+            kp.k[i] = recv_block();
+        }
     }
+    // kp.g = (GroupElement *)ramdiskBuffer;
+    // ramdiskBuffer += sizeof(GroupElement) * groupSize;
     kp.g = new GroupElement[groupSize];
     for (int i = 0; i < groupSize; ++i) {
         kp.g[i] = recv_ge(Bout);
     }
-    kp.v = new GroupElement[Bin * groupSize];
-    for (int i = 0; i < Bin * groupSize; ++i) {
-        kp.v[i] = recv_ge(Bout);
+    if (ramdisk && (Bin > 32)) {
+        kp.v = (GroupElement *)ramdiskBuffer;
+        ramdiskBuffer += sizeof(GroupElement) * (Bin * groupSize);
+    } else {
+        kp.v = new GroupElement[Bin * groupSize];
+        for (int i = 0; i < Bin * groupSize; ++i) {
+            kp.v[i] = recv_ge(Bout);
+        }
     }
+    GroupElement t = recv_ge(64);
+    always_assert(t == 42);
     return kp;
 }
 
@@ -927,18 +1002,29 @@ ReluKeyPack Dealer::recv_relu_key(int Bin, int Bout) {
     ReluKeyPack kp;
     kp.Bin = Bin;
     kp.Bout = Bout;
-    kp.k = new osuCrypto::block[Bin + 1];
     kp.g = new GroupElement[groupSize];
-    kp.v = new GroupElement[Bin * groupSize];
     // kp.dcfKey = recv_dcf_keypack(Bin, Bout, groupSize);
-    for(int i = 0; i < Bin + 1; ++i) {
-        kp.k[i] = recv_block();
+    if (ramdisk) {
+        kp.k = (osuCrypto::block *)ramdiskBuffer;
+        ramdiskBuffer += sizeof(osuCrypto::block) * (Bin + 1);
+    } else {
+        kp.k = new osuCrypto::block[Bin + 1];
+        for(int i = 0; i < Bin + 1; ++i) {
+            kp.k[i] = recv_block();
+        }
     }
     for(int i = 0; i < groupSize; ++i) {
         kp.g[i] = recv_ge(Bout);
     }
-    for(int i = 0; i < Bin * groupSize; ++i) {
-        kp.v[i] = recv_ge(Bout);
+    if (ramdisk && (Bin > 32)) {
+        kp.v = (GroupElement *)ramdiskBuffer;
+        ramdiskBuffer += sizeof(GroupElement) * (Bin * groupSize);
+    }
+    else {
+        kp.v = new GroupElement[Bin * groupSize];
+        for(int i = 0; i < Bin * groupSize; ++i) {
+            kp.v[i] = recv_ge(Bout);
+        }
     }
     kp.e_b0 = recv_ge(Bout);
     kp.e_b1 = recv_ge(Bout);
