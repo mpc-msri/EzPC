@@ -3,6 +3,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.autograd import Variable
 torch.set_default_dtype(torch.float64)
 torch.set_printoptions(precision=20)
 
@@ -44,7 +45,7 @@ img[2][2][0][1] = 2349
 # img[0][2][0][0] = 2
 # img[1][0][0][0] = 3
 # img[1][1][0][0] = 4
-# img[1][2][0][0] = 5
+# img[1][2][0][0] = 7
 
 # model.eval()
 # y = model(img)
@@ -65,17 +66,19 @@ optimizer = torch.optim.SGD(model.parameters(), lr=lr_rate, momentum=momentum)
 
 
 for i in range(5):
-    output = model(img)
+    img2 = Variable(img, requires_grad=True)
+    output = model(img2)
     optimizer.zero_grad()
     loss = criterion(output,label)
     loss.backward()
     optimizer.step()
 
+print(img2.grad)
 
-print("#### AFTER ####")
-print(model.bn.weight.data)
-print(model.bn.bias.data)
+# print("#### AFTER ####")
+# print(model.bn.weight.data)
+# print(model.bn.bias.data)
 
 model.eval()
 output = model(img)
-print(output)
+# print(output)

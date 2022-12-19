@@ -65,7 +65,7 @@ void llama_fixtofloat_test(int party) {
     LlamaConfig::party = party;
     LlamaConfig::bitlength = 64;
     // LlamaExtended<u64>::init("172.31.45.158");
-    LlamaExtended<u64>::init("127.0.0.1");
+    LlamaExtended<u64>::init("127.0.0.1", true);
     int numClasses = 10;
     int batchSize = 100;
     if (party != 1)
@@ -501,7 +501,7 @@ void bn_float() {
     // trainImage(1, 0, 0, 0) = 3;
     // trainImage(1, 0, 0, 1) = 4;
     // trainImage(1, 0, 0, 2) = 5;
-    // Tensor4D<double> e(2, 1, 1, 3);
+    // Tensor4D<double> e(2, 3, 1, 1);
 
     // model.forward(trainImage, false);
     // model.activation.print();
@@ -517,17 +517,18 @@ void bn_float() {
         }
         model.backward(e);
     }
-    bn->gamma.print();
-    bn->beta.print();
-    model.forward(trainImage, false);
-    model.activation.print();
+    // bn->gamma.print();
+    // bn->beta.print();
+    bn->inputDerivative.print();
+    // model.forward(trainImage, false);
+    // model.activation.print();
 }
 
 int main(int argc, char** argv) {
     prngWeights.SetSeed(osuCrypto::toBlock(time(NULL)));
     prng.SetSeed(osuCrypto::toBlock(time(NULL)));
     // set floating point precision
-    std::cout << std::fixed  << std::setprecision(20);
+    // std::cout << std::scientific  << std::setprecision(20);
 #ifdef NDEBUG
     std::cout << "> Release Build" << std::endl;
 #else
@@ -554,6 +555,6 @@ int main(int argc, char** argv) {
     // for(int i = 0; i < 10; ++i) {
     //     pt_test_bitwiseand();
     // }
-    // cifar10_float();
-    bn_float();
+    cifar10_float();
+    // bn_float();
 }

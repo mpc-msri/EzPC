@@ -320,12 +320,15 @@ void cifar10_float() {
     auto model = Sequential<double>({
         /// 3 Layer from Gupta et al
         new Conv2D<double, 0>(3, 64, 5, 1),
+        new BatchNorm2d<double, 0>(64),
         new ReLU<double>(),
         new MaxPool2D<double>(3, 0, 2),
         new Conv2D<double, 0>(64, 64, 5, 1),
+        new BatchNorm2d<double, 0>(64),
         new ReLU<double>(),
         new MaxPool2D<double>(3, 0, 2),
         new Conv2D<double, 0>(64, 64, 5, 1),
+        new BatchNorm2d<double, 0>(64),
         new ReLU<double>(),
         new MaxPool2D<double>(3, 0, 2),
         new Flatten<double>(),
@@ -370,7 +373,7 @@ void cifar10_float() {
                     }
                 }
             }
-            model.forward(trainImage);
+            model.forward(trainImage, true);
             softmax<double, 0>(model.activation, e);
             for(u64 b = 0; b < batchSize; ++b) {
                 e(b, dataset.training_labels[i+b], 0, 0) -= (1.0/batchSize);
@@ -390,7 +393,7 @@ void cifar10_float() {
                     }
                 }
             }
-            model.forward(testImage);
+            model.forward(testImage, false);
             for(u64 b = 0; b < batchSize; ++b) {
                 if (model.activation.argmax(b) == dataset.test_labels[i+b]) {
                     correct++;

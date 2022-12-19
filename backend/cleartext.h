@@ -681,7 +681,7 @@ public:
 
             for(int i = 0; i < M; ++i) {
                 dinReshaped(c, i) = M * dxcap(c, i) - tmp1 - xcap(c, i) * tmp2;
-                dinReshaped(c, i) = dinReshaped(c, i) * invstd(c);
+                dinReshaped(c, i) = dinReshaped(c, i) * invstd(c) / M;
             }
         });
 
