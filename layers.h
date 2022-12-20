@@ -430,8 +430,8 @@ public:
     BatchNorm2d(u64 channels) : Layer<T>("BatchNorm2d"), running_mean(channels), running_variance(channels), gamma(channels), beta(channels),
     x_normalized(0, 0, 0, 0), invstd(channels), Vgamma(channels), Vbeta(channels) {
         this->running_mean.fill(0);
-        this->running_variance.fill(1);
-        this->gamma.fill(1);
+        this->running_variance.fill(1ULL << scale);
+        this->gamma.fill(1ULL << scale);
         this->beta.fill(0);
         this->Vgamma.fill(0);
         this->Vbeta.fill(0);
@@ -443,10 +443,12 @@ public:
         this->inputDerivative.resize(a.d1, a.d2, a.d3, a.d4);
         x_normalized.resize(a.d1, a.d2, a.d3, a.d4);
         if (train) {
-            Backend::batchNorm2dForwardTrain(a, this->activation, this->running_mean, this->running_variance, this->gamma, this->beta, this->x_normalized, this->invstd);
+            Backend::batchNorm2dForwardTrain(a, this->activation, this->running_mean, this->running_variance, this->gamma, 
+                this->beta, this->x_normalized, this->invstd, scale);
         }
         else {
-            Backend::batchNorm2dForwardTest(a, this->activation, this->running_mean, this->running_variance, this->gamma, this->beta);
+            Backend::batchNorm2dForwardTest(a, this->activation, this->running_mean, this->running_variance, this->gamma, 
+                this->beta, scale);
         }
     }
 
@@ -455,8 +457,14 @@ public:
         const u64 C = e.d4;
         Tensor<T> dgamma(C);
         Tensor<T> dbeta(C);
-        Backend::batchNorm2dBackward(this->inputDerivative, e, dgamma, dbeta, this->x_normalized, gamma, invstd);
-        Backend::updateBias(this->gamma, dgamma, Vgamma, scale);
+        Backend::batchNorm2dBackward(this->inputDerivative, e, dgamma, dbeta, this->x_normalized, gamma, invstd, scale);
+        // dgamma.print(scale);
+        // dbeta.print(2*scale);
+        // this->gamma.print(scale);
+        Backend::updateWeight(this->gamma, dgamma, Vgamma, scale);
+        // this->gamma.print(scale);
+        // this->beta.print(2*scale);
         Backend::updateBias(this->beta, dbeta, Vbeta, scale);
+        // this->beta.print(2*scale);
     }
 };

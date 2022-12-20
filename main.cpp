@@ -153,7 +153,7 @@ void llama_test_3layer(int party) {
     LlamaConfig::party = party;
     LlamaConfig::stochasticT = true;
     LlamaConfig::stochasticRT = true;
-    LlamaVersion::init("172.31.45.173");
+    LlamaVersion::init("172.31.45.85", false);
     const u64 bs = 100;
     
     auto conv1 = new Conv2D<u64, scale, LlamaVersion>(3, 64, 5, 1);
@@ -469,46 +469,28 @@ void relu_real_keysize() {
 
 void bn_float() {
     auto bn = new BatchNorm2d<double, 0>(3);
+    auto conv = new Conv2D<double, 0>(3, 3, 3, 1);
+    conv->filter.fill(1);
+    conv->bias.fill(0);
     auto model = Sequential<double>({
+        conv,
         bn,
+        new ReLU<double>(),
         new Flatten<double>(),
     });
 
     Tensor4D<double> trainImage(3, 1, 2, 3);
-    trainImage(0, 0, 0, 0) = 4567;
-    trainImage(0, 0, 1, 0) = 4567;
-    trainImage(0, 0, 0, 1) = 328;
-    trainImage(0, 0, 1, 1) = 328;
-    trainImage(0, 0, 0, 2) = 9785;
-    trainImage(0, 0, 1, 2) = 9785;
-    trainImage(1, 0, 0, 0) = 3109;
-    trainImage(1, 0, 1, 0) = 3109;
-    trainImage(1, 0, 0, 1) = 2389;
-    trainImage(1, 0, 1, 1) = 2389;
-    trainImage(1, 0, 0, 2) = 238;
-    trainImage(1, 0, 1, 2) = 238;
-    trainImage(2, 0, 0, 0) = 5478;
-    trainImage(2, 0, 1, 0) = 5478;
-    trainImage(2, 0, 0, 1) = 623;
-    trainImage(2, 0, 1, 1) = 623;
-    trainImage(2, 0, 0, 2) = 2349;
-    trainImage(2, 0, 1, 2) = 2349;
+    for(int i = 0; i < trainImage.d1; ++i) {
+        for(int j = 0; j < trainImage.d2; ++j) {
+            for(int k = 0; k < trainImage.d3; ++k) {
+                for(int l = 0; l < trainImage.d4; ++l) {
+                    trainImage(i, j, k, l) = (i * trainImage.d2 * trainImage.d3 * trainImage.d4 + j * trainImage.d3 * trainImage.d4 + k * trainImage.d4 + l);
+                }
+            }
+        }
+    }
     Tensor4D<double> e(3, 6, 1, 1);
-    // Tensor4D<double> trainImage(2, 1, 1, 3);
-    // trainImage(0, 0, 0, 0) = 0;
-    // trainImage(0, 0, 0, 1) = 1;
-    // trainImage(0, 0, 0, 2) = 2;
-    // trainImage(1, 0, 0, 0) = 3;
-    // trainImage(1, 0, 0, 1) = 4;
-    // trainImage(1, 0, 0, 2) = 5;
-    // Tensor4D<double> e(2, 3, 1, 1);
-
-    // model.forward(trainImage, false);
-    // model.activation.print();
-    // model.activation.print();
-    // bn->running_mean.print();
-    // bn->running_variance.print();
-    int numIters = 5;
+    int numIters = 10;
     for (int i = 0; i < numIters; ++i) {
         model.forward(trainImage);
         softmax<double, 0>(model.activation, e);
@@ -517,11 +499,57 @@ void bn_float() {
         }
         model.backward(e);
     }
-    // bn->gamma.print();
-    // bn->beta.print();
-    bn->inputDerivative.print();
+    bn->gamma.print();
+    bn->beta.print();
+    // model.activation.print();
+    // bn->inputDerivative.print();
     // model.forward(trainImage, false);
     // model.activation.print();
+}
+
+void bn_int() {
+    std::cerr << "BN INT" << std::endl;
+    const u64 scale = 24;
+    auto bn = new BatchNorm2d<i64, scale>(3);
+    auto conv = new Conv2D<i64, scale>(3, 3, 3, 1);
+    conv->filter.fill(1LL << scale);
+    conv->bias.fill(0);
+    auto model = Sequential<i64>({
+        conv,
+        new Truncate<i64>(scale),
+        bn,
+        new ReLU<i64>(),
+        new Flatten<i64>(),
+    });
+
+    Tensor4D<i64> trainImage(3, 1, 2, 3);
+    for(int i = 0; i < trainImage.d1; ++i) {
+        for(int j = 0; j < trainImage.d2; ++j) {
+            for(int k = 0; k < trainImage.d3; ++k) {
+                for(int l = 0; l < trainImage.d4; ++l) {
+                    trainImage(i, j, k, l) = (i * trainImage.d2 * trainImage.d3 * trainImage.d4 + j * trainImage.d3 * trainImage.d4 + k * trainImage.d4 + l) << scale;
+                }
+            }
+        }
+    }
+    Tensor4D<i64> e(3, 6, 1, 1);
+    int numIters = 10;
+    for (int i = 0; i < numIters; ++i) {
+        model.forward(trainImage);
+        softmax<i64, scale>(model.activation, e);
+        for(u64 b = 0; b < 3; ++b) {
+            e(b, 0, 0, 0) -= ((1LL<<scale)/3);
+        }
+        model.backward(e);
+    }
+    bn->gamma.print();
+    bn->beta.print();
+    bn->gamma.print(scale);
+    bn->beta.print(2*scale);
+    // model.activation.print(scale);
+    // bn->inputDerivative.print(scale);
+    // model.forward(trainImage, false);
+    // model.activation.print(scale);
 }
 
 int main(int argc, char** argv) {
@@ -555,6 +583,7 @@ int main(int argc, char** argv) {
     // for(int i = 0; i < 10; ++i) {
     //     pt_test_bitwiseand();
     // }
-    cifar10_float();
-    // bn_float();
+    // cifar10_float();
+    bn_float();
+    bn_int();
 }

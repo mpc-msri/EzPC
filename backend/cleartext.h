@@ -189,6 +189,30 @@ public:
         }
     }
 
+    static void updateWeight(Tensor<T> &weight, const Tensor<T> &e, Tensor<T> &Vw, u64 scale) {
+        assert(weight.size == e.size);
+        if (mom_fp == 0) {
+            for(int i = 0; i < weight.size; i++) {
+                e(i) = e(i) * lr_fp;
+            }
+            truncate(e, scale+lr_scale);
+            for(u64 i = 0; i < weight.size; i++) {
+                weight(i) -= e(i);
+            }
+        }
+        else {
+            assert(weight.size = Vw.size);
+            for(int i = 0; i < weight.size; i++) {
+                Vw(i) = mom_fp * Vw(i) + (1ULL<<mom_scale) * e(i);
+            }
+            truncate(Vw, mom_scale);
+            for(int i = 0; i < weight.size; i++) {
+                weight(i) = (1ULL<<(lr_scale+scale)) * weight(i) - lr_fp * Vw(i);
+            }
+            truncate(weight, lr_scale+scale);
+        }
+    }
+
     static void updateBias(Tensor<T> &bias, const Tensor4D<T> &e, const Tensor<T> &Vb, u64 scale) {
         // assert(e.d1 == 1);
         assert(e.d2 == bias.size);
@@ -431,6 +455,19 @@ public:
         });
     }
 
+    static void truncate(const T &in, u64 shift) {
+        if constexpr (std::is_floating_point<T>::value) {
+            in = in / ((T)(1ULL << shift));
+        } else {
+            u64 x0 = ((u64)in) % (1ULL << shift);
+            in = in >> shift;
+            if (probablistic) {
+                u64 r = rand() % (1ULL << shift);
+                in += (x0 < r ? 0 : 1); 
+            }
+        }
+    }
+
     static void div(const Tensor4D<T> &in, T divisor) {
         fastfor(in.d1, [&] (u64 i) {
             for (u64 j = 0; j < in.d2; j++) {
@@ -563,7 +600,7 @@ public:
 
     static void batchNorm2dForwardTrain(const Tensor4D<T> &in, Tensor4D<T> &out, 
         const Tensor<T> &running_mean, const Tensor<T> &running_var, const Tensor<T> &gamma, const Tensor<T> &beta,
-        Tensor4D<T> &x_normalized, Tensor<T> &invstd) {
+        Tensor4D<T> &x_normalized, Tensor<T> &invstd, u64 scale) {
         assert(in.d1 == out.d1);
         assert(in.d2 == out.d2);
         assert(in.d3 == out.d3);
@@ -572,12 +609,14 @@ public:
         assert(in.d4 == beta.size);
         assert(in.d4 == running_mean.size);
         assert(in.d4 == running_var.size);
+        assert(!((scale == 0) ^ std::is_floating_point<T>::value));
 
         Tensor<T> mean(in.d4); mean.fill(0);
         Tensor<T> var(in.d4); var.fill(0);
-        u64 m = in.d1 * in.d2 * in.d3;
+        i64 m = in.d1 * in.d2 * in.d3;
         
-        fastfor(in.d4, [&](int l) {
+        // fastfor(in.d4, [&](int l) {
+        for(int l = 0; l < in.d4; ++l) {
             for(int i = 0; i < in.d1; i++) {
                 for(int j = 0; j < in.d2; j++) {
                     for(int k = 0; k < in.d3; k++) {
@@ -595,23 +634,43 @@ public:
                 }
             }
             // var(l) /= ((in.d1 * in.d2 * in.d3) - 1);
-            invstd(l) = 1 / sqrt((var(l) / m) + 1e-5);
+            if constexpr (!std::is_floating_point<T>::value) {
+                var(l) = var(l) / (1LL << scale); // due to multiplication
+                double var_d = (var(l) / m);
+                var_d /= (1LL << scale); // fix2float
+                invstd(l) = (1LL << scale) / sqrt(var_d + 1e-5);
+            } else {
+                invstd(l) = 1 / sqrt((var(l) / m) + 1e-5);
+            }
 
-            running_mean(l) = 0.9 * running_mean(l) + 0.1 * mean(l);
-            running_var(l) = 0.9 * running_var(l) + 0.1 * (var(l) / (m - 1));
+            running_mean(l) = 29 * running_mean(l) + 3 * mean(l);
+            running_mean(l) /= 32;
+            running_var(l) = 29 * running_var(l) + 3 * (var(l) / (m - 1));
+            running_var(l) /= 32;
+            // std::cout << ((double)invstd(l)) / (1LL << (scale)) << " ";
+
 
             for(int i = 0; i < in.d1; i++) {
                 for(int j = 0; j < in.d2; j++) {
                     for(int k = 0; k < in.d3; k++) {
                         x_normalized(i, j, k, l) = (in(i, j, k, l) - mean(l)) * invstd(l);
+                        if constexpr (!std::is_floating_point<T>::value) {
+                            x_normalized(i, j, k, l) = x_normalized(i, j, k, l) / (1LL << scale); // due to multiplication
+                        }
+                        // std::cout << ((double)x_normalized(i, j, k, l)) / (1LL << (scale)) << " ";
                         out(i, j, k, l) = gamma(l) * x_normalized(i, j, k, l) + beta(l);
+                        if constexpr (!std::is_floating_point<T>::value) {
+                            out(i, j, k, l) /= (1LL << scale); // due to multiplication
+                        }
+                        // std::cout << ((double)out(i, j, k, l)) / (1LL << (scale)) << " ";
                     }
                 }
             }
-        });
+        }
     }
 
-    static void batchNorm2dForwardTest(const Tensor4D<T> &in, Tensor4D<T> &out, const Tensor<T> &running_mean, const Tensor<T> &running_var, const Tensor<T> &gamma, const Tensor<T> &beta) {
+    static void batchNorm2dForwardTest(const Tensor4D<T> &in, Tensor4D<T> &out, const Tensor<T> &running_mean, 
+        const Tensor<T> &running_var, const Tensor<T> &gamma, const Tensor<T> &beta, u64 scale) {
         assert(in.d1 == out.d1);
         assert(in.d2 == out.d2);
         assert(in.d3 == out.d3);
@@ -622,10 +681,24 @@ public:
         assert(in.d4 == running_var.size);
 
         fastfor(in.d4, [&](int l) {
+            T invstd;
+            if constexpr (!std::is_floating_point<T>::value) {
+                double var_d = running_var(l);
+                var_d /= (1LL << scale); // fix2float
+                invstd = (1LL << scale) / sqrt(var_d + 1e-5);
+            } else {
+                invstd = 1 / sqrt(running_var(l) + 1e-5);
+            }
             for(int i = 0; i < in.d1; i++) {
                 for(int j = 0; j < in.d2; j++) {
                     for(int k = 0; k < in.d3; k++) {
-                        out(i, j, k, l) = gamma(l) * (in(i, j, k, l) - running_mean(l)) / sqrt(running_var(l) + 1e-5) + beta(l);
+                        out(i, j, k, l) = gamma(l) * (in(i, j, k, l) - running_mean(l));
+                        if constexpr (!std::is_floating_point<T>::value)
+                            out(i, j, k, l) /= (1LL << scale); // due to multiplication
+                        out(i, j, k, l) *= invstd;
+                        out(i, j, j, l) + beta(l);
+                        if constexpr (!std::is_floating_point<T>::value)
+                            out(i, j, k, l) /= (1LL << scale); // due to multiplication
                     }
                 }
             }
@@ -647,8 +720,8 @@ public:
     }
 
     static void batchNorm2dBackward(Tensor4D<T> &din, const Tensor4D<T> &dout, Tensor<T> &dgamma, Tensor<T> &dbeta,
-        const Tensor4D<T> &normalized, const Tensor<T> &gamma, const Tensor<T> &invstd) {
-        const u64 M = din.d1 * din.d2 * din.d3;
+        const Tensor4D<T> &normalized, const Tensor<T> &gamma, const Tensor<T> &invstd, u64 scale) {
+        const i64 M = din.d1 * din.d2 * din.d3;
         const u64 C = din.d4;
         assert(din.d1 == dout.d1);
         assert(din.d2 == dout.d2);
@@ -665,11 +738,16 @@ public:
         dgamma.fill(0);
         dbeta.fill(0);
 
-        fastfor(C, [&](int c) {
+        // fastfor(C, [&](int c) {
+        for(int c = 0; c < C; ++c) {
             for(int i = 0; i < M; ++i) {
                 dgamma(c) += doutReshaped(c, i) * xcap(c, i);
                 dbeta(c) += doutReshaped(c, i);
                 dxcap(c, i) = doutReshaped(c, i) * gamma(c);
+                if constexpr (!std::is_floating_point<T>::value) {
+                    dxcap(c, i) /= (1LL << scale); // due to multiplication
+                }
+
             }
 
             T tmp1 = 0;
@@ -678,12 +756,25 @@ public:
                 tmp1 += dxcap(c, i);
                 tmp2 += dxcap(c, i) * xcap(c, i);
             }
+            if constexpr (!std::is_floating_point<T>::value) {
+                tmp2 /= (1LL << scale); // due to multiplication
+            }
 
             for(int i = 0; i < M; ++i) {
-                dinReshaped(c, i) = M * dxcap(c, i) - tmp1 - xcap(c, i) * tmp2;
-                dinReshaped(c, i) = dinReshaped(c, i) * invstd(c) / M;
+                dinReshaped(c, i) = - xcap(c, i) * tmp2;
+                if constexpr (!std::is_floating_point<T>::value) {
+                    dinReshaped(c, i) /= (1LL << scale); // due to multiplication
+                }
+                dinReshaped(c, i) += M * dxcap(c, i) - tmp1;
+                dinReshaped(c, i) = (dinReshaped(c, i) * invstd(c)) / M;
+                if constexpr (!std::is_floating_point<T>::value) {
+                    dinReshaped(c, i) /= (1LL << scale); // due to multiplication
+                }
+                // std::cout << ((double)dinReshaped(c, i)) / (1LL << (scale)) << " ";
             }
-        });
+        }
+
+        // std::cout << std::endl;
 
         for(int i = 0; i < din.d1; i++) {
             for(int j = 0; j < din.d2; j++) {
