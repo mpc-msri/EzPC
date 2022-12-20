@@ -852,7 +852,7 @@ DCFKeyPack Dealer::recv_dcf_keypack(int Bin, int Bout, int groupSize) {
     for (int i = 0; i < groupSize; ++i) {
         kp.g[i] = recv_ge(Bout);
     }
-    if (ramdisk && (Bin > 32)) {
+    if (false) {
         kp.v = (GroupElement *)ramdiskBuffer;
         ramdiskBuffer += sizeof(GroupElement) * (Bin * groupSize);
     } else {

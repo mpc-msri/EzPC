@@ -31,9 +31,9 @@ inline void freeDCFKeyPack(DCFKeyPack &key){
         delete[] key.k;
     }
     delete[] key.g;
-    if (!(LlamaConfig::dealer->ramdisk && (key.Bin > 32))) {
+    // if (!(LlamaConfig::dealer->ramdisk && (key.Bin > 32))) {
         delete[] key.v;
-    }
+    // }
 }
 
 inline void freeDCFKeyPackPair(std::pair<DCFKeyPack, DCFKeyPack> &keys){
