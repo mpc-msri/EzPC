@@ -40,13 +40,12 @@ T *make_array(size_t s1, size_t s2, size_t s3, size_t s4, size_t s5) {
 
 // Indexing Helpers, we use 1D pointers for any dimension array, hence these macros are necessary
 // Copied from SCI
-#define Arr1DIdxRowM(arr, s0, i) (*((arr) + (i)))
-#define Arr2DIdxRowM(arr, s0, s1, i, j) (*((arr) + (i) * (s1) + (j)))
-#define Arr3DIdxRowM(arr, s0, s1, s2, i, j, k)                                 \
+#define Arr2DIdx(arr, s0, s1, i, j) (*((arr) + (i) * (s1) + (j)))
+// #define Arr3D(arr, s0, s1, s2, i, j, k)                                 \
   (*((arr) + (i) * (s1) * (s2) + (j) * (s2) + (k)))
-#define Arr4DIdxRowM(arr, s0, s1, s2, s3, i, j, k, l)                          \
+#define Arr4DIdx(arr, s0, s1, s2, s3, i, j, k, l)                          \
   (*((arr) + (i) * (s1) * (s2) * (s3) + (j) * (s2) * (s3) + (k) * (s3) + (l)))
-#define Arr5DIdxRowM(arr, s0, s1, s2, s3, s4, i, j, k, l, m)                   \
+#define Arr5DIdx(arr, s0, s1, s2, s3, s4, i, j, k, l, m)                   \
   (*((arr) + (i) * (s1) * (s2) * (s3) * (s4) + (j) * (s2) * (s3) * (s4) +      \
      (k) * (s3) * (s4) + (l) * (s4) + (m)))
 

@@ -21,7 +21,7 @@ public:
 
     static void init(std::string ip, bool ramdisk = false)
     {
-        prng.SetSeed(toBlock(0, time(NULL)));
+        prng.SetSeed(osuCrypto::toBlock(0, time(NULL)));
         if (LlamaConfig::party == 1) {
             LlamaConfig::server = new Peer("server.dat");
             LlamaConfig::client = new Peer("client.dat");

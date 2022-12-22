@@ -57,7 +57,7 @@ GroupElement MultEval(int party, const MultKey &k, const GroupElement &l, const 
 
 GroupElement mult_helper(uint8_t party, GroupElement x, GroupElement y, GroupElement x_mask, GroupElement y_mask)
 {
-    if ((party == DEALER)) {
+    if (party == DEALER) {
         GroupElement z_mask = random_ge(64);
         std::pair<MultKey, MultKey> keys = MultGen(x_mask, y_mask, z_mask);
         server->send_mult_key(keys.first);

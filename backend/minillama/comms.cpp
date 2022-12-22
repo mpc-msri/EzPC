@@ -333,19 +333,19 @@ void Peer::send_matmul_key(const MatMulKey &k) {
     
     for(int i = 0; i < s1; i++) {
         for(int j = 0; j < s2; j++) {
-            send_ge(Arr2DIdxRowM(k.a, s1, s2, i, j), k.Bin);
+            send_ge(Arr2DIdx(k.a, s1, s2, i, j), k.Bin);
         }
     }
 
     for(int i = 0; i < s2; i++) {
         for(int j = 0; j < s3; j++) {
-            send_ge(Arr2DIdxRowM(k.b, s2, s3, i, j), k.Bin);
+            send_ge(Arr2DIdx(k.b, s2, s3, i, j), k.Bin);
         }
     }
 
     for(int i = 0; i < s1; i++) {
         for(int j = 0; j < s3; j++) {
-            send_ge(Arr2DIdxRowM(k.c, s1, s3, i, j), k.Bout);
+            send_ge(Arr2DIdx(k.c, s1, s3, i, j), k.Bout);
         }
     }
 }
@@ -375,7 +375,7 @@ void Peer::send_conv2d_key(const Conv2DKey &k) {
         for(int h = 0; h < H; ++h) {
             for(int w = 0; w < W; ++w) {
                 for(int ci = 0; ci < CI; ++ci) {
-                    send_ge(Arr4DIdxRowM(k.a, N, H, W, CI, n, h, w, ci), k.Bin);
+                    send_ge(Arr4DIdx(k.a, N, H, W, CI, n, h, w, ci), k.Bin);
                 }
             }
         }
@@ -385,7 +385,7 @@ void Peer::send_conv2d_key(const Conv2DKey &k) {
         for(int fw = 0; fw < FW; ++fw) {
             for(int ci = 0; ci < CI; ++ci) {
                 for(int co = 0; co < CO; ++co) {
-                    send_ge(Arr4DIdxRowM(k.b, FH, FW, CI, CO, fh, fw, ci, co), k.Bin);
+                    send_ge(Arr4DIdx(k.b, FH, FW, CI, CO, fh, fw, ci, co), k.Bin);
                 }
             }
         }
@@ -397,7 +397,7 @@ void Peer::send_conv2d_key(const Conv2DKey &k) {
         for(int j = 0; j < d1; ++j) {
             for(int k = 0; k < d2; ++k) {
                 for(int l = 0; l < d3; ++l) {
-                    send_ge(Arr4DIdxRowM(c, d0, d1, d2, d3, i, j, k, l), Bout);
+                    send_ge(Arr4DIdx(c, d0, d1, d2, d3, i, j, k, l), Bout);
                 }
             }
         }
@@ -907,22 +907,22 @@ MatMulKey Dealer::recv_matmul_key(int Bin, int Bout, int s1, int s2, int s3) {
 
     for(int i = 0; i < s1; ++i) {
         for(int j = 0; j < s2; ++j) {
-            Arr2DIdxRowM(k.a, s1, s2, i, j) = (party == SERVER ? GroupElement(prngShared.get<uint64_t>()) : recv_ge(Bin));
-            mod(Arr2DIdxRowM(k.a, s1, s2, i, j), Bin);
+            Arr2DIdx(k.a, s1, s2, i, j) = (party == SERVER ? GroupElement(prngShared.get<uint64_t>()) : recv_ge(Bin));
+            mod(Arr2DIdx(k.a, s1, s2, i, j), Bin);
         }
     }
     
     for(int i = 0; i < s2; ++i) {
         for(int j = 0; j < s3; ++j) {
-            Arr2DIdxRowM(k.b, s2, s3, i, j) = (party == SERVER ? GroupElement(prngShared.get<uint64_t>()) : recv_ge(Bin));
-            mod(Arr2DIdxRowM(k.b, s2, s3, i, j), Bin);
+            Arr2DIdx(k.b, s2, s3, i, j) = (party == SERVER ? GroupElement(prngShared.get<uint64_t>()) : recv_ge(Bin));
+            mod(Arr2DIdx(k.b, s2, s3, i, j), Bin);
         }
     }
 
     for(int i = 0; i < s1; ++i) {
         for(int j = 0; j < s3; ++j) {
-            Arr2DIdxRowM(k.c, s1, s3, i, j) = (party == SERVER ? GroupElement(prngShared.get<uint64_t>()) : recv_ge(Bout));
-            mod(Arr2DIdxRowM(k.c, s1, s3, i, j), Bout);
+            Arr2DIdx(k.c, s1, s3, i, j) = (party == SERVER ? GroupElement(prngShared.get<uint64_t>()) : recv_ge(Bout));
+            mod(Arr2DIdx(k.c, s1, s3, i, j), Bout);
         }
     }
 
@@ -965,8 +965,8 @@ Conv2DKey Dealer::recv_conv2d_key(int Bin, int Bout, int64_t N, int64_t H, int64
         for(int h = 0; h < H; ++h) {
             for(int w = 0; w < W; ++w) {
                 for(int ci = 0; ci < CI; ++ci) {
-                    Arr4DIdxRowM(k.a, N, H, W, CI, n, h, w, ci) = (party == SERVER ? GroupElement(prngShared.get<uint64_t>()) : recv_ge(Bin));
-                    mod(Arr4DIdxRowM(k.a, N, H, W, CI, n, h, w, ci), Bin);
+                    Arr4DIdx(k.a, N, H, W, CI, n, h, w, ci) = (party == SERVER ? GroupElement(prngShared.get<uint64_t>()) : recv_ge(Bin));
+                    mod(Arr4DIdx(k.a, N, H, W, CI, n, h, w, ci), Bin);
                 }
             }
         }
@@ -976,8 +976,8 @@ Conv2DKey Dealer::recv_conv2d_key(int Bin, int Bout, int64_t N, int64_t H, int64
         for(int fw = 0; fw < FW; ++fw) {
             for(int ci = 0; ci < CI; ++ci) {
                 for(int co = 0; co < CO; ++co) {
-                    Arr4DIdxRowM(k.b, FH, FW, CI, CO, fh, fw, ci, co) = (party == SERVER ? GroupElement(prngShared.get<uint64_t>()) : recv_ge(Bin));
-                    mod(Arr4DIdxRowM(k.b, FH, FW, CI, CO, fh, fw, ci, co), Bin);
+                    Arr4DIdx(k.b, FH, FW, CI, CO, fh, fw, ci, co) = (party == SERVER ? GroupElement(prngShared.get<uint64_t>()) : recv_ge(Bin));
+                    mod(Arr4DIdx(k.b, FH, FW, CI, CO, fh, fw, ci, co), Bin);
                 }
             }
         }
@@ -988,8 +988,8 @@ Conv2DKey Dealer::recv_conv2d_key(int Bin, int Bout, int64_t N, int64_t H, int64
         for(int j = 0; j < d1; ++j) {
             for(int k = 0; k < d2; ++k) {
                 for(int l = 0; l < d3; ++l) {
-                    Arr4DIdxRowM(c, d0, d1, d2, d3, i, j, k, l) = (party == SERVER ? GroupElement(prngShared.get<uint64_t>()) : recv_ge(Bout));
-                    mod(Arr4DIdxRowM(c, d0, d1, d2, d3, i, j, k, l), Bout);
+                    Arr4DIdx(c, d0, d1, d2, d3, i, j, k, l) = (party == SERVER ? GroupElement(prngShared.get<uint64_t>()) : recv_ge(Bout));
+                    mod(Arr4DIdx(c, d0, d1, d2, d3, i, j, k, l), Bout);
                 }
             }
         }

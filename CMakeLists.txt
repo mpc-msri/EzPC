@@ -2,40 +2,33 @@ cmake_minimum_required(VERSION 3.16)
 project(fptraining)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-write-strings -Wno-unused-result -maes -Wno-ignored-attributes -march=native")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-write-strings -Wno-unused-result -maes -Wno-ignored-attributes -march=native -Wno-deprecated-declarations")
 find_package (Eigen3 3.3 REQUIRED NO_MODULE)
 find_package(Threads REQUIRED)
 
 add_subdirectory(backend/sci)
+add_subdirectory(backend/minillama)
 
 add_executable(fptraining 
     main.cpp 
     networks.cpp
     mnist.cpp
     random.cpp
-    backend/minillama/cryptoTools/cryptoTools/Common/Defines.cpp
-    backend/minillama/cryptoTools/cryptoTools/Common/Log.cpp
-    backend/minillama/cryptoTools/cryptoTools/Crypto/AES.cpp
-    backend/minillama/cryptoTools/cryptoTools/Crypto/PRNG.cpp
-    backend/minillama/and.cpp
-    backend/minillama/api.cpp
-    backend/minillama/comms.cpp
-    backend/minillama/config.cpp
-    backend/minillama/conv.cpp
-    backend/minillama/dcf.cpp
-    backend/minillama/float.cpp
-    backend/minillama/input_prng.cpp
-    backend/minillama/mic.cpp
-    backend/minillama/msnzb.cpp
-    backend/minillama/mult.cpp
-    backend/minillama/prng.cpp
-    backend/minillama/pubdiv.cpp
-    backend/minillama/relutruncate.cpp
-    backend/minillama/relu.cpp
-    backend/minillama/select.cpp
-    backend/minillama/stats.cpp
-    backend/minillama/taylor.cpp
-    backend/minillama/truncate.cpp
-    backend/minillama/utils.cpp)
-target_link_libraries (fptraining Eigen3::Eigen Threads::Threads SCI-FloatML)
+    train.cpp
+    backend/cleartext.cpp
+)
+target_link_libraries (fptraining Eigen3::Eigen Threads::Threads SCI-FloatML LLAMA)
 target_include_directories(fptraining PRIVATE backend/minillama/cryptoTools backend/sci/src)
+
+add_executable(tests 
+    tests/main.cpp
+    tests/cleartext.cpp
+    tests/llama.cpp
+    networks.cpp
+    mnist.cpp
+    random.cpp
+    train.cpp
+    backend/cleartext.cpp
+)
+target_link_libraries (tests Eigen3::Eigen Threads::Threads SCI-FloatML LLAMA)
+target_include_directories(tests PRIVATE backend/minillama/cryptoTools backend/sci/src)

@@ -215,7 +215,7 @@ void Conv2DWrapper(int32_t N, int32_t H, int32_t W,
             for(int j = 0; j < d1; ++j) {
                 for(int k = 0; k < d2; ++k) {
                     for(int l = 0; l < d3; ++l) {
-                        Arr4DIdxRowM(outArr_mask, d0, d1, d2, d3, i, j, k, l) = random_ge(bitlength);
+                        Arr4DIdx(outArr_mask, d0, d1, d2, d3, i, j, k, l) = random_ge(bitlength);
                     }
                 }
             }
@@ -436,12 +436,12 @@ inline void matmul2d_server_helper(int thread_idx, int s1, int s2, int s3, Group
     for(int ik = p.first; ik < p.second; ik += 1){
         int i = ik / s3;
         int k = ik % s3;
-        Arr2DIdxRowM(C, s1, s3, i, k) = Arr2DIdxRowM(c, s1, s3, i, k);
+        Arr2DIdx(C, s1, s3, i, k) = Arr2DIdx(c, s1, s3, i, k);
         for (int j = 0; j < s2; j++)
         {
-            Arr2DIdxRowM(C, s1, s3, i, k) = Arr2DIdxRowM(C, s1, s3, i, k) - Arr2DIdxRowM(A, s1, s2, i, j) * Arr2DIdxRowM(b, s2, s3, j, k) - Arr2DIdxRowM(a, s1, s2, i, j) * Arr2DIdxRowM(B, s2, s3, j, k) + Arr2DIdxRowM(A, s1, s2, i, j) * Arr2DIdxRowM(B, s2, s3, j, k);
+            Arr2DIdx(C, s1, s3, i, k) = Arr2DIdx(C, s1, s3, i, k) - Arr2DIdx(A, s1, s2, i, j) * Arr2DIdx(b, s2, s3, j, k) - Arr2DIdx(a, s1, s2, i, j) * Arr2DIdx(B, s2, s3, j, k) + Arr2DIdx(A, s1, s2, i, j) * Arr2DIdx(B, s2, s3, j, k);
         }
-        // mod(Arr2DIdxRowM(C, s1, s3, i, k));
+        // mod(Arr2DIdx(C, s1, s3, i, k));
     }
 
 }
@@ -452,12 +452,12 @@ inline void matmul2d_client_helper(int thread_idx, int s1, int s2, int s3, Group
     for(int ik = p.first; ik < p.second; ik += 1){
         int i = ik / s3;
         int k = ik % s3;
-        Arr2DIdxRowM(C, s1, s3, i, k) = Arr2DIdxRowM(c, s1, s3, i, k);
+        Arr2DIdx(C, s1, s3, i, k) = Arr2DIdx(c, s1, s3, i, k);
         for (int j = 0; j < s2; j++)
         {
-            Arr2DIdxRowM(C, s1, s3, i, k) = Arr2DIdxRowM(C, s1, s3, i, k) - Arr2DIdxRowM(A, s1, s2, i, j) * Arr2DIdxRowM(b, s2, s3, j, k) - Arr2DIdxRowM(a, s1, s2, i, j) * Arr2DIdxRowM(B, s2, s3, j, k);
+            Arr2DIdx(C, s1, s3, i, k) = Arr2DIdx(C, s1, s3, i, k) - Arr2DIdx(A, s1, s2, i, j) * Arr2DIdx(b, s2, s3, j, k) - Arr2DIdx(a, s1, s2, i, j) * Arr2DIdx(B, s2, s3, j, k);
         }
-        // mod(Arr2DIdxRowM(C, s1, s3, i, k));
+        // mod(Arr2DIdx(C, s1, s3, i, k));
     }
 
 }
@@ -471,7 +471,7 @@ void MatMul2D(int32_t s1, int32_t s2, int32_t s3, MASK_PAIR(GroupElement *A),
         auto dealer_start = std::chrono::high_resolution_clock::now();
         for(int i = 0; i < s1; ++i) {
             for(int j = 0; j < s3; ++j) {
-                Arr2DIdxRowM(C_mask, s1, s3, i, j) = random_ge(bitlength);
+                Arr2DIdx(C_mask, s1, s3, i, j) = random_ge(bitlength);
             }
         }
 
@@ -543,16 +543,16 @@ void ArgMax(int32_t rows, int32_t cols, MASK_PAIR(GroupElement *inp), MASK_PAIR(
         auto start = std::chrono::high_resolution_clock::now();
         for(int i = 0; i < rows; ++i) {
             for(int j = 0; j < cols; ++j) {
-                Arr2DIdxRowM(tmpMax_mask, rows, cols, i, j) = Arr2DIdxRowM(inp_mask, rows, cols, i, j);
-                Arr2DIdxRowM(tmpIdx_mask, rows, cols, i, j) = 0;
+                Arr2DIdx(tmpMax_mask, rows, cols, i, j) = Arr2DIdx(inp_mask, rows, cols, i, j);
+                Arr2DIdx(tmpIdx_mask, rows, cols, i, j) = 0;
             }
         }
 
         while(curCols > 1) {
             for(int row = 0; row < rows; row++) {
                 for(int j = 0; j < curCols / 2; ++j) {
-                    Arr2DIdxRowM(drelu_mask, rows, curCols / 2, row, j) = random_ge(bitlength);
-                    auto scmpKeys = keyGenSCMP(bitlength, bitlength, Arr2DIdxRowM(tmpMax_mask, rows, curCols, row, 2*j), Arr2DIdxRowM(tmpMax_mask, rows, curCols, row, 2*j + 1), Arr2DIdxRowM(drelu_mask, rows, curCols / 2, row, j));
+                    Arr2DIdx(drelu_mask, rows, curCols / 2, row, j) = random_ge(bitlength);
+                    auto scmpKeys = keyGenSCMP(bitlength, bitlength, Arr2DIdx(tmpMax_mask, rows, curCols, row, 2*j), Arr2DIdx(tmpMax_mask, rows, curCols, row, 2*j + 1), Arr2DIdx(drelu_mask, rows, curCols / 2, row, j));
                     server->send_scmp_keypack(scmpKeys.first);
                     client->send_scmp_keypack(scmpKeys.second);
                 }
@@ -561,14 +561,14 @@ void ArgMax(int32_t rows, int32_t cols, MASK_PAIR(GroupElement *inp), MASK_PAIR(
             for (int row = 0; row < rows; row++) {
                 for(int j = 0; j < curCols / 2; ++j) {
                     
-                    Arr2DIdxRowM(mult_res_mask, 2 * rows, curCols / 2, row, j) = random_ge(bitlength);
-                    auto multKeys1 = MultGen(Arr2DIdxRowM(drelu_mask, rows, curCols / 2, row, j), Arr2DIdxRowM(tmpMax_mask, rows, curCols, row, 2*j) - Arr2DIdxRowM(tmpMax_mask, rows, curCols, row, 2*j + 1), Arr2DIdxRowM(mult_res_mask, 2 * rows, curCols / 2, row, j));
+                    Arr2DIdx(mult_res_mask, 2 * rows, curCols / 2, row, j) = random_ge(bitlength);
+                    auto multKeys1 = MultGen(Arr2DIdx(drelu_mask, rows, curCols / 2, row, j), Arr2DIdx(tmpMax_mask, rows, curCols, row, 2*j) - Arr2DIdx(tmpMax_mask, rows, curCols, row, 2*j + 1), Arr2DIdx(mult_res_mask, 2 * rows, curCols / 2, row, j));
                     
                     server->send_mult_key(multKeys1.first);
                     client->send_mult_key(multKeys1.second);
                     
-                    Arr2DIdxRowM(mult_res_mask, 2 * rows, curCols / 2, rows + row, j) = random_ge(bitlength);
-                    auto multKeys2 = MultGen(Arr2DIdxRowM(drelu_mask, rows, curCols / 2, row, j), Arr2DIdxRowM(tmpIdx_mask, rows, curCols, row, 2*j) - Arr2DIdxRowM(tmpIdx_mask, rows, curCols, row, 2*j + 1), Arr2DIdxRowM(mult_res_mask, 2 * rows, curCols / 2, rows + row, j));
+                    Arr2DIdx(mult_res_mask, 2 * rows, curCols / 2, rows + row, j) = random_ge(bitlength);
+                    auto multKeys2 = MultGen(Arr2DIdx(drelu_mask, rows, curCols / 2, row, j), Arr2DIdx(tmpIdx_mask, rows, curCols, row, 2*j) - Arr2DIdx(tmpIdx_mask, rows, curCols, row, 2*j + 1), Arr2DIdx(mult_res_mask, 2 * rows, curCols / 2, rows + row, j));
                     
                     server->send_mult_key(multKeys2.first);
                     client->send_mult_key(multKeys2.second);
@@ -577,12 +577,12 @@ void ArgMax(int32_t rows, int32_t cols, MASK_PAIR(GroupElement *inp), MASK_PAIR(
 
             for (int row = 0; row < rows; row++) {
                 for(int j = 0; j < curCols / 2; ++j) {
-                    Arr2DIdxRowM(tmpMax_mask, rows, curCols / 2, row, j) = Arr2DIdxRowM(mult_res_mask, 2 * rows, curCols / 2, row, j) + Arr2DIdxRowM(tmpMax_mask, rows, curCols, row, 2*j + 1);
-                    Arr2DIdxRowM(tmpIdx_mask, rows, curCols / 2, row, j) = Arr2DIdxRowM(mult_res_mask, 2 * rows, curCols / 2, rows + row, j) + Arr2DIdxRowM(tmpIdx_mask, rows, curCols, row, 2*j + 1);
+                    Arr2DIdx(tmpMax_mask, rows, curCols / 2, row, j) = Arr2DIdx(mult_res_mask, 2 * rows, curCols / 2, row, j) + Arr2DIdx(tmpMax_mask, rows, curCols, row, 2*j + 1);
+                    Arr2DIdx(tmpIdx_mask, rows, curCols / 2, row, j) = Arr2DIdx(mult_res_mask, 2 * rows, curCols / 2, rows + row, j) + Arr2DIdx(tmpIdx_mask, rows, curCols, row, 2*j + 1);
                 }
                 if (curCols % 2 == 1) {
-                    Arr2DIdxRowM(tmpMax_mask, rows, curCols / 2, row, curCols / 2) = Arr2DIdxRowM(tmpMax_mask, 2 * rows, curCols, row, curCols - 1);
-                    Arr2DIdxRowM(tmpIdx_mask, rows, curCols / 2, row, curCols / 2) = Arr2DIdxRowM(tmpIdx_mask, 2 * rows, curCols, row, curCols - 1);
+                    Arr2DIdx(tmpMax_mask, rows, curCols / 2, row, curCols / 2) = Arr2DIdx(tmpMax_mask, 2 * rows, curCols, row, curCols - 1);
+                    Arr2DIdx(tmpIdx_mask, rows, curCols / 2, row, curCols / 2) = Arr2DIdx(tmpIdx_mask, 2 * rows, curCols, row, curCols - 1);
                 }
             }
 
@@ -591,7 +591,7 @@ void ArgMax(int32_t rows, int32_t cols, MASK_PAIR(GroupElement *inp), MASK_PAIR(
         }
 
         for(int row = 0; row < rows; row++) {
-            out_mask[row] = Arr2DIdxRowM(tmpIdx_mask, rows, 1, row, 0);
+            out_mask[row] = Arr2DIdx(tmpIdx_mask, rows, 1, row, 0);
         }    
         auto end = std::chrono::high_resolution_clock::now();
         dealerMicroseconds += std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
@@ -635,8 +635,8 @@ void ArgMax(int32_t rows, int32_t cols, MASK_PAIR(GroupElement *inp), MASK_PAIR(
         
         for(int i = 0; i < rows; ++i) {
             for(int j = 0; j < cols; ++j) {
-                Arr2DIdxRowM(tmpMax, rows, cols, i, j) = Arr2DIdxRowM(inp, rows, cols, i, j);
-                Arr2DIdxRowM(tmpIdx, rows, cols, i, j) = j;
+                Arr2DIdx(tmpMax, rows, cols, i, j) = Arr2DIdx(inp, rows, cols, i, j);
+                Arr2DIdx(tmpIdx, rows, cols, i, j) = j;
             }
         }
         
@@ -646,7 +646,7 @@ void ArgMax(int32_t rows, int32_t cols, MASK_PAIR(GroupElement *inp), MASK_PAIR(
         while(curCols > 1) {
             for(int row = 0; row < rows; row++) {
                 for(int j = 0; j < curCols / 2; ++j) {
-                    Arr2DIdxRowM(drelu, rows, curCols / 2, row, j) = evalSCMP(party - 2, keys[k1++], Arr2DIdxRowM(tmpMax, rows, curCols, row, 2*j), Arr2DIdxRowM(tmpMax, rows, curCols, row, 2*j + 1));
+                    Arr2DIdx(drelu, rows, curCols / 2, row, j) = evalSCMP(party - 2, keys[k1++], Arr2DIdx(tmpMax, rows, curCols, row, 2*j), Arr2DIdx(tmpMax, rows, curCols, row, 2*j + 1));
                 }
             }
 
@@ -655,11 +655,11 @@ void ArgMax(int32_t rows, int32_t cols, MASK_PAIR(GroupElement *inp), MASK_PAIR(
             for (int row = 0; row < rows; row++) {
                 for(int j = 0; j < curCols / 2; ++j) {
                     
-                    Arr2DIdxRowM(mult_res, 2 * rows, curCols / 2, row, j) = MultEval(party - 2, mult_keys1[k2++], Arr2DIdxRowM(drelu, rows, curCols / 2, row, j), Arr2DIdxRowM(tmpMax, rows, curCols, row, 2*j) - Arr2DIdxRowM(tmpMax, rows, curCols, row, 2*j + 1));
+                    Arr2DIdx(mult_res, 2 * rows, curCols / 2, row, j) = MultEval(party - 2, mult_keys1[k2++], Arr2DIdx(drelu, rows, curCols / 2, row, j), Arr2DIdx(tmpMax, rows, curCols, row, 2*j) - Arr2DIdx(tmpMax, rows, curCols, row, 2*j + 1));
                     
-                    Arr2DIdxRowM(mult_res, 2 * rows, curCols / 2, rows + row, j) = MultEval(party - 2, mult_keys2[k3++], 
-                        Arr2DIdxRowM(drelu, rows, curCols / 2, row, j), 
-                        Arr2DIdxRowM(tmpIdx, rows, curCols, row, 2*j) - Arr2DIdxRowM(tmpIdx, rows, curCols, row, 2*j + 1));
+                    Arr2DIdx(mult_res, 2 * rows, curCols / 2, rows + row, j) = MultEval(party - 2, mult_keys2[k3++], 
+                        Arr2DIdx(drelu, rows, curCols / 2, row, j), 
+                        Arr2DIdx(tmpIdx, rows, curCols, row, 2*j) - Arr2DIdx(tmpIdx, rows, curCols, row, 2*j + 1));
                 }
             }
 
@@ -667,12 +667,12 @@ void ArgMax(int32_t rows, int32_t cols, MASK_PAIR(GroupElement *inp), MASK_PAIR(
 
             for (int row = 0; row < rows; row++) {
                 for(int j = 0; j < curCols / 2; ++j) {
-                    Arr2DIdxRowM(tmpMax, rows, curCols / 2, row, j) = Arr2DIdxRowM(mult_res, 2 * rows, curCols / 2, row, j) + Arr2DIdxRowM(tmpMax, rows, curCols, row, 2*j + 1);
-                    Arr2DIdxRowM(tmpIdx, rows, curCols / 2, row, j) = Arr2DIdxRowM(mult_res, 2 * rows, curCols / 2, rows + row, j) + Arr2DIdxRowM(tmpIdx, rows, curCols, row, 2*j + 1);
+                    Arr2DIdx(tmpMax, rows, curCols / 2, row, j) = Arr2DIdx(mult_res, 2 * rows, curCols / 2, row, j) + Arr2DIdx(tmpMax, rows, curCols, row, 2*j + 1);
+                    Arr2DIdx(tmpIdx, rows, curCols / 2, row, j) = Arr2DIdx(mult_res, 2 * rows, curCols / 2, rows + row, j) + Arr2DIdx(tmpIdx, rows, curCols, row, 2*j + 1);
                 }
                 if (curCols % 2 == 1) {
-                    Arr2DIdxRowM(tmpMax, rows, curCols / 2, row, curCols / 2) = Arr2DIdxRowM(tmpMax, 2 * rows, curCols, row, curCols - 1);
-                    Arr2DIdxRowM(tmpIdx, rows, curCols / 2, row, curCols / 2) = Arr2DIdxRowM(tmpIdx, 2 * rows, curCols, row, curCols - 1);
+                    Arr2DIdx(tmpMax, rows, curCols / 2, row, curCols / 2) = Arr2DIdx(tmpMax, 2 * rows, curCols, row, curCols - 1);
+                    Arr2DIdx(tmpIdx, rows, curCols / 2, row, curCols / 2) = Arr2DIdx(tmpIdx, 2 * rows, curCols, row, curCols - 1);
                 }
             }
 
@@ -680,7 +680,7 @@ void ArgMax(int32_t rows, int32_t cols, MASK_PAIR(GroupElement *inp), MASK_PAIR(
         }
 
         for(int row = 0; row < rows; row++) {
-            out[row] = Arr2DIdxRowM(tmpIdx, rows, 1, row, 0);
+            out[row] = Arr2DIdx(tmpIdx, rows, 1, row, 0);
         }
         
         auto end = std::chrono::high_resolution_clock::now();
@@ -958,8 +958,8 @@ void AvgPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t ksizeH,
                                 temp_mask = 0;
 							}
 							else{
-								temp = Arr4DIdxRowM(inArr, N, imgH, imgW, C, n, curPosH, curPosW, c);
-                                temp_mask = Arr4DIdxRowM(inArr_mask, N, imgH, imgW, C, n, curPosH, curPosW, c);
+								temp = Arr4DIdx(inArr, N, imgH, imgW, C, n, curPosH, curPosW, c);
+                                temp_mask = Arr4DIdx(inArr_mask, N, imgH, imgW, C, n, curPosH, curPosW, c);
 							}
 
 							curFilterSum = curFilterSum + temp;
@@ -1026,10 +1026,10 @@ void AvgPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t ksizeH,
 				for(int w=0;w<W;w++){
 					int iidx = n*C*H*W + c*H*W + h*W + w;
                     if (party == DEALER) {
-                        Arr4DIdxRowM(outArr_mask, N, H, W, C, n, h, w, c) = outp_mask[iidx];
+                        Arr4DIdx(outArr_mask, N, H, W, C, n, h, w, c) = outp_mask[iidx];
                     }
                     else {
-					    Arr4DIdxRowM(outArr, N, H, W, C, n, h, w, c) = outp[iidx];
+					    Arr4DIdx(outArr, N, H, W, C, n, h, w, c) = outp[iidx];
                     }
 				}
 			}
@@ -1127,16 +1127,16 @@ void maxpool_threads_helper(int thread_idx, int fh, int fw, int32_t N, int32_t H
         int curPosH = leftTopCornerH + fh;
         int curPosW = leftTopCornerW + fw;
         
-        GroupElement maxi = Arr4DIdxRowM(maxUntilNow, N, H, W, C, n, ctH, ctW, c);
+        GroupElement maxi = Arr4DIdx(maxUntilNow, N, H, W, C, n, ctH, ctW, c);
         GroupElement temp;
         if ((((curPosH < 0) || (curPosH >= imgH)) || ((curPosW < 0) || (curPosW >= imgW)))) {
             temp = GroupElement(0);
         }
         else {
-            temp = Arr4DIdxRowM(inArr, N1, imgH, imgW, C1, n, curPosH, curPosW, c);
+            temp = Arr4DIdx(inArr, N1, imgH, imgW, C1, n, curPosH, curPosW, c);
         }
         int kidx = (fh * FW + fw - 1) * (N * C * H * W) + i;
-        Arr4DIdxRowM(maxUntilNow, N, H, W, C, n, ctH, ctW, c) = evalMaxpool(party - 2, maxi, temp, keys[kidx], Arr5DIdxRowM(oneHot, FH*FW-1, N, H, W, C, fh * FW + fw - 1, n, ctH, ctW, c));
+        Arr4DIdx(maxUntilNow, N, H, W, C, n, ctH, ctW, c) = evalMaxpool(party - 2, maxi, temp, keys[kidx], Arr5DIdx(oneHot, FH*FW-1, N, H, W, C, fh * FW + fw - 1, n, ctH, ctW, c));
         freeMaxpoolKeyPack(keys[kidx]);
     }
 }
@@ -1172,29 +1172,29 @@ void MaxPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
 
                                 if (fh == 0 && fw == 0) {
                                     if (leftTopCornerH < 0 || leftTopCornerW < 0 || leftTopCornerH >= imgH || leftTopCornerW >= imgW) {
-                                        Arr4DIdxRowM(maxUntilNow_mask, N, H, W, C, n, ctH, ctW, c) = GroupElement(0);
+                                        Arr4DIdx(maxUntilNow_mask, N, H, W, C, n, ctH, ctW, c) = GroupElement(0);
                                     }
                                     else {
-                                        Arr4DIdxRowM(maxUntilNow_mask, N, H, W, C, n, ctH, ctW, c) = Arr4DIdxRowM(inArr_mask, N1, imgH, imgW, C1, n, leftTopCornerH, leftTopCornerW, c);
+                                        Arr4DIdx(maxUntilNow_mask, N, H, W, C, n, ctH, ctW, c) = Arr4DIdx(inArr_mask, N1, imgH, imgW, C1, n, leftTopCornerH, leftTopCornerW, c);
                                     }
                                 }
                                 else {
                                     int curPosH = leftTopCornerH + fh;
                                     int curPosW = leftTopCornerW + fw;
 
-                                    GroupElement maxi_mask = Arr4DIdxRowM(maxUntilNow_mask, N, H, W, C, n, ctH, ctW, c);
+                                    GroupElement maxi_mask = Arr4DIdx(maxUntilNow_mask, N, H, W, C, n, ctH, ctW, c);
                                     GroupElement temp_mask;
                                     if ((((curPosH < 0) || (curPosH >= imgH)) || ((curPosW < 0) || (curPosW >= imgW)))) {
                                         temp_mask = GroupElement(0);
                                     }
                                     else {
-                                        temp_mask = Arr4DIdxRowM(inArr_mask, N1, imgH, imgW, C1, n, curPosH, curPosW, c);
+                                        temp_mask = Arr4DIdx(inArr_mask, N1, imgH, imgW, C1, n, curPosH, curPosW, c);
                                     }
                                     GroupElement rout = random_ge(bitlength);
                                     GroupElement routBit = random_ge(1);
                                     auto keys = keyGenMaxpool(bitlength, bitlength, maxi_mask, temp_mask, rout, routBit);
-                                    Arr5DIdxRowM(oneHot, FH * FW - 1, N, H, W, C, fh * FW + fw - 1, n, ctH, ctW, c) = routBit;
-                                    Arr4DIdxRowM(maxUntilNow_mask, N, H, W, C, n, ctH, ctW, c) = rout;
+                                    Arr5DIdx(oneHot, FH * FW - 1, N, H, W, C, fh * FW + fw - 1, n, ctH, ctW, c) = routBit;
+                                    Arr4DIdx(maxUntilNow_mask, N, H, W, C, n, ctH, ctW, c) = rout;
 
                                     auto read_start = std::chrono::high_resolution_clock::now();
                                     server->send_maxpool_key(keys.first);
@@ -1252,10 +1252,10 @@ void MaxPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
                         int leftTopCornerH = ctH * strideH - zPadHLeft;
                         int leftTopCornerW = ctW * strideW - zPadWLeft;
                         if (leftTopCornerH < 0 || leftTopCornerW < 0 || leftTopCornerH >= imgH || leftTopCornerW >= imgW) {
-                            Arr4DIdxRowM(maxUntilNow, N, H, W, C, n, ctH, ctW, c) = 0;
+                            Arr4DIdx(maxUntilNow, N, H, W, C, n, ctH, ctW, c) = 0;
                         }
                         else {
-                            Arr4DIdxRowM(maxUntilNow, N, H, W, C, n, ctH, ctW, c) = Arr4DIdxRowM(inArr, N1, imgH, imgW, C1, n, leftTopCornerH, leftTopCornerW, c);
+                            Arr4DIdx(maxUntilNow, N, H, W, C, n, ctH, ctW, c) = Arr4DIdx(inArr, N1, imgH, imgW, C1, n, leftTopCornerH, leftTopCornerW, c);
                         }
                     }
                 }
@@ -1392,14 +1392,14 @@ void PiranhaSoftmax(int32_t s1, int32_t s2, MASK_PAIR(GroupElement *inArr), MASK
     if (party == DEALER) {
         for(int i = 0; i < s1; ++i) {
             for(int j = 0; j < s2; ++j) {
-                Arr2DIdxRowM(outArr_mask, s1, s2, i, j) = Arr2DIdxRowM(inArr_mask, s1, s2, i, j) - max[i];
+                Arr2DIdx(outArr_mask, s1, s2, i, j) = Arr2DIdx(inArr_mask, s1, s2, i, j) - max[i];
             }
         }
     }
     else {
         for(int i = 0; i < s1; ++i) {
             for(int j = 0; j < s2; ++j) {
-                Arr2DIdxRowM(outArr, s1, s2, i, j) = Arr2DIdxRowM(inArr, s1, s2, i, j) - max[i] + (1<<(sf + 1));
+                Arr2DIdx(outArr, s1, s2, i, j) = Arr2DIdx(inArr, s1, s2, i, j) - max[i] + (1<<(sf + 1));
             }
         }
     }
@@ -1414,7 +1414,7 @@ void PiranhaSoftmax(int32_t s1, int32_t s2, MASK_PAIR(GroupElement *inArr), MASK
         for(int i = 0; i < s1; ++i) {
             denominators[i] = 0;
             for(int j = 0; j < s2; ++j) {
-                denominators[i] = denominators[i] + Arr2DIdxRowM(outArr_mask, s1, s2, i, j);
+                denominators[i] = denominators[i] + Arr2DIdx(outArr_mask, s1, s2, i, j);
             }
             denominators[i] = denominators[i] * s1;
         }
@@ -1423,7 +1423,7 @@ void PiranhaSoftmax(int32_t s1, int32_t s2, MASK_PAIR(GroupElement *inArr), MASK
         for(int i = 0; i < s1; ++i) {
             denominators[i] = 0;
             for(int j = 0; j < s2; ++j) {
-                denominators[i] = denominators[i] + Arr2DIdxRowM(outArr, s1, s2, i, j);
+                denominators[i] = denominators[i] + Arr2DIdx(outArr, s1, s2, i, j);
             }
             denominators[i] = denominators[i] * s1;
         }
@@ -1436,7 +1436,7 @@ void PiranhaSoftmax(int32_t s1, int32_t s2, MASK_PAIR(GroupElement *inArr), MASK
     GroupElement *expandedDenominator = make_array<GroupElement>(s1 * s2);
     for(int i = 0; i < s1; ++i) {
         for(int j = 0; j < s2; ++j) {
-            Arr2DIdxRowM(expandedDenominator, s1, s2, i, j) = denominators[i];
+            Arr2DIdx(expandedDenominator, s1, s2, i, j) = denominators[i];
         }
     }
     delete[] max;
@@ -1623,16 +1623,16 @@ void maxpool_double_threads_helper_1(int thread_idx, int fh, int fw, int32_t N, 
         int curPosH = leftTopCornerH + fh;
         int curPosW = leftTopCornerW + fw;
         
-        GroupElement maxi = Arr4DIdxRowM(maxUntilNow, N, H, W, C, n, ctH, ctW, c);
+        GroupElement maxi = Arr4DIdx(maxUntilNow, N, H, W, C, n, ctH, ctW, c);
         GroupElement temp;
         if ((((curPosH < 0) || (curPosH >= imgH)) || ((curPosW < 0) || (curPosW >= imgW)))) {
             temp = GroupElement(0);
         }
         else {
-            temp = Arr4DIdxRowM(inArr, N1, imgH, imgW, C1, n, curPosH, curPosW, c);
+            temp = Arr4DIdx(inArr, N1, imgH, imgW, C1, n, curPosH, curPosW, c);
         }
         int kidx = (fh * FW + fw - 1) * (N * C * H * W) + i;
-        Arr5DIdxRowM(oneHot, FH*FW-1, N, H, W, C, fh * FW + fw - 1, n, ctH, ctW, c) = evalMaxpoolDouble_1(party - 2, maxi, temp, keys[kidx]);
+        Arr5DIdx(oneHot, FH*FW-1, N, H, W, C, fh * FW + fw - 1, n, ctH, ctW, c) = evalMaxpoolDouble_1(party - 2, maxi, temp, keys[kidx]);
         // freeMaxpoolKeyPack(keys[kidx]);
     }
 }
@@ -1660,18 +1660,18 @@ void maxpool_double_threads_helper_2(int thread_idx, int fh, int fw, int32_t N, 
         int curPosH = leftTopCornerH + fh;
         int curPosW = leftTopCornerW + fw;
         
-        GroupElement maxi = Arr4DIdxRowM(maxUntilNow, N, H, W, C, n, ctH, ctW, c);
+        GroupElement maxi = Arr4DIdx(maxUntilNow, N, H, W, C, n, ctH, ctW, c);
         GroupElement temp;
         if ((((curPosH < 0) || (curPosH >= imgH)) || ((curPosW < 0) || (curPosW >= imgW)))) {
             temp = GroupElement(0);
         }
         else {
-            temp = Arr4DIdxRowM(inArr, N1, imgH, imgW, C1, n, curPosH, curPosW, c);
+            temp = Arr4DIdx(inArr, N1, imgH, imgW, C1, n, curPosH, curPosW, c);
         }
         int kidx = (fh * FW + fw - 1) * (N * C * H * W) + i;
-        // Arr5DIdxRowM(oneHot, FH*FW-1, N, H, W, C, fh * FW + fw - 1, n, ctH, ctW, c) = evalMaxpoolDouble_1(party - 2, maxi, temp, keys[kidx]);
-        GroupElement s = Arr5DIdxRowM(oneHot, FH*FW-1, N, H, W, C, fh * FW + fw - 1, n, ctH, ctW, c);
-        Arr4DIdxRowM(maxUntilNow, N, H, W, C, n, ctH, ctW, c) = evalMaxpoolDouble_2(party - 2, maxi, temp, s, keys[kidx]);
+        // Arr5DIdx(oneHot, FH*FW-1, N, H, W, C, fh * FW + fw - 1, n, ctH, ctW, c) = evalMaxpoolDouble_1(party - 2, maxi, temp, keys[kidx]);
+        GroupElement s = Arr5DIdx(oneHot, FH*FW-1, N, H, W, C, fh * FW + fw - 1, n, ctH, ctW, c);
+        Arr4DIdx(maxUntilNow, N, H, W, C, n, ctH, ctW, c) = evalMaxpoolDouble_2(party - 2, maxi, temp, s, keys[kidx]);
         freeMaxpoolDoubleKeyPack(keys[kidx]);
     }
 }
@@ -1707,29 +1707,29 @@ void MaxPoolDouble(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
 
                                 if (fh == 0 && fw == 0) {
                                     if (leftTopCornerH < 0 || leftTopCornerW < 0 || leftTopCornerH >= imgH || leftTopCornerW >= imgW) {
-                                        Arr4DIdxRowM(maxUntilNow_mask, N, H, W, C, n, ctH, ctW, c) = GroupElement(0);
+                                        Arr4DIdx(maxUntilNow_mask, N, H, W, C, n, ctH, ctW, c) = GroupElement(0);
                                     }
                                     else {
-                                        Arr4DIdxRowM(maxUntilNow_mask, N, H, W, C, n, ctH, ctW, c) = Arr4DIdxRowM(inArr_mask, N1, imgH, imgW, C1, n, leftTopCornerH, leftTopCornerW, c);
+                                        Arr4DIdx(maxUntilNow_mask, N, H, W, C, n, ctH, ctW, c) = Arr4DIdx(inArr_mask, N1, imgH, imgW, C1, n, leftTopCornerH, leftTopCornerW, c);
                                     }
                                 }
                                 else {
                                     int curPosH = leftTopCornerH + fh;
                                     int curPosW = leftTopCornerW + fw;
 
-                                    GroupElement maxi_mask = Arr4DIdxRowM(maxUntilNow_mask, N, H, W, C, n, ctH, ctW, c);
+                                    GroupElement maxi_mask = Arr4DIdx(maxUntilNow_mask, N, H, W, C, n, ctH, ctW, c);
                                     GroupElement temp_mask;
                                     if ((((curPosH < 0) || (curPosH >= imgH)) || ((curPosW < 0) || (curPosW >= imgW)))) {
                                         temp_mask = GroupElement(0);
                                     }
                                     else {
-                                        temp_mask = Arr4DIdxRowM(inArr_mask, N1, imgH, imgW, C1, n, curPosH, curPosW, c);
+                                        temp_mask = Arr4DIdx(inArr_mask, N1, imgH, imgW, C1, n, curPosH, curPosW, c);
                                     }
                                     GroupElement rout = random_ge(bitlength);
                                     GroupElement routBit = random_ge(1);
                                     auto keys = keyGenMaxpoolDouble(bitlength, bitlength, maxi_mask, temp_mask, routBit, rout);
-                                    Arr4DIdxRowM(maxUntilNow_mask, N, H, W, C, n, ctH, ctW, c) = rout;
-                                    Arr5DIdxRowM(oneHot, FH * FW - 1, N, H, W, C, fh * FW + fw - 1, n, ctH, ctW, c) = routBit;
+                                    Arr4DIdx(maxUntilNow_mask, N, H, W, C, n, ctH, ctW, c) = rout;
+                                    Arr5DIdx(oneHot, FH * FW - 1, N, H, W, C, fh * FW + fw - 1, n, ctH, ctW, c) = routBit;
 
                                     auto read_start = std::chrono::high_resolution_clock::now();
                                     server->send_maxpool_double_key(keys.first);
@@ -1780,10 +1780,10 @@ void MaxPoolDouble(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
                         int leftTopCornerH = ctH * strideH - zPadHLeft;
                         int leftTopCornerW = ctW * strideW - zPadWLeft;
                         if (leftTopCornerH < 0 || leftTopCornerW < 0 || leftTopCornerH >= imgH || leftTopCornerW >= imgW) {
-                            Arr4DIdxRowM(maxUntilNow, N, H, W, C, n, ctH, ctW, c) = 0;
+                            Arr4DIdx(maxUntilNow, N, H, W, C, n, ctH, ctW, c) = 0;
                         }
                         else {
-                            Arr4DIdxRowM(maxUntilNow, N, H, W, C, n, ctH, ctW, c) = Arr4DIdxRowM(inArr, N1, imgH, imgW, C1, n, leftTopCornerH, leftTopCornerW, c);
+                            Arr4DIdx(maxUntilNow, N, H, W, C, n, ctH, ctW, c) = Arr4DIdx(inArr, N1, imgH, imgW, C1, n, leftTopCornerH, leftTopCornerW, c);
                         }
                     }
                 }
@@ -1868,11 +1868,11 @@ void maxpool_onehot_threads_helper(int thread_idx, int f, int32_t N, int32_t H, 
         int n = curridx % N;
         curridx = curridx / N;
 
-        auto max = Arr5DIdxRowM(maxBits, FH * FW - 1, N, H, W, C, f - 1, n, h, w, c);
-        auto c1 = Arr4DIdxRowM(curr, N, H, W, C, n, h, w, c);
+        auto max = Arr5DIdx(maxBits, FH * FW - 1, N, H, W, C, f - 1, n, h, w, c);
+        auto c1 = Arr4DIdx(curr, N, H, W, C, n, h, w, c);
         auto key = keys[(FH * FW - 2 - f) * N * H * W * C + n * H * W * C + h * W * C + w * C + c];
-        Arr5DIdxRowM(oneHot, FH * FW, N, H, W, C, f, n, h, w, c) = evalAnd(party - 2, max, 1 ^ c1, key);
-        mod(Arr5DIdxRowM(oneHot, FH * FW, N, H, W, C, f, n, h, w, c), 1);
+        Arr5DIdx(oneHot, FH * FW, N, H, W, C, f, n, h, w, c) = evalAnd(party - 2, max, 1 ^ c1, key);
+        mod(Arr5DIdx(oneHot, FH * FW, N, H, W, C, f, n, h, w, c), 1);
     }
 }
 
@@ -1886,30 +1886,30 @@ void MaxPoolOneHot(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH, int32
     GroupElement *curr = make_array<GroupElement>(N * H * W * C);
     if (party == DEALER) {
         BIG_LOOPY(
-            auto m = Arr5DIdxRowM(maxBits, FH * FW - 1, N, H, W, C, FH * FW - 2, n, h, w, c);
-            Arr4DIdxRowM(curr, N, H, W, C, n, h, w, c) = m;
-            Arr5DIdxRowM(oneHot, FH * FW, N, H, W, C, FH * FW - 1, n, h, w, c) = m;
+            auto m = Arr5DIdx(maxBits, FH * FW - 1, N, H, W, C, FH * FW - 2, n, h, w, c);
+            Arr4DIdx(curr, N, H, W, C, n, h, w, c) = m;
+            Arr5DIdx(oneHot, FH * FW, N, H, W, C, FH * FW - 1, n, h, w, c) = m;
         )
 
         for(int f = FH * FW - 2; f >= 1; --f) {
             // out[f] = max[f - 1] ^ !curr
             BIG_LOOPY(
-                auto max = Arr5DIdxRowM(maxBits, FH * FW - 1, N, H, W, C, f - 1, n, h, w, c);
-                auto c1 = Arr4DIdxRowM(curr, N, H, W, C, n, h, w, c);
+                auto max = Arr5DIdx(maxBits, FH * FW - 1, N, H, W, C, f - 1, n, h, w, c);
+                auto c1 = Arr4DIdx(curr, N, H, W, C, n, h, w, c);
                 auto rout = random_ge(1);
                 auto keys = keyGenBitwiseAnd(max, c1, rout);
                 server->send_bitwise_and_key(keys.first);
                 client->send_bitwise_and_key(keys.second);
-                Arr5DIdxRowM(oneHot, FH * FW, N, H, W, C, f, n, h, w, c) = rout;
+                Arr5DIdx(oneHot, FH * FW, N, H, W, C, f, n, h, w, c) = rout;
             )
             
             BIG_LOOPY(
-                Arr4DIdxRowM(curr, N, H, W, C, n, h, w, c) = Arr4DIdxRowM(curr, N, H, W, C, n, h, w, c) ^ Arr5DIdxRowM(oneHot, FH * FW, N, H, W, C, f, n, h, w, c);
+                Arr4DIdx(curr, N, H, W, C, n, h, w, c) = Arr4DIdx(curr, N, H, W, C, n, h, w, c) ^ Arr5DIdx(oneHot, FH * FW, N, H, W, C, f, n, h, w, c);
             )
         }
 
         BIG_LOOPY(
-            Arr5DIdxRowM(oneHot, FH * FW, N, H, W, C, 0, n, h, w, c) = Arr4DIdxRowM(curr, N, H, W, C, n, h, w, c);
+            Arr5DIdx(oneHot, FH * FW, N, H, W, C, 0, n, h, w, c) = Arr4DIdx(curr, N, H, W, C, n, h, w, c);
         )
     }
     else {
@@ -1924,20 +1924,20 @@ void MaxPoolOneHot(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH, int32
         peer->sync();
         auto start = std::chrono::high_resolution_clock::now();
         BIG_LOOPY(
-            auto m = Arr5DIdxRowM(maxBits, FH * FW - 1, N, H, W, C, FH * FW - 2, n, h, w, c);
-            Arr4DIdxRowM(curr, N, H, W, C, n, h, w, c) = m;
-            Arr5DIdxRowM(oneHot, FH * FW, N, H, W, C, FH * FW - 1, n, h, w, c) = m;
+            auto m = Arr5DIdx(maxBits, FH * FW - 1, N, H, W, C, FH * FW - 2, n, h, w, c);
+            Arr4DIdx(curr, N, H, W, C, n, h, w, c) = m;
+            Arr5DIdx(oneHot, FH * FW, N, H, W, C, FH * FW - 1, n, h, w, c) = m;
         )
 
         for(int f = FH * FW - 2; f >= 1; --f) {
             
             // out[f] = max[f - 1] ^ !curr
             BIG_LOOPY(
-                auto max = Arr5DIdxRowM(maxBits, FH * FW - 1, N, H, W, C, f - 1, n, h, w, c);
-                auto c1 = Arr4DIdxRowM(curr, N, H, W, C, n, h, w, c);
+                auto max = Arr5DIdx(maxBits, FH * FW - 1, N, H, W, C, f - 1, n, h, w, c);
+                auto c1 = Arr4DIdx(curr, N, H, W, C, n, h, w, c);
                 auto key = keys[(FH * FW - 2 - f) * N * H * W * C + n * H * W * C + h * W * C + w * C + c];
-                Arr5DIdxRowM(oneHot, FH * FW, N, H, W, C, f, n, h, w, c) = evalAnd(party - 2, max, 1 ^ c1, key);
-                mod(Arr5DIdxRowM(oneHot, FH * FW, N, H, W, C, f, n, h, w, c), 1);
+                Arr5DIdx(oneHot, FH * FW, N, H, W, C, f, n, h, w, c) = evalAnd(party - 2, max, 1 ^ c1, key);
+                mod(Arr5DIdx(oneHot, FH * FW, N, H, W, C, f, n, h, w, c), 1);
             )
 
             // std::thread thread_pool[num_threads];
@@ -1952,12 +1952,12 @@ void MaxPoolOneHot(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH, int32
             reconstruct(N * H * W * C, oneHot + f * N * H * W * C, 1);
             
             BIG_LOOPY(
-                Arr4DIdxRowM(curr, N, H, W, C, n, h, w, c) = Arr4DIdxRowM(curr, N, H, W, C, n, h, w, c) ^ Arr5DIdxRowM(oneHot, FH * FW, N, H, W, C, f, n, h, w, c);
+                Arr4DIdx(curr, N, H, W, C, n, h, w, c) = Arr4DIdx(curr, N, H, W, C, n, h, w, c) ^ Arr5DIdx(oneHot, FH * FW, N, H, W, C, f, n, h, w, c);
             )
         }
 
         BIG_LOOPY(
-            Arr5DIdxRowM(oneHot, FH * FW, N, H, W, C, 0, n, h, w, c) = Arr4DIdxRowM(curr, N, H, W, C, n, h, w, c) ^ 1;
+            Arr5DIdx(oneHot, FH * FW, N, H, W, C, 0, n, h, w, c) = Arr4DIdx(curr, N, H, W, C, n, h, w, c) ^ 1;
         )
         auto end = std::chrono::high_resolution_clock::now();
         auto eval_time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
@@ -1987,7 +1987,7 @@ void MaxPoolBackward(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
             for(int h = 0; h < imgH; ++h) {
                 for(int w = 0; w < imgW; ++w) {
                     for(int c = 0; c < C; ++c) {
-                        Arr4DIdxRowM(inArr, N1, imgH, imgW, C1, n, h, w, c) = 0;
+                        Arr4DIdx(inArr, N1, imgH, imgW, C1, n, h, w, c) = 0;
                     }
                 }
             }
@@ -1996,16 +1996,16 @@ void MaxPoolBackward(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
         BIG_LOOPY(
             int leftTopCornerH = h * strideH - zPadHLeft;
             int leftTopCornerW = w * strideW - zPadWLeft;
-            auto src = Arr4DIdxRowM(outArr, N, H, W, C, n, h, w, c);
+            auto src = Arr4DIdx(outArr, N, H, W, C, n, h, w, c);
             for(int fh = 0; fh < FH; ++fh) {
                 for(int fw = 0; fw < FW; ++fw) {
                     if ((leftTopCornerH + fh >= 0) && (leftTopCornerH + fh < imgH) && (leftTopCornerW + fw >= 0) && (leftTopCornerW + fw < imgW)) {
-                        auto s = Arr5DIdxRowM(oneHot, FH * FW, N, H, W, C, fh * FW + fw, n, h, w, c);
-                        auto dst = Arr4DIdxRowM(inArr, N1, imgH, imgW, C1, n, leftTopCornerH + fh, leftTopCornerW + fw, c);
+                        auto s = Arr5DIdx(oneHot, FH * FW, N, H, W, C, fh * FW + fw, n, h, w, c);
+                        auto dst = Arr4DIdx(inArr, N1, imgH, imgW, C1, n, leftTopCornerH + fh, leftTopCornerW + fw, c);
                         // dst = dst + select(s, src)
                         auto rout = random_ge(bitlength);
                         auto keys = keyGenSelect(bitlength, s, src, rout);
-                        Arr4DIdxRowM(inArr, N1, imgH, imgW, C1, n, leftTopCornerH + fh, leftTopCornerW + fw, c) = dst + rout;
+                        Arr4DIdx(inArr, N1, imgH, imgW, C1, n, leftTopCornerH + fh, leftTopCornerW + fw, c) = dst + rout;
                         server->send_select_key(keys.first);
                         client->send_select_key(keys.second);
                     }
@@ -2030,7 +2030,7 @@ void MaxPoolBackward(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
             for(int h = 0; h < imgH; ++h) {
                 for(int w = 0; w < imgW; ++w) {
                     for(int c = 0; c < C; ++c) {
-                        Arr4DIdxRowM(inArr, N1, imgH, imgW, C1, n, h, w, c) = 0;
+                        Arr4DIdx(inArr, N1, imgH, imgW, C1, n, h, w, c) = 0;
                     }
                 }
             }
@@ -2040,15 +2040,15 @@ void MaxPoolBackward(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
                     for(int c = 0; c < C; ++c) {
                         int leftTopCornerH = h * strideH - zPadHLeft;
                         int leftTopCornerW = w * strideW - zPadWLeft;
-                        auto src = Arr4DIdxRowM(outArr, N, H, W, C, n, h, w, c);
+                        auto src = Arr4DIdx(outArr, N, H, W, C, n, h, w, c);
                         for(int fh = 0; fh < FH; ++fh) {
                             for(int fw = 0; fw < FW; ++fw) {
-                                auto s = Arr5DIdxRowM(oneHot, FH * FW, N, H, W, C, fh * FW + fw, n, h, w, c);
-                                auto dst = Arr4DIdxRowM(inArr, N1, imgH, imgW, C1, n, leftTopCornerH + fh, leftTopCornerW + fw, c);
+                                auto s = Arr5DIdx(oneHot, FH * FW, N, H, W, C, fh * FW + fw, n, h, w, c);
+                                auto dst = Arr4DIdx(inArr, N1, imgH, imgW, C1, n, leftTopCornerH + fh, leftTopCornerW + fw, c);
                                 // dst = dst + select(s, src)
                                 auto key = keys[n * H * W * C * FH * FW + h * W * C * FH * FW + w * C * FH * FW + c * FH * FW + fh * FW + fw];
                                 // auto key = dealer->recv_select_key(bitlength);
-                                Arr4DIdxRowM(inArr, N1, imgH, imgW, C1, n, leftTopCornerH + fh, leftTopCornerW + fw, c) = dst + evalSelect(party - 2, s, src, key);
+                                Arr4DIdx(inArr, N1, imgH, imgW, C1, n, leftTopCornerH + fh, leftTopCornerW + fw, c) = dst + evalSelect(party - 2, s, src, key);
                             }
                         }
                     }
