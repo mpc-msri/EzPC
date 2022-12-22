@@ -20,6 +20,7 @@ auto input1(int d1, int party)
         tmp0[i0] = __fp_op->input(party, 1, __tmp_in_tmp0);
     }
     delete[] __tmp_in_tmp0;
+
     return tmp0;
 }
 

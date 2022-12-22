@@ -1,4 +1,4 @@
-# Onnx-FzPC 
+# OnnxBridge 
 An end-to-end compiler for converting Onnx Models to Secure Floating Point backend(SecFloat).
 - [Setup](#setup)
 - [Usage](#usage)
@@ -6,7 +6,7 @@ An end-to-end compiler for converting Onnx Models to Secure Floating Point backe
 - [Add Support for Node](#add-support-for-nodes)
 
 ## Setup
-If you used the `setup_env_and_build.sh` script the below would already have been installed in the `mpc_venv` environment. We require the below packages to run Onnx-FzPC.
+If you used the `setup_env_and_build.sh` script the below would already have been installed in the `mpc_venv` environment. We require the below packages to run OnnxBridge.
 - onnx==1.12.0
 - onnxruntime==1.12.1
 - onnxsim==0.4.8
@@ -18,26 +18,26 @@ Above dependencies can be installed using the `requirements.txt` file as below:
 pip3 install -r requirements.txt
 ```
 
-#### Along with this SecFloat Backend also need to be build for Onnx-FzPC to work. Follow the steps from `../SCI/` to build SecFloat.
+#### Along with this SecFloat Backend also need to be build for OnnxBridge to work. Follow the steps from `../SCI/` to build SecFloat.
 
 ## Usage
 
 ### Generate Binaries:  
 To compile an onnx file to SecFloat backend, use the below command:
 ```bash
-cd Onnx-FzPC 
+cd OnnxBridge 
 python3 main.py --path "/path/to/onnx-file" --generate "code"
 ```
 
 To compile SecFloat Code generated from above step and get executable use:
 ```bash
-lib_secfloat/compile_secfloat.sh "/path/to/file.cpp"
+Secfloat/compile_secfloat.sh "/path/to/file.cpp"
 ```
 
 ---
 ### To directly generate executable from Onnx File use:
 ```bash
-cd Onnx-FzPC 
+cd OnnxBridge 
 python3 main.py --path "/path/to/onnx-file" --generate "executable"
 ```
 ---
@@ -67,7 +67,7 @@ To run secure inference on networks:
 ## Add Support for Nodes
 #### Follow below steps to add support for any new node:
 #### For example we will consider `"Tanh"` node:
-1. Implement the Node in `Onnx-FzPC/lib_secfloat/link_secfloat.cpp` using secfloat backend as follows:
+1. Implement the Node in  OnnxBridge/Secfloat/lib_secfloat/link_secfloat.cpp` using secfloat backend as follows:
 ```cpp
     // tanh(x) = 2 * sigmoid(2 * x) - 1 
     void Tanh(int32_t s1, vector<FPArray> &inArr, vector<FPArray> &outArr){
@@ -128,7 +128,7 @@ Above implementation is for 1D FPArray, for multidimentional array its recommend
 This completes the node implementation in backend.
 
 
-2. Add assertions for node in class `OnnxNode` inside in `Onnx-FzPC/utils/onnx_nodes.py` for various attributes.
+2. Add assertions for node in class `OnnxNode` inside in  OnnxBridge/utils/onnx_nodes.py` for various attributes.
 ```python
     @classmethod
     def Tanh(cls, node):
@@ -138,7 +138,7 @@ This completes the node implementation in backend.
         # additionaly based on your node implementation add assertions or modification on node attributes.
         logger.debug("Tanh is OK!")
 ```
-3. Add format for Function Prototype in class `Operator` in `Onnx-FzPC/utils/func_calls.py` for the node as implemented in step-1.
+3. Add format for Function Prototype in class `Operator` in  OnnxBridge/Secfloat/func_calls.py` for the node as implemented in step-1.
 ```python
     @classmethod
     def Tanh(cls, attributes, inputs, outputs, value_info, var_dict, indent):
@@ -157,6 +157,6 @@ This completes the node implementation in backend.
 ```
 
 ## Demo
-Follow [Demo](demo/Readme.md) for Onnx-FzPC demo with Secfloat.
+Follow [Demo](Secfloat/demo/Readme.md) for OnnxBridge demo with Secfloat.
 
 

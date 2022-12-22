@@ -25,7 +25,7 @@ def main():
 
     if args.generate == "executable":
         logger.info("Starting Compilation.")
-        os.system(f"lib_secfloat/compile_secfloat.sh {args.path[:-5]}_secfloat.cpp")
+        os.system(f"Secfloat/compile_secfloat.sh {args.path[:-5]}_secfloat.cpp")
         logger.info(f"Output Binary generated : {args.path[:-5]}_secfloat.out")
 
 

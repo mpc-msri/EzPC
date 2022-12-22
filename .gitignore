@@ -1,6 +1,7 @@
 # Build Directory
 build/
 bin/
-
+mpc_venv
 # Vim c_tags files
 c_*
+SEAL
