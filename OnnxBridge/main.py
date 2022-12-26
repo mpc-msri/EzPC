@@ -10,6 +10,9 @@ def parse_args():
     parser.add_argument(
         "--generate", required=True, type=str, choices=["code", "executable"]
     )
+    parser.add_argument(
+        "--backend", required=True, type=str, choices=["SECFLOAT", "SECFLOAT_CLEARTEXT"]
+    )
     args = parser.parse_args()
     return args
 
@@ -18,15 +21,17 @@ def main():
     args = parse_args()
 
     # Prepare a BackendRep for the Model.
-    backendrep = prepare(args.path)
+    backendrep = prepare(args.path, args.backend)
 
     # Export the Model as Secfloat and writes to a cpp file
     backendrep.export_model()
 
+    ct = "" if args.backend == "SECFLOAT" else "_ct"
+
     if args.generate == "executable":
         logger.info("Starting Compilation.")
-        os.system(f"Secfloat/compile_secfloat.sh {args.path[:-5]}_secfloat.cpp")
-        logger.info(f"Output Binary generated : {args.path[:-5]}_secfloat.out")
+        os.system(f"Secfloat/compile_secfloat.sh {args.path[:-5]}_secfloat{ct}.cpp")
+        logger.info(f"Output Binary generated : {args.path[:-5]}_secfloat{ct}.out")
 
 
 if __name__ == "__main__":

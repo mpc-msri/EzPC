@@ -121,7 +121,7 @@ class FzpcBackend(Backend):
             "Flatten",
             "Reshape",
             "Gemm",
-            "Tanh"
+            "Tanh",
         ]
         for node in model.graph.node:
             if node.op_type not in implemented:
@@ -133,6 +133,7 @@ class FzpcBackend(Backend):
     def prepare(
         cls,
         model,
+        backend,
         device: str = "2PC",
         strict=True,
         logging_level="INFO",
@@ -180,7 +181,7 @@ class FzpcBackend(Backend):
         logger.info("Onnx Variable -> IR variable Dictionary Created.")
 
         backend_rep = FzpcBackendRep(
-            program, value_info, var_dict, path, file_name[:-5]
+            program, value_info, var_dict, path, file_name[:-5], backend
         )
         logger.info("BackendRep Created.")
         return backend_rep

@@ -148,7 +148,7 @@ def prepare_output(code_list, node, var_dict, indent):
         code_list.append("\n\n")
 
 
-def prepare_export(program, var_dict, value_info):
+def prepare_export(program, var_dict, value_info, backend):
     """
     Prepares the Program List for export by converting it into cpp format.
     :param program: Program List having a list of Input, Nodes and Output nodes classes.
@@ -160,13 +160,19 @@ def prepare_export(program, var_dict, value_info):
     indent = 1
     input_taken = []  # list of variables already input
     input_dict = dict()
-    code_list.append('#include "../lib_secfloat/common.cpp" \n\n\n')
-    code_list.append(
-        "int main(int __argc, char **__argv)\n{\n\n      __init(__argc, __argv);\n"
-    )
+    if backend == "SECFLOAT":
+        code_list.append('#include "../lib_secfloat/common.cpp" \n\n\n')
+        code_list.append(
+            "int main(int __argc, char **__argv)\n{\n\n      __init(__argc, __argv);\n"
+        )
+    elif backend == "SECFLOAT_CLEARTEXT":
+        code_list.append('#include "../lib_cleartext/cleartext_common.cpp" \n\n\n')
+        code_list.append(
+            "int main(int __argc, char **__argv)\n{\n\n     int __party=0;\n"
+        )
 
     for node in program:
-        
+
         func = getattr(OnnxNode, node.op_type)
         func(node)
 
@@ -209,12 +215,13 @@ class FzpcBackendRep(BackendRep):
     Provides functionalities to export the model currently, can be extended to run models directly in future versions.
     """
 
-    def __init__(self, program, value_info, var_dict, path, file_name):
+    def __init__(self, program, value_info, var_dict, path, file_name, backend):
         self.program_AST = program
         self.value_info = value_info
         self.var_dict = var_dict
         self.path = path
         self.file_name = file_name
+        self.backend = backend
 
     def export_model(self):
         """
@@ -222,13 +229,17 @@ class FzpcBackendRep(BackendRep):
         :return: NA
         """
         logger.info("Preparing to export Model.")
-        code_list = prepare_export(self.program_AST, self.var_dict, self.value_info)
-        logger.info(
-            f"Secure Model File Saved in Secfloat format as {self.file_name}_secfloat.cpp"
+        ct = "" if self.backend == "SECFLOAT" else "_ct"
+        code_list = prepare_export(
+            self.program_AST, self.var_dict, self.value_info, self.backend
         )
 
-        with open(self.path + f"/{self.file_name}_secfloat.cpp", "w") as fp:
+        with open(self.path + f"/{self.file_name}_secfloat{ct}.cpp", "w") as fp:
             fp.write("\n".join(code_list))
+
+        logger.info(
+            f"Secure Model File Saved in Secfloat format as {self.file_name}_secfloat{ct}.cpp"
+        )
 
 
 export_model = FzpcBackendRep.export_model
