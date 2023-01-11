@@ -27,8 +27,8 @@ python ../../main.py --path "Secfloat/demo/model.onnx" --generate "executable" -
 
 ```
 This generates :
-- A file with model weigths `~/EzPC/Onnx-FzPC/Secfloat/demo/model_input_weights_.inp` (Secret Server Data) 
-- A model output binary : `~/EzPC/Onnx-FzPC/Secfloat/demo/model_secfloat.out` which needs to be passed to client.
+- A file with model weigths `~/EzPC/OnnxBridge/Secfloat/demo/model_input_weights_.inp` (Secret Server Data) 
+- A model output binary : `~/EzPC/OnnxBridge/Secfloat/demo/model_secfloat.out` which needs to be passed to client.
 
 Run the following command to start server side computation and wait for client connection:
 ```bash
