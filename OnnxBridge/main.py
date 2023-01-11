@@ -21,16 +21,18 @@ def main():
     args = parse_args()
 
     # Prepare a BackendRep for the Model.
+    main_path = os.path.dirname(os.path.abspath(__file__))
+    file_path = os.path.join(main_path, "Secfloat")
     backendrep = prepare(args.path, args.backend)
 
     # Export the Model as Secfloat and writes to a cpp file
-    backendrep.export_model()
+    backendrep.export_model(file_path)
 
     ct = "" if args.backend == "SECFLOAT" else "_ct"
 
     if args.generate == "executable":
         logger.info("Starting Compilation.")
-        os.system(f"Secfloat/compile_secfloat.sh {args.path[:-5]}_secfloat{ct}.cpp")
+        os.system(f"{file_path}/compile_secfloat.sh {args.path[:-5]}_secfloat{ct}.cpp")
         logger.info(f"Output Binary generated : {args.path[:-5]}_secfloat{ct}.out")
 
 

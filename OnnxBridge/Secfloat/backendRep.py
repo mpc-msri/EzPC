@@ -148,7 +148,7 @@ def prepare_output(code_list, node, var_dict, indent):
         code_list.append("\n\n")
 
 
-def prepare_export(program, var_dict, value_info, backend):
+def prepare_export(program, var_dict, value_info, backend, file_path):
     """
     Prepares the Program List for export by converting it into cpp format.
     :param program: Program List having a list of Input, Nodes and Output nodes classes.
@@ -160,13 +160,16 @@ def prepare_export(program, var_dict, value_info, backend):
     indent = 1
     input_taken = []  # list of variables already input
     input_dict = dict()
+
     if backend == "SECFLOAT":
-        code_list.append('#include "../lib_secfloat/common.cpp" \n\n\n')
+        code_list.append(f'#include "{file_path}/lib_secfloat/common.cpp" \n\n\n')
         code_list.append(
             "int main(int __argc, char **__argv)\n{\n\n      __init(__argc, __argv);\n"
         )
     elif backend == "SECFLOAT_CLEARTEXT":
-        code_list.append('#include "../lib_cleartext/cleartext_common.cpp" \n\n\n')
+        code_list.append(
+            f'#include "{file_path}/lib_cleartext/cleartext_common.cpp" \n\n\n'
+        )
         code_list.append(
             "int main(int __argc, char **__argv)\n{\n\n     int __party=0;\n"
         )
@@ -223,7 +226,7 @@ class FzpcBackendRep(BackendRep):
         self.file_name = file_name
         self.backend = backend
 
-    def export_model(self):
+    def export_model(self, file_path):
         """
         Exports the FzpcBackendRep to Secfloat Backend in .cpp format following the crypto protocols.
         :return: NA
@@ -231,7 +234,7 @@ class FzpcBackendRep(BackendRep):
         logger.info("Preparing to export Model.")
         ct = "" if self.backend == "SECFLOAT" else "_ct"
         code_list = prepare_export(
-            self.program_AST, self.var_dict, self.value_info, self.backend
+            self.program_AST, self.var_dict, self.value_info, self.backend, file_path
         )
 
         with open(self.path + f"/{self.file_name}_secfloat{ct}.cpp", "w") as fp:

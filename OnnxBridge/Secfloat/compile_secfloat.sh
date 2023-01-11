@@ -37,12 +37,12 @@ mkdir build_dir
 cd build_dir
 eval `opam config env`
 
-
+path=$(dirname $0)
 echo "
 cmake_minimum_required (VERSION 3.13) 
 project (BUILD_IT)
 set(CMAKE_MODULE_PATH \${CMAKE_CURRENT_SOURCE_DIR})
-find_package(SCI REQUIRED PATHS \"../../SCI/build/install\") 
+find_package(SCI REQUIRED PATHS \"$path/../../SCI/build/install\") 
 add_executable($BINARY_NAME ../$SECFLOAT_CPP_FILE)
 target_include_directories($BINARY_NAME PUBLIC)
 target_compile_options($BINARY_NAME PRIVATE -fconcepts -g)
