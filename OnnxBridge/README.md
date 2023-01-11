@@ -26,7 +26,7 @@ pip3 install -r requirements.txt
 To compile an onnx file to SecFloat backend, use the below command:
 ```bash
 cd OnnxBridge 
-python3 main.py --path "/path/to/onnx-file" --generate "code"
+python3 main.py --path "/path/to/onnx-file" --generate "code" --backend SECFLOAT
 ```
 
 To compile SecFloat Code generated from above step and get executable use:
@@ -38,7 +38,7 @@ Secfloat/compile_secfloat.sh "/path/to/file.cpp"
 ### To directly generate executable from Onnx File use:
 ```bash
 cd OnnxBridge 
-python3 main.py --path "/path/to/onnx-file" --generate "executable"
+python3 main.py --path "/path/to/onnx-file" --generate "executable" --backend SECFLOAT
 ```
 ---
 ### Run Inference:
@@ -47,6 +47,13 @@ To run secure inference on networks:
 ```bash
 ./<network> r=2 [port=port] [chunk=chunk] < <model_weights_file> // Server
 ./<network> r=1 [add=server_address] [port=port] [chunk=chunk] < <image_file> // Client
+```
+
+### To do the same using cleartext:
+```bash
+cd OnnxBridge 
+python3 main.py --path "/path/to/onnx-file" --generate ["executable"/"code"] --backend [SECFLOAT/SECFLOAT_CLEARTEXT]
+cat <image_file> <model_weights_file> | ./network
 ```
 
 ## Supported Nodes

@@ -22,9 +22,9 @@ Build SecFloat following [SCI](https://github.com/mpc-msri/EzPC/blob/onnx-fzpc/S
 ## Compile the Model
 Run the following command to compile the model:
 ```bash
-cd ../..
-python main.py --path "Secfloat/demo/model.onnx" --generate "executable"
-cd Secfloat/demo
+
+python ../../main.py --path "Secfloat/demo/model.onnx" --generate "executable" --backend SECFLOAT
+
 ```
 This generates :
 - A file with model weigths `~/EzPC/Onnx-FzPC/Secfloat/demo/model_input_weights_.inp` (Secret Server Data) 
