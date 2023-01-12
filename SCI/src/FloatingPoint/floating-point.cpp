@@ -22,7 +22,6 @@ SOFTWARE.
 #include "FloatingPoint/floating-point.h"
 #include <omp.h>
 
-#define CHUNK_SIZE (1 << 20)
 
 using namespace std;
 using namespace sci;
@@ -1587,7 +1586,7 @@ vector<FPArray> enlist_products(FPOp* fp_op, const FPMatrix &x, const FPMatrix &
   return fp_op->mul(prod_x, prod_y) ;
 }
 
-FPMatrix FPOp::matrix_multiplication(const FPMatrix &x, const FPMatrix &y) {
+FPMatrix FPOp::matrix_multiplication(const FPMatrix &x, const FPMatrix &y,int chunk_size) {
   assert(x.party != PUBLIC); assert(y.party != PUBLIC);
   assert(x.dim2 == y.dim1);
   assert(x.m_bits == y.m_bits); assert(x.e_bits == y.e_bits);
@@ -1597,7 +1596,7 @@ FPMatrix FPOp::matrix_multiplication(const FPMatrix &x, const FPMatrix &y) {
   
   vector<FPArray> prod = enlist_products(this, x, y) ;
   FPMatrix ret(this->party, x.dim1, y.dim2, m_bits, e_bits) ;
-  int rows_per_batch = ceil(CHUNK_SIZE/double(n));
+  int rows_per_batch = ceil(chunk_size/double(n));
   for (int i = 0; i < N; i += rows_per_batch) {
     int j = std::min(i + rows_per_batch, N);
     vector<FPArray> prod_i = {prod.begin() + i, prod.begin() + j};

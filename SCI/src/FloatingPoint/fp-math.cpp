@@ -922,3 +922,64 @@ vector<FPArray> FPMath::softmax(const vector<FPArray>& x) {
   }
   return ret;
 }
+
+
+FPArray FPMath::sigmoid_fp32(const FPArray &x) {
+  assert(x.party != PUBLIC) ;
+  assert(x.m_bits == 23) ;
+  assert(x.e_bits == 8) ;
+
+  FPArray one_flat = fp_op->input<float>(ALICE, x.size, (float)1.0, x.m_bits, x.e_bits) ;
+
+  return fp_op->div(
+    one_flat, 
+    fp_op->add(
+      one_flat,
+      this->exp(fp_op->flip_sign(x))
+    )
+  ) ;
+}
+
+FPArray FPMath::sigmoid_bf16(const FPArray &x) {
+  // currently only supports bfloat16
+  assert(x.party != PUBLIC);
+  assert(x.m_bits == 7);
+  assert(x.e_bits == 8);
+
+  BoolArray x_s, x_z;
+  FixArray x_m, x_e;
+  tie(x_s, x_z, x_m, x_e) = fp_op->get_components(x);
+  BoolArray all_0 = bool_op->input(ALICE, x.size, uint8_t(0));
+
+  x_e.signed_ = false;
+  // idx = s || (e + 8) mod 2^4 || m - 2^7 = 12 bits
+  FixArray idx_hi_s = fix->scale_up(fix->mul(fix->B2A(x_s, false, 5), 1ULL << 4), x.m_bits + 5, x.m_bits);
+  // only 4 bits of exponent are needed
+  FixArray idx_hi = fix->scale_up(fix->reduce(fix->add(x_e, 8 - x.e_bias()), 5), x.m_bits + 5, x.m_bits);
+  FixArray idx_lo = fix->extend(fix->sub(x_m, 1ULL << x.m_bits), x.m_bits + 5);
+  FixArray idx = fix->add(idx_hi_s, fix->add(idx_hi, idx_lo));
+  // print_fix(idx);
+
+  // all outputs are positive, so ignoring sign bit
+  FixArray y_int = fix->LUT(sigmoid_bfloat16, idx, false, 15, x.m_bits);
+  FixArray y_m = fix->add(fix->extend(fix->reduce(y_int, x.m_bits), x.m_bits + 1), 1ULL << x.m_bits);
+  FixArray y_e = fix->truncate_reduce(y_int, x.m_bits);
+  y_e.signed_ = true;
+  y_e = fix->extend(y_e, x.e_bits + 2);
+  FPArray y = fp_op->input(x.party, x.size, all_0.data, all_0.data,
+          y_m.data, y_e.data, x.m_bits, x.e_bits);
+  // print_fix(y_int);
+  // print_fp(y);
+  // print_fp(x);
+
+  FPArray pos_x = fp_op->input(x.party, x.size, all_0.data, x_z.data,
+          x_m.data, x_e.data, x.m_bits, x.e_bits);
+  BoolArray cond1 = fp_op->LT(pos_x, 93.0);
+  BoolArray cond2 = fix->GE(x_e, -8 + x.e_bias());
+  FPArray zero_fp = fp_op->input<float>(ALICE, x.size, 0.0, x.m_bits, x.e_bits, false);
+  FPArray y_ = fp_op->if_else(x_s, zero_fp, 1.0);
+
+  y = fp_op->if_else(cond1, y, y_);
+  y = fp_op->if_else(cond2, y, 0.5);
+  return y;
+}
