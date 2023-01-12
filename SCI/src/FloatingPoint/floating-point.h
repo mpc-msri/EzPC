@@ -456,7 +456,7 @@ public:
   // Returns a FPArray of length x.size() with s_i in i-th index
   FPArray treesum(const vector<FPArray> &x) ;
 
-  FPMatrix matrix_multiplication(const FPMatrix &x, const FPMatrix &y) ;
+  FPMatrix matrix_multiplication(const FPMatrix &x, const FPMatrix &y,int chunk_size = 1<<20) ;
 };
 
 #endif // FLOATING_POINT_H__
