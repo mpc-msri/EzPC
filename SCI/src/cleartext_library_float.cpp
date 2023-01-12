@@ -156,7 +156,7 @@ void IfElse(int32_t s1, vector<float>& dat, vector<bool>& hot, vector<float>& ou
 
 void Relu(int32_t s1, vector<float>& inArr, vector<float>& outArr, vector<bool>& hotArr) {
 	for (uint32_t i1 = 0; i1 < s1; i1++){
-		// hotArr[i1] = (inArr[i1] > 0.) ;
-		outArr[i1] = (inArr[i1] > 0.) ? inArr[i1] : 0. ;	
+		hotArr[i1] = (inArr[i1] > 0.) ;
+		outArr[i1] = hotArr[i1] ? inArr[i1] : 0. ;	
 	}
 }

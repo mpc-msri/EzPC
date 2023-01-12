@@ -1,7 +1,0 @@
-onnx==1.12.0
-onnxruntime==1.12.1
-onnxsim==0.4.8
-numpy==1.21.0
-protobuf==3.20.1
-torchvision==0.13.1
-idx2numpy==1.2.3

@@ -1,9 +1,0 @@
-*.onnx
-*.txt
-*.inp
-*.cpp
-*.out
-*.outp
-.DS_Store
-.idea/
-__pycache__
