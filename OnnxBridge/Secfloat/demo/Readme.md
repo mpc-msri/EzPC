@@ -23,7 +23,7 @@ Build SecFloat following [SCI](https://github.com/mpc-msri/EzPC/blob/onnx-fzpc/S
 Run the following command to compile the model:
 ```bash
 
-python ../../main.py --path "Secfloat/demo/model.onnx" --generate "executable" --backend SECFLOAT
+python ../../main.py --path "model.onnx" --generate "executable" --backend SECFLOAT
 
 ```
 This generates :
@@ -58,7 +58,7 @@ Raw Output will be saved in `output.txt` , to get output as numpy array do :
 ```bash
 python ../../helper/make_np_arr.py "output.txt"
 ```
-This dumps model_output.npy as a flattened numpy array(1-D).
+This dumps model output as a flattened numpy array(1-D) in output.npy .
 
 ## Verify Output
 To verify if everything is working as expected, run the input image with the model itself using the onnx runtime:

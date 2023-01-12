@@ -53,7 +53,7 @@ To run secure inference on networks:
 ```bash
 cd OnnxBridge 
 python3 main.py --path "/path/to/onnx-file" --generate ["executable"/"code"] --backend [SECFLOAT/SECFLOAT_CLEARTEXT]
-cat <image_file> <model_weights_file> | ./network
+cat input_input.inp model_input_weights_.inp | ./model_secfloat_ct
 ```
 
 ## Supported Nodes
