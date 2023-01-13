@@ -42,6 +42,8 @@ auto inner = make_vector<T>(sizes...) ;
 return vector<decltype(inner)>(first, inner) ;
 }
 
+static vector<bool> DEFAULT_VECTOR;
+
 float intToFloat(int32_t m);
 void Softmax2(int32_t s1, int32_t s2, vector<vector<float>>& inArr, vector<vector<float>>& outArr);
 void Ln(int32_t s1, vector<float>& inArr, vector<float>& outArr);
@@ -49,7 +51,7 @@ void getOutDer(int32_t s1, int32_t s2, vector<vector<float>>& batchSoft, vector<
 void MatMul(int32_t s1, int32_t s2, int32_t s3, vector<vector<float>>& mat1, vector<vector<float>>& mat2, vector<vector<float>>& mat3);
 void GemmAdd(int32_t s1, int32_t s2, vector<vector<float>>& prod, vector<float>& bias, vector<vector<float>>& out);
 void dotProduct2(int32_t s1, int32_t s2, vector<vector<float>>& arr1, vector<vector<float>>& arr2, vector<float>& outArr);
-void Relu(int32_t s1, vector<float>& inArr, vector<float>& outArr, vector<bool>& hotArr);
+void Relu(int32_t s1, vector<float>& inArr, vector<float>& outArr, vector<bool>& hotArr=DEFAULT_VECTOR);
 void getBiasDer(int32_t s1, int32_t s2, vector<vector<float>>& der, vector<float>& biasDer);
 void IfElse(int32_t s1, vector<float>& dat, vector<bool>& hot, vector<float>& out, bool flip);
 void updateWeights(int32_t s, float lr, vector<float>& bias, vector<float>& der);
