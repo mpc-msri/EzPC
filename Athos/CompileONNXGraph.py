@@ -228,14 +228,20 @@ def generate_code(params, role, debug=False):
         )
     os.system('mv "{temp}" "{ezpc}"'.format(temp=temp, ezpc=ezpc_abs_path))
     if library == "fss":
-        os.system("fssc --bitlen {bl} --disable-tac {ezpc}".format(bl=bitlength, ezpc=ezpc_abs_path))
-        print("\n\nGenerated binary: {mb}.out".format(mb=model_base_name))
+        os.system(
+            "fssc --bitlen {bl}  {ezpc} --disable-cse".format(
+                bl=bitlength, ezpc=ezpc_abs_path
+            )
+        )
+        # print("\n\nGenerated binary: {mb}.out".format(mb=model_base_name))
         program_name = model_base_name + "_" + target + ".out"
         program_path = os.path.join(model_abs_dir, program_name)
     else:
         ezpc_dir = os.path.join(athos_dir, "../EzPC/EzPC/")
         # Copy generated code to the ezpc directory
-        os.system('cp "{ezpc}" "{ezpc_dir}"'.format(ezpc=ezpc_abs_path, ezpc_dir=ezpc_dir))
+        os.system(
+            'cp "{ezpc}" "{ezpc_dir}"'.format(ezpc=ezpc_abs_path, ezpc_dir=ezpc_dir)
+        )
         os.chdir(ezpc_dir)
         ezpc_args = ""
         ezpc_args += "--bitlen {bl} --codegen {target} --disable-tac ".format(
@@ -340,9 +346,9 @@ def generate_code(params, role, debug=False):
 
         os.chdir(cwd)
         print("\n\nGenerated binary: {}".format(program_path))
-    if role == "server":
-        print("\n\nUse as input to server (model weights): {}".format(weights_path))
-        print("Share {} file with the client".format(zip_path))
+    # if role == "server":
+    #     print("\n\nUse as input to server (model weights): {}".format(weights_path))
+    #     print("Share {} file with the client".format(zip_path))
     return (program_path, weights_path)
 
 

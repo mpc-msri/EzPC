@@ -597,6 +597,8 @@ class IRBuilderCSF(IRBuilderAST):
 
         funcCallArgsDict[expr_1] = "input"
         funcCallArgsDict[expr_2] = "output"
+        if node.poolType == AST.Pool.PoolType.AvgPool:
+            funcCallArgsDict[IR.Int(Util.Config.consSF, 32)] = "scale"
 
         funcCall = IR.FuncCall(node.poolType, funcCallArgsDict)
         prog_pool = IR.Prog([comment, funcCall])

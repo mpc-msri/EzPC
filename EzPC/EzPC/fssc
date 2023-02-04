@@ -109,13 +109,13 @@ if [ -z ${HELP} ]; then
 		fi
 	fi
 	
-	if [ "$LIB" = "N" ]; then
-		if [ "$DEBUG" = "N" ]; then
-			g++ -O3 -pthread -std=c++17 "-I${currentDirPath}/../../FSS/build/install/include" "${newFileNamePrefix}.cpp" "${currentDirPath}/../../FSS/build/install/lib/libfss.a" -o "${newFileNamePrefix}.out"
-		else
-			g++ -g -O3 -pthread -std=c++17 "-I${currentDirPath}/../../FSS/build/install/include" "${newFileNamePrefix}.cpp" "${currentDirPath}/../../FSS/build/install/lib/libfss.a" -o "${newFileNamePrefix}.out" 
-		fi
-	fi 
+	# if [ "$LIB" = "N" ]; then
+	# 	if [ "$DEBUG" = "N" ]; then
+	# 		g++ -O3 -pthread -std=c++17 "-I${currentDirPath}/../../FSS/build/install/include" "${newFileNamePrefix}.cpp" "${currentDirPath}/../../FSS/build/install/lib/libfss.a" -o "${newFileNamePrefix}.out"
+	# 	else
+	# 		g++ -g -O3 -pthread -std=c++17 "-I${currentDirPath}/../../FSS/build/install/include" "${newFileNamePrefix}.cpp" "${currentDirPath}/../../FSS/build/install/lib/libfss.a" -o "${newFileNamePrefix}.out" 
+	# 	fi
+	# fi 
 else
 	"$currentDirPath/ezpc" --help
 fi
