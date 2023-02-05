@@ -535,10 +535,10 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
        let send_mask_to_correct_peer = 
         let out_mask = { name = "pair<GroupElement, GroupElement> out_mask"; index = 0 } in
           Seq_codegen(
-            Assign_codegen (Base_e (Var out_mask |> mk_dsyntax "") , App_codegen_expr ("splitShare", [index_var x; Codegen_String("bitlength")])),
+            Assign_codegen (Base_e (Var out_mask |> mk_dsyntax "") , App_codegen_expr ("splitShare", [index_var mask_var; Codegen_String("bitlength")])),
             Seq_codegen(
               App_codegen ("server->send_mask", [Codegen_String("out_mask.first")]),
-              App_codegen ("client->send_mask", [Codegen_String("out_mask.second")])
+              App_codegen ("client->send_mask", [Codegen_String("-1 * out_mask.second")])
             )
           )
        in
@@ -688,7 +688,7 @@ let porthos_main_prelude_string (bitlen:int) :string =
 \tamap.parse(argc, argv);\n\
 \tfss_init();\n\
 \tbitlength = " ^ bitlen ^ ";\n\
-\tofstream outputFile(\"secret_shares.txt\");
+\tofstream outputFile(\"secret_shares.txt\", std::ios::app);
 \n\
 \tassert(party==DEALER || party==SERVER || party==CLIENT);\n\
 
