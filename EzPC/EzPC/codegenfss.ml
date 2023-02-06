@@ -537,8 +537,8 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
           Seq_codegen(
             Assign_codegen (Base_e (Var out_mask |> mk_dsyntax "") , App_codegen_expr ("splitShare", [index_var mask_var; Codegen_String("bitlength")])),
             Seq_codegen(
-              App_codegen ("server->send_mask", [Codegen_String("out_mask.first")]),
-              App_codegen ("client->send_mask", [Codegen_String("-1 * out_mask.second")])
+              App_codegen ("server->send_mask", [Codegen_String("-1 * out_mask.first")]),
+              App_codegen ("client->send_mask", [Codegen_String("out_mask.second")])
             )
           )
        in
