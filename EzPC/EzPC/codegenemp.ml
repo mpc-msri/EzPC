@@ -111,11 +111,11 @@ let o_sbinop (l:secret_label) (op:binop) (c1:comp) (c2:comp) :comp =
   | Greater_than_equal -> 
     if l == Baba 
       then o_app (seq (o_paren(aux ".less_than")) (o_str ".operator!")) [] 
-      else aux ".operator<"
+      else aux ".operator>="
   | Less_than_equal    ->
     if l == Baba 
       then o_app (seq (o_paren(rev_aux ".less_than")) (o_str ".operator!")) [] 
-      else aux ".operator<"
+      else aux ".operator<="
   | And                -> aux ".operator&" 
   | Or                 -> aux ".operator|" 
   | Xor                -> aux ".operator^" 
