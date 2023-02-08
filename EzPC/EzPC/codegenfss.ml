@@ -679,15 +679,19 @@ let porthos_main_prelude_string (bitlen:int) :string =
   let bitlen = string_of_int bitlen in
 "\
 \tArgMapping amap;\n\
+\tstring key_index = \"0\";\n\
 \tamap.arg(\"r\", party, \"Role of party: DEALER = 1; SERVER = 2; CLIENT = 3;\");\n\
 \tamap.arg(\"port\", port, \"Port Number\");\n\
 \tamap.arg(\"dealer\", dealer_address, \"Dealer's address\");\n\
 \tamap.arg(\"server\", server_address, \"Server's IP\");\n\
 \tamap.arg(\"nt\", num_threads, \"Number of Threads\");\n\
 \tamap.arg(\"ell\", bitlength, \"Uniform Bitwidth\");\n\
+\tamap.arg(\"key_id\", key_index, \"Uniform Bitwidth\");\n\
 \tamap.parse(argc, argv);\n\
 \tfss_init();\n\
 \tbitlength = " ^ bitlen ^ ";\n\
+\tstring server_file = \"server\"+key_index+\".dat\";\n\
+\tstring client_file = \"client\"+key_index+\".dat\";\n\
 \tofstream outputFile(\"secret_shares.txt\", std::ios::app);
 \n\
 \tassert(party==DEALER || party==SERVER || party==CLIENT);\n\
@@ -695,16 +699,16 @@ let porthos_main_prelude_string (bitlen:int) :string =
 \t\tswitch(party)\n\
 \t\t\t{
 \t\t\tcase DEALER:
-\t\t\t\t\tserver = new Peer(\"server.dat\");
-\t\t\t\t\tclient = new Peer(\"client.dat\");
+\t\t\t\t\tserver = new Peer(server_file);
+\t\t\t\t\tclient = new Peer(client_file);
 \t\t\t\t\tbreak;
 \t\t\tcase SERVER:
-\t\t\t\t\tdealer = new Dealer(\"server.dat\", true);
+\t\t\t\t\tdealer = new Dealer(server_file, true);
 \t\t\t\t\tclient = waitForPeer(42002);
 \t\t\t\t\tpeer = client;
 \t\t\t\t\tbreak;
 \t\t\tcase CLIENT:
-\t\t\t\t\tdealer = new Dealer(\"client.dat\", true);
+\t\t\t\t\tdealer = new Dealer(client_file, true);
 \t\t\t\t\tserver = new Peer(server_address, 42002);
 \t\t\t\t\tpeer = server;
 \t\t\t}
