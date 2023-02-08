@@ -1,0 +1,485 @@
+(*
+
+Authors: Kanav Gupta.
+
+Copyright:
+Copyright (c) 2020 Microsoft Research
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*)
+
+
+(* Helper functions defined in C++ Code *)
+extern void ClearMemSecret1(int32_pl s1, int64_al[s1] arr);
+extern void ClearMemSecret2(int32_pl s1, int32_pl s2, int64_al[s1][s2] arr);
+extern void ClearMemSecret3(int32_pl s1, int32_pl s2, int32_pl s3, int64_al[s1][s2][s3] arr);
+extern void ClearMemSecret4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int64_al[s1][s2][s3][s4] arr);
+extern void ClearMemSecret5(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int64_al[s1][s2][s3][s4][s5] arr);
+extern void ClearMemPublic(int32_pl x);
+extern void ClearMemPublic1(int32_pl s, int32_pl[s] x);
+extern void ClearMemPublic2(int32_pl s1, int32_pl s2, int32_pl[s1][s2] arr);
+extern void ClearMemPublic3(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl[s1][s2][s3] arr);
+extern void ClearMemPublic4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl[s1][s2][s3][s4] arr);
+extern void ClearMemPublic5(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int32_pl[s1][s2][s3][s4][s5] arr);
+
+extern void MatMul2D(int32_pl i, int32_pl j, int32_pl k, int64_al[i][j] A, int64_al[j][k] B, int64_al[i][k] C, bool_pl modelIsA);
+
+extern void ArgMax(int32_pl s1, int32_pl s2, int64_al[s1][s2] inArr, int64_al[s1] outArr);
+
+extern void Relu(int32_pl s1, int64_al[s1] inArr, int64_al[s1] outArr, int32_pl sf, bool_pl doTruncation);
+
+extern void Floor(int32_pl s1, int64_al[s1] inArr, int64_al[s1] outArr, int32_pl sf);
+
+extern void MaxPool(int32_pl N, int32_pl H, int32_pl W, int32_pl C,
+				  int32_pl ksizeH, int32_pl ksizeW,
+				  int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight,
+				  int32_pl strideH, int32_pl strideW,
+				  int32_pl N1, int32_pl imgH, int32_pl imgW, int32_pl C1,
+  				  int64_al[N1][imgH][imgW][C1] inArr, 
+				  int64_al[N][H][W][C] outArr);
+
+extern void AvgPool(int32_pl N, int32_pl H, int32_pl W, int32_pl C,
+				  int32_pl ksizeH, int32_pl ksizeW,
+				  int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight,
+				  int32_pl strideH, int32_pl strideW,
+				  int32_pl N1, int32_pl imgH, int32_pl imgW, int32_pl C1,
+  				  int64_al[N1][imgH][imgW][C1] inArr, 
+				  int64_al[N][H][W][C] outArr, int32_pl sf);
+
+extern void ElemWiseSecretSharedVectorMult(int32_pl s1, int64_al[s1] arr1, int64_al[s1] arr2, int64_al[s1] outArr);
+extern void ElemWiseActModelVectorMult(int32_pl s1, int64_al[s1] arr1, int64_al[s1] arr2, int64_al[s1] outArr);
+extern void ElemWiseVectorPublicDiv(int32_pl s1, int64_al[s1] arr1, int32_pl divisor, int64_al[s1] outArr);
+
+extern void ScaleUp(int32_pl s1, int64_al[s1] arr, int32_pl sf);
+extern void ScaleDown(int32_pl s1, int64_al[s1] arr, int32_pl sf);
+
+extern void Conv2DWrapper(int32_pl N, int32_pl H, int32_pl W, int32_pl CI, 
+				   int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
+				   int32_pl strideH, int32_pl strideW, 
+				   int64_al[N][H][W][CI] inputArr, 
+				   int64_al[FH][FW][CI][CO] filterArr, 
+				   int64_al[N][((H-FH+(zPadHLeft+zPadHRight))/strideH)+1][((W-FW+(zPadWLeft+zPadWRight))/strideW)+1][CO] outArr);
+
+extern void Conv3DWrapper(int32_pl N, int32_pl D, int32_pl H, int32_pl W, int32_pl CI, 
+				   int32_pl FD, int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl zPadDLeft, int32_pl zPadDRight, int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
+				   int32_pl strideD, int32_pl strideH, int32_pl strideW, 
+				   int64_al[N][D][H][W][CI] inputArr, 
+				   int64_al[FD][FH][FW][CI][CO] filterArr,
+				   int64_al[N][((D-FD+(zPadDLeft+zPadDRight))/strideD)+1][((H-FH+(zPadHLeft+zPadHRight))/strideH)+1][((W-FW+(zPadWLeft+zPadWRight))/strideW)+1][CO] outArr);
+
+extern void Conv2DGroupWrapper(int32_pl N, int32_pl H, int32_pl W, int32_pl CI, 
+				   int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
+				   int32_pl strideH, int32_pl strideW, int32_pl G,
+				   int64_al[N][H][W][CI] inputArr, 
+				   int64_al[FH][FW][CI/G][CO] filterArr, 
+				   int64_al[N][((H-FH+(zPadHLeft+zPadHRight))/strideH)+1][((W-FW+(zPadWLeft+zPadWRight))/strideW)+1][CO] outArr);
+
+extern void ConvTranspose2DWrapper(int32_pl N, int32_pl HPrime, int32_pl WPrime, int32_pl CI, 
+				   int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl H, int32_pl W,
+				   int32_pl zPadTrHLeft, int32_pl zPadTrHRight, int32_pl zPadTrWLeft, int32_pl zPadTrWRight, 
+				   int32_pl strideH, int32_pl strideW,
+				   int64_al[N][HPrime][WPrime][CI] inputArr, 
+				   int64_al[FH][FW][CO][CI] filterArr, 
+				   int64_al[N][H][W][CO] outArr);
+
+extern void ConvTranspose3DWrapper(int32_pl N, int32_pl DPrime, int32_pl HPrime, int32_pl WPrime, int32_pl CI, 
+				   int32_pl FD, int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl D, int32_pl H, int32_pl W,
+				   int32_pl zPadTrDLeft, int32_pl zPadTrDRight, int32_pl zPadTrHLeft, int32_pl zPadTrHRight, int32_pl zPadTrWLeft, int32_pl zPadTrWRight, 
+				   int32_pl strideD, int32_pl strideH, int32_pl strideW,
+				   int64_al[N][DPrime][HPrime][WPrime][CI] inputArr, 
+				   int64_al[FD][FH][FW][CO][CI] filterArr, 
+				   int64_al[N][D][H][W][CO] outArr);
+
+extern void TanH(int32_pl one, int32_pl size, int32_pl scaleIn, int32_pl scaleOut, int32_pl bwA, int32_pl bwB, int64_al[size] A, int64_al[size] B);
+extern void Sigmoid(int32_pl one, int32_pl size, int32_pl scaleIn, int32_pl scaleOut, int32_pl bwA, int32_pl bwB, int64_al[size] A, int64_al[size] B);
+extern void Sqrt(int32_pl one, int32_pl size, int32_pl scaleIn, int32_pl scaleOut, int32_pl bwA, int32_pl bwB, bool_pl inverse, int64_al[size] A, int64_al[size] B);
+
+(**************************)
+(*  FSS Standard Library  *)
+(**************************)
+
+extern void ScaleUp1(int32_pl s1, int64_al[s1] arr, int32_pl sf);
+
+extern void ScaleUp2(int32_pl s1, int32_pl s2, int64_al[s1][s2] arr, int32_pl sf);
+
+extern void ScaleUp3(int32_pl s1, int32_pl s2, int32_pl s3, int64_al[s1][s2][s3] arr, int32_pl sf);
+
+extern void ScaleUp4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int64_al[s1][s2][s3][s4] arr, int32_pl sf);
+
+extern void ScaleUp5(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int64_al[s1][s2][s3][s4][s5] arr, int32_pl sf);
+
+extern void ScaleDown1(int32_pl s1, int64_al[s1] arr, int32_pl sf);
+
+extern void ScaleDown2(int32_pl s1, int32_pl s2, int64_al[s1][s2] arr, int32_pl sf);
+
+extern void ScaleDown3(int32_pl s1, int32_pl s2, int32_pl s3, int64_al[s1][s2][s3] arr, int32_pl sf);
+
+extern void ScaleDown4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int64_al[s1][s2][s3][s4] arr, int32_pl sf);
+
+extern void ScaleDown5(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int64_al[s1][s2][s3][s4][s5] arr, int32_pl sf);
+
+extern void StartComputation();
+
+extern void EndComputation();
+
+extern void MatAddBroadCast2(int32_pl a1, int32_pl a2, int32_pl b1, int32_pl s1, int32_pl s2, int64_al[s1][s2] A, int64_al[s2] B, int64_al[s1][s2] outArr);
+
+extern void MatAdd2(int32_pl a1, int32_pl a2, int32_pl b1, int32_pl b2, int32_pl s1, int32_pl s2, int64_al[a1][a2] A, int64_al[b1][b2] B, int64_al[s1][s2] outArr);
+
+extern void MatAddBroadCast4(int32_pl a1, int32_pl a2, int32_pl a3, int32_pl a4, int32_pl b1, int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int64_al[s1][s2][s3][s4] A, int64_al[s4] B, int64_al[s1][s2][s3][s4] outArr);
+
+extern void MatAddBroadCast5(int32_pl a1, int32_pl a2, int32_pl a3, int32_pl a4, int32_pl a5, int32_pl b1, int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int64_al[s1][s2][s3][s4][s5] A, int64_al[s5] B, int64_al[s1][s2][s3][s4][s5] outArr);
+
+extern void MatAdd4(int32_pl a1, int32_pl a2, int32_pl a3, int32_pl a4, int32_pl b1, int32_pl b2, int32_pl b3, int32_pl b4, int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int64_al[a1][a2][a3][a4] A, int64_al[b1][b2][b3][b4] B, int64_al[s1][s2][s3][s4] outArr);
+
+extern void MatAdd5(int32_pl a1, int32_pl a2, int32_pl a3, int32_pl a4, int32_pl a5, int32_pl b1, int32_pl b2, int32_pl b3, int32_pl b4, int32_pl b5, int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int64_al[a1][a2][a3][a4][a5] A, int64_al[b1][b2][b3][b4][b5] B, int64_al[s1][s2][s3][s4][s5] outArr);
+
+(**************************)
+extern void CreateTensor1(int32_pl s1, int64_pl val, int64_pl[s1] arr);
+
+extern void CreateTensor2(int32_pl s1, int32_pl s2, int64_pl val, int64_pl[s1][s2] arr);
+
+extern void CreateTensor3(int32_pl s1, int32_pl s2, int32_pl s3, int64_pl val, int64_pl[s1][s2][s3] arr);
+
+extern void CreateTensor4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int64_pl val, int64_pl[s1][s2][s3][s4] arr);
+
+extern void CreateTensor5(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int64_pl val, int64_pl[s1][s2][s3][s4][s5] arr);
+
+(**************************)
+extern void CopyTensor1(int32_pl s1, int64_al[s1] targetArr, int64_al[s1] fromArr, int64_al[s1] ignore);
+
+extern void CopyTensor2(int32_pl s1, int32_pl s2, int64_al[s1][s2] targetArr, int64_al[s1][s2] fromArr, int64_al[s1][s2] ignore);
+
+extern void CopyTensor3(int32_pl s1, int32_pl s2, int32_pl s3, int64_al[s1][s2][s3] targetArr, int64_al[s1][s2][s3] fromArr, int64_al[s1][s2][s3] ignore);
+
+extern void CopyTensor4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int64_al[s1][s2][s3][s4] targetArr, int64_al[s1][s2][s3][s4] fromArr, int64_al[s1][s2][s3][s4] ignore);
+
+(**************************)
+extern void CreateIdentity11(int32_pl s1, int64_al[s1] fromArr, int64_al[s1] newArr);
+
+extern void CreateIdentity22(int32_pl s1, int32_pl s2, int64_al[s1][s2] fromArr, int64_al[s1][s2] newArr);
+
+extern void CreateIdentity33(int32_pl s1, int32_pl s2, int32_pl s3, int64_al[s1][s2][s3] fromArr, int64_al[s1][s2][s3] newArr);
+
+extern void CreateIdentity44(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int64_al[s1][s2][s3][s4] fromArr, int64_al[s1][s2][s3][s4] newArr);
+
+(**************************)
+extern void CreateCopy2211(int32_pl s1, int32_pl s2, int32_pl inps1, int32_pl inps2, int64_al[inps1][inps2] inArr, int32_pl perDimSize, int32_pl[perDimSize] beginIdx, int32_pl[perDimSize] sizeIdx, int64_al[s1][s2] outArr);
+
+extern void CreateCopy5511(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int32_pl inps1, int32_pl inps2, int32_pl inps3, int32_pl inps4, int32_pl inps5, int64_al[inps1][inps2][inps3][inps4][inps5] inArr, int32_pl perDimSize, int32_pl[perDimSize] beginIdx, int32_pl[perDimSize] sizeIdx, int64_al[s1][s2][s3][s4][s5] outArr);
+
+(**************************)
+
+extern void Concat1T44(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat2T222(int32_pl s1, int32_pl s2, int32_pl inp1s1, int32_pl inp1s2, int64_al[inp1s1][inp1s2] inp1, int32_pl inp2s1, int32_pl inp2s2, int64_al[inp2s1][inp2s2] inp2, int32_pl axis, int64_al[s1][s2] outp);
+
+extern void Concat2T444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat3T4444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat4T44444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl inp4s1, int32_pl inp4s2, int32_pl inp4s3, int32_pl inp4s4, int64_al[inp4s1][inp4s2][inp4s3][inp4s4] inp4, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat5T444444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl inp4s1, int32_pl inp4s2, int32_pl inp4s3, int32_pl inp4s4, int64_al[inp4s1][inp4s2][inp4s3][inp4s4] inp4, int32_pl inp5s1, int32_pl inp5s2, int32_pl inp5s3, int32_pl inp5s4, int64_al[inp5s1][inp5s2][inp5s3][inp5s4] inp5, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat6T4444444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl inp4s1, int32_pl inp4s2, int32_pl inp4s3, int32_pl inp4s4, int64_al[inp4s1][inp4s2][inp4s3][inp4s4] inp4, int32_pl inp5s1, int32_pl inp5s2, int32_pl inp5s3, int32_pl inp5s4, int64_al[inp5s1][inp5s2][inp5s3][inp5s4] inp5, int32_pl inp6s1, int32_pl inp6s2, int32_pl inp6s3, int32_pl inp6s4, int64_al[inp6s1][inp6s2][inp6s3][inp6s4] inp6, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat7T44444444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl inp4s1, int32_pl inp4s2, int32_pl inp4s3, int32_pl inp4s4, int64_al[inp4s1][inp4s2][inp4s3][inp4s4] inp4, int32_pl inp5s1, int32_pl inp5s2, int32_pl inp5s3, int32_pl inp5s4, int64_al[inp5s1][inp5s2][inp5s3][inp5s4] inp5, int32_pl inp6s1, int32_pl inp6s2, int32_pl inp6s3, int32_pl inp6s4, int64_al[inp6s1][inp6s2][inp6s3][inp6s4] inp6, int32_pl inp7s1, int32_pl inp7s2, int32_pl inp7s3, int32_pl inp7s4, int64_al[inp7s1][inp7s2][inp7s3][inp7s4] inp7, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat8T444444444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl inp4s1, int32_pl inp4s2, int32_pl inp4s3, int32_pl inp4s4, int64_al[inp4s1][inp4s2][inp4s3][inp4s4] inp4, int32_pl inp5s1, int32_pl inp5s2, int32_pl inp5s3, int32_pl inp5s4, int64_al[inp5s1][inp5s2][inp5s3][inp5s4] inp5, int32_pl inp6s1, int32_pl inp6s2, int32_pl inp6s3, int32_pl inp6s4, int64_al[inp6s1][inp6s2][inp6s3][inp6s4] inp6, int32_pl inp7s1, int32_pl inp7s2, int32_pl inp7s3, int32_pl inp7s4, int64_al[inp7s1][inp7s2][inp7s3][inp7s4] inp7, int32_pl inp8s1, int32_pl inp8s2, int32_pl inp8s3, int32_pl inp8s4, int64_al[inp8s1][inp8s2][inp8s3][inp8s4] inp8, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat9T4444444444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl inp4s1, int32_pl inp4s2, int32_pl inp4s3, int32_pl inp4s4, int64_al[inp4s1][inp4s2][inp4s3][inp4s4] inp4, int32_pl inp5s1, int32_pl inp5s2, int32_pl inp5s3, int32_pl inp5s4, int64_al[inp5s1][inp5s2][inp5s3][inp5s4] inp5, int32_pl inp6s1, int32_pl inp6s2, int32_pl inp6s3, int32_pl inp6s4, int64_al[inp6s1][inp6s2][inp6s3][inp6s4] inp6, int32_pl inp7s1, int32_pl inp7s2, int32_pl inp7s3, int32_pl inp7s4, int64_al[inp7s1][inp7s2][inp7s3][inp7s4] inp7, int32_pl inp8s1, int32_pl inp8s2, int32_pl inp8s3, int32_pl inp8s4, int64_al[inp8s1][inp8s2][inp8s3][inp8s4] inp8, int32_pl inp9s1, int32_pl inp9s2, int32_pl inp9s3, int32_pl inp9s4, int64_al[inp9s1][inp9s2][inp9s3][inp9s4] inp9, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat10T44444444444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl inp4s1, int32_pl inp4s2, int32_pl inp4s3, int32_pl inp4s4, int64_al[inp4s1][inp4s2][inp4s3][inp4s4] inp4, int32_pl inp5s1, int32_pl inp5s2, int32_pl inp5s3, int32_pl inp5s4, int64_al[inp5s1][inp5s2][inp5s3][inp5s4] inp5, int32_pl inp6s1, int32_pl inp6s2, int32_pl inp6s3, int32_pl inp6s4, int64_al[inp6s1][inp6s2][inp6s3][inp6s4] inp6, int32_pl inp7s1, int32_pl inp7s2, int32_pl inp7s3, int32_pl inp7s4, int64_al[inp7s1][inp7s2][inp7s3][inp7s4] inp7, int32_pl inp8s1, int32_pl inp8s2, int32_pl inp8s3, int32_pl inp8s4, int64_al[inp8s1][inp8s2][inp8s3][inp8s4] inp8, int32_pl inp9s1, int32_pl inp9s2, int32_pl inp9s3, int32_pl inp9s4, int64_al[inp9s1][inp9s2][inp9s3][inp9s4] inp9, int32_pl inp10s1, int32_pl inp10s2, int32_pl inp10s3, int32_pl inp10s4, int64_al[inp10s1][inp10s2][inp10s3][inp10s4] inp10, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat11T444444444444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl inp4s1, int32_pl inp4s2, int32_pl inp4s3, int32_pl inp4s4, int64_al[inp4s1][inp4s2][inp4s3][inp4s4] inp4, int32_pl inp5s1, int32_pl inp5s2, int32_pl inp5s3, int32_pl inp5s4, int64_al[inp5s1][inp5s2][inp5s3][inp5s4] inp5, int32_pl inp6s1, int32_pl inp6s2, int32_pl inp6s3, int32_pl inp6s4, int64_al[inp6s1][inp6s2][inp6s3][inp6s4] inp6, int32_pl inp7s1, int32_pl inp7s2, int32_pl inp7s3, int32_pl inp7s4, int64_al[inp7s1][inp7s2][inp7s3][inp7s4] inp7, int32_pl inp8s1, int32_pl inp8s2, int32_pl inp8s3, int32_pl inp8s4, int64_al[inp8s1][inp8s2][inp8s3][inp8s4] inp8, int32_pl inp9s1, int32_pl inp9s2, int32_pl inp9s3, int32_pl inp9s4, int64_al[inp9s1][inp9s2][inp9s3][inp9s4] inp9, int32_pl inp10s1, int32_pl inp10s2, int32_pl inp10s3, int32_pl inp10s4, int64_al[inp10s1][inp10s2][inp10s3][inp10s4] inp10, int32_pl inp11s1, int32_pl inp11s2, int32_pl inp11s3, int32_pl inp11s4, int64_al[inp11s1][inp11s2][inp11s3][inp11s4] inp11, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat12T4444444444444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl inp4s1, int32_pl inp4s2, int32_pl inp4s3, int32_pl inp4s4, int64_al[inp4s1][inp4s2][inp4s3][inp4s4] inp4, int32_pl inp5s1, int32_pl inp5s2, int32_pl inp5s3, int32_pl inp5s4, int64_al[inp5s1][inp5s2][inp5s3][inp5s4] inp5, int32_pl inp6s1, int32_pl inp6s2, int32_pl inp6s3, int32_pl inp6s4, int64_al[inp6s1][inp6s2][inp6s3][inp6s4] inp6, int32_pl inp7s1, int32_pl inp7s2, int32_pl inp7s3, int32_pl inp7s4, int64_al[inp7s1][inp7s2][inp7s3][inp7s4] inp7, int32_pl inp8s1, int32_pl inp8s2, int32_pl inp8s3, int32_pl inp8s4, int64_al[inp8s1][inp8s2][inp8s3][inp8s4] inp8, int32_pl inp9s1, int32_pl inp9s2, int32_pl inp9s3, int32_pl inp9s4, int64_al[inp9s1][inp9s2][inp9s3][inp9s4] inp9, int32_pl inp10s1, int32_pl inp10s2, int32_pl inp10s3, int32_pl inp10s4, int64_al[inp10s1][inp10s2][inp10s3][inp10s4] inp10, int32_pl inp11s1, int32_pl inp11s2, int32_pl inp11s3, int32_pl inp11s4, int64_al[inp11s1][inp11s2][inp11s3][inp11s4] inp11, int32_pl inp12s1, int32_pl inp12s2, int32_pl inp12s3, int32_pl inp12s4, int64_al[inp12s1][inp12s2][inp12s3][inp12s4] inp12, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat13T44444444444444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl inp4s1, int32_pl inp4s2, int32_pl inp4s3, int32_pl inp4s4, int64_al[inp4s1][inp4s2][inp4s3][inp4s4] inp4, int32_pl inp5s1, int32_pl inp5s2, int32_pl inp5s3, int32_pl inp5s4, int64_al[inp5s1][inp5s2][inp5s3][inp5s4] inp5, int32_pl inp6s1, int32_pl inp6s2, int32_pl inp6s3, int32_pl inp6s4, int64_al[inp6s1][inp6s2][inp6s3][inp6s4] inp6, int32_pl inp7s1, int32_pl inp7s2, int32_pl inp7s3, int32_pl inp7s4, int64_al[inp7s1][inp7s2][inp7s3][inp7s4] inp7, int32_pl inp8s1, int32_pl inp8s2, int32_pl inp8s3, int32_pl inp8s4, int64_al[inp8s1][inp8s2][inp8s3][inp8s4] inp8, int32_pl inp9s1, int32_pl inp9s2, int32_pl inp9s3, int32_pl inp9s4, int64_al[inp9s1][inp9s2][inp9s3][inp9s4] inp9, int32_pl inp10s1, int32_pl inp10s2, int32_pl inp10s3, int32_pl inp10s4, int64_al[inp10s1][inp10s2][inp10s3][inp10s4] inp10, int32_pl inp11s1, int32_pl inp11s2, int32_pl inp11s3, int32_pl inp11s4, int64_al[inp11s1][inp11s2][inp11s3][inp11s4] inp11, int32_pl inp12s1, int32_pl inp12s2, int32_pl inp12s3, int32_pl inp12s4, int64_al[inp12s1][inp12s2][inp12s3][inp12s4] inp12, int32_pl inp13s1, int32_pl inp13s2, int32_pl inp13s3, int32_pl inp13s4, int64_al[inp13s1][inp13s2][inp13s3][inp13s4] inp13, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat14T444444444444444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl inp4s1, int32_pl inp4s2, int32_pl inp4s3, int32_pl inp4s4, int64_al[inp4s1][inp4s2][inp4s3][inp4s4] inp4, int32_pl inp5s1, int32_pl inp5s2, int32_pl inp5s3, int32_pl inp5s4, int64_al[inp5s1][inp5s2][inp5s3][inp5s4] inp5, int32_pl inp6s1, int32_pl inp6s2, int32_pl inp6s3, int32_pl inp6s4, int64_al[inp6s1][inp6s2][inp6s3][inp6s4] inp6, int32_pl inp7s1, int32_pl inp7s2, int32_pl inp7s3, int32_pl inp7s4, int64_al[inp7s1][inp7s2][inp7s3][inp7s4] inp7, int32_pl inp8s1, int32_pl inp8s2, int32_pl inp8s3, int32_pl inp8s4, int64_al[inp8s1][inp8s2][inp8s3][inp8s4] inp8, int32_pl inp9s1, int32_pl inp9s2, int32_pl inp9s3, int32_pl inp9s4, int64_al[inp9s1][inp9s2][inp9s3][inp9s4] inp9, int32_pl inp10s1, int32_pl inp10s2, int32_pl inp10s3, int32_pl inp10s4, int64_al[inp10s1][inp10s2][inp10s3][inp10s4] inp10, int32_pl inp11s1, int32_pl inp11s2, int32_pl inp11s3, int32_pl inp11s4, int64_al[inp11s1][inp11s2][inp11s3][inp11s4] inp11, int32_pl inp12s1, int32_pl inp12s2, int32_pl inp12s3, int32_pl inp12s4, int64_al[inp12s1][inp12s2][inp12s3][inp12s4] inp12, int32_pl inp13s1, int32_pl inp13s2, int32_pl inp13s3, int32_pl inp13s4, int64_al[inp13s1][inp13s2][inp13s3][inp13s4] inp13, int32_pl inp14s1, int32_pl inp14s2, int32_pl inp14s3, int32_pl inp14s4, int64_al[inp14s1][inp14s2][inp14s3][inp14s4] inp14, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat15T4444444444444444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl inp4s1, int32_pl inp4s2, int32_pl inp4s3, int32_pl inp4s4, int64_al[inp4s1][inp4s2][inp4s3][inp4s4] inp4, int32_pl inp5s1, int32_pl inp5s2, int32_pl inp5s3, int32_pl inp5s4, int64_al[inp5s1][inp5s2][inp5s3][inp5s4] inp5, int32_pl inp6s1, int32_pl inp6s2, int32_pl inp6s3, int32_pl inp6s4, int64_al[inp6s1][inp6s2][inp6s3][inp6s4] inp6, int32_pl inp7s1, int32_pl inp7s2, int32_pl inp7s3, int32_pl inp7s4, int64_al[inp7s1][inp7s2][inp7s3][inp7s4] inp7, int32_pl inp8s1, int32_pl inp8s2, int32_pl inp8s3, int32_pl inp8s4, int64_al[inp8s1][inp8s2][inp8s3][inp8s4] inp8, int32_pl inp9s1, int32_pl inp9s2, int32_pl inp9s3, int32_pl inp9s4, int64_al[inp9s1][inp9s2][inp9s3][inp9s4] inp9, int32_pl inp10s1, int32_pl inp10s2, int32_pl inp10s3, int32_pl inp10s4, int64_al[inp10s1][inp10s2][inp10s3][inp10s4] inp10, int32_pl inp11s1, int32_pl inp11s2, int32_pl inp11s3, int32_pl inp11s4, int64_al[inp11s1][inp11s2][inp11s3][inp11s4] inp11, int32_pl inp12s1, int32_pl inp12s2, int32_pl inp12s3, int32_pl inp12s4, int64_al[inp12s1][inp12s2][inp12s3][inp12s4] inp12, int32_pl inp13s1, int32_pl inp13s2, int32_pl inp13s3, int32_pl inp13s4, int64_al[inp13s1][inp13s2][inp13s3][inp13s4] inp13, int32_pl inp14s1, int32_pl inp14s2, int32_pl inp14s3, int32_pl inp14s4, int64_al[inp14s1][inp14s2][inp14s3][inp14s4] inp14, int32_pl inp15s1, int32_pl inp15s2, int32_pl inp15s3, int32_pl inp15s4, int64_al[inp15s1][inp15s2][inp15s3][inp15s4] inp15, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat16T44444444444444444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl inp4s1, int32_pl inp4s2, int32_pl inp4s3, int32_pl inp4s4, int64_al[inp4s1][inp4s2][inp4s3][inp4s4] inp4, int32_pl inp5s1, int32_pl inp5s2, int32_pl inp5s3, int32_pl inp5s4, int64_al[inp5s1][inp5s2][inp5s3][inp5s4] inp5, int32_pl inp6s1, int32_pl inp6s2, int32_pl inp6s3, int32_pl inp6s4, int64_al[inp6s1][inp6s2][inp6s3][inp6s4] inp6, int32_pl inp7s1, int32_pl inp7s2, int32_pl inp7s3, int32_pl inp7s4, int64_al[inp7s1][inp7s2][inp7s3][inp7s4] inp7, int32_pl inp8s1, int32_pl inp8s2, int32_pl inp8s3, int32_pl inp8s4, int64_al[inp8s1][inp8s2][inp8s3][inp8s4] inp8, int32_pl inp9s1, int32_pl inp9s2, int32_pl inp9s3, int32_pl inp9s4, int64_al[inp9s1][inp9s2][inp9s3][inp9s4] inp9, int32_pl inp10s1, int32_pl inp10s2, int32_pl inp10s3, int32_pl inp10s4, int64_al[inp10s1][inp10s2][inp10s3][inp10s4] inp10, int32_pl inp11s1, int32_pl inp11s2, int32_pl inp11s3, int32_pl inp11s4, int64_al[inp11s1][inp11s2][inp11s3][inp11s4] inp11, int32_pl inp12s1, int32_pl inp12s2, int32_pl inp12s3, int32_pl inp12s4, int64_al[inp12s1][inp12s2][inp12s3][inp12s4] inp12, int32_pl inp13s1, int32_pl inp13s2, int32_pl inp13s3, int32_pl inp13s4, int64_al[inp13s1][inp13s2][inp13s3][inp13s4] inp13, int32_pl inp14s1, int32_pl inp14s2, int32_pl inp14s3, int32_pl inp14s4, int64_al[inp14s1][inp14s2][inp14s3][inp14s4] inp14, int32_pl inp15s1, int32_pl inp15s2, int32_pl inp15s3, int32_pl inp15s4, int64_al[inp15s1][inp15s2][inp15s3][inp15s4] inp15, int32_pl inp16s1, int32_pl inp16s2, int32_pl inp16s3, int32_pl inp16s4, int64_al[inp16s1][inp16s2][inp16s3][inp16s4] inp16, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat17T444444444444444444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl inp4s1, int32_pl inp4s2, int32_pl inp4s3, int32_pl inp4s4, int64_al[inp4s1][inp4s2][inp4s3][inp4s4] inp4, int32_pl inp5s1, int32_pl inp5s2, int32_pl inp5s3, int32_pl inp5s4, int64_al[inp5s1][inp5s2][inp5s3][inp5s4] inp5, int32_pl inp6s1, int32_pl inp6s2, int32_pl inp6s3, int32_pl inp6s4, int64_al[inp6s1][inp6s2][inp6s3][inp6s4] inp6, int32_pl inp7s1, int32_pl inp7s2, int32_pl inp7s3, int32_pl inp7s4, int64_al[inp7s1][inp7s2][inp7s3][inp7s4] inp7, int32_pl inp8s1, int32_pl inp8s2, int32_pl inp8s3, int32_pl inp8s4, int64_al[inp8s1][inp8s2][inp8s3][inp8s4] inp8, int32_pl inp9s1, int32_pl inp9s2, int32_pl inp9s3, int32_pl inp9s4, int64_al[inp9s1][inp9s2][inp9s3][inp9s4] inp9, int32_pl inp10s1, int32_pl inp10s2, int32_pl inp10s3, int32_pl inp10s4, int64_al[inp10s1][inp10s2][inp10s3][inp10s4] inp10, int32_pl inp11s1, int32_pl inp11s2, int32_pl inp11s3, int32_pl inp11s4, int64_al[inp11s1][inp11s2][inp11s3][inp11s4] inp11, int32_pl inp12s1, int32_pl inp12s2, int32_pl inp12s3, int32_pl inp12s4, int64_al[inp12s1][inp12s2][inp12s3][inp12s4] inp12, int32_pl inp13s1, int32_pl inp13s2, int32_pl inp13s3, int32_pl inp13s4, int64_al[inp13s1][inp13s2][inp13s3][inp13s4] inp13, int32_pl inp14s1, int32_pl inp14s2, int32_pl inp14s3, int32_pl inp14s4, int64_al[inp14s1][inp14s2][inp14s3][inp14s4] inp14, int32_pl inp15s1, int32_pl inp15s2, int32_pl inp15s3, int32_pl inp15s4, int64_al[inp15s1][inp15s2][inp15s3][inp15s4] inp15, int32_pl inp16s1, int32_pl inp16s2, int32_pl inp16s3, int32_pl inp16s4, int64_al[inp16s1][inp16s2][inp16s3][inp16s4] inp16, int32_pl inp17s1, int32_pl inp17s2, int32_pl inp17s3, int32_pl inp17s4, int64_al[inp17s1][inp17s2][inp17s3][inp17s4] inp17, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat18T4444444444444444444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl inp4s1, int32_pl inp4s2, int32_pl inp4s3, int32_pl inp4s4, int64_al[inp4s1][inp4s2][inp4s3][inp4s4] inp4, int32_pl inp5s1, int32_pl inp5s2, int32_pl inp5s3, int32_pl inp5s4, int64_al[inp5s1][inp5s2][inp5s3][inp5s4] inp5, int32_pl inp6s1, int32_pl inp6s2, int32_pl inp6s3, int32_pl inp6s4, int64_al[inp6s1][inp6s2][inp6s3][inp6s4] inp6, int32_pl inp7s1, int32_pl inp7s2, int32_pl inp7s3, int32_pl inp7s4, int64_al[inp7s1][inp7s2][inp7s3][inp7s4] inp7, int32_pl inp8s1, int32_pl inp8s2, int32_pl inp8s3, int32_pl inp8s4, int64_al[inp8s1][inp8s2][inp8s3][inp8s4] inp8, int32_pl inp9s1, int32_pl inp9s2, int32_pl inp9s3, int32_pl inp9s4, int64_al[inp9s1][inp9s2][inp9s3][inp9s4] inp9, int32_pl inp10s1, int32_pl inp10s2, int32_pl inp10s3, int32_pl inp10s4, int64_al[inp10s1][inp10s2][inp10s3][inp10s4] inp10, int32_pl inp11s1, int32_pl inp11s2, int32_pl inp11s3, int32_pl inp11s4, int64_al[inp11s1][inp11s2][inp11s3][inp11s4] inp11, int32_pl inp12s1, int32_pl inp12s2, int32_pl inp12s3, int32_pl inp12s4, int64_al[inp12s1][inp12s2][inp12s3][inp12s4] inp12, int32_pl inp13s1, int32_pl inp13s2, int32_pl inp13s3, int32_pl inp13s4, int64_al[inp13s1][inp13s2][inp13s3][inp13s4] inp13, int32_pl inp14s1, int32_pl inp14s2, int32_pl inp14s3, int32_pl inp14s4, int64_al[inp14s1][inp14s2][inp14s3][inp14s4] inp14, int32_pl inp15s1, int32_pl inp15s2, int32_pl inp15s3, int32_pl inp15s4, int64_al[inp15s1][inp15s2][inp15s3][inp15s4] inp15, int32_pl inp16s1, int32_pl inp16s2, int32_pl inp16s3, int32_pl inp16s4, int64_al[inp16s1][inp16s2][inp16s3][inp16s4] inp16, int32_pl inp17s1, int32_pl inp17s2, int32_pl inp17s3, int32_pl inp17s4, int64_al[inp17s1][inp17s2][inp17s3][inp17s4] inp17, int32_pl inp18s1, int32_pl inp18s2, int32_pl inp18s3, int32_pl inp18s4, int64_al[inp18s1][inp18s2][inp18s3][inp18s4] inp18, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat19T44444444444444444444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl inp4s1, int32_pl inp4s2, int32_pl inp4s3, int32_pl inp4s4, int64_al[inp4s1][inp4s2][inp4s3][inp4s4] inp4, int32_pl inp5s1, int32_pl inp5s2, int32_pl inp5s3, int32_pl inp5s4, int64_al[inp5s1][inp5s2][inp5s3][inp5s4] inp5, int32_pl inp6s1, int32_pl inp6s2, int32_pl inp6s3, int32_pl inp6s4, int64_al[inp6s1][inp6s2][inp6s3][inp6s4] inp6, int32_pl inp7s1, int32_pl inp7s2, int32_pl inp7s3, int32_pl inp7s4, int64_al[inp7s1][inp7s2][inp7s3][inp7s4] inp7, int32_pl inp8s1, int32_pl inp8s2, int32_pl inp8s3, int32_pl inp8s4, int64_al[inp8s1][inp8s2][inp8s3][inp8s4] inp8, int32_pl inp9s1, int32_pl inp9s2, int32_pl inp9s3, int32_pl inp9s4, int64_al[inp9s1][inp9s2][inp9s3][inp9s4] inp9, int32_pl inp10s1, int32_pl inp10s2, int32_pl inp10s3, int32_pl inp10s4, int64_al[inp10s1][inp10s2][inp10s3][inp10s4] inp10, int32_pl inp11s1, int32_pl inp11s2, int32_pl inp11s3, int32_pl inp11s4, int64_al[inp11s1][inp11s2][inp11s3][inp11s4] inp11, int32_pl inp12s1, int32_pl inp12s2, int32_pl inp12s3, int32_pl inp12s4, int64_al[inp12s1][inp12s2][inp12s3][inp12s4] inp12, int32_pl inp13s1, int32_pl inp13s2, int32_pl inp13s3, int32_pl inp13s4, int64_al[inp13s1][inp13s2][inp13s3][inp13s4] inp13, int32_pl inp14s1, int32_pl inp14s2, int32_pl inp14s3, int32_pl inp14s4, int64_al[inp14s1][inp14s2][inp14s3][inp14s4] inp14, int32_pl inp15s1, int32_pl inp15s2, int32_pl inp15s3, int32_pl inp15s4, int64_al[inp15s1][inp15s2][inp15s3][inp15s4] inp15, int32_pl inp16s1, int32_pl inp16s2, int32_pl inp16s3, int32_pl inp16s4, int64_al[inp16s1][inp16s2][inp16s3][inp16s4] inp16, int32_pl inp17s1, int32_pl inp17s2, int32_pl inp17s3, int32_pl inp17s4, int64_al[inp17s1][inp17s2][inp17s3][inp17s4] inp17, int32_pl inp18s1, int32_pl inp18s2, int32_pl inp18s3, int32_pl inp18s4, int64_al[inp18s1][inp18s2][inp18s3][inp18s4] inp18, int32_pl inp19s1, int32_pl inp19s2, int32_pl inp19s3, int32_pl inp19s4, int64_al[inp19s1][inp19s2][inp19s3][inp19s4] inp19, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat20T444444444444444444444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl inp4s1, int32_pl inp4s2, int32_pl inp4s3, int32_pl inp4s4, int64_al[inp4s1][inp4s2][inp4s3][inp4s4] inp4, int32_pl inp5s1, int32_pl inp5s2, int32_pl inp5s3, int32_pl inp5s4, int64_al[inp5s1][inp5s2][inp5s3][inp5s4] inp5, int32_pl inp6s1, int32_pl inp6s2, int32_pl inp6s3, int32_pl inp6s4, int64_al[inp6s1][inp6s2][inp6s3][inp6s4] inp6, int32_pl inp7s1, int32_pl inp7s2, int32_pl inp7s3, int32_pl inp7s4, int64_al[inp7s1][inp7s2][inp7s3][inp7s4] inp7, int32_pl inp8s1, int32_pl inp8s2, int32_pl inp8s3, int32_pl inp8s4, int64_al[inp8s1][inp8s2][inp8s3][inp8s4] inp8, int32_pl inp9s1, int32_pl inp9s2, int32_pl inp9s3, int32_pl inp9s4, int64_al[inp9s1][inp9s2][inp9s3][inp9s4] inp9, int32_pl inp10s1, int32_pl inp10s2, int32_pl inp10s3, int32_pl inp10s4, int64_al[inp10s1][inp10s2][inp10s3][inp10s4] inp10, int32_pl inp11s1, int32_pl inp11s2, int32_pl inp11s3, int32_pl inp11s4, int64_al[inp11s1][inp11s2][inp11s3][inp11s4] inp11, int32_pl inp12s1, int32_pl inp12s2, int32_pl inp12s3, int32_pl inp12s4, int64_al[inp12s1][inp12s2][inp12s3][inp12s4] inp12, int32_pl inp13s1, int32_pl inp13s2, int32_pl inp13s3, int32_pl inp13s4, int64_al[inp13s1][inp13s2][inp13s3][inp13s4] inp13, int32_pl inp14s1, int32_pl inp14s2, int32_pl inp14s3, int32_pl inp14s4, int64_al[inp14s1][inp14s2][inp14s3][inp14s4] inp14, int32_pl inp15s1, int32_pl inp15s2, int32_pl inp15s3, int32_pl inp15s4, int64_al[inp15s1][inp15s2][inp15s3][inp15s4] inp15, int32_pl inp16s1, int32_pl inp16s2, int32_pl inp16s3, int32_pl inp16s4, int64_al[inp16s1][inp16s2][inp16s3][inp16s4] inp16, int32_pl inp17s1, int32_pl inp17s2, int32_pl inp17s3, int32_pl inp17s4, int64_al[inp17s1][inp17s2][inp17s3][inp17s4] inp17, int32_pl inp18s1, int32_pl inp18s2, int32_pl inp18s3, int32_pl inp18s4, int64_al[inp18s1][inp18s2][inp18s3][inp18s4] inp18, int32_pl inp19s1, int32_pl inp19s2, int32_pl inp19s3, int32_pl inp19s4, int64_al[inp19s1][inp19s2][inp19s3][inp19s4] inp19, int32_pl inp20s1, int32_pl inp20s2, int32_pl inp20s3, int32_pl inp20s4, int64_al[inp20s1][inp20s2][inp20s3][inp20s4] inp20, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat21T4444444444444444444444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl inp4s1, int32_pl inp4s2, int32_pl inp4s3, int32_pl inp4s4, int64_al[inp4s1][inp4s2][inp4s3][inp4s4] inp4, int32_pl inp5s1, int32_pl inp5s2, int32_pl inp5s3, int32_pl inp5s4, int64_al[inp5s1][inp5s2][inp5s3][inp5s4] inp5, int32_pl inp6s1, int32_pl inp6s2, int32_pl inp6s3, int32_pl inp6s4, int64_al[inp6s1][inp6s2][inp6s3][inp6s4] inp6, int32_pl inp7s1, int32_pl inp7s2, int32_pl inp7s3, int32_pl inp7s4, int64_al[inp7s1][inp7s2][inp7s3][inp7s4] inp7, int32_pl inp8s1, int32_pl inp8s2, int32_pl inp8s3, int32_pl inp8s4, int64_al[inp8s1][inp8s2][inp8s3][inp8s4] inp8, int32_pl inp9s1, int32_pl inp9s2, int32_pl inp9s3, int32_pl inp9s4, int64_al[inp9s1][inp9s2][inp9s3][inp9s4] inp9, int32_pl inp10s1, int32_pl inp10s2, int32_pl inp10s3, int32_pl inp10s4, int64_al[inp10s1][inp10s2][inp10s3][inp10s4] inp10, int32_pl inp11s1, int32_pl inp11s2, int32_pl inp11s3, int32_pl inp11s4, int64_al[inp11s1][inp11s2][inp11s3][inp11s4] inp11, int32_pl inp12s1, int32_pl inp12s2, int32_pl inp12s3, int32_pl inp12s4, int64_al[inp12s1][inp12s2][inp12s3][inp12s4] inp12, int32_pl inp13s1, int32_pl inp13s2, int32_pl inp13s3, int32_pl inp13s4, int64_al[inp13s1][inp13s2][inp13s3][inp13s4] inp13, int32_pl inp14s1, int32_pl inp14s2, int32_pl inp14s3, int32_pl inp14s4, int64_al[inp14s1][inp14s2][inp14s3][inp14s4] inp14, int32_pl inp15s1, int32_pl inp15s2, int32_pl inp15s3, int32_pl inp15s4, int64_al[inp15s1][inp15s2][inp15s3][inp15s4] inp15, int32_pl inp16s1, int32_pl inp16s2, int32_pl inp16s3, int32_pl inp16s4, int64_al[inp16s1][inp16s2][inp16s3][inp16s4] inp16, int32_pl inp17s1, int32_pl inp17s2, int32_pl inp17s3, int32_pl inp17s4, int64_al[inp17s1][inp17s2][inp17s3][inp17s4] inp17, int32_pl inp18s1, int32_pl inp18s2, int32_pl inp18s3, int32_pl inp18s4, int64_al[inp18s1][inp18s2][inp18s3][inp18s4] inp18, int32_pl inp19s1, int32_pl inp19s2, int32_pl inp19s3, int32_pl inp19s4, int64_al[inp19s1][inp19s2][inp19s3][inp19s4] inp19, int32_pl inp20s1, int32_pl inp20s2, int32_pl inp20s3, int32_pl inp20s4, int64_al[inp20s1][inp20s2][inp20s3][inp20s4] inp20, int32_pl inp21s1, int32_pl inp21s2, int32_pl inp21s3, int32_pl inp21s4, int64_al[inp21s1][inp21s2][inp21s3][inp21s4] inp21, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat22T44444444444444444444444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl inp4s1, int32_pl inp4s2, int32_pl inp4s3, int32_pl inp4s4, int64_al[inp4s1][inp4s2][inp4s3][inp4s4] inp4, int32_pl inp5s1, int32_pl inp5s2, int32_pl inp5s3, int32_pl inp5s4, int64_al[inp5s1][inp5s2][inp5s3][inp5s4] inp5, int32_pl inp6s1, int32_pl inp6s2, int32_pl inp6s3, int32_pl inp6s4, int64_al[inp6s1][inp6s2][inp6s3][inp6s4] inp6, int32_pl inp7s1, int32_pl inp7s2, int32_pl inp7s3, int32_pl inp7s4, int64_al[inp7s1][inp7s2][inp7s3][inp7s4] inp7, int32_pl inp8s1, int32_pl inp8s2, int32_pl inp8s3, int32_pl inp8s4, int64_al[inp8s1][inp8s2][inp8s3][inp8s4] inp8, int32_pl inp9s1, int32_pl inp9s2, int32_pl inp9s3, int32_pl inp9s4, int64_al[inp9s1][inp9s2][inp9s3][inp9s4] inp9, int32_pl inp10s1, int32_pl inp10s2, int32_pl inp10s3, int32_pl inp10s4, int64_al[inp10s1][inp10s2][inp10s3][inp10s4] inp10, int32_pl inp11s1, int32_pl inp11s2, int32_pl inp11s3, int32_pl inp11s4, int64_al[inp11s1][inp11s2][inp11s3][inp11s4] inp11, int32_pl inp12s1, int32_pl inp12s2, int32_pl inp12s3, int32_pl inp12s4, int64_al[inp12s1][inp12s2][inp12s3][inp12s4] inp12, int32_pl inp13s1, int32_pl inp13s2, int32_pl inp13s3, int32_pl inp13s4, int64_al[inp13s1][inp13s2][inp13s3][inp13s4] inp13, int32_pl inp14s1, int32_pl inp14s2, int32_pl inp14s3, int32_pl inp14s4, int64_al[inp14s1][inp14s2][inp14s3][inp14s4] inp14, int32_pl inp15s1, int32_pl inp15s2, int32_pl inp15s3, int32_pl inp15s4, int64_al[inp15s1][inp15s2][inp15s3][inp15s4] inp15, int32_pl inp16s1, int32_pl inp16s2, int32_pl inp16s3, int32_pl inp16s4, int64_al[inp16s1][inp16s2][inp16s3][inp16s4] inp16, int32_pl inp17s1, int32_pl inp17s2, int32_pl inp17s3, int32_pl inp17s4, int64_al[inp17s1][inp17s2][inp17s3][inp17s4] inp17, int32_pl inp18s1, int32_pl inp18s2, int32_pl inp18s3, int32_pl inp18s4, int64_al[inp18s1][inp18s2][inp18s3][inp18s4] inp18, int32_pl inp19s1, int32_pl inp19s2, int32_pl inp19s3, int32_pl inp19s4, int64_al[inp19s1][inp19s2][inp19s3][inp19s4] inp19, int32_pl inp20s1, int32_pl inp20s2, int32_pl inp20s3, int32_pl inp20s4, int64_al[inp20s1][inp20s2][inp20s3][inp20s4] inp20, int32_pl inp21s1, int32_pl inp21s2, int32_pl inp21s3, int32_pl inp21s4, int64_al[inp21s1][inp21s2][inp21s3][inp21s4] inp21, int32_pl inp22s1, int32_pl inp22s2, int32_pl inp22s3, int32_pl inp22s4, int64_al[inp22s1][inp22s2][inp22s3][inp22s4] inp22, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat23T444444444444444444444444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl inp4s1, int32_pl inp4s2, int32_pl inp4s3, int32_pl inp4s4, int64_al[inp4s1][inp4s2][inp4s3][inp4s4] inp4, int32_pl inp5s1, int32_pl inp5s2, int32_pl inp5s3, int32_pl inp5s4, int64_al[inp5s1][inp5s2][inp5s3][inp5s4] inp5, int32_pl inp6s1, int32_pl inp6s2, int32_pl inp6s3, int32_pl inp6s4, int64_al[inp6s1][inp6s2][inp6s3][inp6s4] inp6, int32_pl inp7s1, int32_pl inp7s2, int32_pl inp7s3, int32_pl inp7s4, int64_al[inp7s1][inp7s2][inp7s3][inp7s4] inp7, int32_pl inp8s1, int32_pl inp8s2, int32_pl inp8s3, int32_pl inp8s4, int64_al[inp8s1][inp8s2][inp8s3][inp8s4] inp8, int32_pl inp9s1, int32_pl inp9s2, int32_pl inp9s3, int32_pl inp9s4, int64_al[inp9s1][inp9s2][inp9s3][inp9s4] inp9, int32_pl inp10s1, int32_pl inp10s2, int32_pl inp10s3, int32_pl inp10s4, int64_al[inp10s1][inp10s2][inp10s3][inp10s4] inp10, int32_pl inp11s1, int32_pl inp11s2, int32_pl inp11s3, int32_pl inp11s4, int64_al[inp11s1][inp11s2][inp11s3][inp11s4] inp11, int32_pl inp12s1, int32_pl inp12s2, int32_pl inp12s3, int32_pl inp12s4, int64_al[inp12s1][inp12s2][inp12s3][inp12s4] inp12, int32_pl inp13s1, int32_pl inp13s2, int32_pl inp13s3, int32_pl inp13s4, int64_al[inp13s1][inp13s2][inp13s3][inp13s4] inp13, int32_pl inp14s1, int32_pl inp14s2, int32_pl inp14s3, int32_pl inp14s4, int64_al[inp14s1][inp14s2][inp14s3][inp14s4] inp14, int32_pl inp15s1, int32_pl inp15s2, int32_pl inp15s3, int32_pl inp15s4, int64_al[inp15s1][inp15s2][inp15s3][inp15s4] inp15, int32_pl inp16s1, int32_pl inp16s2, int32_pl inp16s3, int32_pl inp16s4, int64_al[inp16s1][inp16s2][inp16s3][inp16s4] inp16, int32_pl inp17s1, int32_pl inp17s2, int32_pl inp17s3, int32_pl inp17s4, int64_al[inp17s1][inp17s2][inp17s3][inp17s4] inp17, int32_pl inp18s1, int32_pl inp18s2, int32_pl inp18s3, int32_pl inp18s4, int64_al[inp18s1][inp18s2][inp18s3][inp18s4] inp18, int32_pl inp19s1, int32_pl inp19s2, int32_pl inp19s3, int32_pl inp19s4, int64_al[inp19s1][inp19s2][inp19s3][inp19s4] inp19, int32_pl inp20s1, int32_pl inp20s2, int32_pl inp20s3, int32_pl inp20s4, int64_al[inp20s1][inp20s2][inp20s3][inp20s4] inp20, int32_pl inp21s1, int32_pl inp21s2, int32_pl inp21s3, int32_pl inp21s4, int64_al[inp21s1][inp21s2][inp21s3][inp21s4] inp21, int32_pl inp22s1, int32_pl inp22s2, int32_pl inp22s3, int32_pl inp22s4, int64_al[inp22s1][inp22s2][inp22s3][inp22s4] inp22, int32_pl inp23s1, int32_pl inp23s2, int32_pl inp23s3, int32_pl inp23s4, int64_al[inp23s1][inp23s2][inp23s3][inp23s4] inp23, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat24T4444444444444444444444444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl inp4s1, int32_pl inp4s2, int32_pl inp4s3, int32_pl inp4s4, int64_al[inp4s1][inp4s2][inp4s3][inp4s4] inp4, int32_pl inp5s1, int32_pl inp5s2, int32_pl inp5s3, int32_pl inp5s4, int64_al[inp5s1][inp5s2][inp5s3][inp5s4] inp5, int32_pl inp6s1, int32_pl inp6s2, int32_pl inp6s3, int32_pl inp6s4, int64_al[inp6s1][inp6s2][inp6s3][inp6s4] inp6, int32_pl inp7s1, int32_pl inp7s2, int32_pl inp7s3, int32_pl inp7s4, int64_al[inp7s1][inp7s2][inp7s3][inp7s4] inp7, int32_pl inp8s1, int32_pl inp8s2, int32_pl inp8s3, int32_pl inp8s4, int64_al[inp8s1][inp8s2][inp8s3][inp8s4] inp8, int32_pl inp9s1, int32_pl inp9s2, int32_pl inp9s3, int32_pl inp9s4, int64_al[inp9s1][inp9s2][inp9s3][inp9s4] inp9, int32_pl inp10s1, int32_pl inp10s2, int32_pl inp10s3, int32_pl inp10s4, int64_al[inp10s1][inp10s2][inp10s3][inp10s4] inp10, int32_pl inp11s1, int32_pl inp11s2, int32_pl inp11s3, int32_pl inp11s4, int64_al[inp11s1][inp11s2][inp11s3][inp11s4] inp11, int32_pl inp12s1, int32_pl inp12s2, int32_pl inp12s3, int32_pl inp12s4, int64_al[inp12s1][inp12s2][inp12s3][inp12s4] inp12, int32_pl inp13s1, int32_pl inp13s2, int32_pl inp13s3, int32_pl inp13s4, int64_al[inp13s1][inp13s2][inp13s3][inp13s4] inp13, int32_pl inp14s1, int32_pl inp14s2, int32_pl inp14s3, int32_pl inp14s4, int64_al[inp14s1][inp14s2][inp14s3][inp14s4] inp14, int32_pl inp15s1, int32_pl inp15s2, int32_pl inp15s3, int32_pl inp15s4, int64_al[inp15s1][inp15s2][inp15s3][inp15s4] inp15, int32_pl inp16s1, int32_pl inp16s2, int32_pl inp16s3, int32_pl inp16s4, int64_al[inp16s1][inp16s2][inp16s3][inp16s4] inp16, int32_pl inp17s1, int32_pl inp17s2, int32_pl inp17s3, int32_pl inp17s4, int64_al[inp17s1][inp17s2][inp17s3][inp17s4] inp17, int32_pl inp18s1, int32_pl inp18s2, int32_pl inp18s3, int32_pl inp18s4, int64_al[inp18s1][inp18s2][inp18s3][inp18s4] inp18, int32_pl inp19s1, int32_pl inp19s2, int32_pl inp19s3, int32_pl inp19s4, int64_al[inp19s1][inp19s2][inp19s3][inp19s4] inp19, int32_pl inp20s1, int32_pl inp20s2, int32_pl inp20s3, int32_pl inp20s4, int64_al[inp20s1][inp20s2][inp20s3][inp20s4] inp20, int32_pl inp21s1, int32_pl inp21s2, int32_pl inp21s3, int32_pl inp21s4, int64_al[inp21s1][inp21s2][inp21s3][inp21s4] inp21, int32_pl inp22s1, int32_pl inp22s2, int32_pl inp22s3, int32_pl inp22s4, int64_al[inp22s1][inp22s2][inp22s3][inp22s4] inp22, int32_pl inp23s1, int32_pl inp23s2, int32_pl inp23s3, int32_pl inp23s4, int64_al[inp23s1][inp23s2][inp23s3][inp23s4] inp23, int32_pl inp24s1, int32_pl inp24s2, int32_pl inp24s3, int32_pl inp24s4, int64_al[inp24s1][inp24s2][inp24s3][inp24s4] inp24, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat25T44444444444444444444444444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl inp4s1, int32_pl inp4s2, int32_pl inp4s3, int32_pl inp4s4, int64_al[inp4s1][inp4s2][inp4s3][inp4s4] inp4, int32_pl inp5s1, int32_pl inp5s2, int32_pl inp5s3, int32_pl inp5s4, int64_al[inp5s1][inp5s2][inp5s3][inp5s4] inp5, int32_pl inp6s1, int32_pl inp6s2, int32_pl inp6s3, int32_pl inp6s4, int64_al[inp6s1][inp6s2][inp6s3][inp6s4] inp6, int32_pl inp7s1, int32_pl inp7s2, int32_pl inp7s3, int32_pl inp7s4, int64_al[inp7s1][inp7s2][inp7s3][inp7s4] inp7, int32_pl inp8s1, int32_pl inp8s2, int32_pl inp8s3, int32_pl inp8s4, int64_al[inp8s1][inp8s2][inp8s3][inp8s4] inp8, int32_pl inp9s1, int32_pl inp9s2, int32_pl inp9s3, int32_pl inp9s4, int64_al[inp9s1][inp9s2][inp9s3][inp9s4] inp9, int32_pl inp10s1, int32_pl inp10s2, int32_pl inp10s3, int32_pl inp10s4, int64_al[inp10s1][inp10s2][inp10s3][inp10s4] inp10, int32_pl inp11s1, int32_pl inp11s2, int32_pl inp11s3, int32_pl inp11s4, int64_al[inp11s1][inp11s2][inp11s3][inp11s4] inp11, int32_pl inp12s1, int32_pl inp12s2, int32_pl inp12s3, int32_pl inp12s4, int64_al[inp12s1][inp12s2][inp12s3][inp12s4] inp12, int32_pl inp13s1, int32_pl inp13s2, int32_pl inp13s3, int32_pl inp13s4, int64_al[inp13s1][inp13s2][inp13s3][inp13s4] inp13, int32_pl inp14s1, int32_pl inp14s2, int32_pl inp14s3, int32_pl inp14s4, int64_al[inp14s1][inp14s2][inp14s3][inp14s4] inp14, int32_pl inp15s1, int32_pl inp15s2, int32_pl inp15s3, int32_pl inp15s4, int64_al[inp15s1][inp15s2][inp15s3][inp15s4] inp15, int32_pl inp16s1, int32_pl inp16s2, int32_pl inp16s3, int32_pl inp16s4, int64_al[inp16s1][inp16s2][inp16s3][inp16s4] inp16, int32_pl inp17s1, int32_pl inp17s2, int32_pl inp17s3, int32_pl inp17s4, int64_al[inp17s1][inp17s2][inp17s3][inp17s4] inp17, int32_pl inp18s1, int32_pl inp18s2, int32_pl inp18s3, int32_pl inp18s4, int64_al[inp18s1][inp18s2][inp18s3][inp18s4] inp18, int32_pl inp19s1, int32_pl inp19s2, int32_pl inp19s3, int32_pl inp19s4, int64_al[inp19s1][inp19s2][inp19s3][inp19s4] inp19, int32_pl inp20s1, int32_pl inp20s2, int32_pl inp20s3, int32_pl inp20s4, int64_al[inp20s1][inp20s2][inp20s3][inp20s4] inp20, int32_pl inp21s1, int32_pl inp21s2, int32_pl inp21s3, int32_pl inp21s4, int64_al[inp21s1][inp21s2][inp21s3][inp21s4] inp21, int32_pl inp22s1, int32_pl inp22s2, int32_pl inp22s3, int32_pl inp22s4, int64_al[inp22s1][inp22s2][inp22s3][inp22s4] inp22, int32_pl inp23s1, int32_pl inp23s2, int32_pl inp23s3, int32_pl inp23s4, int64_al[inp23s1][inp23s2][inp23s3][inp23s4] inp23, int32_pl inp24s1, int32_pl inp24s2, int32_pl inp24s3, int32_pl inp24s4, int64_al[inp24s1][inp24s2][inp24s3][inp24s4] inp24, int32_pl inp25s1, int32_pl inp25s2, int32_pl inp25s3, int32_pl inp25s4, int64_al[inp25s1][inp25s2][inp25s3][inp25s4] inp25, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+(**************************)
+extern void Split44(int32_pl O1, int32_pl O2, int32_pl O3, int32_pl O4, int32_pl I1, int32_pl I2, int32_pl I3, int32_pl I4, int64_al[I1][I2][I3][I4] inp, int32_pl axis, int32_pl curCount, int32_pl total, int64_al[O1][O2][O3][O4] out);
+
+(**************************)
+(* Generic implementation of Conv2D *)
+
+extern void Conv2DReshapeFilter(int32_pl FH, int32_pl FW, int32_pl CI, int32_pl CO, int64_al[FH][FW][CI][CO] inputArr, int64_al[CO][FH*FW*CI] outputArr);
+
+extern void Conv2DReshapeMatMulOP(int32_pl N, int32_pl finalH, int32_pl finalW, int32_pl CO, int64_al[CO][N*finalH*finalW] inputArr, int64_al[N][finalH][finalW][CO] outputArr);
+
+extern void Conv2DReshapeInput(int32_pl N, int32_pl H, int32_pl W, int32_pl CI, int32_pl FH, int32_pl FW, int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, int32_pl strideH, int32_pl strideW, int32_pl RRows, int32_pl RCols, int64_al[N][H][W][CI] inputArr, int64_al[RRows][RCols] outputArr);
+
+extern void Conv2D(int32_pl N, int32_pl H, int32_pl W, int32_pl CI, 
+				   int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
+				   int32_pl strideH, int32_pl strideW, 
+				   int64_al[N][H][W][CI] inputArr, 
+				   int64_al[FH][FW][CI][CO] filterArr, 
+				   int64_al[N][((H-FH+(zPadHLeft+zPadHRight))/strideH)+1][((W-FW+(zPadWLeft+zPadWRight))/strideW)+1][CO] outArr);
+
+(**************************)
+(* Loop-based implementation of Conv2D *)
+(* These loop implementations of convolution run faster with multithreading *)
+
+extern void Conv2DLoopInner(int32_pl N, int32_pl H, int32_pl W, int32_pl CI, 
+				   int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
+				   int32_pl strideH, int32_pl strideW,
+				   int32_pl outH, int32_pl outW, int32_pl G,
+				   int64_al[N][H][W][CI] inputArr, 
+				   int64_al[FH][FW][CI/G][CO] filterArr,
+				   int64_al[N][outH][outW][CO] outArr);
+
+(* int64_al[N][H][W][CI] inputArr, 
+   int64_al[FH][FW][CI][CO] filterArr, 
+   int64_al[N][((H-FH+zPadHLeft+zPadHRight)/strideH)+1][((W-FW+zPadWLeft+zPadWRight)/strideW)+1][CO] outArr 
+*)
+extern void Conv2DLoop(int32_pl N, int32_pl H, int32_pl W, int32_pl CI, 
+				   int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
+				   int32_pl strideH, int32_pl strideW, int32_pl G, 
+				   int64_al[N][H][W][CI] inputArr, 
+				   int64_al[FH][FW][CI][CO] filterArr, 
+				   int64_al[N][((H-FH+(zPadHLeft+zPadHRight))/strideH)+1][((W-FW+(zPadWLeft+zPadWRight))/strideW)+1][CO] outArr);
+
+(**************************)
+(* Generic implementation of Conv2D with Groups *)
+
+extern void Conv2DReshapeFilterGroup(int32_pl FH, int32_pl FW, int32_pl CI, int32_pl CO, int32_pl g, int32_pl G, int64_al[FH][FW][CI/G][CO] inputArr, int64_al[CO/G][FH*FW*(CI/G)] outputArr);
+
+
+extern void Conv2DReshapeMatMulOPGroup(int32_pl N, int32_pl finalH, int32_pl finalW, int32_pl CO, int32_pl g, int32_pl G, int64_al[CO/G][N*finalH*finalW] inputArr, int64_al[N][finalH][finalW][CO] outputArr);
+
+extern void Conv2DReshapeInputGroup(int32_pl N, int32_pl H, int32_pl W, int32_pl CI, int32_pl FH, int32_pl FW, int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, int32_pl strideH, int32_pl strideW, int32_pl g, int32_pl G, int32_pl RRows, int32_pl RCols, int64_al[N][H][W][CI] inputArr, int64_al[RRows][RCols] outputArr);
+
+(* int64_al[N][H][W][CI] inputArr, 
+   int64_al[FH][FW][CI][CO] filterArr, 
+   int64_al[N][((H-FH+zPadHLeft+zPadHRight)/strideH)+1][((W-FW+zPadWLeft+zPadWRight)/strideW)+1][CO] outArr 
+*)
+extern void Conv2DGroup(int32_pl N, int32_pl H, int32_pl W, int32_pl CI, 
+				   int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
+				   int32_pl strideH, int32_pl strideW, int32_pl G,
+				   int64_al[N][H][W][CI] inputArr, 
+				   int64_al[FH][FW][CI/G][CO] filterArr, 
+				   int64_al[N][((H-FH+(zPadHLeft+zPadHRight))/strideH)+1][((W-FW+(zPadWLeft+zPadWRight))/strideW)+1][CO] outArr);
+
+(**************************)
+(* Generic implementation of Conv3D *)
+
+extern void Conv3DReshapeFilter(int32_pl FD, int32_pl FH, int32_pl FW, int32_pl CI, int32_pl CO, int64_al[FD][FH][FW][CI][CO] inputArr, int64_al[CO][FD*FH*FW*CI] outputArr);
+
+extern void Conv3DReshapeMatMulOP(int32_pl N, int32_pl finalD, int32_pl finalH, int32_pl finalW, int32_pl CO, int64_al[CO][N*finalD*finalH*finalW] inputArr, int64_al[N][finalD][finalH][finalW][CO] outputArr);
+
+extern void Conv3DReshapeInput(int32_pl N, int32_pl D, int32_pl H, int32_pl W, int32_pl CI, int32_pl FD, int32_pl FH, int32_pl FW, int32_pl zPadDLeft, int32_pl zPadDRight, int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, int32_pl strideD, int32_pl strideH, int32_pl strideW, int32_pl RRows, int32_pl RCols, int64_al[N][D][H][W][CI] inputArr, int64_al[RRows][RCols] outputArr);
+
+(* int64_al[N][D][H][W][CI] inputArr, 
+   int64_al[FD][FH][FW][CI][CO] filterArr, 
+   int64_al[N][((D-FD+zPadDLeft+zPadDRight)/strideD)+1][((H-FH+zPadHLeft+zPadHRight)/strideH)+1][((W-FW+zPadWLeft+zPadWRight)/strideW)+1][CO] outArr 
+*)
+extern void Conv3D(int32_pl N, int32_pl D, int32_pl H, int32_pl W, int32_pl CI, 
+				   int32_pl FD, int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl zPadDLeft, int32_pl zPadDRight, int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
+				   int32_pl strideD, int32_pl strideH, int32_pl strideW, 
+				   int64_al[N][D][H][W][CI] inputArr, 
+				   int64_al[FD][FH][FW][CI][CO] filterArr,
+				   int64_al[N][((D-FD+(zPadDLeft+zPadDRight))/strideD)+1][((H-FH+(zPadHLeft+zPadHRight))/strideH)+1][((W-FW+(zPadWLeft+zPadWRight))/strideW)+1][CO] outArr);
+
+(**************************)
+(* Loop-based implementation of Conv3D *)
+(* Loop implementation of convolution run faster with multithreading *)
+
+extern void Conv3DLoopInner(int32_pl N, int32_pl D, int32_pl H, int32_pl W, int32_pl CI, 
+				   int32_pl FD, int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl zPadDLeft, int32_pl zPadDRight,int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
+				   int32_pl strideD, int32_pl strideH, int32_pl strideW,
+				   int32_pl outD, int32_pl outH, int32_pl outW, 
+				   int64_al[N][D][H][W][CI] inputArr, 
+				   int64_al[FD][FH][FW][CI][CO] filterArr, 
+				   int64_al[N][outD][outH][outW][CO] outArr);
+
+(* int64_al[N][D][H][W][CI] inputArr, 
+   int64_al[FD][FH][FW][CI][CO] filterArr, 
+   int64_al[N][((D-FD+zPadDLeft+zPadDRight)/strideD)+1][((H-FH+zPadHLeft+zPadHRight)/strideH)+1][((W-FW+zPadWLeft+zPadWRight)/strideW)+1][CO] outArr 
+*)
+extern void Conv3DLoop(int32_pl N, int32_pl D, int32_pl H, int32_pl W, int32_pl CI, 
+				   int32_pl FD, int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl zPadDLeft, int32_pl zPadDRight, int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
+				   int32_pl strideD, int32_pl strideH, int32_pl strideW, 
+				   int64_al[N][D][H][W][CI] inputArr, 
+				   int64_al[FD][FH][FW][CI][CO] filterArr, 
+				   int64_al[N][((D-FD+(zPadDLeft+zPadDRight))/strideD)+1][((H-FH+(zPadHLeft+zPadHRight))/strideH)+1][((W-FW+(zPadWLeft+zPadWRight))/strideW)+1][CO] outArr);
+
+(**************************)
+(* Generic implementation of ConvTranpose2D *)
+
+extern void ConvTranspose2DReshapeMatMulOP(int32_pl N, int32_pl finalH, int32_pl finalW, int32_pl CO, int64_al[CO][N*finalH*finalW] inputArr, int64_al[N][finalH][finalW][CO] outputArr);
+
+
+extern void ConvTranspose2DReshapeFilter(int32_pl FH, int32_pl FW, int32_pl CO, int32_pl CI, int64_al[FH][FW][CO][CI] inputArr, int64_al[CO][FH*FW*CI] outputArr);
+
+extern void ConvTranspose2DReshapeInput(int32_pl N, int32_pl HPrime, int32_pl WPrime, int32_pl CI, int32_pl FH, int32_pl FW, int32_pl zPadTrHLeft, int32_pl zPadTrHRight, int32_pl zPadTrWLeft, int32_pl zPadTrWRight, int32_pl strideH, int32_pl strideW, int32_pl RRows, int32_pl RCols, int64_al[N][HPrime][WPrime][CI] inputArr, int64_al[RRows][RCols] outputArr);
+
+(* int64_al[N][HPrime][WPrime][CI] inputArr,
+   int64_al[FH][FW][CO][CI] filter,
+   int64_al[N][H][W][CO] outputArr
+*)
+extern void ConvTranspose2D(int32_pl N, int32_pl HPrime, int32_pl WPrime, int32_pl CI, 
+				   int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl H, int32_pl W,
+				   int32_pl zPadTrHLeft, int32_pl zPadTrHRight, int32_pl zPadTrWLeft, int32_pl zPadTrWRight, 
+				   int32_pl strideH, int32_pl strideW,
+				   int64_al[N][HPrime][WPrime][CI] inputArr, 
+				   int64_al[FH][FW][CO][CI] filterArr, 
+				   int64_al[N][H][W][CO] outArr);
+
+(**************************)
+(* Generic implementation of ConvTranpose3D *)
+
+extern void ConvTranspose3DReshapeFilter(int32_pl FD, int32_pl FH, int32_pl FW, int32_pl CO, int32_pl CI, int64_al[FD][FH][FW][CO][CI] inputArr, int64_al[CO][FD*FH*FW*CI] outputArr);
+
+extern void ConvTranspose3DReshapeInput(int32_pl N, int32_pl DPrime, int32_pl HPrime, int32_pl WPrime, int32_pl CI, int32_pl FD, int32_pl FH, int32_pl FW, int32_pl zPadTrDLeft, int32_pl zPadTrDRight, int32_pl zPadTrHLeft, int32_pl zPadTrHRight, int32_pl zPadTrWLeft, int32_pl zPadTrWRight, int32_pl strideD, int32_pl strideH, int32_pl strideW, int32_pl RRows, int32_pl RCols, int64_al[N][DPrime][HPrime][WPrime][CI] inputArr, int64_al[RRows][RCols] outputArr);
+
+(* int64_al[N][DPrime][HPrime][WPrime][CI] inputArr,
+   int64_al[FD][FH][FW][CO][CI] filter,
+   int64_al[N][D][H][W][CO] outputArr
+*)
+extern void ConvTranspose3D(int32_pl N, int32_pl DPrime, int32_pl HPrime, int32_pl WPrime, int32_pl CI, 
+				   int32_pl FD, int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl D, int32_pl H, int32_pl W,
+				   int32_pl zPadTrDLeft, int32_pl zPadTrDRight, int32_pl zPadTrHLeft, int32_pl zPadTrHRight, int32_pl zPadTrWLeft, int32_pl zPadTrWRight, 
+				   int32_pl strideD, int32_pl strideH, int32_pl strideW,
+				   int64_al[N][DPrime][HPrime][WPrime][CI] inputArr, 
+				   int64_al[FD][FH][FW][CO][CI] filterArr, 
+				   int64_al[N][D][H][W][CO] outArr);
+
+(**************************)
+(* Loop-based implementation of ConvTranspose3D *)
+
+extern void ConvTranspose3DLoopInner(int32_pl N, int32_pl D, int32_pl H, int32_pl W, int32_pl CI, 
+				   int32_pl FD, int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl zPadDLeft, int32_pl zPadDRight,int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
+				   int32_pl strideD, int32_pl strideH, int32_pl strideW,
+				   int32_pl outD, int32_pl outH, int32_pl outW, 
+				   int64_al[N][D][H][W][CI] inputArr, 
+				   int64_al[FD][FH][FW][CO][CI] filterArr, 
+				   int64_al[N][outD][outH][outW][CO] outArr);
+
+
+(* int64_al[N][DPrime][HPrime][WPrime][CI] inputArr,
+   int64_al[FD][FH][FW][CO][CI] filter,
+   int64_al[N][D][H][W][CO] outputArr
+*)
+extern void ConvTranspose3DLoop(int32_pl N, int32_pl DPrime, int32_pl HPrime, int32_pl WPrime, int32_pl CI, 
+				   int32_pl FD, int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl D, int32_pl H, int32_pl W,
+				   int32_pl zPadTrDLeft, int32_pl zPadTrDRight, int32_pl zPadTrHLeft, int32_pl zPadTrHRight, int32_pl zPadTrWLeft, int32_pl zPadTrWRight, 
+				   int32_pl strideD, int32_pl strideH, int32_pl strideW,
+				   int64_al[N][DPrime][HPrime][WPrime][CI] inputArr, 
+				   int64_al[FD][FH][FW][CO][CI] filterArr, 
+				   int64_al[N][D][H][W][CO] outArr);
+
+(**************************)
+extern void Transpose2(int32_pl s1, int32_pl s2, int64_al[s2][s1] inArr, int64_al[s1][s2] outArr);
+
+(**************************)
+extern void Pad442(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inps1, int32_pl inps2, int32_pl inps3, int32_pl inps4, int64_al[inps1][inps2][inps3][inps4] inpArr, int32_pl pads1, int32_pl pads2, int32_pl[pads1][pads2] paddings, int64_al[s1][s2][s3][s4] outArr);
+
+extern void Pad552(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int32_pl inps1, int32_pl inps2, int32_pl inps3, int32_pl inps4, int32_pl inps5, int64_al[inps1][inps2][inps3][inps4][inps5] inpArr, int32_pl pads1, int32_pl pads2, int32_pl[pads1][pads2] paddings, int64_al[s1][s2][s3][s4][s5] outArr);
+
+extern void PadONNX441(int32_pl o1, int32_pl o2, int32_pl o3, int32_pl o4, int32_pl i1, int32_pl i2, int32_pl i3, int32_pl i4, int64_al[i1][i2][i3][i4] inpArr, int32_pl pads, int32_pl[pads] paddings, int64_al[o1][o2][o3][o4] outArr);
+
+(**************************)
+(* Squeeze where the input is a 4D tensor, output is a 2D tensor and hence 2 dims are getting squeezed. *)
+(* Ignoring dimensions in squeeze *)
+
+extern void Squeeze24(int32_pl s1, int32_pl s2, int32_pl dim1, int32_pl dim2, int32_pl ins1, int32_pl ins2, int32_pl ins3, int32_pl ins4, int64_al[ins1][ins2][ins3][ins4] inArr, int64_al[s1][s2] outArr);
+
+extern void Squeeze34(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl dim, int32_pl ins1, int32_pl ins2, int32_pl ins3, int32_pl ins4, int64_al[ins1][ins2][ins3][ins4] inArr, int64_al[s1][s2][s3] outArr);
+
+extern void Squeeze23(int32_pl s1, int32_pl s2, int32_pl dim, int32_pl ins1, int32_pl ins2, int32_pl ins3, int64_al[ins1][ins2][ins3] inArr, int64_al[s1][s2] outArr);
+
+(**************************)
+extern void FusedBatchNorm4411(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int64_al[s1][s2][s3][s4] inArr, int64_al[s4] multArr, int64_al[s4] biasArr, int32_pl multExprScaleDownSf, int32_pl biasExprScaleUpSf, int64_al[s1][s2][s3][s4] outputArr);
+
+extern void FusedBatchNorm5511(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int64_al[s1][s2][s3][s4][s5] inArr, int64_al[s5] multArr, int64_al[s5] biasArr, int32_pl multExprScaleDownSf, int32_pl biasExprScaleUpSf, int64_al[s1][s2][s3][s4][s5] outputArr);
+(**************************)
+extern void ElemWiseMul2(int32_pl s1, int32_pl s2, int64_al[s1][s2] arr1, int64_al[s1][s2] arr2, int64_al[s1][s2] outArr);
+extern void ElemWiseMul4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int64_al[s1][s2][s3][s4] arr1, int64_al[s1][s2][s3][s4] arr2, int64_al[s1][s2][s3][s4] outArr);
+extern void ElemWiseMul5(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int64_al[s1][s2][s3][s4][s5] arr1, int64_al[s1][s2][s3][s4][s5] arr2, int64_al[s1][s2][s3][s4][s5] outArr);
+
+(**************************)
+extern void ReduceMean24(int32_pl outS1, int32_pl outS2, 
+					  int32_pl inS1, int32_pl inS2, int32_pl inS3, int32_pl inS4, 
+					  int64_al[inS1][inS2][inS3][inS4] inputArr,
+					  int32_pl[2] axes,
+					  int64_al[outS1][outS2] outputArr
+					  );
+
+extern void ReduceMeanONNX24(int32_pl outS1, int32_pl outS2, 
+					  int32_pl inS1, int32_pl inS2, int32_pl inS3, int32_pl inS4, 
+					  int64_al[inS1][inS2][inS3][inS4] inputArr,
+					  int32_pl axis1, int32_pl axis2,
+					  int64_al[outS1][outS2] outputArr
+					  );
+
+(**************************)
+extern void ArgMax1(int32_pl outArrS1, int32_pl inArrS1, int32_pl inArrS2, int64_al[inArrS1][inArrS2] inArr, int32_pl dim, int64_al[outArrS1] outArr);
+
+extern void ArgMax3(int32_pl outs1, int32_pl outs2, int32_pl outs3, 
+			   int32_pl ins1, int32_pl ins2, int32_pl ins3, int32_pl ins4,
+			   int64_al[ins1][ins2][ins3][ins4] inArr, int32_pl dim, int64_al[outs1][outs2][outs3] outArr);
+(**************************)
+extern void Relu1(int32_pl s1, int64_al[s1] inArr, int64_al[s1] outArr, int32_pl sf, bool_pl doTruncation);
+extern void Relu2(int32_pl s1, int32_pl s2, int64_al[s1][s2] inArr, int64_al[s1][s2] outArr, int32_pl sf, bool_pl doTruncation);
+
+extern void Relu4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int64_al[s1][s2][s3][s4] inArr, int64_al[s1][s2][s3][s4] outArr, int32_pl sf, bool_pl doTruncation);
+
+extern void Relu5(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int64_al[s1][s2][s3][s4][s5] inArr, int64_al[s1][s2][s3][s4][s5] outArr, int32_pl sf, bool_pl doTruncation);
+
+(**************************)
+extern void Floor2(int32_pl s1, int32_pl s2, int64_al[s1][s2] inArr, int64_al[s1][s2] outArr, int32_pl sf);
