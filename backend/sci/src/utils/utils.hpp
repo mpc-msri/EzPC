@@ -284,7 +284,7 @@ inline uint64_t all1Mask(int x){
 inline void print128_num(__m128i var) 
 {
     uint64_t *v64val = (uint64_t*) &var;
-    printf("%.16llx %.16llx\n", v64val[1], v64val[0]);
+    printf("%.16lx %.16lx\n", v64val[1], v64val[0]);
 }
 
 inline void linIdxRowMInverseMapping(int cur, int s1, int s2, int& i, int& j){

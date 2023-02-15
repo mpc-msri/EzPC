@@ -21,5 +21,7 @@ SOFTWARE.
 
 #include <cryptoTools/Crypto/PRNG.h>
 
-osuCrypto::PRNG prng;
+namespace LlamaConfig {
+    osuCrypto::PRNG prngs[256];
+}
 osuCrypto::PRNG prngShared;

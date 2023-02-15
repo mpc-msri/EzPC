@@ -254,3 +254,29 @@ inline void freeFloatToFixKeyPackPair(std::pair<FloatToFixKeyPack, FloatToFixKey
     delete[] keys.first.dcfKey.g;
     delete[] keys.first.dcfKey.v;
 }
+
+inline void freeReluExtendKeyPack(ReluExtendKeyPack &key)
+{
+    freeDCFKeyPack(key.dcfKey);
+}
+
+inline void freeReluExtendKeyPackPair(std::pair<ReluExtendKeyPack, ReluExtendKeyPack> &keys)
+{
+    delete[] keys.first.dcfKey.k;
+    delete[] keys.second.dcfKey.k;
+    delete[] keys.first.dcfKey.g;
+    delete[] keys.first.dcfKey.v;
+}
+
+inline void freeSignExtend2KeyPack(SignExtend2KeyPack &key)
+{
+    freeDCFKeyPack(key.dcfKey);
+}
+
+inline void freeSignExtend2KeyPackPair(std::pair<SignExtend2KeyPack, SignExtend2KeyPack> &keys)
+{
+    delete[] keys.first.dcfKey.k;
+    delete[] keys.second.dcfKey.k;
+    delete[] keys.first.dcfKey.g;
+    delete[] keys.first.dcfKey.v;
+}

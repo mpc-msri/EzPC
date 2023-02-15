@@ -2,9 +2,11 @@ cmake_minimum_required(VERSION 3.16)
 project(LLAMA)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-write-strings -Wno-unused-result -maes -Wno-ignored-attributes -march=native -Wno-deprecated-declarations")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-write-strings -Wno-unused-result -maes -Wno-ignored-attributes -march=native -Wno-deprecated-declarations -fopenmp")
 find_package (Eigen3 3.3 REQUIRED NO_MODULE)
 find_package(Threads REQUIRED)
+
+# add_subdirectory(gpu)
 
 add_library(LLAMA
     cryptoTools/cryptoTools/Common/Defines.cpp
@@ -26,6 +28,8 @@ add_library(LLAMA
     pubdiv.cpp
     relutruncate.cpp
     relu.cpp
+    reluextend.cpp
+    signextend.cpp
     select.cpp
     stats.cpp
     taylor.cpp

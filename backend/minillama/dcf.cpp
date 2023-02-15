@@ -20,6 +20,7 @@ SOFTWARE.
 */
 
 #include "dcf.h"
+#include <omp.h>
 
 using namespace osuCrypto;
 // uint64_t aes_evals_count = 0;
@@ -146,7 +147,8 @@ std::pair<DCFKeyPack, DCFKeyPack> keyGenDCF(int Bin, int Bout, int groupSize,
     static const block ThreeBlock = toBlock(0, 3);
     const static block pt[4] = {ZeroBlock, OneBlock, TwoBlock, ThreeBlock};
 
-    auto s = prng.get<std::array<block, 2>>();
+    int tid = omp_get_thread_num();
+    auto s = LlamaConfig::prngs[tid].get<std::array<block, 2>>();
     block si[2][2];
     block vi[2][2];
 

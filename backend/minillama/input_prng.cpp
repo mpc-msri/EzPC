@@ -34,7 +34,7 @@ int counter[2] = {0, 0};
 void input_prng_init()
 {
     if (party == DEALER) {
-        osuCrypto::AES aesSeed(osuCrypto::toBlock(1, time(NULL)));
+        osuCrypto::AES aesSeed(prngs[0].get<osuCrypto::block>());
         auto seed0 = aesSeed.ecbEncBlock(osuCrypto::ZeroBlock);
         server->send_block(seed0);
         auto seed1 = aesSeed.ecbEncBlock(osuCrypto::OneBlock);

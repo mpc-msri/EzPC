@@ -243,3 +243,18 @@ struct FloatToFixKeyPack
     GroupElement p[1024];
     GroupElement q[1024];
 };
+
+struct ReluExtendKeyPack
+{
+    DCFKeyPack dcfKey;
+    GroupElement rd, rw;
+    GroupElement p[4];
+    GroupElement q[2];
+};
+
+struct SignExtend2KeyPack
+{
+    DCFKeyPack dcfKey;
+    GroupElement rw;
+    GroupElement p[2];
+};

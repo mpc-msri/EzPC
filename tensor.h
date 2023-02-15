@@ -7,6 +7,7 @@
 
 typedef uint64_t u64;
 typedef int64_t i64;
+typedef int32_t i32;
 
 template <typename T>
 class Tensor4D;

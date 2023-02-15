@@ -108,6 +108,9 @@ void MaxPoolBackward(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
 void FixToFloat(int size, GroupElement *inp, GroupElement *out, int scale);
 void FloatToFix(int size, GroupElement *inp, GroupElement *out, int scale);
 
+void ReluExtend(int size, int bin, int bout, GroupElement *x, GroupElement *y, GroupElement *drelu);
+void SignExtend2(int size, int bin, int bout, GroupElement *x, GroupElement *y);
+
 inline GroupElement funcSSCons(uint64_t val) {
     // if (party == DEALER)
     //     g.value = 0;

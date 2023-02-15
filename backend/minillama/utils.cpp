@@ -156,27 +156,30 @@ void Conv2DReshapeFilter(int FH, int FW, int CI, int CO, GroupElement* filter, e
     }
 }
 
-void Conv2DReshapeInput(int N, int H, int W, int CI, int FH, int FW, int zPadHLeft, int zPadHRight, int zPadWLeft, int zPadWRight, int strideH, int strideW, int RRows, int RCols, GroupElement *inputArr, GroupElement *outputArr)
+void Conv2DReshapeInput(size_t N, size_t H, size_t W, size_t CI, size_t FH, size_t FW, size_t zPadHLeft, size_t zPadHRight, size_t zPadWLeft, size_t zPadWRight, size_t strideH, size_t strideW, size_t RRows, size_t RCols, GroupElement *inputArr, GroupElement *outputArr)
 {
-    int linIdxFilterMult = 0;
-	for (int n = 0; n < N; n++){
-		int leftTopCornerH = 0 - zPadHLeft;
-		int extremeRightBottomCornerH = H - 1 + zPadHRight;
+    size_t linIdxFilterMult = 0;
+	for (size_t n = 0; n < N; n++){
+		size_t leftTopCornerH = 0 - zPadHLeft;
+		size_t extremeRightBottomCornerH = H - 1 + zPadHRight;
 		while((leftTopCornerH + FH - 1) <= extremeRightBottomCornerH){
-			int leftTopCornerW = 0 - zPadWLeft;
-			int extremeRightBottomCornerW = W - 1 + zPadWRight;
+			size_t leftTopCornerW = 0 - zPadWLeft;
+			size_t extremeRightBottomCornerW = W - 1 + zPadWRight;
 			while((leftTopCornerW + FW - 1) <= extremeRightBottomCornerW){
 
-				for (int fh = 0; fh < FH; fh++){
-					for (int fw = 0; fw < FW; fw++){
-						int curPosH = leftTopCornerH + fh;
-						int curPosW = leftTopCornerW + fw;
-						for (int ci = 0; ci < CI; ci++){
+				for (size_t fh = 0; fh < FH; fh++){
+					for (size_t fw = 0; fw < FW; fw++){
+						size_t curPosH = leftTopCornerH + fh;
+						size_t curPosW = leftTopCornerW + fw;
+						for (size_t ci = 0; ci < CI; ci++){
+                            size_t rowidx = (fh*FW*CI) + (fw*CI) + ci;
+                            // std::cout << rowidx << std::endl;
 							if ((((curPosH < 0) || (curPosH >= H)) || ((curPosW < 0) || (curPosW >= W)))){
-								Arr2DIdx(outputArr, RRows, RCols,(fh*FW*CI) + (fw*CI) + ci, linIdxFilterMult) = 0L;
+								Arr2DIdx(outputArr, RRows, RCols, rowidx, linIdxFilterMult) = 0L;
 							}
 							else{
-								Arr2DIdx(outputArr, RRows, RCols,(fh*FW*CI) + (fw*CI) + ci, linIdxFilterMult) = Arr4DIdx(inputArr, N, H, W, CI, n, curPosH, curPosW, ci);
+                                auto l = Arr4DIdx(inputArr, N, H, W, CI, n, curPosH, curPosW, ci);
+								Arr2DIdx(outputArr, RRows, RCols, rowidx, linIdxFilterMult) = l;
 							}
 						}
 					}
@@ -191,22 +194,22 @@ void Conv2DReshapeInput(int N, int H, int W, int CI, int FH, int FW, int zPadHLe
 	}
 }
 
-void Conv2DReshapeInputPartial(int N, int H, int W, int CI, int FH, int FW, int zPadHLeft, int zPadHRight, int zPadWLeft, int zPadWRight, int strideH, int strideW, int RRows, int RCols, GroupElement *inputArr, eigenMatrix &outputArr, int batchIndex)
+void Conv2DReshapeInputPartial(size_t N, size_t H, size_t W, size_t CI, size_t FH, size_t FW, size_t zPadHLeft, size_t zPadHRight, size_t zPadWLeft, size_t zPadWRight, size_t strideH, size_t strideW, size_t RRows, size_t RCols, GroupElement *inputArr, eigenMatrix &outputArr, size_t batchIndex)
 {
-    int linIdxFilterMult = 0;
-    int n = batchIndex;
-    int leftTopCornerH = 0 - zPadHLeft;
-    int extremeRightBottomCornerH = H - 1 + zPadHRight;
+    size_t linIdxFilterMult = 0;
+    size_t n = batchIndex;
+    size_t leftTopCornerH = 0 - zPadHLeft;
+    size_t extremeRightBottomCornerH = H - 1 + zPadHRight;
     while((leftTopCornerH + FH - 1) <= extremeRightBottomCornerH){
-        int leftTopCornerW = 0 - zPadWLeft;
-        int extremeRightBottomCornerW = W - 1 + zPadWRight;
+        size_t leftTopCornerW = 0 - zPadWLeft;
+        size_t extremeRightBottomCornerW = W - 1 + zPadWRight;
         while((leftTopCornerW + FW - 1) <= extremeRightBottomCornerW){
 
-            for (int fh = 0; fh < FH; fh++){
-                for (int fw = 0; fw < FW; fw++){
-                    int curPosH = leftTopCornerH + fh;
-                    int curPosW = leftTopCornerW + fw;
-                    for (int ci = 0; ci < CI; ci++){
+            for (size_t fh = 0; fh < FH; fh++){
+                for (size_t fw = 0; fw < FW; fw++){
+                    size_t curPosH = leftTopCornerH + fh;
+                    size_t curPosW = leftTopCornerW + fw;
+                    for (size_t ci = 0; ci < CI; ci++){
                         if ((((curPosH < 0) || (curPosH >= H)) || ((curPosW < 0) || (curPosW >= W)))){
                             outputArr((fh*FW*CI) + (fw*CI) + ci, linIdxFilterMult) = 0L;
                         }
@@ -258,16 +261,17 @@ void Conv2DPlaintext(int N, int H, int W, int CI,
 				   GroupElement * filterArr, 
 				   GroupElement * outArr)
 {
-    int reshapedFilterRows = CO;
-	int reshapedFilterCols = FH*FW*CI;
-	int reshapedIPRows = FH*FW*CI;
-	int newH = (((H + (zPadHLeft+zPadHRight) - FH)/strideH) + 1);
-	int newW = (((W + (zPadWLeft+zPadWRight) - FW)/strideW) + 1);
-	int reshapedIPCols = N * newH * newW;
+    size_t reshapedFilterRows = CO;
+	size_t reshapedFilterCols = FH*FW*CI;
+	size_t reshapedIPRows = FH*FW*CI;
+	size_t newH = (((H + (zPadHLeft+zPadHRight) - FH)/strideH) + 1);
+	size_t newW = (((W + (zPadWLeft+zPadWRight) - FW)/strideW) + 1);
+	size_t reshapedIPCols = N * newH * newW;
 
     GroupElement *filterReshaped = make_array<GroupElement>(reshapedFilterRows, reshapedFilterCols);
 	GroupElement *inputReshaped = make_array<GroupElement>(reshapedIPRows, reshapedIPCols);
 	GroupElement *matmulOP = make_array<GroupElement>(reshapedFilterRows, reshapedIPCols);
+    std::cout << "reshaped size = " << reshapedIPRows * reshapedIPCols << std::endl;
     
     Conv2DReshapeInput(N, H, W, CI, FH, FW, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideH, strideW, reshapedIPRows, reshapedIPCols, inputArr, inputReshaped);
     Conv2DReshapeFilter(FH, FW, CI, CO, filterArr, filterReshaped);

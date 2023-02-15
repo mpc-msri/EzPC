@@ -12,3 +12,6 @@ perf.data
 perf.data.old
 graph.svg
 .venv
+*.dat
+logs/
+temp/

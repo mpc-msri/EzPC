@@ -124,6 +124,10 @@ public:
 
     void send_float_to_fix_key(const FloatToFixKeyPack &kp, int bl);
 
+    void send_relu_extend_key(const ReluExtendKeyPack &kp, int bin, int bout);
+
+    void send_sign_extend2_key(const SignExtend2KeyPack &kp, int bin, int bout);
+
     void send_uint8_array(const uint8_t *data, int size);
 
     void recv_uint8_array(uint8_t *data, int size);
@@ -235,6 +239,10 @@ public:
     FixToFloatKeyPack recv_fix_to_float_key(int bl);
 
     FloatToFixKeyPack recv_float_to_fix_key(int bl);
+
+    ReluExtendKeyPack recv_relu_extend_key(int Bin, int Bout);
+
+    SignExtend2KeyPack recv_sign_extend2_key(int Bin, int Bout);
 
 };
 

@@ -622,6 +622,25 @@ void Peer::send_float_to_fix_key(const FloatToFixKeyPack &kp, int bl)
     }
 }
 
+void Peer::send_relu_extend_key(const ReluExtendKeyPack &kp, int bin, int bout)
+{
+    send_dcf_keypack(kp.dcfKey);
+    send_ge(kp.rd, 2);
+    send_ge(kp.rw, 2);
+    for(int i = 0; i < 4; ++i)
+        send_ge(kp.p[i], bout);
+    for(int i = 0; i < 2; ++i)
+        send_ge(kp.q[i], bout);
+}
+
+void Peer::send_sign_extend2_key(const SignExtend2KeyPack &kp, int bin, int bout)
+{
+    send_dcf_keypack(kp.dcfKey);
+    send_ge(kp.rw, 1);
+    send_ge(kp.p[0], bout);
+    send_ge(kp.p[1], bout);
+}
+
 GroupElement Peer::recv_input() {
     char buf[8];
     if (useFile) {
@@ -669,8 +688,8 @@ void Dealer::close() {
             file.close();
         }
         else {
-            std::cout << (int)(ramdiskBuffer - ramdiskStart) << "bytes read" << std::endl;
-            always_assert(ramdiskBuffer - ramdiskStart == ramdiskSize);
+            // std::cout << (int)(ramdiskBuffer - ramdiskStart) << "bytes read" << std::endl;
+            // always_assert(ramdiskBuffer - ramdiskStart == ramdiskSize);
         }
     }
     else {
@@ -1333,5 +1352,30 @@ FloatToFixKeyPack Dealer::recv_float_to_fix_key(int bl)
     for(int i = 0; i < 1024; ++i) {
         kp.q[i] = recv_ge(bl);
     }
+    return kp;
+}
+
+ReluExtendKeyPack Dealer::recv_relu_extend_key(int bin, int bout)
+{
+    ReluExtendKeyPack kp;
+    kp.dcfKey = recv_dcf_keypack(bin, 2, 1);
+    kp.rd = recv_ge(2);
+    kp.rw = recv_ge(2);
+    for(int i = 0; i < 4; ++i) {
+        kp.p[i] = recv_ge(bout);
+    }
+    for(int i = 0; i < 2; ++i) {
+        kp.q[i] = recv_ge(bout);
+    }
+    return kp;
+}
+
+SignExtend2KeyPack Dealer::recv_sign_extend2_key(int Bin, int Bout)
+{
+    SignExtend2KeyPack kp;
+    kp.dcfKey = recv_dcf_keypack(Bin, 1, 1);
+    kp.rw = recv_ge(1);
+    kp.p[0] = recv_ge(Bout);
+    kp.p[1] = recv_ge(Bout);
     return kp;
 }

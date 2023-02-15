@@ -1,0 +1,8 @@
+nvcc -c gpu_linear_helper.cu -O3  
+nvcc -I./ext/cutlass/include -I./ext/cutlass/tools/util/include -L./ext/cutlass/build/tools/library gpu_linear_helper.o -c gpu_matmul.cu -O3
+nvcc -I./ext/cutlass/include -I./ext/cutlass/tools/util/include -L./ext/cutlass/build/tools/library gpu_linear_helper.o -c gpu_conv2d.cu -O3
+nvcc -I./ext/fptraining/build/install/include -c gpu_relu_truncate.cu -O3
+nvcc -c gpu_mem.cu -O3
+g++ -O3 -std=c++17 -I../../../SCI/extern/eigen -I./ext/fptraining/build/install/include 3layer_network.cpp conv2d_layer.cpp fc_layer.cpp maxpool_layer.cpp relu_sign_extend_layer.cpp gpu_sgd.cpp gpu_truncate.cpp gpu_relu.cpp gpu_select.cpp gpu_and.cpp gpu_fss_utils.cpp gpu_dcf.cpp gpu_comms.cpp gpu_file_utils.cpp ./ext/fptraining/build/backend/minillama/libLLAMA.a ./ext/fptraining/build/install/lib/libSCI-FloatML.a ./ext/fptraining/build/install/lib/libSCI-FloatingPoint.a ./ext/fptraining/build/install/lib/libSCI-BuildingBlocks.a ./ext/fptraining/build/install/lib/libSCI-GC.a ./ext/fptraining/build/install/lib/libSCI-LinearOT.a gpu_conv2d.o gpu_matmul.o gpu_relu_truncate.o gpu_mem.o gpu_linear_helper.o -lcuda -lcudart -lssl -lcrypto -o 3layer_network -march=native -m64 -fopenmp
+# use -g -G to compile with cuda-gdb
+# remember to add -O3

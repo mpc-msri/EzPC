@@ -34,6 +34,8 @@ SOFTWARE.
 #include "relu.h"
 #include "select.h"
 #include "float.h"
+#include "reluextend.h"
+#include "signextend.h"
 #include "freekey.h"
 #include <cassert>
 #include <iostream>
@@ -76,7 +78,7 @@ void StartComputation()
     }
 
     if (party == DEALER) {
-        osuCrypto::AES aesSeed(osuCrypto::toBlock(0, time(NULL)));
+        osuCrypto::AES aesSeed(prngs[0].get<osuCrypto::block>());
         auto commonSeed = aesSeed.ecbEncBlock(osuCrypto::ZeroBlock);
         server->send_block(commonSeed);
         prngShared.SetSeed(commonSeed);
@@ -105,6 +107,13 @@ void EndComputation()
         std::cerr << "Truncate time = " << arsEvalMicroseconds / 1000.0 << " milliseconds\n";
         auto endTime = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         std::cerr << "Total Time (including Key Read) = " << (endTime - startTime) / 1000000.0 << " milliseconds\n";
+        std::cerr << std::endl;
+        std::cerr << "Conv Online Communication = " << convOnlineComm << " bytes\n";
+        std::cerr << "MatMul Online Communication = " << matmulOnlineComm << " bytes\n";
+        std::cerr << "Select Online Communication = " << selectOnlineComm << " bytes\n";
+        std::cerr << "ReLU Online Communication = " << reluOnlineComm << " bytes\n";
+        std::cerr << "RT Online Communication = " << rtOnlineComm << " bytes\n";
+        std::cerr << "ARS Online Communication = " << arsOnlineComm << " bytes\n";
     }
     else {
         std::cerr << "Offline Communication = " << server->bytesSent + client->bytesSent << " bytes\n";
@@ -249,7 +258,10 @@ void Conv2DWrapper(int32_t N, int32_t H, int32_t W,
         auto local_start = std::chrono::high_resolution_clock::now();
         EvalConv2D(party, key, N, H, W, CI, FH, FW, CO, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideH, strideW, inputArr, filterArr, outArr);
         auto t1 = std::chrono::high_resolution_clock::now();
+        uint64_t onlineComm0 = peer->bytesReceived + peer->bytesSent;
         reconstruct(d0 * d1 * d2 * d3, outArr, bitlength);
+        uint64_t onlineComm1 = peer->bytesReceived + peer->bytesSent;
+        convOnlineComm += (onlineComm1 - onlineComm0);
         auto local_end = std::chrono::high_resolution_clock::now();
         
         freeConv2dKey(key);
@@ -264,6 +276,7 @@ void Conv2DWrapper(int32_t N, int32_t H, int32_t W,
         std::cerr << "      Eigen Time = " << (eigenMicroseconds - eigen_start) / 1000.0 << " milliseconds\n";
         std::cerr << "   Reconstruct Time = " << reconstruct_time / 1000.0 << " milliseconds\n";
         std::cerr << "   Online Time = " << (reconstruct_time + compute_time) / 1000.0 << " milliseconds\n";
+        std::cerr << "   Online Comm = " << (onlineComm1 - onlineComm0) << " bytes\n";
     }
 
     std::cerr << ">> Conv2D - End" << std::endl;
@@ -310,14 +323,6 @@ void ars_threads_helper(int thread_idx, int32_t size, GroupElement *inArr, Group
     }
 }
 
-void ars_dealer_helper(int thread_idx, int size, int shift, GroupElement *inArr_mask, GroupElement *outArr_mask, pair<ARSKeyPack> *keys)
-{
-    auto p = get_start_end(size, thread_idx);
-    for(int i = p.first; i < p.second; i += 1){
-        outArr_mask[i] = random_ge(bitlength);
-        keys[i] = keyGenARS(bitlength, bitlength, shift, inArr_mask[i], outArr_mask[i]);
-    }
-}
 /*
         auto keyread_start = std::chrono::high_resolution_clock::now();
         auto keyread_end = std::chrono::high_resolution_clock::now();
@@ -339,21 +344,25 @@ void ARS(int32_t size, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *o
 {
     std::cerr << ">> Truncate" << (LlamaConfig::stochasticT ? " (stochastic)" : "") << " - Start" << std::endl;
     if (party == DEALER) {
-        uint64_t dealer_time_taken = 0;
+        pair<ARSKeyPack> *keys = new pair<ARSKeyPack>[size];
+        auto dealer_start = std::chrono::high_resolution_clock::now();
+        #pragma omp parallel for
         for (int i = 0; i < size; i++) {
-            auto dealer_start = std::chrono::high_resolution_clock::now();
             GroupElement rout = random_ge(bitlength);
-            auto keys = keyGenARS(bitlength, bitlength, shift, inArr_mask[i], rout);
+            keys[i] = keyGenARS(bitlength, bitlength, shift, inArr_mask[i], rout);
             outArr_mask[i] = rout;
-            auto dealer_end = std::chrono::high_resolution_clock::now();
-            dealer_time_taken += std::chrono::duration_cast<std::chrono::microseconds>(dealer_end -
-                                                                dealer_start)
-              .count();
-            server->send_ars_key(keys.first);
-            client->send_ars_key(keys.second);
-            freeARSKeyPackPair(keys);
+        }
+        auto dealer_end = std::chrono::high_resolution_clock::now();
+        auto dealer_time_taken = std::chrono::duration_cast<std::chrono::microseconds>(dealer_end -
+                                        dealer_start).count();
+
+        for (int i = 0; i < size; i++) {
+            server->send_ars_key(keys[i].first);
+            client->send_ars_key(keys[i].second);
+            freeARSKeyPackPair(keys[i]);
         }
         dealerMicroseconds += dealer_time_taken;
+        delete[] keys;
         std::cerr << "   Dealer Time = " << dealer_time_taken / 1000.0 << " milliseconds\n";
     }
     else {
@@ -378,7 +387,10 @@ void ARS(int32_t size, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *o
         }
         auto mid = std::chrono::high_resolution_clock::now();
 
+        uint64_t onlineComm0 = peer->bytesReceived + peer->bytesSent;
         reconstruct(size, outArr, bitlength);
+        uint64_t onlineComm1 = peer->bytesReceived + peer->bytesSent;
+        arsOnlineComm += (onlineComm1 - onlineComm0);
         
         auto end = std::chrono::high_resolution_clock::now();
         auto compute_time = std::chrono::duration_cast<std::chrono::microseconds>(mid - start).count();
@@ -387,6 +399,7 @@ void ARS(int32_t size, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *o
         std::cerr << "   Compute Time = " << compute_time / 1000.0 << " milliseconds\n";
         std::cerr << "   Reconstruct Time = " << reconstruct_time / 1000.0 << " milliseconds\n";
         std::cerr << "   Online Time = " << (reconstruct_time + compute_time) / 1000.0 << " milliseconds\n";
+        std::cerr << "   Online Comm = " << (onlineComm1 - onlineComm0) << " bytes\n";
         evalMicroseconds += (reconstruct_time + compute_time);
         arsEvalMicroseconds += (reconstruct_time + compute_time);
         delete[] keys;
@@ -498,7 +511,10 @@ void MatMul2D(int32_t s1, int32_t s2, int32_t s3, MASK_PAIR(GroupElement *A),
         auto start = std::chrono::high_resolution_clock::now();
         matmul_eval_helper(party, s1, s2, s3, A, B, C, key.a, key.b, key.c);
         auto mid = std::chrono::high_resolution_clock::now();
+        uint64_t onlineComm0 = peer->bytesReceived + peer->bytesSent;
         reconstruct(s1 * s3, C, bitlength);
+        uint64_t onlineComm1 = peer->bytesReceived + peer->bytesSent;
+        matmulOnlineComm += (onlineComm1 - onlineComm0);
         auto end = std::chrono::high_resolution_clock::now();
 
         auto compute_time = std::chrono::duration_cast<std::chrono::microseconds>(mid - start).count();
@@ -510,6 +526,7 @@ void MatMul2D(int32_t s1, int32_t s2, int32_t s3, MASK_PAIR(GroupElement *A),
         std::cerr << "      Eigen Time = " << (eigenMicroseconds - eigen_start) / 1000.0 << " milliseconds\n";
         std::cerr << "   Reconstruct Time = " << reconstruct_time / 1000.0 << " milliseconds\n";
         std::cerr << "   Online Time = " << (reconstruct_time + compute_time) / 1000.0 << " milliseconds\n";
+        std::cerr << "   Online Comm = " << (onlineComm1 - onlineComm0) << " bytes\n";
         
         freeMatMulKey(key);
     }
@@ -715,17 +732,6 @@ void rt_threads_helper_2(int thread_idx, int32_t size, GroupElement *tmp, GroupE
     }
 }
 
-void rt_dealer_threads_helper(int thread_idx, int32_t size, int sf, GroupElement *inArr_mask, GroupElement *drelu_mask, GroupElement *lrs_mask, GroupElement *outArr_mask, std::pair<ReluTruncateKeyPack, ReluTruncateKeyPack> *keys)
-{
-    auto p = get_start_end(size, thread_idx);
-    for(int i = p.first; i < p.second; i += 1){
-        drelu_mask[i] = random_ge(1);
-        lrs_mask[i] = random_ge(bitlength);
-        outArr_mask[i] = random_ge(bitlength);
-        keys[i] = keyGenReluTruncate(bitlength, bitlength, sf, inArr_mask[i], lrs_mask[i], drelu_mask[i], outArr_mask[i]);
-    }
-}
-
 void ReluTruncate(int32_t size, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *outArr), int sf, GroupElement *drelu_cache)
 {
     std::cerr << ">> ReluTruncate - Start" << std::endl;
@@ -733,18 +739,24 @@ void ReluTruncate(int32_t size, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupE
     if (party == DEALER) {
         GroupElement *lrs_mask = tmp;
         GroupElement *drelu_mask = tmp + size;
+        pair<ReluTruncateKeyPack> *keys = new pair<ReluTruncateKeyPack>[size];
+        #pragma omp parallel for
         for(int i = 0; i < size; ++i) {
             drelu_mask[i] = random_ge(1);
             if (drelu_cache != nullptr)
                 drelu_cache[i] = drelu_mask[i];
             lrs_mask[i] = random_ge(bitlength);
             GroupElement rout = random_ge(bitlength);
-            auto keys = keyGenReluTruncate(bitlength, bitlength, sf, inArr_mask[i], lrs_mask[i], drelu_mask[i], rout);
+            keys[i] = keyGenReluTruncate(bitlength, bitlength, sf, inArr_mask[i], lrs_mask[i], drelu_mask[i], rout);
             outArr_mask[i] = rout;
-            server->send_relu_truncate_key(keys.first);
-            client->send_relu_truncate_key(keys.second);
-            freeReluTruncateKeyPackPair(keys);
         }
+
+        for(int i = 0; i < size; ++i) {
+            server->send_relu_truncate_key(keys[i].first);
+            client->send_relu_truncate_key(keys[i].second);
+            freeReluTruncateKeyPackPair(keys[i]);
+        }
+        delete[] keys;
     }
     else {
         auto keyread_start = std::chrono::high_resolution_clock::now();
@@ -769,6 +781,7 @@ void ReluTruncate(int32_t size, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupE
             }
         }
         auto t1 = std::chrono::high_resolution_clock::now();
+        uint64_t onlineComm0 = peer->bytesReceived + peer->bytesSent;
         reconstructRT(size, tmp, bitlength);
         if (drelu_cache != nullptr)
             for(int i = 0; i < size; ++i) {
@@ -787,6 +800,8 @@ void ReluTruncate(int32_t size, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupE
         }
         auto t3 = std::chrono::high_resolution_clock::now();
         reconstruct(size, outArr, bitlength);
+        uint64_t onlineComm1 = peer->bytesReceived + peer->bytesSent;
+        rtOnlineComm += (onlineComm1 - onlineComm0);
         auto end = std::chrono::high_resolution_clock::now();
         
         uint64_t time_taken = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
@@ -805,7 +820,7 @@ void ReluTruncate(int32_t size, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupE
         std::cerr << "   Compute Time = " << (time1 + time3) / 1000.0 << " milliseconds" << std::endl;
         std::cerr << "   Reconstruct Time = " << (time2 + time4) / 1000.0 << " milliseconds" << std::endl;
         std::cerr << "   Online Time = " << (time1 + time2 + time3 + time4) / 1000.0 << " milliseconds" << std::endl;
-
+        std::cerr << "   Online Comm = " << (onlineComm1 - onlineComm0) << " bytes\n";
 
         for(int i = 0; i < size; ++i) {
             freeReluTruncateKeyPack(keys[i]);
@@ -839,17 +854,23 @@ void Relu2Round(int32_t size, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupEle
     GroupElement *tmp = make_array<GroupElement>(size);
     if (party == DEALER) {
         GroupElement *drelu_mask = tmp;
+        pair<Relu2RoundKeyPack> *keys = new pair<Relu2RoundKeyPack>[size];
+        #pragma omp parallel for
         for(int i = 0; i < size; ++i) {
             drelu_mask[i] = random_ge(1);
             if (drelu_cache != nullptr)
                 drelu_cache[i] = drelu_mask[i];
             GroupElement rout = random_ge(bitlength);
-            auto keys = keyGenRelu2Round(effectiveInputBw, bitlength, inArr_mask[i], drelu_mask[i], rout);
+            keys[i] = keyGenRelu2Round(effectiveInputBw, bitlength, inArr_mask[i], drelu_mask[i], rout);
             outArr_mask[i] = rout;
-            server->send_relu_2round_key(keys.first);
-            client->send_relu_2round_key(keys.second);
-            freeRelu2RoundKeyPackPair(keys);
         }
+
+        for(int i = 0; i < size; ++i) {
+            server->send_relu_2round_key(keys[i].first);
+            client->send_relu_2round_key(keys[i].second);
+            freeRelu2RoundKeyPackPair(keys[i]);
+        }
+        delete[] keys;
     }
     else {
         auto keyread_start = std::chrono::high_resolution_clock::now();
@@ -874,6 +895,7 @@ void Relu2Round(int32_t size, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupEle
             }
         }
         auto t1 = std::chrono::high_resolution_clock::now();
+        uint64_t onlineComm0 = peer->bytesReceived + peer->bytesSent;
         reconstruct(size, tmp, 1);
         if (drelu_cache != nullptr)
             for(int i = 0; i < size; ++i) {
@@ -892,6 +914,8 @@ void Relu2Round(int32_t size, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupEle
         }
         auto t3 = std::chrono::high_resolution_clock::now();
         reconstruct(size, outArr, bitlength);
+        uint64_t onlineComm1 = peer->bytesReceived + peer->bytesSent;
+        reluOnlineComm += (onlineComm1 - onlineComm0);
         auto end = std::chrono::high_resolution_clock::now();
         
         uint64_t time_taken = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
@@ -910,6 +934,7 @@ void Relu2Round(int32_t size, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupEle
         std::cerr << "   Compute Time = " << (time1 + time3) / 1000.0 << " milliseconds" << std::endl;
         std::cerr << "   Reconstruct Time = " << (time2 + time4) / 1000.0 << " milliseconds" << std::endl;
         std::cerr << "   Online Time = " << time_taken / 1000.0 << " milliseconds" << std::endl;
+        std::cerr << "   Online Comm = " << (onlineComm1 - onlineComm0) << " bytes\n";
 
 
         for(int i = 0; i < size; ++i) {
@@ -1055,17 +1080,24 @@ void ElemWiseSecretSharedVectorMult(int32_t size, MASK_PAIR(GroupElement *inArr)
     std::cerr << ">> ElemWise Mult - start" << std::endl;
     if (party == DEALER) {
         uint64_t dealer_toal_time = 0;
+        pair<MultKey> *keys = new pair<MultKey>[size];
+
+        #pragma omp parallel for
         for(int i = 0; i < size; ++i) {
             auto dealer_start = std::chrono::high_resolution_clock::now();
             auto rout = random_ge(bitlength);
-            auto keys = MultGen(inArr_mask[i], multArrVec_mask[i], rout);
+            keys[i] = MultGen(inArr_mask[i], multArrVec_mask[i], rout);
             outputArr_mask[i] = rout;
             auto dealer_end = std::chrono::high_resolution_clock::now();
             dealer_toal_time += std::chrono::duration_cast<std::chrono::microseconds>(dealer_end - dealer_start).count();
-            server->send_mult_key(keys.first);
-            client->send_mult_key(keys.second);
+        }
+
+        for(int i = 0; i < size; ++i) {
+            server->send_mult_key(keys[i].first);
+            client->send_mult_key(keys[i].second);
         }
         dealerMicroseconds = dealerMicroseconds + dealer_toal_time;
+        delete[] keys;
     }
     else {
         MultKey *keys = new MultKey[size];
@@ -1331,6 +1363,7 @@ void InsecureInverse(int32_t size, GroupElement *A, GroupElement *invA, int32_t 
             server->send_taylor_key(keys.first, bitlength, m);
             client->send_taylor_key(keys.second, bitlength, m);
             invA[i] = rout;
+            // TODO: delete keys[i].first and keys[i].second
         }
     }
     else {
@@ -1406,7 +1439,16 @@ void PiranhaSoftmax(int32_t s1, int32_t s2, MASK_PAIR(GroupElement *inArr), MASK
 
     // step 3 - exponentiate each element in each image in batch 
     // e^x = RT((x+2), 1) for negative x
-    ReluTruncate(s1 * s2, MASK_PAIR(outArr), MASK_PAIR(outArr), 1, nullptr); // Q: can we do this in place? can be a source of bug in future
+    // ReluTruncate(s1 * s2, MASK_PAIR(outArr), MASK_PAIR(outArr), 1, nullptr); // Q: can we do this in place? can be a source of bug in future
+    Relu2Round(s1 * s2, MASK_PAIR(outArr), MASK_PAIR(outArr), nullptr, 64);
+    for(int i = 0; i < s1 * s2; ++i) {
+        if (party == DEALER) {
+            outArr_mask[i] = outArr_mask[i] / 2;
+        }
+        else {
+            outArr[i] = outArr[i] / 2;
+        }
+    }
 
     GroupElement *denominators = max; // reuse the array
     // // step 4 - calculate sum of exponentiated elements for each image in batch
@@ -1442,7 +1484,15 @@ void PiranhaSoftmax(int32_t s1, int32_t s2, MASK_PAIR(GroupElement *inArr), MASK
     delete[] max;
 
     ElemWiseSecretSharedVectorMult(s1 * s2, expandedDenominator, expandedDenominator, MASK_PAIR(outArr), MASK_PAIR(outArr));
-    ScaleDown(s1 * s2, MASK_PAIR(outArr), sf);
+    // ScaleDown(s1 * s2, MASK_PAIR(outArr), sf);
+    for(int i = 0; i < s1 * s2; ++i) {
+        if (party == DEALER) {
+            outArr_mask[i] = outArr_mask[i] >> sf;
+        }
+        else {
+            outArr[i] = outArr[i] >> sf;
+        }
+    }
     std::cerr << ">> Softmax - end" << std::endl;
 
     delete[] expandedDenominator;
@@ -1487,7 +1537,10 @@ void Select(int32_t size, GroupElement *s, GroupElement *x, GroupElement *out) {
             thread_pool[i].join();
         }
         auto mid = std::chrono::high_resolution_clock::now();
+        uint64_t onlineComm0 = peer->bytesReceived + peer->bytesSent;
         reconstruct(size, out, bitlength);
+        uint64_t onlineComm1 = peer->bytesReceived + peer->bytesSent;
+        selectOnlineComm += (onlineComm1 - onlineComm0);
 
         auto end = std::chrono::high_resolution_clock::now();
         auto compute_time = std::chrono::duration_cast<std::chrono::microseconds>(mid - start).count();
@@ -1496,6 +1549,7 @@ void Select(int32_t size, GroupElement *s, GroupElement *x, GroupElement *out) {
         std::cerr << "   Compute Time = " << compute_time / 1000.0 << " milliseconds\n";
         std::cerr << "   Reconstruct Time = " << reconstruct_time / 1000.0 << " milliseconds\n";
         std::cerr << "   Online Time = " << (reconstruct_time + compute_time) / 1000.0 << " milliseconds\n";
+        std::cerr << "   Online Comm = " << (onlineComm1 - onlineComm0) << " bytes\n";
         evalMicroseconds += (reconstruct_time + compute_time);
         selectEvalMicroseconds += (reconstruct_time + compute_time);
         delete[] keys;
@@ -1533,13 +1587,12 @@ void Relu(int32_t size, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *
         uint64_t dealer_total_time = 0;
         std::pair<ReluKeyPack, ReluKeyPack> *keys = new std::pair<ReluKeyPack, ReluKeyPack>[size];
         auto start = std::chrono::high_resolution_clock::now();
-        std::thread thread_pool[num_threads];
-        for(int i = 0; i < num_threads; ++i) {
-            thread_pool[i] = std::thread(relu_dealer_threads_helper, i, size, inArr_mask, outArr_mask, drelu, keys);
-        }
-
-        for(int i = 0; i < num_threads; ++i) {
-            thread_pool[i].join();
+        #pragma omp parallel for
+        for(int i = 0; i < size; i += 1){
+            auto rout = random_ge(bitlength); // prng inside multithreads, need some locking
+            drelu[i] = random_ge(1);
+            keys[i] = keyGenRelu(bitlength, bitlength, inArr_mask[i], rout, drelu[i]);
+            outArr_mask[i] = rout;
         }
         auto end = std::chrono::high_resolution_clock::now();
         dealer_total_time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
@@ -1584,8 +1637,11 @@ void Relu(int32_t size, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *
 
         auto mid = std::chrono::high_resolution_clock::now();
         // Step 3: Online Communication
+        uint64_t onlineComm0 = peer->bytesReceived + peer->bytesSent;
         reconstruct(size, outArr, bitlength);
         reconstruct(size, drelu, 1);
+        uint64_t onlineComm1 = peer->bytesReceived + peer->bytesSent;
+        reluOnlineComm += (onlineComm1 - onlineComm0);
         auto end = std::chrono::high_resolution_clock::now();
         auto compute_time = std::chrono::duration_cast<std::chrono::microseconds>(mid - start).count();
         auto reconstruct_time = std::chrono::duration_cast<std::chrono::microseconds>(end - mid).count();
@@ -1593,6 +1649,7 @@ void Relu(int32_t size, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *
         std::cerr << "   Compute Time = " << compute_time / 1000.0 << " milliseconds\n";
         std::cerr << "   Reconstruct Time = " << reconstruct_time / 1000.0 << " milliseconds\n";
         std::cerr << "   Online Time = " << (reconstruct_time + compute_time) / 1000.0 << " milliseconds\n";
+        std::cerr << "   Online Comm = " << (onlineComm1 - onlineComm0) << " bytes\n";
         evalMicroseconds += (reconstruct_time + compute_time);
         reluEvalMicroseconds += (reconstruct_time + compute_time);
         delete[] keys;
@@ -1683,6 +1740,7 @@ void MaxPoolDouble(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
              int32_t C1, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *outArr), GroupElement *oneHot) 
 {
     std::cerr << ">> MaxPoolDouble - Start" << std::endl;
+    std::cerr << "Bitlength = " << bitlength << std::endl;
     int d1 = ((imgH - FH + (zPadHLeft + zPadHRight)) / strideH) + 1;
     int d2 = ((imgW - FW + (zPadWLeft + zPadWRight)) / strideW) + 1;
     always_assert(d1 == H);
@@ -1790,12 +1848,15 @@ void MaxPoolDouble(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
             }
         }
 
+        uint64_t phase1_time = 0;
+        uint64_t phase2_time = 0;
         for (int fh = 0; fh < FH; fh++) {
             for(int fw = 0; fw < FW; fw++) {
                 if (fh == 0 && fw == 0) {
                     continue;
                 }
 
+                auto phase1_start = std::chrono::high_resolution_clock::now();
                 std::thread thread_pool[num_threads];
                 
                 for(int i = 0; i < num_threads; ++i) {
@@ -1812,11 +1873,15 @@ void MaxPoolDouble(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
                 }
 
                 reconstruct(N * C * H * W, oneHot + (fh * FW + fw - 1) * N * C * H * W, 1);
+                auto phase1_end = std::chrono::high_resolution_clock::now();
+                auto phase1_time_ = std::chrono::duration_cast<std::chrono::microseconds>(phase1_end - phase1_start).count();
+                phase1_time += phase1_time_;
 
-                std::thread thread_pool2[num_threads];
+                auto phase2_start = std::chrono::high_resolution_clock::now();
+                // std::thread thread_pool2[num_threads];
 
                 for(int i = 0; i < num_threads; ++i) {
-                    thread_pool2[i] = std::thread(maxpool_double_threads_helper_2, i, fh, fw, 
+                    maxpool_double_threads_helper_2( i, fh, fw, 
                                         N, H, W, C, FH,
                                         FW, zPadHLeft, zPadHRight,
                                         zPadWLeft, zPadWRight, strideH,
@@ -1824,11 +1889,14 @@ void MaxPoolDouble(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
                                         C1,inArr, maxUntilNow, oneHot, keys);
                 }
 
-                for(int i = 0; i < num_threads; ++i) {
-                    thread_pool2[i].join();
-                }
+                // for(int i = 0; i < num_threads; ++i) {
+                //     thread_pool2[i].join();
+                // }
 
                 reconstruct(N * C * H * W, maxUntilNow, bitlength);
+                auto phase2_end = std::chrono::high_resolution_clock::now();
+                auto phase2_time_ = std::chrono::duration_cast<std::chrono::microseconds>(phase2_end - phase2_start).count();
+                phase2_time += phase2_time_;
             }
         }
         auto end_eval = std::chrono::high_resolution_clock::now();
@@ -1837,6 +1905,8 @@ void MaxPoolDouble(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
         maxpoolEvalMicroseconds += eval_time;
         delete[] keys;
         std::cerr << "   Online Time = " << eval_time / 1000.0 << " miliseconds" << std::endl;
+        std::cerr << "   Phase 1 Time = " << phase1_time / 1000.0 << " miliseconds" << std::endl;
+        std::cerr << "   Phase 2 Time = " << phase2_time / 1000.0 << " miliseconds" << std::endl;
     }
 
     std::cerr << ">> MaxPoolDouble - End" << std::endl;
@@ -2097,16 +2167,22 @@ void FixToFloat(int size, GroupElement *inp, GroupElement *out, int scale)
     // std::cout << "}" << std::endl;
 
     if (party == DEALER) {
+        pair<FixToFloatKeyPack> *keys = new pair<FixToFloatKeyPack>[size];
+        #pragma omp parallel for
         for(int i = 0; i < size; ++i) {
-            auto keys = keyGenFixToFloat(bitlength, scale, inp[i], p, q);
+            keys[i] = keyGenFixToFloat(bitlength, scale, inp[i], p, q);
             out[4*i] = 0;
             out[4*i+1] = 0;
             out[4*i+2] = 0;
             out[4*i+3] = 0;
-            server->send_fix_to_float_key(keys.first, bitlength);
-            client->send_fix_to_float_key(keys.second, bitlength);
-            freeFixToFloatKeyPackPair(keys);
         }
+
+        for(int i = 0; i < size; ++i) {
+            server->send_fix_to_float_key(keys[i].first, bitlength);
+            client->send_fix_to_float_key(keys[i].second, bitlength);
+            freeFixToFloatKeyPackPair(keys[i]);
+        }
+        delete[] keys;
     }
     else {
         auto keyread_start = std::chrono::high_resolution_clock::now();
@@ -2178,14 +2254,20 @@ void FloatToFix(int size, GroupElement *inp, GroupElement *out, int scale)
     std::cerr << ">> FloatToFix - Start" << std::endl;
 
     if (party == DEALER) {
+        pair<FloatToFixKeyPack> *keys = new pair<FloatToFixKeyPack>[size];
+        #pragma omp parallel for
         for(int i = 0; i < size; ++i) {
             auto rout = random_ge(bitlength);
-            auto keys = keyGenFloatToFix(bitlength, scale, rout);
+            keys[i] = keyGenFloatToFix(bitlength, scale, rout);
             out[i] = rout;
-            server->send_float_to_fix_key(keys.first, bitlength);
-            client->send_float_to_fix_key(keys.second, bitlength);
-            freeFloatToFixKeyPackPair(keys);
         }
+
+        for(int i = 0; i < size; ++i) {
+            server->send_float_to_fix_key(keys[i].first, bitlength);
+            client->send_float_to_fix_key(keys[i].second, bitlength);
+            freeFloatToFixKeyPackPair(keys[i]);
+        }
+        delete[] keys;
     }
     else {
         auto keyread_start = std::chrono::high_resolution_clock::now();
@@ -2253,4 +2335,241 @@ void FloatToFix(int size, GroupElement *inp, GroupElement *out, int scale)
 
     }
     std::cerr << ">> FloatToFix - End" << std::endl;
+}
+
+void relu_extend_eval_threads_helper(int thread_idx, int32_t size, int bin, int bout, GroupElement *x, GroupElement *y, GroupElement *drelu, GroupElement *wrap, ReluExtendKeyPack *keys)
+{
+    auto thread_start = std::chrono::high_resolution_clock::now();
+    auto p = get_start_end(size, thread_idx);
+    for(int i = p.first; i < p.second; i += 1){
+        GroupElement y = x[i] + (1ULL << (bin - 1));
+        mod(y, bin);
+        evalDCF(party - 2, &wrap[i], x[i], keys[i].dcfKey);
+        evalDCF(party - 2, &drelu[i], y, keys[i].dcfKey);
+        drelu[i] = drelu[i] - wrap[i];
+        if (party == 2) {
+            if (y >= (1ULL << (bin - 1))) {
+                drelu[i] = drelu[i] + 1;
+            }
+        }
+        drelu[i] = drelu[i] + keys[i].rd;
+        wrap[i] = wrap[i] + keys[i].rw;
+        mod(drelu[i], 2);
+        mod(wrap[i], 2);
+    }
+    auto thread_end = std::chrono::high_resolution_clock::now();
+}
+
+void ReluExtend(int size, int bin, int bout, GroupElement *x, GroupElement *y, GroupElement *drelu)
+{
+    std::cerr << ">> ReluExtend - Start" << std::endl;
+    if (party == DEALER) {
+        uint64_t dealer_total_time = 0;
+        std::pair<ReluExtendKeyPack, ReluExtendKeyPack> *keys = new std::pair<ReluExtendKeyPack, ReluExtendKeyPack>[size];
+        auto start = std::chrono::high_resolution_clock::now();
+        #pragma omp parallel for
+        for(int i = 0; i < size; i += 1){
+            auto rout = random_ge(bout); // prng inside multithreads, need some locking
+            drelu[i] = random_ge(1);
+            keys[i] = keyGenReluExtend(bin, bout, x[i], rout, drelu[i]);
+            y[i] = rout;
+        }
+        auto end = std::chrono::high_resolution_clock::now();
+        dealer_total_time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+
+        for(int i = 0; i < size; ++i) {
+            server->send_relu_extend_key(keys[i].first, bin, bout);
+            client->send_relu_extend_key(keys[i].second, bin, bout);
+            freeReluExtendKeyPackPair(keys[i]);
+        }
+        delete[] keys;
+        dealerMicroseconds += dealer_total_time;
+        std::cerr << "   Dealer time = " << dealer_total_time / 1000.0 << " milliseconds" << std::endl;
+    }
+    else {
+        // Step 1: Preprocessing Keys from Dealer
+        ReluExtendKeyPack *keys = new ReluExtendKeyPack[size];
+        auto keyread_start = std::chrono::high_resolution_clock::now();
+        for(int i = 0; i < size; i++){
+            keys[i] = dealer->recv_relu_extend_key(bin, bout);
+        }
+        auto keyread_end = std::chrono::high_resolution_clock::now();
+        auto keyread_time_taken = std::chrono::duration_cast<std::chrono::milliseconds>(keyread_end -
+                                                            keyread_start).count();
+
+        peer->sync();
+        GroupElement *wrap = new GroupElement[size];
+        auto start = std::chrono::high_resolution_clock::now();
+        if (num_threads == 1) {
+            relu_extend_eval_threads_helper(0, size, bin, bout, x, y, drelu, wrap, keys);
+        }
+        else {
+            std::thread thread_pool[num_threads];
+            for(int thread_idx = 0; thread_idx < num_threads; thread_idx++)
+            {
+                thread_pool[thread_idx] = std::thread(relu_extend_eval_threads_helper, thread_idx, size, bin, bout, x, y, drelu, wrap, keys);
+            }
+
+            for(int thread_idx = 0; thread_idx < num_threads; thread_idx++)
+            {
+                thread_pool[thread_idx].join();
+            }
+        }
+
+        auto mid = std::chrono::high_resolution_clock::now();
+        // Step 3: Online Communication
+        uint64_t onlineComm0 = peer->bytesReceived + peer->bytesSent;
+        reconstruct(size, wrap,  2);
+        reconstruct(size, drelu, 2);
+
+        auto mid2 = std::chrono::high_resolution_clock::now();
+        for(int i = 0; i < size; i++){
+            GroupElement idx = 2 * drelu[i] + wrap[i];
+            mod(idx, 2);
+            y[i] = keys[i].p[3-idx] * (x[i] + (1ULL << (bin)));
+            y[i] = y[i] + keys[i].p[(2-idx) % 4] * x[i];
+            y[i] = y[i] + keys[i].q[drelu[i] % 2];
+            freeReluExtendKeyPack(keys[i]);
+        }
+        auto mid3 = std::chrono::high_resolution_clock::now();
+
+        reconstruct(size, y, bout);
+
+        uint64_t onlineComm1 = peer->bytesReceived + peer->bytesSent;
+        reluOnlineComm += (onlineComm1 - onlineComm0);
+        auto end = std::chrono::high_resolution_clock::now();
+        auto compute_time = std::chrono::duration_cast<std::chrono::microseconds>(mid - start).count()
+         + std::chrono::duration_cast<std::chrono::microseconds>(mid3 - mid2).count();
+        auto reconstruct_time = std::chrono::duration_cast<std::chrono::microseconds>(mid2 - mid).count()
+         + std::chrono::duration_cast<std::chrono::microseconds>(end - mid3).count();
+        std::cerr << "   Key Read Time = " << keyread_time_taken << " milliseconds\n";
+        std::cerr << "   Compute Time = " << compute_time / 1000.0 << " milliseconds\n";
+        std::cerr << "   Reconstruct Time = " << reconstruct_time / 1000.0 << " milliseconds\n";
+        std::cerr << "   Online Time = " << (reconstruct_time + compute_time) / 1000.0 << " milliseconds\n";
+        std::cerr << "   Online Comm = " << (onlineComm1 - onlineComm0) << " bytes\n";
+        evalMicroseconds += (reconstruct_time + compute_time);
+        reluEvalMicroseconds += (reconstruct_time + compute_time);
+        delete[] keys;
+        delete[] wrap;
+    }
+    std::cerr << ">> ReluExtend - End" << std::endl;
+}
+
+void sign_extend2_dealer_threads_helper(int thread_idx, int32_t size, int bin, int bout, GroupElement *x, GroupElement *y, std::pair<SignExtend2KeyPack, SignExtend2KeyPack> *keys)
+{
+    auto p = get_start_end(size, thread_idx);
+    for(int i = p.first; i < p.second; i += 1){
+        auto rout = random_ge(bout); // prng inside multithreads, need some locking
+        keys[i] = keyGenSignExtend2(bin, bout, x[i], rout);
+        y[i] = rout;
+    }
+}
+
+void sign_extend2_eval_threads_helper(int thread_idx, int32_t size, int bin, int bout, GroupElement *x, GroupElement *wrap, SignExtend2KeyPack *keys)
+{
+    auto thread_start = std::chrono::high_resolution_clock::now();
+    auto p = get_start_end(size, thread_idx);
+    for(int i = p.first; i < p.second; i += 1){
+        GroupElement y = x[i] + (1ULL << (bin - 1));
+        mod(y, bin);
+        evalDCF(party - 2, &wrap[i], y, keys[i].dcfKey);
+        wrap[i] = wrap[i] + keys[i].rw;
+        mod(wrap[i], 1);
+    }
+    auto thread_end = std::chrono::high_resolution_clock::now();
+}
+
+void SignExtend2(int size, int bin, int bout, GroupElement *x, GroupElement *y)
+{
+    std::cerr << ">> SignExtend2 - Start" << std::endl;
+    if (party == DEALER) {
+        uint64_t dealer_total_time = 0;
+        std::pair<SignExtend2KeyPack, SignExtend2KeyPack> *keys = new std::pair<SignExtend2KeyPack, SignExtend2KeyPack>[size];
+        auto start = std::chrono::high_resolution_clock::now();
+        #pragma omp parallel for
+        for(int i = 0; i < size; i += 1) {
+            auto rout = random_ge(bout); // prng inside multithreads, need some locking
+            keys[i] = keyGenSignExtend2(bin, bout, x[i], rout);
+            y[i] = rout;
+        }
+        auto end = std::chrono::high_resolution_clock::now();
+        dealer_total_time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+
+        for(int i = 0; i < size; ++i) {
+            server->send_sign_extend2_key(keys[i].first, bin, bout);
+            client->send_sign_extend2_key(keys[i].second, bin, bout);
+            freeSignExtend2KeyPackPair(keys[i]);
+        }
+        delete[] keys;
+        dealerMicroseconds += dealer_total_time;
+        std::cerr << "   Dealer time = " << dealer_total_time / 1000.0 << " milliseconds" << std::endl;
+    }
+    else {
+        // Step 1: Preprocessing Keys from Dealer
+        SignExtend2KeyPack *keys = new SignExtend2KeyPack[size];
+        auto keyread_start = std::chrono::high_resolution_clock::now();
+        for(int i = 0; i < size; i++){
+            keys[i] = dealer->recv_sign_extend2_key(bin, bout);
+        }
+        auto keyread_end = std::chrono::high_resolution_clock::now();
+        auto keyread_time_taken = std::chrono::duration_cast<std::chrono::milliseconds>(keyread_end -
+                                                            keyread_start).count();
+
+        peer->sync();
+        GroupElement *wrap = new GroupElement[size];
+        auto start = std::chrono::high_resolution_clock::now();
+        if (num_threads == 1) {
+            sign_extend2_eval_threads_helper(0, size, bin, bout, x, wrap, keys);
+        }
+        else {
+            std::thread thread_pool[num_threads];
+            for(int thread_idx = 0; thread_idx < num_threads; thread_idx++)
+            {
+                thread_pool[thread_idx] = std::thread(sign_extend2_eval_threads_helper, thread_idx, size, bin, bout, x, wrap, keys);
+            }
+
+            for(int thread_idx = 0; thread_idx < num_threads; thread_idx++)
+            {
+                thread_pool[thread_idx].join();
+            }
+        }
+
+        auto mid = std::chrono::high_resolution_clock::now();
+        // Step 3: Online Communication
+        uint64_t onlineComm0 = peer->bytesReceived + peer->bytesSent;
+        reconstruct(size, wrap,  1);
+
+        auto mid2 = std::chrono::high_resolution_clock::now();
+        for(int i = 0; i < size; i++){
+            GroupElement out = keys[i].p[wrap[i] % 2];
+            if (party == 2) {
+                GroupElement z = x[i] + (1ULL << (bin - 1));
+                mod(z, bin);
+                out = out + z;
+            }
+            y[i] = out;
+            freeSignExtend2KeyPack(keys[i]);
+        }
+        auto mid3 = std::chrono::high_resolution_clock::now();
+
+        reconstruct(size, y, bout);
+
+        uint64_t onlineComm1 = peer->bytesReceived + peer->bytesSent;
+        reluOnlineComm += (onlineComm1 - onlineComm0);
+        auto end = std::chrono::high_resolution_clock::now();
+        auto compute_time = std::chrono::duration_cast<std::chrono::microseconds>(mid - start).count()
+         + std::chrono::duration_cast<std::chrono::microseconds>(mid3 - mid2).count();
+        auto reconstruct_time = std::chrono::duration_cast<std::chrono::microseconds>(mid2 - mid).count()
+         + std::chrono::duration_cast<std::chrono::microseconds>(end - mid3).count();
+        std::cerr << "   Key Read Time = " << keyread_time_taken << " milliseconds\n";
+        std::cerr << "   Compute Time = " << compute_time / 1000.0 << " milliseconds\n";
+        std::cerr << "   Reconstruct Time = " << reconstruct_time / 1000.0 << " milliseconds\n";
+        std::cerr << "   Online Time = " << (reconstruct_time + compute_time) / 1000.0 << " milliseconds\n";
+        std::cerr << "   Online Comm = " << (onlineComm1 - onlineComm0) << " bytes\n";
+        evalMicroseconds += (reconstruct_time + compute_time);
+        reluEvalMicroseconds += (reconstruct_time + compute_time);
+        delete[] keys;
+        delete[] wrap;
+    }
+    std::cerr << ">> SignExtend2 - End" << std::endl;
 }

@@ -25,3 +25,10 @@ extern uint64_t inputOfflineComm;
 extern uint64_t inputOnlineComm;
 extern uint64_t startTime;
 extern uint64_t secFloatComm;
+
+extern uint64_t convOnlineComm;
+extern uint64_t matmulOnlineComm;
+extern uint64_t selectOnlineComm;
+extern uint64_t reluOnlineComm;
+extern uint64_t arsOnlineComm;
+extern uint64_t rtOnlineComm;

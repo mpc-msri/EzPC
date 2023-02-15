@@ -27,6 +27,7 @@ SOFTWARE.
 #include "cryptoTools/Crypto/PRNG.h"
 #include "config.h"
 #include "prng.h"
+#include "omp.h"
 
 using GroupElement = uint64_t;
 
@@ -36,10 +37,19 @@ inline void mod(GroupElement &a, int bw)
         a = a & ((uint64_t(1) << bw) - 1); 
 }
 
+inline GroupElement random_ge(int bw)
+{
+    GroupElement a;
+    int tid = omp_get_thread_num();
+    a = LlamaConfig::prngs[tid].get<uint64_t>();
+    mod(a, bw);
+    return a;
+}
+
 inline std::pair<GroupElement, GroupElement> splitShare(const GroupElement& a, int bw)
 {
     GroupElement a1, a2;
-    a1 = rand();
+    a1 = random_ge(bw);
     // a1 = 0;
     mod(a1, bw);
     a2 = a - a1;
@@ -50,7 +60,7 @@ inline std::pair<GroupElement, GroupElement> splitShare(const GroupElement& a, i
 inline std::pair<GroupElement, GroupElement> splitShareXor(const GroupElement& a, int bw)
 {
     GroupElement a1, a2;
-    a1 = rand();
+    a1 = random_ge(bw);
     a2 = a ^ a1;
     return std::make_pair(a1, a2);
 }
@@ -81,14 +91,6 @@ inline GroupElement pow(GroupElement x, uint64_t e)
     {
         return res * res * x;
     }
-}
-
-inline GroupElement random_ge(int bw)
-{
-    GroupElement a;
-    a = prng.get<uint64_t>();
-    mod(a, bw);
-    return a;
 }
 
 inline GroupElement msb(GroupElement a, int bw)

@@ -1,3 +1,4 @@
+#include <iomanip>
 #include "train.h"
 #include "cifar10.hpp"
 #include "mnist.h"

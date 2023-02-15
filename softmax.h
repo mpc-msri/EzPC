@@ -2,6 +2,7 @@
 #include "tensor.h"
 #include "backend/sci/src/library_float.h"
 #include "backend/minillama/stats.h"
+#include "backend/minillama/api.h"
 
 template <typename T, u64 scale>
 void softmax(const Tensor4D<T> &in, Tensor4D<T> &out)
@@ -105,12 +106,13 @@ inline void pirhana_softmax_ct(const Tensor4D<i64> &in, Tensor4D<i64> &out, u64 
             den += exps[j];
             // std::cout << x << std::endl;
         }
-        den = den * batchSize;
+        // den = den * batchSize;
         den = pirhana_inverse(den, scale);
 
         for(u64 j = 0; j < numClasses; ++j) {
             auto t = exps[j] * den;
             t >>= scale;
+            t /= batchSize;
             out(b, j, 0, 0) = (i64)(t);
         }
     }
@@ -123,7 +125,38 @@ inline void secfloat_init(int secfloatParty, std::string secfloatAddr)
     __init(0, nullptr);
 }
 
-inline void softmax_secfloat(const Tensor4D<u64> &in, Tensor4D<u64> &out, u64 scale, int llamaParty)
+inline void reconstrunct_and_print_float(Tensor4D<u64> &in, int llamaParty) {
+    reconstruct(in.d1 * in.d2 * 4, in.data, 64);
+    for(int i = 0; i < in.d1; ++i) {
+        for(int j = 0; j < in.d2; ++j) {
+            int m = in(i, j, 0, 0) % (1LL << 24);
+            int e = in(i, j, 1, 0) % 256;
+            int z = in(i, j, 2, 0) % 2;
+            int s = in(i, j, 3, 0) % 2;
+            std::cout << m << " " << e << " " << s << " " << z << std::endl;
+            double x = m;
+            x = x / (1LL << 23);
+            if (s == 1) {
+                x = -x;
+            }
+            e = e - 127;
+            if (e < 0) {
+                x = x / (1LL << (-e));
+            } else {
+                x = x * (1LL << e);
+            }
+            if (z == 1) {
+                x = 0;
+            }
+            std::cout << x << std::endl;
+        }
+    }
+    if (llamaParty == 3) {
+        in.fill(0);
+    }
+}
+
+inline void softmax_secfloat(Tensor4D<u64> &in, Tensor4D<u64> &out, u64 scale, int llamaParty)
 {
     assert(in.d1 == out.d1);
     assert(in.d2 == out.d2);
@@ -139,6 +172,7 @@ inline void softmax_secfloat(const Tensor4D<u64> &in, Tensor4D<u64> &out, u64 sc
     FixToFloat(in.d1 * in.d2, in.data, inFloat.data, scale);
     LlamaConfig::bitlength = origBitlength;
     Tensor4D<u64> outFloat(in.d1, in.d2, 4, 1);
+    outFloat.fill(0);
     if (llamaParty != 1) {
         vector < vector < FPArray > > inpFloatSecfloat = make_vector_float(llamaParty-1, in.d1, in.d2);
         for(int i = 0; i < in.d1; ++i) {
@@ -155,7 +189,23 @@ inline void softmax_secfloat(const Tensor4D<u64> &in, Tensor4D<u64> &out, u64 sc
         auto secfloat_start = std::chrono::high_resolution_clock::now();
         auto secfloat_comm_start = __get_comm();
         auto secfloat_round_start = __iopack->get_rounds();
+
         Softmax2(in.d1, in.d2, inpFloatSecfloat, outFloatSecfloat);
+        int sz = in.d1 * in.d2;
+        vector < FPArray > outFloatSecfloatFlat = make_vector_float(llamaParty-1, sz);
+        for(int i = 0; i < in.d1; ++i) {
+            for(int j = 0; j < in.d2; ++j) {
+                outFloatSecfloatFlat[i * in.d2 + j].m[0] = outFloatSecfloat[i][j].m[0];
+                outFloatSecfloatFlat[i * in.d2 + j].e[0] = outFloatSecfloat[i][j].e[0];
+                outFloatSecfloatFlat[i * in.d2 + j].s[0] = outFloatSecfloat[i][j].s[0];
+                outFloatSecfloatFlat[i * in.d2 + j].z[0] = outFloatSecfloat[i][j].z[0];
+            }
+        }
+        vector<FPArray> divver = make_vector_float(llamaParty-1, sz) ;
+        for (int i = 0 ; i < sz ; i++)
+            divver[i] = __fp_op->input<float>(ALICE, sz, (float)(1.0/(float)in.d1)) ;
+        ElemWiseMul(in.d1 * in.d2, outFloatSecfloatFlat, divver, outFloatSecfloatFlat);
+
         auto secfloat_round_end = __iopack->get_rounds();
         auto secfloat_comm_end = __get_comm();
         auto secfloat_end = std::chrono::high_resolution_clock::now();
@@ -168,10 +218,10 @@ inline void softmax_secfloat(const Tensor4D<u64> &in, Tensor4D<u64> &out, u64 sc
 
         for(int i = 0; i < in.d1; ++i) {
             for(int j = 0; j < in.d2; ++j) {
-                outFloat(i, j, 0, 0) = outFloatSecfloat[i][j].m[0];
-                outFloat(i, j, 1, 0) = outFloatSecfloat[i][j].e[0];
-                outFloat(i, j, 2, 0) = outFloatSecfloat[i][j].z[0];
-                outFloat(i, j, 3, 0) = outFloatSecfloat[i][j].s[0];
+                outFloat(i, j, 0, 0) = outFloatSecfloatFlat[i * in.d2 + j].m[0];
+                outFloat(i, j, 1, 0) = outFloatSecfloatFlat[i * in.d2 + j].e[0];
+                outFloat(i, j, 2, 0) = outFloatSecfloatFlat[i * in.d2 + j].z[0];
+                outFloat(i, j, 3, 0) = outFloatSecfloatFlat[i * in.d2 + j].s[0];
             }
         }
     }

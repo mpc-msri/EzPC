@@ -272,6 +272,26 @@ void ClearText<T>::updateBias(Tensor<T> &bias, const Tensor<T> &grad, Tensor<T> 
 }
 
 template <typename T>
+void expandOutputConv(const Tensor4D<T> &output, u64 stride, Tensor4D<T> &outputExpanded) {
+    // put elements with a gap of stride-1 in between
+    assert(outputExpanded.d1 == output.d1);
+    assert(outputExpanded.d2 == output.d2 + (output.d2 - 1) * (stride - 1));
+    assert(outputExpanded.d3 == output.d3 + (output.d3 - 1) * (stride - 1));
+    assert(outputExpanded.d4 == output.d4);
+
+    outputExpanded.fill(0);
+    for (u64 i = 0; i < output.d1; i++) {
+        for (u64 j = 0; j < output.d2; j++) {
+            for (u64 k = 0; k < output.d3; k++) {
+                for (u64 l = 0; l < output.d4; l++) {
+                    outputExpanded(i, j*stride, k*stride, l) = output(i, j, k, l);
+                }
+            }
+        }
+    }
+}
+
+template <typename T>
 void ClearText<T>::conv2DInputGrad(u64 fh, u64 fw, u64 padding, u64 stride, u64 ci, u64 co, Tensor4D<T> &input, const Tensor2D<T> &filter, const Tensor4D<T> &output)
 {
     if (stride != 1) {
@@ -289,7 +309,14 @@ void ClearText<T>::conv2DInputGrad(u64 fh, u64 fw, u64 padding, u64 stride, u64 
     
     Tensor2D<T> transposedFilter(ci, fh * fw * co);
     transposeFilter<T>(fh, fw, ci, co, filter, transposedFilter);
-    conv2D(fh, fw, fh-padding-1, stride, co, ci, output, transposedFilter, input);
+    if (stride == 1) {
+        conv2D(fh, fw, fh-padding-1, 1, co, ci, output, transposedFilter, input);
+    }
+    else {
+        Tensor4D<T> outputExpanded(input.d1, input.d2 + (input.d2 - 1) * (stride - 1), input.d3 + (input.d3 - 1) * (stride - 1), co);
+        expandOutputConv(output, stride, outputExpanded);
+        conv2D(fh, fw, fh-padding-1, 1, co, ci, outputExpanded, transposedFilter, input);
+    }
 }
 
 template <typename T>
@@ -307,6 +334,19 @@ void ClearText<T>::relutruncate(const Tensor4D<T> &in, const Tensor4D<T> &out, c
             for (u64 k = 0; k < in.d3; k++) {
                 for (u64 l = 0; l < in.d4; l++) {
                     drelu(i, j, k, l) = (T)(in(i, j, k, l) > 0);
+                    if(localTruncationEmulation) {
+                        if (drelu(i, j, k, l) == 0) {
+                            out(i, j, k, l) = 0;
+                        }
+                        else {
+                            u64 a = prngStr.get<T>();
+                            u64 b = ((u64)in(i, j, k, l)) - a;
+                            a = a >> shift;
+                            b = -((-b) >> shift);
+                            out(i, j, k, l) = a + b;
+                        }
+                        continue;
+                    }
                     out(i, j, k, l) = (drelu(i, j, k, l) == 1) ? (in(i, j, k, l) / (1LL << shift)) : 0;
                     if (probablistic) {
                         u64 r = rand() % (1ULL << shift);
@@ -320,7 +360,7 @@ void ClearText<T>::relutruncate(const Tensor4D<T> &in, const Tensor4D<T> &out, c
 }
 
 template <typename T>
-void ClearText<T>::relu(const Tensor4D<T> &in, const Tensor4D<T> &out, const Tensor4D<T> &drelu) {
+void ClearText<T>::relu(const Tensor4D<T> &in, const Tensor4D<T> &out, const Tensor4D<T> &drelu, u64 scale) {
     assert(in.d1 == out.d1);
     assert(in.d2 == out.d2);
     assert(in.d3 == out.d3);
@@ -365,74 +405,57 @@ void ClearText<T>::select(const Tensor4D<T> &in, const Tensor4D<T> &drelu, const
 }
 
 template <typename T>
+void ClearText<T>::truncate(T *in, T *out, u64 shift, u64 size) {
+    fastfor(size, [&] (u64 i) {
+        if constexpr (std::is_floating_point<T>::value) {
+            out[i] = in[i] / ((T)(1ULL << shift));
+        } else {
+            if(localTruncationEmulation) {
+                u64 a = prngStr.get<u64>();
+                u64 b = ((u64)in[i]) - a;
+                a = a >> shift;
+                b = -((-b) >> shift);
+                out[i] = a + b;
+                return;
+            }
+            u64 x0 = ((u64)in[i]) % (1ULL << shift);
+            in[i] = in[i] >> shift;
+            if (probablistic) {
+                u64 r = rand() % (1ULL << shift);
+                out[i] += (x0 < r ? 0 : 1); 
+            }
+        }
+    });
+}
+
+template <typename T>
 void ClearText<T>::truncate(const Tensor4D<T> &in, const Tensor4D<T> &out, u64 shift) {
     assert(in.d1 == out.d1);
     assert(in.d2 == out.d2);
     assert(in.d3 == out.d3);
     assert(in.d4 == out.d4);
-    fastfor(in.d1, [&] (u64 i) {
-        for (u64 j = 0; j < in.d2; j++) {
-            for (u64 k = 0; k < in.d3; k++) {
-                for (u64 l = 0; l < in.d4; l++) {
-                    if constexpr (std::is_floating_point<T>::value) {
-                        out(i, j, k, l) = in(i, j, k, l) / (1 << shift);
-                    } else {
-                        out(i, j, k, l) = in(i, j, k, l) >> shift;
-                        if (probablistic) {
-                            u64 r = rand() % (1ULL << shift);
-                            u64 x0 = ((u64)in(i, j, k, l)) % (1ULL << shift);
-                            out(i, j, k, l) += (x0 < r ? 0 : 1); 
-                        }
-                    }
-                }
-            }
-        }
-    });
+    truncate(in.data, out.data, shift, in.d1 * in.d2 * in.d3 * in.d4);
 }
 
 template <typename T>
 void ClearText<T>::truncate(const Tensor4D<T> &in, u64 shift) {
     // Eigen::Map<Eigen::ArrayX<T>> eA(in.data, in.d1 * in.d2 * in.d3 * in.d4);
     // eA = eA / ((T)(1LL << shift));
-    truncate(in, in, shift);
+    truncate(in.data, in.data, shift, in.d1 * in.d2 * in.d3 * in.d4);
 }
 
 template <typename T>
 void ClearText<T>::truncate(const Tensor2D<T> &in, u64 shift) {
 //    Eigen::Map<Eigen::ArrayX<T>> eA(in.data, in.d1 * in.d2);
 //    eA = eA / ((T)(1LL << shift)); // this gives bad accuracy, why?
-    fastfor(in.d1, [&] (u64 i) {
-        for (u64 j = 0; j < in.d2; j++) {
-            if constexpr (std::is_floating_point<T>::value) {
-                in(i, j) = in(i, j) / ((T)(1ULL << shift));
-            } else {
-                u64 x0 = ((u64)in(i, j)) % (1ULL << shift);
-                in(i, j) = in(i, j) >> shift;
-                if (probablistic) {
-                    u64 r = rand() % (1ULL << shift);
-                    in(i, j) += (x0 < r ? 0 : 1); 
-                }
-            }
-        }
-    });
+    truncate(in.data, in.data, shift, in.d1 * in.d2);
 }
 
 template <typename T>
 void ClearText<T>::truncate(const Tensor<T> &in, u64 shift) {
 //    Eigen::Map<Eigen::ArrayX<T>> eA(in.data, in.d1 * in.d2);
 //    eA = eA / ((T)(1LL << shift)); // this gives bad accuracy, why?
-    fastfor(in.size, [&] (u64 i) {
-        if constexpr (std::is_floating_point<T>::value) {
-            in(i) = in(i) / ((T)(1ULL << shift));
-        } else {
-            u64 x0 = ((u64)in(i)) % (1ULL << shift);
-            in(i) = in(i) >> shift;
-            if (probablistic) {
-                u64 r = rand() % (1ULL << shift);
-                in(i) += (x0 < r ? 0 : 1); 
-            }
-        }
-    });
+    truncate(in.data, in.data, shift, in.size);
 }
 
 template <typename T>
@@ -440,6 +463,14 @@ void ClearText<T>::truncate(T &in, u64 shift) {
     if constexpr (std::is_floating_point<T>::value) {
         in = in / ((T)(1ULL << shift));
     } else {
+        if(localTruncationEmulation) {
+            u64 a = prngStr.get<T>();
+            u64 b = ((u64)in) - a;
+            a = a >> shift;
+            b = -((-b) >> shift);
+            in = a + b;
+            return;
+        }
         u64 x0 = ((u64)in) % (1ULL << shift);
         in = in >> shift;
         if (probablistic) {
@@ -533,7 +564,7 @@ void ClearText<T>::avgPool2DInputGrad(u64 ks, u64 padding, u64 stride, Tensor4D<
 }
 
 template <typename T>
-void ClearText<T>::maxPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> &in, Tensor4D<T> &out, Tensor4D<u64> &maxIdx) {
+void ClearText<T>::maxPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> &in, Tensor4D<T> &out, Tensor4D<u64> &maxIdx, u64 scale) {
     assert(in.d1 == out.d1);
     assert(in.d4 == out.d4);
     u64 newH = (in.d2 + 2*padding - ks)/stride + 1;
@@ -759,6 +790,7 @@ void ClearText<T>::batchNorm2dBackward(Tensor4D<T> &din, const Tensor4D<T> &dout
 }
 
 template class ClearText<i64>;
+template class ClearText<i32>;
 template class ClearText<u64>;
 template class ClearText<double>;
 template class ClearText<float>;

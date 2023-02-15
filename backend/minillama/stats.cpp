@@ -23,3 +23,10 @@ uint64_t inputOfflineComm = 0;
 uint64_t inputOnlineComm = 0;
 uint64_t startTime = 0;
 uint64_t secFloatComm = 0;
+
+uint64_t convOnlineComm = 0;
+uint64_t matmulOnlineComm = 0;
+uint64_t selectOnlineComm = 0;
+uint64_t reluOnlineComm = 0;
+uint64_t arsOnlineComm = 0;
+uint64_t rtOnlineComm = 0;
