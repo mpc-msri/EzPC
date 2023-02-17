@@ -10,8 +10,8 @@
 #include <sytorch/datasets/cifar10.h>
 #include <filesystem>
 #include <Eigen/Dense>
-#include "backend/llama_extended.h"
-#include "backend/llama_improved.h"
+#include <sytorch/backend/llama_extended.h>
+#include <sytorch/backend/llama_improved.h>
 
 template <typename T, u64 scale>
 void cifar10_fill_images(Tensor4D<T>& trainImages, Tensor<u64> &trainLabels, int datasetOffset = 0) {
@@ -100,13 +100,13 @@ void llama_test_vgg_imgnet(int party) {
     // trainImage.fill(1);
 
     llama->initializeWeights(model); // dealer initializes the weights and sends to the parties
-    StartComputation();
+    llama::start();
     llama->inputA(trainImages);
     model.forward(trainImages);
     // llama->output(model.activation);
     // if (party != 1)
     //     model.activation.print();
-    EndComputation();
+    llama::end();
     llama->finalize();
 }
 
@@ -155,7 +155,7 @@ void llama_test_3layer(int party) {
     // trainImage.fill(1);
 
     llama->initializeWeights(model); // dealer initializes the weights and sends to the parties
-    StartComputation();
+    llama::start();
 
     int numIterations = 1;
     for(int i = 0; i < numIterations; ++i) {
@@ -169,7 +169,7 @@ void llama_test_3layer(int party) {
         // }
         // model.backward(e);
     }
-    EndComputation();
+    llama::end();
 
     // llama->output(conv1->filter);
     // llama->output(conv2->filter);
@@ -234,7 +234,7 @@ void llama_test_lenet_gupta(int party) {
     // trainImage.fill(1);
 
     llama->initializeWeights(model); // dealer initializes the weights and sends to the parties
-    StartComputation();
+    llama::start();
 
     int numIterations = 1;
     for(int i = 0; i < numIterations; ++i) {
@@ -248,7 +248,7 @@ void llama_test_lenet_gupta(int party) {
         }
         model.backward(e);
     }
-    EndComputation();
+    llama::end();
     llama->finalize();
 }
 
@@ -292,7 +292,7 @@ void llama_test_lenet_minionn(int party) {
     // trainImage.fill(1);
 
     llama->initializeWeights(model); // dealer initializes the weights and sends to the parties
-    StartComputation();
+    llama::start();
 
     int numIterations = 1;
     for(int i = 0; i < numIterations; ++i) {
@@ -306,7 +306,7 @@ void llama_test_lenet_minionn(int party) {
         }
         model.backward(e);
     }
-    EndComputation();
+    llama::end();
     llama->finalize();
 }
 
@@ -358,7 +358,7 @@ void llama_test_falcon_alex(int party) {
     // trainImage.fill(1);
 
     llama->initializeWeights(model); // dealer initializes the weights and sends to the parties
-    StartComputation();
+    llama::start();
 
     int numIterations = 1;
     for(int i = 0; i < numIterations; ++i) {
@@ -372,7 +372,7 @@ void llama_test_falcon_alex(int party) {
         }
         model.backward(e);
     }
-    EndComputation();
+    llama::end();
     llama->finalize();
 }
 
@@ -494,11 +494,11 @@ void llama_test_pvgg(int party) {
 
     llama->initializeWeights(model); // dealer initializes the weights and sends to the parties
     llama->initializeData(trainImage, 1); // takes input from stdin
-    StartComputation();
+    llama::start();
     model.forward(trainImage);
-    EndComputation();
+    llama::end();
     model.backward(e);
-    EndComputation();
+    llama::end();
     // LlamaVersion::output(model.activation);
     // LlamaVersion::output(conv1->bias);
     // LlamaVersion::output(conv1->filter);
@@ -563,9 +563,9 @@ void llama_fixtofloat_test(int party) {
         y_ct.print();
     }
 
-    StartComputation();
+    llama::start();
     softmax_secfloat(e, y, scale, party);
-    EndComputation();
+    llama::end();
     llama->output(y);
     llama->finalize();
     if (LlamaConfig::party != 1) {
@@ -610,11 +610,11 @@ void test_reluextend(int party) {
         x(i, 0, 0, 0) = x(i, 0, 0, 0) >> scale;
     }
 
-    StartComputation();
+    llama::start();
     Tensor4D<u64> y(size, 1, 1, 1);
     Tensor4D<u64> drelu(size, 1, 1, 1);
     ReluExtend(size, 64 - scale, 64, x.data, y.data, drelu.data);
-    EndComputation();
+    llama::end();
     llama->output(y);
     llama->output(drelu);
     llama->finalize();
@@ -654,9 +654,9 @@ void test_ars(int party) {
 
     llama->inputA(x);
 
-    StartComputation();
+    llama::start();
     ARS(size, x.data, x.data, x.data, x.data, scale);
-    EndComputation();
+    llama::end();
     llama->output(x);
     llama->finalize();
     if (LlamaConfig::party != 1) {
@@ -694,10 +694,10 @@ void test_rt(int party) {
 
     llama->inputA(x);
 
-    StartComputation();
+    llama::start();
     Tensor4D<u64> drelu(size, 1, 1, 1);
     ReluTruncate(size, x.data, x.data, x.data, x.data, scale, drelu.data);
-    EndComputation();
+    llama::end();
     llama->output(x);
     llama->finalize();
     if (LlamaConfig::party != 1) {
@@ -735,10 +735,10 @@ void test_r2(int party) {
 
     llama->inputA(x);
 
-    StartComputation();
+    llama::start();
     Tensor4D<u64> drelu(size, 1, 1, 1);
     Relu2Round(size, x.data, x.data, x.data, x.data, drelu.data, 64);
-    EndComputation();
+    llama::end();
     llama->output(x);
     llama->finalize();
     if (LlamaConfig::party != 1) {
@@ -775,9 +775,9 @@ void test_mul(int party) {
 
     llama->inputA(x);
 
-    StartComputation();
+    llama::start();
     ElemWiseSecretSharedVectorMult(size, x.data, x.data, y.data, y.data, x.data, x.data);
-    EndComputation();
+    llama::end();
     llama->output(x);
     llama->finalize();
     if (LlamaConfig::party != 1) {
@@ -815,10 +815,10 @@ void test_reluspline(int party) {
 
     llama->inputA(x);
 
-    StartComputation();
+    llama::start();
     Tensor4D<u64> drelu(size, 1, 1, 1);
     Relu(size, x.data, x.data, x.data, x.data, drelu.data);
-    EndComputation();
+    llama::end();
     llama->output(x);
     llama->finalize();
     if (LlamaConfig::party != 1) {
@@ -860,11 +860,11 @@ void test_maxpool(int party) {
 
     llama->inputA(x);
 
-    StartComputation();
+    llama::start();
     Tensor4D<u64> y(size, 1, 1, 1);
     Tensor4D<u64> maxbit(size * 3, 1, 1, 1);
     MaxPoolDouble(size, 1, 1, 1, 2, 2, 0, 0, 0, 0, 2, 2, size, 2, 2, 1, x.data, x.data, y.data, y.data, maxbit.data);
-    EndComputation();
+    llama::end();
     llama->output(y);
     llama->output(maxbit);
     llama->finalize();
@@ -912,10 +912,10 @@ void test_signextend(int party) {
         x(i, 0, 0, 0) = x(i, 0, 0, 0) >> scale;
     }
 
-    StartComputation();
+    llama::start();
     Tensor4D<u64> drelu(size, 1, 1, 1);
     SignExtend2(size, 64 - scale, 64, x.data, x.data);
-    EndComputation();
+    llama::end();
     llama->output(x);
     llama->finalize();
     if (LlamaConfig::party != 1) {
@@ -949,14 +949,14 @@ void microbenchmark_conv(int party) {
     model.setBackend(llama);
 
     llama->initializeWeights(model); // dealer initializes the weights and sends to the parties
-    StartComputation();
+    llama::start();
 
     u64 imgSize = 64;
     model.init(bs, imgSize, imgSize, 64, scale);
     Tensor4D<u64> trainImages(bs, imgSize, imgSize, 64);
     // llama->inputA(trainImages);
     model.forward(trainImages);
-    EndComputation();
+    llama::end();
     llama->finalize();
 }
 
@@ -982,13 +982,13 @@ void microbenchmark_rt_llamaext(int party) {
     });
     model.setBackend(llama);
 
-    StartComputation();
+    llama::start();
     u64 numrelu = 10000000;
     model.init(1, numrelu, 1, 1, scale);
     Tensor4D<u64> trainImages(1, numrelu, 1, 1);
     // llama->inputA(trainImages);
     model.forward(trainImages);
-    EndComputation();
+    llama::end();
     llama->finalize();
 }
 
@@ -1012,14 +1012,14 @@ void microbenchmark_rt_llamaimp(int party) {
     });
     model.setBackend(llama);
 
-    StartComputation();
+    llama::start();
     u64 numrelu = 10000;
     model.init(1, numrelu, 1, 1, scale);
     Tensor4D<u64> trainImages(1, numrelu, 1, 1);
 
     llama->truncateForward(trainImages, scale);
     model.forward(trainImages);
-    EndComputation();
+    llama::end();
     llama->finalize();
 }
 
@@ -1049,13 +1049,13 @@ void microbenchmark_maxpool_llamaimp(int party) {
     });
     model.setBackend(llama);
 
-    StartComputation();
+    llama::start();
     model.init(bs, imgDim, imgDim, 64, scale);
     Tensor4D<u64> trainImages(bs, imgDim, imgDim, 64);
 
     llama->truncateForward(trainImages, scale);
     model.forward(trainImages);
-    EndComputation();
+    llama::end();
     llama->finalize();
 }
 
@@ -1073,10 +1073,10 @@ void piranha_microbenchmark(int party) {
     std::string ip = "172.31.45.174";
     llama->init(ip, true);
 
-    StartComputation();
+    llama::start();
     Tensor4D<u64> trainImages(128, 10, 1, 1);
     PiranhaSoftmax(128, 10, trainImages.data, trainImages.data, trainImages.data, trainImages.data, scale);
-    EndComputation();
+    llama::end();
     llama->finalize();
 }
 
@@ -1243,9 +1243,9 @@ void softmax_microbenchmark(int party) {
     Tensor4D<u64> moutput(bs, 10, 1, 1);
     Tensor4D<u64> e(bs, 10, 1, 1);
 
-    StartComputation();
+    llama::start();
     softmax_secfloat(moutput, e, scale, party);
-    EndComputation();
+    llama::end();
     llama->finalize();
 }
 

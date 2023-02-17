@@ -1,6 +1,7 @@
 #pragma once
 #include <sytorch/utils.h>
-#include "../../../backend/cleartext.h"
+#include <llama/assert.h>
+#include <sytorch/backend/cleartext.h>
 #include <string>
 
 struct layer_dims {

@@ -1,8 +1,8 @@
 #pragma once
 #include <sytorch/tensor.h>
-#include "../../backend/sci/src/library_float.h"
-#include "../../backend/minillama/stats.h"
-#include "../../backend/minillama/api.h"
+#include <library_float.h>
+#include <llama/stats.h>
+#include <llama/api.h>
 
 template <typename T, u64 scale>
 void softmax(const Tensor4D<T> &in, Tensor4D<T> &out)
