@@ -9,8 +9,6 @@
 #include "networks.h"
 #include "backend/llama_extended.h"
 #include "backend/llama_improved.h"
-#include "backend/carvanha.h"
-#include "gpu_main.h"
 #include "cifar10.hpp"
 #include <filesystem>
 
@@ -525,29 +523,6 @@ void fptraining_init() {
     std::cerr << "> Debug Build" << std::endl;
 #endif
     std::cerr << "> Eigen will use " << Eigen::nbThreads() << " threads" << std::endl;
-}
-
-void carvanha_compile() {
-    auto model = Sequential<float>({
-        new Conv2D<float>(3, 64, 5, 1),
-        new ReLU<float>(),
-        new MaxPool2D<float>(3, 0, 2),
-        new Conv2D<float>(64, 64, 5, 1),
-        new ReLU<float>(),
-        new MaxPool2D<float>(3, 0, 2),
-        new Conv2D<float>(64, 64, 5, 1),
-        new ReLU<float>(),
-        new MaxPool2D<float>(3, 0, 2),
-        new Flatten<float>(),
-        new FC<float>(64, 10),
-    });
-    // model.init(bs, 32, 32, 3, scale);
-    // auto model = Sequential<float>({
-    //     new FC<float, 0>(64, 10),
-    // });
-    // dump_training_gpu_code(model, 64 , 1, 1, "FC");
-    dump_training_gpu_code(model, 32 , 32, 3, "3Layer");
-    // dump_inference_gpu_code(model, 500000, 1, 1, "chemistry");
 }
 
 void llama_fixtofloat_test(int party) {
