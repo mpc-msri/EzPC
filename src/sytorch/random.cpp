@@ -1,4 +1,4 @@
-#include "random.h"
+#include <sytorch/random.h>
 
 osuCrypto::PRNG prngWeights;
 osuCrypto::PRNG prngStr;

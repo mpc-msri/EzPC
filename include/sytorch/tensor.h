@@ -3,7 +3,8 @@
 #include <cassert>
 #include <Eigen/Dense>
 #include <iostream>
-#include "random.h"
+#include <sytorch/random.h>
+#include <cmath>
 
 typedef uint64_t u64;
 typedef int64_t i64;

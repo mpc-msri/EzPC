@@ -1,6 +1,6 @@
 #pragma once
 #include "backend.h"
-#include "../utils.h"
+#include <sytorch/utils.h>
 #include <thread>
 
 template <typename T>

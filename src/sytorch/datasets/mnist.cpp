@@ -1,4 +1,4 @@
-#include "mnist.h"
+#include <sytorch/datasets/mnist.h>
 
 unsigned char image[MAX_NUM_OF_IMAGES][MAX_IMAGESIZE][MAX_IMAGESIZE];
 int width[MAX_NUM_OF_IMAGES], height[MAX_NUM_OF_IMAGES];

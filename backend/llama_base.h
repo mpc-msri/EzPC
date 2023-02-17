@@ -1,5 +1,5 @@
 #pragma once
-#include "../utils.h"
+#include <sytorch/utils.h>
 #include "cleartext.h"
 #include "minillama/config.h"
 #include "minillama/input_prng.h"

@@ -1,5 +1,6 @@
 
 #include "cleartext.h"
+#include <Eigen/Dense>
 
 template <typename T>
 void ClearText<T>::matmul(const Tensor2D<T> &a, const Tensor2D<T> &b, Tensor2D<T> &c) {

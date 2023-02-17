@@ -1,8 +1,8 @@
 #pragma once
-#include "layers.h"
-#include "mnist.h"
-#include "cifar10.hpp"
-#include "softmax.h"
+#include <sytorch/layers/layers.h>
+#include <sytorch/datasets/mnist.h>
+#include <sytorch/datasets/cifar10.h>
+#include <sytorch/softmax.h>
 
 void printprogress(double percent);
 

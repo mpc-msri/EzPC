@@ -1,6 +1,5 @@
 #pragma once
 #include "llama_base.h"
-#include "../layers.h"
 
 template <typename T>
 class Sequential;

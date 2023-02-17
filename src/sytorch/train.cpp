@@ -1,8 +1,8 @@
 #include <iomanip>
-#include "train.h"
-#include "cifar10.hpp"
-#include "mnist.h"
-#include "softmax.h"
+#include <sytorch/train.h>
+#include <sytorch/datasets/cifar10.h>
+#include <sytorch/datasets/mnist.h>
+#include <sytorch/softmax.h>
 
 void printprogress(double percent) {
     int val = (int) (percent * 100);

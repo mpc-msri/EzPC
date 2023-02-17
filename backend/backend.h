@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../tensor.h"
+#include <sytorch/tensor.h>
 #include "minillama/api.h"
 
 #define NOT_IMPLEMENTED { \

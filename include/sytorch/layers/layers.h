@@ -1,7 +1,6 @@
 #pragma once
-#include "tensor.h"
-#include "utils.h"
-#include "backend/cleartext.h"
+#include <sytorch/utils.h>
+#include "../../../backend/cleartext.h"
 #include <string>
 
 struct layer_dims {

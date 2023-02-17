@@ -1,5 +1,5 @@
 #pragma once
-#include "tensor.h"
+#include <sytorch/tensor.h>
 
 template <typename T>
 Tensor2D<T> reshapeFilter(const Tensor4D<T> &filter) {

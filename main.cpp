@@ -4,13 +4,14 @@
 #include <vector>
 #include <cmath>
 #include <iomanip>
-#include "layers.h"
-#include "softmax.h"
-#include "networks.h"
+#include <sytorch/layers/layers.h>
+#include <sytorch/softmax.h>
+#include <sytorch/networks.h>
+#include <sytorch/datasets/cifar10.h>
+#include <filesystem>
+#include <Eigen/Dense>
 #include "backend/llama_extended.h"
 #include "backend/llama_improved.h"
-#include "cifar10.hpp"
-#include <filesystem>
 
 template <typename T, u64 scale>
 void cifar10_fill_images(Tensor4D<T>& trainImages, Tensor<u64> &trainLabels, int datasetOffset = 0) {
@@ -1250,7 +1251,7 @@ void softmax_microbenchmark(int party) {
 
 int main(int argc, char** argv) {
     fptraining_init();
-    // lenet_int();
+    lenet_int();
     // lenet_float();
     // threelayer_int();
     // threelayer_float();
@@ -1290,7 +1291,7 @@ int main(int argc, char** argv) {
     // test_reluspline(party);
     // microbenchmark_maxpool_llamaimp(party);
     // piranha_microbenchmark(party);
-    ct_vgg_imgnet();
+    // ct_vgg_imgnet();
     // softmax_microbenchmark(party);
 
 }
