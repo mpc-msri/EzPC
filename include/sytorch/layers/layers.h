@@ -689,3 +689,43 @@ public:
         return {in.n, in.h, in.w, in.c};
     }
 };
+
+template <typename T>
+class BatchNorm2dInference : public Layer<T> {
+public:
+    Tensor<T> A; // scale = s
+    Tensor<T> B; // scale = 2s
+
+    BatchNorm2dInference(u64 channels) : Layer<T>("BatchNorm2dInference"), A(channels), B(channels) {
+        this->A.fill(0);
+        this->B.fill(0);
+    }
+
+    void init(u64 d1, u64 d2, u64 d3, u64 d4, u64 scale) {
+        this->scale = scale;
+        resize(d1, d2, d3, d4);
+    }
+
+    void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
+        this->inputDerivative.resize(d1, d2, d3, d4);
+        this->activation.resize(d1, d2, d3, d4);
+    }
+
+    void forward_internal(const Tensor4D<T> &a, bool train = true) {
+        assert(a.d4 == this->A.size);
+        if (train) {
+            std::runtime_error("BatchNorm2dInference should not be used in training mode");
+        }
+        else {
+            this->backend->batchNorm2dInference(this->A, this->B, a, this->activation, this->scale);
+        }
+    }
+
+    void backward(const Tensor4D<T> &e) {
+        std::runtime_error("BatchNorm2dInference should not be used in training mode");
+    }
+
+    struct layer_dims get_output_dims(struct layer_dims &in) {
+        return {in.n, in.h, in.w, in.c};
+    }
+};

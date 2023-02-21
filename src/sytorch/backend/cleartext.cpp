@@ -790,6 +790,28 @@ void ClearText<T>::batchNorm2dBackward(Tensor4D<T> &din, const Tensor4D<T> &dout
     }
 }
 
+template <typename T>
+void ClearText<T>::batchNorm2dInference(const Tensor<T> &A, const Tensor<T> &B, const Tensor4D<T> &x, Tensor4D<T> &y, u64 scale)
+{
+    assert(A.size == B.size);
+    assert(A.size == x.d4);
+    assert(x.d4 == y.d4);
+    assert(x.d1 == y.d1);
+    assert(x.d2 == y.d2);
+    assert(x.d3 == y.d3);
+    fastfor(x.d4, [&](int l) {
+        for(int i = 0; i < x.d1; i++) {
+            for(int j = 0; j < x.d2; j++) {
+                for(int k = 0; k < x.d3; k++) {
+                    y(i, j, k, l) = A(l) * x(i, j, k, l) + B(l);
+                    if constexpr (!std::is_floating_point<T>::value)
+                        y(i, j, k, l) /= (1LL << scale); // due to multiplication
+                }
+            }
+        }
+    });
+}
+
 template class ClearText<i64>;
 template class ClearText<i32>;
 template class ClearText<u64>;

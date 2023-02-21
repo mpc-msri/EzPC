@@ -517,7 +517,7 @@ void fptraining_init() {
     prngWeights.SetSeed(osuCrypto::toBlock(0, 0));
     prngStr.SetSeed(osuCrypto::toBlock(time(NULL)));
     // set floating point precision
-    std::cout << std::fixed  << std::setprecision(1);
+    // std::cout << std::fixed  << std::setprecision(1);
 #ifdef NDEBUG
     std::cerr << "> Release Build" << std::endl;
 #else
@@ -1249,9 +1249,292 @@ void softmax_microbenchmark(int party) {
     llama->finalize();
 }
 
+template <typename T>
+void add(const Tensor4D<T> &a, const Tensor4D<T> &b, Tensor4D<T> &c)
+{
+    for (int i = 0; i < a.d1; ++i) {
+        for (int j = 0; j < a.d2; ++j) {
+            for (int k = 0; k < a.d3; ++k) {
+                for (int l = 0; l < a.d4; ++l) {
+                    c(i, j, k, l) = a(i, j, k, l) + b(i, j, k, l);
+                }
+            }
+        }
+    }
+}
+
+template <typename T>
+Tensor4D<T> add(const Tensor4D<T> &a, const Tensor4D<T> &b)
+{
+    Tensor4D<T> c(a.d1, a.d2, a.d3, a.d4);
+    add(a, b, c);
+    return c;
+}
+
+template <typename T>
+class ResNet9 {
+public:
+    union {
+        struct {
+            Conv2D<T> *conv1;
+            BatchNorm2dInference<T> *bn1;
+            ReLU<T> *relu1;
+            Conv2D<T> *conv2;
+            BatchNorm2dInference<T> *bn2;
+            ReLU<T> *relu2;
+            MaxPool2D<T> *maxpool;
+            Conv2D<T> *conv3;
+            BatchNorm2dInference<T> *bn3;
+            ReLU<T> *relu3;
+            Conv2D<T> *conv4;
+            BatchNorm2dInference<T> *bn4;
+            ReLU<T> *relu4;
+            Conv2D<T> *conv5;
+            BatchNorm2dInference<T> *bn5;
+            ReLU<T> *relu5;
+            MaxPool2D<T> *maxpool2;
+            Conv2D<T> *conv6;
+            BatchNorm2dInference<T> *bn6;
+            ReLU<T> *relu6;
+            MaxPool2D<T> *maxpool3;
+            Conv2D<T> *conv7;
+            BatchNorm2dInference<T> *bn7;
+            ReLU<T> *relu7;
+            Conv2D<T> *conv8;
+            BatchNorm2dInference<T> *bn8;
+            ReLU<T> *relu8;
+            MaxPool2D<T> *maxpool4;
+            Flatten<T> *flatten;
+            FC<T> *fc;
+        };
+        Layer<T> *layers[30];
+    };
+
+    Tensor4D<T> activation;
+
+public:
+    ResNet9() : activation(1, 10, 1, 1)
+    {
+        conv1 = new Conv2D<T>(3, 64, 3, 1);
+        bn1 = new BatchNorm2dInference<T>(64);
+        relu1 = new ReLU<T>();
+        
+        conv2 = new Conv2D<T>(64, 128, 3, 1);
+        bn2 = new BatchNorm2dInference<T>(128);
+        relu2 = new ReLU<T>();
+        maxpool = new MaxPool2D<T>(2, 0, 2);
+
+        conv3 = new Conv2D<T>(128, 128, 3, 1);
+        bn3 = new BatchNorm2dInference<T>(128);
+        relu3 = new ReLU<T>();
+        conv4 = new Conv2D<T>(128, 128, 3, 1);
+        bn4 = new BatchNorm2dInference<T>(128);
+        relu4 = new ReLU<T>();
+
+        conv5 = new Conv2D<T>(128, 256, 3, 1);
+        bn5 = new BatchNorm2dInference<T>(256);
+        relu5 = new ReLU<T>();
+        maxpool2 = new MaxPool2D<T>(2, 0, 2);
+
+        conv6 = new Conv2D<T>(256, 512, 3, 1);
+        bn6 = new BatchNorm2dInference<T>(512);
+        relu6 = new ReLU<T>();
+        maxpool3 = new MaxPool2D<T>(2, 0, 2);
+
+        conv7 = new Conv2D<T>(512, 512, 3, 1);
+        bn7 = new BatchNorm2dInference<T>(512);
+        relu7 = new ReLU<T>();
+        conv8 = new Conv2D<T>(512, 512, 3, 1);
+        bn8 = new BatchNorm2dInference<T>(512);
+        relu8 = new ReLU<T>();
+
+        maxpool4 = new MaxPool2D<T>(4, 0, 4);
+        flatten = new Flatten<T>();
+        fc = new FC<T>(512, 10);
+    }
+
+    void init(u64 scale)
+    {
+        conv1->init(1, 32, 32, 3, scale);
+        bn1->init(1, 32, 32, 64, scale);
+        relu1->init(1, 32, 32, 64, scale);
+        
+        conv2->init(1, 32, 32, 64, scale);
+        bn2->init(1, 32, 32, 128, scale);
+        relu2->init(1, 32, 32, 128, scale);
+        
+        maxpool->init(1, 32, 32, 128, scale);
+
+        conv3->init(1, 16, 16, 128, scale);
+        bn3->init(1, 16, 16, 128, scale);
+        relu3->init(1, 16, 16, 128, scale);
+        conv4->init(1, 16, 16, 128, scale);
+        bn4->init(1, 16, 16, 128, scale);
+        relu4->init(1, 16, 16, 128, scale);
+
+        conv5->init(1, 16, 16, 128, scale);
+        bn5->init(1, 16, 16, 256, scale);
+        relu5->init(1, 16, 16, 256, scale);
+        
+        maxpool2->init(1, 16, 16, 256, scale);
+
+        conv6->init(1, 8, 8, 256, scale);
+        bn6->init(1, 8, 8, 512, scale);
+        relu6->init(1, 8, 8, 512, scale);
+        
+        maxpool3->init(1, 8, 8, 512, scale);
+
+        conv7->init(1, 4, 4, 512, scale);
+        bn7->init(1, 4, 4, 512, scale);
+        relu7->init(1, 4, 4, 512, scale);
+        conv8->init(1, 4, 4, 512, scale);
+        bn8->init(1, 4, 4, 512, scale);
+        relu8->init(1, 4, 4, 512, scale);
+
+        maxpool4->init(1, 4, 4, 512, scale);
+        flatten->init(1, 1, 1, 512, scale);
+        fc->init(1, 512, 1, 1, scale);
+    }
+
+    void setBackend(Backend<T> *b)
+    {
+        for (int i = 0; i < 30; ++i) {
+            layers[i]->setBackend(b);
+        }
+    }
+
+    void loadFloatWeights(const std::string weightsFile, u64 scale) {
+        size_t size_in_bytes = std::filesystem::file_size(weightsFile);
+        always_assert(size_in_bytes % 4 == 0); // as it's float
+        size_t numParameters = size_in_bytes / 4;
+        float *floatWeights = new float[numParameters];
+        
+        std::ifstream file(weightsFile, std::ios::binary);
+        file.read((char*) floatWeights, size_in_bytes);
+        file.close();
+        
+        size_t wIdx = 0;
+        for(int i = 0; i < 30; i++) {
+            // std::cout << "Loading " << layers[i]->name << std::endl;
+            if(layers[i]->name.find("Conv2D") != std::string::npos || layers[i]->name.find("FC") != std::string::npos) {
+                auto& weights = layers[i]->getweights();
+
+                for (int j = 0; j < weights.d1; j++) {
+                    for(int k = 0; k < weights.d2; ++k) {
+                        weights(j, k) = floatWeights[wIdx + weights.d2 * j + k] * (1LL << scale);
+                    }
+                }
+                
+                auto wSize = weights.d1 * weights.d2;
+                wIdx += wSize;
+
+                auto& bias = layers[i]->getbias();
+
+                for (int j = 0; j < bias.size; ++j) {
+                    bias(j) = floatWeights[wIdx + j] * (1LL << (2*scale));
+                }
+
+                wSize = bias.size;
+                wIdx += wSize;
+            }
+            else if (layers[i]->name.find("BatchNorm2dInference") != std::string::npos) {
+                auto bn = (BatchNorm2dInference<T>*) layers[i];
+                auto channel = bn->A.size;
+                auto gammaPtr = floatWeights + wIdx;
+                auto betaPtr = floatWeights + wIdx + channel;
+                auto meanPtr = floatWeights + wIdx + 2 * channel;
+                auto varPtr = floatWeights + wIdx + 3 * channel;
+                for (int j = 0; j < channel; ++j) {
+                    bn->A(j) = (gammaPtr[j] / std::sqrt(varPtr[j])) * (1LL << scale);
+                    bn->B(j) = (betaPtr[j] - gammaPtr[j] * meanPtr[j] / std::sqrt(varPtr[j])) * (1LL << (2 * scale));
+                }
+                wIdx += 4 * channel;
+            }
+        }
+        always_assert(wIdx == numParameters);
+        delete[] floatWeights;
+    }
+
+    Tensor4D<T>& forward(Tensor4D<T> &input)
+    {
+        // conv block
+        auto &var1 = conv1->forward(input, false);
+        auto &var2 = bn1->forward(var1, false);
+        auto &var3 = relu1->forward(var2, false);
+
+        // conv block
+        auto &var4 = conv2->forward(var3, false);
+        auto &var5 = bn2->forward(var4, false);
+        auto &var6 = relu2->forward(var5, false);
+
+        // maxpool
+        auto &var7 = maxpool->forward(var6, false);
+
+        // res block
+        auto &var8 = conv3->forward(var7, false);
+        auto &var9 = bn3->forward(var8, false);
+        auto &var10 = relu3->forward(var9, false);
+        auto &var11 = conv4->forward(var10, false);
+        auto &var12 = bn4->forward(var11, false);
+        auto &var13 = relu4->forward(var12, false);
+        auto var14 = add(var7, var13);
+
+        // conv block
+        auto &var15 = conv5->forward(var14, false);
+        auto &var16 = bn5->forward(var15, false);
+        auto &var17 = relu5->forward(var16, false);
+
+        // maxpool
+        auto &var18 = maxpool2->forward(var17, false);
+
+        // conv block
+        auto &var19 = conv6->forward(var18, false);
+        auto &var20 = bn6->forward(var19, false);
+        auto &var21 = relu6->forward(var20, false);
+
+        // maxpool
+        auto &var22 = maxpool3->forward(var21, false);
+
+        // res block
+        auto &var23 = conv7->forward(var22, false);
+        auto &var24 = bn7->forward(var23, false);
+        auto &var25 = relu7->forward(var24, false);
+        auto &var26 = conv8->forward(var25, false);
+        auto &var27 = bn8->forward(var26, false);
+        auto &var28 = relu8->forward(var27, false);
+        auto var29 = add(var22, var28);
+
+        // maxpool
+        auto &var30 = maxpool4->forward(var29, false);
+
+        // flatten
+        auto &var31 = flatten->forward(var30, false);
+
+        // fc
+        auto &var32 = fc->forward(var31, false);
+
+        activation.copy(var32);
+        return activation;
+    }
+};
+
+void module_test()
+{
+    ResNet9<i64> resnet;
+    resnet.init(24);
+    resnet.loadFloatWeights("cifar10_resnet9-float.dat", 24);
+    Tensor4D<i64> input(1, 32, 32, 3);
+    input.fill(1LL << 24);
+    auto &res = resnet.forward(input);
+    for(int i = 0; i < 10; ++i) {
+        std::cout << ((double)res(0, i, 0, 0)) / (1LL << 24) << std::endl;
+    }
+}
+
 int main(int argc, char** argv) {
     fptraining_init();
-    lenet_int();
+    // lenet_int();
+    module_test();
     // lenet_float();
     // threelayer_int();
     // threelayer_float();
