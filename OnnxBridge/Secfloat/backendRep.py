@@ -197,9 +197,10 @@ def prepare_export(program, var_dict, value_info, backend, file_path):
                 for input_var in node.inputs
             ]
             prepare_func(code_list, node, var_dict, value_info, input_taken, indent)
-            # check_variables_to_delete(
-            #     delete_order_list, code_list, counter, var_dict, indent
-            # )
+            if backend == "SECFLOAT_CLEARTEXT":
+                check_variables_to_delete(
+                    delete_order_list, code_list, counter, var_dict, indent
+                )
         elif isinstance(node, Output):
             prepare_output(code_list, node, var_dict, indent)
 

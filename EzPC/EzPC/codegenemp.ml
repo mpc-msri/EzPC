@@ -100,7 +100,7 @@ let o_sbinop (l:secret_label) (op:binop) (c1:comp) (c2:comp) :comp =
   | Sub                -> aux ".operator-" 
   | Mul                -> aux ".operator*" 
   | Greater_than       -> 
-    if l==Baba then rev_aux ".less_than" else aux ".operator<" 
+    if l==Baba then rev_aux ".greater_than" else aux ".operator>" 
   | Div                -> aux ".operator/"
   | Mod                ->
     if l==Baba then unsup() else aux ".operator%"
@@ -110,12 +110,12 @@ let o_sbinop (l:secret_label) (op:binop) (c1:comp) (c2:comp) :comp =
     if l==Baba then aux ".equal" else aux ".operator=="
   | Greater_than_equal -> 
     if l == Baba 
-      then o_app (seq (o_paren(aux ".less_than")) (o_str ".operator!")) [] 
-      else aux ".operator<"
+      then o_app (seq (o_paren(aux ".greater_than")) (o_str ".operator!")) [] 
+      else aux ".operator>="
   | Less_than_equal    ->
     if l == Baba 
       then o_app (seq (o_paren(rev_aux ".less_than")) (o_str ".operator!")) [] 
-      else aux ".operator<"
+      else aux ".operator<="
   | And                -> aux ".operator&" 
   | Or                 -> aux ".operator|" 
   | Xor                -> aux ".operator^" 

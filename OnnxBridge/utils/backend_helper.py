@@ -150,4 +150,7 @@ def fun_call(attributes, inputs, output, value_info, var_dict, indent):
 
 
 def delete_variable(name, indent):
-    return f"{'   ' * indent}delete &{name};"
+    return str(
+        f"{'   ' * indent}{name}.clear();\n"
+        f"{'   ' * indent}{name}.shrink_to_fit();\n"
+    )
