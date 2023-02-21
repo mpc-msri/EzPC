@@ -1396,6 +1396,44 @@ public:
         fc->init(1, 512, 1, 1, scale);
     }
 
+    void zero()
+    {
+        conv1->filter.fill(0);
+        conv1->bias.fill(0);
+        bn1->A.fill(0);
+        bn1->B.fill(0);
+        conv2->filter.fill(0);
+        conv2->bias.fill(0);
+        bn2->A.fill(0);
+        bn2->B.fill(0);
+        conv3->filter.fill(0);
+        conv3->bias.fill(0);
+        bn3->A.fill(0);
+        bn3->B.fill(0);
+        conv4->filter.fill(0);
+        conv4->bias.fill(0);
+        bn4->A.fill(0);
+        bn4->B.fill(0);
+        conv5->filter.fill(0);
+        conv5->bias.fill(0);
+        bn5->A.fill(0);
+        bn5->B.fill(0);
+        conv6->filter.fill(0);
+        conv6->bias.fill(0);
+        bn6->A.fill(0);
+        bn6->B.fill(0);
+        conv7->filter.fill(0);
+        conv7->bias.fill(0);
+        bn7->A.fill(0);
+        bn7->B.fill(0);
+        conv8->filter.fill(0);
+        conv8->bias.fill(0);
+        bn8->A.fill(0);
+        bn8->B.fill(0);
+        fc->weight.fill(0);
+        fc->bias.fill(0);
+    }
+
     void setBackend(Backend<T> *b)
     {
         for (int i = 0; i < 30; ++i) {
@@ -1531,10 +1569,50 @@ void module_test()
     }
 }
 
+void module_test_llama_ext(int party)
+{
+    using LlamaVersion = LlamaExtended<u64>;
+    LlamaVersion *llama = new LlamaVersion();
+    srand(time(NULL));
+    const u64 scale = 24;
+    LlamaConfig::bitlength = 64;
+    LlamaConfig::party = party;
+    LlamaConfig::stochasticT = true;
+    LlamaConfig::stochasticRT = true;
+    LlamaConfig::num_threads = 4;
+    // std::string ip = "127.0.0.1";
+    std::string ip = "127.0.0.1";
+    llama->init(ip, true);
+
+    ResNet9<u64> resnet;
+    resnet.init(24);
+    resnet.setBackend(llama);
+    if (party != 1) {
+        resnet.loadFloatWeights("cifar10_resnet9-float.dat", 24);
+    }
+    else {
+        resnet.zero();
+    }
+
+    llama::start();
+    Tensor4D<u64> input(1, 32, 32, 3);
+    input.fill(1LL << 24);
+    llama->inputA(input);
+
+    resnet.forward(input);
+    llama::end();
+    llama->output(resnet.activation);
+    if (party != 1)
+        for(int i = 0; i < 10; ++i) {
+            std::cout << ((double)resnet.activation(0, i, 0, 0)) / (1LL << 24) << std::endl;
+        }
+    llama->finalize();
+}
+
 int main(int argc, char** argv) {
     fptraining_init();
     // lenet_int();
-    module_test();
+    // module_test();
     // lenet_float();
     // threelayer_int();
     // threelayer_float();
@@ -1548,6 +1626,7 @@ int main(int argc, char** argv) {
     if (argc > 1) {
         party = atoi(argv[1]);
     }
+    module_test_llama_ext(party);
     // llama_test_3layer(party);
     // llama_test_lenet_gupta(party);
     // gpu_main(argc, argv);

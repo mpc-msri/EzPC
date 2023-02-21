@@ -64,6 +64,42 @@ public:
         MaxPoolBackward(out.d1, out.d2, out.d3, out.d4, ks, ks, padding, padding, padding, padding, stride, stride, in.d1, in.d2, in.d3, in.d4, in.data, in.data, out.data, out.data, maxIdx.data);
     }
 
+    void batchNorm2dInference(const Tensor<T> &A, const Tensor<T> &B, const Tensor4D<T> &x, Tensor4D<T> &y, u64 scale)
+    {
+        assert(A.size == B.size);
+        assert(A.size == x.d4);
+        assert(x.d4 == y.d4);
+        assert(x.d1 == y.d1);
+        assert(x.d2 == y.d2);
+        assert(x.d3 == y.d3);
+        // replicate A and B
+        Tensor4D<T> A2(x.d1, x.d2, x.d3, x.d4);
+        for (int i = 0; i < x.d1; ++i) {
+            for(int j = 0; j < x.d2; ++j) {
+                for(int k = 0; k < x.d3; ++k) {
+                    for(int l = 0; l < x.d4; ++l) {
+                        A2(i, j, k, l) = A(l);
+                    }
+                }
+            }
+        }
+
+        ElemWiseSecretSharedVectorMult(x.d1 * x.d2 * x.d3 * x.d4, x.data, x.data, A2.data, A2.data, y.data, y.data);
+
+        for(int i = 0; i < x.d1; ++i) {
+            for(int j = 0; j < x.d2; ++j) {
+                for(int k = 0; k < x.d3; ++k) {
+                    for(int l = 0; l < x.d4; ++l) {
+                        y(i, j, k, l) += B(l);
+                    }
+                }
+            }
+        }
+
+        this->truncateForward(y, scale);
+
+    }
+
     void optimize(Sequential<T> &model) {
         // push truncations forward
         int sz = model.layers.size();
