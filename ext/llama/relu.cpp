@@ -89,6 +89,7 @@ GroupElement evalRelu(int party, GroupElement x, const ReluKeyPack &k, GroupElem
 {
     int Bout = k.Bout;
     int Bin = k.Bin;
+    mod(x, Bin);
 
     GroupElement p = 0;
     GroupElement q = GroupElement((((uint64_t)1 << (Bin-1)) - 1));

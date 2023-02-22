@@ -2,6 +2,7 @@
 
 #include <sytorch/tensor.h>
 #include <llama/api.h>
+#include <llama/assert.h>
 
 #define NOT_IMPLEMENTED { \
         throw std::runtime_error("not implemented");\

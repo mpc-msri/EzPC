@@ -48,3 +48,8 @@ add_executable(main
     main.cpp
 )
 target_link_libraries (main ${PROJECT_NAME})
+
+add_executable(module 
+    module.cpp
+)
+target_link_libraries (module ${PROJECT_NAME})
