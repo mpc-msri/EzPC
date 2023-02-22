@@ -1,5 +1,8 @@
 #pragma once
 #include <sytorch/tensor.h>
+#include <queue>
+#include <set>
+#include <fstream>
 
 template <typename T>
 Tensor2D<T> reshapeFilter(const Tensor4D<T> &filter) {
@@ -111,4 +114,35 @@ void transposeFilter(u64 fh, u64 fw, u64 ci, u64 co, const Tensor2D<T> &filter, 
             }
         }
     }
+}
+
+
+template <typename T>
+void print_dot_graph(LayerTreeNode<T> *root)
+{
+    std::ofstream dotfile("graph.dot");
+    dotfile << "digraph G {" << std::endl;
+    std::queue<LayerTreeNode<T> *> q;
+    std::set<LayerTreeNode<T> *> visited;
+    q.push(root);
+    while (!q.empty()) {
+        LayerTreeNode<T> *curr = q.front();
+        if (visited.find(curr) != visited.end()) {
+            q.pop();
+            continue;
+        }
+        q.pop();
+        if (curr->curr != nullptr) {
+            dotfile << curr->curr->name + std::to_string((u64)(curr->curr)) << " [label=\"" << curr->curr->name << "\"];" << std::endl;
+        }
+        for (auto &child : curr->children) {
+            if (curr->curr != nullptr) {
+                dotfile << curr->curr->name + std::to_string((u64)(curr->curr)) << " -> " << child->curr->name + std::to_string((u64)(child->curr)) << ";" << std::endl;
+            }
+            q.push(child);
+        }
+        visited.insert(curr);
+    }
+    dotfile << "}" << std::endl;
+    dotfile.close();
 }

@@ -22,6 +22,7 @@ public:
     bool isFirst = false;
     u64 scale = 0;
     Backend<T> *backend = nullptr;
+    static bool treeInit;
 
     Layer(const std::string &id) : activation(0,0,0,0), inputDerivative(0,0,0,0), name(id) {
         backend = new ClearText<T>();
@@ -30,6 +31,12 @@ public:
     virtual void resize(u64 d1, u64 d2, u64 d3, u64 d4) = 0;
     virtual void forward_internal(const Tensor4D<T> &a, bool train = true) = 0;
     Tensor4D<T>& forward(const Tensor4D<T> &a, bool train = true) {
+        if (treeInit) {
+            activation.treeDat->curr = this;
+            activation.treeDat->parents.push_back(a.treeDat);
+            a.treeDat->children.push_back(activation.treeDat);
+            return activation;
+        }
         if (a.d1 != inputDerivative.d1 || a.d2 != inputDerivative.d2 || a.d3 != inputDerivative.d3 || a.d4 != inputDerivative.d4) {
             resize(a.d1, a.d2, a.d3, a.d4);
         }
@@ -729,3 +736,65 @@ public:
         return {in.n, in.h, in.w, in.c};
     }
 };
+
+template <typename T>
+class PlaceHolderLayer : public Layer<T> {
+public:
+    PlaceHolderLayer(const std::string &s) : Layer<T>(s) {
+    }
+
+    void init(u64 d1, u64 d2, u64 d3, u64 d4, u64 scale) {
+        std::runtime_error("PlaceHolderLayer only to be used for tree traversal");
+    }
+
+    void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
+        std::runtime_error("PlaceHolderLayer only to be used for tree traversal");
+    }
+
+    void forward_internal(const Tensor4D<T> &a, bool train = true) {
+        std::runtime_error("PlaceHolderLayer only to be used for tree traversal");
+    }
+
+    void backward(const Tensor4D<T> &e) {
+        std::runtime_error("PlaceHolderLayer only to be used for tree traversal");
+    }
+
+    struct layer_dims get_output_dims(struct layer_dims &in) {
+        std::runtime_error("PlaceHolderLayer only to be used for tree traversal");
+        return {0, 0, 0, 0};
+    }
+};
+
+template <typename T>
+void add(const Tensor4D<T> &a, const Tensor4D<T> &b, Tensor4D<T> &c)
+{
+    if (Layer<T>::treeInit) {
+        c.treeDat->curr = new PlaceHolderLayer<T>("Add");
+        c.treeDat->parents.push_back(a.treeDat);
+        c.treeDat->parents.push_back(b.treeDat);
+        a.treeDat->children.push_back(c.treeDat);
+        b.treeDat->children.push_back(c.treeDat);
+        return;
+    }
+
+    for (int i = 0; i < a.d1; ++i) {
+        for (int j = 0; j < a.d2; ++j) {
+            for (int k = 0; k < a.d3; ++k) {
+                for (int l = 0; l < a.d4; ++l) {
+                    c(i, j, k, l) = a(i, j, k, l) + b(i, j, k, l);
+                }
+            }
+        }
+    }
+}
+
+template <typename T>
+Tensor4D<T> add(const Tensor4D<T> &a, const Tensor4D<T> &b)
+{
+    Tensor4D<T> c(a.d1, a.d2, a.d3, a.d4);
+    add(a, b, c);
+    return c;
+}
+
+template <typename T>
+bool Layer<T>::treeInit = false;

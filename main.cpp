@@ -1250,28 +1250,6 @@ void softmax_microbenchmark(int party) {
 }
 
 template <typename T>
-void add(const Tensor4D<T> &a, const Tensor4D<T> &b, Tensor4D<T> &c)
-{
-    for (int i = 0; i < a.d1; ++i) {
-        for (int j = 0; j < a.d2; ++j) {
-            for (int k = 0; k < a.d3; ++k) {
-                for (int l = 0; l < a.d4; ++l) {
-                    c(i, j, k, l) = a(i, j, k, l) + b(i, j, k, l);
-                }
-            }
-        }
-    }
-}
-
-template <typename T>
-Tensor4D<T> add(const Tensor4D<T> &a, const Tensor4D<T> &b)
-{
-    Tensor4D<T> c(a.d1, a.d2, a.d3, a.d4);
-    add(a, b, c);
-    return c;
-}
-
-template <typename T>
 class ResNet9 {
 public:
     union {
@@ -1394,6 +1372,14 @@ public:
         maxpool4->init(1, 4, 4, 512, scale);
         flatten->init(1, 1, 1, 512, scale);
         fc->init(1, 512, 1, 1, scale);
+
+        Tensor4D<T> ip(1, 32, 32, 3);
+        ip.treeDat->curr = new PlaceHolderLayer<T>("Input");
+        Layer<T>::treeInit = true;
+        auto &res = this->forward(ip);
+        Layer<T>::treeInit = false;
+        // print_dot_graph(ip.treeDat);
+
     }
 
     void zero()
@@ -1612,7 +1598,7 @@ void module_test_llama_ext(int party)
 int main(int argc, char** argv) {
     fptraining_init();
     // lenet_int();
-    // module_test();
+    module_test();
     // lenet_float();
     // threelayer_int();
     // threelayer_float();
@@ -1626,7 +1612,7 @@ int main(int argc, char** argv) {
     if (argc > 1) {
         party = atoi(argv[1]);
     }
-    module_test_llama_ext(party);
+    // module_test_llama_ext(party);
     // llama_test_3layer(party);
     // llama_test_lenet_gupta(party);
     // gpu_main(argc, argv);

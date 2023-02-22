@@ -211,7 +211,6 @@ class ResNet9(BaseModel):
                                      ) 
     def forward(self,x):
         out=self.conv1(x)
-        self.y = out
         out=self.conv2(out)
         out=self.res1(out)+out
         out=self.conv3(out)
@@ -229,7 +228,17 @@ model.load_state_dict(sd)
 
 # make an array filled with 1
 a = torch.ones(1, 3, 32, 32)
-model(a)
+# model(a)
+
+torch.onnx.export(model,               # model being run
+                  a,                         # model input (or a tuple for multiple inputs)
+                  "resnet9.onnx",   # where to save the model (can be a file or file-like object)
+                  export_params=True,        # store the trained parameter weights inside the model file
+                  opset_version=10,          # the ONNX version to export the model to
+                  do_constant_folding=True,  # whether to execute constant folding for optimization
+                  input_names = ['input'],   # the model's input names
+                  output_names = ['output'], # the model's output names
+)
 # print("weight =", model.conv1[1].weight[0])
 # print("bias =", model.conv1[1].bias[0])
 # print("running_mean =", model.conv1[1].running_mean[0])
@@ -237,4 +246,4 @@ model(a)
 # print(model.y.size())
 # print(model.y[0][0][0][0].item())
 
-print(model(a))
+# print(model(a))

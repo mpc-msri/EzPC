@@ -24,6 +24,16 @@ bool toobig(T& x) {
 }
 
 template <typename T>
+class Layer;
+
+template <typename T>
+struct LayerTreeNode {
+    Layer<T> *curr;
+    std::vector<LayerTreeNode<T> *> parents;
+    std::vector<LayerTreeNode<T> *> children;
+};
+
+template <typename T>
 class Tensor {
 public:
     T *data;
@@ -203,10 +213,11 @@ class Tensor4D {
 public:
     T *data;
     u64 d1, d2, d3, d4;
-
+    LayerTreeNode<T> *treeDat;
     
     Tensor4D(u64 d1, u64 d2, u64 d3, u64 d4) : d1(d1), d2(d2), d3(d3), d4(d4) {
         data = new T[d1 * d2 * d3 * d4];
+        treeDat = new LayerTreeNode<T>;
     }
 
     ~Tensor4D() {
@@ -256,6 +267,7 @@ public:
         assert(d3 == other.d3);
         assert(d4 == other.d4);
         memcpy(data, other.data, d1 * d2 * d3 * d4 * sizeof(T));
+        this->treeDat = other.treeDat;
     }
 
     template <typename T2>
