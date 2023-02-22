@@ -96,7 +96,7 @@ public:
             }
         }
 
-        this->truncateForward(y, scale);
+        // this->truncateForward(y, scale);
 
     }
 
@@ -120,6 +120,42 @@ public:
             }
         }
 
+    }
+
+    void optimize(LayerTreeNode<T> *root)
+    {
+        std::set<LayerTreeNode<T> *> visited;
+        std::queue<LayerTreeNode<T> *> q;
+        q.push(root);
+        while(!q.empty()) {
+            LayerTreeNode<T> *node = q.front();
+            // std::cout << node->curr->name << std::endl;
+            q.pop();
+            if (visited.find(node) != visited.end()) {
+                continue;
+            }
+            visited.insert(node);
+            if (node->curr->doTruncationForward) {
+                if (node->children.size() == 1) {
+                    // std::cout << "yeah.." << std::endl;
+                    LayerTreeNode<T> *child = node->children[0];
+                    if (child->curr->doTruncationForward) {
+                        // no optimization possible
+                        // this is set to true for FC, Conv2D and BatchNorm2dInference
+                    }
+                    else {
+                        if (child->curr->name == "MaxPool2D" || child->curr->name == "ReLU") {
+                            // optimize
+                            node->curr->doTruncationForward = false;
+                            child->curr->doTruncationForward = true;
+                        }
+                    }
+                }
+            }
+            for (int i = 0; i < node->children.size(); ++i) {
+                q.push(node->children[i]);
+            }
+        }
     }
 
 };

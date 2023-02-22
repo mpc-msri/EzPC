@@ -82,4 +82,9 @@ public:
 
     virtual void batchNorm2dInference(const Tensor<T> &A, const Tensor<T> &B, const Tensor4D<T> &x, Tensor4D<T> &y, u64 scale) NOT_IMPLEMENTED;
 
+    virtual void optimize(LayerTreeNode<T> *root)
+    {
+        
+    }
+
 };

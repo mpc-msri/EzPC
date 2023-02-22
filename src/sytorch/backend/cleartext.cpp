@@ -804,8 +804,8 @@ void ClearText<T>::batchNorm2dInference(const Tensor<T> &A, const Tensor<T> &B, 
             for(int j = 0; j < x.d2; j++) {
                 for(int k = 0; k < x.d3; k++) {
                     y(i, j, k, l) = A(l) * x(i, j, k, l) + B(l);
-                    if constexpr (!std::is_floating_point<T>::value)
-                        y(i, j, k, l) /= (1LL << scale); // due to multiplication
+                    // if constexpr (!std::is_floating_point<T>::value)
+                    //     y(i, j, k, l) /= (1LL << scale); // due to multiplication
                 }
             }
         }

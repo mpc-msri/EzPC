@@ -1289,6 +1289,8 @@ public:
     };
 
     Tensor4D<T> activation;
+    Backend<T> *backend = new ClearText<T>;
+    LayerTreeNode<T> *root = nullptr;
 
 public:
     ResNet9() : activation(1, 10, 1, 1)
@@ -1378,6 +1380,7 @@ public:
         Layer<T>::treeInit = true;
         auto &res = this->forward(ip);
         Layer<T>::treeInit = false;
+        root = ip.treeDat;
         // print_dot_graph(ip.treeDat);
 
     }
@@ -1425,6 +1428,7 @@ public:
         for (int i = 0; i < 30; ++i) {
             layers[i]->setBackend(b);
         }
+        backend = b;
     }
 
     void loadFloatWeights(const std::string weightsFile, u64 scale) {
@@ -1540,18 +1544,24 @@ public:
         activation.copy(var32);
         return activation;
     }
+
+    void optimize()
+    {
+        backend->optimize(root);
+    }
 };
 
 void module_test()
 {
-    ResNet9<i64> resnet;
-    resnet.init(24);
-    resnet.loadFloatWeights("cifar10_resnet9-float.dat", 24);
-    Tensor4D<i64> input(1, 32, 32, 3);
-    input.fill(1LL << 24);
+    const u64 scale = 12;
+    ResNet9<i32> resnet;
+    resnet.init(scale);
+    resnet.loadFloatWeights("cifar10_resnet9-float.dat", scale);
+    Tensor4D<i32> input(1, 32, 32, 3);
+    input.fill(1LL << scale);
     auto &res = resnet.forward(input);
     for(int i = 0; i < 10; ++i) {
-        std::cout << ((double)res(0, i, 0, 0)) / (1LL << 24) << std::endl;
+        std::cout << ((double)res(0, i, 0, 0)) / (1LL << scale) << std::endl;
     }
 }
 
@@ -1571,10 +1581,11 @@ void module_test_llama_ext(int party)
     llama->init(ip, true);
 
     ResNet9<u64> resnet;
-    resnet.init(24);
+    resnet.init(scale);
     resnet.setBackend(llama);
+    resnet.optimize();
     if (party != 1) {
-        resnet.loadFloatWeights("cifar10_resnet9-float.dat", 24);
+        resnet.loadFloatWeights("cifar10_resnet9-float.dat", scale);
     }
     else {
         resnet.zero();
@@ -1582,7 +1593,7 @@ void module_test_llama_ext(int party)
 
     llama::start();
     Tensor4D<u64> input(1, 32, 32, 3);
-    input.fill(1LL << 24);
+    input.fill(1LL << scale);
     llama->inputA(input);
 
     resnet.forward(input);
@@ -1590,7 +1601,7 @@ void module_test_llama_ext(int party)
     llama->output(resnet.activation);
     if (party != 1)
         for(int i = 0; i < 10; ++i) {
-            std::cout << ((double)resnet.activation(0, i, 0, 0)) / (1LL << 24) << std::endl;
+            std::cout << ((double)(resnet.activation(0, i, 0, 0))) / (1LL << scale) << std::endl;
         }
     llama->finalize();
 }

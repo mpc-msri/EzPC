@@ -706,6 +706,7 @@ public:
     BatchNorm2dInference(u64 channels) : Layer<T>("BatchNorm2dInference"), A(channels), B(channels) {
         this->A.fill(0);
         this->B.fill(0);
+        this->doTruncationForward = true;
     }
 
     void init(u64 d1, u64 d2, u64 d3, u64 d4, u64 scale) {

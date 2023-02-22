@@ -271,7 +271,6 @@ void Conv2DPlaintext(int N, int H, int W, int CI,
     GroupElement *filterReshaped = make_array<GroupElement>(reshapedFilterRows, reshapedFilterCols);
 	GroupElement *inputReshaped = make_array<GroupElement>(reshapedIPRows, reshapedIPCols);
 	GroupElement *matmulOP = make_array<GroupElement>(reshapedFilterRows, reshapedIPCols);
-    std::cout << "reshaped size = " << reshapedIPRows * reshapedIPCols << std::endl;
     
     Conv2DReshapeInput(N, H, W, CI, FH, FW, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideH, strideW, reshapedIPRows, reshapedIPCols, inputArr, inputReshaped);
     Conv2DReshapeFilter(FH, FW, CI, CO, filterArr, filterReshaped);
