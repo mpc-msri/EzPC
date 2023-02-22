@@ -326,9 +326,7 @@ void module_test()
     Tensor4D<i64> input(1, 32, 32, 3);
     input.fill(1LL << scale);
     auto &res = resnet.forward(input);
-    for(int i = 0; i < 10; ++i) {
-        std::cout << ((double)res(0, i, 0, 0)) / (1LL << scale) << std::endl;
-    }
+    resnet.activation.print();
 }
 
 template <typename T>
@@ -338,8 +336,14 @@ void blprint(const Tensor4D<T> &p, u64 bw)
         for (int j = 0; j < p.d2; ++j) {
             for (int k = 0; k < p.d3; ++k) {
                 for (int l = 0; l < p.d4; ++l) {
-                    i64 val = (p(i, j, k, l) + (1 << (bw - 1))) % (1 << bw);
-                    val -= (1 << (bw - 1));
+                    i64 val;
+                    if (bw == 64) {
+                        val = p(i, j, k, l);
+                    }
+                    else {
+                        val = (p(i, j, k, l) + (1LL << (bw - 1))) % (1LL << bw);
+                        val -= (1LL << (bw - 1));
+                    }
                     std::cout << val << " ";
                 }
                 std::cout << std::endl;
@@ -357,9 +361,15 @@ void blprint(const Tensor4D<T> &p, u64 bw, u64 scale)
         for (int j = 0; j < p.d2; ++j) {
             for (int k = 0; k < p.d3; ++k) {
                 for (int l = 0; l < p.d4; ++l) {
-                    i64 val = (p(i, j, k, l) + (1 << (bw - 1))) % (1 << bw);
-                    val -= (1 << (bw - 1));
-                    std::cout << ((double)val) / (1LL << scale) << " ";
+                    if (bw == 64) {
+                        std::cout << ((double)p(i, j, k, l)) / (1LL << scale) << " ";
+                        continue;
+                    }
+                    else {
+                        i64 val = (p(i, j, k, l) + (1LL << (bw - 1))) % (1LL << bw);
+                        val -= (1LL << (bw - 1));
+                        std::cout << ((double)val) / (1LL << scale) << " ";
+                    }
                 }
                 std::cout << std::endl;
             }
@@ -375,7 +385,7 @@ void module_test_llama_ext(int party)
     LlamaVersion *llama = new LlamaVersion();
     srand(time(NULL));
     const u64 scale = 12;
-    LlamaConfig::bitlength = 50;
+    LlamaConfig::bitlength = 32;
     LlamaConfig::party = party;
     LlamaConfig::stochasticT = true;
     LlamaConfig::stochasticRT = true;
@@ -402,13 +412,11 @@ void module_test_llama_ext(int party)
 
     resnet.forward(input);
     llama::end();
-    // auto &output = resnet.relu1->activation;
-    // llama->output(output);
-    llama->output(resnet.activation);
-    // if (party != 1)
-    //     blprint(output, LlamaConfig::bitlength);
-    if (party != 1)
-        blprint(resnet.activation, LlamaConfig::bitlength, scale);
+    auto &output = resnet.activation;
+    llama->output(output);
+    if (party != 1) {
+        blprint(output, LlamaConfig::bitlength);
+    }
     llama->finalize();
 }
 
