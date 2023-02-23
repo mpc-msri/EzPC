@@ -24,7 +24,7 @@ public:
     bool isFirst = false;
     u64 scale = 0;
     Backend<T> *backend = nullptr;
-    static bool treeInit;
+    static bool fakeExecution;
     int mode = 0; // only used in ReLU in llama improved to decide between relu and reluext, might need something cleaner?
     int forwardTruncationMode = 0;
 
@@ -35,8 +35,8 @@ public:
     virtual void resize(u64 d1, u64 d2, u64 d3, u64 d4) = 0;
     virtual void forward_internal(Tensor4D<T> &a, bool train = true) = 0;
     Tensor4D<T>& forward(Tensor4D<T> &a, bool train = true) {
-        if (treeInit) {
-            activation.treeDat->curr = this;
+        if (fakeExecution) {
+            activation.treeDat->layer = this;
             activation.treeDat->parents.push_back(a.treeDat);
             a.treeDat->children.push_back(activation.treeDat);
             return activation;
@@ -779,8 +779,8 @@ public:
 template <typename T>
 void add(const Tensor4D<T> &a, const Tensor4D<T> &b, Tensor4D<T> &c)
 {
-    if (Layer<T>::treeInit) {
-        c.treeDat->curr = new PlaceHolderLayer<T>("Add");
+    if (Layer<T>::fakeExecution) {
+        c.treeDat->layer = new PlaceHolderLayer<T>("Add");
         c.treeDat->parents.push_back(a.treeDat);
         c.treeDat->parents.push_back(b.treeDat);
         a.treeDat->children.push_back(c.treeDat);
@@ -808,4 +808,4 @@ Tensor4D<T> add(const Tensor4D<T> &a, const Tensor4D<T> &b)
 }
 
 template <typename T>
-bool Layer<T>::treeInit = false;
+bool Layer<T>::fakeExecution = false;

@@ -143,10 +143,10 @@ public:
         fc->init(1, 512, 1, 1, scale);
 
         Tensor4D<T> ip(1, 32, 32, 3);
-        ip.treeDat->curr = new PlaceHolderLayer<T>("Input");
-        Layer<T>::treeInit = true;
+        ip.treeDat->layer = new PlaceHolderLayer<T>("Input");
+        Layer<T>::fakeExecution = true;
         auto &res = this->forward(ip);
-        Layer<T>::treeInit = false;
+        Layer<T>::fakeExecution = false;
         root = ip.treeDat;
         // print_dot_graph(ip.treeDat);
 

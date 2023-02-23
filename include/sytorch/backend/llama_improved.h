@@ -112,74 +112,74 @@ public:
         // 2: the layer takes as input \ell - scale bits and outputs \ell bits
         // 3: the layer takes as input \ell - scale bits and outputs \ell - scale bits
 
-        // std::cerr << "Visiting " << node->curr->name << std::endl;
-        if (node->curr->name == "Conv2D" || node->curr->name == "FC" || node->curr->name == "BatchNorm2dInference")
+        // std::cerr << "Visiting " << node->layer->name << std::endl;
+        if (node->layer->name == "Conv2D" || node->layer->name == "FC" || node->layer->name == "BatchNorm2dInference")
         {
             // only one parent
             auto parent = node->parents[0];
-            if (parent->curr->mode == 1 || parent->curr->mode == 3) {
-                // std::cerr << "    Found parent " << parent->curr->name << " with mode " << parent->curr->mode << std::endl;
-                node->curr->doPreSignExtension = true;
+            if (parent->layer->mode == 1 || parent->layer->mode == 3) {
+                // std::cerr << "    Found parent " << parent->layer->name << " with mode " << parent->layer->mode << std::endl;
+                node->layer->doPreSignExtension = true;
             }
-            node->curr->mode = 1;
-            node->curr->forwardTruncationMode = 1;
+            node->layer->mode = 1;
+            node->layer->forwardTruncationMode = 1;
         }
-        else if (node->curr->name == "Add")
+        else if (node->layer->name == "Add")
         {
-            auto parentMode = node->parents[0]->curr->mode;
+            auto parentMode = node->parents[0]->layer->mode;
             for(auto &parent : node->parents) {
-                if ((parent->curr->mode % 2) != (parentMode % 2)) {
+                if ((parent->layer->mode % 2) != (parentMode % 2)) {
                     throw std::runtime_error("Add layer has parents with different modes");
                 }
             }
-            node->curr->mode = 3 * (parentMode % 2);
+            node->layer->mode = 3 * (parentMode % 2);
         }
-        else if (node->curr->name == "Flatten")
+        else if (node->layer->name == "Flatten")
         {
-            auto parentMode = node->parents[0]->curr->mode;
-            node->curr->mode = 3 * (parentMode % 2);
+            auto parentMode = node->parents[0]->layer->mode;
+            node->layer->mode = 3 * (parentMode % 2);
         }
-        else if (node->curr->name == "MaxPool2D")
+        else if (node->layer->name == "MaxPool2D")
         {
-            auto parentMode = node->parents[0]->curr->mode;
+            auto parentMode = node->parents[0]->layer->mode;
             if (parentMode == 1 || parentMode == 3) {
-                node->curr->mode = 3;
+                node->layer->mode = 3;
                 bool atleastOneChildAdd = false;
                 for(auto &child : node->children) {
-                    if (child->curr->name == "Add") {
+                    if (child->layer->name == "Add") {
                         atleastOneChildAdd = true;
                         break;
                     }
                 }
                 if (atleastOneChildAdd) {
-                    node->curr->mode = 2;
-                    node->curr->doPostSignExtension = true;
+                    node->layer->mode = 2;
+                    node->layer->doPostSignExtension = true;
                 }
             }
             else {
-                node->curr->mode = 0;
+                node->layer->mode = 0;
             }
         }
-        else if (node->curr->name == "ReLU")
+        else if (node->layer->name == "ReLU")
         {
-            auto parentMode = node->parents[0]->curr->mode;
+            auto parentMode = node->parents[0]->layer->mode;
             if (parentMode == 0 || parentMode == 2)
             {
-                node->curr->mode = 0;
+                node->layer->mode = 0;
             }
             else {
                 bool allChildMaxpools = true;
                 for(auto &child : node->children) {
-                    if (child->curr->name != "MaxPool2D") {
+                    if (child->layer->name != "MaxPool2D") {
                         allChildMaxpools = false;
                         break;
                     }
                 }
                 if (allChildMaxpools) {
-                    node->curr->mode = 3;
+                    node->layer->mode = 3;
                 }
                 else {
-                    node->curr->mode = 2;
+                    node->layer->mode = 2;
                 }
             }
         }

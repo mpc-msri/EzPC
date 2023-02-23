@@ -132,12 +132,12 @@ void print_dot_graph(LayerTreeNode<T> *root)
             continue;
         }
         q.pop();
-        if (curr->curr != nullptr) {
-            dotfile << curr->curr->name + std::to_string((u64)(curr->curr)) << " [label=\"" << curr->curr->name + "-" + std::to_string(curr->curr->mode) + "-" + (curr->curr->doPreSignExtension ? "true" : "false") << "\"];" << std::endl;
+        if (curr->layer != nullptr) {
+            dotfile << curr->layer->name + std::to_string((u64)(curr->layer)) << " [label=\"" << curr->layer->name + "-" + std::to_string(curr->layer->mode) + "-" + (curr->layer->doPreSignExtension ? "true" : "false") << "\"];" << std::endl;
         }
         for (auto &child : curr->children) {
-            if (curr->curr != nullptr) {
-                dotfile << curr->curr->name + std::to_string((u64)(curr->curr)) << " -> " << child->curr->name + std::to_string((u64)(child->curr)) << ";" << std::endl;
+            if (curr->layer != nullptr) {
+                dotfile << curr->layer->name + std::to_string((u64)(curr->layer)) << " -> " << child->layer->name + std::to_string((u64)(child->layer)) << ";" << std::endl;
             }
             q.push(child);
         }

@@ -29,7 +29,7 @@ class Layer;
 
 template <typename T>
 struct LayerTreeNode {
-    Layer<T> *curr;
+    Layer<T> *layer;
     std::vector<LayerTreeNode<T> *> parents;
     std::vector<LayerTreeNode<T> *> children;
 };
@@ -215,6 +215,7 @@ public:
     T *data;
     u64 d1, d2, d3, d4;
     LayerTreeNode<T> *treeDat;
+    bool isFreed = false;
     
     Tensor4D(u64 d1, u64 d2, u64 d3, u64 d4) : d1(d1), d2(d2), d3(d3), d4(d4) {
         data = new T[d1 * d2 * d3 * d4];
@@ -222,7 +223,13 @@ public:
     }
 
     ~Tensor4D() {
+        if (!isFreed)
+            delete[] data;
+    }
+
+    void free() {
         delete[] data;
+        isFreed = true;
     }
 
     void addBias(const Tensor<T> &bias) {

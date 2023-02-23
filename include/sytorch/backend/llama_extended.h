@@ -93,25 +93,25 @@ public:
         q.push(root);
         while(!q.empty()) {
             LayerTreeNode<T> *node = q.front();
-            // std::cout << node->curr->name << std::endl;
+            // std::cout << node->layer->name << std::endl;
             q.pop();
             if (visited.find(node) != visited.end()) {
                 continue;
             }
             visited.insert(node);
-            if (node->curr->doTruncationForward) {
+            if (node->layer->doTruncationForward) {
                 if (node->children.size() == 1) {
                     // std::cout << "yeah.." << std::endl;
                     LayerTreeNode<T> *child = node->children[0];
-                    if (child->curr->doTruncationForward) {
+                    if (child->layer->doTruncationForward) {
                         // no optimization possible
                         // this is set to true for FC, Conv2D and BatchNorm2dInference
                     }
                     else {
-                        if (child->curr->name == "MaxPool2D" || child->curr->name == "ReLU") {
+                        if (child->layer->name == "MaxPool2D" || child->layer->name == "ReLU") {
                             // optimize
-                            node->curr->doTruncationForward = false;
-                            child->curr->doTruncationForward = true;
+                            node->layer->doTruncationForward = false;
+                            child->layer->doTruncationForward = true;
                         }
                     }
                 }
