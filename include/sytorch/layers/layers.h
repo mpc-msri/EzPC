@@ -36,9 +36,9 @@ public:
     virtual void forward_internal(Tensor4D<T> &a, bool train = true) = 0;
     Tensor4D<T>& forward(Tensor4D<T> &a, bool train = true) {
         if (fakeExecution) {
-            activation.treeDat->layer = this;
-            activation.treeDat->parents.push_back(a.treeDat);
-            a.treeDat->children.push_back(activation.treeDat);
+            activation.graphNode->layer = this;
+            activation.graphNode->parents.push_back(a.graphNode);
+            a.graphNode->children.push_back(activation.graphNode);
             return activation;
         }
         if (a.d1 != inputDerivative.d1 || a.d2 != inputDerivative.d2 || a.d3 != inputDerivative.d3 || a.d4 != inputDerivative.d4) {
@@ -780,11 +780,11 @@ template <typename T>
 void add(const Tensor4D<T> &a, const Tensor4D<T> &b, Tensor4D<T> &c)
 {
     if (Layer<T>::fakeExecution) {
-        c.treeDat->layer = new PlaceHolderLayer<T>("Add");
-        c.treeDat->parents.push_back(a.treeDat);
-        c.treeDat->parents.push_back(b.treeDat);
-        a.treeDat->children.push_back(c.treeDat);
-        b.treeDat->children.push_back(c.treeDat);
+        c.graphNode->layer = new PlaceHolderLayer<T>("Add");
+        c.graphNode->parents.push_back(a.graphNode);
+        c.graphNode->parents.push_back(b.graphNode);
+        a.graphNode->children.push_back(c.graphNode);
+        b.graphNode->children.push_back(c.graphNode);
         return;
     }
 

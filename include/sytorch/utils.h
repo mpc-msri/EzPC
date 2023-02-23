@@ -115,34 +115,3 @@ void transposeFilter(u64 fh, u64 fw, u64 ci, u64 co, const Tensor2D<T> &filter, 
         }
     }
 }
-
-
-template <typename T>
-void print_dot_graph(LayerTreeNode<T> *root)
-{
-    std::ofstream dotfile("graph.dot");
-    dotfile << "digraph G {" << std::endl;
-    std::queue<LayerTreeNode<T> *> q;
-    std::set<LayerTreeNode<T> *> visited;
-    q.push(root);
-    while (!q.empty()) {
-        LayerTreeNode<T> *curr = q.front();
-        if (visited.find(curr) != visited.end()) {
-            q.pop();
-            continue;
-        }
-        q.pop();
-        if (curr->layer != nullptr) {
-            dotfile << curr->layer->name + std::to_string((u64)(curr->layer)) << " [label=\"" << curr->layer->name + "-" + std::to_string(curr->layer->mode) + "-" + (curr->layer->doPreSignExtension ? "true" : "false") << "\"];" << std::endl;
-        }
-        for (auto &child : curr->children) {
-            if (curr->layer != nullptr) {
-                dotfile << curr->layer->name + std::to_string((u64)(curr->layer)) << " -> " << child->layer->name + std::to_string((u64)(child->layer)) << ";" << std::endl;
-            }
-            q.push(child);
-        }
-        visited.insert(curr);
-    }
-    dotfile << "}" << std::endl;
-    dotfile.close();
-}

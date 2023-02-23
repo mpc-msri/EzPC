@@ -104,7 +104,7 @@ public:
 
     }
 
-    void doOptimize(LayerTreeNode<T> *node, LayerTreeNode<T> *root)
+    void doOptimize(LayerGraphNode<T> *node, LayerGraphNode<T> *root)
     {
         // in LlamaImproved, mode takes the value according to the following rule:
         // 0: the layer takes as input \ell bits and outputs \ell bits
@@ -186,27 +186,11 @@ public:
 
     }
 
-    void topologicalVisit(std::set<LayerTreeNode<T> *> &visited, LayerTreeNode<T> *node, LayerTreeNode<T> *root)
-    {
-        if (visited.find(node) != visited.end()) {
-            return;
-        }
-        visited.insert(node);
-        for(auto parent : node->parents) {
-            topologicalVisit(visited, parent, root);
-        }
-
-        doOptimize(node, root);
-
-        for(auto child : node->children) {
-            topologicalVisit(visited, child, root);
-        }
-    }
-
-    void optimize(LayerTreeNode<T> *root)
+    void optimize(LayerGraphNode<T> *root)
     {   
-        std::set<LayerTreeNode<T> *> visited;
-        topologicalVisit(visited, root, root);
+        topologicalApply(root, [&](LayerGraphNode<T> *n, LayerGraphNode<T> *r) {
+            doOptimize(n, r);
+        });
     }
 
 };

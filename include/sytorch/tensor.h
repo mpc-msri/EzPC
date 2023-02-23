@@ -4,35 +4,13 @@
 #include <Eigen/Dense>
 #include <iostream>
 #include <sytorch/random.h>
+#include <sytorch/graph.h>
 #include <cmath>
 
 typedef uint64_t u64;
 typedef uint8_t u8;
 typedef int64_t i64;
 typedef int32_t i32;
-
-template <typename T>
-class Tensor4D;
-
-template <typename T>
-bool toobig(T& x) {
-    if constexpr(std::is_integral<T>::value) {
-        return false;
-    } else {
-        return std::isnan(x) || std::isinf(x);
-        // return (x > 1e-2) || (x < -1e-2);
-    }
-}
-
-template <typename T>
-class Layer;
-
-template <typename T>
-struct LayerTreeNode {
-    Layer<T> *layer;
-    std::vector<LayerTreeNode<T> *> parents;
-    std::vector<LayerTreeNode<T> *> children;
-};
 
 template <typename T>
 class Tensor {
@@ -214,12 +192,12 @@ class Tensor4D {
 public:
     T *data;
     u64 d1, d2, d3, d4;
-    LayerTreeNode<T> *treeDat;
+    LayerGraphNode<T> *graphNode;
     bool isFreed = false;
     
     Tensor4D(u64 d1, u64 d2, u64 d3, u64 d4) : d1(d1), d2(d2), d3(d3), d4(d4) {
         data = new T[d1 * d2 * d3 * d4];
-        treeDat = new LayerTreeNode<T>;
+        graphNode = new LayerGraphNode<T>;
     }
 
     ~Tensor4D() {
@@ -275,7 +253,7 @@ public:
         assert(d3 == other.d3);
         assert(d4 == other.d4);
         memcpy(data, other.data, d1 * d2 * d3 * d4 * sizeof(T));
-        this->treeDat = other.treeDat;
+        this->graphNode = other.graphNode;
     }
 
     template <typename T2>

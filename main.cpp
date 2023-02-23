@@ -1290,7 +1290,7 @@ public:
 
     Tensor4D<T> activation;
     Backend<T> *backend = new ClearText<T>;
-    LayerTreeNode<T> *root = nullptr;
+    LayerGraphNode<T> *root = nullptr;
 
 public:
     ResNet9() : activation(1, 10, 1, 1)
@@ -1376,12 +1376,12 @@ public:
         fc->init(1, 512, 1, 1, scale);
 
         Tensor4D<T> ip(1, 32, 32, 3);
-        ip.treeDat->layer = new PlaceHolderLayer<T>("Input");
+        ip.graphNode->layer = new PlaceHolderLayer<T>("Input");
         Layer<T>::fakeExecution = true;
         auto &res = this->forward(ip);
         Layer<T>::fakeExecution = false;
-        root = ip.treeDat;
-        // print_dot_graph(ip.treeDat);
+        root = ip.graphNode;
+        // print_dot_graph(ip.graphNode);
 
     }
 

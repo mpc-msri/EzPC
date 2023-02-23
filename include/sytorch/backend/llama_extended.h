@@ -86,40 +86,32 @@ public:
 
     }
 
-    void optimize(LayerTreeNode<T> *root)
+    void doOptimize(LayerGraphNode<T> *node, LayerGraphNode<T> *root)
     {
-        std::set<LayerTreeNode<T> *> visited;
-        std::queue<LayerTreeNode<T> *> q;
-        q.push(root);
-        while(!q.empty()) {
-            LayerTreeNode<T> *node = q.front();
-            // std::cout << node->layer->name << std::endl;
-            q.pop();
-            if (visited.find(node) != visited.end()) {
-                continue;
-            }
-            visited.insert(node);
-            if (node->layer->doTruncationForward) {
-                if (node->children.size() == 1) {
-                    // std::cout << "yeah.." << std::endl;
-                    LayerTreeNode<T> *child = node->children[0];
-                    if (child->layer->doTruncationForward) {
-                        // no optimization possible
-                        // this is set to true for FC, Conv2D and BatchNorm2dInference
-                    }
-                    else {
-                        if (child->layer->name == "MaxPool2D" || child->layer->name == "ReLU") {
-                            // optimize
-                            node->layer->doTruncationForward = false;
-                            child->layer->doTruncationForward = true;
-                        }
+        if (node->layer->doTruncationForward) {
+            if (node->children.size() == 1) {
+                // std::cout << "yeah.." << std::endl;
+                LayerGraphNode<T> *child = node->children[0];
+                if (child->layer->doTruncationForward) {
+                    // no optimization possible
+                    // this is set to true for FC, Conv2D and BatchNorm2dInference
+                }
+                else {
+                    if (child->layer->name == "MaxPool2D" || child->layer->name == "ReLU") {
+                        // optimize
+                        node->layer->doTruncationForward = false;
+                        child->layer->doTruncationForward = true;
                     }
                 }
             }
-            for (int i = 0; i < node->children.size(); ++i) {
-                q.push(node->children[i]);
-            }
         }
+    }
+
+    void optimize(LayerGraphNode<T> *root)
+    {
+        topologicalApply(root, [&](LayerGraphNode<T> *n, LayerGraphNode<T> *r) {
+            doOptimize(n, r);
+        });
     }
 
 };
