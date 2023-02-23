@@ -2364,6 +2364,10 @@ void relu_extend_eval_threads_helper(int thread_idx, int32_t size, int bin, int 
 
 void ReluExtend(int size, int bin, int bout, GroupElement *x, GroupElement *y, GroupElement *drelu)
 {
+    if (bin == bout) {
+        Relu2Round(size, x, x, y, y, drelu, bin);
+        return;
+    }
     std::cerr << ">> ReluExtend - Start" << std::endl;
     if (party == DEALER) {
         uint64_t dealer_total_time = 0;

@@ -1,4 +1,5 @@
 #include <sytorch/backend/llama_extended.h>
+#include <sytorch/backend/llama_improved.h>
 #include <sytorch/layers/layers.h>
 #include <filesystem>
 
@@ -381,7 +382,7 @@ void blprint(const Tensor4D<T> &p, u64 bw, u64 scale)
 
 void module_test_llama_ext(int party)
 {
-    using LlamaVersion = LlamaExtended<u64>;
+    using LlamaVersion = LlamaImproved<u64>;
     LlamaVersion *llama = new LlamaVersion();
     srand(time(NULL));
     const u64 scale = 12;
@@ -415,7 +416,7 @@ void module_test_llama_ext(int party)
     auto &output = resnet.activation;
     llama->output(output);
     if (party != 1) {
-        blprint(output, LlamaConfig::bitlength);
+        blprint(output, LlamaConfig::bitlength - scale);
     }
     llama->finalize();
 }

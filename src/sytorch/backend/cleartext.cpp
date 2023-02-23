@@ -134,7 +134,7 @@ void ClearText<T>::updateWeight(Tensor2D<T> &weight, const Tensor2D<T> &e, Tenso
                 e(i, j) = e(i, j) * lr_fp;
             }
         }
-        truncate(e, scale+lr_scale);
+        Backend<T>::truncate(e, scale+lr_scale);
         for(u64 i = 0; i < weight.d1; i++) {
             for(u64 j = 0; j < weight.d2; j++) {
                 weight.data[i * weight.d2 + j] -= e(i, j);
@@ -149,13 +149,13 @@ void ClearText<T>::updateWeight(Tensor2D<T> &weight, const Tensor2D<T> &e, Tenso
                 Vw(i, j) = mom_fp * Vw(i, j) + (1ULL<<mom_scale) * e(i, j);
             }
         }
-        truncate(Vw, mom_scale);
+        Backend<T>::truncate(Vw, mom_scale);
         for(int i = 0; i < weight.d1; i++) {
             for(int j = 0; j < weight.d2; j++) {
                 weight(i, j) = (1ULL<<(lr_scale+scale)) * weight(i, j) - lr_fp * Vw(i, j);
             }
         }
-        truncate(weight, lr_scale+scale);
+        Backend<T>::truncate(weight, lr_scale+scale);
     }
 }
 
@@ -166,7 +166,7 @@ void ClearText<T>::updateWeight(Tensor<T> &weight, const Tensor<T> &e, Tensor<T>
         for(int i = 0; i < weight.size; i++) {
             e(i) = e(i) * lr_fp;
         }
-        truncate(e, scale+lr_scale);
+        Backend<T>::truncate(e, scale+lr_scale);
         for(u64 i = 0; i < weight.size; i++) {
             weight(i) -= e(i);
         }
@@ -176,11 +176,11 @@ void ClearText<T>::updateWeight(Tensor<T> &weight, const Tensor<T> &e, Tensor<T>
         for(int i = 0; i < weight.size; i++) {
             Vw(i) = mom_fp * Vw(i) + (1ULL<<mom_scale) * e(i);
         }
-        truncate(Vw, mom_scale);
+        Backend<T>::truncate(Vw, mom_scale);
         for(int i = 0; i < weight.size; i++) {
             weight(i) = (1ULL<<(lr_scale+scale)) * weight(i) - lr_fp * Vw(i);
         }
-        truncate(weight, lr_scale+scale);
+        Backend<T>::truncate(weight, lr_scale+scale);
     }
 }
 
@@ -225,7 +225,7 @@ void ClearText<T>::updateBias(Tensor<T> &bias, const Tensor4D<T> &e, const Tenso
                 }
                 Vb(i) = mom_fp * Vb(i) + (1ULL << (scale + mom_scale - lr_scale)) * sum;
             }
-            truncate(Vb, mom_scale);
+            Backend<T>::truncate(Vb, mom_scale);
             fastfor(bias.size, [&](u64 i) {
                 bias(i) = bias(i) - lr_fp * Vb(i);
             });
@@ -264,7 +264,7 @@ void ClearText<T>::updateBias(Tensor<T> &bias, const Tensor<T> &grad, Tensor<T> 
             fastfor(bias.size, [&](u64 i) {
                 Vb(i) = mom_fp * Vb(i) + (1ULL << (scale + mom_scale - lr_scale)) * grad(i);
             });
-            truncate(Vb, mom_scale);
+            Backend<T>::truncate(Vb, mom_scale);
             fastfor(bias.size, [&](u64 i) {
                 bias(i) = bias(i) - lr_fp * Vb(i);
             });
@@ -361,7 +361,7 @@ void ClearText<T>::relutruncate(const Tensor4D<T> &in, const Tensor4D<T> &out, c
 }
 
 template <typename T>
-void ClearText<T>::relu(const Tensor4D<T> &in, const Tensor4D<T> &out, const Tensor4D<T> &drelu, u64 scale) {
+void ClearText<T>::relu(const Tensor4D<T> &in, const Tensor4D<T> &out, const Tensor4D<T> &drelu, u64 scale, int mode) {
     assert(in.d1 == out.d1);
     assert(in.d2 == out.d2);
     assert(in.d3 == out.d3);
@@ -406,7 +406,7 @@ void ClearText<T>::select(const Tensor4D<T> &in, const Tensor4D<T> &drelu, const
 }
 
 template <typename T>
-void ClearText<T>::truncate(T *in, T *out, u64 shift, u64 size) {
+void ClearText<T>::truncate(T *in, T *out, u64 shift, u64 size, u8 mode) {
     fastfor(size, [&] (u64 i) {
         if constexpr (std::is_floating_point<T>::value) {
             out[i] = in[i] / ((T)(1ULL << shift));
@@ -429,35 +429,35 @@ void ClearText<T>::truncate(T *in, T *out, u64 shift, u64 size) {
     });
 }
 
-template <typename T>
-void ClearText<T>::truncate(const Tensor4D<T> &in, const Tensor4D<T> &out, u64 shift) {
-    assert(in.d1 == out.d1);
-    assert(in.d2 == out.d2);
-    assert(in.d3 == out.d3);
-    assert(in.d4 == out.d4);
-    truncate(in.data, out.data, shift, in.d1 * in.d2 * in.d3 * in.d4);
-}
+// template <typename T>
+// void ClearText<T>::truncate(const Tensor4D<T> &in, const Tensor4D<T> &out, u64 shift) {
+//     assert(in.d1 == out.d1);
+//     assert(in.d2 == out.d2);
+//     assert(in.d3 == out.d3);
+//     assert(in.d4 == out.d4);
+//     truncate(in.data, out.data, shift, in.d1 * in.d2 * in.d3 * in.d4);
+// }
 
-template <typename T>
-void ClearText<T>::truncate(const Tensor4D<T> &in, u64 shift) {
-    // Eigen::Map<Eigen::ArrayX<T>> eA(in.data, in.d1 * in.d2 * in.d3 * in.d4);
-    // eA = eA / ((T)(1LL << shift));
-    truncate(in.data, in.data, shift, in.d1 * in.d2 * in.d3 * in.d4);
-}
+// template <typename T>
+// void ClearText<T>::truncate(const Tensor4D<T> &in, u64 shift) {
+//     // Eigen::Map<Eigen::ArrayX<T>> eA(in.data, in.d1 * in.d2 * in.d3 * in.d4);
+//     // eA = eA / ((T)(1LL << shift));
+//     truncate(in.data, in.data, shift, in.d1 * in.d2 * in.d3 * in.d4);
+// }
 
-template <typename T>
-void ClearText<T>::truncate(const Tensor2D<T> &in, u64 shift) {
-//    Eigen::Map<Eigen::ArrayX<T>> eA(in.data, in.d1 * in.d2);
-//    eA = eA / ((T)(1LL << shift)); // this gives bad accuracy, why?
-    truncate(in.data, in.data, shift, in.d1 * in.d2);
-}
+// template <typename T>
+// void ClearText<T>::truncate(const Tensor2D<T> &in, u64 shift) {
+// //    Eigen::Map<Eigen::ArrayX<T>> eA(in.data, in.d1 * in.d2);
+// //    eA = eA / ((T)(1LL << shift)); // this gives bad accuracy, why?
+//     truncate(in.data, in.data, shift, in.d1 * in.d2);
+// }
 
-template <typename T>
-void ClearText<T>::truncate(const Tensor<T> &in, u64 shift) {
-//    Eigen::Map<Eigen::ArrayX<T>> eA(in.data, in.d1 * in.d2);
-//    eA = eA / ((T)(1LL << shift)); // this gives bad accuracy, why?
-    truncate(in.data, in.data, shift, in.size);
-}
+// template <typename T>
+// void ClearText<T>::truncate(const Tensor<T> &in, u64 shift) {
+// //    Eigen::Map<Eigen::ArrayX<T>> eA(in.data, in.d1 * in.d2);
+// //    eA = eA / ((T)(1LL << shift)); // this gives bad accuracy, why?
+//     truncate(in.data, in.data, shift, in.size);
+// }
 
 template <typename T>
 void ClearText<T>::truncate(T &in, u64 shift) {
@@ -555,7 +555,7 @@ void ClearText<T>::sumPool2DInputGrad(u64 ks, u64 padding, u64 stride, Tensor4D<
         }
     });
     // hack for piranha
-    truncate(in, log2(ks * ks));
+    Backend<T>::truncate(in, log2(ks * ks));
 }
 
 template <typename T>
@@ -565,7 +565,7 @@ void ClearText<T>::avgPool2DInputGrad(u64 ks, u64 padding, u64 stride, Tensor4D<
 }
 
 template <typename T>
-void ClearText<T>::maxPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> &in, Tensor4D<T> &out, Tensor4D<u64> &maxIdx, u64 scale) {
+void ClearText<T>::maxPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> &in, Tensor4D<T> &out, Tensor4D<u64> &maxIdx, u64 scale, u8 mode) {
     assert(in.d1 == out.d1);
     assert(in.d4 == out.d4);
     u64 newH = (in.d2 + 2*padding - ks)/stride + 1;

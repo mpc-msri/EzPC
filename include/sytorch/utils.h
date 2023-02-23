@@ -133,7 +133,7 @@ void print_dot_graph(LayerTreeNode<T> *root)
         }
         q.pop();
         if (curr->curr != nullptr) {
-            dotfile << curr->curr->name + std::to_string((u64)(curr->curr)) << " [label=\"" << curr->curr->name << "\"];" << std::endl;
+            dotfile << curr->curr->name + std::to_string((u64)(curr->curr)) << " [label=\"" << curr->curr->name + "-" + std::to_string(curr->curr->mode) + "-" + (curr->curr->doPreSignExtension ? "true" : "false") << "\"];" << std::endl;
         }
         for (auto &child : curr->children) {
             if (curr->curr != nullptr) {

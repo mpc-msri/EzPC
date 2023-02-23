@@ -19,18 +19,22 @@ public:
     Tensor4D<T> activation;
     Tensor4D<T> inputDerivative;
     bool doTruncationForward = false;
+    bool doPreSignExtension = false;
+    bool doPostSignExtension = false;
     bool isFirst = false;
     u64 scale = 0;
     Backend<T> *backend = nullptr;
     static bool treeInit;
+    int mode = 0; // only used in ReLU in llama improved to decide between relu and reluext, might need something cleaner?
+    int forwardTruncationMode = 0;
 
     Layer(const std::string &id) : activation(0,0,0,0), inputDerivative(0,0,0,0), name(id) {
         backend = new ClearText<T>();
     }
     virtual void init(u64 d1, u64 d2, u64 d3, u64 d4, u64 scale) = 0;
     virtual void resize(u64 d1, u64 d2, u64 d3, u64 d4) = 0;
-    virtual void forward_internal(const Tensor4D<T> &a, bool train = true) = 0;
-    Tensor4D<T>& forward(const Tensor4D<T> &a, bool train = true) {
+    virtual void forward_internal(Tensor4D<T> &a, bool train = true) = 0;
+    Tensor4D<T>& forward(Tensor4D<T> &a, bool train = true) {
         if (treeInit) {
             activation.treeDat->curr = this;
             activation.treeDat->parents.push_back(a.treeDat);
@@ -40,9 +44,15 @@ public:
         if (a.d1 != inputDerivative.d1 || a.d2 != inputDerivative.d2 || a.d3 != inputDerivative.d3 || a.d4 != inputDerivative.d4) {
             resize(a.d1, a.d2, a.d3, a.d4);
         }
+        if (doPreSignExtension) {
+            this->backend->signext(a, scale);
+        }
         forward_internal(a, train);
         if (doTruncationForward) {
-            this->backend->truncateForward(activation, scale);
+            this->backend->truncateForward(activation, scale, forwardTruncationMode);
+        }
+        if (doPostSignExtension) {
+            this->backend->signext(activation, scale);
         }
         return activation;
     }
@@ -94,7 +104,7 @@ public:
         this->activation.resize(d1, newH, newW, co);
     }
 
-    void forward_internal(const Tensor4D<T> &a, bool train = true) {
+    void forward_internal(Tensor4D<T> &a, bool train = true) {
         assert(a.d4 == ci);
         inp.copy(a);
         this->backend->conv2D(ks, ks, padding, stride, ci, co, a, filter, this->activation);
@@ -144,7 +154,7 @@ public:
         this->activation.resize(d1, (d2 + 2*padding - ks)/stride + 1, (d3 + 2*padding - ks)/stride + 1, d4);
     }
     
-    void forward_internal(const Tensor4D<T> &a, bool train = true) {
+    void forward_internal(Tensor4D<T> &a, bool train = true) {
         this->backend->avgPool2D(ks, padding, stride, a, this->activation, this->scale);
     }
 
@@ -180,7 +190,7 @@ public:
         this->activation.resize(d1, (d2 + 2*padding - ks)/stride + 1, (d3 + 2*padding - ks)/stride + 1, d4);
     }
 
-    void forward_internal(const Tensor4D<T> &a, bool train = true) {
+    void forward_internal(Tensor4D<T> &a, bool train = true) {
         this->backend->sumPool2D(ks, padding, stride, a, this->activation);
     }
 
@@ -218,8 +228,8 @@ public:
         this->maxIndex.resize(d1, (d2 + 2*padding - ks)/stride + 1, (d3 + 2*padding - ks)/stride + 1, d4);
     }
 
-    void forward_internal(const Tensor4D<T> &a, bool train = true) {
-        this->backend->maxPool2D(ks, padding, stride, a, this->activation, maxIndex, this->scale);
+    void forward_internal(Tensor4D<T> &a, bool train = true) {
+        this->backend->maxPool2D(ks, padding, stride, a, this->activation, maxIndex, this->scale, this->mode);
     }
 
     void backward(const Tensor4D<T> &e) {
@@ -258,7 +268,7 @@ public:
         this->activation.resize(d1, d2 * d3 * d4, 1, 1);
     }
 
-    void forward_internal(const Tensor4D<T> &a, bool train = true) {
+    void forward_internal(Tensor4D<T> &a, bool train = true) {
         for (u64 i = 0; i < d1; i++) {
             for (u64 j = 0; j < d2; j++) {
                 for (u64 k = 0; k < d3; k++) {
@@ -324,7 +334,7 @@ public:
         this->activation.resize(d1, out, 1, 1);
     }
 
-    void forward_internal(const Tensor4D<T> &a, bool train = true) {
+    void forward_internal(Tensor4D<T> &a, bool train = true) {
         this->inp.copy(a);
         this->backend->matmul(a, weight, this->activation);
         this->activation.addBias2D(bias);
@@ -357,7 +367,7 @@ public:
 //     Tensor4D<T> drelu;
 //     ReLUTruncate(u64 shift) : Layer<T>("ReLUTruncate"), shift(shift), drelu(0,0,0,0) {}
 
-//     void forward_internal(const Tensor4D<T> &a, bool train = true) {
+//     void forward_internal(Tensor4D<T> &a, bool train = true) {
 //         // std::cout << "== Truncate forward ==" << std::endl;
 //         // std::cout << "a: "; a.print();
 //         this->activation.resize(a.d1, a.d2, a.d3, a.d4);
@@ -397,10 +407,10 @@ public:
         this->drelu.resize(d1, d2, d3, d4);
     }
 
-    void forward_internal(const Tensor4D<T> &a, bool train = true) {
+    void forward_internal(Tensor4D<T> &a, bool train = true) {
         // std::cout << "== ReLU forward ==" << std::endl;
         // std::cout << "a: "; a.print();
-        this->backend->relu(a, this->activation, this->drelu, this->scale);
+        this->backend->relu(a, this->activation, this->drelu, this->scale, this->mode);
     }
 
     void backward(const Tensor4D<T> &e) {
@@ -420,7 +430,7 @@ public:
 //     u64 shift;
 //     Truncate(u64 shift) : Layer<T>("Truncate"), shift(shift) {}
 
-//     void forward_internal(const Tensor4D<T> &a, bool train = true) {
+//     void forward_internal(Tensor4D<T> &a, bool train = true) {
 //         this->activation.resize(a.d1, a.d2, a.d3, a.d4);
 //         this->inputDerivative.resize(a.d1, a.d2, a.d3, a.d4);
 //         this->backend->truncate(a, this->activation, shift);
@@ -494,7 +504,7 @@ public:
         optimize(outermost);
     }
     
-    void forward_internal(const Tensor4D<T> &a, bool train = true) {
+    void forward_internal(Tensor4D<T> &a, bool train = true) {
         layers[0]->forward(a, train);
         u64 size = layers.size();
         for(u64 i = 1; i < size; i++) {
@@ -544,7 +554,7 @@ public:
         this->activation.resize(d1, d2, d3, d4);
     }
 
-    void forward_internal(const Tensor4D<T> &a, bool train = true) {
+    void forward_internal(Tensor4D<T> &a, bool train = true) {
         this->activation.copy(a);
     }
 
@@ -590,7 +600,7 @@ public:
         this->activation.resize(left->activation.d1, left->activation.d2, left->activation.d3, left->activation.d4);
     }
 
-    void forward_internal(const Tensor4D<T> &a, bool train = true) {
+    void forward_internal(Tensor4D<T> &a, bool train = true) {
         left->forward(a, train);
         right->forward(a, train);
         for(int i = 0; i < this->activation.d1; ++i) {
@@ -664,7 +674,7 @@ public:
         x_normalized.resize(d1, d2, d3, d4);
     }
 
-    void forward_internal(const Tensor4D<T> &a, bool train = true) {
+    void forward_internal(Tensor4D<T> &a, bool train = true) {
         assert(a.d4 == this->running_mean.size);
         if (train) {
             this->backend->batchNorm2dForwardTrain(a, this->activation, this->running_mean, this->running_variance, this->gamma, 
@@ -719,7 +729,7 @@ public:
         this->activation.resize(d1, d2, d3, d4);
     }
 
-    void forward_internal(const Tensor4D<T> &a, bool train = true) {
+    void forward_internal(Tensor4D<T> &a, bool train = true) {
         assert(a.d4 == this->A.size);
         if (train) {
             std::runtime_error("BatchNorm2dInference should not be used in training mode");
@@ -752,7 +762,7 @@ public:
         std::runtime_error("PlaceHolderLayer only to be used for tree traversal");
     }
 
-    void forward_internal(const Tensor4D<T> &a, bool train = true) {
+    void forward_internal(Tensor4D<T> &a, bool train = true) {
         std::runtime_error("PlaceHolderLayer only to be used for tree traversal");
     }
 

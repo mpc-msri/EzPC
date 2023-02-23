@@ -7,7 +7,7 @@ template <typename T>
 class ClearText : public Backend<T> {
 private:
 public:
-    void truncate(T *in, T *out, u64 shift, u64 size);
+    void truncate(T *in, T *out, u64 shift, u64 size, u8 mode);
     static const u64 lr_fp = 1;
     static const u64 lr_scale = 6;
     static const u64 mom_fp = 29;
@@ -59,12 +59,12 @@ public:
     void updateBias(Tensor<T> &bias, const Tensor<T> &grad, Tensor<T> &Vb, u64 scale);
 
     void relutruncate(const Tensor4D<T> &in, const Tensor4D<T> &out, const Tensor4D<T> &drelu, u64 shift);
-    void relu(const Tensor4D<T> &in, const Tensor4D<T> &out, const Tensor4D<T> &drelu, u64 scale);
+    void relu(const Tensor4D<T> &in, const Tensor4D<T> &out, const Tensor4D<T> &drelu, u64 scale, int mode);
     void select(const Tensor4D<T> &in, const Tensor4D<T> &drelu, const Tensor4D<T> &out);
-    void truncate(const Tensor4D<T> &in, const Tensor4D<T> &out, u64 shift);
-    void truncate(const Tensor4D<T> &in, u64 shift);
-    void truncate(const Tensor2D<T> &in, u64 shift);
-    void truncate(const Tensor<T> &in, u64 shift);
+    // void truncate(const Tensor4D<T> &in, const Tensor4D<T> &out, u64 shift);
+    // void truncate(const Tensor4D<T> &in, u64 shift);
+    // void truncate(const Tensor2D<T> &in, u64 shift);
+    // void truncate(const Tensor<T> &in, u64 shift);
     void truncate(T &in, u64 shift);
     void div(const Tensor4D<T> &in, T divisor);
     u64 log2(u64 x);
@@ -72,7 +72,7 @@ public:
     void avgPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> &in, Tensor4D<T> &out, u64 scale);
     void sumPool2DInputGrad(u64 ks, u64 padding, u64 stride, Tensor4D<T> &in, const Tensor4D<T> &out);
     void avgPool2DInputGrad(u64 ks, u64 padding, u64 stride, Tensor4D<T> &in, const Tensor4D<T> &out, u64 scale);
-    void maxPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> &in, Tensor4D<T> &out, Tensor4D<u64> &maxIdx, u64 scale);
+    void maxPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> &in, Tensor4D<T> &out, Tensor4D<u64> &maxIdx, u64 scale, u8 mode);
     void maxPool2DInputGrad(u64 ks, u64 padding, u64 stride, Tensor4D<T> &in, const Tensor4D<T> &out, const      Tensor4D<u64> &maxIdx);
     Tensor2D<T> channelReshape(const Tensor4D<T> &x);
     void batchNorm2dForwardTrain(const Tensor4D<T> &in, Tensor4D<T> &out, const Tensor<T> &running_mean, const Tensor<T> &running_var, const Tensor<T> &gamma, const Tensor<T> &beta, Tensor4D<T> &x_normalized, Tensor<T> &invstd, u64 scale);
