@@ -115,3 +115,71 @@ void transposeFilter(u64 fh, u64 fw, u64 ci, u64 co, const Tensor2D<T> &filter, 
         }
     }
 }
+
+template <typename T>
+void blprint(const Tensor4D<T> &p, u64 bw)
+{
+    for (int i = 0; i < p.d1; ++i) {
+        for (int j = 0; j < p.d2; ++j) {
+            for (int k = 0; k < p.d3; ++k) {
+                for (int l = 0; l < p.d4; ++l) {
+                    i64 val;
+                    if (bw == 64) {
+                        val = p(i, j, k, l);
+                    }
+                    else {
+                        val = (p(i, j, k, l) + (1LL << (bw - 1))) % (1LL << bw);
+                        val -= (1LL << (bw - 1));
+                    }
+                    std::cout << val << " ";
+                }
+                if (p.d4 > 1) {
+                    std::cout << std::endl;
+                }
+            }
+            if (p.d3 > 1) {
+                std::cout << std::endl;
+            }
+        }
+        if (p.d2 > 1) {
+            std::cout << std::endl;
+        }
+    }
+    if (p.d1 > 1) {
+        std::cout << std::endl;
+    }
+}
+
+template <typename T>
+void blprint(const Tensor4D<T> &p, u64 bw, u64 scale)
+{
+    for (int i = 0; i < p.d1; ++i) {
+        for (int j = 0; j < p.d2; ++j) {
+            for (int k = 0; k < p.d3; ++k) {
+                for (int l = 0; l < p.d4; ++l) {
+                    if (bw == 64) {
+                        std::cout << ((double)p(i, j, k, l)) / (1LL << scale) << " ";
+                        continue;
+                    }
+                    else {
+                        i64 val = (p(i, j, k, l) + (1LL << (bw - 1))) % (1LL << bw);
+                        val -= (1LL << (bw - 1));
+                        std::cout << ((double)val) / (1LL << scale) << " ";
+                    }
+                }
+                if (p.d4 > 1) {
+                    std::cout << std::endl;
+                }
+            }
+            if (p.d3 > 1) {
+                std::cout << std::endl;
+            }
+        }
+        if (p.d2 > 1) {
+            std::cout << std::endl;
+        }
+    }
+    if (p.d1 > 1) {
+        std::cout << std::endl;
+    }
+}

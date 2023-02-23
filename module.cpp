@@ -2,7 +2,7 @@
 #include <sytorch/backend/llama_improved.h>
 #include <sytorch/layers/layers.h>
 #include <sytorch/module.h>
-#include <filesystem>
+#include <sytorch/utils.h>
 
 void fptraining_init() {
     prngWeights.SetSeed(osuCrypto::toBlock(0, 0));
@@ -20,41 +20,36 @@ void fptraining_init() {
 template <typename T>
 class ResNet9: public SytorchModule<T> {
 public:
-    union {
-        struct {
-            Conv2D<T> *conv1;
-            BatchNorm2dInference<T> *bn1;
-            ReLU<T> *relu1;
-            Conv2D<T> *conv2;
-            BatchNorm2dInference<T> *bn2;
-            ReLU<T> *relu2;
-            MaxPool2D<T> *maxpool;
-            Conv2D<T> *conv3;
-            BatchNorm2dInference<T> *bn3;
-            ReLU<T> *relu3;
-            Conv2D<T> *conv4;
-            BatchNorm2dInference<T> *bn4;
-            ReLU<T> *relu4;
-            Conv2D<T> *conv5;
-            BatchNorm2dInference<T> *bn5;
-            ReLU<T> *relu5;
-            MaxPool2D<T> *maxpool2;
-            Conv2D<T> *conv6;
-            BatchNorm2dInference<T> *bn6;
-            ReLU<T> *relu6;
-            MaxPool2D<T> *maxpool3;
-            Conv2D<T> *conv7;
-            BatchNorm2dInference<T> *bn7;
-            ReLU<T> *relu7;
-            Conv2D<T> *conv8;
-            BatchNorm2dInference<T> *bn8;
-            ReLU<T> *relu8;
-            MaxPool2D<T> *maxpool4;
-            Flatten<T> *flatten;
-            FC<T> *fc;
-        };
-        Layer<T> *layers[30];
-    };
+    Conv2D<T> *conv1;
+    BatchNorm2dInference<T> *bn1;
+    ReLU<T> *relu1;
+    Conv2D<T> *conv2;
+    BatchNorm2dInference<T> *bn2;
+    ReLU<T> *relu2;
+    MaxPool2D<T> *maxpool;
+    Conv2D<T> *conv3;
+    BatchNorm2dInference<T> *bn3;
+    ReLU<T> *relu3;
+    Conv2D<T> *conv4;
+    BatchNorm2dInference<T> *bn4;
+    ReLU<T> *relu4;
+    Conv2D<T> *conv5;
+    BatchNorm2dInference<T> *bn5;
+    ReLU<T> *relu5;
+    MaxPool2D<T> *maxpool2;
+    Conv2D<T> *conv6;
+    BatchNorm2dInference<T> *bn6;
+    ReLU<T> *relu6;
+    MaxPool2D<T> *maxpool3;
+    Conv2D<T> *conv7;
+    BatchNorm2dInference<T> *bn7;
+    ReLU<T> *relu7;
+    Conv2D<T> *conv8;
+    BatchNorm2dInference<T> *bn8;
+    ReLU<T> *relu8;
+    MaxPool2D<T> *maxpool4;
+    Flatten<T> *flatten;
+    FC<T> *fc;
 
 public:
     ResNet9()
@@ -159,7 +154,7 @@ public:
     }
 };
 
-void module_test()
+void module_test_clear()
 {
     const u64 scale = 12;
     ResNet9<i64> resnet;
@@ -171,57 +166,7 @@ void module_test()
     resnet.activation.print();
 }
 
-template <typename T>
-void blprint(const Tensor4D<T> &p, u64 bw)
-{
-    for (int i = 0; i < p.d1; ++i) {
-        for (int j = 0; j < p.d2; ++j) {
-            for (int k = 0; k < p.d3; ++k) {
-                for (int l = 0; l < p.d4; ++l) {
-                    i64 val;
-                    if (bw == 64) {
-                        val = p(i, j, k, l);
-                    }
-                    else {
-                        val = (p(i, j, k, l) + (1LL << (bw - 1))) % (1LL << bw);
-                        val -= (1LL << (bw - 1));
-                    }
-                    std::cout << val << " ";
-                }
-                std::cout << std::endl;
-            }
-            std::cout << std::endl;
-        }
-        std::cout << std::endl;
-    }
-}
-
-template <typename T>
-void blprint(const Tensor4D<T> &p, u64 bw, u64 scale)
-{
-    for (int i = 0; i < p.d1; ++i) {
-        for (int j = 0; j < p.d2; ++j) {
-            for (int k = 0; k < p.d3; ++k) {
-                for (int l = 0; l < p.d4; ++l) {
-                    if (bw == 64) {
-                        std::cout << ((double)p(i, j, k, l)) / (1LL << scale) << " ";
-                        continue;
-                    }
-                    else {
-                        i64 val = (p(i, j, k, l) + (1LL << (bw - 1))) % (1LL << bw);
-                        val -= (1LL << (bw - 1));
-                        std::cout << ((double)val) / (1LL << scale) << " ";
-                    }
-                }
-                std::cout << std::endl;
-            }
-            std::cout << std::endl;
-        }
-        std::cout << std::endl;
-    }
-}
-
-void module_test_llama_ext(int party)
+void module_test_llama(int party)
 {
     using LlamaVersion = LlamaImproved<u64>;
     LlamaVersion *llama = new LlamaVersion();
@@ -270,10 +215,10 @@ int main(int argc, char** argv) {
         party = atoi(argv[1]);
     }
     if (party == 0) {
-        module_test();
+        module_test_clear();
     }
     else {
-        module_test_llama_ext(party);
+        module_test_llama(party);
     }
 
 }
