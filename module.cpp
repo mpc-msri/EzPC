@@ -1,6 +1,7 @@
 #include <sytorch/backend/llama_extended.h>
 #include <sytorch/backend/llama_improved.h>
 #include <sytorch/layers/layers.h>
+#include <sytorch/module.h>
 #include <filesystem>
 
 void fptraining_init() {
@@ -17,7 +18,7 @@ void fptraining_init() {
 }
 
 template <typename T>
-class ResNet9 {
+class ResNet9: public SytorchModule<T> {
 public:
     union {
         struct {
@@ -55,12 +56,8 @@ public:
         Layer<T> *layers[30];
     };
 
-    Tensor4D<T> activation;
-    Backend<T> *backend = new ClearText<T>;
-    LayerGraphNode<T> *root = nullptr;
-
 public:
-    ResNet9() : activation(1, 10, 1, 1)
+    ResNet9()
     {
         conv1 = new Conv2D<T>(3, 64, 3, 1);
         bn1 = new BatchNorm2dInference<T>(64);
@@ -100,157 +97,7 @@ public:
         fc = new FC<T>(512, 10);
     }
 
-    void init(u64 scale)
-    {
-        conv1->init(1, 32, 32, 3, scale);
-        bn1->init(1, 32, 32, 64, scale);
-        relu1->init(1, 32, 32, 64, scale);
-        
-        conv2->init(1, 32, 32, 64, scale);
-        bn2->init(1, 32, 32, 128, scale);
-        relu2->init(1, 32, 32, 128, scale);
-        
-        maxpool->init(1, 32, 32, 128, scale);
-
-        conv3->init(1, 16, 16, 128, scale);
-        bn3->init(1, 16, 16, 128, scale);
-        relu3->init(1, 16, 16, 128, scale);
-        conv4->init(1, 16, 16, 128, scale);
-        bn4->init(1, 16, 16, 128, scale);
-        relu4->init(1, 16, 16, 128, scale);
-
-        conv5->init(1, 16, 16, 128, scale);
-        bn5->init(1, 16, 16, 256, scale);
-        relu5->init(1, 16, 16, 256, scale);
-        
-        maxpool2->init(1, 16, 16, 256, scale);
-
-        conv6->init(1, 8, 8, 256, scale);
-        bn6->init(1, 8, 8, 512, scale);
-        relu6->init(1, 8, 8, 512, scale);
-        
-        maxpool3->init(1, 8, 8, 512, scale);
-
-        conv7->init(1, 4, 4, 512, scale);
-        bn7->init(1, 4, 4, 512, scale);
-        relu7->init(1, 4, 4, 512, scale);
-        conv8->init(1, 4, 4, 512, scale);
-        bn8->init(1, 4, 4, 512, scale);
-        relu8->init(1, 4, 4, 512, scale);
-
-        maxpool4->init(1, 4, 4, 512, scale);
-        flatten->init(1, 1, 1, 512, scale);
-        fc->init(1, 512, 1, 1, scale);
-
-        Tensor4D<T> ip(1, 32, 32, 3);
-        ip.graphNode->layer = new PlaceHolderLayer<T>("Input");
-        Layer<T>::fakeExecution = true;
-        auto &res = this->forward(ip);
-        Layer<T>::fakeExecution = false;
-        root = ip.graphNode;
-        print_dot_graph(ip.graphNode);
-
-    }
-
-    void zero()
-    {
-        conv1->filter.fill(0);
-        conv1->bias.fill(0);
-        bn1->A.fill(0);
-        bn1->B.fill(0);
-        conv2->filter.fill(0);
-        conv2->bias.fill(0);
-        bn2->A.fill(0);
-        bn2->B.fill(0);
-        conv3->filter.fill(0);
-        conv3->bias.fill(0);
-        bn3->A.fill(0);
-        bn3->B.fill(0);
-        conv4->filter.fill(0);
-        conv4->bias.fill(0);
-        bn4->A.fill(0);
-        bn4->B.fill(0);
-        conv5->filter.fill(0);
-        conv5->bias.fill(0);
-        bn5->A.fill(0);
-        bn5->B.fill(0);
-        conv6->filter.fill(0);
-        conv6->bias.fill(0);
-        bn6->A.fill(0);
-        bn6->B.fill(0);
-        conv7->filter.fill(0);
-        conv7->bias.fill(0);
-        bn7->A.fill(0);
-        bn7->B.fill(0);
-        conv8->filter.fill(0);
-        conv8->bias.fill(0);
-        bn8->A.fill(0);
-        bn8->B.fill(0);
-        fc->weight.fill(0);
-        fc->bias.fill(0);
-    }
-
-    void setBackend(Backend<T> *b)
-    {
-        for (int i = 0; i < 30; ++i) {
-            layers[i]->setBackend(b);
-        }
-        backend = b;
-    }
-
-    void loadFloatWeights(const std::string weightsFile, u64 scale) {
-        size_t size_in_bytes = std::filesystem::file_size(weightsFile);
-        always_assert(size_in_bytes % 4 == 0); // as it's float
-        size_t numParameters = size_in_bytes / 4;
-        float *floatWeights = new float[numParameters];
-        
-        std::ifstream file(weightsFile, std::ios::binary);
-        file.read((char*) floatWeights, size_in_bytes);
-        file.close();
-        
-        size_t wIdx = 0;
-        for(int i = 0; i < 30; i++) {
-            // std::cout << "Loading " << layers[i]->name << std::endl;
-            if(layers[i]->name.find("Conv2D") != std::string::npos || layers[i]->name.find("FC") != std::string::npos) {
-                auto& weights = layers[i]->getweights();
-
-                for (int j = 0; j < weights.d1; j++) {
-                    for(int k = 0; k < weights.d2; ++k) {
-                        weights(j, k) = floatWeights[wIdx + weights.d2 * j + k] * (1LL << scale);
-                    }
-                }
-                
-                auto wSize = weights.d1 * weights.d2;
-                wIdx += wSize;
-
-                auto& bias = layers[i]->getbias();
-
-                for (int j = 0; j < bias.size; ++j) {
-                    bias(j) = floatWeights[wIdx + j] * (1LL << (2*scale));
-                }
-
-                wSize = bias.size;
-                wIdx += wSize;
-            }
-            else if (layers[i]->name.find("BatchNorm2dInference") != std::string::npos) {
-                auto bn = (BatchNorm2dInference<T>*) layers[i];
-                auto channel = bn->A.size;
-                auto gammaPtr = floatWeights + wIdx;
-                auto betaPtr = floatWeights + wIdx + channel;
-                auto meanPtr = floatWeights + wIdx + 2 * channel;
-                auto varPtr = floatWeights + wIdx + 3 * channel;
-                for (int j = 0; j < channel; ++j) {
-                    bn->A(j) = (gammaPtr[j] / std::sqrt(varPtr[j])) * (1LL << scale);
-                    bn->B(j) = (betaPtr[j] - gammaPtr[j] * meanPtr[j] / std::sqrt(varPtr[j])) * (1LL << (2 * scale));
-                }
-                wIdx += 4 * channel;
-            }
-        }
-        always_assert(wIdx == numParameters);
-        delete[] floatWeights;
-    }
-
-    Tensor4D<T>& forward(Tensor4D<T> &input)
+    Tensor4D<T>& _forward(Tensor4D<T> &input)
     {
         // conv block
         auto &var1 = conv1->forward(input, false);
@@ -308,13 +155,7 @@ public:
         // fc
         auto &var32 = fc->forward(var31, false);
 
-        activation.copy(var32);
-        return activation;
-    }
-
-    void optimize()
-    {
-        backend->optimize(root);
+        return var32;
     }
 };
 
@@ -322,8 +163,8 @@ void module_test()
 {
     const u64 scale = 12;
     ResNet9<i64> resnet;
-    resnet.init(scale);
-    resnet.loadFloatWeights("cifar10_resnet9-float.dat", scale);
+    resnet.init(1, 32, 32, 3, scale);
+    resnet.load("cifar10_resnet9-float.dat");
     Tensor4D<i64> input(1, 32, 32, 3);
     input.fill(1LL << scale);
     auto &res = resnet.forward(input);
@@ -382,7 +223,7 @@ void blprint(const Tensor4D<T> &p, u64 bw, u64 scale)
 
 void module_test_llama_ext(int party)
 {
-    using LlamaVersion = LlamaExtended<u64>;
+    using LlamaVersion = LlamaImproved<u64>;
     LlamaVersion *llama = new LlamaVersion();
     srand(time(NULL));
     const u64 scale = 12;
@@ -391,16 +232,15 @@ void module_test_llama_ext(int party)
     LlamaConfig::stochasticT = true;
     LlamaConfig::stochasticRT = true;
     LlamaConfig::num_threads = 4;
-    // std::string ip = "127.0.0.1";
     std::string ip = "127.0.0.1";
     llama->init(ip, true);
 
     ResNet9<u64> resnet;
-    resnet.init(scale);
+    resnet.init(1, 32, 32, 3, scale);
     resnet.setBackend(llama);
     resnet.optimize();
     if (party != 1) {
-        resnet.loadFloatWeights("cifar10_resnet9-float.dat", scale);
+        resnet.load("cifar10_resnet9-float.dat");
     }
     else {
         resnet.zero();

@@ -39,6 +39,10 @@ public:
             activation.graphNode->layer = this;
             activation.graphNode->parents.push_back(a.graphNode);
             a.graphNode->children.push_back(activation.graphNode);
+            layer_dims indims = {a.d1, a.d2, a.d3, a.d4};
+            layer_dims outdims = this->get_output_dims(indims);
+            activation.resize(outdims.n, outdims.h, outdims.w, outdims.c);
+            inputDerivative.resize(a.d1, a.d2, a.d3, a.d4);
             return activation;
         }
         if (a.d1 != inputDerivative.d1 || a.d2 != inputDerivative.d2 || a.d3 != inputDerivative.d3 || a.d4 != inputDerivative.d4) {
