@@ -5,20 +5,20 @@ from utils import VariableGen, Party
 
 
 def comment(string, indent):
-    return str(f"{'   ' * indent}//{string}")
+    return str(f"{'  ' * indent}// {string}")
 
 
 def decl(name, data_type, shape, indent, party=Party.ALICE):
-    comma = ","
+    comma = ", "
     return str(
-        f"{'   ' * indent}auto {name} = make_vector_float({party.name},{comma.join(str(sh) for sh in shape)});"
+        f"{'  ' * indent}auto {name} = make_vector_float({party.name}, {comma.join(str(sh) for sh in shape)});"
     )
 
 
 def decl_multiple_int(variables, indent):
     need = ""
     return str(
-        f"{'   ' * indent}int32_t {need.join(f'{v}=0,' for v in variables[:-1])}{variables[-1]}=0;\n"
+        f"{'  ' * indent}int32_t {need.join(f'{v} = 0, ' for v in variables[:-1])}{variables[-1]} = 0;\n"
     )
 
 
@@ -40,16 +40,16 @@ def nested_for_input_loop(counter, shape, variables, name, indent):
     open_braces = "{"
     close_braces = "}"
     loop = (
-        f"{'   ' * indent}for(int {variables[counter]} = 0; "
+        f"{'  ' * indent}for(int {variables[counter]} = 0; "
         f"{variables[counter]} < {shape[counter]}; {variables[counter]}++)"
         f"{open_braces}\n"
     )
     loop += (
-        f"{'   ' * (indent + 1)}cin>>{name}{need.join(f'[{v}]' for v in variables)}"
+        f"{'  ' * (indent + 1)}cin >> {name}{need.join(f'[{v}]' for v in variables)}"
         if counter + 1 == len(shape)
         else nested_for_input_loop(counter + 1, shape, variables, name, indent + 1)
     )
-    loop += f"\n{'   ' * indent}{close_braces}"
+    loop += f"\n{'  ' * indent}{close_braces}"
     return loop
 
 
@@ -57,15 +57,15 @@ def reshape_helper(counter, shape, variables, indent):
     l = len(shape)
     open_braces = "{"
     close_braces = "}"
-    code = f"{'   ' * indent}{variables[l - counter - 1]} += 1;\n\n"
+    code = f"{'  ' * indent}{variables[l - counter - 1]} += 1;\n"
     if len(shape) != counter + 1:
         code += (
-            f"{'   ' * indent}if({variables[l - counter - 1]} == {shape[l - counter - 1]})\n"
-            f"{'   ' * indent}{open_braces}\n"
+            f"{'  ' * indent}if({variables[l - counter - 1]} == {shape[l - counter - 1]})\n"
+            f"{'  ' * indent}{open_braces}\n"
         )
-        code += f"{'   ' * (indent + 1)}{variables[l - counter - 1]} = 0;\n"
+        code += f"{'  ' * (indent + 1)}{variables[l - counter - 1]} = 0;\n"
         code += reshape_helper(counter + 1, shape, variables, indent + 1)
-        code += f"\n{'   ' * indent}{close_braces}"
+        code += f"\n{'  ' * indent}{close_braces}"
     return code
 
 
@@ -76,14 +76,14 @@ def nested_for_reshape_loop(
     open_braces = "{"
     close_braces = "}"
     loop = (
-        f"{'   ' * indent}for(int {variables2[counter2]} = 0; "
+        f"{'  ' * indent}for(int {variables2[counter2]} = 0; "
         f"{variables2[counter2]} < {shape2[counter2]}; {variables2[counter2]}++)\n"
-        f"{'   ' * indent}{open_braces}\n"
+        f"{'  ' * indent}{open_braces}\n"
     )
     if counter2 + 1 == len(shape2):
         loop += (
-            f"{'   ' * (indent + 1)}{name2}{need.join(f'[{v}]' for v in variables2)} "
-            f"= {name1}{need.join(f'[{v}]' for v in variables1)};\n\n"
+            f"{'  ' * (indent + 1)}{name2}{need.join(f'[{v}]' for v in variables2)} "
+            f"= {name1}{need.join(f'[{v}]' for v in variables1)};\n"
         )
         loop += reshape_helper(counter1, shape1, variables1, indent + 1)
     else:
@@ -98,7 +98,7 @@ def nested_for_reshape_loop(
             name2,
             indent + 1,
         )
-    loop += f"\n{'   ' * indent}{close_braces}\n"
+    loop += f"\n{'  ' * indent}{close_braces}\n"
     return loop
 
 
@@ -106,26 +106,32 @@ def take_input(name, shape, party, indent):
     variables = generate_loop_vars(len(shape))
     VariableGen.reset_loop_var_counter()
     dim = len(shape)
-    comma = ","
+    comma = ", "
     statement = str(
-        f"{'   ' * indent}if(__party=={party.name})cout<<\"Input {name}:\"<<endl;\n"
+        f"{'  ' * indent}if (__party == {party.name}) cout << \"Input {name}:\" << endl;\n"
     )
     # return nested_for_loop(0, shape, variables, name, indent)
     return (
         statement
-        + f"{'   ' * indent}auto {name} = input{dim}({comma.join(str(sh) for sh in shape)},{party.name});"
+        + f"{'  ' * indent}auto {name} = input{dim}({comma.join(str(sh) for sh in shape)}, {party.name});\n"
     )
 
 
 def give_output(name, shape, party, indent):
     dim = len(shape)
-    comma = ","
-    return f"{'   ' * indent}output{dim}({name},{comma.join(str(sh) for sh in shape)},{party.name});"
+    comma = ", "
+    return f"{'  ' * indent}output{dim}({name}, {comma.join(str(sh) for sh in shape)}, {party.name});\n"
 
 
 def iterate_list(var_list):
     comma = ", "
     return f"{comma.join((str(var) for var in var_list))}"
+
+
+def iterate_list_singleton(var_list):
+    comma = ", "
+    index = "[0]"
+    return f"{comma.join((str(var + index) for var in var_list))}"
 
 
 def iterate_concat_list(num_list):
@@ -144,10 +150,10 @@ def iterate_dict(var_dict):
 
 def fun_call(attributes, inputs, output, value_info, var_dict, indent):
     return str(
-        f"{'   ' * indent}name({(iterate_dict(attributes) if attributes else '')}{',' if attributes else ''}"
+        f"{'  ' * indent}name({(iterate_dict(attributes) if attributes else '')}{',' if attributes else ''}"
         f"{iterate_list(inputs)},{iterate_list(output)});"
     )
 
 
 def delete_variable(name, indent):
-    return f"{'   ' * indent}delete &{name};"
+    return f"{'  ' * indent}delete &{name};"

@@ -122,6 +122,23 @@ class FzpcBackend(Backend):
             "Reshape",
             "Gemm",
             "Tanh",
+            "Add",
+            "Sub",
+            "Mul",
+            "Div",
+            "Sqrt",
+            "Pow",
+            "Transpose",
+            "MatMul",
+            "ReduceMean",
+            "Split",
+            "Slice",
+            "Shape",
+            "Gather",
+            "Squeeze",
+            "Unsqueeze",
+            "NonZero",
+            "ConstantOfShape",
         ]
         for node in model.graph.node:
             if node.op_type not in implemented:
@@ -155,7 +172,7 @@ class FzpcBackend(Backend):
         path = os.path.dirname(path)
         file_name = os.path.basename(model)
         model = cls.preprocess_model(model, logging_level)
-        super(FzpcBackend, cls).prepare(model, device, **kwargs)
+        # super(FzpcBackend, cls).prepare(model, device, **kwargs)
         logger.info("Optimised Stripped Model Loaded")
 
         if cls.supports_device(device):
