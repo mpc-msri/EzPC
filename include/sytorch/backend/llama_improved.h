@@ -56,6 +56,7 @@ public:
         }
         else if (mode == 1) {
             // do nothing
+            std::cerr << ">> Local Truncation" << std::endl;
         }
         else {
             throw std::runtime_error("this should not have happened");
@@ -100,9 +101,9 @@ public:
         SignExtend2(x.d1 * x.d2 * x.d3 * x.d4, LlamaConfig::bitlength - scale, LlamaConfig::bitlength, x.data, x.data);
     }
 
-    void optimize(Sequential<T> &model) {
+    // void optimize(Sequential<T> &model) {
 
-    }
+    // }
 
     void doOptimize(LayerGraphNode<T> *node, LayerGraphNode<T> *root)
     {

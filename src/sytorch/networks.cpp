@@ -1,6 +1,7 @@
 #include <sytorch/layers/layers.h>
 #include <sytorch/train.h>
 #include <filesystem>
+#include <sytorch/sequential.h>
 
 uint8_t *readFile(std::string filename, size_t* input_size)
 {

@@ -192,7 +192,7 @@ class Tensor4D {
 public:
     T *data;
     u64 d1, d2, d3, d4;
-    LayerGraphNode<T> *graphNode;
+    LayerGraphNode<T> *graphNode = nullptr;
     bool isFreed = false;
     static bool trackAllocations;
     

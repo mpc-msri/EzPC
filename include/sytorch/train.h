@@ -1,5 +1,6 @@
 #pragma once
 #include <sytorch/layers/layers.h>
+#include <sytorch/sequential.h>
 #include <sytorch/datasets/mnist.h>
 #include <sytorch/datasets/cifar10.h>
 #include <sytorch/softmax.h>
