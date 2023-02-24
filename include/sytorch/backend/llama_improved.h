@@ -101,10 +101,6 @@ public:
         SignExtend2(x.d1 * x.d2 * x.d3 * x.d4, LlamaConfig::bitlength - scale, LlamaConfig::bitlength, x.data, x.data);
     }
 
-    // void optimize(Sequential<T> &model) {
-
-    // }
-
     void doOptimize(LayerGraphNode<T> *node, LayerGraphNode<T> *root)
     {
         // in LlamaImproved, mode takes the value according to the following rule:

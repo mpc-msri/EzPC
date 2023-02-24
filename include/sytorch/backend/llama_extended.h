@@ -64,29 +64,6 @@ public:
         MaxPoolBackward(out.d1, out.d2, out.d3, out.d4, ks, ks, padding, padding, padding, padding, stride, stride, in.d1, in.d2, in.d3, in.d4, in.data, in.data, out.data, out.data, maxIdx.data);
     }
 
-    // void optimize(Sequential<T> &model) {
-    //     // push truncations forward
-    //     int sz = model.layers.size();
-    //     for (int i = 0; i < sz - 1; ++i) {
-    //         Layer<T> *layer = model.layers[i];
-    //         if (layer->doTruncationForward) {
-    //             Layer<T> *child = model.layers[i+1];
-    //             if (child->doTruncationForward) {
-    //                 // no optimization possible
-    //                 // this is set to true for FC, Conv2D and BatchNorm2dInference
-    //             }
-    //             else {
-    //                 if (child->name == "MaxPool2D" || child->name == "ReLU") {
-    //                     // optimize
-    //                     layer->doTruncationForward = false;
-    //                     child->doTruncationForward = true;
-    //                 }
-    //             }
-    //         }
-    //     }
-
-    // }
-
     void doOptimize(LayerGraphNode<T> *node, LayerGraphNode<T> *root)
     {
         if (node->layer->doTruncationForward) {

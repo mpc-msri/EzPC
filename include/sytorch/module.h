@@ -37,9 +37,12 @@ public:
         });
     }
 
-    LayerGraphNode<T> * getAddNode(LayerGraphNode<T> *par1, LayerGraphNode<T> *par2)
+    LayerGraphNode<T> *getAddNode(std::vector<Tensor4D<T> *> ips)
     {
-        std::string id = "|" + std::to_string((uint64_t)(par1)) + "|" + std::to_string((uint64_t)(par2));
+        std::string id = "";
+        for(auto& ip: ips) {
+            id += "|" + std::to_string((uint64_t)(ip->graphNode));
+        }
         if (addLayerMap.find(id) == addLayerMap.end()) {
             std::cerr << "Add layer not found" << std::endl;
             exit(1);
@@ -187,46 +190,81 @@ public:
         });
     }
 
-    void add(const Tensor4D<T> &a, const Tensor4D<T> &b, Tensor4D<T> &c)
+    template <typename... Args>
+    std::vector<Tensor4D<T> *> collect(Args & ... args)
+    {
+        std::vector<Tensor4D<T> *> res;
+        collectHelper(res, args...);
+        return res;
+    }
+
+    void collectHelper(std::vector<Tensor4D<T> *> &res, Tensor4D<T> &a)
+    {
+        res.push_back(&a);
+    }
+
+    template <typename... Args>
+    void collectHelper(std::vector<Tensor4D<T> *> &res, Tensor4D<T> &a, Args & ... args)
+    {
+        res.push_back(&a);
+        collectHelper(res, args...);
+    }
+
+    void add(std::vector<Tensor4D<T> *> &arr, Tensor4D<T> &c)
     {
         if (Layer<T>::fakeExecution) {
             c.graphNode = new LayerGraphNode<T>();
             c.graphNode->layer = new PlaceHolderLayer<T>("Add");
-            c.graphNode->parents.push_back(a.graphNode);
-            c.graphNode->parents.push_back(b.graphNode);
-            a.graphNode->children.push_back(c.graphNode);
-            b.graphNode->children.push_back(c.graphNode);
+            for (auto &a : arr) {
+                c.graphNode->parents.push_back(a->graphNode);
+                a->graphNode->children.push_back(c.graphNode);
+            }
             return;
         }
 
-        auto cNode = getAddNode(a.graphNode, b.graphNode);
+        // check if all tensors have same dimensions
+        for (int i = 1; i < arr.size(); ++i) {
+            if (arr[i]->d1 != arr[0]->d1 || arr[i]->d2 != arr[0]->d2 || arr[i]->d3 != arr[0]->d3 || arr[i]->d4 != arr[0]->d4) {
+                throw std::runtime_error("All tensors must have same dimensions");
+            }
+        }
+
+        auto cNode = getAddNode(arr);
         cNode->currTensor = &c;
         c.graphNode = cNode;
 
-        for (int i = 0; i < a.d1; ++i) {
-            for (int j = 0; j < a.d2; ++j) {
-                for (int k = 0; k < a.d3; ++k) {
-                    for (int l = 0; l < a.d4; ++l) {
-                        c(i, j, k, l) = a(i, j, k, l) + b(i, j, k, l);
+        for (int i = 0; i < c.d1; ++i) {
+            for (int j = 0; j < c.d2; ++j) {
+                for (int k = 0; k < c.d3; ++k) {
+                    for (int l = 0; l < c.d4; ++l) {
+                        c(i, j, k, l) = 0;
+                        for (auto &a : arr) {
+                            c(i, j, k, l) += a->operator()(i, j, k, l);
+                        }
                     }
                 }
             }
         }
 
-        bool gcHappened = a.graphNode->incrementAndGc();
-        // if (gcHappened) {
-        //     std::cerr << "Output of " << a.graphNode->layer->name << " cleared" << std::endl;
-        // }
-        gcHappened = b.graphNode->incrementAndGc();
-        // if (gcHappened) {
-        //     std::cerr << "Output of " << b.graphNode->layer->name << " cleared" << std::endl;
-        // }
+        for (auto &a : arr) {
+            bool gcHappened = a->graphNode->incrementAndGc();
+            // if (gcHappened) {
+            //     std::cerr << "Output of " << a->graphNode->layer->name << " cleared" << std::endl;
+            // }
+        }
     }
 
-    Tensor4D<T> add(const Tensor4D<T> &a, const Tensor4D<T> &b)
+    Tensor4D<T> add(std::vector<Tensor4D<T> *> &arr)
     {
-        Tensor4D<T> c(a.d1, a.d2, a.d3, a.d4);
-        add(a, b, c);
+        Tensor4D<T> c(arr[0]->d1, arr[0]->d2, arr[0]->d3, arr[0]->d4);
+        add(arr, c);
         return c;
+    }
+
+    template <typename... Args>
+    Tensor4D<T> add(Args & ... args)
+    {
+        auto res = collect(args...);
+        return add(res);
     }
 };

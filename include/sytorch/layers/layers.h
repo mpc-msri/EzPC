@@ -376,36 +376,6 @@ public:
     }
 };
 
-// template <typename T>
-// class ReLUTruncate: public Layer<T> {
-// public:
-//     u64 shift;
-//     Tensor4D<T> drelu;
-//     ReLUTruncate(u64 shift) : Layer<T>("ReLUTruncate"), shift(shift), drelu(0,0,0,0) {}
-
-//     void forward_internal(Tensor4D<T> &a, bool train = true) {
-//         // std::cout << "== Truncate forward ==" << std::endl;
-//         // std::cout << "a: "; a.print();
-//         this->activation.resize(a.d1, a.d2, a.d3, a.d4);
-//         this->drelu.resize(a.d1, a.d2, a.d3, a.d4);
-//         this->inputDerivative.resize(a.d1, a.d2, a.d3, a.d4);
-//         this->backend->relutruncate(a, this->activation, this->drelu, shift);
-//     }
-
-//     void backward(const Tensor4D<T> &e) {
-//         // std::cout << "== ReLU backward ==" << std::endl;
-//         // std::cout << "e: "; e.print();
-//         this->backend->select(e, this->drelu, this->inputDerivative);
-//         // std::cout << "== Truncate ==" << std::endl;
-//         // std::cout << "e: "; this->inputDerivative.print();
-//         // truncate(this->inputDerivative, this->inputDerivative, shift);
-//     }
-
-//     struct layer_dims get_output_dims(struct layer_dims &in) {
-//         return {in.n, in.h, in.w, in.c};
-//     }
-// };
-
 template <typename T>
 class ReLU: public Layer<T> {
 public:
@@ -433,56 +403,6 @@ public:
         // std::cout << "== ReLU backward ==" << std::endl;
         // std::cout << "e: "; e.print();
         this->backend->select(e, this->drelu, this->inputDerivative);
-    }
-
-    struct layer_dims get_output_dims(struct layer_dims &in) {
-        return {in.n, in.h, in.w, in.c};
-    }
-};
-
-// template <typename T>
-// class Truncate: public Layer<T> {
-// public:
-//     u64 shift;
-//     Truncate(u64 shift) : Layer<T>("Truncate"), shift(shift) {}
-
-//     void forward_internal(Tensor4D<T> &a, bool train = true) {
-//         this->activation.resize(a.d1, a.d2, a.d3, a.d4);
-//         this->inputDerivative.resize(a.d1, a.d2, a.d3, a.d4);
-//         this->backend->truncate(a, this->activation, shift);
-//     }
-
-//     void backward(const Tensor4D<T> &e) {
-//         // this->backend->truncate(e, this->inputDerivative, shift);
-//         this->inputDerivative.copy(e);
-//     }
-
-//     struct layer_dims get_output_dims(struct layer_dims &in) {
-//         return {in.n, in.h, in.w, in.c};
-//     }
-// };
-
-template <typename T>
-class Identity: public Layer<T> {
-public:
-    Identity() :  Layer<T>("Identity") {}
-
-    void initScale(u64 scale) {
-        always_assert(std::is_integral<T>::value || scale == 0);
-        this->scale = scale;
-    }
-
-    void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
-        this->inputDerivative.resize(d1, d2, d3, d4);
-        this->activation.resize(d1, d2, d3, d4);
-    }
-
-    void forward_internal(Tensor4D<T> &a, bool train = true) {
-        this->activation.copy(a);
-    }
-
-    void backward(const Tensor4D<T> &e) {
-        this->inputDerivative.copy(e);
     }
 
     struct layer_dims get_output_dims(struct layer_dims &in) {
@@ -626,37 +546,6 @@ public:
         return {0, 0, 0, 0};
     }
 };
-
-// template <typename T>
-// void add(const Tensor4D<T> &a, const Tensor4D<T> &b, Tensor4D<T> &c)
-// {
-//     if (Layer<T>::fakeExecution) {
-//         c.graphNode->layer = new PlaceHolderLayer<T>("Add");
-//         c.graphNode->parents.push_back(a.graphNode);
-//         c.graphNode->parents.push_back(b.graphNode);
-//         a.graphNode->children.push_back(c.graphNode);
-//         b.graphNode->children.push_back(c.graphNode);
-//         return;
-//     }
-
-//     for (int i = 0; i < a.d1; ++i) {
-//         for (int j = 0; j < a.d2; ++j) {
-//             for (int k = 0; k < a.d3; ++k) {
-//                 for (int l = 0; l < a.d4; ++l) {
-//                     c(i, j, k, l) = a(i, j, k, l) + b(i, j, k, l);
-//                 }
-//             }
-//         }
-//     }
-// }
-
-// template <typename T>
-// Tensor4D<T> add(const Tensor4D<T> &a, const Tensor4D<T> &b)
-// {
-//     Tensor4D<T> c(a.d1, a.d2, a.d3, a.d4);
-//     add(a, b, c);
-//     return c;
-// }
 
 template <typename T>
 bool Layer<T>::fakeExecution = false;
