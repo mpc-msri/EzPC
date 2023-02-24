@@ -27,6 +27,7 @@ public:
     static bool fakeExecution;
     int mode = 0; // only used in ReLU in llama improved to decide between relu and reluext, might need something cleaner?
     int forwardTruncationMode = 0;
+    LayerGraphNode<T> *node = nullptr;
 
     Layer(const std::string &id) : activation(0,0,0,0), inputDerivative(0,0,0,0), name(id) {
         backend = new ClearText<T>();
@@ -41,6 +42,7 @@ public:
     Tensor4D<T>& forward(Tensor4D<T> &a, bool train = true) {
         if (fakeExecution) {
             activation.graphNode = new LayerGraphNode<T>();
+            node = activation.graphNode;
             activation.graphNode->layer = this;
             activation.graphNode->parents.push_back(a.graphNode);
             a.graphNode->children.push_back(activation.graphNode);
@@ -53,6 +55,10 @@ public:
         if (a.d1 != inputDerivative.d1 || a.d2 != inputDerivative.d2 || a.d3 != inputDerivative.d3 || a.d4 != inputDerivative.d4) {
             resize(a.d1, a.d2, a.d3, a.d4);
         }
+        if (node != nullptr) {
+            node->currTensor = &activation;
+            activation.graphNode = node;
+        }
         if (doPreSignExtension) {
             this->backend->signext(a, scale);
         }
@@ -62,6 +68,12 @@ public:
         }
         if (doPostSignExtension) {
             this->backend->signext(activation, scale);
+        }
+        if (a.graphNode != nullptr) {
+            bool gcHappened = a.graphNode->incrementAndGc();
+            // if (gcHappened) {
+            //     std::cerr << "Output of " << a.graphNode->layer->name << " cleared" << std::endl;
+            // }
         }
         return activation;
     }

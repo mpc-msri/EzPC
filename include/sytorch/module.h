@@ -1,6 +1,7 @@
 #include <sytorch/tensor.h>
 #include <fstream>
 #include <filesystem>
+#include <map>
 
 template <typename T>
 class SytorchModule {
@@ -11,6 +12,7 @@ public:
     LayerGraphNode<T> *root = nullptr;
     bool debug = true;
     u64 scale;
+    std::map<std::string, LayerGraphNode<T> *> addLayerMap;
 
 public:
 
@@ -19,6 +21,30 @@ public:
     SytorchModule() : activation(0, 0, 0, 0)
     {
 
+    }
+
+    void generateAddLayerMap()
+    {
+        addLayerMap.clear();
+        topologicalApply(root, [=](LayerGraphNode<T> *node, LayerGraphNode<T> *_root) {
+            if (node->layer->name == "Add") {
+                std::string id = "";
+                for(auto& parent: node->parents) {
+                    id += "|" + std::to_string((uint64_t)(parent));
+                }
+                addLayerMap[id] = node;
+            }
+        });
+    }
+
+    LayerGraphNode<T> * getAddNode(LayerGraphNode<T> *par1, LayerGraphNode<T> *par2)
+    {
+        std::string id = "|" + std::to_string((uint64_t)(par1)) + "|" + std::to_string((uint64_t)(par2));
+        if (addLayerMap.find(id) == addLayerMap.end()) {
+            std::cerr << "Add layer not found" << std::endl;
+            exit(1);
+        }
+        return addLayerMap[id];
     }
 
     void init(u64 d1, u64 d2, u64 d3, u64 d4, u64 scale)
@@ -38,6 +64,7 @@ public:
         });
 
         this->scale = scale;
+        generateAddLayerMap();
     }
 
     void init(u64 scale)
@@ -55,6 +82,7 @@ public:
         });
 
         this->scale = scale;
+        generateAddLayerMap();
     }
 
     void zero()
@@ -82,6 +110,12 @@ public:
 
     Tensor4D<T>& forward(Tensor4D<T> &input)
     {
+        topologicalApply(root, [](LayerGraphNode<T> *node, LayerGraphNode<T> *_root) {
+            node->numUsages = 0;
+        });
+        input.graphNode = new LayerGraphNode<T>();
+        input.graphNode->layer = new PlaceHolderLayer<T>("ActualInput");
+        input.graphNode->currTensor = &input;
         if (debug) {
             auto& res = this->_forward(input);
             this->activation.resize(res.d1, res.d2, res.d3, res.d4);
@@ -165,6 +199,10 @@ public:
             return;
         }
 
+        auto cNode = getAddNode(a.graphNode, b.graphNode);
+        cNode->currTensor = &c;
+        c.graphNode = cNode;
+
         for (int i = 0; i < a.d1; ++i) {
             for (int j = 0; j < a.d2; ++j) {
                 for (int k = 0; k < a.d3; ++k) {
@@ -174,6 +212,15 @@ public:
                 }
             }
         }
+
+        bool gcHappened = a.graphNode->incrementAndGc();
+        // if (gcHappened) {
+        //     std::cerr << "Output of " << a.graphNode->layer->name << " cleared" << std::endl;
+        // }
+        gcHappened = b.graphNode->incrementAndGc();
+        // if (gcHappened) {
+        //     std::cerr << "Output of " << b.graphNode->layer->name << " cleared" << std::endl;
+        // }
     }
 
     Tensor4D<T> add(const Tensor4D<T> &a, const Tensor4D<T> &b)

@@ -7,10 +7,28 @@ template <typename T>
 class Layer;
 
 template <typename T>
+class Tensor4D;
+
+template <typename T>
 struct LayerGraphNode {
     Layer<T> *layer;
     std::vector<LayerGraphNode<T> *> parents;
     std::vector<LayerGraphNode<T> *> children;
+    int numUsages = 0;
+    Tensor4D<T> *currTensor = nullptr;
+
+    bool incrementAndGc()
+    {
+        if (layer->name == "ActualInput") {
+            return false;
+        }
+        numUsages++; // todo: make it atomic
+        if (numUsages == children.size()) {
+            currTensor->free();
+            return true;
+        }
+        return false;
+    }
 };
 
 template <typename T, typename Functor>
