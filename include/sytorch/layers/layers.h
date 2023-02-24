@@ -520,6 +520,34 @@ public:
 };
 
 template <typename T>
+class Identity: public Layer<T> {
+public:
+    Identity() :  Layer<T>("Identity") {}
+
+    void initScale(u64 scale) {
+        always_assert(std::is_integral<T>::value || scale == 0);
+        this->scale = scale;
+    }
+
+    void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
+        this->inputDerivative.resize(d1, d2, d3, d4);
+        this->activation.resize(d1, d2, d3, d4);
+    }
+
+    void forward_internal(Tensor4D<T> &a, bool train = true) {
+        this->activation.copy(a);
+    }
+
+    void backward(const Tensor4D<T> &e) {
+        this->inputDerivative.copy(e);
+    }
+
+    struct layer_dims get_output_dims(struct layer_dims &in) {
+        return {in.n, in.h, in.w, in.c};
+    }
+};
+
+template <typename T>
 class PlaceHolderLayer : public Layer<T> {
 public:
     PlaceHolderLayer(const std::string &s) : Layer<T>(s) {

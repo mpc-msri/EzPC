@@ -13,6 +13,7 @@ public:
     bool debug = true;
     u64 scale;
     std::map<std::string, LayerGraphNode<T> *> addLayerMap;
+    std::map<std::string, LayerGraphNode<T> *> concatLayerMap;
 
 public:
 
@@ -37,6 +38,20 @@ public:
         });
     }
 
+    void generateConcatLayerMap()
+    {
+        concatLayerMap.clear();
+        topologicalApply(root, [=](LayerGraphNode<T> *node, LayerGraphNode<T> *_root) {
+            if (node->layer->name == "Concat") {
+                std::string id = "";
+                for(auto& parent: node->parents) {
+                    id += "|" + std::to_string((uint64_t)(parent));
+                }
+                concatLayerMap[id] = node;
+            }
+        });
+    }
+
     LayerGraphNode<T> *getAddNode(std::vector<Tensor4D<T> *> ips)
     {
         std::string id = "";
@@ -48,6 +63,19 @@ public:
             exit(1);
         }
         return addLayerMap[id];
+    }
+
+    LayerGraphNode<T> *getConcatNode(std::vector<Tensor4D<T> *> ips)
+    {
+        std::string id = "";
+        for(auto& ip: ips) {
+            id += "|" + std::to_string((uint64_t)(ip->graphNode));
+        }
+        if (concatLayerMap.find(id) == concatLayerMap.end()) {
+            std::cerr << "Concat layer not found" << std::endl;
+            exit(1);
+        }
+        return concatLayerMap[id];
     }
 
     void init(u64 d1, u64 d2, u64 d3, u64 d4, u64 scale)
@@ -68,6 +96,7 @@ public:
 
         this->scale = scale;
         generateAddLayerMap();
+        generateConcatLayerMap();
     }
 
     void init(u64 scale)
@@ -86,6 +115,7 @@ public:
 
         this->scale = scale;
         generateAddLayerMap();
+        generateConcatLayerMap();
     }
 
     void zero()
@@ -116,8 +146,7 @@ public:
         topologicalApply(root, [](LayerGraphNode<T> *node, LayerGraphNode<T> *_root) {
             node->numUsages = 0;
         });
-        input.graphNode = new LayerGraphNode<T>();
-        input.graphNode->layer = new PlaceHolderLayer<T>("ActualInput");
+        input.graphNode = root;
         input.graphNode->currTensor = &input;
         if (debug) {
             auto& res = this->_forward(input);
@@ -266,5 +295,77 @@ public:
     {
         auto res = collect(args...);
         return add(res);
+    }
+
+    void concat(std::vector<Tensor4D<T> *> &arr, Tensor4D<T> &c)
+    {
+        if (Layer<T>::fakeExecution) {
+            c.graphNode = new LayerGraphNode<T>();
+            c.graphNode->layer = new PlaceHolderLayer<T>("Concat");
+            for (auto &a : arr) {
+                c.graphNode->parents.push_back(a->graphNode);
+                a->graphNode->children.push_back(c.graphNode);
+            }
+            return;
+        }
+
+        // check if all tensors have same dimensions except the last one
+        for (int i = 1; i < arr.size(); ++i) {
+            if (arr[i]->d1 != arr[0]->d1 || arr[i]->d2 != arr[0]->d2 || arr[i]->d3 != arr[0]->d3) {
+                throw std::runtime_error("All tensors must have same dimensions");
+            }
+        }
+
+        auto cNode = getConcatNode(arr);
+        cNode->currTensor = &c;
+        c.graphNode = cNode;
+
+        u64 d4 = 0;
+        for (auto &a : arr) {
+            d4 += a->d4;
+        }
+
+        if (c.d1 != arr[0]->d1 || c.d2 != arr[0]->d2 || c.d3 != arr[0]->d3 || c.d4 != d4) {
+            throw std::runtime_error("Output tensor must have correct dimensions");
+        }
+
+        u64 d4Idx = 0;
+        for (auto &a : arr) {
+            for (int i = 0; i < c.d1; ++i) {
+                for (int j = 0; j < c.d2; ++j) {
+                    for (int k = 0; k < c.d3; ++k) {
+                        for (int l = 0; l < a->d4; ++l) {
+                            c(i, j, k, d4Idx + l) = a->operator()(i, j, k, l);
+                        }
+                    }
+                }
+            }
+            d4Idx += a->d4;
+        }
+
+        for (auto &a : arr) {
+            bool gcHappened = a->graphNode->incrementAndGc();
+            // if (gcHappened) {
+            //     std::cerr << "Output of " << a->graphNode->layer->name << " cleared" << std::endl;
+            // }
+        }
+    }
+
+    Tensor4D<T> concat(std::vector<Tensor4D<T> *> &arr)
+    {
+        u64 d4 = 0;
+        for (auto &a : arr) {
+            d4 += a->d4;
+        }
+        Tensor4D<T> c(arr[0]->d1, arr[0]->d2, arr[0]->d3, d4);
+        concat(arr, c);
+        return c;
+    }
+
+    template <typename... Args>
+    Tensor4D<T> concat(Args & ... args)
+    {
+        auto res = collect(args...);
+        return concat(res);
     }
 };

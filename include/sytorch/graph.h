@@ -19,7 +19,7 @@ struct LayerGraphNode {
 
     bool incrementAndGc()
     {
-        if (layer->name == "ActualInput") {
+        if (layer->name == "Input") {
             return false;
         }
         numUsages++; // todo: make it atomic

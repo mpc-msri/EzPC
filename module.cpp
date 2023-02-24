@@ -155,6 +155,29 @@ public:
     }
 };
 
+template <typename T>
+class Net : public SytorchModule<T>
+{
+    using SytorchModule<T>::concat;
+    ReLU<T> *relu1;
+    Identity<T> *iden;
+
+public:
+    Net()
+    {
+        relu1 = new ReLU<T>();
+        iden = new Identity<T>();
+    }
+
+    Tensor4D<T>& _forward(Tensor4D<T> &input)
+    {
+        auto &var1 = relu1->forward(input, false);
+        auto var2 = concat(input, var1);
+        auto &var3 = iden->forward(var2, false);
+        return var3;
+    }
+};
+
 void module_test_clear()
 {
     const u64 scale = 12;
@@ -168,6 +191,19 @@ void module_test_clear()
     auto &res = resnet.forward(input);
     // Tensor4D<i64>::trackAllocations = false;
     resnet.activation.print();
+}
+
+void mini_test()
+{
+    const u64 scale = 12;
+    Net<i64> net;
+    net.init(scale);
+    print_dot_graph(net.root);
+    Tensor4D<i64> input(1, 1, 1, 2);
+    input(0, 0, 0, 0) = -5;
+    input(0, 0, 0, 1) = 5;
+    auto &res = net.forward(input);
+    net.activation.print();
 }
 
 void module_test_llama(int party)
@@ -221,6 +257,7 @@ int main(int argc, char** argv) {
     }
     if (party == 0) {
         module_test_clear();
+        mini_test();
     }
     else {
         module_test_llama(party);
