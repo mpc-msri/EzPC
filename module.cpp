@@ -19,6 +19,7 @@ void fptraining_init() {
 
 template <typename T>
 class ResNet9: public SytorchModule<T> {
+    using SytorchModule<T>::add;
 public:
     Conv2D<T> *conv1;
     BatchNorm2dInference<T> *bn1;
@@ -159,10 +160,13 @@ void module_test_clear()
     const u64 scale = 12;
     ResNet9<i64> resnet;
     resnet.init(1, 32, 32, 3, scale);
+    // resnet.init(scale);
     resnet.load("cifar10_resnet9-float.dat");
     Tensor4D<i64> input(1, 32, 32, 3);
     input.fill(1LL << scale);
+    Tensor4D<i64>::trackAllocations = true;
     auto &res = resnet.forward(input);
+    Tensor4D<i64>::trackAllocations = false;
     resnet.activation.print();
 }
 
@@ -181,7 +185,8 @@ void module_test_llama(int party)
     llama->init(ip, true);
 
     ResNet9<u64> resnet;
-    resnet.init(1, 32, 32, 3, scale);
+    // resnet.init(1, 32, 32, 3, scale);
+    resnet.init(scale);
     resnet.setBackend(llama);
     resnet.optimize();
     if (party != 1) {

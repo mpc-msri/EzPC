@@ -194,19 +194,39 @@ public:
     u64 d1, d2, d3, d4;
     LayerGraphNode<T> *graphNode;
     bool isFreed = false;
+    static bool trackAllocations;
     
     Tensor4D(u64 d1, u64 d2, u64 d3, u64 d4) : d1(d1), d2(d2), d3(d3), d4(d4) {
+        if (d1 == 0 || d2 == 0 || d3 == 0 || d4 == 0) {
+            data = nullptr;
+            return;
+        }
         data = new T[d1 * d2 * d3 * d4];
-        graphNode = new LayerGraphNode<T>;
+        if (trackAllocations) {
+            std::cout << "Allocated " << d1 * d2 * d3 * d4 * sizeof(T) << " bytes for " << this << std::endl;
+        }
+        // graphNode = new LayerGraphNode<T>;
     }
 
     ~Tensor4D() {
-        if (!isFreed)
-            delete[] data;
+        free();
     }
 
     void free() {
+        if (isFreed) {
+            return;
+        }
+        if (d1 == 0 || d2 == 0 || d3 == 0 || d4 == 0) {
+            return;
+        }
         delete[] data;
+        if (trackAllocations) {
+            std::cout << "Deleted " << d1 * d2 * d3 * d4 * sizeof(T) << " bytes for " << this << std::endl;
+        }
+        d1 = 0;
+        d2 = 0;
+        d3 = 0;
+        d4 = 0;
         isFreed = true;
     }
 
@@ -239,12 +259,15 @@ public:
         if (this->d1 == d1 && this->d2 == d2 && this->d3 == d3 && this->d4 == d4) {
             return;
         }
-        delete[] data;
+        free();
         this->d1 = d1;
         this->d2 = d2;
         this->d3 = d3;
         this->d4 = d4;
         data = new T[d1 * d2 * d3 * d4];
+        if (trackAllocations) {
+            std::cout << "Allocated " << d1 * d2 * d3 * d4 * sizeof(T) << " bytes for " << this << std::endl;
+        }
     }
 
     void copy(const Tensor4D<T> &other) {
@@ -414,3 +437,6 @@ public:
     }
 
 };
+
+template <typename T>
+bool Tensor4D<T>::trackAllocations = false;

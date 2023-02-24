@@ -15,3 +15,5 @@ graph.svg
 *.dat
 logs/
 temp/
+graph.dot
+graph.png

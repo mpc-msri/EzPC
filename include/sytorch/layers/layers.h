@@ -31,11 +31,16 @@ public:
     Layer(const std::string &id) : activation(0,0,0,0), inputDerivative(0,0,0,0), name(id) {
         backend = new ClearText<T>();
     }
-    virtual void init(u64 d1, u64 d2, u64 d3, u64 d4, u64 scale) = 0;
+    void init(u64 d1, u64 d2, u64 d3, u64 d4, u64 scale) {
+        initScale(scale);
+        resize(d1, d2, d3, d4);
+    }
+    virtual void initScale(u64 scale) {};
     virtual void resize(u64 d1, u64 d2, u64 d3, u64 d4) = 0;
     virtual void forward_internal(Tensor4D<T> &a, bool train = true) = 0;
     Tensor4D<T>& forward(Tensor4D<T> &a, bool train = true) {
         if (fakeExecution) {
+            activation.graphNode = new LayerGraphNode<T>();
             activation.graphNode->layer = this;
             activation.graphNode->parents.push_back(a.graphNode);
             a.graphNode->children.push_back(activation.graphNode);
@@ -87,20 +92,18 @@ public:
         this->doTruncationForward = true;
     }
 
-    void init(u64 d1, u64 d2, u64 d3, u64 d4, u64 scale)
-    {
+    void initScale(u64 scale) {
         always_assert(std::is_integral<T>::value || scale == 0);
-        always_assert(d4 == ci);
         this->scale = scale;
         double xavier = 1.0 / sqrt(ci * ks * ks);
         filter.randomize(xavier * (1ULL<<scale));
         bias.randomize(xavier * (1ULL<<(2*scale)));
         Vw.fill(0);
         Vb.fill(0);
-        resize(d1, d2, d3, d4);
     }
 
     void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
+        always_assert(d4 == ci);
         this->inputDerivative.resize(d1, d2, d3, d4);
         inp.resize(d1, d2, d3, d4);
         u64 newH = (((d2 + 2*padding - ks)/stride) + 1);
@@ -148,9 +151,9 @@ public:
 
     AvgPool2D(u64 ks, u64 padding = 0, u64 _stride = 0) : Layer<T>("AvgPool2D"), ks(ks), padding(padding), stride(_stride == 0 ? ks : _stride) {}
 
-    void init(u64 d1, u64 d2, u64 d3, u64 d4, u64 scale) {
+    void initScale(u64 scale) {
+        always_assert(std::is_integral<T>::value || scale == 0);
         this->scale = scale;
-        resize(d1, d2, d3, d4);
     }
 
     void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
@@ -184,9 +187,9 @@ public:
 
     SumPool2D(u64 ks, u64 padding = 0, u64 _stride = 0) : Layer<T>("SumPool2D"), ks(ks), padding(padding), stride(_stride == 0 ? ks : _stride) {}
 
-    void init(u64 d1, u64 d2, u64 d3, u64 d4, u64 scale) {
+    void initScale(u64 scale) {
+        always_assert(std::is_integral<T>::value || scale == 0);
         this->scale = scale;
-        resize(d1, d2, d3, d4);
     }
     
     void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
@@ -221,9 +224,9 @@ public:
 
     MaxPool2D(u64 ks, u64 padding = 0, u64 _stride = 0) : Layer<T>("MaxPool2D"), ks(ks), padding(padding), stride(_stride == 0 ? ks : _stride), maxIndex(0,0,0,0) {}
 
-    void init(u64 d1, u64 d2, u64 d3, u64 d4, u64 scale) {
+    void initScale(u64 scale) {
+        always_assert(std::is_integral<T>::value || scale == 0);
         this->scale = scale;
-        resize(d1, d2, d3, d4);
     }
 
     void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
@@ -257,10 +260,10 @@ public:
     u64 d1, d2, d3, d4;
 
     Flatten() : Layer<T>("Flatten") {}
-    
-    void init(u64 d1, u64 d2, u64 d3, u64 d4, u64 scale) {
+
+    void initScale(u64 scale) {
+        always_assert(std::is_integral<T>::value || scale == 0);
         this->scale = scale;
-        resize(d1, d2, d3, d4);
     }
 
     void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
@@ -317,17 +320,14 @@ public:
         this->doTruncationForward = true;
     }
 
-    void init(u64 d1, u64 d2, u64 d3, u64 d4, u64 scale) {
+    void initScale(u64 scale) {
         always_assert(std::is_integral<T>::value || scale == 0);
-        always_assert(d2 == in);
-        always_assert((d3 == 1) && (d4 == 1));
         this->scale = scale;
         double xavier = 1.0 / sqrt(in);
         weight.randomize(xavier * (1ULL<<scale));
         bias.randomize(xavier * (1ULL<<(2*scale)));
         Vw.fill(0);
         Vb.fill(0);
-        resize(d1, d2, d3, d4);
     }
 
     void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
@@ -400,9 +400,9 @@ public:
     Tensor4D<T> drelu;
     ReLU() :  Layer<T>("ReLU"), drelu(0,0,0,0) {}
 
-    void init(u64 d1, u64 d2, u64 d3, u64 d4, u64 scale) {
+    void initScale(u64 scale) {
+        always_assert(std::is_integral<T>::value || scale == 0);
         this->scale = scale;
-        resize(d1, d2, d3, d4);
     }
 
     void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
@@ -455,17 +455,12 @@ class Sequential : public Layer<T> {
 public:
     std::vector<Layer<T>*> layers;
 
-    void init(u64 d1, u64 d2, u64 d3, u64 d4, u64 scale) {
+    void initScale(u64 scale) {
+        always_assert(std::is_integral<T>::value || scale == 0);
         this->scale = scale;
-        this->inputDerivative.resize(d1, d2, d3, d4);
         for(auto &l : layers) {
-            l->init(d1, d2, d3, d4, scale);
-            d1 = l->activation.d1;
-            d2 = l->activation.d2;
-            d3 = l->activation.d3;
-            d4 = l->activation.d4;
+            l->initScale(scale);
         }
-        this->activation.resize(d1, d2, d3, d4);
     }
 
     void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
@@ -547,10 +542,10 @@ template <typename T>
 class Identity: public Layer<T> {
 public:
     Identity() :  Layer<T>("Identity") {}
-    
-    void init(u64 d1, u64 d2, u64 d3, u64 d4, u64 scale) {
+
+    void initScale(u64 scale) {
+        always_assert(std::is_integral<T>::value || scale == 0);
         this->scale = scale;
-        resize(d1, d2, d3, d4);
     }
 
     void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
@@ -568,78 +563,6 @@ public:
 
     struct layer_dims get_output_dims(struct layer_dims &in) {
         return {in.n, in.h, in.w, in.c};
-    }
-};
-
-template <typename T>
-class BranchAdd : public Layer<T> {
-public:
-    Layer<T>* left;
-    Layer<T>* right;
-
-    BranchAdd(Layer<T>* left, Layer<T>* right) : Layer<T>("BranchAdd"), left(left), right(right) {
-        
-    }
-
-    void init(u64 d1, u64 d2, u64 d3, u64 d4, u64 scale) {
-        this->scale = scale;
-        this->inputDerivative.resize(d1, d2, d3, d4);
-        left->init(d1, d2, d3, d4, scale);
-        right->init(d1, d2, d3, d4, scale);
-        always_assert(left->activation.d1 == right->activation.d1);
-        always_assert(left->activation.d2 == right->activation.d2);
-        always_assert(left->activation.d3 == right->activation.d3);
-        always_assert(left->activation.d4 == right->activation.d4);
-        this->activation.resize(left->activation.d1, left->activation.d2, left->activation.d3, left->activation.d4);
-    }
-
-    void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
-        this->inputDerivative.resize(d1, d2, d3, d4);
-        left->resize(d1, d2, d3, d4);
-        right->resize(d1, d2, d3, d4);
-        always_assert(left->activation.d1 == right->activation.d1);
-        always_assert(left->activation.d2 == right->activation.d2);
-        always_assert(left->activation.d3 == right->activation.d3);
-        always_assert(left->activation.d4 == right->activation.d4);
-        this->activation.resize(left->activation.d1, left->activation.d2, left->activation.d3, left->activation.d4);
-    }
-
-    void forward_internal(Tensor4D<T> &a, bool train = true) {
-        left->forward(a, train);
-        right->forward(a, train);
-        for(int i = 0; i < this->activation.d1; ++i) {
-            for(int j = 0; j < this->activation.d2; ++j) {
-                for(int k = 0; k < this->activation.d3; ++k) {
-                    for(int l = 0; l < this->activation.d4; ++l) {
-                        this->activation(i, j, k, l) = left->activation(i, j, k, l) + right->activation(i, j, k, l);
-                    }
-                }
-            }
-        }
-    }
-
-    void backward(const Tensor4D<T> &e) {
-        left->backward(e);
-        right->backward(e);
-        for(int i = 0; i < this->inputDerivative.d1; ++i) {
-            for(int j = 0; j < this->inputDerivative.d2; ++j) {
-                for(int k = 0; k < this->inputDerivative.d3; ++k) {
-                    for(int l = 0; l < this->inputDerivative.d4; ++l) {
-                        this->inputDerivative(i, j, k, l) = left->inputDerivative(i, j, k, l) + right->inputDerivative(i, j, k, l);
-                    }
-                }
-            }
-        }
-    }
-
-    struct layer_dims get_output_dims(struct layer_dims &in) {
-        return left->get_output_dims(in);
-    }
-
-    virtual void setBackend(Backend<T> *b) {
-        this->backend = b;
-        left->setBackend(b);
-        right->setBackend(b);
     }
 };
 
@@ -665,11 +588,11 @@ public:
         this->Vbeta.fill(0);
     }
 
-    void init(u64 d1, u64 d2, u64 d3, u64 d4, u64 scale) {
+    void initScale(u64 scale) {
+        always_assert(std::is_integral<T>::value || scale == 0);
         this->scale = scale;
         this->running_variance.fill(1ULL << scale);
         this->gamma.fill(1ULL << scale);
-        resize(d1, d2, d3, d4);
     }
 
     void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
@@ -723,9 +646,9 @@ public:
         this->doTruncationForward = true;
     }
 
-    void init(u64 d1, u64 d2, u64 d3, u64 d4, u64 scale) {
+    void initScale(u64 scale) {
+        always_assert(std::is_integral<T>::value || scale == 0);
         this->scale = scale;
-        resize(d1, d2, d3, d4);
     }
 
     void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
@@ -758,7 +681,7 @@ public:
     PlaceHolderLayer(const std::string &s) : Layer<T>(s) {
     }
 
-    void init(u64 d1, u64 d2, u64 d3, u64 d4, u64 scale) {
+    void initScale(u64 scale) {
         std::runtime_error("PlaceHolderLayer only to be used for tree traversal");
     }
 
@@ -780,36 +703,36 @@ public:
     }
 };
 
-template <typename T>
-void add(const Tensor4D<T> &a, const Tensor4D<T> &b, Tensor4D<T> &c)
-{
-    if (Layer<T>::fakeExecution) {
-        c.graphNode->layer = new PlaceHolderLayer<T>("Add");
-        c.graphNode->parents.push_back(a.graphNode);
-        c.graphNode->parents.push_back(b.graphNode);
-        a.graphNode->children.push_back(c.graphNode);
-        b.graphNode->children.push_back(c.graphNode);
-        return;
-    }
+// template <typename T>
+// void add(const Tensor4D<T> &a, const Tensor4D<T> &b, Tensor4D<T> &c)
+// {
+//     if (Layer<T>::fakeExecution) {
+//         c.graphNode->layer = new PlaceHolderLayer<T>("Add");
+//         c.graphNode->parents.push_back(a.graphNode);
+//         c.graphNode->parents.push_back(b.graphNode);
+//         a.graphNode->children.push_back(c.graphNode);
+//         b.graphNode->children.push_back(c.graphNode);
+//         return;
+//     }
 
-    for (int i = 0; i < a.d1; ++i) {
-        for (int j = 0; j < a.d2; ++j) {
-            for (int k = 0; k < a.d3; ++k) {
-                for (int l = 0; l < a.d4; ++l) {
-                    c(i, j, k, l) = a(i, j, k, l) + b(i, j, k, l);
-                }
-            }
-        }
-    }
-}
+//     for (int i = 0; i < a.d1; ++i) {
+//         for (int j = 0; j < a.d2; ++j) {
+//             for (int k = 0; k < a.d3; ++k) {
+//                 for (int l = 0; l < a.d4; ++l) {
+//                     c(i, j, k, l) = a(i, j, k, l) + b(i, j, k, l);
+//                 }
+//             }
+//         }
+//     }
+// }
 
-template <typename T>
-Tensor4D<T> add(const Tensor4D<T> &a, const Tensor4D<T> &b)
-{
-    Tensor4D<T> c(a.d1, a.d2, a.d3, a.d4);
-    add(a, b, c);
-    return c;
-}
+// template <typename T>
+// Tensor4D<T> add(const Tensor4D<T> &a, const Tensor4D<T> &b)
+// {
+//     Tensor4D<T> c(a.d1, a.d2, a.d3, a.d4);
+//     add(a, b, c);
+//     return c;
+// }
 
 template <typename T>
 bool Layer<T>::fakeExecution = false;

@@ -24,6 +24,7 @@ public:
     void init(u64 d1, u64 d2, u64 d3, u64 d4, u64 scale)
     {
         Tensor4D<T> ip(d1, d2, d3, d4);
+        ip.graphNode = new LayerGraphNode<T>();
         ip.graphNode->layer = new PlaceHolderLayer<T>("Input");
         Layer<T>::fakeExecution = true;
         auto &res = this->_forward(ip);
@@ -34,6 +35,23 @@ public:
         topologicalApply(root, [=](LayerGraphNode<T> *node, LayerGraphNode<T> *_root) {
             auto &inp = node->layer->inputDerivative;
             node->layer->init(inp.d1, inp.d2, inp.d3, inp.d4, scale);
+        });
+
+        this->scale = scale;
+    }
+
+    void init(u64 scale)
+    {
+        Tensor4D<T> ip(0, 0, 0, 0);
+        ip.graphNode = new LayerGraphNode<T>();
+        ip.graphNode->layer = new PlaceHolderLayer<T>("Input");
+        Layer<T>::fakeExecution = true;
+        auto &res = this->_forward(ip);
+        Layer<T>::fakeExecution = false;
+        root = ip.graphNode;
+        
+        topologicalApply(root, [=](LayerGraphNode<T> *node, LayerGraphNode<T> *_root) {
+            node->layer->initScale(scale);
         });
 
         this->scale = scale;
@@ -65,12 +83,14 @@ public:
     Tensor4D<T>& forward(Tensor4D<T> &input)
     {
         if (debug) {
-            auto res = this->_forward(input);
+            auto& res = this->_forward(input);
+            this->activation.resize(res.d1, res.d2, res.d3, res.d4);
             this->activation.copy(res);
             return this->activation;
         }
         else {
-            auto res = this->_forward(input); // todo: calculate using the generated graph
+            auto& res = this->_forward(input); // todo: calculate using the generated graph
+            this->activation.resize(res.d1, res.d2, res.d3, res.d4);
             this->activation.copy(res);
             return this->activation;
         }
@@ -131,5 +151,35 @@ public:
                 wIdx += 4 * channel;
             }
         });
+    }
+
+    void add(const Tensor4D<T> &a, const Tensor4D<T> &b, Tensor4D<T> &c)
+    {
+        if (Layer<T>::fakeExecution) {
+            c.graphNode = new LayerGraphNode<T>();
+            c.graphNode->layer = new PlaceHolderLayer<T>("Add");
+            c.graphNode->parents.push_back(a.graphNode);
+            c.graphNode->parents.push_back(b.graphNode);
+            a.graphNode->children.push_back(c.graphNode);
+            b.graphNode->children.push_back(c.graphNode);
+            return;
+        }
+
+        for (int i = 0; i < a.d1; ++i) {
+            for (int j = 0; j < a.d2; ++j) {
+                for (int k = 0; k < a.d3; ++k) {
+                    for (int l = 0; l < a.d4; ++l) {
+                        c(i, j, k, l) = a(i, j, k, l) + b(i, j, k, l);
+                    }
+                }
+            }
+        }
+    }
+
+    Tensor4D<T> add(const Tensor4D<T> &a, const Tensor4D<T> &b)
+    {
+        Tensor4D<T> c(a.d1, a.d2, a.d3, a.d4);
+        add(a, b, c);
+        return c;
     }
 };
