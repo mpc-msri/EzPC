@@ -53,3 +53,13 @@ add_executable(module
     module.cpp
 )
 target_link_libraries (module ${PROJECT_NAME})
+
+add_executable(vgg16 
+    vgg16.cpp
+)
+target_link_libraries (vgg16 ${PROJECT_NAME})
+
+add_executable(chexpert 
+    chexpert.cpp
+)
+target_link_libraries (chexpert ${PROJECT_NAME})

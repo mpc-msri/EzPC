@@ -98,7 +98,7 @@ public:
     Tensor<T> Vb;
     u64 ci, co, ks, padding, stride;
 
-    Conv2D(u64 ci, u64 co, u64 ks, u64 padding = 0, u64 stride = 1) : Layer<T>("Conv2D"), ci(ci), co(co), ks(ks), padding(padding), 
+    Conv2D(u64 ci, u64 co, u64 ks, u64 padding = 0, u64 stride = 1, bool useBias = true) : Layer<T>("Conv2D"), ci(ci), co(co), ks(ks), padding(padding), 
         stride(stride), filter(co, ks * ks * ci), filterGrad(co, ks * ks * ci), Vw(co, ks * ks * ci), bias(co), biasGrad(co), Vb(co), inp(0,0,0,0)
     {
         this->doTruncationForward = true;
@@ -328,7 +328,7 @@ public:
     Tensor<T> Vb;
     u64 in, out;
 
-    FC(u64 in, u64 out) : Layer<T>("FC"), in(in), out(out), weight(in, out), bias(out), inp(0,0,0,0), weightGrad(in,out), Vw(in,out), Vb(out) {
+    FC(u64 in, u64 out, bool useBias = true) : Layer<T>("FC"), in(in), out(out), weight(in, out), bias(out), inp(0,0,0,0), weightGrad(in,out), Vw(in,out), Vb(out) {
         this->doTruncationForward = true;
     }
 
@@ -544,6 +544,40 @@ public:
 
     struct layer_dims get_output_dims(struct layer_dims &in) {
         return {in.n, in.h, in.w, in.c};
+    }
+};
+
+template <typename T>
+class GlobalAvgPool2D : public Layer<T> {
+public:
+
+    GlobalAvgPool2D() : Layer<T>("GlobalAvgPool2D") {}
+
+    void initScale(u64 scale) {
+        always_assert(std::is_integral<T>::value || scale == 0);
+        this->scale = scale;
+    }
+
+    void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
+        always_assert(d2 == d3);
+        this->inputDerivative.resize(d1, d2, d3, d4);
+        this->activation.resize(d1, 1, 1, d4);
+    }
+    
+    void forward_internal(Tensor4D<T> &a, bool train = true) {
+        this->backend->avgPool2D(a.d2, 0, 1, a, this->activation, this->scale);
+    }
+
+    void backward(const Tensor4D<T> &e) {
+        assert(e.d1 == this->activation.d1);
+        assert(e.d2 == this->activation.d2);
+        assert(e.d3 == this->activation.d3);
+        assert(e.d4 == this->activation.d4);
+        this->backend->avgPool2DInputGrad(this->inputDerivative.d2, 0, 1, this->inputDerivative, e, this->scale);
+    }
+
+    struct layer_dims get_output_dims(struct layer_dims &in) {
+        return {in.n, 1, 1, in.c};
     }
 };
 
