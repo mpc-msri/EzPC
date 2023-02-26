@@ -391,7 +391,7 @@ FPArray log_core(FPOp *fp_op, FixOp *fix, BoolOp *bool_op, const FPArray &x,
 
   // reduce precision to normal
   FPArray gamma =
-      fp_op->if_else(a, neg_mu, fp_op->add(beta, mu, true, false, false));
+      fp_op->if_else(a, neg_mu, fp_op->add(beta, mu, true, true, false));
   BoolArray gamma_s, gamma_z;
   FixArray gamma_m, gamma_e;
   tie(gamma_s, gamma_z, gamma_m, gamma_e) = fp_op->get_components(gamma);
