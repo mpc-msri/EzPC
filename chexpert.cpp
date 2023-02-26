@@ -1041,13 +1041,14 @@ int main(int argc, char**argv){
           net.activation.print();
           return 0;
     }
-    using LlamaVersion = LlamaImproved<u64>;
+    using LlamaVersion = LlamaExtended<u64>;
     LlamaVersion *llama = new LlamaVersion();
     srand(time(NULL));
     
     LlamaConfig::bitlength = 40;
     LlamaConfig::stochasticT = true;
     LlamaConfig::stochasticRT = true;
+    LlamaConfig::party = party;
 //     _init(argc, argv); // This can read all command line arguments like party, ip, port, etc. and can be written as a part of backend.
     // LlamaConfig::num_threads = 4;
     std::string ip = "127.0.0.1";
@@ -1058,8 +1059,9 @@ int main(int argc, char**argv){
     net.init(scale);
     net.setBackend(llama);
     net.optimize();
+    print_dot_graph(net.root);
     if (party != 1) {
-        net.load("weight_file.dat");
+        // net.load("weight_file.dat");
     }
     else {
         net.zero();

@@ -16,6 +16,7 @@ struct LayerGraphNode {
     std::vector<LayerGraphNode<T> *> children;
     int numUsages = 0;
     Tensor4D<T> *currTensor = nullptr;
+    bool mark = false;
 
     bool incrementAndGc()
     {
@@ -64,7 +65,7 @@ void print_dot_graph(LayerGraphNode<T> *root)
 
     topologicalApply(root, [&dotfile](LayerGraphNode<T> *node, LayerGraphNode<T> *_root) {
         if (node->layer != nullptr) {
-            dotfile << node->layer->name + std::to_string((uint64_t)(node->layer)) << " [label=\"" << node->layer->name + "-" + std::to_string(node->layer->mode) + "-" + (node->layer->doPreSignExtension ? "true" : "false") << "\"];" << std::endl;
+            dotfile << node->layer->name + std::to_string((uint64_t)(node->layer)) << " [label=\"" << node->layer->name + "-" + std::to_string(node->layer->mode) + "-" + (node->layer->doPreSignExtension ? "true" : "false") << "\"" + (node->mark ? std::string(" color=\"red\"") : std::string("")) + "];" << std::endl;
             for (auto &child : node->children) {
                 dotfile << node->layer->name + std::to_string((uint64_t)(node->layer)) << " -> " << child->layer->name + std::to_string((uint64_t)(child->layer)) << ";" << std::endl;
             }

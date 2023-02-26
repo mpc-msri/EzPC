@@ -121,12 +121,14 @@ public:
             node->layer->mode = 1;
             node->layer->forwardTruncationMode = 1;
         }
-        else if (node->layer->name == "Add")
+        else if (node->layer->name == "Add" || node->layer->name == "Concat")
         {
             auto parentMode = node->parents[0]->layer->mode;
             for(auto &parent : node->parents) {
                 if ((parent->layer->mode % 2) != (parentMode % 2)) {
-                    throw std::runtime_error("Add layer has parents with different modes");
+                    node->mark = true;
+                    print_dot_graph(root);
+                    throw std::runtime_error(node->layer->name + " layer has parents with different modes");
                 }
             }
             node->layer->mode = 3 * (parentMode % 2);
@@ -141,17 +143,6 @@ public:
             auto parentMode = node->parents[0]->layer->mode;
             if (parentMode == 1 || parentMode == 3) {
                 node->layer->mode = 3;
-                bool atleastOneChildAdd = false;
-                for(auto &child : node->children) {
-                    if (child->layer->name == "Add") {
-                        atleastOneChildAdd = true;
-                        break;
-                    }
-                }
-                if (atleastOneChildAdd) {
-                    node->layer->mode = 2;
-                    node->layer->doPostSignExtension = true;
-                }
             }
             else {
                 node->layer->mode = 0;
@@ -165,20 +156,30 @@ public:
                 node->layer->mode = 0;
             }
             else {
-                bool allChildMaxpools = true;
+                bool oneChildLinear = false;
                 for(auto &child : node->children) {
-                    if (child->layer->name != "MaxPool2D") {
-                        allChildMaxpools = false;
+                    if (child->layer->name == "Conv2D" || child->layer->name == "FC" || child->layer->name == "BatchNorm2dInference") {
+                        oneChildLinear = true;
                         break;
                     }
                 }
-                if (allChildMaxpools) {
-                    node->layer->mode = 3;
-                }
-                else {
+                if (oneChildLinear) {
                     node->layer->mode = 2;
                 }
+                else {
+                    node->layer->mode = 3;
+                }
             }
+        }
+        else if (node->layer->name == "AvgPool2D" || node->layer->name == "GlobalAvgPool2D") {
+            auto parentMode = node->parents[0]->layer->mode;
+            node->layer->mode = 3 * (parentMode % 2);
+        }
+        else if (node->layer->name == "Input") {
+            // do nothing
+        }
+        else {
+            throw std::runtime_error("Unknown layer type: " + node->layer->name);
         }
 
     }

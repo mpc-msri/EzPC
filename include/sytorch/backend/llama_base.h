@@ -481,7 +481,7 @@ public:
         }
         // Hack for Pirhana
         // assert(std::popcount(ks * ks) == 1);
-        Backend<T>::truncate(in, log2(ks * ks));
+        // Backend<T>::truncate(in, log2(ks * ks));
     }
 
     void div(const Tensor4D<T> &in, T divisor) {
