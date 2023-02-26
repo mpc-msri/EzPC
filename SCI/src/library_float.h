@@ -29,6 +29,8 @@ SOFTWARE.
 using namespace std;
 using namespace sci;
 
+#define WHICHPARTY tid&1?3-__party:__party
+
 // Packs
 extern IOPack *__iopack;
 extern OTPack *__otpack;
@@ -171,6 +173,9 @@ auto make_vector_float_rand(int party, size_t first, Args... sizes)
 
 /********************* Extern functions *********************/
 
+vector<int> get_chunks(int items, int slots);
+tuple<BoolArray,BoolArray,FixArray,FixArray> get_components(int tid, const FPArray &x);
+
 void ElemWiseAdd(int32_t s1, vector<FPArray> &arr1, vector<FPArray> &arr2, vector<FPArray> &outArr);
 
 void ElemWiseSub(int32_t s1, vector<FPArray> &arr1, vector<FPArray> &arr2, vector<FPArray> &outArr);
@@ -201,7 +206,7 @@ void IfElse(
 	int32_t s1,
 	vector<FPArray> &inArr,
 	vector<BoolArray> &condArr,
-	vector<FPArray> &outArr, bool flip);
+	vector<FPArray> &outArr, bool flip = false);
 
 void GemmAdd(int32_t s1, int32_t s2,
 			 vector<vector<FPArray>> &inArr,
@@ -295,6 +300,8 @@ void ConvDerWrapper(
 
 void ConvBiasDer(
 	int N, int W, int H, int chan, vector<vector<vector<vector<FPArray>>>> &der, vector<FPArray> &biasDer) ;
+
+vector<FPMatrix> batched_matrix_multiplication(vector<FPMatrix> &x, vector<FPMatrix> &y);
 
 // conv_weights comes in as as FH, FW, CI, CO
 // conv_weights required as CO, CI, FH, FW

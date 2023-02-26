@@ -43,3 +43,24 @@ target_include_directories(math-float PUBLIC ${MPFR_INCLUDES})
 target_link_libraries(math-float SCI-FloatingPoint ${MPFR_LIBRARIES}) 
 
 add_subdirectory(GC)
+
+macro(add_test_secfloat name)
+	add_executable(${name}-secfloatml "test_floatml_${name}.cpp")
+	target_link_libraries(${name}-secfloatml SCI-SecfloatML)
+endmacro()
+
+macro(add_test_beacon name)
+	add_executable(${name}-beacon "test_floatml_${name}.cpp")
+    target_link_libraries(${name}-beacon SCI-Beacon)
+endmacro()
+
+macro(add_test_floatml name)
+	add_test_secfloat(${name})
+	add_test_beacon(${name})
+endmacro()
+
+add_test_floatml(vsum)
+add_test_floatml(dotprod)
+add_test_floatml(matmul)
+add_test_floatml(sigmoid)
+add_test_floatml(softmax)
