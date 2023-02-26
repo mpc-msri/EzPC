@@ -66,7 +66,7 @@ public:
     // void truncate(const Tensor2D<T> &in, u64 shift);
     // void truncate(const Tensor<T> &in, u64 shift);
     void truncate(T &in, u64 shift);
-    void div(const Tensor4D<T> &in, T divisor);
+    void div(const Tensor4D<T> &in, T divisor, u64 scale);
     u64 log2(u64 x);
     void sumPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> &in, Tensor4D<T> &out);
     void avgPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> &in, Tensor4D<T> &out, u64 scale);

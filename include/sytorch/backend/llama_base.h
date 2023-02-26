@@ -484,13 +484,23 @@ public:
         // Backend<T>::truncate(in, log2(ks * ks));
     }
 
-    void div(const Tensor4D<T> &in, T divisor) {
-        throw std::runtime_error("Not implemented");
+    void div(const Tensor4D<T> &in, T divisor, u64 scale) {
+        if (!(divisor & (divisor - 1))) {
+            Backend<T>::truncate(in, log2(divisor), 3);
+        }
+        else {
+            T divfp = (1LL << scale) / divisor;
+            u64 sz = in.d1 * in.d2 * in.d3 * in.d4;
+            for (u64 i = 0; i < sz; i++) {
+                in.data[i] *= divfp;
+            }
+            Backend<T>::truncate(in, scale, 3);
+        }
     }
 
     void avgPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> &in, Tensor4D<T> &out, u64 scale) {
         sumPool2D(ks, padding, stride, in, out);
-        div(out, (T)(ks*ks));
+        div(out, (T)(ks*ks), scale);
     }
 
     u64 log2(u64 x) {
@@ -501,7 +511,7 @@ public:
 
     void avgPool2DInputGrad(u64 ks, u64 padding, u64 stride, Tensor4D<T> &in, const Tensor4D<T> &out,  u64 scale) {
         sumPool2DInputGrad(ks, padding, stride, in, out);
-        div(in, (T)(ks*ks));
+        div(in, (T)(ks*ks), scale);
     }
 
     void select(const Tensor4D<T> &in, const Tensor4D<T> &drelu, const Tensor4D<T> &out) {

@@ -482,7 +482,7 @@ void ClearText<T>::truncate(T &in, u64 shift) {
 }
 
 template <typename T>
-void ClearText<T>::div(const Tensor4D<T> &in, T divisor) {
+void ClearText<T>::div(const Tensor4D<T> &in, T divisor, u64 scale) {
     fastfor(in.d1, [&] (u64 i) {
         for (u64 j = 0; j < in.d2; j++) {
             for (u64 k = 0; k < in.d3; k++) {
@@ -522,7 +522,7 @@ void ClearText<T>::sumPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> 
 template <typename T>
 void ClearText<T>::avgPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> &in, Tensor4D<T> &out, u64 scale) {
     sumPool2D(ks, padding, stride, in, out);
-    div(out, (T)(ks*ks));
+    div(out, (T)(ks*ks), scale);
 }
 
 template <typename T>
@@ -555,13 +555,13 @@ void ClearText<T>::sumPool2DInputGrad(u64 ks, u64 padding, u64 stride, Tensor4D<
         }
     });
     // hack for piranha
-    Backend<T>::truncate(in, log2(ks * ks));
+    // Backend<T>::truncate(in, log2(ks * ks));
 }
 
 template <typename T>
 void ClearText<T>::avgPool2DInputGrad(u64 ks, u64 padding, u64 stride, Tensor4D<T> &in, const Tensor4D<T> &out, u64 scale) {
     sumPool2DInputGrad(ks, padding, stride, in, out);
-    div(in, (T)(ks*ks));
+    div(in, (T)(ks*ks), scale);
 }
 
 template <typename T>

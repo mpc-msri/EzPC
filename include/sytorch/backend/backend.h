@@ -65,7 +65,7 @@ public:
     virtual void select(const Tensor4D<T> &in, const Tensor4D<T> &drelu, const Tensor4D<T> &out) NOT_IMPLEMENTED;
 
     // avgpool API
-    virtual void div(const Tensor4D<T> &in, T divisor) NOT_IMPLEMENTED;
+    virtual void div(const Tensor4D<T> &in, T divisor, u64 scale) NOT_IMPLEMENTED;
     virtual void sumPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> &in, Tensor4D<T> &out) NOT_IMPLEMENTED;
     virtual void avgPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> &in, Tensor4D<T> &out, u64 scale) NOT_IMPLEMENTED;
     virtual void sumPool2DInputGrad(u64 ks, u64 padding, u64 stride, Tensor4D<T> &in, const Tensor4D<T> &out) NOT_IMPLEMENTED;
