@@ -626,9 +626,7 @@ let prelude_string :string = "
 #include <iostream>\n\
 #include <fstream>\n\
 \n\
-#include \"FloatingPoint/floating-point.h\"\n\
-#include \"FloatingPoint/fp-math.h\"\n\
-#include \"secfloat.h\"\n\
+#include \"library_float.h\"\n\
 \n\
 using namespace std ;\n\
 using namespace sci ;\n\
@@ -658,8 +656,8 @@ let o_one_program ((globals, main):global list * codegen_stmt) (ofname:string) :
   in
 
   let file = seq (seq main_prelude (seq main_body main_end)) (o_codegen_stmt g out_files_close_stmt |> fst) in
-  let file = seq file (o_str "\nreturn 0;\n}\n") in
-  
+  let file = seq file (o_str "\n__end();\nreturn 0;\n}\n") in 
+ 
   let b = Buffer.create 0 in
   file b;
   let fd = open_out ofname in
