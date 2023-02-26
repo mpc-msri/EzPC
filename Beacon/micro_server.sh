@@ -1,40 +1,39 @@
-printf "RUNNING : Accumulate\n"
+printf "RUNNING : Summation\n"
 printf "Secfloat FP32\n"
-./../SCI/build/bin/accum_secfloat r=1 nt=16 sz1=2000 sz2=2000
+./../SCI/build/bin/vsum-secfloatml r=1 nt=16 sz1=2000 sz2=2000
 printf "Beacon FP32\n"
-./../SCI/build/bin/accum_beacon r=1 nt=16 sz1=2000 sz2=2000 chunk=26
-# ./../SCI/build/bin/accum_beacon r=1 nt=16 sz1=2000 sz2=2000 chunk=26 mbits=10 ebits=8
-# ./../SCI/build/bin/accum_beacon r=1 nt=16 sz1=2000 sz2=2000 chunk=26 mbits=7 ebits=8
-printf "||-------------------||\n"
+./../SCI/build/bin/vsum-beacon r=1 nt=16 sz1=2000 sz2=2000 chunk=26
+printf "Beacon BF16\n"
+./../SCI/build/bin/vsum-beacon r=1 nt=16 sz1=2000 sz2=2000 chunk=26 mbits=7 ebits=8
 
-printf "RUNNING : DotProd\n"
+printf "RUNNING : Dotprod\n"
 printf "Secfloat FP32\n"
-./../SCI/build/bin/dotprod_secfloat r=1 nt=16 sz1=1000 sz2=1000
+./../SCI/build/bin/dotprod-secfloatml r=1 nt=16 sz1=1000 sz2=1000
 printf "Beacon FP32\n"
-./../SCI/build/bin/dotprod_beacon r=1 nt=16 sz1=1000 sz2=1000 chunk=26
-# ./../SCI/build/bin/dotprod_beacon r=1 nt=16 sz1=1000 sz2=1000 chunk=26 mbits=10 ebits=8
-# ./../SCI/build/bin/dotprod_beacon r=1 nt=16 sz1=1000 sz2=1000 chunk=26 mbits=7 ebits=8
-printf "||-------------------||\n"
+./../SCI/build/bin/dotprod-beacon r=1 nt=16 sz1=1000 sz2=1000 chunk=26
+printf "Beacon BF16\n"
+./../SCI/build/bin/dotprod-beacon r=1 nt=16 sz1=1000 sz2=1000 chunk=26 mbits=7 ebits=8
 
-printf "RUNNING : MatMul\n"
+printf "RUNNING : Matmul\n"
 printf "Secfloat FP32\n"
-./../SCI/build/bin/matmul_secfloat r=1 nt=16 sz1=100 sz2=100 sz3=100
+./../SCI/build/bin/matmul-secfloatml r=1 nt=16 sz1=100 sz2=100 sz3=100
 printf "Beacon FP32\n"
-./../SCI/build/bin/matmul_beacon r=1 nt=16 sz1=100 sz2=100 sz3=100 chunk=26
-# ./../SCI/build/bin/matmul_beacon r=1 nt=16 sz1=100 sz2=100 sz3=100 chunk=26 mbits=10 ebits=8
-# ./../SCI/build/bin/matmul_beacon r=1 nt=16 sz1=100 sz2=100 sz3=100 chunk=26 mbits=7 ebits=8
-printf "||-------------------||\n"
+./../SCI/build/bin/matmul-beacon r=1 nt=16 sz1=100 sz2=100 sz3=100 chunk=26
+printf "Beacon BF16\n"
+./../SCI/build/bin/matmul-beacon r=1 nt=16 sz1=100 sz2=100 sz3=100 chunk=26 mbits=7 ebits=8
 
 printf "RUNNING : Softmax\n"
 printf "Secfloat FP32\n"
-./../SCI/build/bin/softmax_secfloat r=1 nt=16 sz1=1000 sz2=100
+./../SCI/build/bin/softmax-secfloatml r=1 nt=16 sz1=1000 sz2=100
 printf "Beacon FP32\n"
-./../SCI/build/bin/softmax_beacon r=1 nt=16 sz1=1000 sz2=100 chunk=26
-printf "||-------------------||\n"
+./../SCI/build/bin/softmax-beacon r=1 nt=16 sz1=1000 sz2=100 chunk=26
+printf "Beacon BF16\n"
+./../SCI/build/bin/softmax-beacon r=1 nt=16 sz1=1000 sz2=100 chunk=26 mbits=7 ebits=8
 
 printf "RUNNING : Sigmoid\n"
 printf "Sigmoid FP32\n"
-./../SCI/build/bin/sigmoid_secfloat r=1 nt=16 sz1=1000000
+./../SCI/build/bin/sigmoid-secfloatml r=1 nt=16 sz1=1000000
 printf "Beacon FP32\n"
-./../SCI/build/bin/sigmoid_beacon r=1 nt=16 sz1=1000000 chunk=26
-printf "||-------------------||\n"
+./../SCI/build/bin/sigmoid-beacon r=1 nt=16 sz1=1000000 chunk=26
+printf "Beacon BF16\n"
+./../SCI/build/bin/sigmoid-beacon r=1 nt=16 sz1=1000000 chunk=26 mbits=7 ebits=8

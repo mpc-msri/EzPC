@@ -1,8 +1,8 @@
 printf "Relevance\n"
 printf "Secfloat\n"
-./../SCI/build/bin/relevance32_split_secfloat r=2 nt=16 add=10.13.0.6
+./../SCI/build/bin/relevance32_secfloat r=2 nt=16 add=$1
 printf "Beacon\n"
-./../SCI/build/bin/relevance32_split_beacon r=2 nt=16 chunk=26 add=$1
+./../SCI/build/bin/relevance32_beacon r=2 nt=16 chunk=26 add=$1
 
 printf "Logistic\n"
 printf "Secfloat\n"
@@ -24,6 +24,6 @@ cat ../SCI/networks/inputs/lenet_input128.inp ../SCI/networks/inputs/lenet_label
 
 printf "HiNet\n"
 printf "Secfloat\n"
-cat ../SCI/networks/inputs/hinet_input4.inp ../SCI/networks/inputs/hinet_labels4.inp | ./../SCI/build/bin/hinet4_split_secfloat r=2 nt=16 add=$1
+cat ../SCI/networks/inputs/hinet_input4.inp ../SCI/networks/inputs/hinet_labels4.inp | ./../SCI/build/bin/hinet4_secfloat r=2 nt=16 add=$1
 printf "Beacon\n"
-cat ../SCI/networks/inputs/hinet_input4.inp ../SCI/networks/inputs/hinet_labels4.inp | ./../SCI/build/bin/hinet4_split_beacon r=2 nt=16 add=$1 chunk=26
+cat ../SCI/networks/inputs/hinet_input4.inp ../SCI/networks/inputs/hinet_labels4.inp | ./../SCI/build/bin/hinet4_beacon r=2 nt=16 add=$1 chunk=26
