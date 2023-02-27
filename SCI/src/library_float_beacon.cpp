@@ -164,7 +164,7 @@ void vectorSum_thread(
 		) ;
 	}
 
-	FPArray vsum = fpopArr[tid]->vector_sum_with_chunking(sums) ;
+	FPArray vsum = fpopArr[tid]->vector_sum(sums) ;
 
 	memcpy(row_s, vsum.s, chunk*sizeof(uint8_t)) ;
 	memcpy(row_z, vsum.z, chunk*sizeof(uint8_t)) ;
@@ -412,7 +412,7 @@ void vsumIfElse(int32_t s1, int32_t s2, vector<vector<FPArray>>& arr, vector<vec
 		dot.push_back(__fp_op->input(__party, s2, conded_s, conded_z, conded_m, conded_e, m_bits, e_bits)) ;
 	}
 
-	FPArray res = __fp_op->vector_sum_with_chunking(dot) ;
+	FPArray res = __fp_op->vector_sum(dot) ;
 	for (int i = 0 ; i < s1 ; i++) {
 		outArr[i].s[0] = res.s[i] ;
 		outArr[i].z[0] = res.z[i] ;
@@ -446,7 +446,7 @@ void getLoss(int32_t s, vector<FPArray>& arr, vector<FPArray>& outArr) {
 	vector<FPArray> sum ;
 	sum.push_back(__fp_op->input(__party, s, in_s, in_z, in_m, in_e, m_bits, e_bits)) ;
 	
-	FPArray res = __fp_op->vector_sum_with_chunking(sum) ;
+	FPArray res = __fp_op->vector_sum(sum) ;
 	FPArray div = __fp_op->input<float>(ALICE, 1, (float)(1.0/s), m_bits, e_bits) ;
 	res = __fp_op->mul(res, div) ;
 

@@ -468,18 +468,18 @@ public:
   // mask[i][j] is 1 if j is the index of the max element in x[i] and 0 otherwise
   std::pair<FPArray, vector<BoolArray>> max_with_mask(const std::vector<FPArray> &x) ;
 
-  FPArray general_vector_sum(const vector<FPArray> &x, int b_, int sc, int m_bits, int e_bits);
-  FPArray vector_sum(const vector<FPArray> &x) {
+  FPArray general_vector_sum_core(const vector<FPArray> &x, int b_, int sc, int m_bits, int e_bits);
+  FPArray vector_sum_core(const vector<FPArray> &x) {
+    int m_bits = x[0].m_bits;
+    int e_bits = x[0].e_bits;
+    return general_vector_sum_core(x, m_bits, m_bits, m_bits, e_bits);
+  }
+
+  FPArray general_vector_sum(vector<FPArray> &x, int b_, int sc, int m_bits, int e_bits);
+  FPArray vector_sum(vector<FPArray> &x) {
     int m_bits = x[0].m_bits;
     int e_bits = x[0].e_bits;
     return general_vector_sum(x, m_bits, m_bits, m_bits, e_bits);
-  }
-
-  FPArray general_vector_sum_with_chunking(vector<FPArray> &x, int b_, int sc, int m_bits, int e_bits);
-  FPArray vector_sum_with_chunking(vector<FPArray> &x) {
-    int m_bits = x[0].m_bits;
-    int e_bits = x[0].e_bits;
-    return general_vector_sum_with_chunking(x, m_bits, m_bits, m_bits, e_bits);
   }
 
   // Finds sum s_i of elements in x[i], forall i

@@ -1663,7 +1663,7 @@ pair<FPArray, vector<BoolArray>> FPOp::max_with_mask(const vector<FPArray>& x) {
   return make_pair(x_tr[0], mask) ;
 }
 
-FPArray FPOp::general_vector_sum(const vector<FPArray> &x, int b_, int sc, int m_bits, int e_bits) {
+FPArray FPOp::general_vector_sum_core(const vector<FPArray> &x, int b_, int sc, int m_bits, int e_bits) {
   int N = x.size();
   int n = x[0].size;
   int b = x[0].m_bits + 1;
@@ -1732,7 +1732,7 @@ FPArray FPOp::general_vector_sum(const vector<FPArray> &x, int b_, int sc, int m
   return this->check_bounds(alpha, true);
 }
 
-FPArray FPOp::general_vector_sum_with_chunking(vector<FPArray> &x, int b_, int sc, int m_bits, int e_bits) {
+FPArray FPOp::general_vector_sum(vector<FPArray> &x, int b_, int sc, int m_bits, int e_bits) {
   int N = x.size();
   uint64_t n = x[0].size;
   assert(m_bits > 0);
@@ -1767,11 +1767,11 @@ FPArray FPOp::general_vector_sum_with_chunking(vector<FPArray> &x, int b_, int s
     }
   }
   if (num_chunks == 1) {
-    return general_vector_sum(x_slices, b_, sc, m_bits, e_bits);
+    return general_vector_sum_core(x_slices, b_, sc, m_bits, e_bits);
   } else {
     FPArray sum_tr;
     if (num_chunks * chunk_size == n) {
-      sum_tr = general_vector_sum(x_slices, b_, sc, m_bits, e_bits);
+      sum_tr = general_vector_sum_core(x_slices, b_, sc, m_bits, e_bits);
     } else {
       vector<FPArray> x_slices_1(N*(num_chunks - 1));
       vector<FPArray> x_slices_2(N);
@@ -1783,8 +1783,8 @@ FPArray FPOp::general_vector_sum_with_chunking(vector<FPArray> &x, int b_, int s
       for (int i = 0; i < N; i++) {
         x_slices_2[i] = x_slices[(num_chunks-1)*N + i];
       }
-      FPArray sum_tr_1 = general_vector_sum(x_slices_1, b_, sc, m_bits, e_bits);
-      FPArray sum_tr_2 = general_vector_sum(x_slices_2, b_, sc, m_bits, e_bits);
+      FPArray sum_tr_1 = general_vector_sum_core(x_slices_1, b_, sc, m_bits, e_bits);
+      FPArray sum_tr_2 = general_vector_sum_core(x_slices_2, b_, sc, m_bits, e_bits);
       sum_tr = concat({ sum_tr_1, sum_tr_2 });
     }
     vector<FPArray> summ(N);
@@ -1797,7 +1797,7 @@ FPArray FPOp::general_vector_sum_with_chunking(vector<FPArray> &x, int b_, int s
         summ[i].e[j] = sum_tr.e[j*N + i];
       }
     }
-    return general_vector_sum_with_chunking(summ, m_bits, m_bits, m_bits, e_bits) ;
+    return general_vector_sum(summ, m_bits, m_bits, m_bits, e_bits) ;
   }
 }
 
@@ -1872,7 +1872,7 @@ FPArray FPOp::dot_product(const vector<FPArray> &x, const vector<FPArray> &y) {
   delete[] flat_x_m; delete[] flat_y_m;
   delete[] flat_x_e; delete[] flat_y_e;
 
-  return general_vector_sum_with_chunking(prod, b_, sc, m_bits, e_bits);
+  return general_vector_sum(prod, b_, sc, m_bits, e_bits);
 }
 
 vector<FPArray> matmul_intermediate_products_beacon(FPOp* fp_op, const FPMatrix &x, const FPMatrix &y, int chunk_exp) {
@@ -2024,7 +2024,7 @@ FPMatrix FPOp::matrix_multiplication_beacon(const FPMatrix &x, const FPMatrix &y
   for (int i = 0; i < N; i += rows_per_batch) {
     int j = std::min(i + rows_per_batch, N);
     vector<FPArray> prod_i = {prod.begin() + i, prod.begin() + j};
-    FPArray ret_i = general_vector_sum_with_chunking(prod_i, b_, sc, m_bits, e_bits);
+    FPArray ret_i = general_vector_sum(prod_i, b_, sc, m_bits, e_bits);
     memcpy(ret.s + i, ret_i.s, (j-i) * sizeof(uint8_t));
     memcpy(ret.z + i, ret_i.z, (j-i) * sizeof(uint8_t));
     memcpy(ret.m + i, ret_i.m, (j-i) * sizeof(uint64_t));
@@ -2126,7 +2126,7 @@ vector<FPMatrix> FPOp::matrix_multiplication_beacon(const vector<FPMatrix> &x, c
       for (int k = i ; k < j ; k++)
         tosum.push_back(prod[k].subset(l*n, (l+1)*n)) ;
 
-      FPArray summed = general_vector_sum_with_chunking(tosum, b_, sc, m_bits, e_bits) ;
+      FPArray summed = general_vector_sum(tosum, b_, sc, m_bits, e_bits) ;
       memcpy(ret_l.s + i, summed.s, (j-i)*sizeof(uint8_t)) ;
       memcpy(ret_l.z + i, summed.z, (j-i)*sizeof(uint8_t)) ;
       memcpy(ret_l.m + i, summed.m, (j-i)*sizeof(uint64_t)) ;

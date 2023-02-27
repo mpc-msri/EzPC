@@ -4,7 +4,7 @@
 using namespace sci ;
 using namespace std ;
 
-#define MAX_THREADS 4
+#define MAX_THREADS 16
 
 /********************* Public Variables *********************/
 

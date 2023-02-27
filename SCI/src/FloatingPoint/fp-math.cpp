@@ -1004,7 +1004,7 @@ vector<FPArray> FPMath::softmax_beacon(const vector<FPArray>& x) {
       e_x_tr[i].e[j] = e_x[j].e[i];
     }
   }
-  FPArray sum_e_x = fp_op->vector_sum_with_chunking(e_x);
+  FPArray sum_e_x = fp_op->vector_sum(e_x);
   vector<FPArray> ret_tr = fp_op->div(e_x_tr, sum_e_x, false);
   vector<FPArray> ret(N);
   for (int i = 0; i < N; i++) {
