@@ -24,4 +24,3 @@ int main (int __argc, char **__argv) {
 	__end() ;
 	return 0 ;
 }
-
