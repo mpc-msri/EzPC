@@ -17,6 +17,7 @@ struct LayerGraphNode {
     int numUsages = 0;
     Tensor4D<T> *currTensor = nullptr;
     bool mark = false;
+    std::vector<LayerGraphNode<T> *> *allNodesInExecutionOrderRef = nullptr;
 
     bool incrementAndGc()
     {

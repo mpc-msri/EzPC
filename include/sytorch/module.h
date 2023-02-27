@@ -14,12 +14,13 @@ public:
     u64 scale;
     std::map<std::string, LayerGraphNode<T> *> addLayerMap;
     std::map<std::string, LayerGraphNode<T> *> concatLayerMap;
+    std::vector<LayerGraphNode<T> *> allNodesInExecutionOrder;
 
 public:
 
     virtual Tensor4D<T>& _forward(Tensor4D<T> &input) = 0;
 
-    SytorchModule() : activation(0, 0, 0, 0)
+    SytorchModule() : activation(0, 0, 0, 0), allNodesInExecutionOrder(0)
     {
 
     }
@@ -83,6 +84,7 @@ public:
         Tensor4D<T> ip(d1, d2, d3, d4);
         ip.graphNode = new LayerGraphNode<T>();
         ip.graphNode->layer = new PlaceHolderLayer<T>("Input");
+        ip.graphNode->allNodesInExecutionOrderRef = &allNodesInExecutionOrder;
         Layer<T>::fakeExecution = true;
         auto &res = this->_forward(ip);
         Layer<T>::fakeExecution = false;
@@ -104,6 +106,7 @@ public:
         Tensor4D<T> ip(0, 0, 0, 0);
         ip.graphNode = new LayerGraphNode<T>();
         ip.graphNode->layer = new PlaceHolderLayer<T>("Input");
+        ip.graphNode->allNodesInExecutionOrderRef = &allNodesInExecutionOrder;
         Layer<T>::fakeExecution = true;
         auto &res = this->_forward(ip);
         Layer<T>::fakeExecution = false;
@@ -180,7 +183,7 @@ public:
         u64 scale = this->scale;
         
         size_t wIdx = 0;
-        topologicalApply(root, [&wIdx, &floatWeights, &scale](LayerGraphNode<T> *node, LayerGraphNode<T> *_root) {
+        for (auto &node: allNodesInExecutionOrder) {
             auto layer = node->layer;
             if(layer->name.find("Conv2D") != std::string::npos || layer->name.find("FC") != std::string::npos) {
                 auto& weights = layer->getweights();
@@ -194,14 +197,16 @@ public:
                 auto wSize = weights.d1 * weights.d2;
                 wIdx += wSize;
 
-                auto& bias = layer->getbias();
+                if (layer->useBias) {
+                    auto& bias = layer->getbias();
 
-                for (int j = 0; j < bias.size; ++j) {
-                    bias(j) = floatWeights[wIdx + j] * (1LL << (2*scale));
+                    for (int j = 0; j < bias.size; ++j) {
+                        bias(j) = floatWeights[wIdx + j] * (1LL << (2*scale));
+                    }
+
+                    wSize = bias.size;
+                    wIdx += wSize;
                 }
-
-                wSize = bias.size;
-                wIdx += wSize;
             }
             else if (layer->name.find("BatchNorm2dInference") != std::string::npos) {
                 auto bn = (BatchNorm2dInference<T>*) layer;
@@ -216,7 +221,10 @@ public:
                 }
                 wIdx += 4 * channel;
             }
-        });
+        }
+
+        always_assert(wIdx == numParameters);
+        delete[] floatWeights;
     }
 
     template <typename... Args>
@@ -248,6 +256,8 @@ public:
                 c.graphNode->parents.push_back(a->graphNode);
                 a->graphNode->children.push_back(c.graphNode);
             }
+            c.graphNode->allNodesInExecutionOrderRef = arr[0]->graphNode->allNodesInExecutionOrderRef;
+            c.graphNode->allNodesInExecutionOrderRef->push_back(c.graphNode);
             return;
         }
 
@@ -306,6 +316,8 @@ public:
                 c.graphNode->parents.push_back(a->graphNode);
                 a->graphNode->children.push_back(c.graphNode);
             }
+            c.graphNode->allNodesInExecutionOrderRef = arr[0]->graphNode->allNodesInExecutionOrderRef;
+            c.graphNode->allNodesInExecutionOrderRef->push_back(c.graphNode);
             return;
         }
 

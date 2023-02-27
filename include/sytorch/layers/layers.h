@@ -28,6 +28,7 @@ public:
     int mode = 0; // only used in ReLU in llama improved to decide between relu and reluext, might need something cleaner?
     int forwardTruncationMode = 0;
     LayerGraphNode<T> *node = nullptr;
+    bool useBias = true;
 
     Layer(const std::string &id) : activation(0,0,0,0), inputDerivative(0,0,0,0), name(id) {
         backend = new ClearText<T>();
@@ -45,6 +46,8 @@ public:
             node = activation.graphNode;
             activation.graphNode->layer = this;
             activation.graphNode->parents.push_back(a.graphNode);
+            activation.graphNode->allNodesInExecutionOrderRef = a.graphNode->allNodesInExecutionOrderRef;
+            activation.graphNode->allNodesInExecutionOrderRef->push_back(activation.graphNode);
             a.graphNode->children.push_back(activation.graphNode);
             layer_dims indims = {a.d1, a.d2, a.d3, a.d4};
             layer_dims outdims = this->get_output_dims(indims);
@@ -98,10 +101,11 @@ public:
     Tensor<T> Vb;
     u64 ci, co, ks, padding, stride;
 
-    Conv2D(u64 ci, u64 co, u64 ks, u64 padding = 0, u64 stride = 1, bool useBias = true) : Layer<T>("Conv2D"), ci(ci), co(co), ks(ks), padding(padding), 
+    Conv2D(u64 ci, u64 co, u64 ks, u64 padding = 0, u64 stride = 1, bool useBias = false) : Layer<T>("Conv2D"), ci(ci), co(co), ks(ks), padding(padding), 
         stride(stride), filter(co, ks * ks * ci), filterGrad(co, ks * ks * ci), Vw(co, ks * ks * ci), bias(co), biasGrad(co), Vb(co), inp(0,0,0,0)
     {
         this->doTruncationForward = true;
+        this->useBias = useBias;
     }
 
     void initScale(u64 scale) {
@@ -127,6 +131,7 @@ public:
         assert(a.d4 == ci);
         inp.copy(a);
         this->backend->conv2D(ks, ks, padding, stride, ci, co, a, filter, this->activation);
+        if (this->useBias)
         this->activation.addBias(bias);
     }
 
@@ -136,6 +141,7 @@ public:
         assert(e.d3 == this->activation.d3);
         assert(e.d4 == this->activation.d4);
         this->backend->conv2DFilterGrad(ks, ks, padding, stride, ci, co, inp, filterGrad, e);
+        if (this->useBias)
         this->backend->conv2DBiasGrad(e, biasGrad);
         if (!(this->isFirst)) {
             this->backend->conv2DInputGrad(ks, ks, padding, stride, ci, co, this->inputDerivative, filter, e);
@@ -143,6 +149,7 @@ public:
         }
         // this->backend->truncate(filterGrad, scale);
         this->backend->updateWeight(filter, filterGrad, Vw, this->scale);
+        if (this->useBias)
         this->backend->updateBias(bias, biasGrad, Vb, this->scale);
     }
 
@@ -328,8 +335,9 @@ public:
     Tensor<T> Vb;
     u64 in, out;
 
-    FC(u64 in, u64 out, bool useBias = true) : Layer<T>("FC"), in(in), out(out), weight(in, out), bias(out), inp(0,0,0,0), weightGrad(in,out), Vw(in,out), Vb(out) {
+    FC(u64 in, u64 out, bool useBias = false) : Layer<T>("FC"), in(in), out(out), weight(in, out), bias(out), inp(0,0,0,0), weightGrad(in,out), Vw(in,out), Vb(out) {
         this->doTruncationForward = true;
+        this->useBias = useBias;
     }
 
     void initScale(u64 scale) {
@@ -337,6 +345,7 @@ public:
         this->scale = scale;
         double xavier = 1.0 / sqrt(in);
         weight.randomize(xavier * (1ULL<<scale));
+        if (this->useBias)
         bias.randomize(xavier * (1ULL<<(2*scale)));
         Vw.fill(0);
         Vb.fill(0);
@@ -353,6 +362,7 @@ public:
     void forward_internal(Tensor4D<T> &a, bool train = true) {
         this->inp.copy(a);
         this->backend->matmul(a, weight, this->activation);
+        if (this->useBias)
         this->activation.addBias2D(bias);
     }
 
@@ -365,6 +375,7 @@ public:
         // this->backend->truncate(weightGrad, scale);
         Vw.resize(weightGrad.d1, weightGrad.d2);
         this->backend->updateWeight(weight, weightGrad, Vw, this->scale);
+        if (this->useBias)
         this->backend->updateBias(bias, e, Vb, this->scale);
     }
     

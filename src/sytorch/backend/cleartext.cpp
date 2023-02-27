@@ -581,7 +581,11 @@ void ClearText<T>::maxPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> 
                     u64 maxIdxJ = 0;
                     for(int m = 0; m < ks; m++) {
                         for(int n = 0; n < ks; n++) {
-                            T val = in(i, j*stride+m, k*stride+n, l);
+                            auto h2 = j*stride+m-padding;
+                            auto w2 = k*stride+n-padding;
+                            T val = 0;
+                            if (h2 < in.d2 && w2 < in.d3 && h2 >= 0 && w2 >= 0)
+                                val = in(i, h2, w2, l);
                             if(val > max) {
                                 max = val;
                                 maxIdxI = m;

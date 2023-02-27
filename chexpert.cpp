@@ -1032,13 +1032,13 @@ int main(int argc, char**argv){
 
     if (party == 0) {
           Net<i64> net;
-          net.init(24);
-          // net.load("weight_file.dat");
+          net.init(scale);
+          net.load("chexpert_weights.dat");
           Tensor4D<i64> input(1, 320, 320, 3);
           input.fill(1LL << scale);
           print_dot_graph(net.root);
           net.forward(input);
-          net.activation.print();
+          blprint(net.activation, 64, scale);
           return 0;
     }
     using LlamaVersion = LlamaExtended<u64>;
