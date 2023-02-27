@@ -260,6 +260,8 @@ void SubtractOne(int32_t s1, vector<FPArray>& inArr, vector<FPArray>& outArr) ;
 
 void dotProduct2(int32_t s1, int32_t s2, vector<vector<FPArray>>& arr1, vector<vector<FPArray>>& arr2, vector<FPArray>& outArr) ;
 
+void vectorSum2(int32_t s1, int32_t s2, vector<vector<FPArray>>& arr1, vector<FPArray>& outArr) ;
+
 void vsumIfElse(int32_t s1, int32_t s2, vector<vector<FPArray>>& arr1, vector<vector<BoolArray>>& arr2, vector<FPArray>& outArr) ;
 
 void getLoss(int32_t s, vector<FPArray> &arr, vector<FPArray> &outArr);

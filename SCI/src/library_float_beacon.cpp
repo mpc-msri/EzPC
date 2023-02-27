@@ -34,7 +34,7 @@ void MatMul_thread(
 	uint8_t *res_s, uint8_t *res_z, uint64_t *res_m, uint64_t *res_e
 	) {
 
-	FPMatrix A_chunk = fpopArr[tid]->input(tid&1?3-__party:__party, m_chunk, n, A_s, A_z, A_m, A_e, m_bits, e_bits) ;
+	FPMatrix A_chunk = fpopArr[tid]->input(WHICHPARTY, m_chunk, n, A_s, A_z, A_m, A_e, m_bits, e_bits) ;
 	FPMatrix res ;
 
 	res = fpopArr[tid]->matrix_multiplication_beacon(A_chunk, B, __chunk_exp) ;
@@ -159,7 +159,7 @@ void vectorSum_thread(
 	for (int i = 0 ; i < chunk ; i++) {
 		sums.push_back(
 			fpopArr[tid]->input(
-				tid&1?3-__party:__party, colsize, Row_s[i], Row_z[i], Row_m[i], Row_e[i], m_bits, e_bits
+				WHICHPARTY, colsize, Row_s[i], Row_z[i], Row_m[i], Row_e[i], m_bits, e_bits
 			)
 		) ;
 	}
@@ -251,7 +251,7 @@ void Softmax2_thread(
 	vector<FPArray> softin, softout ;
 
 	for (int i = 0 ; i < mchunk ; i++)
-		softin.push_back(fpopArr[tid]->input(tid&1?3-__party:__party, n, in_s[i], in_z[i], in_m[i], in_e[i], m_bits, e_bits)) ;
+		softin.push_back(fpopArr[tid]->input(WHICHPARTY, n, in_s[i], in_z[i], in_m[i], in_e[i], m_bits, e_bits)) ;
 
 	softout = fpmathArr[tid]->softmax_beacon(softin) ;
 	
@@ -341,89 +341,189 @@ void Softmax2(
 	delete[] row_e ; delete[] out_e ;
 }
 
-void dotProduct2(int32_t s1, int32_t s2, vector<vector<FPArray>>& arr1, vector<vector<FPArray>>& arr2, vector<FPArray>& outArr) {
-	int m_bits, e_bits ;
+void dotProduct_thread(
+	int tid, int chunk, int colsize, int m_bits, int e_bits,
+	uint8_t **Row1_s, uint8_t **Row1_z, uint64_t **Row1_m, uint64_t **Row1_e,
+	uint8_t **Row2_s, uint8_t **Row2_z, uint64_t **Row2_m, uint64_t **Row2_e,
+	uint8_t *row_s, uint8_t *row_z, uint64_t *row_m, uint64_t *row_e
+	) {
+	vector<FPArray> prod1, prod2;
+	for (int i = 0; i < chunk; i++)
+	{
+		FPArray mul1 = fpopArr[tid]->input(WHICHPARTY, colsize, Row1_s[i], Row1_z[i], Row1_m[i], Row1_e[i], m_bits, e_bits) ;
+		FPArray mul2 = fpopArr[tid]->input(WHICHPARTY, colsize, Row2_s[i], Row2_z[i], Row2_m[i], Row2_e[i], m_bits, e_bits) ;
+		prod1.push_back(mul1) ;
+		prod2.push_back(mul2) ;
+	}
+
+	FPArray vsum = fpopArr[tid]->dot_product(prod1, prod2);
+	memcpy(row_s, vsum.s, chunk * sizeof(uint8_t));
+	memcpy(row_z, vsum.z, chunk * sizeof(uint8_t));
+	memcpy(row_m, vsum.m, chunk * sizeof(uint64_t));
+	memcpy(row_e, vsum.e, chunk * sizeof(uint64_t));
+}
+
+void dotProduct2(int32_t s1, int32_t s2, 
+	vector<vector<FPArray>> &arr1, vector<vector<FPArray>> &arr2, vector<FPArray> &outArr
+	) {
+	int m_bits, e_bits;
 	m_bits = arr1[0][0].m_bits ;
 	e_bits = arr1[0][0].e_bits ;
 
-	vector<FPArray> dot1, dot2 ;
+	uint8_t **Row1_s = new uint8_t*[s1] ;
+	uint8_t **Row1_z = new uint8_t*[s1] ;
+	uint64_t **Row1_m = new uint64_t*[s1] ;
+	uint64_t **Row1_e = new uint64_t*[s1] ;
 
-	uint8_t *arr1_s = new uint8_t[s2] ;
-	uint8_t *arr1_z = new uint8_t[s2] ;
-	uint64_t *arr1_m = new uint64_t[s2] ;
-	uint64_t *arr1_e = new uint64_t[s2] ;
+	uint8_t **Row2_s = new uint8_t*[s1] ;
+	uint8_t **Row2_z = new uint8_t*[s1] ;
+	uint64_t **Row2_m = new uint64_t*[s1] ;
+	uint64_t **Row2_e = new uint64_t*[s1] ;
 
-	uint8_t *arr2_s = new uint8_t[s2] ;
-	uint8_t *arr2_z = new uint8_t[s2] ;
-	uint64_t *arr2_m = new uint64_t[s2] ;
-	uint64_t *arr2_e = new uint64_t[s2] ;
+	uint8_t *row_s = new uint8_t[s1] ;
+	uint8_t *row_z = new uint8_t[s1] ;
+	uint64_t *row_m = new uint64_t[s1] ;
+	uint64_t *row_e = new uint64_t[s1] ;
 
 	for (int i = 0 ; i < s1 ; i++) {
+		Row1_s[i] = new uint8_t[s2] ; Row2_s[i] = new uint8_t[s2] ;
+		Row1_z[i] = new uint8_t[s2] ; Row2_z[i] = new uint8_t[s2] ;
+		Row1_m[i] = new uint64_t[s2] ; Row2_m[i] = new uint64_t[s2] ;
+		Row1_e[i] = new uint64_t[s2] ; Row2_e[i] = new uint64_t[s2] ;
+
 		for (int j = 0 ; j < s2 ; j++) {
-			arr1_s[j] = arr1[i][j].s[0] ; arr2_s[j] = arr2[i][j].s[0] ;
-			arr1_z[j] = arr1[i][j].z[0] ; arr2_z[j] = arr2[i][j].z[0] ;
-			arr1_m[j] = arr1[i][j].m[0] ; arr2_m[j] = arr2[i][j].m[0] ;
-			arr1_e[j] = arr1[i][j].e[0] ; arr2_e[j] = arr2[i][j].e[0] ;
+			Row1_s[i][j] = arr1[i][j].s[0] ; Row2_s[i][j] = arr2[i][j].s[0] ;
+			Row1_z[i][j] = arr1[i][j].z[0] ; Row2_z[i][j] = arr2[i][j].z[0] ;
+			Row1_m[i][j] = arr1[i][j].m[0] ; Row2_m[i][j] = arr2[i][j].m[0] ;
+			Row1_e[i][j] = arr1[i][j].e[0] ; Row2_e[i][j] = arr2[i][j].e[0] ;
 		}
-
-		dot1.push_back(__fp_op->input(__party, s2, arr1_s, arr1_z, arr1_m, arr1_e, m_bits, e_bits)) ;
-		dot2.push_back(__fp_op->input(__party, s2, arr2_s, arr2_z, arr2_m, arr2_e, m_bits, e_bits)) ;
 	}
 
-	FPArray res = __fp_op->dot_product(dot1, dot2) ;
+	vector<int> chunks = get_chunks(s1, __nt);
+	thread threads[MAX_THREADS];
+	int offset = 0;
+	for (int i = 0; i < __nt; i++)
+	{
+		if (chunks[i] > 0)
+		{
+			threads[i] = thread(dotProduct_thread,
+								i, chunks[i], s2, m_bits, e_bits,
+								Row1_s + offset, Row1_z + offset, Row1_m + offset, Row1_e + offset,
+								Row2_s + offset, Row2_z + offset, Row2_m + offset, Row2_e + offset,
+								row_s + offset, row_z + offset, row_m + offset, row_e + offset);
+			offset += chunks[i];
+		}
+	}
+
+	for (int i = 0; i < __nt; i++)
+		if (chunks[i] > 0)
+			threads[i].join();
+
+	for (int i = 0; i < s1; i++)
+	{
+		outArr[i].m_bits = m_bits;
+		outArr[i].e_bits = e_bits;
+
+		outArr[i].s[0] = row_s[i];
+		outArr[i].z[0] = row_z[i];
+		outArr[i].m[0] = row_m[i];
+		outArr[i].e[0] = row_e[i];
+	}
+
+
 	for (int i = 0 ; i < s1 ; i++) {
-		outArr[i].s[0] = res.s[i] ;
-		outArr[i].z[0] = res.z[i] ;
-		outArr[i].m[0] = res.m[i] ;
-		outArr[i].e[0] = res.e[i] ;
+		delete[] Row1_s[i] ; delete[] Row2_s[i] ;
+		delete[] Row1_z[i] ; delete[] Row2_z[i] ;
+		delete[] Row1_m[i] ; delete[] Row2_m[i] ;
+		delete[] Row1_e[i] ; delete[] Row2_e[i] ;
 	}
 
-	delete[] arr1_s ; delete[] arr2_s ;
-	delete[] arr1_z ; delete[] arr2_z ;
-	delete[] arr1_m ; delete[] arr2_m ;
-	delete[] arr1_e ; delete[] arr2_e ;
+	delete[] Row1_s ; delete[] Row2_s ; delete[] row_s ;
+	delete[] Row1_z ; delete[] Row2_z ; delete[] row_z ;
+	delete[] Row1_m ; delete[] Row2_m ; delete[] row_m ;
+	delete[] Row1_e ; delete[] Row2_e ; delete[] row_e ;
 }
 
-void vsumIfElse(int32_t s1, int32_t s2, vector<vector<FPArray>>& arr, vector<vector<BoolArray>>& condArr, vector<FPArray>& outArr) {
-	int m_bits, e_bits ;
-	int sz = s1*s2 ;
-	m_bits = arr[0][0].m_bits ;
-	e_bits = arr[0][0].e_bits ;
+void vectorSum2(
+	int32_t s1, int32_t s2, 
+	vector<vector<FPArray>> &inArr, vector<FPArray> &outArr
+	) {
+	int m_bits, e_bits;
+	m_bits = inArr[0][0].m_bits;
+	e_bits = inArr[0][0].e_bits;
 
-	vector<FPArray> arr_flat = make_vector_float(ALICE, sz) ;
-	vector<BoolArray> cond_flat = make_vector_bool(ALICE, sz) ;
-	vector<FPArray> conded_flat = make_vector_float(ALICE, sz) ;
+	uint8_t **Row_s = new uint8_t *[s1];
+	uint8_t **Row_z = new uint8_t *[s1];
+	uint64_t **Row_m = new uint64_t *[s1];
+	uint64_t **Row_e = new uint64_t *[s1];
 
-	IfElse(sz, arr_flat, cond_flat, conded_flat) ;
+	uint8_t *row_s = new uint8_t[s1];
+	uint8_t *row_z = new uint8_t[s1];
+	uint64_t *row_m = new uint64_t[s1];
+	uint64_t *row_e = new uint64_t[s1];
 
-	uint8_t *conded_s = new uint8_t[s2] ;
-	uint8_t *conded_z = new uint8_t[s2] ;
-	uint64_t *conded_m = new uint64_t[s2] ;
-	uint64_t *conded_e = new uint64_t[s2] ;
+	for (int i = 0; i < s1; i++)
+	{
+		Row_s[i] = new uint8_t[s2];
+		Row_z[i] = new uint8_t[s2];
+		Row_m[i] = new uint64_t[s2];
+		Row_e[i] = new uint64_t[s2];
 
-	vector<FPArray> dot ;
-	for (int i = 0 ; i < s1 ; i++) {
-		for (int j = 0 ; j < s2 ; j++) {
-			conded_s[j] = conded_flat[i*s2 + j].s[0] ;
-			conded_z[j] = conded_flat[i*s2 + j].z[0] ;
-			conded_m[j] = conded_flat[i*s2 + j].m[0] ;
-			conded_e[j] = conded_flat[i*s2 + j].e[0] ;
+		for (int j = 0; j < s2; j++)
+		{
+			Row_s[i][j] = inArr[j][i].s[0];
+			Row_z[i][j] = inArr[j][i].z[0];
+			Row_m[i][j] = inArr[j][i].m[0];
+			Row_e[i][j] = inArr[j][i].e[0];
 		}
-		dot.push_back(__fp_op->input(__party, s2, conded_s, conded_z, conded_m, conded_e, m_bits, e_bits)) ;
 	}
 
-	FPArray res = __fp_op->vector_sum(dot) ;
-	for (int i = 0 ; i < s1 ; i++) {
-		outArr[i].s[0] = res.s[i] ;
-		outArr[i].z[0] = res.z[i] ;
-		outArr[i].m[0] = res.m[i] ;
-		outArr[i].e[0] = res.e[i] ;
+	vector<int> chunks = get_chunks(s1, __nt);
+	thread threads[MAX_THREADS];
+	int offset = 0;
+	for (int i = 0; i < __nt; i++)
+	{
+		if (chunks[i] > 0)
+		{
+			threads[i] = thread(vectorSum_thread,
+								i, chunks[i], s2, m_bits, e_bits,
+								Row_s + offset, Row_z + offset, Row_m + offset, Row_e + offset,
+								row_s + offset, row_z + offset, row_m + offset, row_e + offset);
+			offset += chunks[i];
+		}
 	}
 
-	delete[] conded_s ;
-	delete[] conded_z ;
-	delete[] conded_m ;
-	delete[] conded_e ;
+	for (int i = 0; i < __nt; i++)
+		if (chunks[i] > 0)
+			threads[i].join();
+
+	for (int i = 0; i < s1; i++)
+	{
+		outArr[i].m_bits = m_bits;
+		outArr[i].e_bits = e_bits;
+
+		outArr[i].s[0] = row_s[i];
+		outArr[i].z[0] = row_z[i];
+		outArr[i].m[0] = row_m[i];
+		outArr[i].e[0] = row_e[i];
+	}
+
+	for (int i = 0; i < s1; i++)
+	{
+		delete[] Row_s[i];
+		delete[] Row_z[i];
+		delete[] Row_m[i];
+		delete[] Row_e[i];
+	}
+
+	delete[] Row_s;
+	delete[] row_s;
+	delete[] Row_z;
+	delete[] row_z;
+	delete[] Row_m;
+	delete[] row_m;
+	delete[] Row_e;
+	delete[] row_e;
 }
 
 void getLoss(int32_t s, vector<FPArray>& arr, vector<FPArray>& outArr) {

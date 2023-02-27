@@ -249,8 +249,8 @@ void ElemWiseSub_thread(
 	uint8_t *arr2_s, uint8_t *arr2_z, uint64_t *arr2_m, uint64_t *arr2_e,
 	uint8_t *out_s, uint8_t *out_z, uint64_t *out_m, uint64_t *out_e
 	) {
-	FPArray arr1_flat = fpopArr[tid]->input(tid&1?3-__party:__party, sz, arr1_s, arr1_z, arr1_m, arr1_e, m_bits, e_bits) ;
-	FPArray arr2_flat = fpopArr[tid]->input(tid&1?3-__party:__party, sz, arr2_s, arr2_z, arr2_m, arr2_e, m_bits, e_bits) ;
+	FPArray arr1_flat = fpopArr[tid]->input(WHICHPARTY, sz, arr1_s, arr1_z, arr1_m, arr1_e, m_bits, e_bits) ;
+	FPArray arr2_flat = fpopArr[tid]->input(WHICHPARTY, sz, arr2_s, arr2_z, arr2_m, arr2_e, m_bits, e_bits) ;
 	FPArray out = fpopArr[tid]->sub(arr1_flat, arr2_flat) ;
 
 	memcpy(out_s, out.s, sz*sizeof(uint8_t)) ;
@@ -333,8 +333,8 @@ void ElemWiseMul_thread(
 	uint8_t *arr2_s, uint8_t *arr2_z, uint64_t *arr2_m, uint64_t *arr2_e,
 	uint8_t *out_s, uint8_t *out_z, uint64_t *out_m, uint64_t *out_e
 	) {
-	FPArray arr1_flat = fpopArr[tid]->input(tid&1?3-__party:__party, sz, arr1_s, arr1_z, arr1_m, arr1_e, m_bits, e_bits) ;
-	FPArray arr2_flat = fpopArr[tid]->input(tid&1?3-__party:__party, sz, arr2_s, arr2_z, arr2_m, arr2_e, m_bits, e_bits) ;
+	FPArray arr1_flat = fpopArr[tid]->input(WHICHPARTY, sz, arr1_s, arr1_z, arr1_m, arr1_e, m_bits, e_bits) ;
+	FPArray arr2_flat = fpopArr[tid]->input(WHICHPARTY, sz, arr2_s, arr2_z, arr2_m, arr2_e, m_bits, e_bits) ;
 	FPArray out = fpopArr[tid]->mul(arr1_flat, arr2_flat) ;
 
 	memcpy(out_s, out.s, sz*sizeof(uint8_t)) ;
@@ -417,8 +417,8 @@ void ElemWiseDiv_thread(
 	uint8_t *arr2_s, uint8_t *arr2_z, uint64_t *arr2_m, uint64_t *arr2_e,
 	uint8_t *out_s, uint8_t *out_z, uint64_t *out_m, uint64_t *out_e
 	) {
-	FPArray arr1_flat = fpopArr[tid]->input(tid&1?3-__party:__party, sz, arr1_s, arr1_z, arr1_m, arr1_e, m_bits, e_bits) ;
-	FPArray arr2_flat = fpopArr[tid]->input(tid&1?3-__party:__party, sz, arr2_s, arr2_z, arr2_m, arr2_e, m_bits, e_bits) ;
+	FPArray arr1_flat = fpopArr[tid]->input(WHICHPARTY, sz, arr1_s, arr1_z, arr1_m, arr1_e, m_bits, e_bits) ;
+	FPArray arr2_flat = fpopArr[tid]->input(WHICHPARTY, sz, arr2_s, arr2_z, arr2_m, arr2_e, m_bits, e_bits) ;
 	FPArray out = fpopArr[tid]->div(arr1_flat, arr2_flat) ;
 
 	memcpy(out_s, out.s, sz*sizeof(uint8_t)) ;
@@ -581,8 +581,8 @@ void IfElse_thread(
 	uint8_t *out_s, uint8_t *out_z, uint64_t *out_m, uint64_t *out_e, bool flip=false
 	) {
 
-	FPArray in_flat = fpopArr[tid]->input(tid&1?3-__party:__party, sz, in_s, in_z, in_m, in_e, m_bits, e_bits) ;
-	BoolArray cond_flat = boolopArr[tid]->input(tid&1?3-__party:__party, sz, in_hot) ;
+	FPArray in_flat = fpopArr[tid]->input(WHICHPARTY, sz, in_s, in_z, in_m, in_e, m_bits, e_bits) ;
+	BoolArray cond_flat = boolopArr[tid]->input(WHICHPARTY, sz, in_hot) ;
 	FPArray zero_flat = fpopArr[tid]->input<float>(ALICE, sz, (float)0.0, m_bits, e_bits) ;
 
 	FPArray out_flat ;
@@ -666,8 +666,8 @@ void ElemWiseAdd_thread(
 	uint8_t *arr2_s, uint8_t *arr2_z, uint64_t *arr2_m, uint64_t *arr2_e,
 	uint8_t *out_s, uint8_t *out_z, uint64_t *out_m, uint64_t *out_e
 	) {
-	FPArray arr1_flat = fpopArr[tid]->input(tid&1?3-__party:__party, sz, arr1_s, arr1_z, arr1_m, arr1_e, m_bits, e_bits) ;
-	FPArray arr2_flat = fpopArr[tid]->input(tid&1?3-__party:__party, sz, arr2_s, arr2_z, arr2_m, arr2_e, m_bits, e_bits) ;
+	FPArray arr1_flat = fpopArr[tid]->input(WHICHPARTY, sz, arr1_s, arr1_z, arr1_m, arr1_e, m_bits, e_bits) ;
+	FPArray arr2_flat = fpopArr[tid]->input(WHICHPARTY, sz, arr2_s, arr2_z, arr2_m, arr2_e, m_bits, e_bits) ;
 	FPArray out = fpopArr[tid]->add(arr1_flat, arr2_flat) ;
 
 	memcpy(out_s, out.s, sz*sizeof(uint8_t)) ;
@@ -1069,8 +1069,8 @@ void updateWeights_thread(
 	uint8_t *in_s, uint8_t *in_z, uint64_t *in_m, uint64_t *in_e,
 	uint8_t *der_s, uint8_t *der_z, uint64_t *der_m, uint64_t *der_e
 	) {
-	FPArray weight = fpopArr[tid]->input(tid&1?3-__party:__party, chunk, in_s, in_z, in_m, in_e, m_bits, e_bits) ;
-	FPArray der = fpopArr[tid]->input(tid&1?3-__party:__party, chunk, der_s, der_z, der_m, der_e, m_bits, e_bits) ;
+	FPArray weight = fpopArr[tid]->input(WHICHPARTY, chunk, in_s, in_z, in_m, in_e, m_bits, e_bits) ;
+	FPArray der = fpopArr[tid]->input(WHICHPARTY, chunk, der_s, der_z, der_m, der_e, m_bits, e_bits) ;
 	FPArray muller = fpopArr[tid]->input<float>(PUBLIC, chunk, lr, m_bits, e_bits) ;
 
 	der = fpopArr[tid]->mul(der, muller) ;
@@ -1239,11 +1239,11 @@ void updateWeightsAdam_thread(
 	uint8_t *v_s, uint8_t *v_z, uint64_t *v_m, uint64_t *v_e,
     uint8_t *t_s, uint8_t *t_z, uint64_t *t_m, uint64_t *t_e
 	) {
-	FPArray weight = fpopArr[tid]->input(tid&1?3-__party:__party, chunk, in_s, in_z, in_m, in_e, m_bits, e_bits) ;
-	FPArray der = fpopArr[tid]->input(tid&1?3-__party:__party, chunk, der_s, der_z, der_m, der_e, m_bits, e_bits) ;
-	FPArray m_t = fpopArr[tid]->input(tid&1?3-__party:__party, chunk, m_s, m_z, m_m, m_e, m_bits, e_bits) ;
-	FPArray v_t = fpopArr[tid]->input(tid&1?3-__party:__party, chunk, v_s, v_z, v_m, v_e, m_bits, e_bits) ;
-    FPArray t = fpopArr[tid]->input(tid&1?3-__party:__party, chunk, t_s, t_z, t_m, t_e, m_bits, e_bits) ;
+	FPArray weight = fpopArr[tid]->input(WHICHPARTY, chunk, in_s, in_z, in_m, in_e, m_bits, e_bits) ;
+	FPArray der = fpopArr[tid]->input(WHICHPARTY, chunk, der_s, der_z, der_m, der_e, m_bits, e_bits) ;
+	FPArray m_t = fpopArr[tid]->input(WHICHPARTY, chunk, m_s, m_z, m_m, m_e, m_bits, e_bits) ;
+	FPArray v_t = fpopArr[tid]->input(WHICHPARTY, chunk, v_s, v_z, v_m, v_e, m_bits, e_bits) ;
+    FPArray t = fpopArr[tid]->input(WHICHPARTY, chunk, t_s, t_z, t_m, t_e, m_bits, e_bits) ;
     
     
     FPArray muller = fpopArr[tid]->input<float>(ALICE, chunk, lr, m_bits, e_bits) ;
@@ -1433,7 +1433,7 @@ void Ln_thread(
 	uint8_t *out_s, uint8_t *out_z, uint64_t *out_m, uint64_t *out_e
 	) {
 
-	FPArray in_flat = fpopArr[tid]->input(tid&1?3-__party:__party, sz, in_s, in_z, in_m, in_e, m_bits, e_bits) ;
+	FPArray in_flat = fpopArr[tid]->input(WHICHPARTY, sz, in_s, in_z, in_m, in_e, m_bits, e_bits) ;
 	FPArray out_flat = fpmathArr[tid]->ln(in_flat) ;
 
 	memcpy(out_s, out_flat.s, sz*sizeof(uint8_t)) ;
@@ -1771,7 +1771,7 @@ void Maxpool_thread(
 	for (int i = 0 ; i < chunk ; i++) {
 		maxs.push_back(
 			fpopArr[tid]->input(
-				tid&1?3-__party:__party, filterSize, Row_s[i], Row_z[i], Row_m[i], Row_e[i], m_bits, e_bits
+				WHICHPARTY, filterSize, Row_s[i], Row_z[i], Row_m[i], Row_e[i], m_bits, e_bits
 			)
 		) ;
 	}
@@ -1925,6 +1925,40 @@ void MaxPool(
 	delete[] Mask ;
 }
 
+void vsumIfElse(int32_t s1, int32_t s2, vector<vector<FPArray>>& arr, vector<vector<BoolArray>>& condArr, vector<FPArray>& outArr) {
+	int m_bits, e_bits ;
+	int sz = s1*s2 ;
+	m_bits = arr[0][0].m_bits ;
+	e_bits = arr[0][0].e_bits ;
+
+	vector<FPArray> arr_flat = make_vector_float(ALICE, sz) ;
+	vector<BoolArray> cond_flat = make_vector_bool(ALICE, sz) ;
+
+	for (int i = 0 ; i < s1 ; i++) {
+		for (int j = 0 ; j < s2 ; j++) {
+			arr_flat[i*s2 + j].s[0] = arr[i][j].s[0] ;
+			arr_flat[i*s2 + j].z[0] = arr[i][j].z[0] ;
+			arr_flat[i*s2 + j].m[0] = arr[i][j].m[0] ;
+			arr_flat[i*s2 + j].e[0] = arr[i][j].e[0] ;
+
+			cond_flat[i*s2 + j].data[0] = condArr[i][j].data[0] ;
+		}
+	}
+
+	vector<FPArray> conded_flat = make_vector_float(ALICE, sz) ;
+	vector<vector<FPArray>> conded_unflat = make_vector_float(ALICE, s1, s2) ;
+	IfElse(sz, arr_flat, cond_flat, conded_flat) ;
+
+	for (int i = 0 ; i < s1 ; i++) {
+		for (int j = 0 ; j < s2 ; j++) {
+			conded_unflat[i][j].s[0] = conded_flat[i*s2 + j].s[0] ;
+			conded_unflat[i][j].z[0] = conded_flat[i*s2 + j].z[0] ;
+			conded_unflat[i][j].m[0] = conded_flat[i*s2 + j].m[0] ;
+			conded_unflat[i][j].e[0] = conded_flat[i*s2 + j].e[0] ;
+		}
+	}
+	vectorSum2(s1, s2, conded_unflat, outArr) ;
+}
 
 void ConvAdd(int32_t s1, int32_t s2, int32_t s3, int32_t s4, 
 	vector<vector<vector<vector<FPArray>>>>& inArr, 
