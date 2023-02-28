@@ -1461,7 +1461,7 @@ vector < vector < FPArray > > fwdOut = make_vector_float(ALICE, 4, 10) ;
 vector < FPArray > loss = make_vector_float(ALICE, 1) ;
 
 forward(layer1W, layer1b, layer2W, layer2b, layer3W, layer3b, layer4W, layer4b, layer1In, layer1Hot, layer1Out, layer1Pool, layer2In, layer2Hot, layer2Out, layer2Pool, layer3In, layer3Hot, layer3Out, layer3Pool, layer4In, fwdOut);
-computeCELoss(4, 10, target, fwdOut, loss);
+// computeCELoss(4, 10, target, fwdOut, loss);
 FPArray __tac_var209 = loss[0] ;
 
 cout << "Value of __tac_var209 : " ;
