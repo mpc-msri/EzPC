@@ -1103,6 +1103,8 @@ non_time += t/1000.0 ;
 non_comm += (comm_end - comm_start)/(1<<20) ;
 non_rounds += __iopack->get_rounds() - initial_rounds ;
 
+cout << "\tLayer 3 done\n" ;
+
 start = clock_start() ;
 initial_rounds = __iopack->get_rounds();
 comm_start = __get_comm() ;
@@ -1148,6 +1150,8 @@ start = clock_start() ;
 initial_rounds = __iopack->get_rounds();
 comm_start = __get_comm() ;
 
+cout << "\tLayer 2 done\n" ;
+
 ConvDerWrapper(4, 14, 14, 64, 5, 5, 64, 1, 1, 1, 1, 1, 1, 1, layer2In, layer2WDer, layer2Der);
 ConvBiasDer(4, 12, 12, 64, layer2Der, layer2bDer);
 GetPooledDer(4, 14, 14, 64, 64, 12, 12, 5, 5, layer2W, layer2Der, layer1PooledDer);
@@ -1183,6 +1187,8 @@ non_time += t/1000.0 ;
 non_comm += (comm_end - comm_start)/(1<<20) ;
 non_rounds += __iopack->get_rounds() - initial_rounds ;
 
+cout << "\tLayer 1 done\n" ;
+
 start = clock_start() ;
 initial_rounds = __iopack->get_rounds();
 comm_start = __get_comm() ;
@@ -1200,6 +1206,8 @@ updateWeightsMomentum4(5, 5, 64, 64, 0.01, 0.9, layer3W, layer3WDer, layer3WMom)
 updateWeightsMomentum(64, 0.01, 0.9, layer3b, layer3bDer, layer3bMom);
 updateWeightsMomentum2(10, 64, 0.01, 0.9, layer4W, layer4WDer, layer4WMom);
 updateWeightsMomentum(10, 0.01, 0.9, layer4b, layer4bDer, layer4bMom);
+
+cout << "\tWeight update done\n" ;
 
 t = time_from(start);
 comm_end = __get_comm() ;
