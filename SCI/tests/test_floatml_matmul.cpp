@@ -20,6 +20,12 @@ int main (int __argc, char **__argv) {
 	n = __sz2 ;
 	p = __sz3 ;
 
+	if (m == 0 || n == 0 || p == 0) {
+		m = 100 ;
+		n = 100 ;
+		p = 100 ;
+	}
+
 	vector<vector<FPArray>> matA = make_vector_float_rand(ALICE, m, n) ;
 	vector<vector<FPArray>> matB = make_vector_float_rand(ALICE, n, p) ;
 	vector<vector<FPArray>> matC = make_vector_float_rand(ALICE, m, p) ;

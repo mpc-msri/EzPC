@@ -19,6 +19,11 @@ int main (int __argc, char **__argv) {
 	sz1 = __sz1 ;
 	sz2 = __sz2 ;
 
+	if (sz1 == 0 || sz2 == 0) {
+		sz1 = 1000 ;
+		sz2 = 1000 ;
+	}
+
 	vector<vector<FPArray>> inArr1 = make_vector_float_rand(ALICE, sz1, sz2) ;
 	vector<vector<FPArray>> inArr2 = make_vector_float_rand(ALICE, sz1, sz2) ;
 	vector<FPArray> outArr = make_vector_float(ALICE, sz1) ;

@@ -19,6 +19,12 @@ int main (int __argc, char **__argv) {
 	rows = __sz1 ;
 	sz = __sz2 ;
 
+	if (rows == 0 || sz == 0) {
+		rows = 1000 ;
+		sz = 100 ;
+	}
+
+
 	float* inp1_tmp = new float[1] ;
 	vector<vector<FPArray>> inp1 = make_vector_float_rand(ALICE, rows, sz) ;
 	vector<vector<FPArray>> out = make_vector_float(ALICE, rows, sz) ;

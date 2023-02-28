@@ -16,6 +16,9 @@ int main (int __argc, char **__argv) {
 	e_bits = __e_bits ;
 	int sz = __sz1 ;
 
+	if (sz == 0)
+		sz = 1000000 ;
+
 	float* inp1_tmp = new float[1] ;
 	vector<FPArray> inp1 = make_vector_float_rand(ALICE, sz) ;
 	vector<FPArray> out = make_vector_float(ALICE, sz) ;
