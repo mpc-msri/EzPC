@@ -31,8 +31,6 @@ printf "Beacon BF16\n"
 ./../SCI/build/bin/softmax-beacon r=1 sz1=1000 sz2=100 mbits=7 ebits=8
 
 printf "RUNNING : Sigmoid\n"
-printf "Sigmoid FP32\n"
-./../SCI/build/bin/sigmoid-secfloatml r=1 sz1=1000000
 printf "Beacon FP32\n"
 ./../SCI/build/bin/sigmoid-beacon r=1 sz1=1000000
 printf "Beacon BF16\n"
