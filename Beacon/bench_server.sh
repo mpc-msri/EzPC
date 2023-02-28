@@ -3,7 +3,7 @@ printf "Secfloat\n"
 ./../SCI/build/bin/relevance32_secfloat r=1
 printf "Beacon FP32\n"
 ./../SCI/build/bin/relevance32_beacon r=1
-printf "Beacon FP32\n"
+printf "Beacon BF16\n"
 ./../SCI/build/bin/relevance32_beacon r=1 mbits=7 ebits=8
 
 printf "Logistic\n"
@@ -28,9 +28,9 @@ printf "LeNet\n"
 printf "Secfloat\n"
 ./../SCI/build/bin/lenet128_secfloat r=1 < ./../SCI/networks/inputs/lenet_weights.inp
 printf "Beacon FP32\n"
-./../SCI/build/bin/lenet128_beacon r=1 chunk=20  < ./../SCI/networks/inputs/lenet_weights.inp
+./../SCI/build/bin/lenet128_beacon r=1 < ./../SCI/networks/inputs/lenet_weights.inp
 printf "Beacon BF16\n"
-./../SCI/build/bin/lenet128_beacon r=1 chunk=20 mbits=7 ebits=8 < ./../SCI/networks/inputs/lenet_weights.inp
+./../SCI/build/bin/lenet128_beacon r=1 mbits=7 ebits=8 < ./../SCI/networks/inputs/lenet_weights.inp
 
 printf "HiNet\n"
 printf "Secfloat\n"

@@ -26,9 +26,9 @@ printf "LeNet\n"
 printf "Secfloat\n"
 cat ../SCI/networks/inputs/lenet_input128.inp ../SCI/networks/inputs/lenet_labels128.inp | ./../SCI/build/bin/lenet128_secfloat r=2 add=$1
 printf "Beacon FP32\n"
-cat ../SCI/networks/inputs/lenet_input128.inp ../SCI/networks/inputs/lenet_labels128.inp | ./../SCI/build/bin/lenet128_beacon r=2 add=$1 chunk=20
+cat ../SCI/networks/inputs/lenet_input128.inp ../SCI/networks/inputs/lenet_labels128.inp | ./../SCI/build/bin/lenet128_beacon r=2 add=$1
 printf "Beacon BF16\n"
-cat ../SCI/networks/inputs/lenet_input128.inp ../SCI/networks/inputs/lenet_labels128.inp | ./../SCI/build/bin/lenet128_beacon r=2 add=$1 chunk=20 mbits=7 ebits=8
+cat ../SCI/networks/inputs/lenet_input128.inp ../SCI/networks/inputs/lenet_labels128.inp | ./../SCI/build/bin/lenet128_beacon r=2 add=$1 mbits=7 ebits=8
 
 printf "HiNet\n"
 printf "Secfloat\n"
