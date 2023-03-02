@@ -21,6 +21,7 @@ SOFTWARE.
 
 #include "FloatingPoint/floating-point.h"
 #include <omp.h>
+#include <cstdlib>
 
 
 using namespace std;
@@ -392,36 +393,43 @@ tuple<BoolArray,BoolArray,FixArray,FixArray> FPOp::get_components(const FPArray 
   return make_tuple(x_s, x_z, x_m, x_e);
 }
 
-FPArray FPOp::check_bounds(const FPArray &x) {
+FPArray FPOp::check_bounds(const FPArray &x, bool only_underflow) {
   assert(x.party != PUBLIC);
   BoolArray x_s, x_z;
   FixArray x_m, x_e;
   tie(x_s, x_z, x_m, x_e) = get_components(x);
 
-  BoolArray overflow_check = fix->GT(x_e, x.e_max());
   BoolArray underflow_check = fix->LT(x_e, x.e_min());
-  underflow_check = bool_op->OR(underflow_check, x_z);
-
-  uint64_t m_inf = (1ULL << x.m_bits);
-  uint64_t e_inf = x.e_max() + 1;
-  FixArray ret_m_if = fix->input(PUBLIC, x.size, m_inf, x_m.signed_, x_m.ell, x_m.s);
-  FixArray ret_m_else = x_m;
-  FixArray ret_e_if = fix->input(PUBLIC, x.size, e_inf, x_e.signed_, x_e.ell, x_e.s);
-  FixArray ret_e_else = x_e;
-
-  FixArray ret_m = fix->if_else(overflow_check, ret_m_if, ret_m_else);
-  FixArray ret_e = fix->if_else(overflow_check, ret_e_if, ret_e_else);
+  if (!only_underflow) underflow_check = bool_op->OR(underflow_check, x_z);
 
   uint64_t m_0 = 0;
   uint64_t e_0 = x.e_min() - 1;
-  ret_m_if = fix->input(PUBLIC, x.size, m_0, x_m.signed_, x_m.ell, x_m.s);
+  FixArray ret_m_if = fix->input(PUBLIC, x.size, m_0, x_m.signed_, x_m.ell, x_m.s);
+  FixArray ret_m_else = x_m;
+  FixArray ret_e_if = fix->input(PUBLIC, x.size, e_0, x_e.signed_, x_e.ell, x_e.s);
+  FixArray ret_e_else = x_e;
+
+  FixArray ret_m = fix->if_else(underflow_check, ret_m_if, ret_m_else);
+  FixArray ret_e = fix->if_else(underflow_check, ret_e_if, ret_e_else);
+  BoolArray ret_z = underflow_check;
+
+  if (only_underflow) {
+    FPArray ret = this->input(x.party, x.size, x_s.data, ret_z.data,
+            ret_m.data, ret_e.data, x.m_bits, x.e_bits);
+    return ret;
+  }
+
+  BoolArray overflow_check = fix->GT(x_e, x.e_max());
+
+  uint64_t m_inf = (1ULL << x.m_bits);
+  uint64_t e_inf = x.e_max() + 1;
+  ret_m_if = fix->input(PUBLIC, x.size, m_inf, x_m.signed_, x_m.ell, x_m.s);
   ret_m_else = ret_m;
-  ret_e_if = fix->input(PUBLIC, x.size, e_0, x_e.signed_, x_e.ell, x_e.s);
+  ret_e_if = fix->input(PUBLIC, x.size, e_inf, x_e.signed_, x_e.ell, x_e.s);
   ret_e_else = ret_e;
 
-  ret_m = fix->if_else(underflow_check, ret_m_if, ret_m_else);
-  ret_e = fix->if_else(underflow_check, ret_e_if, ret_e_else);
-  BoolArray ret_z = underflow_check;
+  ret_m = fix->if_else(overflow_check, ret_m_if, ret_m_else);
+  ret_e = fix->if_else(overflow_check, ret_e_if, ret_e_else);
 
   FPArray ret = this->input(x.party, x.size, x_s.data, ret_z.data,
           ret_m.data, ret_e.data, x.m_bits, x.e_bits);
@@ -989,6 +997,49 @@ vector<FPArray> FPOp::mul(const vector<FPArray> &x, const vector<FPArray> &y) {
   return ret ;
 }
 
+FPArray FPOp::treesum(const vector<FPArray> &x) {
+  int N = x.size();
+  int n = x[0].size;
+  int party = x[0].party;
+  int m_bits = x[0].m_bits;
+  int e_bits = x[0].e_bits;
+  for (int i = 1; i < N; i++) {
+    assert(x[i].party == party);
+    assert(x[i].m_bits == m_bits);
+    assert(x[i].e_bits == e_bits);
+    assert(x[i].size == n);
+  }
+
+  vector<FPArray> x_tr(n);
+  for (int i = 0; i < n; i++) {
+    x_tr[i] = FPArray(party, N, m_bits, e_bits);
+    for (int j = 0; j < N; j++) {
+      x_tr[i].s[j] = x[j].s[i];
+      x_tr[i].z[j] = x[j].z[i];
+      x_tr[i].m[j] = x[j].m[i];
+      x_tr[i].e[j] = x[j].e[i];
+    }
+  }
+  int num_cmps_old = n; int num_cmps_curr = n/2;
+  while(num_cmps_old > 1) {
+    int odd_num_cmps = num_cmps_old & 1;
+    vector<FPArray> lhs(num_cmps_curr); vector<FPArray> rhs(num_cmps_curr);
+    for (int j = odd_num_cmps; j < num_cmps_old && j + 1 < num_cmps_old; j += 2) {
+      lhs[j/2] = x_tr[j]; rhs[j/2] = x_tr[j+1];
+    }
+    FPArray lhs_concat = concat(lhs);
+    FPArray rhs_concat = concat(rhs);
+    lhs_concat = this->add(lhs_concat, rhs_concat) ;
+    for (int j = 0; j < num_cmps_old && j + 1 < num_cmps_old; j += 2) {
+      x_tr[odd_num_cmps + (j/2)] = lhs_concat.subset((j/2)*N, (j/2)*N + N);
+    }
+    num_cmps_old = num_cmps_curr + odd_num_cmps;
+    num_cmps_curr = num_cmps_old/2;
+  }
+
+  return x_tr[0];
+}
+
 void FPOp::normalize(FixArray &m, FixArray &e, int e_offset, int ell) {
   assert(m.party != PUBLIC);
   assert(m.size == e.size);
@@ -1025,14 +1076,19 @@ void FPOp::normalize(FixArray &m, FixArray &e, int e_offset, int ell) {
   return;
 }
 
-void FPOp::round_and_check(FixArray &m, FixArray &e, int s) {
+void FPOp::round_and_check(FixArray &m, FixArray &e, int s, bool ties_to_even) {
   assert(m.party != PUBLIC && e.party != PUBLIC);
   assert(m.size == e.size);
   assert(m.s == m.ell - 1);
   int m_bits = m.ell - 1;
   uint64_t oflow_threshold = (1ULL << (m_bits + 1)) - (1ULL << (s - 1));
   BoolArray rnd_no_oflow = fix->LT(m, oflow_threshold);
-  FixArray m_if = fix->round_ties_to_even(m, s);
+  FixArray m_if;
+  if (ties_to_even) {
+    m_if = fix->round_ties_to_even(m, s);
+  } else {
+    m_if = fix->round_nearest(m, s);
+  }
   m = fix->if_else(rnd_no_oflow, m_if, (1ULL << (m_bits - s)));
   e = fix->if_else(rnd_no_oflow, e, fix->add(e, 1));
 
@@ -1074,12 +1130,10 @@ FPArray FPOp::add(const FPArray &x, const FPArray &y, bool cheap_variant,
   FPArray b = y;
   FixArray e_diff = fix->sub(x_e, y_e);
   if (compare_and_swap) {
-    /* FixArray x_em = fix->extend(x_m, x_m.ell + x_e.ell - 1, all_1.data); */
     FixArray x_em = fix->extend(x_m, x_m.ell + x_e.ell - 1, msb_x_m.data);
     x_e.signed_ = false;
     x_em = fix->add(x_em, fix->scale_up(x_e, x_m.ell + x_e.ell - 1, x.m_bits));
 
-    /* FixArray y_em = fix->extend(y_m, y_m.ell + y_e.ell - 1, all_1.data); */
     FixArray y_em = fix->extend(y_m, y_m.ell + y_e.ell - 1, msb_y_m.data);
     y_e.signed_ = false;
     y_em = fix->add(y_em, fix->scale_up(y_e, y_m.ell + y_e.ell - 1, y.m_bits));
@@ -1144,8 +1198,7 @@ FPArray FPOp::add(const FPArray &x, const FPArray &y, bool cheap_variant,
 
   if (!cheap_variant) {
     ret_m = fix->reduce(ret_m, 2 * x.m_bits + 2);
-    // fp_op->round_and_check(ret_m, ret_e, x.m_bits + 1);
-    fp_op->round_and_check(ret_m, ret_e, 2 * x.m_bits + 1 - output_m_bits);
+    fp_op->round_and_check(ret_m, ret_e, 2 * x.m_bits + 1 - output_m_bits, true);
   } else {
     ret_m = fix->truncate_reduce(ret_m, 1);
   }
@@ -1155,9 +1208,6 @@ FPArray FPOp::add(const FPArray &x, const FPArray &y, bool cheap_variant,
 
   FPArray ret = this->input(this->party, x.size, ret_s.data, ret_z.data,
           ret_m.data, ret_e.data, output_m_bits, x.e_bits);
-
-  // ret = this->if_else(x_z, y, ret);
-  // ret = this->if_else(y_z, x, ret);
 
   if (check_bounds) {
     ret = this->check_bounds(ret);
@@ -1192,7 +1242,12 @@ vector<FixArray> quotient_mantissa(FixOp *fix, const vector<FixArray> &m1, const
   BoolArray all_0 = fix->bool_op->input(ALICE, m2.size, uint8_t(0));
   BoolArray all_1 = fix->bool_op->input(ALICE, m2.size, 1);
 
-  int num_iter = 2;
+  int num_iter;
+  if (m_bits == BFLOAT16_M_BITS) {
+    num_iter = 1;
+  } else {
+    num_iter = 2;
+  }
   int p = ceil((m_bits + 1) / double(1 << num_iter)) + 1;
 
   // idx = m >> (m_bits-p) mod 2^{p}
@@ -1307,7 +1362,6 @@ vector<FPArray> FPOp::div(const vector<FPArray> &x, const FPArray &y, bool cheap
   FixArray ret_e_flat = fix->sub(x_e_flat, y_e_replicated);
   ret_e_flat = fix->add(ret_e_flat, y.e_bias());
   BoolArray denormal_m_flat = fix->LT(x_m_flat, y_m_replicated);
-  /* x_m_flat = fix->extend(x_m_flat, y.m_bits + 3, all_1.data); */
   x_m_flat = fix->extend(x_m_flat, y.m_bits + 3, msb_x_m_flat.data);
   FixArray x_m_if_flat = fix->mul(x_m_flat, 2, y.m_bits + 3);
   x_m_flat = fix->if_else(denormal_m_flat, x_m_if_flat, x_m_flat);
@@ -1459,12 +1513,20 @@ FPArray FPOp::int_to_float(const FixArray &x, int m_bits, int e_bits) {
   FixArray delta_m = f;
   FixArray delta_e = fix->input(ALICE, x.size, uint64_t(0), true, e_bits + 2, 0);
   this->normalize(delta_m, delta_e, -1 * delta_e_bias);
-  round_and_check(delta_m, delta_e, f.ell - 1 - m_bits);
+  round_and_check(delta_m, delta_e, f.ell - 1 - m_bits, true);
   delta_e = fix->if_else(f_eq_0, 0, delta_e);
   FPArray delta = this->input(x.party, x.size, msb_x.data, f_eq_0.data,
           delta_m.data, delta_e.data, m_bits, e_bits);
 
   return delta;
+}
+
+FPArray FPOp::max(const FPArray &x, const FPArray &y) {
+  return this->if_else(this->GT(x, y), x, y) ;
+}
+
+FPArray FPOp::min(const FPArray &x, const FPArray &y) {
+  return this->if_else(this->LT(x, y), x, y) ;
 }
 
 FPArray FPOp::max(const vector<FPArray>& x) {
@@ -1511,7 +1573,7 @@ FPArray FPOp::max(const vector<FPArray>& x) {
   return x_tr[0];
 }
 
-FPArray FPOp::treesum(const vector<FPArray> &x) {
+pair<FPArray, vector<BoolArray>> FPOp::max_with_mask(const vector<FPArray>& x) {
   int N = x.size();
   int n = x[0].size;
   int party = x[0].party;
@@ -1524,40 +1586,384 @@ FPArray FPOp::treesum(const vector<FPArray> &x) {
     assert(x[i].size == n);
   }
 
+  uint8_t *ones = new uint8_t[N] ;
+  for (int i = 0 ; i < N ; i++)
+    ones[i] = 1 ;
   vector<FPArray> x_tr(n);
+  BoolArray mask_flat = bool_op->input(ALICE, N*n, (uint8_t)1) ;
+
+  // Flip each row in x
+  // This is needed so that it is compatible with GT
   for (int i = 0; i < n; i++) {
     x_tr[i] = FPArray(party, N, m_bits, e_bits);
     for (int j = 0; j < N; j++) {
-      x_tr[i].s[j] = x[j].s[i];
-      x_tr[i].z[j] = x[j].z[i];
-      x_tr[i].m[j] = x[j].m[i];
-      x_tr[i].e[j] = x[j].e[i];
+      x_tr[i].s[j] = x[j].s[n-1-i];
+      x_tr[i].z[j] = x[j].z[n-1-i];
+      x_tr[i].m[j] = x[j].m[n-1-i];
+      x_tr[i].e[j] = x[j].e[n-1-i];
     }
   }
-  int num_cmps_old = n; int num_cmps_curr = n/2;
+
+  int num_cmps_old = n; int num_cmps_curr = n/2; int dist = 1 ;
   while(num_cmps_old > 1) {
     int odd_num_cmps = num_cmps_old & 1;
     vector<FPArray> lhs(num_cmps_curr); vector<FPArray> rhs(num_cmps_curr);
     for (int j = odd_num_cmps; j < num_cmps_old && j + 1 < num_cmps_old; j += 2) {
-      lhs[j/2] = x_tr[j]; rhs[j/2] = x_tr[j+1];
+      lhs[j/2] = x_tr[j]; 
+      rhs[j/2] = x_tr[j+1];
     }
     FPArray lhs_concat = concat(lhs);
     FPArray rhs_concat = concat(rhs);
-    lhs_concat = this->add(lhs_concat, rhs_concat) ;
+    BoolArray cond = fp_op->GT(lhs_concat, rhs_concat);
+    BoolArray cond_not = bool_op->NOT(cond) ;
+
+    vector<BoolArray> mask_tr ;
+    for (int i = 0 ; i < n ; i++)
+      mask_tr.push_back(bool_op->input(ALICE, N, ones)) ;
+    for (int cmp_ind = num_cmps_curr-1, j=n-1 ; cmp_ind >= 0 ; j -= 2*dist, cmp_ind--) {
+      int row_left_start, row_left_end ;
+      int row_right_start, row_right_end ;
+
+      row_left_start = j - 2*dist + 1 ; row_left_end = j - dist ;
+      row_right_start = row_left_end + 1 ; row_right_end = j ; 
+
+      BoolArray right_cond = cond_not.subset(cmp_ind*N, (cmp_ind+1)*N) ;
+      for (int k = row_right_end ; k >= row_right_start ; k--)
+        mask_tr[k] = right_cond ;
+
+      BoolArray left_cond = cond.subset(cmp_ind*N, (cmp_ind+1)*N) ;
+      for (int k = row_left_end ; k >= row_left_start && k >= 0 ; k--)
+        mask_tr[k] = left_cond ;
+    }
+    BoolArray mask_tr_flat = concat(mask_tr) ;
+
+    mask_flat = bool_op->AND(mask_flat, mask_tr_flat) ;
+    lhs_concat = fp_op->if_else(cond, lhs_concat, rhs_concat);
+
     for (int j = 0; j < num_cmps_old && j + 1 < num_cmps_old; j += 2) {
       x_tr[odd_num_cmps + (j/2)] = lhs_concat.subset((j/2)*N, (j/2)*N + N);
     }
+
     num_cmps_old = num_cmps_curr + odd_num_cmps;
     num_cmps_curr = num_cmps_old/2;
+    dist *= 2 ;
   }
 
-  return x_tr[0];
+  // Flip back the mask
+  vector<BoolArray> mask ;
+  for (int i = 0 ; i < N ; i++) {
+    BoolArray row(this->party, n) ;
+    for (int j = 0 ; j < n ; j++) {
+      row.data[n-1-j] = mask_flat.data[j*N + i] ;
+    }
+    mask.push_back(row) ;
+  }
+
+  delete[] ones ;
+  return make_pair(x_tr[0], mask) ;
 }
 
-vector<FPArray> enlist_products(FPOp* fp_op, const FPMatrix &x, const FPMatrix &y) {
+FPArray FPOp::general_vector_sum_core(const vector<FPArray> &x, int b_, int sc, int m_bits, int e_bits) {
+  int N = x.size();
+  int n = x[0].size;
+  int b = x[0].m_bits + 1;
+  assert(m_bits > 0);
+  int logn = ceil(log2(n));
+  int ell = 2*b - b_ + sc + 2*logn;
+
+  assert(b_ <= b);
+  assert(ell < 64) ;
+
+  // These arrays store the transposed version (nxN) of x (Nxn)
+  FixArray x_m = fix->input(this->party, N*n, uint64_t(0), false, b, sc);
+  FixArray x_e = fix->input(this->party, N*n, uint64_t(0), true, e_bits + 2, 0);
+  BoolArray x_s = bool_op->input(this->party, N*n, uint8_t(0));
+
+  for (int j = 0; j < n; j++) {
+    for (int i = 0; i < N; i++) {
+      x_m.data[j*N + i] = x[i].m[j];
+      x_e.data[j*N + i] = x[i].e[j];
+      x_s.data[j*N + i] = x[i].s[j];
+    }
+  }
+
+  vector<FixArray> e_concat(N);
+  for (int i = 0; i < N; i++) {
+    e_concat[i] = FixArray(this->party, n, x_e.signed_, x_e.ell, x_e.s);
+    for (int j = 0; j < n; j++) {
+      e_concat[i].data[j] = x_e.data[j*N + i];
+    }
+  }
+  FixArray e_max_concat = fix->max(e_concat);
+  FixArray e_thr;
+  e_thr = fix->sub(e_max_concat, sc + logn + (b - b_));
+
+  FixArray e_thr_copy = fix->input(this->party, N*n, (uint64_t)0ULL, x_e.signed_, x_e.ell, x_e.s);
+  for (int i = 0; i < n; i++) {
+    memcpy(e_thr_copy.data + i*N, e_thr.data, N*sizeof(uint64_t));
+  }
+  BoolArray e_lt_e_thr = fix->LT(x_e, e_thr_copy);
+  FixArray m = fix->if_else(e_lt_e_thr, 0, x_m);
+  BoolArray all_0 = bool_op->input(ALICE, m.size, uint8_t(0));
+  FixArray shift_amt = fix->sub(x_e, e_thr_copy); shift_amt.signed_ = false;
+  // extending by 1 extra bit to ensure we know the MSB when doing left-shift
+  // m = fix->left_shift(fix->extend(m, b + logn + 1), shift_amt, ell + 1, sc + logn + (b - b_), all_0.data);
+  m = fix->left_shift(m, shift_amt, 2*b - b_ + sc + logn + 1, sc + logn + (b - b_) + 1);
+  m = fix->extend(m, ell + 1, all_0.data);
+  m = fix->if_else(x_s, fix->mul(m, -1), m);
+
+  FixArray M; FixArray e;
+  M = fix->input(this->party, N, uint64_t(0), m.signed_, ell + 1, sc);
+  e = e_thr;
+  for(int i = 0; i < n; i++) {
+    for(int j = 0; j < N; j++) {
+      M.data[j] += m.data[i*N + j];
+    }
+  }
+  M = fix->reduce(M, M.ell);
+  BoolArray s, z;
+  tie(s, z) = fix->LT_and_EQ(M, 0);
+  M = fix->if_else(s, fix->mul(M, -1), M);
+  M = fix->reduce(M, ell);
+  this->normalize(M, e, sc, ell);
+  // M = fix->reduce(M, ell);
+  fp_op->round_and_check(M, e, ell - 1 - m_bits);
+  FPArray alpha = this->input(this->party, N, s.data, z.data, M.data, e.data, m_bits, e_bits);
+  return this->check_bounds(alpha, true);
+}
+
+FPArray FPOp::general_vector_sum(vector<FPArray> &x, int b_, int sc, int m_bits, int e_bits) {
+  int N = x.size();
+  uint64_t n = x[0].size;
+  assert(m_bits > 0);
+  int b = x[0].m_bits + 1;
+  int logn = ceil(log2(n));
+  int ell = 2*b - b_ + sc + 2*logn;
+  assert(b_ <= b);
+  for(int i = 0; i < N; i++) {
+    assert(x[i].party != PUBLIC);
+    assert(x[i].m_bits == b-1);
+    assert(x[i].e_bits == e_bits);
+    assert(x[i].size == n);
+  }
+
+  // This is the assertion condition in the unwrapped function
+  // max bitwidth < 64
+  int chunk_size = 1 << logn;
+  if (ell >= 64) {
+    do {
+      chunk_size /= 2;
+      int logc = ceil(log2(chunk_size));
+      ell = 2*b - b_ + sc + 2*logc;
+    } while (ell >= 64);
+  }
+  int num_chunks = ceil(n/double(chunk_size));
+
+  vector<FPArray> x_slices(N*num_chunks) ;
+  for (uint64_t j = 0; j < num_chunks; j++) {
+    uint64_t end = (n < (j + 1) * chunk_size) ? n : (j + 1) * chunk_size;
+    for (int i = 0 ; i < N ; i++) {
+      x_slices[j*N + i] = x[i].subset(j*chunk_size, end) ;
+    }
+  }
+  if (num_chunks == 1) {
+    return general_vector_sum_core(x_slices, b_, sc, m_bits, e_bits);
+  } else {
+    FPArray sum_tr;
+    if (num_chunks * chunk_size == n) {
+      sum_tr = general_vector_sum_core(x_slices, b_, sc, m_bits, e_bits);
+    } else {
+      vector<FPArray> x_slices_1(N*(num_chunks - 1));
+      vector<FPArray> x_slices_2(N);
+      for (int j = 0; j < num_chunks - 1; j++) {
+        for (int i = 0; i < N; i++) {
+          x_slices_1[j*N + i] = x_slices[j*N + i];
+        }
+      }
+      for (int i = 0; i < N; i++) {
+        x_slices_2[i] = x_slices[(num_chunks-1)*N + i];
+      }
+      FPArray sum_tr_1 = general_vector_sum_core(x_slices_1, b_, sc, m_bits, e_bits);
+      FPArray sum_tr_2 = general_vector_sum_core(x_slices_2, b_, sc, m_bits, e_bits);
+      sum_tr = concat({ sum_tr_1, sum_tr_2 });
+    }
+    vector<FPArray> summ(N);
+    for (int i = 0; i < N; i++) {
+      summ[i] = FPArray(party, num_chunks, m_bits, e_bits);
+      for (int j = 0; j < num_chunks; j++) {
+        summ[i].s[j] = sum_tr.s[j*N + i];
+        summ[i].z[j] = sum_tr.z[j*N + i];
+        summ[i].m[j] = sum_tr.m[j*N + i];
+        summ[i].e[j] = sum_tr.e[j*N + i];
+      }
+    }
+    return general_vector_sum(summ, m_bits, m_bits, m_bits, e_bits) ;
+  }
+}
+
+FPArray FPOp::dot_product(const vector<FPArray> &x, const vector<FPArray> &y) {
+  int N = x.size();
+  int n = x[0].size;
+  int m_bits = x[0].m_bits;
+  int e_bits = x[0].e_bits;
+  assert(y.size() == N);
+  for(int i = 0; i < N; i++) {
+    assert(x[i].party != PUBLIC); assert(y[i].party != PUBLIC);
+    assert(x[i].m_bits == y[i].m_bits); assert(x[i].m_bits == m_bits);
+    assert(x[i].e_bits == y[i].e_bits); assert(x[i].e_bits == e_bits);
+    assert(x[i].size == y[i].size); assert(x[i].size == n);
+  }
+  uint8_t* flat_x_s = new uint8_t[N*n]; uint8_t* flat_y_s = new uint8_t[N*n];
+  uint8_t* flat_x_z = new uint8_t[N*n]; uint8_t* flat_y_z = new uint8_t[N*n];
+  uint64_t* flat_x_m = new uint64_t[N*n]; uint64_t* flat_y_m = new uint64_t[N*n];
+  uint64_t* flat_x_e = new uint64_t[N*n]; uint64_t* flat_y_e = new uint64_t[N*n];
+  for (int i = 0; i < N; i++) {
+    for (int j = 0; j < n; j++) {
+      flat_x_s[i*n + j] = x[i].s[j]; flat_y_s[i*n + j] = y[i].s[j];
+      flat_x_z[i*n + j] = x[i].z[j]; flat_y_z[i*n + j] = y[i].z[j];
+      flat_x_m[i*n + j] = x[i].m[j]; flat_y_m[i*n + j] = y[i].m[j];
+      flat_x_e[i*n + j] = x[i].e[j]; flat_y_e[i*n + j] = y[i].e[j];
+    }
+  }
+  BoolArray flat_x_s_fp = bool_op->input(this->party, N*n, flat_x_s);
+  BoolArray flat_x_z_fp = bool_op->input(this->party, N*n, flat_x_z);
+  BoolArray flat_y_s_fp = bool_op->input(this->party, N*n, flat_y_s);
+  BoolArray flat_y_z_fp = bool_op->input(this->party, N*n, flat_y_z);
+  FixArray flat_x_m_fp = fix->input(this->party, N*n, flat_x_m, false, m_bits + 1, m_bits);
+  FixArray flat_x_e_fp = fix->input(this->party, N*n, flat_x_e, true, e_bits + 2, 0);
+  FixArray flat_y_m_fp = fix->input(this->party, N*n, flat_y_m, false, m_bits + 1, m_bits);
+  FixArray flat_y_e_fp = fix->input(this->party, N*n, flat_y_e, true, e_bits + 2, 0);
+
+  BoolArray x_m_msb = bool_op->NOT(flat_x_z_fp);
+  BoolArray y_m_msb = bool_op->NOT(flat_y_z_fp);
+  BoolArray prod_s = bool_op->XOR(flat_x_s_fp, flat_y_s_fp);
+  FixArray prod_m = fix->mul(flat_x_m_fp, flat_y_m_fp, 2 * m_bits + 2, x_m_msb.data, y_m_msb.data);
+  FixArray prod_e = fix->sub(fix->add(flat_x_e_fp, flat_y_e_fp), x[0].e_bias());
+  BoolArray prod_z = bool_op->input(ALICE, N*n, uint8_t(0));
+  int b, b_, sc;
+  if ((m_bits == BFLOAT16_M_BITS && e_bits == BFLOAT16_E_BITS)
+      || (m_bits == FP16_M_BITS && e_bits == FP16_E_BITS)
+      || (m_bits == FP19_M_BITS && e_bits == FP19_E_BITS)) {
+    b = 2*m_bits + 2;
+    b_ = 2*m_bits;
+    sc = 23;
+    // adjusting the scale change from 2*m_bits to 23
+    prod_e = fix->add(prod_e, 23 - 2*m_bits);
+  } else {
+    prod_m = fix->round_nearest(prod_m, m_bits);
+    b = m_bits + 2;
+    b_ = m_bits;
+    sc = m_bits;
+  }
+
+  vector<FPArray> prod(N);
+  for (int i = 0; i < N; i++) {
+    prod[i] = this->input(this->party, n, prod_s.data + i*n, prod_z.data + i*n,
+        prod_m.data + i*n, prod_e.data + i*n, b-1, e_bits);
+  }
+  FPArray prod_concat = concat(prod);
+  prod_concat = fp_op->check_bounds(prod_concat, true);
+  for (int i = 0; i < N; i++) {
+    prod[i] = prod_concat.subset(i*n, (i+1)*n);
+  }
+
+  delete[] flat_x_z; delete[] flat_y_z;
+  delete[] flat_x_s; delete[] flat_y_s;
+  delete[] flat_x_m; delete[] flat_y_m;
+  delete[] flat_x_e; delete[] flat_y_e;
+
+  return general_vector_sum(prod, b_, sc, m_bits, e_bits);
+}
+
+vector<FPArray> matmul_intermediate_products_beacon(FPOp* fp_op, const FPMatrix &x, const FPMatrix &y, int chunk_exp) {
   assert(x.party != PUBLIC); assert(y.party != PUBLIC);
   assert(x.dim2 == y.dim1);
   assert(x.m_bits == y.m_bits); assert(x.e_bits == y.e_bits);
+  BoolOp* bool_op = fp_op->bool_op;
+  FixOp* fix = fp_op->fix;
+
+  int N = x.dim1*y.dim2; int n = x.dim2;
+  int m_bits = x.m_bits; int e_bits = x.e_bits;
+
+  BoolArray prod_zx = bool_op->input(fp_op->party, x.dim1*x.dim2, uint8_t(0));
+  BoolArray prod_zy = bool_op->input(fp_op->party, y.dim1*y.dim2, uint8_t(0));
+  for (int i = 0; i < x.dim1; i++) {
+    for (int j = 0; j < x.dim2; j++) {
+      prod_zx.data[i*x.dim2 + j] = x.z[i*x.dim2 + j];
+    }
+  }
+  for (int i = 0; i < y.dim1; i++) {
+    for (int j = 0; j < y.dim2; j++) {
+      prod_zy.data[i*y.dim2 + j] = y.z[i*y.dim2 + j];
+    }
+  }
+  prod_zx = bool_op->NOT(prod_zx); prod_zy = bool_op->NOT(prod_zy);
+
+  FixArray prod_m_ = fix->input(fp_op->party, N*n, uint64_t(0), false, 2*m_bits + 2, 2*m_bits);
+  FixArray prod_e = fix->input(fp_op->party, N*n, uint64_t(0), true, e_bits + 2, 0);
+  BoolArray prod_s = bool_op->input(fp_op->party, N*n, uint8_t(0));
+
+  BoolArray x_s, y_s, x_z, y_z;
+  FixArray x_m, y_m, x_e, y_e;
+  tie(x_s, x_z, x_m, x_e) = fp_op->get_components(x);
+  tie(y_s, y_z, y_m, y_e) = fp_op->get_components(y);
+
+  long long chunk_size = 1 << chunk_exp ;
+  int dot_products_per_batch = ceil(chunk_size/double(x.dim2*y.dim2));
+  for (int i = 0; i < x.dim1; i += dot_products_per_batch) {
+    int j = std::min(i + dot_products_per_batch, x.dim1);
+    fix->mult->matrix_multiplication(j-i, x.dim2, y.dim2, x.m + i*x.dim2, y.m, prod_m_.data + (i*x.dim2*y.dim2), m_bits + 1, m_bits + 1, 2*m_bits + 2, false, false, false, MultMode::None, prod_zx.data, prod_zy.data);
+  }
+
+  FixArray prod_m = prod_m_;
+  uint64_t prod_e_mask = prod_e.ell_mask();
+  for (int i = 0; i < N; i++) {
+    for (int j = 0; j < n; j++) {
+      int row_idx = i / y.dim2;
+      int col_idx = i % y.dim2;
+      prod_e.data[i*n + j] = (x.e[row_idx*n + j] + y.e[j*y.dim2 + col_idx]) & prod_e_mask;
+      prod_s.data[i*n + j] = (x.s[row_idx*n + j] ^ y.s[j*y.dim2 + col_idx]) & 1;
+    }
+  }
+  prod_e = fix->sub(prod_e, x.e_bias());
+  int b, b_, sc;
+  if ((m_bits == BFLOAT16_M_BITS && e_bits == BFLOAT16_E_BITS)
+      || (m_bits == FP16_M_BITS && e_bits == FP16_E_BITS)
+      || (m_bits == FP19_M_BITS && e_bits == FP19_E_BITS)) {
+    b = 2*m_bits + 2;
+    b_ = 2*m_bits;
+    sc = 23;
+    // adjusting the scale change from 2*m_bits to 23
+    prod_e = fix->add(prod_e, 23 - 2*m_bits);
+  } else {
+    prod_m = fix->round_nearest(prod_m, m_bits);
+    b = m_bits + 2;
+    b_ = m_bits;
+    sc = m_bits;
+  }
+  // not used, just a placeholder
+  BoolArray prod_z = bool_op->input(ALICE, N*n, uint8_t(0));
+
+  vector<FPArray> prod(N);
+  for (int i = 0; i < N; i++) {
+    prod[i] = fp_op->input(fp_op->party, n, prod_s.data + i*n, prod_z.data + i*n,
+        prod_m.data + i*n, prod_e.data + i*n, b-1, e_bits);
+  }
+  FPArray prod_concat = concat(prod);
+  prod_concat = fp_op->check_bounds(prod_concat, true);
+  for (int i = 0; i < N; i++) {
+    prod[i] = prod_concat.subset(i*n, (i+1)*n);
+  }
+
+  return prod ;
+}
+
+vector<FPArray> matmul_intermediate_products_secfloat(FPOp* fp_op, const FPMatrix &x, const FPMatrix &y) {
+  assert(x.party != PUBLIC); assert(y.party != PUBLIC);
+  assert(x.dim2 == y.dim1);
+  assert(x.m_bits == y.m_bits); assert(x.e_bits == y.e_bits);
+  BoolOp* bool_op = fp_op->bool_op;
+  FixOp* fix = fp_op->fix;
 
   int N = x.dim1*y.dim2; int n = x.dim2;
   int m_bits = x.m_bits; int e_bits = x.e_bits;
@@ -1586,7 +1992,48 @@ vector<FPArray> enlist_products(FPOp* fp_op, const FPMatrix &x, const FPMatrix &
   return fp_op->mul(prod_x, prod_y) ;
 }
 
-FPMatrix FPOp::matrix_multiplication(const FPMatrix &x, const FPMatrix &y,int chunk_size) {
+FPMatrix FPOp::matrix_multiplication_beacon(const FPMatrix &x, const FPMatrix &y, int chunk_exp) {
+  assert(x.party != PUBLIC); assert(y.party != PUBLIC);
+  assert(x.dim2 == y.dim1);
+  assert(x.m_bits == y.m_bits); assert(x.e_bits == y.e_bits);
+
+  int N = x.dim1*y.dim2; int n = x.dim2;
+  int m_bits = x.m_bits; int e_bits = x.e_bits;
+
+  int b, b_, sc;
+  if ((m_bits == BFLOAT16_M_BITS && e_bits == BFLOAT16_E_BITS)
+      || (m_bits == FP16_M_BITS && e_bits == FP16_E_BITS)
+      || (m_bits == FP19_M_BITS && e_bits == FP19_E_BITS)) {
+    b = 2*m_bits + 2;
+    b_ = 2*m_bits;
+    sc = 23;
+  } else {
+    b = m_bits + 2;
+    b_ = m_bits;
+    sc = m_bits;
+  }
+
+  long long chunk_size = 1 << chunk_exp ;
+  int rows_per_batch = ceil(chunk_size/double(n));
+
+  vector<FPArray> prod = matmul_intermediate_products_beacon(this, x, y, chunk_exp) ;
+  assert(prod[0].m_bits == b-1);
+
+  FPMatrix ret(this->party, x.dim1, y.dim2, m_bits, e_bits);
+
+  for (int i = 0; i < N; i += rows_per_batch) {
+    int j = std::min(i + rows_per_batch, N);
+    vector<FPArray> prod_i = {prod.begin() + i, prod.begin() + j};
+    FPArray ret_i = general_vector_sum(prod_i, b_, sc, m_bits, e_bits);
+    memcpy(ret.s + i, ret_i.s, (j-i) * sizeof(uint8_t));
+    memcpy(ret.z + i, ret_i.z, (j-i) * sizeof(uint8_t));
+    memcpy(ret.m + i, ret_i.m, (j-i) * sizeof(uint64_t));
+    memcpy(ret.e + i, ret_i.e, (j-i) * sizeof(uint64_t));
+  }
+  return ret ;
+}
+
+FPMatrix FPOp::matrix_multiplication_secfloat(const FPMatrix &x, const FPMatrix &y, int chunk_exp) {
   assert(x.party != PUBLIC); assert(y.party != PUBLIC);
   assert(x.dim2 == y.dim1);
   assert(x.m_bits == y.m_bits); assert(x.e_bits == y.e_bits);
@@ -1594,9 +2041,11 @@ FPMatrix FPOp::matrix_multiplication(const FPMatrix &x, const FPMatrix &y,int ch
   int N = x.dim1*y.dim2; int n = x.dim2;
   int m_bits = x.m_bits; int e_bits = x.e_bits;
   
-  vector<FPArray> prod = enlist_products(this, x, y) ;
+  vector<FPArray> prod = matmul_intermediate_products_secfloat(this, x, y) ;
   FPMatrix ret(this->party, x.dim1, y.dim2, m_bits, e_bits) ;
+  long long chunk_size = 1 << chunk_exp ;
   int rows_per_batch = ceil(chunk_size/double(n));
+
   for (int i = 0; i < N; i += rows_per_batch) {
     int j = std::min(i + rows_per_batch, N);
     vector<FPArray> prod_i = {prod.begin() + i, prod.begin() + j};
@@ -1606,5 +2055,177 @@ FPMatrix FPOp::matrix_multiplication(const FPMatrix &x, const FPMatrix &y,int ch
     memcpy(ret.m + i, ret_i.m, (j-i) * sizeof(uint64_t));
     memcpy(ret.e + i, ret_i.e, (j-i) * sizeof(uint64_t));
   }
+
   return ret ;
+}
+
+vector<FPMatrix> FPOp::matrix_multiplication_beacon(const vector<FPMatrix> &x, const vector<FPMatrix> &y, int chunk_exp) {
+  int m, n, p, L ;
+  int m_bits, e_bits ;
+  m = x[0].dim1 ;
+  n = x[0].dim2 ;
+  p = y[0].dim2 ;
+  L = (int)x.size() ;
+
+  m_bits = x[0].m_bits ;
+  e_bits = x[0].e_bits ;
+
+  for (int i = 1 ; i < (int)x.size() ; i++) {
+    assert(x[i].dim1 == m) ;
+    assert(x[i].dim2 == n) ;
+    assert(y[i].dim1 == n) ;
+    assert(y[i].dim2 == p) ;
+  }
+
+  FPMatrix x_concat(this->party, m, n*L, m_bits, e_bits) ; 
+  for (int i = 0 ; i < m ; i++) {
+    for (int j = 0 ; j < n*L ; j++) {
+      x_concat.s[i*L*n + j] = x[j/n].s[i*n + j%n] ;
+      x_concat.z[i*L*n + j] = x[j/n].z[i*n + j%n] ;
+      x_concat.m[i*L*n + j] = x[j/n].m[i*n + j%n] ;
+      x_concat.e[i*L*n + j] = x[j/n].e[i*n + j%n] ;
+    }
+  }
+
+  FPMatrix y_concat(this->party, n*L, p, m_bits, e_bits) ; 
+  for (int i = 0 ; i < n*L ; i++) {
+    for (int j = 0 ; j < p ; j++) {
+      y_concat.s[i*p + j] = y[i/n].s[(i%n)*p + j] ;
+      y_concat.z[i*p + j] = y[i/n].z[(i%n)*p + j] ;
+      y_concat.m[i*p + j] = y[i/n].m[(i%n)*p + j] ;
+      y_concat.e[i*p + j] = y[i/n].e[(i%n)*p + j] ;
+    }
+  }
+
+  int b, b_, sc;
+  if ((m_bits == BFLOAT16_M_BITS && e_bits == BFLOAT16_E_BITS)
+      || (m_bits == FP16_M_BITS && e_bits == FP16_E_BITS)
+      || (m_bits == FP19_M_BITS && e_bits == FP19_E_BITS)) {
+    b = 2*m_bits + 2;
+    b_ = 2*m_bits;
+    sc = 23;
+  } else {
+    b = m_bits + 2;
+    b_ = m_bits;
+    sc = m_bits;
+  }
+
+  long long chunk_size = 1 << chunk_exp ;
+  int rows_per_batch = ceil(chunk_size/double(n));
+  vector<FPArray> prod = matmul_intermediate_products_beacon(this, x_concat, y_concat, chunk_exp) ;
+  assert(prod[0].m_bits == b-1);
+
+  vector<FPMatrix> ret ;
+  for (int l = 0 ; l < L ; l++) {
+    FPMatrix ret_l(this->party, m, p, m_bits, e_bits) ;
+    for (int i = 0 ; i < m*p ; i += rows_per_batch) {
+      int j = std::min(i + rows_per_batch, m*p) ;
+      int sz = j - i ;
+
+      vector<FPArray> tosum ;
+      for (int k = i ; k < j ; k++)
+        tosum.push_back(prod[k].subset(l*n, (l+1)*n)) ;
+
+      FPArray summed = general_vector_sum(tosum, b_, sc, m_bits, e_bits) ;
+      memcpy(ret_l.s + i, summed.s, (j-i)*sizeof(uint8_t)) ;
+      memcpy(ret_l.z + i, summed.z, (j-i)*sizeof(uint8_t)) ;
+      memcpy(ret_l.m + i, summed.m, (j-i)*sizeof(uint64_t)) ;
+      memcpy(ret_l.e + i, summed.e, (j-i)*sizeof(uint64_t)) ;
+    }
+    ret.push_back(ret_l) ;
+  }
+
+  return ret ;
+}
+
+vector<FPMatrix> FPOp::matrix_multiplication_secfloat(const vector<FPMatrix> &x, const vector<FPMatrix> &y, int chunk_exp) {
+  int m, n, p, L ;
+  int m_bits, e_bits ;
+  m = x[0].dim1 ;
+  n = x[0].dim2 ;
+  p = y[0].dim2 ;
+  L = (int)x.size() ;
+
+  m_bits = x[0].m_bits ;
+  e_bits = x[0].e_bits ;
+
+  for (int i = 1 ; i < (int)x.size() ; i++) {
+    assert(x[i].dim1 == m) ;
+    assert(x[i].dim2 == n) ;
+    assert(y[i].dim1 == n) ;
+    assert(y[i].dim2 == p) ;
+  }
+
+  FPMatrix x_concat(this->party, m, n*L, m_bits, e_bits) ; 
+  for (int i = 0 ; i < m ; i++) {
+    for (int j = 0 ; j < n*L ; j++) {
+      x_concat.s[i*L*n + j] = x[j/n].s[i*n + j%n] ;
+      x_concat.z[i*L*n + j] = x[j/n].z[i*n + j%n] ;
+      x_concat.m[i*L*n + j] = x[j/n].m[i*n + j%n] ;
+      x_concat.e[i*L*n + j] = x[j/n].e[i*n + j%n] ;
+    }
+  }
+
+  FPMatrix y_concat(this->party, n*L, p, m_bits, e_bits) ; 
+  for (int i = 0 ; i < n*L ; i++) {
+    for (int j = 0 ; j < p ; j++) {
+      y_concat.s[i*p + j] = y[i/n].s[(i%n)*p + j] ;
+      y_concat.z[i*p + j] = y[i/n].z[(i%n)*p + j] ;
+      y_concat.m[i*p + j] = y[i/n].m[(i%n)*p + j] ;
+      y_concat.e[i*p + j] = y[i/n].e[(i%n)*p + j] ;
+    }
+  }
+
+  vector<FPArray> prod = matmul_intermediate_products_secfloat(this, x_concat, y_concat) ;
+  long long chunk_size = 1 << chunk_exp ;
+  int rows_per_batch = ceil(chunk_size/double(n));
+  vector<FPMatrix> ret ;
+  for (int l = 0 ; l < L ; l++) {
+    FPMatrix ret_l(this->party, m, p, m_bits, e_bits) ;
+    for (int i = 0 ; i < m*p ; i += rows_per_batch) {
+      int j = std::min(i + rows_per_batch, m*p) ;
+      int sz = j - i ;
+
+      vector<FPArray> tosum ;
+      for (int k = i ; k < j ; k++)
+        tosum.push_back(prod[k].subset(l*n, (l+1)*n)) ;
+
+      FPArray summed = treesum(tosum) ;
+      memcpy(ret_l.s + i, summed.s, (j-i)*sizeof(uint8_t)) ;
+      memcpy(ret_l.z + i, summed.z, (j-i)*sizeof(uint8_t)) ;
+      memcpy(ret_l.m + i, summed.m, (j-i)*sizeof(uint64_t)) ;
+      memcpy(ret_l.e + i, summed.e, (j-i)*sizeof(uint64_t)) ;
+    }
+    ret.push_back(ret_l) ;
+  }
+
+  return ret ;
+}
+
+FPArray FPOp::bfloat16_to_FP32(const FPArray &x) {
+  assert(x.m_bits == BFLOAT16_M_BITS && x.e_bits == BFLOAT16_E_BITS);
+
+  BoolArray x_s, x_z;
+  FixArray x_m, x_e;
+  tie(x_s, x_z, x_m, x_e) = get_components(x);
+
+  x_m = fix->mul(x_m, 1ULL << (FP32_M_BITS - BFLOAT16_M_BITS), FP32_M_BITS + 1);
+
+  FPArray ret = this->input(x.party, x.size, x_s.data, x_z.data,
+          x_m.data, x_e.data, FP32_M_BITS, FP32_E_BITS);
+  return ret;
+}
+
+FPArray FPOp::FP32_to_bfloat16(const FPArray &x) {
+  assert(x.m_bits == FP32_M_BITS && x.e_bits == FP32_E_BITS);
+
+  BoolArray x_s, x_z;
+  FixArray x_m, x_e;
+  tie(x_s, x_z, x_m, x_e) = get_components(x);
+
+  fp_op->round_and_check(x_m, x_e, FP32_M_BITS-BFLOAT16_M_BITS);
+
+  FPArray ret = this->input(x.party, x.size, x_s.data, x_z.data,
+          x_m.data, x_e.data, BFLOAT16_M_BITS, BFLOAT16_E_BITS);
+  return ret;
 }

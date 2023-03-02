@@ -2,6 +2,10 @@
 
 **Reference Papers:**  
 
+[Secure Floating-Point Training](about:blank)  
+Deevashwer Rathee, Anwesh Bhattacharya, Divya Gupta, Rahul Sharma, Dawn Song  
+*USENIX Security 2023*
+
 [SecFloat: Accurate Floating-Point meets Secure 2-Party Computation](https://eprint.iacr.org/2022/322)  
 Deevashwer Rathee, Anwesh Bhattacharya, Rahul Sharma, Divya Gupta, Nishanth Chandran, Aseem Rastogi  
 *IEEE S&P 2022*
@@ -30,9 +34,10 @@ This repository has the following components:
 - **EzPC**: a language for secure machine learning.
 - **Athos** (part of **CrypTFlow**): an end-to-end compiler from TensorFlow to a variety of semi-honest MPC protocols. Athos leverages EzPC as a low-level intermediate language.
 - **SIRNN**: an end-to-end framework for performing inference over quantized RNN models using semi-honest 2-party computation protocols.
+- **Beacon**: an end-to-end framework for training feed-forward and convolutional neural networks using specialized 2PC floating-point protocols 
 - **Porthos** (part of **CrypTFlow**): a semi-honest 3 party computation protocol which is geared towards TensorFlow-like applications.
 - **Aramis** (part of **CrypTFlow**): a novel technique that uses hardware with integrity guarantees to convert any semi-honest MPC protocol into an MPC protocol that provides malicious security.
-- **SCI** (part of **CrypTFlow2**, **SIRNN** and **SecFloat**): a semi-honest 2-party computation library for secure (fixed-point) inference on deep neural networks and secure floating-point computation.
+- **SCI** (part of **CrypTFlow2**, **SIRNN**, **SecFloat**, and **Beacon**): a semi-honest 2-party computation library for secure (fixed-point) inference on deep neural networks and secure floating-point computation.
 
 Each one of the above is independent and usable in their own right and more information can be found in the readme of each of the components. But together these combine to make **CrypTFlow** a powerful system for end-to-end secure inference of deep neural networks written in TensorFlow.
 
@@ -65,5 +70,3 @@ Wiki section of this repository provides coding practices and examples to get st
 
 ## Issues/Bugs
 For bugs and support, please create an issue on the issues page.
-
-

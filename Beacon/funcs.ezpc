@@ -1,0 +1,489 @@
+(* Typecasting integer to float *)
+extern float_pl intToFloat(int32_pl m) ;
+
+(* Softmax function. 2D variate only *)
+extern void Softmax2(int32_pl s1, int32_pl s2, float_fl[s1][s2] inArr, float_fl[s1][s2] outArr) ;
+
+(* Multidimensional variates *)
+extern void Ln(int32_pl s1, float_fl[s1] inArr, float_fl[s1] outArr) ;
+extern void Sigmoid(int32_pl s1, float_fl[s1] inArr, float_fl[s1] outArr) ;
+extern void Tanh(int32_pl s1, float_fl[s1] inArr, float_fl[s1] outArr) ;
+extern void Relu(int32_pl s1, float_fl[s1] inArr, float_fl[s1] outArr, bool_bl[s1] hotArr) ;
+extern void ElemWiseSub(int32_pl s1, float_fl[s1] inArr1, float_fl[s1] inArr2, float_fl[s1] outArr) ;
+extern void ElemWiseMul(int32_pl s1, float_fl[s1] inArr1, float_fl[s1] inArr2, float_fl[s1] outArr) ;
+extern void ElemWiseDiv(int32_pl s1, float_fl[s1] inArr1, float_fl[s1] inArr2, float_fl[s1] outArr) ;
+extern void IfElse(int32_pl s1, float_fl[s1] dat, bool_bl[s1] hot, float_fl[s1] out, bool_pl flip) ;
+extern void updateWeights(int32_pl s, float_pl lr, float_fl[s] wt, float_fl[s] der) ;
+extern void updateWeightsMomentum(int32_pl s, float_pl lr, float_pl beta, float_fl[s] wt, float_fl[s] der, float_fl[s] mom) ;
+
+(* Single extern definition only *)
+extern void MatMul(int32_pl s1, int32_pl s2, int32_pl s3, float_fl[s1][s2] mat1, float_fl[s2][s3] mat2, float_fl[s1][s3] mat3) ;
+extern void GemmAdd(int32_pl s1, int32_pl s2, float_fl[s1][s2] prod, float_fl[s2] bias, float_fl[s1][s2] out) ;
+extern void SubtractOne(int32_pl s1, float_fl[s1] inArr, float_fl[s1] outArr) ;
+
+(* Functions needed in backprop *)
+extern void getOutDer(int32_pl s1, int32_pl s2, float_fl[s1][s2] batchSoft, float_fl[s1][s2] lab, float_fl[s1][s2] der) ;
+extern void getBiasDer(int32_pl s1, int32_pl s2, float_fl[s1][s2] der, float_fl[s2] biasDer) ;
+
+(* Functioned needed in loss computation *)
+extern void dotProduct2(int32_pl s1, int32_pl s2, float_fl[s1][s2] arr1, float_fl[s1][s2] arr2, float_fl[s1] outArr) ;
+extern void getLoss(int32_pl m, float_fl[m] lossTerms, float_fl[1] loss) ;
+
+(* Convolution network forward functions *)
+extern void Conv2DGroupWrapper(int32_pl N, int32_pl H, int32_pl W, int32_pl CI, 
+				   int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
+				   int32_pl strideH, int32_pl strideW, int32_pl G,
+				   float_fl[N][H][W][CI] inputArr, 
+				   float_fl[FH][FW][CI/G][CO] filterArr, 
+				   float_fl[N][((H-FH+(zPadHLeft+zPadHRight))/strideH)+1][((W-FW+(zPadWLeft+zPadWRight))/strideW)+1][CO] outArr) ;
+
+extern void MaxPool(int32_pl N, int32_pl H, int32_pl W, int32_pl C,
+				  int32_pl ksizeH, int32_pl ksizeW,
+				  int32_pl strideH, int32_pl strideW,
+				  int32_pl imgH, int32_pl imgW,
+  				  float_fl[N][H][W][C] inArr,
+				  bool_bl[N][H][W][C] Pool,
+				  float_fl[N][imgH][imgW][C] outArr) ;
+
+extern void ConvAdd(int32_pl N, int32_pl H, int32_pl W, int32_pl C, float_fl[N][H][W][C] inArr1, float_fl[C] bias, float_fl[N][H][W][C] outArr) ;
+
+(* Convolution network backward functions *)
+
+extern void ConvDerWrapper(int32_pl N, int32_pl H, int32_pl W, int32_pl CI, 
+				   int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
+				   int32_pl strideH, int32_pl strideW, int32_pl G,
+				   float_fl[N][H][W][CI] inputArr, 
+				   float_fl[FH][FW][CI/G][CO] filterArr, 
+				   float_fl[N][((H-FH+(zPadHLeft+zPadHRight))/strideH)+1][((W-FW+(zPadWLeft+zPadWRight))/strideW)+1][CO] outArr) ;
+
+extern void ConvBiasDer(int32_pl N, int32_pl H, int32_pl W, int32_pl C, float_fl[N][H][W][C] layerDer, float_fl[C] layerbDer) ;
+
+extern void GetPooledDer(int32_pl N, int32_pl inH, int32_pl inW, int32_pl inC, int32_pl outC, int32_pl outH, int32_pl outW, int32_pl filterH, int32_pl filterW, float_fl[filterH][filterW][inC][outC] convW, float_fl[N][inH][inW][inC] outDer, float_fl[N][outH][outW][outC] inDer) ;
+
+extern void PoolProp(int32_pl b, int32_pl outc, int32_pl img2, int32_pl imgp, int32_pl img1, int32_pl pk, int32_pl ps, float_fl[b][img2][img2][outc] PooledDer, bool_bl[b][imgp][imgp][outc] Pool, float_fl[b][img1][img1][outc] ActDer, bool_pl flip) ;
+
+(* Boilerplate *)
+
+def void Reassign2(int32_pl s1, int32_pl s2, float_fl[s1][s2] arr1, float_fl[s1][s2] arr2) {
+	for i1=[0:s1] {
+		for i2=[0:s2] {
+			arr2[i1][i2] = arr1[i1][i2] ;
+		} ;
+	} ;
+}
+
+def void Reassign3(int32_pl s1, int32_pl s2, int32_pl s3, float_fl[s1][s2][s3] arr1, float_fl[s1][s2][s3] arr2) {
+	for i1=[0:s1] {
+		for i2=[0:s2] {
+			for i3=[0:s3] {
+				arr2[i1][i2][i3] = arr1[i1][i2][i3] ;
+			} ; 
+		} ; 
+	} ;
+}
+
+def void Reassign4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, float_fl[s1][s2][s3][s4] arr1, float_fl[s1][s2][s3][s4] arr2) {
+	for i1=[0:s1] {
+		for i2=[0:s2] {
+			for i3=[0:s3] {
+				for i4=[0:s4] {
+					arr2[i1][i2][i3][i4] = arr1[i1][i2][i3][i4] ;
+				} ; 
+			} ;
+		} ;
+	} ;
+}
+
+def void Unflatten(int32_pl S1, int32_pl S234, int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, float_fl[S1][S234] inArr, float_fl[s1][s2][s3][s4] outArr) {
+	for i1=[0:s1] {
+		for i2=[0:s2] {
+			for i3=[0:s3] {
+				for i4=[0:s4] {
+					outArr[i1][i2][i3][i4] = inArr[i1][(i2*s3*s4) + (i3*s4) + i4] ;
+				} ;
+			} ;
+		} ;
+	} ;
+}
+
+def void Flatten(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl S1, int32_pl S234, float_fl[s1][s2][s3][s4] inArr, float_fl[S1][S234] outArr) {
+	for i1=[0:s1] {
+		for i2=[0:s2] {
+			for i3=[0:s3] {
+				for i4=[0:s4] {
+					outArr[i1][(i2*s3*s4) + (i3*s4) + i4] = inArr[i1][i2][i3][i4] ;
+				} ;
+			} ;
+		} ;
+	} ;
+}
+
+def void PoolExpand(int32_pl N, int32_pl H, int32_pl W, int32_pl C, int32_pl k1, int32_pl k2, int32_pl imgH, int32_pl imgW, float_fl[N][H][W][C] inArr, float_fl[N][imgH][imgW][C] outArr) {
+	for i1=[0:N] {
+		for i2=[0:(H*k1)] {
+			for i3=[0:(W*k2)] {
+				for i4=[0:C] {
+					outArr[i1][i2][i3][i4] = inArr[i1][i2/k1][i3/k2][i4]
+				}
+			}
+		}
+	}
+}
+
+def void Transpose(int32_pl s1, int32_pl s2, float_fl[s2][s1] inArr, float_fl[s1][s2] outArr) {
+	for i1=[0:s1] {
+		for i2=[0:s2] {
+			outArr[i1][i2] = inArr[i2][i1] ;
+		} ;
+	} ;
+}
+
+def void Ln2(int32_pl s1, int32_pl s2, float_fl[s1][s2] inArr, float_fl[s1][s2] outArr) {
+	int32_pl sz = s1*s2 ;
+	float_fl[sz] inArrFlat ;
+	float_fl[sz] outArrFlat ;
+
+	for i1=[0:s1] {
+		for i2=[0:s2] {
+			inArrFlat[(i1*s2)+i2] = inArr[i1][i2] ;
+		} ;
+	} ;
+
+	Ln(sz, inArrFlat, outArrFlat) ;
+
+	for i1=[0:s1] {
+		for i2=[0:s2] {
+			outArr[i1][i2] = outArrFlat[(i1*s2)+i2] ;
+		} ; 
+	} ;
+}
+
+def void Sigmoid2(int32_pl s1, int32_pl s2, float_fl[s1][s2] inArr, float_fl[s1][s2] outArr) {
+	int32_pl sz = s1*s2 ;
+	float_fl[sz] inArrFlat ;
+	float_fl[sz] outArrFlat ;
+
+	for i1=[0:s1] {
+		for i2=[0:s2] {
+			inArrFlat[(i1*s2)+i2] = inArr[i1][i2] ;
+		} ;
+	} ;
+
+	Sigmoid(sz, inArrFlat, outArrFlat) ;
+
+	for i1=[0:s1] {
+		for i2=[0:s2] {
+			outArr[i1][i2] = outArrFlat[(i1*s2)+i2] ;
+		} ; 
+	} ;
+}
+
+def void Tanh2(int32_pl s1, int32_pl s2, float_fl[s1][s2] inArr, float_fl[s1][s2] outArr) {
+	int32_pl sz = s1*s2 ;
+	float_fl[sz] inArrFlat ;
+	float_fl[sz] outArrFlat ;
+
+	for i1=[0:s1] {
+		for i2=[0:s2] {
+			inArrFlat[(i1*s2)+i2] = inArr[i1][i2] ;
+		} ;
+	} ;
+
+	Tanh(sz, inArrFlat, outArrFlat) ;
+
+	for i1=[0:s1] {
+		for i2=[0:s2] {
+			outArr[i1][i2] = outArrFlat[(i1*s2)+i2] ;
+		} ; 
+	} ;
+}
+
+def void Relu2(int32_pl s1, int32_pl s2, float_fl[s1][s2] inArr, float_fl[s1][s2] outArr, bool_bl[s1][s2] hotArr) {
+	int32_pl sz = s1*s2 ;
+
+	float_fl[sz] inArrFlat ;
+	float_fl[sz] outArrFlat ;
+	bool_bl[sz] hotArrFlat ;
+
+	for i1=[0:s1] {
+		for i2=[0:s2] {
+			inArrFlat[(i1*s2)+i2] = inArr[i1][i2] ;
+		} ;
+	} ;
+
+	Relu(sz, inArrFlat, outArrFlat, hotArrFlat) ;
+
+	for i1=[0:s1] {
+		for i2=[0:s2] {
+			outArr[i1][i2] = outArrFlat[(i1*s2)+i2] ;
+			hotArr[i1][i2] = hotArrFlat[(i1*s2)+i2] ;
+		} ;
+	} ;
+}
+
+def void Relu4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, float_fl[s1][s2][s3][s4] inArr, float_fl[s1][s2][s3][s4] outArr, bool_bl[s1][s2][s3][s4] hotArr) {
+	int32_pl sz = s1*s2*s3*s4 ;
+
+	float_fl[sz] inArrFlat ;
+	float_fl[sz] outArrFlat ;
+	bool_bl[sz] hotArrFlat ;
+
+	for i1=[0:s1] {
+		for i2=[0:s2] {
+			for i3=[0:s3] {
+				for i4=[0:s4] {
+					inArrFlat[(i1*s2*s3*s4) + (i2*s3*s4) + (i3*s4) + i4] = inArr[i1][i2][i3][i4] ;
+				} ;
+			} ;
+		} ; 
+	} ;
+
+	Relu(sz, inArrFlat, outArrFlat, hotArrFlat) ;
+
+	for i1=[0:s1] {
+		for i2=[0:s2] {
+			for i3=[0:s3] {
+				for i4=[0:s4] {
+					outArr[i1][i2][i3][i4] = outArrFlat[(i1*s2*s3*s4) + (i2*s3*s4) + (i3*s4) + i4] ;
+					hotArr[i1][i2][i3][i4] = hotArrFlat[(i1*s2*s3*s4) + (i2*s3*s4) + (i3*s4) + i4] ;
+				} ;
+			} ; 
+		} ;
+	} ;
+}
+
+def void ElemWiseMul2(int32_pl s1, int32_pl s2, float_fl[s1][s2] arr1, float_fl[s1][s2] arr2, float_fl[s1][s2] outArr) {
+	int32_pl sz = s1*s2 ;
+	float_fl[sz] arr1Flat ;
+	float_fl[sz] arr2Flat ;
+	float_fl[sz] outArrFlat ;
+
+	for i1=[0:s1] {
+		for i2=[0:s2] {
+			arr1Flat[(i1*s2)+i2] = arr1[i1][i2] ;
+			arr2Flat[(i1*s2)+i2] = arr2[i1][i2] ;
+		} ;
+	} ;
+
+	ElemWiseMul(sz, arr1Flat, arr2Flat, outArrFlat) ;
+
+	for i1=[0:s1] {
+		for i2=[0:s2] {
+			outArr[i1][i2] = outArrFlat[(i1*s2)+i2] ;
+		} ; 
+	} ;
+}
+
+def void ElemWiseMul3(int32_pl s1, int32_pl s2, int32_pl s3, float_fl[s1][s2][s3] arr1, float_fl[s1][s2][s3] arr2, float_fl[s1][s2][s3] outArr) {
+	int32_pl sz = s1*s2*s3 ;
+	float_fl[sz] arr1Flat ;
+	float_fl[sz] arr2Flat ;
+	float_fl[sz] outArrFlat ;
+
+	for i1=[0:s1] {
+		for i2=[0:s2] {
+			for i3=[0:s3] {
+				arr1Flat[(i1*s2*s3)+(i2*s3)+i3] = arr1[i1][i2][i3] ;
+				arr2Flat[(i1*s2*s3)+(i2*s3)+i3] = arr2[i1][i2][i3] ;
+			} ;
+		} ;
+	} ;
+
+	ElemWiseMul(sz, arr1Flat, arr2Flat, outArrFlat) ;
+
+	for i1=[0:s1] {
+		for i2=[0:s2] {
+			for i3=[0:s3] {
+				outArr[i1][i2][i3] = outArrFlat[(i1*s2*s3)+(i2*s3)+i3] ;
+			} ;
+		} ; 
+	} ;
+}
+
+def void IfElse2(int32_pl s1, int32_pl s2, float_fl[s1][s2] dat, bool_bl[s1][s2] hot, float_fl[s1][s2] out, bool_pl flip) {
+	int32_pl sz = s1*s2 ;
+	float_fl[sz] datFlat ;
+	bool_bl[sz] hotFlat ;
+	float_fl[sz] outFlat ;
+
+	for i1=[0:s1] {
+		for i2=[0:s2] {
+			datFlat[(i1*s2)+i2] = dat[i1][i2] ;
+			hotFlat[(i1*s2)+i2] = hot[i1][i2] ;
+		} ;
+	} ;
+
+	IfElse(sz, datFlat, hotFlat, outFlat, flip) ;
+
+	for i1=[0:s1] {
+		for i2=[0:s2] {
+			out[i1][i2] = outFlat[(i1*s2)+i2] ;
+		} ;
+	} ;
+}
+
+def void IfElse4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, float_fl[s1][s2][s3][s4] dat, bool_bl[s1][s2][s3][s4] hot, float_fl[s1][s2][s3][s4] out, bool_pl flip) {
+	int32_pl sz = s1*s2*s3*s4 ;
+	float_fl[sz] datFlat ;
+	bool_bl[sz] hotFlat ;
+	float_fl[sz] outFlat ;
+
+	for i1=[0:s1] {
+		for i2=[0:s2] {
+			for i3=[0:s3] {
+				for i4=[0:s4] {
+					datFlat[(i1*s2*s3*s4) + (i2*s3*s4) + (i3*s4) + i4] = dat[i1][i2][i3][i4] ;
+					hotFlat[(i1*s2*s3*s4) + (i2*s3*s4) + (i3*s4) + i4] = hot[i1][i2][i3][i4] ;
+				} ;
+			} ;
+		} ;
+	} ;
+
+	IfElse(sz, datFlat, hotFlat, outFlat, flip) ;
+
+	for i1=[0:s1] {
+		for i2=[0:s2] {
+			for i3=[0:s3] {
+				for i4=[0:s4] {
+					out[i1][i2][i3][i4] = outFlat[(i1*s2*s3*s4) + (i2*s3*s4) + (i3*s4) + i4] ;
+				} ;
+			} ;
+		} ;
+	} ;
+}
+
+def void updateWeights2(int32_pl s1, int32_pl s2, float_pl lr, float_fl[s1][s2] wt, float_fl[s1][s2] der) {
+	int32_pl sz = s1*s2 ;
+	float_fl[sz] wtFlat ;
+	float_fl[sz] derFlat ;
+
+	for i1=[0:s1] {
+		for i2=[0:s2] {
+			wtFlat[(i1*s2)+i2] = wt[i1][i2] ;
+			derFlat[(i1*s2)+i2] = der[i1][i2] ;
+		} ;
+	} ;
+
+	updateWeights(sz, lr, wtFlat, derFlat) ;
+
+	for i1=[0:s1] {
+		for i2=[0:s2] {
+			wt[i1][i2] = wtFlat[(i1*s2)+i2] ;
+		} ;
+	} ;
+}
+
+def void updateWeights4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, float_pl lr, float_fl[s1][s2][s3][s4] wt, float_fl[s1][s2][s3][s4] der) {
+	int32_pl sz = s1*s2*s3*s4 ;
+	float_fl[sz] wtFlat ;
+	float_fl[sz] derFlat ;
+
+	for i1=[0:s1] {
+		for i2=[0:s2] {
+			for i3=[0:s3] {
+				for i4=[0:s4] {
+					wtFlat[(i1*s2*s3*s4) + (i2*s3*s4) + (i3*s4) + i4] = wt[i1][i2][i3][i4] ;
+					derFlat[(i1*s2*s3*s4) + (i2*s3*s4) + (i3*s4) + i4] = der[i1][i2][i3][i4] ;
+				} ;
+			} ;
+		} ;
+	} ;
+
+	updateWeights(sz, lr, wtFlat, derFlat) ;
+
+	for i1=[0:s1] {
+		for i2=[0:s2] {
+			for i3=[0:s3] {
+				for i4=[0:s4] {
+					wt[i1][i2][i3][i4] = wtFlat[(i1*s2*s3*s4) + (i2*s3*s4) + (i3*s4) + i4] ;
+				}
+			}
+		} ;
+	} ;
+}
+
+def void updateWeightsMomentum2(int32_pl s1, int32_pl s2, float_pl lr, float_pl beta, float_fl[s1][s2] wt, float_fl[s1][s2] der, float_fl[s1][s2] mom) {
+	int32_pl sz = s1*s2 ;
+	float_fl[sz] wtFlat ;
+	float_fl[sz] derFlat ;
+	float_fl[sz] momFlat ;
+
+	for i1=[0:s1] {
+		for i2=[0:s2] {
+			wtFlat[(i1*s2)+i2] = wt[i1][i2] ;
+			derFlat[(i1*s2)+i2] = der[i1][i2] ;
+			momFlat[(i1*s2)+i2] = mom[i1][i2] ;
+		} ;
+	} ;
+
+	updateWeightsMomentum(sz, lr, beta, wtFlat, derFlat, momFlat) ;
+
+	for i1=[0:s1] {
+		for i2=[0:s2] {
+			wt[i1][i2] = wtFlat[(i1*s2)+i2] ;
+			mom[i1][i2] = momFlat[(i1*s2)+i2] ;
+		} ;
+	} ;
+}
+
+def void updateWeightsMomentum4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, float_pl lr, float_pl beta, float_fl[s1][s2][s3][s4] wt, float_fl[s1][s2][s3][s4] der, float_fl[s1][s2][s3][s4] mom) {
+	int32_pl sz = s1*s2*s3*s4 ;
+	float_fl[sz] wtFlat ;
+	float_fl[sz] derFlat ;
+	float_fl[sz] momFlat ;
+
+	for i1=[0:s1] {
+		for i2=[0:s2] {
+			for i3=[0:s3] {
+				for i4=[0:s4] {
+					wtFlat[(i1*s2*s3*s4) + (i2*s3*s4) + (i3*s4) + i4] = wt[i1][i2][i3][i4] ;
+					derFlat[(i1*s2*s3*s4) + (i2*s3*s4) + (i3*s4) + i4] = der[i1][i2][i3][i4] ;
+					momFlat[(i1*s2*s3*s4) + (i2*s3*s4) + (i3*s4) + i4] = mom[i1][i2][i3][i4] ;
+				} ;
+			} ;
+		} ;
+	} ;
+
+	updateWeightsMomentum(sz, lr, beta, wtFlat, derFlat, momFlat) ;
+
+	for i1=[0:s1] {
+		for i2=[0:s2] {
+			for i3=[0:s3] {
+				for i4=[0:s4] {
+					wt[i1][i2][i3][i4] = wtFlat[(i1*s2*s3*s4) + (i2*s3*s4) + (i3*s4) + i4] ;
+					mom[i1][i2][i3][i4] = momFlat[(i1*s2*s3*s4) + (i2*s3*s4) + (i3*s4) + i4] ;
+				} ;
+			} ;
+		} ;
+	} ;
+}
+
+(* Loss Functions *)
+
+def void computeMSELoss(int32_pl m, int32_pl s, float_fl[m][s] target, float_fl[m][s] fwdOut, float_fl[1] loss) {
+	float_fl[m] targetFlat ;
+	float_fl[m] outFlat ;
+
+	for i=[0:m] {
+		targetFlat[i] = target[i][0] ;
+		outFlat[i] = fwdOut[i][0] ;
+	} ;
+
+	float_fl[m] subbed ;
+	float_fl[m] lossTerms ;
+
+	ElemWiseSub(m, outFlat, targetFlat, subbed) ;
+	ElemWiseMul(m, subbed, subbed, lossTerms) ;
+	getLoss(m, lossTerms, loss) ;
+}
+
+def void computeCELoss(int32_pl m, int32_pl s, float_fl[m][s] labels, float_fl[m][s] batchSoft, float_fl[1] loss) {
+	float_fl[m][s] batchLn ;
+	float_fl[m] lossTerms ;
+
+	Ln2(m, s, batchSoft, batchLn) ;
+	dotProduct2(m, s, batchLn, labels, lossTerms) ;
+	getLoss(m, lossTerms, loss) ;
+}

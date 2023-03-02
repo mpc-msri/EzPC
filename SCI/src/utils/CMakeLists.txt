@@ -9,7 +9,7 @@ add_library(SCI-utils INTERFACE)
 
 target_compile_options(SCI-utils
     INTERFACE
-    "-pthread;-maes;-msse4.1;-mavx;-mavx2;-faligned-new;-std=c++17;-O3")
+    "-pthread;-maes;-msse4.1;-mavx;-mavx2;-faligned-new;-std=c++17;-O3;-Wno-parentheses-equality;-Wno-deprecated-declarations;-Wno-macro-redefined")
 #     "-pthread;-Wall;-maes;-msse4.1;-mavx;-mavx2;-faligned-new;-std=c++17;-w;-g;-ggdb;-O0")
 
 if(USE_RANDOM_DEVICE)
