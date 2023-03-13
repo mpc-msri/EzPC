@@ -122,6 +122,7 @@ cd ..
 wait
 
 sytorch="\$current_dir/EzPC/sytorch"
+onnxbridge="\$current_dir/EzPC/OnnxBridge"
 
 echo "MODEL_DIR: $MODEL_DIR"
 
@@ -132,9 +133,9 @@ cp $PREPROCESS .
 
 # Compile the model
 echo -e "\${bg_green}Compiling the model\${clear}"
-python \$sytorch/OnnxBridge/main.py --path $File_NAME --backend $BACKEND --scale $SCALE --bitlength $BITLENGTH 
+python \$onnxbridge/main.py --path $File_NAME --backend $BACKEND --scale $SCALE --bitlength $BITLENGTH 
 wait
-\$sytorch/OnnxBridge/LLAMA/compile_llama.sh "${Model_Name}_${BACKEND}_${SCALE}.cpp"
+\$onnxbridge/LLAMA/compile_llama.sh "${Model_Name}_${BACKEND}_${SCALE}.cpp"
 
 # Create a zip file of stripped model to share with client
 zipfile="client_$Model_Name.zip"
@@ -232,6 +233,7 @@ cd ..
 wait
 
 sytorch="\$current_dir/EzPC/sytorch"
+onnxbridge="\$current_dir/EzPC/OnnxBridge"
 
 # Looking ZIP file from SERVER
 echo "Looking ZIP file from SERVER"
@@ -251,7 +253,7 @@ wait
 
 # Compile the model
 echo -e "\${bg_green}Compiling the model\${clear}"
-\$sytorch/OnnxBridge/LLAMA/compile_llama.sh "${Model_Name}_${BACKEND}_${SCALE}.cpp"
+\$onnxbridge/LLAMA/compile_llama.sh "${Model_Name}_${BACKEND}_${SCALE}.cpp"
 wait
 
 # Generate the key
@@ -275,6 +277,7 @@ clear='\033[0m'
 
 current_dir=\$(pwd)
 sytorch="\$current_dir/EzPC/sytorch"
+onnxbridge="\$current_dir/EzPC/OnnxBridge"
 
 # Copy the input image
 cp $IMAGE_PATH .
@@ -286,7 +289,7 @@ Image_Name=\${File_NAME%.*}
 echo -e "\${bg_green}Preparing the input\${clear}"
 python $preprocess_image_file \$File_NAME
 wait
-python \$sytorch/OnnxBridge/helper/convert_np_to_float_inp.py --inp \$Image_Name.npy --out \$Image_Name.inp
+python \$onnxbridge/helper/convert_np_to_float_inp.py --inp \$Image_Name.npy --out \$Image_Name.inp
 
 # Run the model
 echo -e "\${bg_green}Running the model\${clear}"
