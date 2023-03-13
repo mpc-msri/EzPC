@@ -3,6 +3,7 @@ import os, sys
 import onnx.checker
 from onnx.backend.base import Backend
 
+from LLAMA.sytorchBackendRep import SytorchBackendRep
 from Secfloat.backendRep import FzpcBackendRep
 from utils import logger, support_device, optimizations, VariableGen
 from utils.nodes import (
@@ -34,14 +35,14 @@ def create_dict(program):
     return var_dict
 
 
-class FzpcBackend(Backend):
+class IR(Backend):
     """
-    This is FzPC Backend for Onnx.
+    This is Intermediate Representation for Onnx.
     This Class gives api methods to prepare a model and run it.
     """
 
     @classmethod
-    def preprocess_model(cls, model_fname, logging_level):
+    def preprocess_model(cls, model_fname, logging_level, backend):
         """
         Preprocesses the onnx file, which includes:
         Optimising
@@ -70,7 +71,7 @@ class FzpcBackend(Backend):
         model = optimizations.infer_shapes(model)
         logger.info("Shape Inference Done")
 
-        is_compatible, unsupported_nodes = cls.is_compatible(model)
+        is_compatible, unsupported_nodes = cls.is_compatible(model, backend)
 
         if is_compatible:
             logger.info("Model is OK!")
@@ -82,10 +83,15 @@ class FzpcBackend(Backend):
             logger.error("Model Not Supported")
             sys.exit()
 
-        # todo why so much time
-        weights_path = optimizations.dump_model_weights(
-            model, model_abs_dir, model_name
-        )
+        if backend in ["CLEARTEXT_LLAMA", "LLAMA"]:
+            weights_path = optimizations.dump_model_weights_as_dat(
+                model, model_abs_dir, model_name
+            )
+        elif backend in ["SECFLOAT", "SECFLOAT_CLEARTEXT"]:
+            weights_path = optimizations.dump_model_weights_as_inp(
+                model, model_abs_dir, model_name
+            )
+
         logger.info(f"Dumping model weights in:\n {weights_path}")
         logger.info(f"These are to be used as input for party owning the model.")
 
@@ -99,7 +105,7 @@ class FzpcBackend(Backend):
         return model
 
     @classmethod
-    def is_compatible(cls, model, device: str = "2PC", **kwargs):
+    def is_compatible(cls, model, backend, device: str = "2PC", **kwargs):
         """
         Checks whether the model is compatible with the backend.
         :param model: The model to br checked.
@@ -108,7 +114,20 @@ class FzpcBackend(Backend):
         :return: bool.
         """
         not_supported = []
-        implemented = [
+        implemented_sytorch = [
+            "Relu",
+            "Softmax",
+            "Conv",
+            "MaxPool",
+            "AveragePool",
+            "Flatten",
+            "Gemm",
+            "BatchNormalization",
+            "Concat",
+            "GlobalAveragePool",
+            "Add",
+        ]
+        implemented_secfloat = [
             "Relu",
             "Sigmoid",
             "Softmax",
@@ -123,10 +142,14 @@ class FzpcBackend(Backend):
             "Gemm",
             "Tanh",
         ]
+        if backend in ["SECFLOAT", "SECFLOAT_CLEARTEXT"]:
+            implemented = implemented_secfloat
+        elif backend in ["CLEARTEXT_LLAMA", "LLAMA"]:
+            implemented = implemented_sytorch
         for node in model.graph.node:
             if node.op_type not in implemented:
                 not_supported.append(node.op_type)
-
+        not_supported = [*set(not_supported)]
         return (True, []) if len(not_supported) == 0 else (False, not_supported)
 
     @classmethod
@@ -154,8 +177,8 @@ class FzpcBackend(Backend):
         path = os.path.abspath(model)
         path = os.path.dirname(path)
         file_name = os.path.basename(model)
-        model = cls.preprocess_model(model, logging_level)
-        super(FzpcBackend, cls).prepare(model, device, **kwargs)
+        model = cls.preprocess_model(model, logging_level, backend)
+        super(IR, cls).prepare(model, device, **kwargs)
         logger.info("Optimised Stripped Model Loaded")
 
         if cls.supports_device(device):
@@ -173,6 +196,9 @@ class FzpcBackend(Backend):
         program = process_output_nodes(program, model.graph, var_dict)
         logger.info("Reading Onnx file completed.")
 
+        program = optimizations.relu_maxpool_optimiser(program)
+        logger.info("Relu Maxpool Optimisation Done.")
+
         # Works only if debugging is on
         if logger.getEffectiveLevel() == "DEBUG":
             print_nodes(program)
@@ -180,9 +206,14 @@ class FzpcBackend(Backend):
         var_dict = create_dict(program)
         logger.info("Onnx Variable -> IR variable Dictionary Created.")
 
-        backend_rep = FzpcBackendRep(
-            program, value_info, var_dict, path, file_name[:-5], backend
-        )
+        if backend in ["SECFLOAT", "SECFLOAT_CLEARTEXT"]:
+            backend_rep = FzpcBackendRep(
+                program, value_info, var_dict, path, file_name[:-5], backend
+            )
+        elif backend in ["CLEARTEXT_LLAMA", "LLAMA"]:
+            backend_rep = SytorchBackendRep(
+                program, value_info, var_dict, path, file_name[:-5]
+            )
         logger.info("BackendRep Created.")
         return backend_rep
 
@@ -194,4 +225,4 @@ class FzpcBackend(Backend):
         return support_device(device)
 
 
-prepare = FzpcBackend.prepare
+prepare = IR.prepare
