@@ -28,3 +28,80 @@ The script generates 4 scripts:
 - `client-offline.sh` - Transfer this script to the client VM in any empty directory. Running this script fetches the stripped code from server and generates the preprocessing key material. This script must be run on client VM parallely while server VM is running it's server script. 
 - `server-online.sh` - Transfer this script to the server VM in the same directory. Running this script waits for client and starts the inference once the client connects.
 - `client-online.sh` - Transfer this script to the client VM in the same directory. Running this script preprocesses the input, connects with the server and starts the inference. After the secure inference is complete, inference output is printed and saved in `output.txt` file.
+
+## Toy example - LeNet-MNIST inference
+
+Using the above instructions, we now demonstrate LeNet inference on MNIST images. We assume that we start at the home path `/home/user` on both machines. The below instructions also work on three terminals opened on a single machine (each terminal representing client, server and local computer) by passing `127.0.0.1` as IP address. 
+
+1. On both machines, install dependencies.
+
+```
+$ sudo apt update
+$ sudo apt install libeigen3-dev cmake build-essential git
+```
+
+2. On both machines, install the python dependencies in a virtual environment.
+
+```
+$ python3 -m venv venv
+$ source venv/bin/activate
+$ wget https://raw.githubusercontent.com/mpc-msri/EzPC/sytorch/OnnxBridge/requirements.txt
+$ pip install -r requirements.txt
+```
+3. Download ONNX file and preprocessing script for LeNet on the server and make a temporary directory.
+
+```
+$ mkdir lenet-demo-server
+$ cd lenet-demo-server
+$ wget https://github.com/kanav99/models/raw/main/lenet.onnx
+$ wget https://github.com/kanav99/models/raw/main/preprocess.py
+$ mkdir tmp
+$ cd tmp
+```
+
+4. Download the test image on the client and make a temporary directory.
+
+```
+$ mkdir lenet-demo-client
+$ cd lenet-demo-client
+$ wget https://github.com/kanav99/models/raw/main/input.jpg
+$ mkdir tmp
+$ cd tmp
+```
+
+5. On the local computer, clone EzPC repository, generate the scripts and transfer them to respective machines. If server and client are in same local network, then pass the local network IP in the `ezpc_cli.sh` command.
+
+```
+$ git clone https://github.com/mpc-msri/EzPC
+$ cd EzPC
+$ git switch sytorch
+$ ./ezpc-cli.sh -m /home/user/lenet-demo-server/lenet.onnx -preprocess /home/user/lenet-demo-server/preprocess.py -s <SERVER-IP> -i /home/user/lenet-demo-client/input.jpg
+$ scp server-offline.sh <SERVER-IP>:/home/user/lenet-demo-server/tmp/
+$ scp server-online.sh  <SERVER-IP>:/home/user/lenet-demo-server/tmp/
+$ scp client-offline.sh <CLIENT-IP>:/home/user/lenet-demo-client/tmp/
+$ scp client-online.sh  <CLIENT-IP>:/home/user/lenet-demo-client/tmp/
+```
+
+6. On both machines, make the bash scripts executable and start the offline phase.
+
+```
+(on server)
+$ chmod +x server-offline.sh server-online.sh
+$ ./server-offline.sh
+
+(on client)
+$ chmod +x client-offline.sh client-online.sh
+$ ./client-offline.sh
+```
+
+7. Once offline phase completes, start the online phase. The inference logits get printed on the client terminal.
+
+```
+(on server)
+$ ./server-online.sh
+
+(on client)
+$ ./client-online.sh
+```
+
+In this particular example, you should get a score array of `[-2.71362 1.06747 4.43045 0.795044 -3.21173 -2.39871 -8.49094 10.3443 1.0567 -0.694458]`, which is maximum at index 7, which is indeed expected as the [input.jpg](https://github.com/kanav99/models/raw/main/input.jpg) file contains an image of handwritten 7.
