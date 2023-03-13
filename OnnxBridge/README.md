@@ -162,7 +162,7 @@ This completes the node implementation in backend.
             f");"
         )
 ```
-4. Lastly add node name i.e "Tanh" to the `implemented` list in function `is_compatible` inside class `FzpcBackend` located in `Onnx-FzPC/backend.py`.
+4. Lastly add node name i.e "Tanh" to the `implemented` list in function `is_compatible` inside class `IR` located in `Onnx-FzPC/backend.py`.
 ```python
     implemented = [
         "Relu",
