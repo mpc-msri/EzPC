@@ -133,7 +133,7 @@ cp $PREPROCESS .
 
 # Compile the model
 echo -e "\${bg_green}Compiling the model\${clear}"
-python \$onnxbridge/main.py --path $File_NAME --backend $BACKEND --scale $SCALE --bitlength $BITLENGTH 
+python \$onnxbridge/main.py --path $File_NAME --backend $BACKEND --scale $SCALE --bitlength $BITLENGTH --generate code
 wait
 \$onnxbridge/LLAMA/compile_llama.sh "${Model_Name}_${BACKEND}_${SCALE}.cpp"
 
