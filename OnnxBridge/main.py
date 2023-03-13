@@ -32,7 +32,7 @@ def parse_args():
     )
     parser.add_argument(
         "--generate",
-        required=any(b in argv for b in [backend[0], backend[1]]),
+        required=any(b in argv for b in [backend[2], backend[3]]),
         type=str,
         choices=["code", "executable"],
         default="code",
@@ -50,6 +50,8 @@ def main():
 
     # Export the Model as Secfloat and writes to a cpp file
     if args.backend in ["CLEARTEXT_LLAMA", "LLAMA"]:
+        main_path = os.path.dirname(os.path.abspath(__file__))
+        file_path = os.path.join(main_path, "LLAMA")
         backendrep.export_model(mode, args.scale, args.bitlength, args.backend)
     elif args.backend in ["SECFLOAT", "SECFLOAT_CLEARTEXT"]:
         main_path = os.path.dirname(os.path.abspath(__file__))
@@ -57,10 +59,19 @@ def main():
         backendrep.export_model(file_path)
 
     if args.generate == "executable":
-        ct = "" if args.backend == "SECFLOAT" else "_ct"
         logger.info("Starting Compilation.")
-        os.system(f"{file_path}/compile_secfloat.sh {args.path[:-5]}_secfloat{ct}.cpp")
-        logger.info(f"Output Binary generated : {args.path[:-5]}_secfloat{ct}.out")
+        if args.backend in ["SECFLOAT", "SECFLOAT_CLEARTEXT"]:
+            ct = "" if args.backend == "SECFLOAT" else "_ct"
+            os.system(
+                f"{file_path}/compile_secfloat.sh {args.path[:-5]}_secfloat{ct}.cpp"
+            )
+        elif args.backend in ["CLEARTEXT_LLAMA", "LLAMA"]:
+            os.system(
+                f"{file_path}/compile_llama.sh {args.path[:-5]}_{args.backend}_{args.scale}.cpp"
+            )
+        logger.info(
+            f"Output Binary generated : {args.path[:-5]}_{args.backend}_{args.scale}.cpp"
+        )
 
 
 if __name__ == "__main__":
