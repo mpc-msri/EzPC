@@ -15,6 +15,14 @@ def decl(name, data_type, shape, indent, party=Party.ALICE):
     )
 
 
+def if_stmnt(stmnt, indent, party=Party.ALICE):
+    return str(
+        f"{'   ' * indent}if(party == {party.name}){'{'}\n"
+        f"{'   ' * (indent + 1)}{stmnt}\n"
+        f"{'   ' * indent}{'}'}\n"
+    )
+
+
 def decl_multiple_int(variables, indent):
     need = ""
     return str(
@@ -154,3 +162,14 @@ def delete_variable(name, indent):
         f"{'   ' * indent}{name}.clear();\n"
         f"{'   ' * indent}{name}.shrink_to_fit();\n"
     )
+
+
+def get_n_h_c_w(listt):
+    if len(listt) == 4:
+        n, c, h, w = listt
+        return [n, h, w, c]
+    elif len(listt) == 2:
+        n, c = listt
+        return [n, c, 1, 1]
+    else:
+        exit()

@@ -1,6 +1,7 @@
-import math
 import os
+import struct
 
+import math
 import numpy as np
 from onnx import ValueInfoProto, TensorShapeProto, helper
 from onnx import numpy_helper
@@ -16,11 +17,32 @@ def get_data_type(proto_val):
     return proto_val.type.tensor_type.elem_type
 
 
-def numpy_float_array_to_float_val_str(input_array):
+def numpy_float_array_to_float_val_str_nchw(input_array):
     chunk = ""
     for val in np.nditer(input_array):
         chunk += str(val) + "\n"
     return chunk
+
+
+def numpy_float_array_to_float_val_str_nhwc(input_array):
+    chunk = []
+    if len(input_array.shape) == 4:
+        co, ci, h, w = input_array.shape
+        arr = np.zeros([co, h, w, ci])
+        for i in range(co):
+            for j in range(ci):
+                for k in range(h):
+                    for l in range(w):
+                        arr[i][k][l][j] = input_array[i][j][k][l]
+        input_array = arr
+    elif len(input_array.shape) == 2:
+        co, ci = input_array.shape
+        arr = np.zeros([ci, co])
+        for i in range(co):
+            for j in range(ci):
+                arr[j][i] = input_array[i][j]
+        input_array = arr
+    return input_array
 
 
 def preprocess_batch_normalization(graph_def, model_name_to_val_dict):
@@ -56,7 +78,7 @@ def preprocess_batch_normalization(graph_def, model_name_to_val_dict):
                 assert val == 0
 
 
-def dump_model_weights(model, model_dir, model_name):
+def dump_model_weights_as_inp(model, model_dir, model_name):
     """
     Dumps the Model Weights to a file.
     :param model: Onnx Model
@@ -87,13 +109,55 @@ def dump_model_weights(model, model_dir, model_name):
 
     chunk_n = ""
     for init_name in initializers:
-        chunk_1 = numpy_float_array_to_float_val_str(
+        chunk_1 = numpy_float_array_to_float_val_str_nchw(
             np.asarray(model_name_to_val_dict[init_name], dtype=np.float32)
         )
         chunk_n += chunk_1
 
     f = open(weights_path, "w")
     f.write(chunk_n)
+    f.close()
+    return weights_path
+
+
+def dump_model_weights_as_dat(model, model_dir, model_name):
+    """
+    Dumps the Model Weights to a file.
+    :param model: Onnx Model
+    :param model_dir: Model Directory
+    :param model_name: Model Name
+    :return: Path to saved Model Weights
+    """
+    weights_path = ""
+    weights_fname = model_name + "_input_weights.dat"
+    weights_path = os.path.join(model_dir, weights_fname)
+    f = open(weights_path, "wb")
+
+    # needed because initializers are not in sequential order and we need to strip them and dump in file
+    exclude = [
+        val for node in model.graph.node for val in node.output
+    ]  # list to store variables that are not initializers
+    exclude.append(
+        model.graph.input[0].name
+    )  # because we want to exclude input in initializers
+    initializers = [
+        inp for node in model.graph.node for inp in node.input if inp not in exclude
+    ]
+
+    model_name_to_val_dict = {
+        init_vals.name: numpy_helper.to_array(init_vals).tolist()
+        for init_vals in model.graph.initializer
+    }
+    preprocess_batch_normalization(model.graph, model_name_to_val_dict)
+
+    chunk_n = ""
+    for init_name in initializers:
+        chunk_1 = numpy_float_array_to_float_val_str_nhwc(
+            np.asarray(model_name_to_val_dict[init_name], dtype=np.float32)
+        )
+        for val in np.nditer(chunk_1):
+            f.write(struct.pack("f", float(val)))
+
     f.close()
     return weights_path
 
@@ -147,6 +211,26 @@ def strip_weights(model):
     new_model.opset_import.pop()
     new_model.opset_import.extend(model.opset_import)
     return new_model
+
+
+def relu_maxpool_optimiser(program):
+    """
+    Optimises the Onnx Model by replacing the order where MaxPool appears after Relu.
+    :param program: Onnx Model as a list of nodes
+    :return: Optimised Program
+    """
+    for idx, node in enumerate(program):
+        if node.op_type == "Relu" and program[idx + 1].op_type == "MaxPool":
+            relu = program[idx]
+            maxpool = program[idx + 1]
+
+            relu.inputs, maxpool.inputs = maxpool.inputs, relu.inputs
+            relu.outputs, maxpool.outputs = maxpool.outputs, relu.outputs
+
+            program[idx] = maxpool
+            program[idx + 1] = relu
+
+    return program
 
 
 def optimise(model):
