@@ -31,7 +31,7 @@ The script generates 4 scripts:
 
 ## Toy example - LeNet-MNIST inference
 
-Using the above instructions, we now demonstrate LeNet inference on MNIST images. We assume that we start at the home path `/home/user` on both machines. The below instructions also work on three terminals opened on a single machine (each terminal representing client, server and local computer) by passing `127.0.0.1` as IP address. 
+Using the above instructions, we now demonstrate LeNet inference on MNIST images. We assume that we start at the home path `/home/<user>` on both machines. The below instructions also work on three terminals opened on a single machine (each terminal representing client, server and local computer) by passing `127.0.0.1` as IP address. 
 
 1. On both machines, install dependencies.
 
@@ -75,11 +75,12 @@ cd tmp
 git clone https://github.com/mpc-msri/EzPC
 cd EzPC
 git switch sytorch
-./ezpc-cli.sh -m /home/user/lenet-demo-server/lenet.onnx -preprocess /home/user/lenet-demo-server/preprocess.py -s <SERVER-IP> -i /home/user/lenet-demo-client/input.jpg
-scp server-offline.sh <SERVER-IP>:/home/user/lenet-demo-server/tmp/
-scp server-online.sh  <SERVER-IP>:/home/user/lenet-demo-server/tmp/
-scp client-offline.sh <CLIENT-IP>:/home/user/lenet-demo-client/tmp/
-scp client-online.sh  <CLIENT-IP>:/home/user/lenet-demo-client/tmp/
+cd sytorch
+./ezpc-cli.sh -m /home/<user>/lenet-demo-server/lenet.onnx -preprocess /home/<user>/lenet-demo-server/preprocess.py -s <SERVER-IP> -i /home/<user>/lenet-demo-client/input.jpg
+scp server-offline.sh <SERVER-IP>:/home/<user>/lenet-demo-server/tmp/
+scp server-online.sh  <SERVER-IP>:/home/<user>/lenet-demo-server/tmp/
+scp client-offline.sh <CLIENT-IP>:/home/<user>/lenet-demo-client/tmp/
+scp client-online.sh  <CLIENT-IP>:/home/<user>/lenet-demo-client/tmp/
 ```
 
 6. On both machines, make the bash scripts executable and start the offline phase.
