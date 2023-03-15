@@ -116,9 +116,6 @@ echo -e "Play Area: \${bg_green}\$current_dir\${clear}"
 # Clone sytorch
 echo -e "\${bg_green}Cloning sytorch repository\${clear}"
 git clone https://github.com/mpc-msri/EzPC
-cd EzPC
-git switch sytorch
-cd ..
 wait
 
 sytorch="\$current_dir/EzPC/sytorch"
@@ -227,9 +224,6 @@ echo -e "\${bg_green}Downloaded Server Files\${clear}"
 # Clone sytorch
 echo -e "\${bg_green}Cloning sytorch repository\${clear}"
 git clone https://github.com/mpc-msri/EzPC
-cd EzPC
-git switch sytorch
-cd ..
 wait
 
 sytorch="\$current_dir/EzPC/sytorch"
