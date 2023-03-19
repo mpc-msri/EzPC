@@ -83,6 +83,12 @@ public:
             this->data[i] = (T)other.data[i];
         }
     }
+
+    void load(const std::vector<float>&arr, int scale){
+        for (u64 i = 0; i < this->size; i++) {
+            this->data[i] = (i64)(arr[i] * (1LL<<scale));
+        }
+    }
 };
 
 template <typename T>
@@ -181,6 +187,14 @@ public:
         for(u64 i = 0; i < d1; i++) {
             for(u64 j = 0; j < d2; j++) {
                 this->data[i * this->d2 + j] = (T)other.data[i * other.d2 + j];
+            }
+        }
+    }
+
+    void load(const std::vector<std::vector<float>>&arr, int scale){
+        for(u64 i = 0; i < this->d1; i++) {
+            for(u64 j = 0; j < this->d2; j++) {
+                this->data[i * this->d2 + j] = (i64)(arr[i][j] * (1LL<<scale));
             }
         }
     }
@@ -434,6 +448,18 @@ public:
             }
         }
         return false;
+    }
+
+    void load(const std::vector<std::vector<std::vector<std::vector<float>>>>&arr, int scale){
+        for (u64 i = 0; i < d1; i++) {
+            for (u64 j = 0; j < d2; j++) {
+                for (u64 k = 0; k < d3; k++) {
+                    for (u64 l = 0; l < d4; l++) {
+                        data[i * d2 * d3 * d4 + j * d3 * d4 + k * d4 + l] = (i64)(arr[i][j][k][l] * (double(1LL<<scale)));
+                    }
+                }
+            }
+        }
     }
 
 };

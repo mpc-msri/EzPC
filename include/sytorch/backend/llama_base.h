@@ -6,6 +6,7 @@
 #include <llama/comms.h>
 #include <llama/api.h>
 #include "backend.h"
+#include <sytorch/layers/layers.h>
 
 template <typename T>
 class Sequential;
@@ -85,6 +86,54 @@ public:
         }
     }
 
+    void initializeInferencePartyB(Tensor4D<T>&data){
+        u64 size = data.d1 * data.d2 * data.d3 * data.d4;
+        if(LlamaConfig::party == 1){
+            input_layer(nullptr,data.data, size,3);
+        }
+        else{
+            Tensor4D<T> tmp(data.d1, data.d2, data.d3, data.d4);
+            input_layer(data.data, tmp.data, size, 3);
+        }
+    }
+
+    void initializeInferencePartyA(LayerGraphNode<T> *root){
+         topologicalApply(root, [&](LayerGraphNode<T> *node, LayerGraphNode<T> *_root) {
+            auto layer = node->layer;
+            if(layer->name.find("Conv2D") != std::string::npos || layer->name.find("FC") != std::string::npos) {
+                auto& weights = layer->getweights();
+                auto& bias = layer->getbias();
+                if(LlamaConfig::party == 1){
+                    input_layer(nullptr,weights.data, weights.d1*weights.d2,2);
+                    if (layer->useBias) {
+                        input_layer(nullptr,bias.data, bias.size,2);
+                    }
+                }
+                else{
+                    Tensor2D<T> tmp(weights.d1, weights.d2);
+                    input_layer(weights.data, tmp.data, weights.d1*weights.d2, 2);
+                    if(layer->useBias){
+                        Tensor<T> tmp2(bias.size);
+                        input_layer(bias.data, tmp2.data, bias.size, 2);
+                    }
+                }
+            }
+            else if (layer->name.find("BatchNorm2dInference") != std::string::npos) {
+                auto bn = (BatchNorm2dInference<T>*) layer;
+                auto channel = bn->A.size;
+                if(LlamaConfig::party == 1){
+                    input_layer(nullptr,bn->A.data, channel,2);
+                    input_layer(nullptr,bn->B.data, channel,2);
+                }
+                else{
+                    Tensor<T> tmp(channel);
+                    input_layer(bn->A.data, tmp.data, channel, 2);
+                    input_layer(bn->B.data, tmp.data, channel, 2);
+                }
+            }
+        });
+    }
+
     void inputA(Tensor4D<T> &data)
     {
         u64 b1 = data.d1 * data.d2 * data.d3 * data.d4;
@@ -131,6 +180,22 @@ public:
         }
     }
 
+     void outputA(Tensor4D<T> &a) {
+        u64 sz = a.d1 * a.d2 * a.d3 * a.d4;
+        if (LlamaConfig::party == 1) {
+            for (int i = 0; i < sz; i++){
+                LlamaConfig::client->send_mask(a.data[i]);
+                a.data[i] = 0;
+            }
+        }
+        else if(LlamaConfig::party ==3){
+            for (int i = 0; i < sz; i++){
+                auto mask = LlamaConfig::dealer->recv_mask();
+                a.data[i] = a.data[i] - mask;
+            }
+        }
+    }
+
     void output(Tensor4D<T> &a) {
         u64 sz = a.d1 * a.d2 * a.d3 * a.d4;
         if (LlamaConfig::party == 1) {
@@ -141,6 +206,22 @@ public:
             }
         }
         else {
+            for (int i = 0; i < sz; i++){
+                auto mask = LlamaConfig::dealer->recv_mask();
+                a.data[i] = a.data[i] - mask;
+            }
+        }
+    }
+
+    void outputA(Tensor2D<T> &a) {
+        u64 sz = a.d1 * a.d2;
+        if (LlamaConfig::party == 1) {
+            for (int i = 0; i < sz; i++){
+                LlamaConfig::client->send_mask(a.data[i]);
+                a.data[i] = 0;
+            }
+        }
+        else if(LlamaConfig::party ==3) {
             for (int i = 0; i < sz; i++){
                 auto mask = LlamaConfig::dealer->recv_mask();
                 a.data[i] = a.data[i] - mask;
@@ -165,6 +246,22 @@ public:
         }
     }
 
+    void outputA(Tensor<T> &a) {
+        u64 sz = a.size;
+        if (LlamaConfig::party == 1) {
+            for (int i = 0; i < sz; i++){
+                LlamaConfig::client->send_mask(a.data[i]);
+                a.data[i] = 0;
+            }
+        }
+        else if(LlamaConfig::party ==3) {
+            for (int i = 0; i < sz; i++){
+                auto mask = LlamaConfig::dealer->recv_mask();
+                a.data[i] = a.data[i] - mask;
+            }
+        }
+    }
+
     void output(Tensor<T> &a) {
         u64 sz = a.size;
         if (LlamaConfig::party == 1) {
@@ -178,6 +275,21 @@ public:
             for (int i = 0; i < sz; i++){
                 auto mask = LlamaConfig::dealer->recv_mask();
                 a.data[i] = a.data[i] - mask;
+            }
+        }
+    }
+
+    void outputA(T *a, u64 sz) {
+        if (LlamaConfig::party == 1) {
+            for (int i = 0; i < sz; i++){
+                LlamaConfig::client->send_mask(a[i]);
+                a[i] = 0;
+            }
+        }
+        else if(LlamaConfig::party ==3) {
+            for (int i = 0; i < sz; i++){
+                auto mask = LlamaConfig::dealer->recv_mask();
+                a[i] = a[i] - mask;
             }
         }
     }

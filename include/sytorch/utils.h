@@ -4,6 +4,50 @@
 #include <set>
 #include <fstream>
 
+inline std::vector<float> make_float_vector( size_t last)
+{
+	std::vector<float> _ret;
+	for (size_t i = 0; i < last; i++)
+	{
+		_ret.push_back(0.0);
+	}
+	return _ret;
+}
+
+template <typename... Args>
+auto make_float_vector( size_t first, Args... sizes)
+{
+	auto _inner = make_float_vector( sizes...);
+	std::vector<decltype(_inner)> _ret;
+	_ret.push_back(_inner);
+	for (size_t i = 1; i < first; i++)
+	{
+		_ret.push_back(make_float_vector( sizes...));
+	}
+	return _ret;
+}
+
+//n h w c
+inline auto take_input(int n, int h, int w, int c)
+{
+    auto tmp0 = make_float_vector( n, h, w, c);
+
+    for (uint32_t i0 = 0; i0 < n; i0++)
+    {
+        for (uint32_t i1 = 0; i1 < c; i1++)
+        {
+            for (uint32_t i2 = 0; i2 < h; i2++)
+            {
+                for (uint32_t i3 = 0; i3 < w; i3++)
+                {
+                    std::cin >> tmp0[i0][i2][i3][i1];
+                }
+            }
+        }
+    }
+    return tmp0;
+}
+
 template <typename T>
 Tensor2D<T> reshapeFilter(const Tensor4D<T> &filter) {
     Tensor2D<T> res(filter.d4, filter.d1 * filter.d2 * filter.d3);

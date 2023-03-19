@@ -187,26 +187,27 @@ public:
             auto layer = node->layer;
             if(layer->name.find("Conv2D") != std::string::npos || layer->name.find("FC") != std::string::npos) {
                 auto& weights = layer->getweights();
-
                 for (int j = 0; j < weights.d1; j++) {
                     for(int k = 0; k < weights.d2; ++k) {
-                        weights(j, k) = floatWeights[wIdx + weights.d2 * j + k] * (1LL << scale);
+                        weights(j, k) = i64(floatWeights[wIdx + weights.d2 * j + k] * (1LL << scale));
                     }
                 }
-                
+
                 auto wSize = weights.d1 * weights.d2;
                 wIdx += wSize;
 
+                auto& bias = layer->getbias();
                 if (layer->useBias) {
-                    auto& bias = layer->getbias();
 
                     for (int j = 0; j < bias.size; ++j) {
-                        bias(j) = floatWeights[wIdx + j] * (1LL << (2*scale));
+                        bias(j) = i64(floatWeights[wIdx + j] * (1LL << (2*scale)));
                     }
 
                     wSize = bias.size;
                     wIdx += wSize;
                 }
+                else
+                    bias.fill(0);
             }
             else if (layer->name.find("BatchNorm2dInference") != std::string::npos) {
                 auto bn = (BatchNorm2dInference<T>*) layer;
@@ -216,8 +217,8 @@ public:
                 auto meanPtr = floatWeights + wIdx + 2 * channel;
                 auto varPtr = floatWeights + wIdx + 3 * channel;
                 for (int j = 0; j < channel; ++j) {
-                    bn->A(j) = (gammaPtr[j] / std::sqrt(varPtr[j])) * (1LL << scale);
-                    bn->B(j) = (betaPtr[j] - gammaPtr[j] * meanPtr[j] / std::sqrt(varPtr[j])) * (1LL << (2 * scale));
+                    bn->A(j) = i64((gammaPtr[j] / std::sqrt(varPtr[j])) * (1LL << scale));
+                    bn->B(j) = i64((betaPtr[j] - gammaPtr[j] * meanPtr[j] / std::sqrt(varPtr[j])) * (1LL << (2 * scale)));
                 }
                 wIdx += 4 * channel;
             }
