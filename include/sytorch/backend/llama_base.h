@@ -598,7 +598,7 @@ public:
 
     void div(const Tensor4D<T> &in, T divisor, u64 scale) {
         if (!(divisor & (divisor - 1))) {
-            Backend<T>::truncate(in, log2(divisor), 3);
+            Backend<T>::truncate(in, log2(divisor), 0);
         }
         else {
             T divfp = (1LL << scale) / divisor;
@@ -606,13 +606,21 @@ public:
             for (u64 i = 0; i < sz; i++) {
                 in.data[i] *= divfp;
             }
-            Backend<T>::truncate(in, scale, 3);
+            Backend<T>::truncate(in, scale, 0);
+        }
+    }
+
+    void divPartial(const Tensor4D<T> &in, T divisor, u64 scale) {
+        T divfp = (1LL << scale) / divisor;
+        u64 sz = in.d1 * in.d2 * in.d3 * in.d4;
+        for (u64 i = 0; i < sz; i++) {
+            in.data[i] *= divfp;
         }
     }
 
     void avgPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> &in, Tensor4D<T> &out, u64 scale) {
         sumPool2D(ks, padding, stride, in, out);
-        div(out, (T)(ks*ks), scale);
+        divPartial(out, (T)(ks*ks), scale);
     }
 
     u64 log2(u64 x) {

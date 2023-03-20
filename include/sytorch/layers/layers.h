@@ -173,6 +173,7 @@ public:
     void initScale(u64 scale) {
         always_assert(std::is_integral<T>::value || scale == 0);
         this->scale = scale;
+        this->doTruncationForward = true;
     }
 
     void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
@@ -567,6 +568,7 @@ public:
     void initScale(u64 scale) {
         always_assert(std::is_integral<T>::value || scale == 0);
         this->scale = scale;
+        this->doTruncationForward = true;
     }
 
     void resize(u64 d1, u64 d2, u64 d3, u64 d4) {

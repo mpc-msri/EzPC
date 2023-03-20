@@ -483,11 +483,18 @@ void ClearText<T>::truncate(T &in, u64 shift) {
 
 template <typename T>
 void ClearText<T>::div(const Tensor4D<T> &in, T divisor, u64 scale) {
+    divPartial(in, divisor, scale);
+    Backend<T>::truncate(in, scale);
+}
+
+template <typename T>
+void ClearText<T>::divPartial(const Tensor4D<T> &in, T divisor, u64 scale) {
+    T inv = (1LL << scale) / divisor;
     fastfor(in.d1, [&] (u64 i) {
         for (u64 j = 0; j < in.d2; j++) {
             for (u64 k = 0; k < in.d3; k++) {
                 for (u64 l = 0; l < in.d4; l++) {
-                    in(i, j, k, l) = in(i, j, k, l) / divisor;
+                    in(i, j, k, l) = in(i, j, k, l) * inv;
                 }
             }
         }
@@ -522,7 +529,7 @@ void ClearText<T>::sumPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> 
 template <typename T>
 void ClearText<T>::avgPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> &in, Tensor4D<T> &out, u64 scale) {
     sumPool2D(ks, padding, stride, in, out);
-    div(out, (T)(ks*ks), scale);
+    divPartial(out, (T)(ks*ks), scale);
 }
 
 template <typename T>

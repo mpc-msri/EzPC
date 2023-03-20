@@ -12,7 +12,7 @@ public:
     static const u64 lr_scale = 6;
     static const u64 mom_fp = 29;
     static const u64 mom_scale = 5;
-    static const bool probablistic = true;
+    static const bool probablistic = false;
     static const bool localTruncationEmulation = false;
     static const bool numThreads = 120;
 
@@ -67,6 +67,7 @@ public:
     // void truncate(const Tensor<T> &in, u64 shift);
     void truncate(T &in, u64 shift);
     void div(const Tensor4D<T> &in, T divisor, u64 scale);
+    void divPartial(const Tensor4D<T> &in, T divisor, u64 scale);
     u64 log2(u64 x);
     void sumPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> &in, Tensor4D<T> &out);
     void avgPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> &in, Tensor4D<T> &out, u64 scale);
