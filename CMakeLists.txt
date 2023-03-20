@@ -63,3 +63,8 @@ add_executable(chexpert
     chexpert.cpp
 )
 target_link_libraries (chexpert ${PROJECT_NAME})
+
+add_executable(resnet18 
+    resnet18.cpp
+)
+target_link_libraries (resnet18 ${PROJECT_NAME})

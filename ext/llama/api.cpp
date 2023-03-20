@@ -2487,6 +2487,9 @@ void sign_extend2_eval_threads_helper(int thread_idx, int32_t size, int bin, int
 
 void SignExtend2(int size, int bin, int bout, GroupElement *x, GroupElement *y)
 {
+    for(int i = 0; i < size; i += 1) {
+        mod(x[i], bin);
+    }
     std::cerr << ">> SignExtend2 - Start" << std::endl;
     if (party == DEALER) {
         uint64_t dealer_total_time = 0;

@@ -110,7 +110,7 @@ public:
         // 3: the layer takes as input \ell - scale bits and outputs \ell - scale bits
 
         // std::cerr << "Visiting " << node->layer->name << std::endl;
-        if (node->layer->name == "Conv2D" || node->layer->name == "FC" || node->layer->name == "BatchNorm2dInference")
+        if (node->layer->name == "Conv2D" || node->layer->name == "FC" || node->layer->name == "BatchNorm2dInference" || node->layer->name == "AvgPool2D" || node->layer->name == "GlobalAvgPool2D")
         {
             // only one parent
             auto parent = node->parents[0];
@@ -123,15 +123,14 @@ public:
         }
         else if (node->layer->name == "Add" || node->layer->name == "Concat")
         {
-            auto parentMode = node->parents[0]->layer->mode;
+            int m = 0;
             for(auto &parent : node->parents) {
-                if ((parent->layer->mode % 2) != (parentMode % 2)) {
-                    node->mark = true;
-                    print_dot_graph(root);
-                    throw std::runtime_error(node->layer->name + " layer has parents with different modes");
+                if ((parent->layer->mode % 2) == 1) {
+                    m = 3;
+                    break;
                 }
             }
-            node->layer->mode = 3 * (parentMode % 2);
+            node->layer->mode = m;
         }
         else if (node->layer->name == "Flatten")
         {
@@ -158,7 +157,7 @@ public:
             else {
                 bool oneChildLinear = false;
                 for(auto &child : node->children) {
-                    if (child->layer->name == "Conv2D" || child->layer->name == "FC" || child->layer->name == "BatchNorm2dInference") {
+                    if (child->layer->name == "Conv2D" || child->layer->name == "FC" || child->layer->name == "BatchNorm2dInference" || child->layer->name == "GlobalAvgPool2D" || child->layer->name == "AvgPool2D") {
                         oneChildLinear = true;
                         break;
                     }
@@ -170,10 +169,6 @@ public:
                     node->layer->mode = 3;
                 }
             }
-        }
-        else if (node->layer->name == "AvgPool2D" || node->layer->name == "GlobalAvgPool2D") {
-            auto parentMode = node->parents[0]->layer->mode;
-            node->layer->mode = 3 * (parentMode % 2);
         }
         else if (node->layer->name == "Input") {
             // do nothing
