@@ -1465,7 +1465,6 @@ void Ln(
 	uint8_t *out_z = new uint8_t[s1] ;
 	uint64_t *out_m = new uint64_t[s1] ;
 	uint64_t *out_e = new uint64_t[s1] ;
-	uint8_t *hot = new uint8_t[s1] ;
 
 	vector<int> chunks = get_chunks(s1, __nt) ;
 	thread threads[MAX_THREADS] ;
@@ -1544,7 +1543,6 @@ void Sigmoid(
 	uint8_t *out_z = new uint8_t[s1] ;
 	uint64_t *out_m = new uint64_t[s1] ;
 	uint64_t *out_e = new uint64_t[s1] ;
-	uint8_t *hot = new uint8_t[s1] ;
 
 	vector<int> chunks = get_chunks(s1, __nt) ;
 	thread threads[MAX_THREADS] ;
@@ -1623,7 +1621,6 @@ void Tanh(
 	uint8_t *out_z = new uint8_t[s1] ;
 	uint64_t *out_m = new uint64_t[s1] ;
 	uint64_t *out_e = new uint64_t[s1] ;
-	uint8_t *hot = new uint8_t[s1] ;
 
 	vector<int> chunks = get_chunks(s1, __nt) ;
 	thread threads[MAX_THREADS] ;
