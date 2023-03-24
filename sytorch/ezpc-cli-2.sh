@@ -147,7 +147,7 @@ wait
 
 # Start a Python server to serve the stripped model
 echo -e "\${bg_green}Starting a Python server to serve the stripped model to Client and Dealer.\${clear}"
-python \$sytorch/scripts/server.py
+python \$sytorch/scripts/server.py 2
 
 while true; do
     # Download Keys from Dealer

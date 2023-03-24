@@ -144,7 +144,7 @@ wait
 
 # Start a Python server to serve the stripped model
 echo -e "\${bg_green}Starting a Python server to serve the stripped model\${clear}"
-python \$sytorch/scripts/server.py
+python \$sytorch/scripts/server.py 1
 
 # Key generation
 echo -e "\${bg_green}Generating keys\${clear}"
