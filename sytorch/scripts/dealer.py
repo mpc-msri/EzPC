@@ -16,8 +16,9 @@ class FileServer(http.server.SimpleHTTPRequestHandler):
         self.files_served_to_client = 0
         self.files_served_to_server = 0
 
-    def end_headers(self):
-        super().end_headers()
+    def do_GET(self):
+        super().do_GET()
+        self.end_headers()
         print(f"File served to {self.server.server_address[1]}")
         if self.server.server_address[1] == PORT_SERVER:
             FileServer.files_served_to_server += 1
