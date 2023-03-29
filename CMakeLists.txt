@@ -68,3 +68,13 @@ add_executable(resnet18
     resnet18.cpp
 )
 target_link_libraries (resnet18 ${PROJECT_NAME})
+
+add_executable(inference 
+    inference.cpp
+)
+target_link_libraries (inference ${PROJECT_NAME})
+
+add_executable(resnet18_acc 
+    resnet18_acc.cpp
+)
+target_link_libraries (resnet18_acc ${PROJECT_NAME})

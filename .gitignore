@@ -18,3 +18,4 @@ temp/
 graph.dot
 graph.png
 venv/
+thread_outputs/
