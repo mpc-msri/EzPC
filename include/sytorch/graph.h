@@ -26,7 +26,7 @@ struct LayerGraphNode {
         }
         numUsages++; // todo: make it atomic
         if (numUsages == children.size()) {
-            currTensor->free();
+            // currTensor->free();
             return true;
         }
         return false;

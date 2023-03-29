@@ -462,6 +462,22 @@ public:
         }
     }
 
+    void dumpAsi64(std::string filename) const {
+        std::ofstream file(filename, std::ios::out | std::ios::binary);
+        file.write((char*)data, d1 * d2 * d3 * d4 * sizeof(i64));
+        u64 pad = 4096 - (d1 * d2 * d3 * d4 * sizeof(i64)) % 4096;
+        for (u64 i = 0; i < pad; i++) {
+            file.write((char*)"\0", 1);
+        }
+        file.close();
+    }
+
+    void loadAsi64(std::string filename) const {
+        std::ifstream file(filename, std::ios::in | std::ios::binary);
+        file.read((char*)data, d1 * d2 * d3 * d4 * sizeof(i64));
+        file.close();
+    }
+
 };
 
 template <typename T>

@@ -272,6 +272,7 @@ public:
         auto cNode = getAddNode(arr);
         cNode->currTensor = &c;
         c.graphNode = cNode;
+        cNode->layer->inputDerivative.resize(c.d1, c.d2, c.d3, c.d4);
 
         for (int i = 0; i < c.d1; ++i) {
             for (int j = 0; j < c.d2; ++j) {
@@ -380,5 +381,171 @@ public:
     {
         auto res = collect(args...);
         return concat(res);
+    }
+
+    void dumpOrcaModel(std::string name = "Net")
+    {
+        std::ofstream file("model.h");
+        std::string tab = "    ";
+
+        file << "template <typename T>" << std::endl;
+        file << "Model<T> " << name << "(int batchSz) {" << std::endl;
+        file << tab << "int bw = 64;" << std::endl;
+        
+        int i = 0;
+        for (auto &n : allNodesInExecutionOrder) {
+            i += 1;
+            int h = n->layer->inputDerivative.d2;
+            int w = n->layer->inputDerivative.d3;
+            int c = n->layer->inputDerivative.d4;
+
+            file << tab << "auto layer" << (i-1) << " = new ";
+            auto &layer = n->layer;
+            if (layer->name == "Conv2D") {
+                auto convLayer = (Conv2D<T> *)(layer);
+                file << "Conv2DLayer<T>(bw, bw, batchSz, " << h << ", " << w << ", " << c << ", " << convLayer->ks << ", " << convLayer->ks << ", " << convLayer->co << ", " << convLayer->padding << ", " << convLayer->padding << ", " << convLayer->padding << ", " << convLayer->padding << ", " << convLayer->stride << ", " << convLayer->stride << ", " << (convLayer->useBias ? "true" : "false") << ", TruncateType::LocalARS, TruncateType::LocalARS, " << (i == 1 ? "false, true" : "true, false") << ");";
+            }
+            else if (layer->name == "MaxPool2D") {
+                auto maxPoolLayer = (MaxPool2D<T> *)(layer);
+                std::string bwToUse = (maxPoolLayer->mode == 3 ? "bw - scale" : "bw");
+                file << "MaxPool2DLayer<T>(" << bwToUse << ", " << bwToUse << ", bw, batchSz, " << h << ", " << w  << ", " << c  << ", " << maxPoolLayer->ks << ", " << maxPoolLayer->ks << ", " << maxPoolLayer->stride << ", " << maxPoolLayer->stride << ", " << maxPoolLayer->padding << ", " << maxPoolLayer->padding << ", " << maxPoolLayer->padding << ", " << maxPoolLayer->padding << ");"; 
+            }
+            else if (layer->name == "FC") {
+                auto fcLayer = (FC<T> *)(layer);
+                file << "FCLayer<T>(bw, bw, batchSz, " << fcLayer->out << ", " << fcLayer->in << ", TruncateType::LocalARS, TruncateType::LocalARS, " << (fcLayer->useBias ? "true, " : "false, ") << (i == 1 ? "false, true" : "true, false") << ");";
+            }
+            else if (layer->name == "ReLU") {
+                auto reluLayer = (ReLU<T> *)(layer);
+                if (reluLayer->mode == 0) {
+                    file << "ReLULayer<T>(bw, bw, batchSz * " << h * w * c << ");";
+                }
+                else if (reluLayer->mode == 2) {
+                    file << "ReluSignExtendLayer<T>(bw - scale, bw, batchSz * " << h * w * c << ");";
+                }
+                else if (reluLayer->mode == 3) {
+                    file << "ReLULayer<T>(bw - scale, bw - scale, batchSz * " << h * w * c << ");";
+                }
+            }
+            else if (layer->name == "GlobalAvgPool2D") {
+                auto avgPoolLayer = (GlobalAvgPool2D<T> *)(layer);
+                file << "AvgPool2DLayer<T>(bw, bw - scale, scale, batchSz, " << h << ", " << w << ", " << c << ", " << h << ", " << w << ", 1, 1, 0, 0, 0, 0, TruncateType::LocalARS, TruncateType::LocalARS);";
+            }
+            else if (layer->name == "AvgPool2D") {
+                auto avgPoolLayer = (AvgPool2D<T> *)(layer);
+                file << "AvgPool2DLayer<T>(bw, bw - scale, scale, batchSz, " << h << ", " << w << ", " << c << ", " << avgPoolLayer->ks << ", " << avgPoolLayer->ks << ", " << avgPoolLayer->stride << ", " << avgPoolLayer->stride << ", " << avgPoolLayer->padding << ", " << avgPoolLayer->padding << ", " << avgPoolLayer->padding << ", " << avgPoolLayer->padding << ", TruncateType::LocalARS, TruncateType::LocalARS);";
+            }
+            else if (layer->name == "Add") {
+                std::string bws = (layer->mode == 0) ? "bw" : "bw - scale";
+                auto parent = n->parents[0];
+                std::cerr << "my parent is " << parent->layer->name << std::endl;
+                parent->layer->activation.printshape();
+                auto ipSize = layer->inputDerivative.d2 * layer->inputDerivative.d3 * layer->inputDerivative.d4;
+                file << "AddLayer<T>(" << bws << ", batchSz * " << ipSize << ");";
+            }
+            else if (layer->name == "BatchNorm2dInference") {
+                auto bnLayer = (BatchNorm2dInference<T> *)(layer);
+                file << "BatchNormLayer<T>(bw, scale, batchSz * " << h * w << ", " << c << ", TruncateType::LocalLRS, " << (layer->doPreSignExtension ? "true" : "false") << ");";
+            }
+            else if (layer->name == "Concat") {
+                file << "ConcatLayer<T>();";
+            }
+            else if (layer->name == "Flatten") {
+                file << "FlattenLayer<T>();";
+            }
+            else {
+                file << "Layer;";
+            }
+            
+            if (layer->doPreSignExtension) {
+                file << "// needs pre sign extension" << std::endl;
+            }
+            else {
+                file << std::endl;
+            }
+        }
+
+        file << std::endl;
+        file << tab << "Model<T> m;" << std::endl;
+        file << tab << "m.bw = bw;" << std::endl;
+        file << tab << "m.batchSz = batchSz;" << std::endl;
+        file << tab << "m.numLayers = " << allNodesInExecutionOrder.size() << ";" << std::endl;
+        file << tab << "m.classes = " << activation.d2 << ";" << std::endl;
+        file << tab << "m.H = " << allNodesInExecutionOrder[0]->layer->inputDerivative.d2 << ";" << std::endl;
+        file << tab << "m.W = " << allNodesInExecutionOrder[0]->layer->inputDerivative.d3 << ";" << std::endl;
+        file << tab << "m.C = " << allNodesInExecutionOrder[0]->layer->inputDerivative.d4 << ";" << std::endl;
+        file << tab << "m.layers = new GPULayer<T>*[m.numLayers];" << std::endl;
+        file << tab << "GPULayer<T>* layers[] = {" << std::endl;
+        for (int i = 0; i < allNodesInExecutionOrder.size(); i++) {
+            file << tab << tab << "layer" << i << "," << std::endl;
+        }
+        file << tab << "};" << std::endl;
+        file << tab << "memcpy(m.layers, layers, m.numLayers * sizeof(GPULayer<T>*));" << std::endl;
+
+        for(int i = 0; i < allNodesInExecutionOrder.size(); ++i) {
+            std::string x = "";
+            for(int j = 0; j < allNodesInExecutionOrder[i]->parents.size(); ++j)
+            {
+                // find index of j'th parent in allNodesInExecutionOrder
+
+                for(int k = 0; k < allNodesInExecutionOrder.size(); ++k)
+                {
+                    if(allNodesInExecutionOrder[k] == allNodesInExecutionOrder[i]->parents[j])
+                    {
+                        x += std::to_string(k);
+                        break;
+                    }
+                }
+                
+                if (j != allNodesInExecutionOrder[i]->parents.size() - 1)
+                    x += ", ";
+            }
+            file << tab << "m.topologicalOrderDescription.push_back({ " << i << ", { " << x << " } });" << std::endl;
+        }
+
+
+        file << tab << "return m;" << std::endl;
+
+        file << "}" << std::endl;
+    }
+
+    void dumModelWeightsAsi64(std::string filename)
+    {
+        std::ofstream dealerFile(filename + "_weights_dealer.dat");
+        std::ofstream evalFile(filename + "_weights_evaluator.dat");
+        i64 zeroStr = 0;
+
+        for (auto &node: allNodesInExecutionOrder) {
+            auto layer = node->layer;
+            if(layer->name.find("Conv2D") != std::string::npos || layer->name.find("FC") != std::string::npos) {
+                auto& weights = layer->getweights();
+                evalFile.write((char*)weights.data, weights.d1 * weights.d2 * sizeof(i64));
+                for (int i = 0; i < weights.d1; ++i) {
+                    for (int j = 0; j < weights.d2; ++j) {
+                        dealerFile.write((char*)&zeroStr, sizeof(i64));
+                    }
+                }
+                auto& bias = layer->getbias();
+                if (layer->useBias) {
+                    evalFile.write((char*)bias.data, bias.size * sizeof(i64));
+                    for (int i = 0; i < bias.size; ++i) {
+                        dealerFile.write((char*)&zeroStr, sizeof(i64));
+                    }
+                }
+            }
+            else if (layer->name.find("BatchNorm2dInference") != std::string::npos) {
+                auto bn = (BatchNorm2dInference<T>*) layer;
+                auto channel = bn->A.size;
+                evalFile.write((char*)bn->A.data, channel * sizeof(i64));
+                evalFile.write((char*)bn->B.data, channel * sizeof(i64));
+                for (int i = 0; i < channel; ++i) {
+                    dealerFile.write((char*)&zeroStr, sizeof(i64));
+                }
+                for (int i = 0; i < channel; ++i) {
+                    dealerFile.write((char*)&zeroStr, sizeof(i64));
+                }
+            }
+        }
+        dealerFile.close();
+        evalFile.close();
     }
 };
