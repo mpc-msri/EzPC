@@ -1,84 +1,68 @@
-import http.server
-import socketserver
-import threading
-import subprocess
-import os
+from threading import Thread
+from pyftpdlib.handlers import FTPHandler
+from pyftpdlib.servers import FTPServer
+from pyftpdlib.authorizers import DummyAuthorizer
+import subprocess, os
+import logging
 
-PORT_SERVER = 9000
-PORT_CLIENT = 9001
+PORT_SERVER = 9005
+PORT_CLIENT = 9006
 
 
-class FileServer(http.server.SimpleHTTPRequestHandler):
+class MyHandler(FTPHandler):
     files_served_to_client = 0
     files_served_to_server = 0
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, directory=".", **kwargs)
+        super().__init__(*args, **kwargs)
         self.files_served_to_client = 0
         self.files_served_to_server = 0
 
-    def end_headers(self):
-        super().end_headers()
-        print(f"File served to {self.server.server_address[1]}")
-        if self.server.server_address[1] == PORT_SERVER:
-            FileServer.files_served_to_server += 1
-            print(f"Files served to server: {FileServer.files_served_to_server}")
-        else:
-            FileServer.files_served_to_client += 1
-            print(f"Files served to client: {FileServer.files_served_to_client}")
-        if (
-            FileServer.files_served_to_client >= 1
-            and FileServer.files_served_to_server >= 1
-        ):
-            # Execute the command after serving one file to each client and server
+    def on_file_sent(self, file):
+        # Increment the appropriate download counter
+        if self.server_address[1] == PORT_SERVER:
+            self.files_served_to_server += 1
+        elif self.server_address[1] == PORT_CLIENT:
+            self.files_served_to_client += 1
+
+        # Check if files have been downloaded via both servers
+        if self.files_served_to_client > 0 and self.files_served_to_server > 0:
+            # Run the desired commands here
             subprocess.run(["echo", "Generating New Keys"])
             subprocess.run(["rm", "-rf", "*.dat"])
             subprocess.run(["./generate_keys", "1"])
-            FileServer.files_served_to_client = 0
-            FileServer.files_served_to_server = 0
-
-    def do_GET(self):
-        f = self.send_head()
-        if f:
-            try:
-                self.send_file(f)
-            except BrokenPipeError:
-                # Client disconnected before the file was fully sent
-                pass
-            f.close()
-
-    def send_file(self, f):
-        CHUNK_SIZE = 16 * 1024
-        total_size = os.fstat(f.fileno()).st_size
-        bytes_sent = 0
-
-        while True:
-            chunk = f.read(CHUNK_SIZE)
-            if not chunk:
-                break
-
-            self.wfile.write(chunk)
-            bytes_sent += len(chunk)
-            progress = min(100, int(100 * bytes_sent / total_size))
-            print(f"\rTransfer progress: [{progress:3}%] ", end="", flush=True)
-
-        print("\rTransfer complete.                 ")
+            print("Files downloaded via both servers.")
+            self.files_served_to_client = 0
+            self.files_served_to_server = 0
 
 
-def serve_files(port, server_type):
-    handler = FileServer
-    with socketserver.TCPServer(("", port), handler) as httpd:
-        print(f"{server_type.capitalize()} started at localhost:{port}")
-        while True:
-            httpd.handle_request()
+logging.basicConfig(level=logging.DEBUG)
+
+cwd = os.getcwd()
+authorizer1 = DummyAuthorizer()
+authorizer1.add_user("user", "pass", ".", perm="elradfmwMT")
+authorizer1.add_anonymous(os.getcwd())
+handler1 = MyHandler
+handler1.authorizer = authorizer1
+# Create two instances of the FTP server
+server1 = FTPServer(("0.0.0.0", PORT_SERVER), handler1)
+
+authorizer2 = DummyAuthorizer()
+authorizer2.add_user("client", "client", ".", perm="elradfmwMT")
+authorizer2.add_anonymous(os.getcwd())
+handler2 = MyHandler
+handler2.authorizer = authorizer2
+server2 = FTPServer(("0.0.0.0", PORT_CLIENT), handler2)
+
+# Define a function to start the servers in separate threads
+def start_servers():
+    server1.serve_forever()
 
 
-# Start the server and client threads
-server_thread = threading.Thread(target=serve_files, args=(PORT_SERVER, "server"))
-client_thread = threading.Thread(target=serve_files, args=(PORT_CLIENT, "client"))
-server_thread.start()
-client_thread.start()
+def start_servers2():
+    server2.serve_forever()
 
-# Loop indefinitely serving files
-while True:
-    pass
+
+# Start the servers in separate threads
+Thread(target=start_servers).start()
+Thread(target=start_servers2).start()
