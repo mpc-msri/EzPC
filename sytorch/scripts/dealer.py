@@ -1,68 +1,68 @@
-from threading import Thread
-from pyftpdlib.handlers import FTPHandler
-from pyftpdlib.servers import FTPServer
+import os
+import sys
+
 from pyftpdlib.authorizers import DummyAuthorizer
-import subprocess, os
-import logging
-
-PORT_SERVER = 9005
-PORT_CLIENT = 9006
+from pyftpdlib.handlers import FTPHandler
+from pyftpdlib.servers import ThreadedFTPServer
 
 
-class MyHandler(FTPHandler):
+class FileHandler(FTPHandler):
     files_served_to_client = 0
     files_served_to_server = 0
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.files_served_to_client = 0
-        self.files_served_to_server = 0
 
     def on_file_sent(self, file):
-        # Increment the appropriate download counter
-        if self.server_address[1] == PORT_SERVER:
-            self.files_served_to_server += 1
-        elif self.server_address[1] == PORT_CLIENT:
-            self.files_served_to_client += 1
-
-        # Check if files have been downloaded via both servers
-        if self.files_served_to_client > 0 and self.files_served_to_server > 0:
-            # Run the desired commands here
-            subprocess.run(["echo", "Generating New Keys"])
-            subprocess.run(["rm", "-rf", "*.dat"])
-            subprocess.run(["./generate_keys", "1"])
-            print("Files downloaded via both servers.")
-            self.files_served_to_client = 0
-            self.files_served_to_server = 0
-
-
-logging.basicConfig(level=logging.DEBUG)
-
-cwd = os.getcwd()
-authorizer1 = DummyAuthorizer()
-authorizer1.add_user("user", "pass", ".", perm="elradfmwMT")
-authorizer1.add_anonymous(os.getcwd())
-handler1 = MyHandler
-handler1.authorizer = authorizer1
-# Create two instances of the FTP server
-server1 = FTPServer(("0.0.0.0", PORT_SERVER), handler1)
-
-authorizer2 = DummyAuthorizer()
-authorizer2.add_user("client", "client", ".", perm="elradfmwMT")
-authorizer2.add_anonymous(os.getcwd())
-handler2 = MyHandler
-handler2.authorizer = authorizer2
-server2 = FTPServer(("0.0.0.0", PORT_CLIENT), handler2)
-
-# Define a function to start the servers in separate threads
-def start_servers():
-    server1.serve_forever()
+        self.log(f"Ip of {self.username} is {self.remote_ip}")
+        if self.username == "server":
+            FileHandler.files_served_to_server += 1
+        elif self.username == "client":
+            FileHandler.files_served_to_client += 1
+        self.log(f"Files served to client: {FileHandler.files_served_to_client}")
+        self.log(f"Files served to server: {FileHandler.files_served_to_server}")
+        if (
+            FileHandler.files_served_to_client > 0
+            and FileHandler.files_served_to_server > 0
+        ):
+            self.log("Files downloaded via both servers.")
+            FileHandler.files_served_to_client = 0
+            FileHandler.files_served_to_server = 0
+            self.log("Generating New Keys")
+            os.system("rm -rf *.dat")
+            os.system("./generate_keys 1")
+            os.system("mv server.dat server/server.dat")
+            os.system("mv client.dat client/client.dat")
+            self.log("New Keys Generated")
 
 
-def start_servers2():
-    server2.serve_forever()
+def main():
+    # Instantiate a dummy authorizer for managing 'virtual' users
+    authorizer = DummyAuthorizer()
+
+    # Define a new user having full r/w permissions and a read-only
+    # anonymous user
+    authorizer.add_user("server", "server", "./server", perm="elradfmwMT")
+    authorizer.add_user("client", "client", "./client", perm="elradfmwMT")
+
+    # Instantiate FTP handler class
+    handler = FileHandler
+    handler.authorizer = authorizer
+
+    # Define a customized banner (string returned when client connects)
+    handler.banner = "pyftpdlib based ftpd ready."
+
+    # Instantiate FTP server class and listen on 0.0.0.0:2121
+    address = (sys.argv[1], 9000)
+    server = ThreadedFTPServer(address, handler)
+
+    # set a limit for connections
+    server.max_cons = 256
+    server.max_cons_per_ip = 5
+
+    # start ftp server
+    server.serve_forever()
 
 
-# Start the servers in separate threads
-Thread(target=start_servers).start()
-Thread(target=start_servers2).start()
+if __name__ == "__main__":
+    main()

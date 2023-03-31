@@ -1,18 +1,41 @@
 import ftplib
-import logging
+import sys
+from tqdm import tqdm
+import time
 
-logging.basicConfig(level=logging.DEBUG)
+url = sys.argv[1]
+user = sys.argv[2]
+passwd = sys.argv[3]
+file_name = sys.argv[4]
 
-ftp = ftplib.FTP()
-ftp.connect("127.0.0.1", 9006)
-ftp.login(user="client", passwd="client")
+while True:
+    try:
+        ftp = ftplib.FTP()
+        ftp.connect(url, 9000)
+        ftp.login(user=user, passwd=passwd)
 
-# # Download a file named "client.dat" from the server
-# with open("client.dat", "wb") as f:
-#     ftp.retrbinary("RETR client.dat", f.write)
+        # Switch to binary mode
+        ftp.sendcmd("TYPE i")
 
-# Now you can execute other FTP commands on the connected server
-# For example, to list files in the current directory:
-ftp.retrlines("LIST")
+        # Get the size of the file on the server
+        file_size = ftp.size(file_name)
 
-ftp.quit()
+        # Download the file and display a progress bar
+        with open(file_name, "wb") as f:
+            with tqdm(
+                unit="B", unit_scale=True, unit_divisor=1024, total=file_size
+            ) as progress:
+
+                def callback(data):
+                    f.write(data)
+                    progress.update(len(data))
+
+                ftp.retrbinary(f"RETR {file_name}", callback)
+
+        ftp.quit()
+        break  # exit the loop if the file is downloaded successfully
+
+    except Exception as e:
+        print(f"Error: Dealer not ready.")
+        print("Retrying in 10 seconds...")
+        time.sleep(10)
