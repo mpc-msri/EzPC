@@ -25,14 +25,14 @@ Using the above instructions, we now demonstrate LeNet inference on MNIST images
 
 1. On all machines, install dependencies.
 
-```
+```bash
 sudo apt update
 sudo apt install libeigen3-dev cmake build-essential git
 ```
 
 2. On all machines, install the python dependencies in a virtual environment.
 
-```
+```bash
 python3 -m venv venv
 source venv/bin/activate
 wget https://raw.githubusercontent.com/mpc-msri/EzPC/sytorch/OnnxBridge/requirements.txt
@@ -41,7 +41,7 @@ pip install tqdm pyftpdlib
 ```
 3. Download ONNX file and preprocessing script for LeNet on the server and make a temporary directory.
 
-```
+```bash
 mkdir lenet-demo-server
 cd lenet-demo-server
 wget https://github.com/kanav99/models/raw/main/lenet.onnx
@@ -52,7 +52,7 @@ cd tmp
 
 4. Download the test image on the client and make a temporary directory.
 
-```
+```bash
 mkdir lenet-demo-client
 cd lenet-demo-client
 wget https://github.com/kanav99/models/raw/main/input.jpg
@@ -62,7 +62,7 @@ cd tmp
 
 5. Make a temporary directory for dealer.
 
-```
+```bash
 mkdir lenet-demo-dealer
 cd lenet-demo-dealer
 mkdir tmp
@@ -71,7 +71,7 @@ cd tmp
 
 6. On the local computer, clone EzPC repository, generate the scripts and transfer them to respective machines. If server, client and dealer are in same local network, then pass the local network IP in the `ezpc_cli-2.sh` command.
 
-```
+```bash
 git clone https://github.com/mpc-msri/EzPC
 cd EzPC
 cd sytorch
@@ -82,29 +82,29 @@ scp client-offline.sh <CLIENT-IP>:/home/<user>/lenet-demo-client/tmp/
 scp client-online.sh  <CLIENT-IP>:/home/<user>/lenet-demo-client/tmp/
 ```
 
-6. On all machines, make the bash scripts executable and start the offline phase.
+7. On all machines, make the bash scripts executable and execute them.
 
-```
-(on server)
+```bash
+# (on server)
 chmod +x server.sh
 ./server.sh
 
-(on dealer)
+# (on dealer)
 chmod +x dealer.sh
 ./dealer.sh
 
-
-(on client)
+# (on client)
 chmod +x client-offline.sh client-online.sh
 ./client-offline.sh
 ```
 
-7. Once offline phase completes, server waits for client to start inference. The inference logits get printed on the client terminal.
+8. Once client-offline.sh script completes, run below script, as server waits for client to start inference. The inference logits get printed on the client terminal.
 
-```
-
-(on client for every inference sequentially)
+```bash
+# (on client for every inference sequentially)
 ./client-online.sh /home/<user>/lenet-demo-client/input.jpg
+# Run this script for every inference
+# server and dealer runs in loop to handle multiple inference with fresh co-related randomness.
 ```
 
 In this particular example, you should get a score array of `[-2.71362 1.06747 4.43045 0.795044 -3.21173 -2.39871 -8.49094 10.3443 1.0567 -0.694458]`, which is maximum at index 7, which is indeed expected as the [input.jpg](https://github.com/kanav99/models/raw/main/input.jpg) file contains an image of handwritten 7.
