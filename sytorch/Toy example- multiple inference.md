@@ -98,12 +98,12 @@ chmod +x client-offline.sh client-online.sh
 ./client-offline.sh
 ```
 
-8. Once client-offline.sh script completes, run below script, as server waits for client to start inference. The inference logits get printed on the client terminal.
+8. Once client-offline.sh script completes, run below script, as server waits for client to start inference. The inference logs get printed on the client terminal.
 
 ```bash
 # (on client for every inference sequentially)
 ./client-online.sh /home/<user>/lenet-demo-client/input.jpg
-# Run this script for every inference
+# Run this script for every inference, after server has started downloading keys from dealer.
 # server and dealer runs in loop to handle multiple inference with fresh co-related randomness.
 ```
 
