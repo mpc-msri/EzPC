@@ -18,9 +18,12 @@ class FileHandler(FTPHandler):
 
     def on_connect(self):
         self.log(f"Connected {self.username}")
-        self.log(f"Sleeping till keys are available")
+        self.log(f"Checking if keys are available")
+        if not FileHandler.keys_available:
+            self.log(f"Keys not available. Sleeping")
         while not FileHandler.keys_available:
             pass
+        self.log(f"Keys available. Continuing")
 
     def on_file_sent(self, file):
         self.log(f"Ip of {self.username} is {self.remote_ip}")
