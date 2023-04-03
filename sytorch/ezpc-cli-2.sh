@@ -386,6 +386,8 @@ python $preprocess_image_file \$File_NAME
 wait
 python \$onnxbridge/helper/convert_np_to_float_inp.py --inp \$Image_Name.npy --out \$Image_Name.inp
 
+sleep 30s
+
 # Run the model
 echo -e "\${bg_green}Running the model\${clear}"
 ./${Model_Name}_${BACKEND}_${SCALE} 3 $SERVER_IP < \$Image_Name.inp > output.txt
