@@ -157,6 +157,7 @@ while true; do
 
     # Get the keys from the Dealer
     python \$sytorch/scripts/download_keys.py \$Dealer_url server server server.dat
+    wait
     echo -e "\${bg_green}Downloaded Dealer Keys File\${clear}"
 
     # Model inference
@@ -370,6 +371,7 @@ Dealer_url="$DEALER_IP"
 
 # Get the keys from the Dealer
 python \$sytorch/scripts/download_keys.py \$Dealer_url client client client.dat
+wait
 echo -e "\${bg_green}Downloaded Dealer Keys File\${clear}"
 
 # Copy the input image
