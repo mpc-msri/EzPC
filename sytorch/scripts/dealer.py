@@ -29,18 +29,18 @@ class FileHandler(FTPHandler):
         self.log(f"Ip of {self.username} is {self.remote_ip}")
 
         # Calculate the MD hash of the file
-        hasher = hashlib.md5()
-        with open(file, "rb") as f:
-            buf = f.read()
-            hasher.update(buf)
-        md_hash = hasher.hexdigest()
+        # hasher = hashlib.md5()
+        # with open(file, "rb") as f:
+        #     buf = f.read()
+        #     hasher.update(buf)
+        # md_hash = hasher.hexdigest()
 
         if self.username == "server":
             FileHandler.files_served_to_server += 1
-            self.log(f"MD5 hash of server.dat is {md_hash}")
+            # self.log(f"MD5 hash of server.dat is {md_hash}")
         elif self.username == "client":
             FileHandler.files_served_to_client += 1
-            self.log(f"MD5 hash of client.dat is {md_hash}")
+            # self.log(f"MD5 hash of client.dat is {md_hash}")
 
         self.log(f"Files served to client: {FileHandler.files_served_to_client}")
         self.log(f"Files served to server: {FileHandler.files_served_to_server}")
