@@ -19,7 +19,7 @@ The script generates 4 scripts:
 - `client-online.sh` - It takes as input absolute path of image for inference. Transfer this script to the client VM in the same directory. Running this script downloads randomness from dealer,  preprocesses the input, connects with the server and starts the inference. After the secure inference is complete, inference output is printed and saved in `output.txt` file. This script needs to be run every time for a new inference with a new input.
 - `dealer.sh` - Transfer this script to the dealer VM in any empty directory. Running this script waits for server to send the zip file, after which it generates and allows the client and server script to automatically download the co-related randomness for server and client. Once transferred, it generates a fresh pair of co-related randomness keys and again allows server and client to download it in a loop for multiple inference.
 
-- Use 'clean' as `script.sh clean` with ny of above script to clean the setup.
+- Use 'clean' as `script.sh clean` with any of above script to clean the setup. This removes all files created by script from the current directory except the script itself. [Note: **This might remove all files from the current directory, keep backup of any important file.**]
 
 ## Toy example - LeNet-MNIST inference
 
