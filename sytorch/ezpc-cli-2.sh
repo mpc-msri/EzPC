@@ -111,6 +111,15 @@ bg_magenta='\033[0;45m'
 bg_cyan='\033[0;46m'
 clear='\033[0m'
 
+if [ "$1" = "clean" ]; then
+  shopt -s extglob
+  echo -e "\${bg_yellow}Cleaning up\${clear}"
+  rm -rf !(server.sh)
+  echo -e "\${bg_green}Cleaned up\${clear}"
+  shopt -u extglob
+  exit 0
+fi
+
 # Current directory
 current_dir=\$(pwd)
 echo -e "Play Area: \${bg_green}\$current_dir\${clear}"
@@ -186,6 +195,15 @@ bg_blue='\033[0;44m'
 bg_magenta='\033[0;45m'
 bg_cyan='\033[0;46m'
 clear='\033[0m'
+
+if [ "$1" = "clean" ]; then
+  shopt -s extglob
+  echo -e "\${bg_yellow}Cleaning up\${clear}"
+  rm -rf !(dealer.sh)
+  echo -e "\${bg_green}Cleaned up\${clear}"
+  shopt -u extglob
+  exit 0
+fi
 
 # Current directory
 current_dir=\$(pwd)
@@ -278,6 +296,15 @@ bg_magenta='\033[0;45m'
 bg_cyan='\033[0;46m'
 clear='\033[0m'
 
+if [ "$1" = "clean" ]; then
+  shopt -s extglob
+  echo -e "\${bg_yellow}Cleaning up\${clear}"
+  rm -rf !(client-o*)
+  echo -e "\${bg_green}Cleaned up\${clear}"
+  shopt -u extglob
+  exit 0
+fi
+
 # Current directory
 current_dir=\$(pwd)
 echo -e "Play Area: \${bg_green}\$current_dir\${clear}"
@@ -352,6 +379,15 @@ bg_blue='\033[0;44m'
 bg_magenta='\033[0;45m'
 bg_cyan='\033[0;46m'
 clear='\033[0m'
+
+if [ "$1" = "clean" ]; then
+  shopt -s extglob
+  echo -e "\${bg_yellow}Cleaning up\${clear}"
+  rm -rf !(client-o*)
+  echo -e "\${bg_green}Cleaned up\${clear}"
+  shopt -u extglob
+  exit 0
+fi
 
 # if Image is not provided
 if [ -z "\$1" ]; then

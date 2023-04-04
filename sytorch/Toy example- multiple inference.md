@@ -19,6 +19,8 @@ The script generates 4 scripts:
 - `client-online.sh` - It takes as input absolute path of image for inference. Transfer this script to the client VM in the same directory. Running this script downloads randomness from dealer,  preprocesses the input, connects with the server and starts the inference. After the secure inference is complete, inference output is printed and saved in `output.txt` file. This script needs to be run every time for a new inference with a new input.
 - `dealer.sh` - Transfer this script to the dealer VM in any empty directory. Running this script waits for server to send the zip file, after which it generates and allows the client and server script to automatically download the co-related randomness for server and client. Once transferred, it generates a fresh pair of co-related randomness keys and again allows server and client to download it in a loop for multiple inference.
 
+- Use 'clean' as `script.sh clean` with ny of above script to clean the setup.
+
 ## Toy example - LeNet-MNIST inference
 
 Using the above instructions, we now demonstrate LeNet inference on MNIST images. We assume that we start at the home path `/home/<user>` on all machines. The below instructions also work on three terminals opened on a single machine (each terminal representing client, server and local computer) by passing `127.0.0.1` as IP address. 
@@ -33,6 +35,7 @@ sudo apt install libeigen3-dev cmake build-essential git
 2. On all machines, install the python dependencies in a virtual environment.
 
 ```bash
+sudo apt install python3.10-venv
 python3 -m venv venv
 source venv/bin/activate
 wget https://raw.githubusercontent.com/mpc-msri/EzPC/master/OnnxBridge/requirements.txt
