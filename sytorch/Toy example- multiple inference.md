@@ -35,7 +35,7 @@ sudo apt install libeigen3-dev cmake build-essential git
 ```bash
 python3 -m venv venv
 source venv/bin/activate
-wget https://raw.githubusercontent.com/mpc-msri/EzPC/sytorch/OnnxBridge/requirements.txt
+wget https://raw.githubusercontent.com/mpc-msri/EzPC/master/OnnxBridge/requirements.txt
 pip install -r requirements.txt
 pip install tqdm pyftpdlib
 ```
