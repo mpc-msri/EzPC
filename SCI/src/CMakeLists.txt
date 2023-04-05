@@ -51,7 +51,7 @@ add_library(SCI-SecfloatML library_float_common.cpp library_float_secfloat.cpp g
 add_library(SCI-Beacon library_float_common.cpp library_float_beacon.cpp globals_float.cpp cleartext_library_float.cpp)
 
 target_link_libraries(SCI-OT PUBLIC SCI-common SCI-LinearOT SCI-GC
-    SCI-BuildingBlocks SCI-Math SCI-FloatingPoint Eigen3::Eigen)
+    SCI-Math SCI-BuildingBlocks SCI-FloatingPoint Eigen3::Eigen)
 target_link_libraries(SCI-HE PUBLIC SCI-common SCI-LinearHE)
 target_link_libraries(SCI-SecfloatML PUBLIC SCI-FloatingPoint) 
 target_link_libraries(SCI-Beacon PUBLIC SCI-FloatingPoint) 
