@@ -85,7 +85,7 @@ def prepare_func(node, var_dict, value_info, input_taken, mode, indent):
 def cleartext_pre(code_list, program, scale, mode, indent):
     code_list.append("#include <sytorch/layers/layers.h>")
     code_list.append("#include <sytorch/module.h>")
-    code_list.append("#include <sytorch/utils..h>\n\n")
+    code_list.append("#include <sytorch/utils.h>\n\n")
 
 
 def cleartext_post(code_list, program, scale, mode, indent):
@@ -94,7 +94,7 @@ def cleartext_post(code_list, program, scale, mode, indent):
     code_list.append(
         f"""
 
-int main(int argc, char**argv){'{'}
+int main(int argc, char**__argv){'{'}
 
     prngWeights.SetSeed(osuCrypto::toBlock(0, 0));
     prngStr.SetSeed(osuCrypto::toBlock(time(NULL)));

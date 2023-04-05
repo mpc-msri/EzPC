@@ -1,5 +1,5 @@
 # OnnxBridge 
-An end-to-end compiler for converting Onnx Models to Secure Floating Point backend(SecFloat).
+An end-to-end compiler for converting Onnx Models to Secure Cryptographic backends : **Secfloat**(Floating Point) and **LLAMA**(FSS based).
 - [Setup](#setup)
 - [Usage](#usage)
 - [Supported Nodes](#supported-nodes)
@@ -12,51 +12,99 @@ If you used the `setup_env_and_build.sh` script the below would already have bee
 - onnxsim==0.4.8
 - numpy==1.21.0
 - protobuf==3.20.1
+- torchvision==0.13.1
+- idx2numpy==1.2.3
 
 Above dependencies can be installed using the `requirements.txt` file as below:
 ```bash
 pip3 install -r requirements.txt
 ```
 
-#### Along with this SecFloat Backend also need to be build for OnnxBridge to work. Follow the steps from `../SCI/` to build SecFloat.
+#### Along with this Backend also need to be build for OnnxBridge to work.
+- Secfloat:  Follow the steps from `../SCI/` to build SecFloat.
+- LLAMA: Builds at compile time.
 
 ## Usage
 
-### Generate Binaries:  
-To compile an onnx file to SecFloat backend, use the below command:
+<br/>
+
+### **Generate Binaries**:  
+To compile an Onnx file to Cryptographic backend, use the below command:
 ```bash
 cd OnnxBridge 
-python3 main.py --path "/path/to/onnx-file" --generate "code" --backend SECFLOAT
+python3 main.py --path "/path/to/onnx-file" --generate ["code"/"executable"] --backend <backend> [--scale scale] [--bitlength bitlength]
 ```
+- --generate ["code"/"executable"]: "code" dumps the secure code and "executable" also compiles it with backend to generate binaries.
+- \<backend\> can be: [ SECFLOAT / SECFLOAT_CLEARTEXT / LLAMA / CLEARTEXT_LLAMA ] 
+- The following arguments are required with the backend LLAMA/CLEARTEXT_LLAMA only: --scale, --bitlength
 
-To compile SecFloat Code generated from above step and get executable use:
+To compile Secure Code generated from above step (when --generate "code") and get executable use:
 ```bash
+# for SECFLOAT / SECFLOAT_CLEARTEXT 
 Secfloat/compile_secfloat.sh "/path/to/file.cpp"
 ```
-
----
-### To directly generate executable from Onnx File use:
 ```bash
-cd OnnxBridge 
-python3 main.py --path "/path/to/onnx-file" --generate "executable" --backend SECFLOAT
+# for LLAMA / CLEARTEXT_LLAMA 
+LLAMA/compile_llama.sh "/path/to/file.cpp"
 ```
 ---
-### Run Inference:
-To run secure inference on networks:
+## Inference with each backend:
 
+#### **Secfloat**
 ```bash
+# generate secure code
+cd OnnxBridge 
+python3 main.py --path "/path/to/onnx-file" --generate "code" --backend SECFLOAT
+
+# compile secure code
+Secfloat/compile_secfloat.sh "/path/to/file.cpp"
+
+# start inference on server and client machines
 ./<network> r=2 [port=port] [chunk=chunk] < <model_weights_file> // Server
 ./<network> r=1 [add=server_address] [port=port] [chunk=chunk] < <image_file> // Client
 ```
 
-### To do the same using cleartext:
+#### **Secfloat Cleartext**
 ```bash
+# generate and compile secure code
 cd OnnxBridge 
-python3 main.py --path "/path/to/onnx-file" --generate ["executable"/"code"] --backend [SECFLOAT/SECFLOAT_CLEARTEXT]
+python3 main.py --path "/path/to/onnx-file" --generate "executable" --backend SECFLOAT_CLEARTEXT
+
+# start inference
 cat input_input.inp model_input_weights_.inp | ./model_secfloat_ct
 ```
 
+#### **LLAMA**
+```bash
+# generate secure code
+cd OnnxBridge 
+python3 main.py --path "/path/to/onnx-file" --generate "code" --backend LLAMA --scale scale --bitlength bitlength
+
+# compile secure code
+LLAMA/compile_llama.sh "/path/to/file.cpp"
+
+# generate LLAMA keys on client and server machines
+./<network> 1
+
+# start inference on server and client machines
+./<network> 2 <ip> <model_weights_file> // Server
+./<network> 3 <server-ip> < <image_file> // Client
+```
+
+#### **LLAMA Cleartext**
+```bash
+# generate and compile secure code
+cd OnnxBridge 
+python3 main.py --path "/path/to/onnx-file" --generate "executable" --backend CLEARTEXT_LLAMA --scale scale --bitlength bitlength
+
+# start inference 
+./<network> 0 127.0.0.1 <model_weights_file> < <image_file> 
+```
+
+
 ## Supported Nodes
+
+### **Secfloat**
 - Conv
 - Relu
 - Sigmoid
@@ -71,9 +119,24 @@ cat input_input.inp model_input_weights_.inp | ./model_secfloat_ct
 - Reshape
 - Gemm
 
+### **LLAMA**
+- Relu
+- Softmax
+- Conv
+- MaxPool
+- AveragePool
+- Flatten
+- Gemm
+- BatchNormalization
+- Concat
+- GlobalAveragePool
+- Add
+
+---
 ## Add Support for Nodes
+
 #### Follow below steps to add support for any new node:
-#### For example we will consider `"Tanh"` node:
+#### For example we will consider `"Tanh"` node to be implemented in Secfloat:
 1. Implement the Node in  OnnxBridge/Secfloat/lib_secfloat/link_secfloat.cpp` using secfloat backend as follows:
 ```cpp
     // tanh(x) = 2 * sigmoid(2 * x) - 1 
@@ -164,7 +227,7 @@ This completes the node implementation in backend.
 ```
 4. Lastly add node name i.e "Tanh" to the `implemented` list in function `is_compatible` inside class `IR` located in `Onnx-FzPC/backend.py`.
 ```python
-    implemented = [
+    implemented_secfloat = [
         "Relu",
         "Sigmoid",
         "Softmax",
