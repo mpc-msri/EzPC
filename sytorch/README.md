@@ -15,7 +15,7 @@ pip3 install -r OnnxBridge/requirements.txt
 
 ## Quick start using OnnxBridge
 
-Given an model onnx file, OnnxBridge can be used to generate an executable which can be run on two VMs, server and client (owning the model weights and input image respectively), to get the secure inference output. \n
+Given an model onnx file, OnnxBridge can be used to generate an executable which can be run on two VMs, server and client (owning the model weights and input image respectively), to get the secure inference output. 
 
 To do this two scripts are available:
 1. [Single Inference](/sytorch/Toy%20example-%20single%20inference.md) - This script is ideal for a single inference scenario.
