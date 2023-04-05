@@ -1,32 +1,41 @@
-import requests
-import time
+import ftplib
 import sys
+from tqdm import tqdm
+import time
 
-# Define the URL of the file server and the file to download
 url = sys.argv[1]
-file_name = sys.argv[2]
+user = sys.argv[2]
+passwd = sys.argv[3]
+file_name = sys.argv[4]
 
-# Define the size of each chunk to download
-chunk_size = 1024 * 1024  # 1 MB
-
-# Download the file repeatedly until a 200 status code is received
 while True:
     try:
-        response = requests.get(url, stream=True)
-        if response.status_code == 200:
-            # Save the contents of the file to disk in chunks
-            with open(file_name, "wb") as f:
-                for chunk in response.iter_content(chunk_size=chunk_size):
-                    f.write(chunk)
-            print("File downloaded successfully.")
-            break
-        else:
-            # Wait for a short time before trying again
-            print(
-                f"Server returned status code {response.status_code}. Retrying in 10 seconds..."
-            )
-            time.sleep(10)
-    except requests.exceptions.ConnectionError:
-        # Wait for a short time before trying again
-        print("Failed to connect to server. Retrying in 10 seconds...")
+        ftp = ftplib.FTP()
+        ftp.connect(url, 9000)
+        ftp.login(user=user, passwd=passwd)
+
+        # Switch to binary mode
+        ftp.sendcmd("TYPE i")
+
+        # Get the size of the file on the server
+        file_size = ftp.size(file_name)
+
+        # Download the file and display a progress bar
+        with open(file_name, "wb") as f:
+            with tqdm(
+                unit="B", unit_scale=True, unit_divisor=1024, total=file_size
+            ) as progress:
+
+                def callback(data):
+                    f.write(data)
+                    progress.update(len(data))
+
+                ftp.retrbinary(f"RETR {file_name}", callback)
+
+        ftp.quit()
+        break  # exit the loop if the file is downloaded successfully
+
+    except Exception as e:
+        print(f"Error: Dealer not ready.")
+        print("Retrying in 10 seconds...")
         time.sleep(10)

@@ -111,6 +111,15 @@ bg_magenta='\033[0;45m'
 bg_cyan='\033[0;46m'
 clear='\033[0m'
 
+if [ "$1" = "clean" ]; then
+  shopt -s extglob
+  echo -e "\${bg_yellow}Cleaning up\${clear}"
+  rm -rf !(server.sh)
+  echo -e "\${bg_green}Cleaned up\${clear}"
+  shopt -u extglob
+  exit 0
+fi
+
 # Current directory
 current_dir=\$(pwd)
 echo -e "Play Area: \${bg_green}\$current_dir\${clear}"
@@ -152,12 +161,12 @@ python \$sytorch/scripts/server.py 2
 while true; do
     # Download Keys from Dealer
     echo -e "\${bg_green}Downloading keys from Dealer\${clear}"
-    # Set the Dealer IP address and port number
-    Dealer_Port="9000"
-    Dealer_url="http://$DEALER_IP:\$Dealer_Port/server.dat"
+    # Set the Dealer IP address and port number is 9000 by default
+    Dealer_url="$DEALER_IP"
 
     # Get the keys from the Dealer
-    python \$sytorch/scripts/download_keys.py \$Dealer_url server.dat
+    python \$sytorch/scripts/download_keys.py \$Dealer_url server server server.dat
+    wait
     echo -e "\${bg_green}Downloaded Dealer Keys File\${clear}"
 
     # Model inference
@@ -186,6 +195,15 @@ bg_blue='\033[0;44m'
 bg_magenta='\033[0;45m'
 bg_cyan='\033[0;46m'
 clear='\033[0m'
+
+if [ "$1" = "clean" ]; then
+  shopt -s extglob
+  echo -e "\${bg_yellow}Cleaning up\${clear}"
+  rm -rf !(dealer.sh)
+  echo -e "\${bg_green}Cleaned up\${clear}"
+  shopt -u extglob
+  exit 0
+fi
 
 # Current directory
 current_dir=\$(pwd)
@@ -248,10 +266,14 @@ cp ${Model_Name}_${BACKEND}_${SCALE} generate_keys
 
 # Generate keys for 1st inference
 ./generate_keys 1
+mkdir server
+mv server.dat server/server.dat
+mkdir client
+mv client.dat client/client.dat
 
 # Key generation and serving key files
 echo -e "\${bg_green}Starting a Python server to serve keys file\${clear}"
-python \$sytorch/scripts/dealer.py
+python \$sytorch/scripts/dealer.py $SERVER_IP 
 
 EOF
 # Finish generating Dealer Script
@@ -273,6 +295,15 @@ bg_blue='\033[0;44m'
 bg_magenta='\033[0;45m'
 bg_cyan='\033[0;46m'
 clear='\033[0m'
+
+if [ "$1" = "clean" ]; then
+  shopt -s extglob
+  echo -e "\${bg_yellow}Cleaning up\${clear}"
+  rm -rf !(client-o*)
+  echo -e "\${bg_green}Cleaned up\${clear}"
+  shopt -u extglob
+  exit 0
+fi
 
 # Current directory
 current_dir=\$(pwd)
@@ -349,6 +380,15 @@ bg_magenta='\033[0;45m'
 bg_cyan='\033[0;46m'
 clear='\033[0m'
 
+if [ "$1" = "clean" ]; then
+  shopt -s extglob
+  echo -e "\${bg_yellow}Cleaning up\${clear}"
+  rm -rf !(client-o*)
+  echo -e "\${bg_green}Cleaned up\${clear}"
+  shopt -u extglob
+  exit 0
+fi
+
 # if Image is not provided
 if [ -z "\$1" ]; then
     echo "Error: Image not provided."
@@ -363,11 +403,11 @@ onnxbridge="\$current_dir/EzPC/OnnxBridge"
 # Download Keys from Dealer
 echo -e "\${bg_green}Downloading keys from Dealer\${clear}"
 # Set the dealer IP address and port number
-Dealer_Port="9001"
-Dealer_url="http://$DEALER_IP:\$Dealer_Port/client.dat"
+Dealer_url="$DEALER_IP"
 
 # Get the keys from the Dealer
-python \$sytorch/scripts/download_keys.py \$Dealer_url client.dat
+python \$sytorch/scripts/download_keys.py \$Dealer_url client client client.dat
+wait
 echo -e "\${bg_green}Downloaded Dealer Keys File\${clear}"
 
 # Copy the input image
@@ -381,6 +421,8 @@ echo -e "\${bg_green}Preparing the input\${clear}"
 python $preprocess_image_file \$File_NAME
 wait
 python \$onnxbridge/helper/convert_np_to_float_inp.py --inp \$Image_Name.npy --out \$Image_Name.inp
+
+sleep 30s
 
 # Run the model
 echo -e "\${bg_green}Running the model\${clear}"

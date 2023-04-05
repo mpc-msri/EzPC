@@ -25,6 +25,15 @@ FPArray __public_float_to_arithmetic(float f, int party = ALICE)
     return _ret;
 }
 
+FPArray __public_float_to_baba(float f, int party = ALICE)
+{
+    float *_dummy = new float[1];
+    _dummy[0] = f;
+    FPArray _ret = __fp_op->input(party, 1, _dummy);
+    delete[] _dummy;
+    return _ret;
+}
+
 auto Add(const FPArray &x, const FPArray &y)
 {
     return __fp_op->add(x, y);
@@ -115,7 +124,6 @@ void MaxPool(int32_t N, int32_t C, int32_t H, int32_t W, int32_t ksizeH, int32_t
         }
     }
 }
-
 
 void AvgPool(int32_t N, int32_t C, int32_t H, int32_t W, int32_t ksizeH, int32_t ksizeW, int32_t zPadHLeft, int32_t zPadHRight, int32_t zPadWLeft, int32_t zPadWRight, int32_t strideH, int32_t strideW, int32_t N1, int32_t C1, int32_t imgH, int32_t imgW, auto &inArr, auto &outArr)
 {
@@ -420,29 +428,30 @@ void Sigmoid(int32_t s1, int32_t s2, int32_t s3, int32_t s4, auto &inArr, auto &
     }
 }
 
-// tanh(x) = 2 * sigmoid(2 * x) - 1 
-void Tanh(int32_t s1, vector<FPArray> &inArr, vector<FPArray> &outArr){
+// tanh(x) = 2 * sigmoid(2 * x) - 1
+void Tanh(int32_t s1, vector<FPArray> &inArr, vector<FPArray> &outArr)
+{
 
     const FPArray one = __public_float_to_baba(1.0, ALICE);
     const FPArray two = __public_float_to_baba(2.0, ALICE);
 
     // 2 * x
     auto twice_input = make_vector_float(ALICE, s1);
-    for(int i=0; i<s1; i++){
-        twice_input[i] = Mul(inArr[i],two);
+    for (int i = 0; i < s1; i++)
+    {
+        twice_input[i] = Mul(inArr[i], two);
     }
 
     // sigmoid(2 * x)
     auto sigmoid_twice_input = make_vector_float(ALICE, s1);
     Sigmoid(s1, twice_input, sigmoid_twice_input);
 
-
     // tanh(x) = 2 * sigmoid(2 * x) - 1
-    for(int i=0; i<s1; i++){
-        outArr[i] = Mul(two , sigmoid_twice_input[i]);
+    for (int i = 0; i < s1; i++)
+    {
+        outArr[i] = Mul(two, sigmoid_twice_input[i]);
         outArr[i] = __fp_op->sub(outArr[i], one);
     }
-
 }
 
 void Tanh(int32_t s1, int32_t s2, auto &inArr, auto &outArr)

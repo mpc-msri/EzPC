@@ -1,84 +1,98 @@
-import http.server
-import socketserver
-import threading
-import subprocess
 import os
+import sys
+import hashlib
 
-PORT_SERVER = 9000
-PORT_CLIENT = 9001
+from pyftpdlib.authorizers import DummyAuthorizer
+from pyftpdlib.handlers import FTPHandler
+from pyftpdlib.servers import ThreadedFTPServer
 
 
-class FileServer(http.server.SimpleHTTPRequestHandler):
+class FileHandler(FTPHandler):
     files_served_to_client = 0
     files_served_to_server = 0
+    keys_served = 0
+    keys_available = True
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, directory=".", **kwargs)
-        self.files_served_to_client = 0
-        self.files_served_to_server = 0
+        super().__init__(*args, **kwargs)
 
-    def end_headers(self):
-        super().end_headers()
-        print(f"File served to {self.server.server_address[1]}")
-        if self.server.server_address[1] == PORT_SERVER:
-            FileServer.files_served_to_server += 1
-            print(f"Files served to server: {FileServer.files_served_to_server}")
-        else:
-            FileServer.files_served_to_client += 1
-            print(f"Files served to client: {FileServer.files_served_to_client}")
+    def on_connect(self):
+        self.log(f"Connected {self.username}")
+        self.log(f"Checking if keys are available")
+        if not FileHandler.keys_available:
+            self.log(f"Keys not available. Sleeping")
+        while not FileHandler.keys_available:
+            pass
+        self.log(f"Keys available. Continuing")
+
+    def on_file_sent(self, file):
+        self.log(f"Ip of {self.username} is {self.remote_ip}")
+
+        # Calculate the MD hash of the file
+        # hasher = hashlib.md5()
+        # with open(file, "rb") as f:
+        #     buf = f.read()
+        #     hasher.update(buf)
+        # md_hash = hasher.hexdigest()
+
+        if self.username == "server":
+            FileHandler.files_served_to_server += 1
+            # self.log(f"MD5 hash of server.dat is {md_hash}")
+        elif self.username == "client":
+            FileHandler.files_served_to_client += 1
+            # self.log(f"MD5 hash of client.dat is {md_hash}")
+
+        self.log(f"Files served to client: {FileHandler.files_served_to_client}")
+        self.log(f"Files served to server: {FileHandler.files_served_to_server}")
+
+    def on_disconnect(self):
+        self.log(f"Disconnected {self.username}")
         if (
-            FileServer.files_served_to_client >= 1
-            and FileServer.files_served_to_server >= 1
+            FileHandler.files_served_to_client > 0
+            and FileHandler.files_served_to_server > 0
         ):
-            # Execute the command after serving one file to each client and server
-            subprocess.run(["echo", "Generating New Keys"])
-            subprocess.run(["rm", "-rf", "*.dat"])
-            subprocess.run(["./generate_keys", "1"])
-            FileServer.files_served_to_client = 0
-            FileServer.files_served_to_server = 0
+            self.log("Files downloaded via both servers.")
+            FileHandler.keys_served += 1
+            FileHandler.files_served_to_client = 0
+            FileHandler.files_served_to_server = 0
+            self.log(f"Keys served: {FileHandler.keys_served}")
 
-    def do_GET(self):
-        f = self.send_head()
-        if f:
-            try:
-                self.send_file(f)
-            except BrokenPipeError:
-                # Client disconnected before the file was fully sent
-                pass
-            f.close()
-
-    def send_file(self, f):
-        CHUNK_SIZE = 16 * 1024
-        total_size = os.fstat(f.fileno()).st_size
-        bytes_sent = 0
-
-        while True:
-            chunk = f.read(CHUNK_SIZE)
-            if not chunk:
-                break
-
-            self.wfile.write(chunk)
-            bytes_sent += len(chunk)
-            progress = min(100, int(100 * bytes_sent / total_size))
-            print(f"\rTransfer progress: [{progress:3}%] ", end="", flush=True)
-
-        print("\rTransfer complete.                 ")
+            self.log("Generating New Keys")
+            FileHandler.keys_available = False
+            os.system("rm -rf *.dat")
+            os.system("./generate_keys 1")
+            os.system("mv server.dat server/server.dat")
+            os.system("mv client.dat client/client.dat")
+            FileHandler.keys_available = True
+            self.log("New Keys Generated")
 
 
-def serve_files(port, server_type):
-    handler = FileServer
-    with socketserver.TCPServer(("", port), handler) as httpd:
-        print(f"{server_type.capitalize()} started at localhost:{port}")
-        while True:
-            httpd.handle_request()
+def main():
+    # Instantiate a dummy authorizer for managing 'virtual' users
+    authorizer = DummyAuthorizer()
+    # Define a new user having full r/w permissions and a read-only
+    # anonymous user
+    authorizer.add_user("server", "server", "./server", perm="elradfmwMT")
+    authorizer.add_user("client", "client", "./client", perm="elradfmwMT")
+
+    # Instantiate FTP handler class
+    handler = FileHandler
+    handler.authorizer = authorizer
+
+    # Define a customized banner (string returned when client connects)
+    handler.banner = "pyftpdlib based ftpd ready."
+
+    # Instantiate FTP server class and listen on 0.0.0.0:2121
+    address = (sys.argv[1], 9000)
+    server = ThreadedFTPServer(address, handler)
+
+    # set a limit for connections
+    server.max_cons = 256
+    server.max_cons_per_ip = 5
+
+    # start ftp server
+    server.serve_forever()
 
 
-# Start the server and client threads
-server_thread = threading.Thread(target=serve_files, args=(PORT_SERVER, "server"))
-client_thread = threading.Thread(target=serve_files, args=(PORT_CLIENT, "client"))
-server_thread.start()
-client_thread.start()
-
-# Loop indefinitely serving files
-while True:
-    pass
+if __name__ == "__main__":
+    main()
