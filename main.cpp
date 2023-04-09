@@ -210,9 +210,11 @@ void llama_test_lenet_gupta(int party) {
     LlamaConfig::party = party;
     LlamaConfig::stochasticT = true;
     LlamaConfig::stochasticRT = true;
-    llama->init("172.31.45.174", true);
+    LlamaConfig::num_threads = 4;
+    std::string ip = "127.0.0.1";
+    llama->init(ip, true);
     if (party != 1) {
-        secfloat_init(party - 1, "172.31.45.174");
+        secfloat_init(party - 1, ip);
     }
     const u64 bs = 100;
 
@@ -1273,17 +1275,17 @@ int main(int argc, char** argv) {
         party = atoi(argv[1]);
     }
     // llama_test_3layer(party);
-    // llama_test_lenet_gupta(party);
+    llama_test_lenet_gupta(party);
     // gpu_main(argc, argv);
     // carvanha_compile();
     // llama_test_pvgg(party);
     // llama_fixtofloat_test(party);
-    if (party == 0) {
-        ct_test_3layer();
-    }
-    else {
-        llama_test_3layer(party);
-    }
+    // if (party == 0) {
+    //     ct_test_3layer();
+    // }
+    // else {
+    //     llama_test_3layer(party);
+    // }
     // llama_test_vgg_imgnet(party);
     // llama_test_lenet_minionn(party);
     // llama_test_falcon_alex(party);

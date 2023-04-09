@@ -9,6 +9,7 @@ public:
     Tensor4D<T> activation;
     Backend<T> *backend = new ClearText<T>();
     LayerGraphNode<T> *root = nullptr;
+    std::vector<LayerGraphNode<T> *> allNodesInExecutionOrder;
 
     void initScale(u64 scale) {
         always_assert(std::is_integral<T>::value || scale == 0);
@@ -33,8 +34,9 @@ public:
         Tensor4D<T> ip(0, 0, 0, 0);
         ip.graphNode = new LayerGraphNode<T>();
         ip.graphNode->layer = new PlaceHolderLayer<T>("Input");
+        ip.graphNode->allNodesInExecutionOrderRef = &allNodesInExecutionOrder;
         Layer<T>::fakeExecution = true;
-        this->forward(ip);
+        auto &res = this->_forward(ip);
         Layer<T>::fakeExecution = false;
         root = ip.graphNode;
     }
@@ -72,17 +74,22 @@ public:
         }
     }
     
-    Tensor4D<T>& forward(Tensor4D<T> &a, bool train = true) {
+    Tensor4D<T>& _forward(Tensor4D<T> &a, bool train = true) {
         layers[0]->forward(a, train);
         u64 size = layers.size();
         for(u64 i = 1; i < size; i++) {
             layers[i]->forward(layers[i-1]->activation, train);
         }
-        this->activation.resize(layers[size-1]->activation.d1, layers[size-1]->activation.d2, layers[size-1]->activation.d3, layers[size-1]->activation.d4);
-        this->activation.copy(layers[size-1]->activation);
-        return this->activation;
-
+        return layers[size-1]->activation;
     }
+
+    Tensor4D<T>& forward(Tensor4D<T> &a, bool train = true) {
+        auto& res = this->_forward(a, train);
+        this->activation.resize(res.d1, res.d2, res.d3, res.d4);
+        this->activation.copy(res);
+        return this->activation;
+    }
+
     void backward(const Tensor4D<T> &e) {
         int size = layers.size();
         layers[size-1]->backward(e);
