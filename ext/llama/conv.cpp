@@ -178,17 +178,14 @@ void EvalConv2D(int party, const Conv2DKey &key,
 
     if (party == SERVER)
     {
+        GroupElement *tempFilter = make_array<GroupElement>(FH, FW, CI, CO);
+        MatSub4(FH, FW, CI, CO, filter, key.b, tempFilter);
         Conv2DPlaintext(N, H, W, CI, FH, FW, CO,
             zPadHLeft, zPadHRight, 
             zPadWLeft, zPadWRight,
-            strideH, strideW, input, filter, cache.temp, cache);
+            strideH, strideW, input, tempFilter, cache.temp, cache);
         MatAdd4(d0, d1, d2, d3, cache.temp, output, output);
-        
-        Conv2DPlaintext(N, H, W, CI, FH, FW, CO,
-            zPadHLeft, zPadHRight, 
-            zPadWLeft, zPadWRight,
-            strideH, strideW, input, key.b, cache.temp, cache);
-        MatSub4(d0, d1, d2, d3, output, cache.temp, output);
+        delete[] tempFilter;
     }
     else
     {
@@ -204,7 +201,6 @@ void EvalConv2D(int party, const Conv2DKey &key,
         zPadWLeft, zPadWRight,
         strideH, strideW, key.a, filter, cache.temp, cache);
     MatSub4(d0, d1, d2, d3, output, cache.temp, output);
-    MatFinalize4(64, d0, d1, d2, d3, output);
 
     freeConv2DCache(cache);
 }

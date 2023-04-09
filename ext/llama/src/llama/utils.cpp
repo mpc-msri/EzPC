@@ -30,58 +30,36 @@ SOFTWARE.
 
 void MatAdd(int s1, int s2, GroupElement *A, GroupElement* B, GroupElement *C)
 {
-    for (int i = 0; i < s1; i++)
-    {
-        for (int j = 0; j < s2; j++)
-        {
-            Arr2DIdx(C, s1, s2, i, j) = Arr2DIdx(A, s1, s2, i, j) + Arr2DIdx(B, s1, s2, i, j);
-        }
-    }
+    // using eigen map
+    Eigen::Map<Eigen::Matrix<GroupElement, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> A_eigen(A, s1, s2);
+    Eigen::Map<Eigen::Matrix<GroupElement, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> B_eigen(B, s1, s2);
+    Eigen::Map<Eigen::Matrix<GroupElement, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> C_eigen(C, s1, s2);
+    C_eigen = A_eigen + B_eigen;
 }
 
 void MatAdd4(int s0, int s1, int s2, int s3, GroupElement* A, GroupElement* B, GroupElement* C)
 {
-    for (int i = 0; i < s0; i++)
-    {
-        for (int j = 0; j < s1; j++)
-        {
-            for (int k = 0; k < s2; k++)
-            {
-                for (int l = 0; l < s3; l++)
-                {
-                    Arr4DIdx(C, s0, s1, s2, s3, i, j, k, l) = Arr4DIdx(A, s0, s1, s2, s3, i, j, k, l) + Arr4DIdx(B, s0, s1, s2, s3, i, j, k, l);
-                }
-            }
-        }
-    }
+    Eigen::Map<Eigen::Matrix<GroupElement, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> A_eigen(A, s0, s1 * s2 * s3);
+    Eigen::Map<Eigen::Matrix<GroupElement, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> B_eigen(B, s0, s1 * s2 * s3);
+    Eigen::Map<Eigen::Matrix<GroupElement, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> C_eigen(C, s0, s1 * s2 * s3);
+    C_eigen = A_eigen + B_eigen;
 }
 
 void MatSub(int s1, int s2, GroupElement *A, GroupElement* B, GroupElement *C)
 {
-    for (int i = 0; i < s1; i++)
-    {
-        for (int j = 0; j < s2; j++)
-        {
-            Arr2DIdx(C, s1, s2, i, j) = Arr2DIdx(A, s1, s2, i, j) - Arr2DIdx(B, s1, s2, i, j);
-        }
-    }
+    // using eigen map
+    Eigen::Map<Eigen::Matrix<GroupElement, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> A_eigen(A, s1, s2);
+    Eigen::Map<Eigen::Matrix<GroupElement, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> B_eigen(B, s1, s2);
+    Eigen::Map<Eigen::Matrix<GroupElement, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> C_eigen(C, s1, s2);
+    C_eigen = A_eigen - B_eigen;
 }
 
 void MatSub4(int s0, int s1, int s2, int s3, GroupElement* A, GroupElement* B, GroupElement* C)
 {
-    for (int i = 0; i < s0; i++)
-    {
-        for (int j = 0; j < s1; j++)
-        {
-            for (int k = 0; k < s2; k++)
-            {
-                for (int l = 0; l < s3; l++)
-                {
-                    Arr4DIdx(C, s0, s1, s2, s3, i, j, k, l) = Arr4DIdx(A, s0, s1, s2, s3, i, j, k, l) - Arr4DIdx(B, s0, s1, s2, s3, i, j, k, l);
-                }
-            }
-        }
-    }
+    Eigen::Map<Eigen::Matrix<GroupElement, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> A_eigen(A, s0, s1 * s2 * s3);
+    Eigen::Map<Eigen::Matrix<GroupElement, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> B_eigen(B, s0, s1 * s2 * s3);
+    Eigen::Map<Eigen::Matrix<GroupElement, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> C_eigen(C, s0, s1 * s2 * s3);
+    C_eigen = A_eigen - B_eigen;
 }
 
 void MatMul(int s1, int s2, int s3, eigenMatrix &A, eigenMatrix &B, eigenMatrix &C)
@@ -97,26 +75,10 @@ void MatMul(int s1, int s2, int s3, eigenMatrix &A, eigenMatrix &B, eigenMatrix 
 void matmul_cleartext_eigen_llama(int dim1, int dim2, int dim3, GroupElement *inA,
                             GroupElement *inB, GroupElement *outC) {
   auto start = std::chrono::high_resolution_clock::now();
-  Eigen::Matrix<uint64_t, Eigen::Dynamic, Eigen::Dynamic> eigen_A(dim1, dim2);
-  Eigen::Matrix<uint64_t, Eigen::Dynamic, Eigen::Dynamic> eigen_B(dim2, dim3);
-  Eigen::Matrix<uint64_t, Eigen::Dynamic, Eigen::Dynamic> eigen_C(dim1, dim3);
-
-  for (int i = 0; i < dim1; i++) {
-    for (int j = 0; j < dim2; j++) {
-      eigen_A(i, j) = Arr2DIdx(inA, dim1, dim2, i, j);
-    }
-  }
-  for (int i = 0; i < dim2; i++) {
-    for (int j = 0; j < dim3; j++) {
-      eigen_B(i, j) = Arr2DIdx(inB, dim2, dim3, i, j);
-    }
-  }
-  eigen_C = eigen_A * eigen_B;
-  for (int i = 0; i < dim1; i++) {
-    for (int j = 0; j < dim3; j++) {
-      Arr2DIdx(outC, dim1, dim3, i, j) = eigen_C(i, j);
-    }
-  }
+  Eigen::Map<Eigen::Matrix<uint64_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eA(inA, dim1, dim2);
+  Eigen::Map<Eigen::Matrix<uint64_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eB(inB, dim2, dim3);
+  Eigen::Map<Eigen::Matrix<uint64_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eC(outC, dim1, dim3);
+  eC = eA * eB;
   auto end = std::chrono::high_resolution_clock::now();
   auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
   eigenMicroseconds += duration.count();
@@ -130,30 +92,16 @@ void MatMul(int s1, int s2, int s3, GroupElement *A, GroupElement *B, GroupEleme
 
 void Conv2DReshapeFilter(int FH, int FW, int CI, int CO, GroupElement* filter, GroupElement* reshapedFilter)
 {
-    for(int co = 0; co < CO; co++){
-        for(int fh = 0; fh < FH; fh++){
-            for(int fw = 0; fw < FW; fw++){
-                for(int ci = 0; ci < CI; ci++){
-                    // Arr2DIdx(reshapedFilter, CO, FH*FW*CI, co, (fh*FW*CI) + (fw*CI) + ci) = Arr4DIdx(filter, FH, FW, CI, CO, fh, fw, ci, co);
-                    Arr2DIdx(reshapedFilter, CO, FH*FW*CI, co, (fh*FW*CI) + (fw*CI) + ci) = Arr2DIdx(filter, CO, FH*FW*CI, co, (fh*FW*CI) + (fw*CI) + ci);
-                }
-            }
-        }
-    }
+    // using eigen
+    Eigen::Map<Eigen::Matrix<uint64_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eA(reshapedFilter, CO, FH*FW*CI);
+    Eigen::Map<Eigen::Matrix<uint64_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eB(filter, CO, FH*FW*CI);
+    eA = eB;
 }
 
 void Conv2DReshapeFilter(int FH, int FW, int CI, int CO, GroupElement* filter, eigenMatrix &reshapedFilter)
 {
-    for(int co = 0; co < CO; co++){
-        for(int fh = 0; fh < FH; fh++){
-            for(int fw = 0; fw < FW; fw++){
-                for(int ci = 0; ci < CI; ci++){
-                    // reshapedFilter(co, (fh*FW*CI) + (fw*CI) + ci) = Arr4DIdx(filter, FH, FW, CI, CO, fh, fw, ci, co);
-                    reshapedFilter(co, (fh*FW*CI) + (fw*CI) + ci) = Arr2DIdx(filter, CO, FH * FW * CI, co, (fh*FW*CI) + (fw*CI) + ci);
-                }
-            }
-        }
-    }
+    Eigen::Map<Eigen::Matrix<uint64_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eB(filter, CO, FH*FW*CI);
+    reshapedFilter = eB;
 }
 
 void Conv2DReshapeInput(size_t N, size_t H, size_t W, size_t CI, size_t FH, size_t FW, size_t zPadHLeft, size_t zPadHRight, size_t zPadWLeft, size_t zPadWRight, size_t strideH, size_t strideW, size_t RRows, size_t RCols, GroupElement *inputArr, GroupElement *outputArr)
@@ -268,16 +216,16 @@ void Conv2DPlaintext(int N, int H, int W, int CI,
 	size_t newW = (((W + (zPadWLeft+zPadWRight) - FW)/strideW) + 1);
 	size_t reshapedIPCols = N * newH * newW;
 
-    GroupElement *filterReshaped = make_array<GroupElement>(reshapedFilterRows, reshapedFilterCols);
+    GroupElement *filterReshaped = filterArr;
 	GroupElement *inputReshaped = make_array<GroupElement>(reshapedIPRows, reshapedIPCols);
 	GroupElement *matmulOP = make_array<GroupElement>(reshapedFilterRows, reshapedIPCols);
     
     Conv2DReshapeInput(N, H, W, CI, FH, FW, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideH, strideW, reshapedIPRows, reshapedIPCols, inputArr, inputReshaped);
-    Conv2DReshapeFilter(FH, FW, CI, CO, filterArr, filterReshaped);
+    // Conv2DReshapeFilter(FH, FW, CI, CO, filterArr, filterReshaped);
     MatMul(reshapedFilterRows, reshapedFilterCols, reshapedIPCols, filterReshaped, inputReshaped, matmulOP);
     Conv2DReshapeOutput(N, newH, newW, CO, matmulOP, outArr);
 
-    delete[] filterReshaped;
+    // delete[] filterReshaped;
     delete[] inputReshaped;
     delete[] matmulOP;
 
@@ -336,149 +284,36 @@ void Conv2DPlaintext(int N, int H, int W, int CI,
 
 void VecCopy(int s, GroupElement *input, GroupElement *output)
 {
-    for(int i = 0; i < s; i++){
-        output[i] = input[i];
-    }
-}
-
-void MatCopy(int s1, int s2, GroupElement *input, GroupElement *output){
-    VecCopy(s1*s2, input, output);
-}
-
-// C = C - A*B
-void MatSubMul(int s1, int s2, int s3, GroupElement *A, GroupElement* B, GroupElement *C)
-{
-    for (int i = 0; i < s1; i++)
-    {
-        for (int k = 0; k < s3; k++)
-        {
-            for (int j = 0; j < s2; j++)
-            {
-                Arr2DIdx(C, s1, s3, i, k) = Arr2DIdx(C, s1, s3, i, k) - Arr2DIdx(A, s1, s2, i, j) * Arr2DIdx(B, s2, s3, j, k);
-            }
-        }
-    }
-}
-
-// C = C + A*B
-void MatAddMul(int s1, int s2, int s3, GroupElement *A, GroupElement* B, GroupElement *C)
-{
-    for (int i = 0; i < s1; i++)
-    {
-        for (int k = 0; k < s3; k++)
-        {
-            for (int j = 0; j < s2; j++)
-            {
-                Arr2DIdx(C, s1, s3, i, k) = Arr2DIdx(C, s1, s3, i, k) + Arr2DIdx(A, s1, s2, i, j) * Arr2DIdx(B, s2, s3, j, k);
-            }
-        }
-    }
+    Eigen::Map<Eigen::Matrix<GroupElement, Eigen::Dynamic, 1>> output_eigen(output, s);
+    Eigen::Map<Eigen::Matrix<GroupElement, Eigen::Dynamic, 1>> input_eigen(input, s);
+    output_eigen = input_eigen;
 }
 
 void MatCopy4(int s1, int s2, int s3, int s4, GroupElement *input, GroupElement *output){
-    for(int i = 0; i < s1; i++)
-    {
-        for(int j = 0; j < s2; j++)
-        {
-            for(int k = 0; k < s3; k++)
-            {
-                for(int l = 0; l < s4; l++)
-                {
-                    Arr4DIdx(output, s1, s2, s3, s4, i, j, k, l) = Arr4DIdx(input, s1, s2, s3, s4, i, j, k, l);
-                }
-            }
-        }
-    }
-}
-
-void MatFinalize4(int bw, int s1, int s2, int s3, int s4, GroupElement *input)
-{
-    for(int i = 0; i < s1; i++)
-    {
-        for(int j = 0; j < s2; j++)
-        {
-            for(int k = 0; k < s3; k++)
-            {
-                for(int l = 0; l < s4; l++)
-                {
-                    mod(Arr4DIdx(input, s1, s2, s3, s4, i, j, k, l), bw);
-                }
-            }
-        }
-    }
+    VecCopy(s1*s2*s3*s4, input, output);
 }
 
 void matmul_eval_helper(int party, int dim1, int dim2, int dim3, GroupElement *A,
                             GroupElement *B, GroupElement *C, GroupElement *ka, GroupElement *kb, GroupElement *kc) {
     auto start = std::chrono::high_resolution_clock::now();
-    Eigen::Matrix<uint64_t, Eigen::Dynamic, Eigen::Dynamic> eigen_A(dim1, dim2);
-    Eigen::Matrix<uint64_t, Eigen::Dynamic, Eigen::Dynamic> eigen_ka(dim1, dim2);
-    Eigen::Matrix<uint64_t, Eigen::Dynamic, Eigen::Dynamic> eigen_B(dim2, dim3);
-    Eigen::Matrix<uint64_t, Eigen::Dynamic, Eigen::Dynamic> eigen_kb(dim2, dim3);
-    Eigen::Matrix<uint64_t, Eigen::Dynamic, Eigen::Dynamic> eigen_C(dim1, dim3);
-    Eigen::Matrix<uint64_t, Eigen::Dynamic, Eigen::Dynamic> eigen_kc(dim1, dim3);
+    Eigen::Map<Eigen::Matrix<uint64_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eigen_A(A, dim1, dim2);
+    Eigen::Map<Eigen::Matrix<uint64_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eigen_ka(ka, dim1, dim2);
+    Eigen::Map<Eigen::Matrix<uint64_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eigen_B(B, dim2, dim3);
+    Eigen::Map<Eigen::Matrix<uint64_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eigen_kb(kb, dim2, dim3);
+    Eigen::Map<Eigen::Matrix<uint64_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eigen_C(C, dim1, dim3);
+    Eigen::Map<Eigen::Matrix<uint64_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eigen_kc(kc, dim1, dim3);
 
-    for (int i = 0; i < dim1; i++) {
-        for (int j = 0; j < dim2; j++) {
-            eigen_A(i, j) = Arr2DIdx(A, dim1, dim2, i, j);
-        }
-    }
-    for (int i = 0; i < dim2; i++) {
-        for (int j = 0; j < dim3; j++) {
-            eigen_B(i, j) = Arr2DIdx(B, dim2, dim3, i, j);
-        }
-    }
-    for (int i = 0; i < dim1; i++) {
-        for (int j = 0; j < dim2; j++) {
-            eigen_ka(i, j) = Arr2DIdx(ka, dim1, dim2, i, j);
-        }
-    }
-    for (int i = 0; i < dim2; i++) {
-        for (int j = 0; j < dim3; j++) {
-            eigen_kb(i, j) = Arr2DIdx(kb, dim2, dim3, i, j);
-        }
-    }
-    for (int i = 0; i < dim1; i++) {
-        for (int j = 0; j < dim3; j++) {
-            eigen_kc(i, j) = Arr2DIdx(kc, dim1, dim3, i, j);
-        }
-    }
     if (party == SERVER) {
-        eigen_C = eigen_A * eigen_B - eigen_ka * eigen_B - eigen_A * eigen_kb + eigen_kc;
+        eigen_C = (eigen_A - eigen_ka) * eigen_B - eigen_A * eigen_kb + eigen_kc;
     }
     else {
         eigen_C = eigen_kc - eigen_ka * eigen_B - eigen_A * eigen_kb;
     }
-    for (int i = 0; i < dim1; i++) {
-        for (int j = 0; j < dim3; j++) {
-            Arr2DIdx(C, dim1, dim3, i, j) = eigen_C(i, j);
-        }
-    }
+
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
     eigenMicroseconds += duration.count();
 }
-
-// void matmul_eval_helper(int party, int dim1, int dim2, int dim3, GroupElement *A,
-//                             GroupElement *B, GroupElement *C, GroupElement *ka, GroupElement *kb, GroupElement *kc) {
-//     auto start = std::chrono::high_resolution_clock::now();
-//     Eigen::Map<Eigen::Matrix<uint64_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eigen_A(A, dim1, dim2);
-//     Eigen::Map<Eigen::Matrix<uint64_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eigen_ka(ka, dim1, dim2);
-//     Eigen::Map<Eigen::Matrix<uint64_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eigen_B(B, dim2, dim3);
-//     Eigen::Map<Eigen::Matrix<uint64_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eigen_kb(kb, dim2, dim3);
-//     Eigen::Map<Eigen::Matrix<uint64_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eigen_C(C, dim1, dim3);
-//     Eigen::Map<Eigen::Matrix<uint64_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eigen_kc(kc, dim1, dim3);
-
-//     if (party == SERVER) {
-//         eigen_C = eigen_A * eigen_B - eigen_ka * eigen_B - eigen_A * eigen_kb + eigen_kc;
-//     }
-//     else {
-//         eigen_C = eigen_kc - eigen_ka * eigen_B - eigen_A * eigen_kb;
-//     }
-//     auto end = std::chrono::high_resolution_clock::now();
-//     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-//     eigenMicroseconds += duration.count();
-// }
 
 void packBitArray(GroupElement *A, int size, uint8_t *out) {
     int bytesize = (size % 8 == 0) ? (size / 8) : (size / 8 + 1);
