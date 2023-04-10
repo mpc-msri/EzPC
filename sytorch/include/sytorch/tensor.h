@@ -13,12 +13,12 @@ typedef int64_t i64;
 typedef int32_t i32;
 
 template <typename T>
-class Tensor {
+class Tensor1D {
 public:
     T *data;
     u64 size;
 
-    Tensor(u64 s) : size(s), data(new T[s]) {}
+    Tensor1D(u64 s) : size(s), data(new T[s]) {}
 
     void randomize(double range) {
         for(u64 i = 0; i < this->size; i++) {
@@ -29,7 +29,7 @@ public:
         }
     }
 
-    ~Tensor() {
+    ~Tensor1D() {
         delete[] this->data;
     }
 
@@ -77,7 +77,7 @@ public:
     }
 
     template <typename T2>
-    void copy(const Tensor<T2> &other) {
+    void copy(const Tensor1D<T2> &other) {
         assert(this->size == other.size);
         for (u64 i = 0; i < this->size; i++) {
             this->data[i] = (T)other.data[i];
@@ -244,7 +244,7 @@ public:
         isFreed = true;
     }
 
-    void addBias(const Tensor<T> &bias) {
+    void addBias(const Tensor1D<T> &bias) {
         assert(bias.size == d4);
         for (u64 i = 0; i < d1; i++) {
             for (u64 j = 0; j < d2; j++) {
@@ -257,7 +257,7 @@ public:
         }
     }
 
-    void addBias2D(const Tensor<T> &bias) {
+    void addBias2D(const Tensor1D<T> &bias) {
         assert(bias.size == d2);
         assert(d3 == 1);
         assert(d4 == 1);

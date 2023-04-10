@@ -34,7 +34,7 @@ public:
         truncate(in.data, in.data, shift, in.d1 * in.d2, mode);
     }
     
-    void truncate(const Tensor<T> &in, u64 shift, u8 mode = 0) {
+    void truncate(const Tensor1D<T> &in, u64 shift, u8 mode = 0) {
         truncate(in.data, in.data, shift, in.size, mode);
     }
 
@@ -59,7 +59,7 @@ public:
     // maxpool API
     virtual void maxPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> &in, Tensor4D<T> &out, Tensor4D<u64> &maxIdx, u64 scale, u8 mode) NOT_IMPLEMENTED;;
 
-    virtual void batchNorm2dInference(const Tensor<T> &A, const Tensor<T> &B, const Tensor4D<T> &x, Tensor4D<T> &y, u64 scale) NOT_IMPLEMENTED;
+    virtual void batchNorm2dInference(const Tensor1D<T> &A, const Tensor1D<T> &B, const Tensor4D<T> &x, Tensor4D<T> &y, u64 scale) NOT_IMPLEMENTED;
     virtual void signext(Tensor4D<T> &x, u64 scale) NOT_IMPLEMENTED;
 
     virtual void optimize(LayerGraphNode<T> *root)

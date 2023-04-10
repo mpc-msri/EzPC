@@ -35,7 +35,7 @@ public:
     void maxPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> &in, Tensor4D<T> &out, Tensor4D<u64> &maxIdx, u64 scale, u8 mode) {
         assert(in.d1 == out.d1);
         assert(in.d4 == out.d4);
-        Tensor<T> maxBit((ks * ks - 1) * out.d1 * out.d2 * out.d3 * out.d4);
+        Tensor1D<T> maxBit((ks * ks - 1) * out.d1 * out.d2 * out.d3 * out.d4);
         maxIdx.resize(ks * ks * out.d1, out.d2, out.d3, out.d4);
         MaxPool(out.d1, out.d2, out.d3, out.d4, ks, ks, padding, padding, padding, padding, stride, stride, in.d1, in.d2, in.d3, in.d4, in.data, in.data, out.data, out.data, maxBit.data);
         MaxPoolOneHot(out.d1, out.d2, out.d3, out.d4, ks, ks, maxBit.data, maxIdx.data);

@@ -82,7 +82,7 @@ public:
     }
 
     virtual Tensor2D<T>& getweights() { throw std::runtime_error("not implemented"); };
-    virtual Tensor<T>& getbias() { throw std::runtime_error("not implemented"); };
+    virtual Tensor1D<T>& getbias() { throw std::runtime_error("not implemented"); };
     virtual struct layer_dims get_output_dims(struct layer_dims &in) = 0;
     virtual void setBackend(Backend<T> *b) {
         backend = b;
@@ -96,9 +96,9 @@ public:
     Tensor2D<T> filter;
     Tensor2D<T> filterGrad;
     Tensor2D<T> Vw;
-    Tensor<T> bias;
-    Tensor<T> biasGrad;
-    Tensor<T> Vb;
+    Tensor1D<T> bias;
+    Tensor1D<T> biasGrad;
+    Tensor1D<T> Vb;
     u64 ci, co, ks, padding, stride;
 
     Conv2D(u64 ci, u64 co, u64 ks, u64 padding = 0, u64 stride = 1, bool useBias = false) : Layer<T>("Conv2D"), ci(ci), co(co), ks(ks), padding(padding), 
@@ -136,7 +136,7 @@ public:
     }
 
     Tensor2D<T>& getweights() { return filter; }
-    Tensor<T>& getbias() { return bias; }
+    Tensor1D<T>& getbias() { return bias; }
 
     struct layer_dims get_output_dims(struct layer_dims &in) {
         u64 newH = (((in.h + 2*padding - ks)/stride) + 1);
@@ -277,8 +277,8 @@ public:
     Tensor2D<T> weight;
     Tensor2D<T> weightGrad;
     Tensor2D<T> Vw;
-    Tensor<T> bias;
-    Tensor<T> Vb;
+    Tensor1D<T> bias;
+    Tensor1D<T> Vb;
     u64 in, out;
 
     FC(u64 in, u64 out, bool useBias = false) : Layer<T>("FC"), in(in), out(out), weight(in, out), bias(out), inp(0,0,0,0), weightGrad(in,out), Vw(in,out), Vb(out) {
@@ -313,7 +313,7 @@ public:
     }
 
     Tensor2D<T>& getweights() { return weight; }
-    Tensor<T>& getbias() { return bias; }
+    Tensor1D<T>& getbias() { return bias; }
 
     struct layer_dims get_output_dims(struct layer_dims &in) {
         return {in.n, out, 1, 1};
@@ -351,8 +351,8 @@ public:
 template <typename T>
 class BatchNorm2dInference : public Layer<T> {
 public:
-    Tensor<T> A; // scale = s
-    Tensor<T> B; // scale = 2s
+    Tensor1D<T> A; // scale = s
+    Tensor1D<T> B; // scale = 2s
 
     BatchNorm2dInference(u64 channels) : Layer<T>("BatchNorm2dInference"), A(channels), B(channels) {
         this->A.fill(0);

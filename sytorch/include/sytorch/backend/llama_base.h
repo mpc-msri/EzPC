@@ -109,7 +109,7 @@ public:
                     Tensor2D<T> tmp(weights.d1, weights.d2);
                     input_layer(weights.data, tmp.data, weights.d1*weights.d2, 2);
                     if(layer->useBias){
-                        Tensor<T> tmp2(bias.size);
+                        Tensor1D<T> tmp2(bias.size);
                         input_layer(bias.data, tmp2.data, bias.size, 2);
                     }
                 }
@@ -122,7 +122,7 @@ public:
                     input_layer(nullptr,bn->B.data, channel,2);
                 }
                 else{
-                    Tensor<T> tmp(channel);
+                    Tensor1D<T> tmp(channel);
                     input_layer(bn->A.data, tmp.data, channel, 2);
                     input_layer(bn->B.data, tmp.data, channel, 2);
                 }
@@ -242,7 +242,7 @@ public:
         }
     }
 
-    void outputA(Tensor<T> &a) {
+    void outputA(Tensor1D<T> &a) {
         u64 sz = a.size;
         if (LlamaConfig::party == 1) {
             for (int i = 0; i < sz; i++){
@@ -258,7 +258,7 @@ public:
         }
     }
 
-    void output(Tensor<T> &a) {
+    void output(Tensor1D<T> &a) {
         u64 sz = a.size;
         if (LlamaConfig::party == 1) {
             for (int i = 0; i < sz; i++){
@@ -443,7 +443,7 @@ public:
         return y;
     }
 
-    void batchNorm2dInference(const Tensor<T> &A, const Tensor<T> &B, const Tensor4D<T> &x, Tensor4D<T> &y, u64 scale)
+    void batchNorm2dInference(const Tensor1D<T> &A, const Tensor1D<T> &B, const Tensor4D<T> &x, Tensor4D<T> &y, u64 scale)
     {
         assert(A.size == B.size);
         assert(A.size == x.d4);

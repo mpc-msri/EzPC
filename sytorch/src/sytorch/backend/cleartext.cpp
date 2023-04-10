@@ -160,7 +160,7 @@ void ClearText<T>::truncate(T *in, T *out, u64 shift, u64 size, u8 mode) {
 // }
 
 // template <typename T>
-// void ClearText<T>::truncate(const Tensor<T> &in, u64 shift) {
+// void ClearText<T>::truncate(const Tensor1D<T> &in, u64 shift) {
 // //    Eigen::Map<Eigen::ArrayX<T>> eA(in.data, in.d1 * in.d2);
 // //    eA = eA / ((T)(1LL << shift)); // this gives bad accuracy, why?
 //     truncate(in.data, in.data, shift, in.size);
@@ -277,7 +277,7 @@ void ClearText<T>::maxPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> 
 }
 
 template <typename T>
-void ClearText<T>::batchNorm2dInference(const Tensor<T> &A, const Tensor<T> &B, const Tensor4D<T> &x, Tensor4D<T> &y, u64 scale)
+void ClearText<T>::batchNorm2dInference(const Tensor1D<T> &A, const Tensor1D<T> &B, const Tensor4D<T> &x, Tensor4D<T> &y, u64 scale)
 {
     assert(A.size == B.size);
     assert(A.size == x.d4);
