@@ -26,37 +26,42 @@ using namespace LlamaConfig;
 
 Peer::Peer(std::string ip, int port) {
     std::cerr << "trying to connect with server...";
-    {
-        recvsocket = socket(AF_INET, SOCK_STREAM, 0);
-        if (recvsocket < 0) {
-            perror("socket");
-            exit(1);
-        }
+    {   
         struct sockaddr_in addr;
         addr.sin_family = AF_INET;
         addr.sin_port = htons(port);
         addr.sin_addr.s_addr = inet_addr(ip.c_str());
-        if (connect(recvsocket, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
-            perror("connect");
-            exit(1);
+        while (1) {
+        recvsocket = socket(AF_INET, SOCK_STREAM, 0);
+
+        if (connect(recvsocket, (struct sockaddr *)&addr,
+                    sizeof(struct sockaddr)) == 0) {
+          break;
         }
+
+        ::close(recvsocket);
+        usleep(1000);
+      }
         const int one = 1;
         setsockopt(recvsocket, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one));
     }
     sleep(1);
     {
-        sendsocket = socket(AF_INET, SOCK_STREAM, 0);
-        if (sendsocket < 0) {
-            perror("socket");
-            exit(1);
-        }
         struct sockaddr_in addr;
         addr.sin_family = AF_INET;
         addr.sin_port = htons(port+3);
         addr.sin_addr.s_addr = inet_addr(ip.c_str());
-        if (connect(sendsocket, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
-            perror("connect");
-            exit(1);
+        while(1){
+            sendsocket = socket(AF_INET, SOCK_STREAM, 0);
+            if (sendsocket < 0) {
+                perror("socket");
+                exit(1);
+            }
+            if (connect(sendsocket, (struct sockaddr *) &addr, sizeof(addr)) == 0) {
+                break;
+            }
+            ::close(sendsocket);
+            usleep(1000);
         }
         const int one = 1;
         setsockopt(sendsocket, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one));
