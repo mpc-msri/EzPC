@@ -5,12 +5,113 @@
 #include <iostream>
 #include <sytorch/random.h>
 #include <sytorch/graph.h>
+#include <llama/assert.h>
 #include <cmath>
 
 typedef uint64_t u64;
 typedef uint8_t u8;
 typedef int64_t i64;
 typedef int32_t i32;
+
+template <typename T>
+class Tensor {
+    bool isFreed = false;
+
+public:
+    T *data;
+    std::vector<u64> shape;
+    LayerGraphNode<T> *graphNode = nullptr;
+
+    void allocate(const std::vector<u64> &s) {
+        this->shape = s;
+        if (this->size() > 0) {
+            this->data = new T[this->size()];
+            isFreed = false;
+        } else {
+            this->data = nullptr;
+            isFreed = true;
+        }
+    }
+
+    void free() {
+        if (isFreed) {
+            return;
+        }
+        if (this->size() == 0) {
+            return;
+        }
+        delete[] data;
+        for(auto &d : this->shape) {
+            d = 0;
+        }
+        isFreed = true;
+    }
+
+    void resize(const std::vector<u64> &s) {
+        if (s.size() == this->shape.size()){
+            bool allSameDims = true;
+            for (u64 i = 0; i < s.size(); i++) {
+                if (s[i] != this->shape[i]) {
+                    allSameDims = false;
+                    break;
+                }
+            }
+            if (allSameDims) {
+                return;
+            }
+        }
+        free();
+        allocate(s);
+    }
+
+    Tensor(const std::vector<u64> &s) {
+        allocate(s);
+    }
+
+    ~Tensor() {
+        free();
+        std::cout << "dobby is freeeeeeee" << std::endl;
+    } 
+
+    u64 size() const {
+        u64 s = 1;
+        for (auto d : this->shape) {
+            s *= d;
+        }
+        return s;
+    }
+
+    void assert_same_shape(const Tensor<T> &other) {
+        always_assert(this->shape.size() == other.shape.size());
+        for (u64 i = 0; i < this->shape.size(); i++) {
+            always_assert(this->shape[i] == other.shape[i]);
+        }
+    }
+
+    void copy(const Tensor<T> &other) {
+        assert_same_shape(other);
+        memcpy(data, other.data, size() * sizeof(T));
+        this->graphNode = other.graphNode;
+    }
+
+    void fill(T x) {
+        for (u64 i = 0; i < size(); i++) {
+            data[i] = x;
+        }
+    }
+
+    void zero() {
+        fill(0);
+    }
+
+    void printshape() {
+        std::cout << "(";
+        for(int i = 0; i < this->shape.size(); i++) {
+            std::cout << this->shape[i] << ", ";
+        }
+        std::cout << ")" << std::endl;
+    }
+};
 
 template <typename T>
 class Tensor1D {
@@ -202,47 +303,18 @@ public:
 };
 
 template <typename T>
-class Tensor4D {
+class Tensor4D : public Tensor<T> {
 public:
-    T *data;
     u64 d1, d2, d3, d4;
-    LayerGraphNode<T> *graphNode = nullptr;
-    bool isFreed = false;
-    static bool trackAllocations;
-    
-    Tensor4D(u64 d1, u64 d2, u64 d3, u64 d4) : d1(d1), d2(d2), d3(d3), d4(d4) {
-        if (d1 == 0 || d2 == 0 || d3 == 0 || d4 == 0) {
-            data = nullptr;
-            return;
-        }
-        data = new T[d1 * d2 * d3 * d4];
-        if (trackAllocations) {
-            std::cout << "Allocated " << d1 * d2 * d3 * d4 * sizeof(T) << " bytes for " << this << std::endl;
-        }
-        // graphNode = new LayerGraphNode<T>;
-    }
+    using Tensor<T>::data;
 
-    ~Tensor4D() {
-        free();
-    }
+    Tensor4D(u64 d1, u64 d2, u64 d3, u64 d4) : Tensor<T>({d1, d2, d3, d4}), d1(d1), d2(d2), d3(d3), d4(d4) {}
 
-    void free() {
-        if (isFreed) {
-            return;
-        }
-        if (d1 == 0 || d2 == 0 || d3 == 0 || d4 == 0) {
-            return;
-        }
-        delete[] data;
-        if (trackAllocations) {
-            std::cout << "Deleted " << d1 * d2 * d3 * d4 * sizeof(T) << " bytes for " << this << std::endl;
-        }
-        d1 = 0;
-        d2 = 0;
-        d3 = 0;
-        d4 = 0;
-        isFreed = true;
-    }
+    Tensor4D(T* data, u64 d1, u64 d2, u64 d3, u64 d4) : Tensor<T>(data, {d1, d2, d3, d4}), d1(d1), d2(d2), d3(d3), d4(d4) {}
+
+    // ~Tensor4D() {
+    //     // this->free();
+    // }
 
     void addBias(const Tensor1D<T> &bias) {
         assert(bias.size == d4);
@@ -270,44 +342,11 @@ public:
     }
 
     void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
-        if (this->d1 == d1 && this->d2 == d2 && this->d3 == d3 && this->d4 == d4) {
-            return;
-        }
-        free();
+        Tensor<T>::resize({d1, d2, d3, d4});
         this->d1 = d1;
         this->d2 = d2;
         this->d3 = d3;
         this->d4 = d4;
-        data = new T[d1 * d2 * d3 * d4];
-        if (trackAllocations) {
-            std::cout << "Allocated " << d1 * d2 * d3 * d4 * sizeof(T) << " bytes for " << this << std::endl;
-        }
-    }
-
-    void copy(const Tensor4D<T> &other) {
-        assert(d1 == other.d1);
-        assert(d2 == other.d2);
-        assert(d3 == other.d3);
-        assert(d4 == other.d4);
-        memcpy(data, other.data, d1 * d2 * d3 * d4 * sizeof(T));
-        this->graphNode = other.graphNode;
-    }
-
-    template <typename T2>
-    void copy(const Tensor4D<T2> &other) {
-        assert(d1 == other.d1);
-        assert(d2 == other.d2);
-        assert(d3 == other.d3);
-        assert(d4 == other.d4);
-        for(u64 i = 0; i < d1; i++) {
-            for(u64 j = 0; j < d2; j++) {
-                for(u64 k = 0; k < d3; k++) {
-                    for(u64 l = 0; l < d4; l++) {
-                        data[i * d2 * d3 * d4 + j * d3 * d4 + k * d4 + l] = (T)other.data[i * other.d2 * other.d3 * other.d4 + j * other.d3 * other.d4 + k * other.d4 + l];
-                    }
-                }
-            }
-        }
     }
 
     T& operator()(u64 i, u64 j, u64 k, u64 l) const {
@@ -316,18 +355,6 @@ public:
         assert(k < d3);
         assert(l < d4);
         return data[i * d2 * d3 * d4 + j * d3 * d4 + k * d4 + l];
-    }
-
-    void transpose2D()
-    {
-        assert(d3 == 1);
-        assert(d4 == 1);
-        for (u64 i = 0; i < d1; i++) {
-            for (u64 j = 0; j < d2; j++) {
-                std::swap(data[j * d1 + i], data[i * d2 + j]);
-            }
-        }
-        std::swap(d1, d2);
     }
 
     template <typename T2 = T>
@@ -404,12 +431,6 @@ public:
         }
     }
 
-    void zero() {
-        for (u64 i = 0; i < d1 * d2 * d3 * d4; i++) {
-            data[i] = (T)0;
-        }
-    }
-
     u64 argmax(u64 i) {
         assert(d3 == 1);
         assert(d4 == 1);
@@ -425,31 +446,6 @@ public:
         return maxIndex;
     }
 
-    void fill(T x) {
-        for (u64 i = 0; i < d1 * d2 * d3 * d4; i++) {
-            data[i] = x;
-        }
-    }
-
-    void printshape() const {
-        std::cout << "(" << d1 << ", " << d2 << ", " << d3 << ", " << d4 << ")" << std::endl;
-    }
-
-    bool isnan() const {
-        for (u64 i = 0; i < d1; i++) {
-            for (u64 j = 0; j < d2; j++) {
-                for (u64 k = 0; k < d3; k++) {
-                    for (u64 l = 0; l < d4; l++) {
-                        if (toobig(data[i * d2 * d3 * d4 + j * d3 * d4 + k * d4 + l])) {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
     void load(const std::vector<std::vector<std::vector<std::vector<float>>>>&arr, int scale){
         for (u64 i = 0; i < d1; i++) {
             for (u64 j = 0; j < d2; j++) {
@@ -463,6 +459,3 @@ public:
     }
 
 };
-
-template <typename T>
-bool Tensor4D<T>::trackAllocations = false;
