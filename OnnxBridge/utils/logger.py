@@ -72,7 +72,7 @@ class ColorHandler(logging.StreamHandler):
 class Logger:
     @classmethod
     def setup_logger(cls):
-        logger = logging.getLogger("onnx-fzpc")
+        logger = logging.getLogger("OnnxBridge")
         console = ColorHandler()
         formatter = logging.Formatter(
             "%(asctime)s - %(name)s - %(levelname)s <<<<- %(message)s ->>>> (%(filename)s:%(lineno)d)"
