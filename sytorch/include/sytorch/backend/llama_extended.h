@@ -8,16 +8,10 @@ template <typename T>
 class LlamaExtended : public LlamaBase<T> {
 public:
 
-    void relu(const Tensor4D<T> &in, const Tensor4D<T> &out, const Tensor4D<T> &drelu, u64 scale, int mode) {
-        assert(in.d1 == out.d1);
-        assert(in.d2 == out.d2);
-        assert(in.d3 == out.d3);
-        assert(in.d4 == out.d4);
-        assert(in.d1 == drelu.d1);
-        assert(in.d2 == drelu.d2);
-        assert(in.d3 == drelu.d3);
-        assert(in.d4 == drelu.d4);
-        int sz = in.d1 * in.d2 * in.d3 * in.d4;
+    void relu(const Tensor<T> &in, const Tensor<T> &out, const Tensor<T> &drelu, u64 scale, int mode) {
+        assert(in.is_same_shape(out));
+        assert(in.is_same_shape(drelu));
+        int sz = in.size();
         Relu(sz, in.data, in.data, out.data, out.data, drelu.data);
     }
 

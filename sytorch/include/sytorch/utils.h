@@ -49,21 +49,6 @@ inline auto take_input(int n, int h, int w, int c)
 }
 
 template <typename T>
-Tensor2D<T> reshapeFilter(const Tensor4D<T> &filter) {
-    Tensor2D<T> res(filter.d4, filter.d1 * filter.d2 * filter.d3);
-    for(int i = 0; i < filter.d4; i++) {
-        for(int j = 0; j < filter.d1; j++) {
-            for(int k = 0; k < filter.d2; k++) {
-                for(int l = 0; l < filter.d3; l++) {
-                    res(i, j * filter.d2 * filter.d3 + k * filter.d3 + l) = filter(j, k, l, i);
-                }
-            }
-        }
-    }
-    return res;
-}
-
-template <typename T>
 Tensor2D<T> reshapeInputTransposed(const Tensor4D<T> &input, u64 padding, u64 stride, u64 FH, u64 FW) {
     u64 newH = (((input.d2 + 2*padding - FH)/stride) + 1);
 	u64 newW = (((input.d3 + 2*padding - FW)/stride) + 1);

@@ -14,47 +14,13 @@ void ClearText<T>::matmul(const Tensor2D<T> &a, const Tensor2D<T> &b, Tensor2D<T
 }
 
 template <typename T>
-void ClearText<T>::matmul(const Tensor4D<T> &a, const Tensor2D<T> &b, Tensor4D<T> &c) {
-    assert(a.d2 == b.d1);
-    assert(a.d3 == 1);
-    assert(a.d4 == 1);
-    assert(c.d1 == a.d1);
-    assert(c.d2 == b.d2);
-    assert(c.d3 == 1);
-    assert(c.d4 == 1);
-    Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eA(a.data, a.d1, a.d2);
-    Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eB(b.data, b.d1, b.d2);
-    Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eC(c.data, c.d1, c.d2);
-    eC = eA * eB;
-}
-
-template <typename T>
-void ClearText<T>::matmulTransposeA(const Tensor4D<T> &a, const Tensor4D<T> &b, Tensor2D<T> &c) {
+void ClearText<T>::matmulTransposeA(const Tensor2D<T> &a, const Tensor2D<T> &b, Tensor2D<T> &c) {
     assert(a.d1 == b.d1);
-    assert(a.d3 == 1);
-    assert(a.d4 == 1);
-    assert(b.d3 == 1);
-    assert(b.d4 == 1);
     assert(c.d1 == a.d2);
     assert(c.d2 == b.d2);
 //    c.zero();
     Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>> eA(a.data, a.d2, a.d1);
     Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eB(b.data, b.d1, b.d2);
-    Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eC(c.data, c.d1, c.d2);
-    eC = eA * eB;
-}
-
-template <typename T>
-void ClearText<T>::matmulTransposeB(const Tensor4D<T> &a, const Tensor2D<T> &b, Tensor4D<T> &c) {
-    assert(a.d2 == b.d2);
-    assert(a.d3 == 1);
-    assert(a.d4 == 1);
-    assert(c.d1 == a.d1);
-    assert(c.d2 == b.d1);
-    assert(c.d3 == 1);
-    assert(c.d4 == 1);
-    Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eA(a.data, a.d1, a.d2);
-    Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>> eB(b.data, b.d2, b.d1);
     Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eC(c.data, c.d1, c.d2);
     eC = eA * eB;
 }
@@ -90,25 +56,13 @@ void ClearText<T>::conv2D(u64 fh, u64 fw, u64 padding, u64 stride, u64 ci, u64 c
 }
 
 template <typename T>
-void ClearText<T>::relu(const Tensor4D<T> &in, const Tensor4D<T> &out, const Tensor4D<T> &drelu, u64 scale, int mode) {
-    assert(in.d1 == out.d1);
-    assert(in.d2 == out.d2);
-    assert(in.d3 == out.d3);
-    assert(in.d4 == out.d4);
-    assert(in.d1 == drelu.d1);
-    assert(in.d2 == drelu.d2);
-    assert(in.d3 == drelu.d3);
-    assert(in.d4 == drelu.d4);
-    fastfor(in.d1, [&] (u64 i) {
-        for (u64 j = 0; j < in.d2; j++) {
-            for (u64 k = 0; k < in.d3; k++) {
-                for (u64 l = 0; l < in.d4; l++) {
-                    drelu(i, j, k, l) = (T)(in(i, j, k, l) > 0);
-                    assert(drelu(i, j, k, l) == 1 || drelu(i, j, k, l) == 0);
-                    out(i, j, k, l) = (drelu(i, j, k, l) == 1) ? in(i, j, k, l) : 0;
-                }
-            }
-        }
+void ClearText<T>::relu(const Tensor<T> &in, const Tensor<T> &out, const Tensor<T> &drelu, u64 scale, int mode) {
+    assert(in.is_same_shape(out));
+    assert(in.is_same_shape(drelu));
+    fastfor(in.size(), [&] (u64 i) {
+        drelu.data[i] = (T)(in.data[i] > 0);
+        assert(drelu.data[i] == 1 || drelu.data[i] == 0);
+        out.data[i] = (drelu.data[i] == 1) ? in.data[i] : 0;
     });
 }
 
@@ -189,16 +143,17 @@ void ClearText<T>::truncate(T &in, u64 shift) {
 }
 
 template <typename T>
-void ClearText<T>::div(const Tensor4D<T> &in, T divisor, u64 scale) {
-    fastfor(in.d1, [&] (u64 i) {
-        for (u64 j = 0; j < in.d2; j++) {
-            for (u64 k = 0; k < in.d3; k++) {
-                for (u64 l = 0; l < in.d4; l++) {
-                    in(i, j, k, l) = in(i, j, k, l) / divisor;
-                }
-            }
-        }
+void ClearText<T>::div(const Tensor<T> &in, T divisor, u64 scale) {
+    // fastfor(in.size(), [&] (u64 i) {
+    //     in.data[i] = in.data[i] / divisor;
+    // });
+
+    T divfp = (1LL << scale) / divisor;
+    u64 sz = in.size();
+    fastfor(in.size(), [&] (u64 i) {
+        in.data[i] *= divfp;
     });
+    Backend<T>::truncate(in, scale, 3);
 }
 
 template <typename T>
@@ -229,7 +184,7 @@ void ClearText<T>::sumPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> 
 template <typename T>
 void ClearText<T>::avgPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> &in, Tensor4D<T> &out, u64 scale) {
     sumPool2D(ks, padding, stride, in, out);
-    div(out, (T)(ks*ks), scale);
+    div(out.as_nd(), (T)(ks*ks), scale);
 }
 
 template <typename T>

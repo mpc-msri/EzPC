@@ -7,7 +7,7 @@ template <typename T>
 class SytorchModule {
 public:
 
-    Tensor4D<T> activation;
+    Tensor<T> activation;
     Backend<T> *backend = new ClearText<T>;
     LayerGraphNode<T> *root = nullptr;
     bool debug = true;
@@ -18,9 +18,9 @@ public:
 
 public:
 
-    virtual Tensor4D<T>& _forward(Tensor4D<T> &input) = 0;
+    virtual Tensor<T>& _forward(Tensor<T> &input) = 0;
 
-    SytorchModule() : activation(0, 0, 0, 0), allNodesInExecutionOrder(0)
+    SytorchModule() : activation({0, 0, 0, 0}), allNodesInExecutionOrder(0)
     {
 
     }
@@ -53,7 +53,7 @@ public:
         });
     }
 
-    LayerGraphNode<T> *getAddNode(std::vector<Tensor4D<T> *> ips)
+    LayerGraphNode<T> *getAddNode(std::vector<Tensor<T> *> ips)
     {
         std::string id = "";
         for(auto& ip: ips) {
@@ -66,7 +66,7 @@ public:
         return addLayerMap[id];
     }
 
-    LayerGraphNode<T> *getConcatNode(std::vector<Tensor4D<T> *> ips)
+    LayerGraphNode<T> *getConcatNode(std::vector<Tensor<T> *> ips)
     {
         std::string id = "";
         for(auto& ip: ips) {
@@ -79,9 +79,9 @@ public:
         return concatLayerMap[id];
     }
 
-    void init(u64 d1, u64 d2, u64 d3, u64 d4, u64 scale)
+    void init(const std::vector<u64> &shape, u64 scale)
     {
-        Tensor4D<T> ip(d1, d2, d3, d4);
+        Tensor<T> ip(shape);
         ip.graphNode = new LayerGraphNode<T>();
         ip.graphNode->layer = new PlaceHolderLayer<T>("Input");
         ip.graphNode->allNodesInExecutionOrderRef = &allNodesInExecutionOrder;
@@ -89,11 +89,10 @@ public:
         auto &res = this->_forward(ip);
         Layer<T>::fakeExecution = false;
         root = ip.graphNode;
-        activation.resize(res.d1, res.d2, res.d3, res.d4);
+        activation.resize(res.shape);
         
         topologicalApply(root, [=](LayerGraphNode<T> *node, LayerGraphNode<T> *_root) {
-            auto &inp = node->layer->inputDerivative;
-            node->layer->init(inp.d1, inp.d2, inp.d3, inp.d4, scale);
+            node->layer->init(node->layer->currentInputShape, scale);
         });
 
         this->scale = scale;
@@ -103,7 +102,7 @@ public:
 
     void init(u64 scale)
     {
-        Tensor4D<T> ip(0, 0, 0, 0);
+        Tensor<T> ip({0, 0, 0, 0});
         ip.graphNode = new LayerGraphNode<T>();
         ip.graphNode->layer = new PlaceHolderLayer<T>("Input");
         ip.graphNode->allNodesInExecutionOrderRef = &allNodesInExecutionOrder;
@@ -144,7 +143,7 @@ public:
         backend = b;
     }
 
-    Tensor4D<T>& forward(Tensor4D<T> &input)
+    Tensor<T>& forward(Tensor<T> &input)
     {
         topologicalApply(root, [](LayerGraphNode<T> *node, LayerGraphNode<T> *_root) {
             node->numUsages = 0;
@@ -153,13 +152,13 @@ public:
         input.graphNode->currTensor = &input;
         if (debug) {
             auto& res = this->_forward(input);
-            this->activation.resize(res.d1, res.d2, res.d3, res.d4);
+            this->activation.resize(res.shape);
             this->activation.copy(res);
             return this->activation;
         }
         else {
             auto& res = this->_forward(input); // todo: calculate using the generated graph
-            this->activation.resize(res.d1, res.d2, res.d3, res.d4);
+            this->activation.resize(res.shape);
             this->activation.copy(res);
             return this->activation;
         }
@@ -229,26 +228,26 @@ public:
     }
 
     template <typename... Args>
-    std::vector<Tensor4D<T> *> collect(Args & ... args)
+    std::vector<Tensor<T> *> collect(Args & ... args)
     {
-        std::vector<Tensor4D<T> *> res;
+        std::vector<Tensor<T> *> res;
         collectHelper(res, args...);
         return res;
     }
 
-    void collectHelper(std::vector<Tensor4D<T> *> &res, Tensor4D<T> &a)
+    void collectHelper(std::vector<Tensor<T> *> &res, Tensor<T> &a)
     {
         res.push_back(&a);
     }
 
     template <typename... Args>
-    void collectHelper(std::vector<Tensor4D<T> *> &res, Tensor4D<T> &a, Args & ... args)
+    void collectHelper(std::vector<Tensor<T> *> &res, Tensor<T> &a, Args & ... args)
     {
         res.push_back(&a);
         collectHelper(res, args...);
     }
 
-    void add(std::vector<Tensor4D<T> *> &arr, Tensor4D<T> &c)
+    void add(std::vector<Tensor<T> *> &arr, Tensor<T> &c)
     {
         if (Layer<T>::fakeExecution) {
             c.graphNode = new LayerGraphNode<T>();
@@ -264,7 +263,7 @@ public:
 
         // check if all tensors have same dimensions
         for (int i = 1; i < arr.size(); ++i) {
-            if (arr[i]->d1 != arr[0]->d1 || arr[i]->d2 != arr[0]->d2 || arr[i]->d3 != arr[0]->d3 || arr[i]->d4 != arr[0]->d4) {
+            if (arr[i]->is_same_shape(*arr[0]) == false) {
                 throw std::runtime_error("All tensors must have same dimensions");
             }
         }
@@ -273,16 +272,11 @@ public:
         cNode->currTensor = &c;
         c.graphNode = cNode;
 
-        for (int i = 0; i < c.d1; ++i) {
-            for (int j = 0; j < c.d2; ++j) {
-                for (int k = 0; k < c.d3; ++k) {
-                    for (int l = 0; l < c.d4; ++l) {
-                        c(i, j, k, l) = 0;
-                        for (auto &a : arr) {
-                            c(i, j, k, l) += a->operator()(i, j, k, l);
-                        }
-                    }
-                }
+        u64 sz = c.size();
+        for (int i = 0; i < sz; ++i) {
+            c.data[i] = 0;
+            for (auto &a : arr) {
+                c.data[i] += a->data[i];
             }
         }
 
@@ -294,21 +288,22 @@ public:
         }
     }
 
-    Tensor4D<T> add(std::vector<Tensor4D<T> *> &arr)
+    Tensor<T> add(std::vector<Tensor<T> *> &arr)
     {
-        Tensor4D<T> c(arr[0]->d1, arr[0]->d2, arr[0]->d3, arr[0]->d4);
+        Tensor<T> c(arr[0]->shape);
         add(arr, c);
         return c;
     }
 
     template <typename... Args>
-    Tensor4D<T> add(Args & ... args)
+    Tensor<T> add(Args & ... args)
     {
         auto res = collect(args...);
         return add(res);
     }
 
-    void concat(std::vector<Tensor4D<T> *> &arr, Tensor4D<T> &c)
+    // doesnt have assertions, don't use directly, use the variadic version only
+    void concat(std::vector<Tensor<T> *> &arr, Tensor<T> &c)
     {
         if (Layer<T>::fakeExecution) {
             c.graphNode = new LayerGraphNode<T>();
@@ -323,37 +318,49 @@ public:
         }
 
         // check if all tensors have same dimensions except the last one
-        for (int i = 1; i < arr.size(); ++i) {
-            if (arr[i]->d1 != arr[0]->d1 || arr[i]->d2 != arr[0]->d2 || arr[i]->d3 != arr[0]->d3) {
-                throw std::runtime_error("All tensors must have same dimensions");
-            }
-        }
+        // for (int i = 1; i < arr.size(); ++i) {
+        //     if (arr[i]->d1 != arr[0]->d1 || arr[i]->d2 != arr[0]->d2 || arr[i]->d3 != arr[0]->d3) {
+        //         throw std::runtime_error("All tensors must have same dimensions");
+        //     }
+        // }
 
         auto cNode = getConcatNode(arr);
         cNode->currTensor = &c;
         c.graphNode = cNode;
 
-        u64 d4 = 0;
-        for (auto &a : arr) {
-            d4 += a->d4;
-        }
+        // u64 d4 = 0;
+        // for (auto &a : arr) {
+        //     d4 += a->d4;
+        // }
 
-        if (c.d1 != arr[0]->d1 || c.d2 != arr[0]->d2 || c.d3 != arr[0]->d3 || c.d4 != d4) {
-            throw std::runtime_error("Output tensor must have correct dimensions");
-        }
+        // if (c.d1 != arr[0]->d1 || c.d2 != arr[0]->d2 || c.d3 != arr[0]->d3 || c.d4 != d4) {
+        //     throw std::runtime_error("Output tensor must have correct dimensions");
+        // }
 
-        u64 d4Idx = 0;
-        for (auto &a : arr) {
-            for (int i = 0; i < c.d1; ++i) {
-                for (int j = 0; j < c.d2; ++j) {
-                    for (int k = 0; k < c.d3; ++k) {
-                        for (int l = 0; l < a->d4; ++l) {
-                            c(i, j, k, d4Idx + l) = a->operator()(i, j, k, l);
-                        }
-                    }
+        // u64 d4Idx = 0;
+        // for (auto &a : arr) {
+        //     for (int i = 0; i < c.d1; ++i) {
+        //         for (int j = 0; j < c.d2; ++j) {
+        //             for (int k = 0; k < c.d3; ++k) {
+        //                 for (int l = 0; l < a->d4; ++l) {
+        //                     c(i, j, k, d4Idx + l) = a->operator()(i, j, k, l);
+        //                 }
+        //             }
+        //         }
+        //     }
+        //     d4Idx += a->d4;
+        // }
+        u64 sz = c.size();
+        for(int i = 0; i < sz; ++i)
+        {
+            u64 l = i % c.shape.back();
+            for(auto &a : arr) {
+                if(l < a->shape.back()) {
+                    c.data[i] = a->data[i];
+                    break;
                 }
+                l -= a->shape.back();
             }
-            d4Idx += a->d4;
         }
 
         for (auto &a : arr) {
@@ -364,19 +371,25 @@ public:
         }
     }
 
-    Tensor4D<T> concat(std::vector<Tensor4D<T> *> &arr)
+    Tensor<T> concat(std::vector<Tensor<T> *> &arr)
     {
-        u64 d4 = 0;
+        u64 channels = 0;
         for (auto &a : arr) {
-            d4 += a->d4;
+            always_assert(a->shape.size() == arr[0]->shape.size());
+            for (int i = 0; i < a->shape.size() - 1; ++i) {
+                always_assert(a->shape[i] == arr[0]->shape[i]);
+            }
+            channels += a->shape.back();
         }
-        Tensor4D<T> c(arr[0]->d1, arr[0]->d2, arr[0]->d3, d4);
+        std::vector<u64> shape = arr[0]->shape;
+        shape.back() = channels;
+        Tensor<T> c(shape);
         concat(arr, c);
         return c;
     }
 
     template <typename... Args>
-    Tensor4D<T> concat(Args & ... args)
+    Tensor<T> concat(Args & ... args)
     {
         auto res = collect(args...);
         return concat(res);

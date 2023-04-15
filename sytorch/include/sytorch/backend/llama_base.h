@@ -60,54 +60,32 @@ public:
 		}
     }
 
-    void initializeData(Tensor4D<T> &data, u64 numImagesWithServer)
-    {
-        u64 b1 = numImagesWithServer * data.d2 * data.d3 * data.d4;
-        u64 b2 = (data.d1 - numImagesWithServer) * data.d2 * data.d3 * data.d4;
-        if (LlamaConfig::party == 1) {
-            input_layer(nullptr, data.data, b1, 2);
-            input_layer(nullptr, data.data + b1, b2, 3);
-        }
-        else {
-            if (LlamaConfig::party == 2) {
-                Tensor4D<T> tmp(numImagesWithServer, data.d2, data.d3, data.d4);
-                input_layer(data.data, tmp.data, b1, 2);
-                input_layer(data.data + b1, nullptr, b2, 3);
-            }
-            else {
-                Tensor4D<T> tmp(data.d1 - numImagesWithServer, data.d2, data.d3, data.d4);
-                input_layer(data.data, nullptr, b1, 2);
-                input_layer(data.data + b1, tmp.data, b2, 3);
-            }
-        }
-    }
-
-    void initializeInferencePartyB(Tensor4D<T>&data){
-        u64 size = data.d1 * data.d2 * data.d3 * data.d4;
+    void initializeInferencePartyB(Tensor<T>&data){
+        u64 size = data.size();
         if(LlamaConfig::party == 1){
-            input_layer(nullptr,data.data, size,3);
+            input_layer(nullptr,data.data, size, 3);
         }
         else{
-            Tensor4D<T> tmp(data.d1, data.d2, data.d3, data.d4);
+            Tensor<T> tmp(data.shape);
             input_layer(data.data, tmp.data, size, 3);
         }
     }
 
-    void initializeInferencePartyA(LayerGraphNode<T> *root){
+    void initializeInferencePartyA(LayerGraphNode<T> *root) {
          topologicalApply(root, [&](LayerGraphNode<T> *node, LayerGraphNode<T> *_root) {
             auto layer = node->layer;
             if(layer->name.find("Conv2D") != std::string::npos || layer->name.find("FC") != std::string::npos) {
                 auto& weights = layer->getweights();
                 auto& bias = layer->getbias();
                 if(LlamaConfig::party == 1){
-                    input_layer(nullptr,weights.data, weights.d1*weights.d2,2);
+                    input_layer(nullptr, weights.data, weights.d1 * weights.d2, 2);
                     if (layer->useBias) {
-                        input_layer(nullptr,bias.data, bias.size,2);
+                        input_layer(nullptr, bias.data, bias.size, 2);
                     }
                 }
                 else{
                     Tensor2D<T> tmp(weights.d1, weights.d2);
-                    input_layer(weights.data, tmp.data, weights.d1*weights.d2, 2);
+                    input_layer(weights.data, tmp.data, weights.d1 * weights.d2, 2);
                     if(layer->useBias){
                         Tensor1D<T> tmp2(bias.size);
                         input_layer(bias.data, tmp2.data, bias.size, 2);
@@ -118,8 +96,8 @@ public:
                 auto bn = (BatchNorm2dInference<T>*) layer;
                 auto channel = bn->A.size;
                 if(LlamaConfig::party == 1){
-                    input_layer(nullptr,bn->A.data, channel,2);
-                    input_layer(nullptr,bn->B.data, channel,2);
+                    input_layer(nullptr, bn->A.data, channel, 2);
+                    input_layer(nullptr, bn->B.data, channel, 2);
                 }
                 else{
                     Tensor1D<T> tmp(channel);
@@ -130,15 +108,15 @@ public:
         });
     }
 
-    void inputA(Tensor4D<T> &data)
+    void inputA(Tensor<T> &data)
     {
-        u64 b1 = data.d1 * data.d2 * data.d3 * data.d4;
+        u64 b1 = data.size();
         if (LlamaConfig::party == 1) {
             input_layer(nullptr, data.data, b1, 2);
         }
         else {
             if (LlamaConfig::party == 2) {
-                Tensor4D<T> tmp(data.d1, data.d2, data.d3, data.d4);
+                Tensor<T> tmp(data.shape);
                 input_layer(data.data, tmp.data, b1, 2);
             }
             else {
@@ -176,103 +154,28 @@ public:
         }
     }
 
-     void outputA(Tensor4D<T> &a) {
-        u64 sz = a.d1 * a.d2 * a.d3 * a.d4;
-        if (LlamaConfig::party == 1) {
-            for (int i = 0; i < sz; i++){
-                LlamaConfig::client->send_mask(a.data[i]);
-                a.data[i] = 0;
-            }
-        }
-        else if(LlamaConfig::party ==3){
-            for (int i = 0; i < sz; i++){
-                auto mask = LlamaConfig::dealer->recv_mask();
-                a.data[i] = a.data[i] - mask;
-            }
-        }
+     void outputA(Tensor<T> &a) {
+        outputA(a.data, a.size());
     }
 
-    void output(Tensor4D<T> &a) {
-        u64 sz = a.d1 * a.d2 * a.d3 * a.d4;
-        if (LlamaConfig::party == 1) {
-            for (int i = 0; i < sz; i++){
-                LlamaConfig::client->send_mask(a.data[i]);
-                LlamaConfig::server->send_mask(a.data[i]);
-                a.data[i] = 0;
-            }
-        }
-        else {
-            for (int i = 0; i < sz; i++){
-                auto mask = LlamaConfig::dealer->recv_mask();
-                a.data[i] = a.data[i] - mask;
-            }
-        }
+    void output(Tensor<T> &a) {
+        output(a.data, a.size());
     }
 
     void outputA(Tensor2D<T> &a) {
-        u64 sz = a.d1 * a.d2;
-        if (LlamaConfig::party == 1) {
-            for (int i = 0; i < sz; i++){
-                LlamaConfig::client->send_mask(a.data[i]);
-                a.data[i] = 0;
-            }
-        }
-        else if(LlamaConfig::party ==3) {
-            for (int i = 0; i < sz; i++){
-                auto mask = LlamaConfig::dealer->recv_mask();
-                a.data[i] = a.data[i] - mask;
-            }
-        }
+        outputA(a.data, a.d1 * a.d2);
     }
 
     void output(Tensor2D<T> &a) {
-        u64 sz = a.d1 * a.d2;
-        if (LlamaConfig::party == 1) {
-            for (int i = 0; i < sz; i++){
-                LlamaConfig::client->send_mask(a.data[i]);
-                LlamaConfig::server->send_mask(a.data[i]);
-                a.data[i] = 0;
-            }
-        }
-        else {
-            for (int i = 0; i < sz; i++){
-                auto mask = LlamaConfig::dealer->recv_mask();
-                a.data[i] = a.data[i] - mask;
-            }
-        }
+        output(a.data, a.d1 * a.d2);
     }
 
     void outputA(Tensor1D<T> &a) {
-        u64 sz = a.size;
-        if (LlamaConfig::party == 1) {
-            for (int i = 0; i < sz; i++){
-                LlamaConfig::client->send_mask(a.data[i]);
-                a.data[i] = 0;
-            }
-        }
-        else if(LlamaConfig::party ==3) {
-            for (int i = 0; i < sz; i++){
-                auto mask = LlamaConfig::dealer->recv_mask();
-                a.data[i] = a.data[i] - mask;
-            }
-        }
+        outputA(a.data, a.size);
     }
 
     void output(Tensor1D<T> &a) {
-        u64 sz = a.size;
-        if (LlamaConfig::party == 1) {
-            for (int i = 0; i < sz; i++){
-                LlamaConfig::client->send_mask(a.data[i]);
-                LlamaConfig::server->send_mask(a.data[i]);
-                a.data[i] = 0;
-            }
-        }
-        else {
-            for (int i = 0; i < sz; i++){
-                auto mask = LlamaConfig::dealer->recv_mask();
-                a.data[i] = a.data[i] - mask;
-            }
-        }
+        output(a.data, a.size);
     }
 
     void outputA(T *a, u64 sz) {
@@ -334,42 +237,22 @@ public:
         MatMul2D(a.d1, a.d2, b.d2, a.data, a.data, b.data, b.data, c.data, c.data, true);
     }
 
-    void matmul(const Tensor4D<T> &a, const Tensor2D<T> &b, Tensor4D<T> &c) {
-        assert(a.d2 == b.d1);
-        assert(a.d3 == 1);
-        assert(a.d4 == 1);
-        assert(c.d1 == a.d1);
-        assert(c.d2 == b.d2);
-        assert(c.d3 == 1);
-        assert(c.d4 == 1);
-
-        MatMul2D(a.d1, a.d2, b.d2, a.data, a.data, b.data, b.data, c.data, c.data, true);
-    }
-
-    void matmulTransposeA(const Tensor4D<T> &a, const Tensor4D<T> &b, Tensor2D<T> &c) {
+    void matmulTransposeA(const Tensor2D<T> &a, const Tensor2D<T> &b, Tensor2D<T> &c) {
         assert(a.d1 == b.d1);
-        assert(a.d3 == 1);
-        assert(a.d4 == 1);
-        assert(b.d3 == 1);
-        assert(b.d4 == 1);
         assert(c.d1 == a.d2);
         assert(c.d2 == b.d2);
 
         Tensor2D<T> aTranspose(a.d2, a.d1);
         for(int i = 0; i < a.d1; ++i)
             for(int j = 0; j < a.d2; ++j)
-                aTranspose(j, i) = a(i, j, 0, 0);
+                aTranspose(j, i) = a(i, j);
         MatMul2D(aTranspose.d1, aTranspose.d2, b.d2, aTranspose.data, aTranspose.data, b.data, b.data, c.data, c.data, true);
     }
 
-    void matmulTransposeB(const Tensor4D<T> &a, const Tensor2D<T> &b, Tensor4D<T> &c) {
+    void matmulTransposeB(const Tensor2D<T> &a, const Tensor2D<T> &b, Tensor2D<T> &c) {
         assert(a.d2 == b.d2);
-        assert(a.d3 == 1);
-        assert(a.d4 == 1);
         assert(c.d1 == a.d1);
         assert(c.d2 == b.d1);
-        assert(c.d3 == 1);
-        assert(c.d4 == 1);
         Tensor2D<T> bTranspose(b.d2, b.d1);
         for(int i = 0; i < b.d1; ++i)
             for(int j = 0; j < b.d2; ++j)
@@ -418,13 +301,13 @@ public:
         }
     }
 
-    void div(const Tensor4D<T> &in, T divisor, u64 scale) {
+    void div(const Tensor<T> &in, T divisor, u64 scale) {
         if (!(divisor & (divisor - 1))) {
             Backend<T>::truncate(in, log2(divisor), 3);
         }
         else {
             T divfp = (1LL << scale) / divisor;
-            u64 sz = in.d1 * in.d2 * in.d3 * in.d4;
+            u64 sz = in.size();
             for (u64 i = 0; i < sz; i++) {
                 in.data[i] *= divfp;
             }
@@ -434,7 +317,7 @@ public:
 
     void avgPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> &in, Tensor4D<T> &out, u64 scale) {
         sumPool2D(ks, padding, stride, in, out);
-        div(out, (T)(ks*ks), scale);
+        div(out.as_nd(), (T)(ks*ks), scale);
     }
 
     u64 log2(u64 x) {

@@ -7,7 +7,7 @@ template <typename T>
 class Layer;
 
 template <typename T>
-class Tensor4D;
+class Tensor;
 
 template <typename T>
 struct LayerGraphNode {
@@ -15,7 +15,7 @@ struct LayerGraphNode {
     std::vector<LayerGraphNode<T> *> parents;
     std::vector<LayerGraphNode<T> *> children;
     int numUsages = 0;
-    Tensor4D<T> *currTensor = nullptr;
+    Tensor<T> *currTensor = nullptr;
     bool mark = false;
     std::vector<LayerGraphNode<T> *> *allNodesInExecutionOrderRef = nullptr;
 

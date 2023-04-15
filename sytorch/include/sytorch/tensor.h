@@ -14,6 +14,12 @@ typedef int64_t i64;
 typedef int32_t i32;
 
 template <typename T>
+class Tensor4D;
+
+template <typename T>
+class Tensor2D;
+
+template <typename T>
 class Tensor {
     bool isFreed = false;
 
@@ -21,8 +27,10 @@ public:
     T *data;
     std::vector<u64> shape;
     LayerGraphNode<T> *graphNode = nullptr;
+    bool isOwner = true;
 
     void allocate(const std::vector<u64> &s) {
+        always_assert(isOwner);
         this->shape = s;
         if (this->size() > 0) {
             this->data = new T[this->size()];
@@ -34,6 +42,7 @@ public:
     }
 
     void free() {
+        always_assert(isOwner);
         if (isFreed) {
             return;
         }
@@ -48,6 +57,7 @@ public:
     }
 
     void resize(const std::vector<u64> &s) {
+        always_assert(isOwner);
         if (s.size() == this->shape.size()){
             bool allSameDims = true;
             for (u64 i = 0; i < s.size(); i++) {
@@ -68,12 +78,28 @@ public:
         allocate(s);
     }
 
+    // template <typename... Args>
+    // Tensor(u64 s1, Args... sizes) {
+    //     std::vector<u64> s = {s1, sizes...};
+    //     allocate(s);
+    // }
+
+    Tensor(T* data, const std::vector<u64> &s) {
+        this->data = data;
+        this->shape = s;
+        this->isOwner = false;
+    }
+
     ~Tensor() {
-        free();
-        std::cout << "dobby is freeeeeeee" << std::endl;
+        if (isOwner)
+            free();
+        // std::cout << "dobby is freeeeeeee" << std::endl;
     } 
 
     u64 size() const {
+        if (this->shape.size() == 0) {
+            return 0;
+        }
         u64 s = 1;
         for (auto d : this->shape) {
             s *= d;
@@ -81,6 +107,18 @@ public:
         return s;
     }
 
+    bool is_same_shape(const Tensor<T> &other) const {
+        if (!(this->shape.size() == other.shape.size())) {
+            return false;
+        }
+        for (u64 i = 0; i < this->shape.size(); i++) {
+            if (!(this->shape[i] == other.shape[i])) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
     void assert_same_shape(const Tensor<T> &other) {
         always_assert(this->shape.size() == other.shape.size());
         for (u64 i = 0; i < this->shape.size(); i++) {
@@ -110,6 +148,18 @@ public:
             std::cout << this->shape[i] << ", ";
         }
         std::cout << ")" << std::endl;
+    }
+
+    Tensor4D<T> as_4d()
+    {
+        assert(this->shape.size() == 4);
+        return Tensor4D<T>(this->data, this->shape[0], this->shape[1], this->shape[2], this->shape[3]);
+    }
+
+    Tensor2D<T> as_2d()
+    {
+        always_assert(this->shape.size() == 2);
+        return Tensor2D<T>(this->data, this->shape[0], this->shape[1]);
     }
 };
 
@@ -195,10 +245,13 @@ public:
 template <typename T>
 class Tensor2D {
 public:
+    bool isOwner = true;
     T *data;
     u64 d1, d2;
 
     Tensor2D(u64 d1, u64 d2) : d1(d1), d2(d2), data(new T[d1 * d2]) {}
+
+    Tensor2D(T *data, u64 d1, u64 d2) : d1(d1), d2(d2), data(data), isOwner(false) {}
 
     void randomize(double range) {
         for(u64 i = 0; i < this->d1; i++) {
@@ -212,6 +265,7 @@ public:
     }
 
     void resize(u64 d1, u64 d2) {
+        always_assert(this->isOwner);
         if (this->d1 == d1 && this->d2 == d2) {
             return;
         }
@@ -222,7 +276,8 @@ public:
     }
 
     ~Tensor2D() {
-        delete[] this->data;
+        if (this->isOwner)
+            delete[] this->data;
     }
 
     T& operator()(u64 i, u64 j) const {
@@ -300,21 +355,56 @@ public:
         }
     }
 
+    void addBias2D(const Tensor1D<T> &bias) {
+        assert(bias.size == d2);
+
+        for (u64 i = 0; i < d1; i++) {
+            for (u64 j = 0; j < d2; j++) {
+                data[i * d2 + j] += bias(j);
+            }
+        }
+    }
+
 };
 
 template <typename T>
-class Tensor4D : public Tensor<T> {
+class Tensor4D {
 public:
     u64 d1, d2, d3, d4;
-    using Tensor<T>::data;
+    T* data;
+    bool isOwner = true;
 
-    Tensor4D(u64 d1, u64 d2, u64 d3, u64 d4) : Tensor<T>({d1, d2, d3, d4}), d1(d1), d2(d2), d3(d3), d4(d4) {}
+    Tensor4D(u64 d1, u64 d2, u64 d3, u64 d4) : d1(d1), d2(d2), d3(d3), d4(d4) {
+        data = new T[d1 * d2 * d3 * d4];
+    }
 
-    Tensor4D(T* data, u64 d1, u64 d2, u64 d3, u64 d4) : Tensor<T>(data, {d1, d2, d3, d4}), d1(d1), d2(d2), d3(d3), d4(d4) {}
+    Tensor4D(T* data, u64 d1, u64 d2, u64 d3, u64 d4) : data(data), d1(d1), d2(d2), d3(d3), d4(d4) {
+        isOwner = false;
+    }
 
-    // ~Tensor4D() {
-    //     // this->free();
-    // }
+    ~Tensor4D() {
+        if (isOwner) {
+            delete[] data;
+        }
+    }
+
+    void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
+        always_assert(isOwner);
+        if (this->d1 == d1 && this->d2 == d2 && this->d3 == d3 && this->d4 == d4) {
+            return;
+        }
+        delete[] data;
+        this->d1 = d1;
+        this->d2 = d2;
+        this->d3 = d3;
+        this->d4 = d4;
+        data = new T[d1 * d2 * d3 * d4];
+    }
+
+    void resize(const std::vector<u64> &shape) {
+        always_assert(isOwner);
+        resize(shape[0], shape[1], shape[2], shape[3]);
+    }
 
     void addBias(const Tensor1D<T> &bias) {
         assert(bias.size == d4);
@@ -327,26 +417,6 @@ public:
                 }
             }
         }
-    }
-
-    void addBias2D(const Tensor1D<T> &bias) {
-        assert(bias.size == d2);
-        assert(d3 == 1);
-        assert(d4 == 1);
-
-        for (u64 i = 0; i < d1; i++) {
-            for (u64 j = 0; j < d2; j++) {
-                data[i * d2 + j] += bias(j);
-            }
-        }
-    }
-
-    void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
-        Tensor<T>::resize({d1, d2, d3, d4});
-        this->d1 = d1;
-        this->d2 = d2;
-        this->d3 = d3;
-        this->d4 = d4;
     }
 
     T& operator()(u64 i, u64 j, u64 k, u64 l) const {
@@ -456,6 +526,11 @@ public:
                 }
             }
         }
+    }
+
+    Tensor<T> as_nd()
+    {
+        return Tensor<T>(data, {d1, d2, d3, d4});
     }
 
 };
