@@ -102,17 +102,25 @@ public:
     Tensor<T> inp;
     Tensor2D<T> filter;
     Tensor1D<T> bias;
-    u64 ci, co, ks, padding, stride;
+    u64 ci, co;
+    u64 fh, fw, padding, stride;
 
-    Conv2D(u64 ci, u64 co, u64 ks, u64 padding = 0, u64 stride = 1, bool useBias = false) : Layer<T>("Conv2D"), ci(ci), co(co), ks(ks), padding(padding), 
-        stride(stride), filter(co, ks * ks * ci), bias(co), inp({0,0,0,0})
+    Conv2D(u64 ci, u64 co, u64 f, u64 padding = 0, u64 stride = 1, bool useBias = false) : Layer<T>("Conv2D"), ci(ci), co(co), fh(f), fw(f), 
+        padding(padding), stride(stride), filter(co, f * f * ci), bias(co), inp({0,0,0,0})
+    {
+        this->doTruncationForward = true;
+        this->useBias = useBias;
+    }
+
+    Conv2D(u64 ci, u64 co, const std::array<u64, 2> f, u64 padding = 0, u64 stride = 1, bool useBias = false) : Layer<T>("Conv2D"), ci(ci), co(co), fh(f[0]), fw(f[1]), 
+        padding(padding), stride(stride), filter(co, f[0] * f[1] * ci), bias(co), inp({0,0,0,0})
     {
         this->doTruncationForward = true;
         this->useBias = useBias;
     }
 
     void _initScale(u64 scale) {
-        double xavier = 1.0 / sqrt(ci * ks * ks);
+        double xavier = 1.0 / sqrt(ci * fh * fw);
         filter.randomize(xavier * (1ULL<<scale));
         if (this->useBias)
             bias.randomize(xavier * (1ULL<<(2*scale)));
@@ -129,7 +137,7 @@ public:
         assert(a.shape[3] == ci);
         inp.copy(a);
         auto act_4d = this->activation.as_4d();
-        this->backend->conv2D(ks, ks, padding, stride, ci, co, a.as_4d(), filter, act_4d);
+        this->backend->conv2D(fh, fw, padding, stride, ci, co, a.as_4d(), filter, act_4d);
         if (this->useBias)
             this->activation.as_4d().addBias(bias);
     }
@@ -139,8 +147,8 @@ public:
 
     std::vector<u64> get_output_dims(const std::vector<u64> &inShape) {
         always_assert(inShape.size() == 4);
-        u64 newH = (((inShape[1] + 2*padding - ks)/stride) + 1);
-        u64 newW = (((inShape[2] + 2*padding - ks)/stride) + 1);
+        u64 newH = (((inShape[1] + 2*padding - fh)/stride) + 1);
+        u64 newW = (((inShape[2] + 2*padding - fw)/stride) + 1);
         return {inShape[0], newH, newW, co};
     }
 };
