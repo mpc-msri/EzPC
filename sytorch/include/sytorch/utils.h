@@ -212,3 +212,28 @@ void blprint(const Tensor4D<T> &p, u64 bw, u64 scale)
         std::cout << std::endl;
     }
 }
+
+
+template <typename T>
+void print(const Tensor<T> &p, u64 bw = sizeof(T) * 8)
+{
+    u64 d = p.shape.back();
+    for (u64 i = 0; i < p.size(); ++i)
+    {
+        i64 val;
+        if (bw == sizeof(T) * 8) {
+            val = p.data[i];
+        }
+        else {
+            val = (p.data[i] + (1LL << (bw - 1))) % (1LL << bw);
+            val -= (1LL << (bw - 1));
+        }
+        std::cout << val;
+        if ((i + 1) % d == 0) {
+            std::cout << std::endl;
+        }
+        else {
+            std::cout << " ";
+        }
+    }
+}

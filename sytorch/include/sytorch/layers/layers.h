@@ -302,7 +302,7 @@ public:
 
     std::vector<u64> get_output_dims(const std::vector<u64> &inShape) {
         always_assert(inShape.size() == 2);
-        always_assert(inShape[1] == in);
+        // assert(inShape[1] == in);
         return {inShape[0], out};
     }
 };

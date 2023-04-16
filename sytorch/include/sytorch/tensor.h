@@ -78,11 +78,9 @@ public:
         allocate(s);
     }
 
-    // template <typename... Args>
-    // Tensor(u64 s1, Args... sizes) {
-    //     std::vector<u64> s = {s1, sizes...};
-    //     allocate(s);
-    // }
+    Tensor(std::initializer_list<u64> s) {
+        allocate(s);
+    }
 
     Tensor(T* data, const std::vector<u64> &s) {
         this->data = data;
@@ -93,7 +91,6 @@ public:
     ~Tensor() {
         if (isOwner)
             free();
-        // std::cout << "dobby is freeeeeeee" << std::endl;
     } 
 
     u64 size() const {
