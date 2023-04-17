@@ -147,6 +147,36 @@ public:
         std::cout << ")" << std::endl;
     }
 
+    void load(const std::vector<std::vector<std::vector<std::vector<std::vector<float>>>>> &arr, int scale)
+    {
+        int d1 = arr.size();
+        int d2 = arr[0].size();
+        int d3 = arr[0][0].size();
+        int d4 = arr[0][0][0].size();
+        int d5 = arr[0][0][0][0].size();
+        always_assert(d1 == this->shape[0]);
+        always_assert(d2 == this->shape[1]);
+        always_assert(d3 == this->shape[2]);
+        always_assert(d4 == this->shape[3]);
+        always_assert(d5 == this->shape[4]);
+        for (int i = 0; i < d1; i++)
+        {
+            for (int j = 0; j < d2; j++)
+            {
+                for (int k = 0; k < d3; k++)
+                {
+                    for (int l = 0; l < d4; l++)
+                    {
+                        for (int m = 0; m < d5; m++)
+                        {
+                            this->data[i * d2 * d3 * d4 * d5 + j * d3 * d4 * d5 + k * d4 * d5 + l * d5 + m] = (i64)(arr[i][j][k][l][m] * scale);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     Tensor4D<T> as_4d()
     {
         assert(this->shape.size() == 4);

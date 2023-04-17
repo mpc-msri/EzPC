@@ -48,6 +48,30 @@ inline auto take_input(int n, int h, int w, int c)
     return tmp0;
 }
 
+// n h w d c
+inline auto take_input(int n, int h, int w, int d, int c)
+{
+    auto tmp0 = make_float_vector(n, h, w, d, c);
+
+    for (uint32_t i0 = 0; i0 < n; i0++)
+    {
+        for (uint32_t i1 = 0; i1 < c; i1++)
+        {
+            for (uint32_t i2 = 0; i2 < h; i2++)
+            {
+                for (uint32_t i3 = 0; i3 < w; i3++)
+                {
+                    for (uint32_t i4 = 0; i4 < d; i4++)
+                    {
+                        std::cin >> tmp0[i0][i2][i3][i4][i1];
+                    }
+                }
+            }
+        }
+    }
+    return tmp0;
+}
+
 template <typename T>
 Tensor2D<T> reshapeInputTransposed(const Tensor4D<T> &input, u64 padding, u64 stride, u64 FH, u64 FW) {
     u64 newH = (((input.d2 + 2*padding - FH)/stride) + 1);

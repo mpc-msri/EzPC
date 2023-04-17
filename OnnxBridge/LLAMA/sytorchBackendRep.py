@@ -90,7 +90,10 @@ def cleartext_pre(code_list, program, scale, mode, indent):
 
 def cleartext_post(code_list, program, scale, mode, indent):
     # Input
-    n, c, h, w = program[0].shape
+    n = program[0].shape[0]
+    c = program[0].shape[1]
+    dims = program[0].shape[2:]
+    # n, c, h, w = program[0].shape
     code_list.append(
         f"""
 
@@ -111,12 +114,12 @@ int main(int argc, char**__argv){'{'}
         net.init(scale);
         std::string weights_file = __argv[3];
         net.load(weights_file);
-        Tensor4D<i64> input({iterate_list([n, h, w, c])});
-        auto actual_image = take_input({iterate_list([n, h, w, c])});
+        Tensor<i64> input({'{'}{iterate_list([n]+ dims +[c])}{'}'});
+        auto actual_image = take_input({iterate_list([n]+ dims +[c])});
           input.load(actual_image, scale);
         print_dot_graph(net.root);
         net.forward(input);
-        net.activation.print(scale);
+        print(net.activation, 64);
         return 0;
     {'}'}
 
@@ -134,7 +137,10 @@ def llama_pre(code_list, program, scale, mode, bitlength, indent):
 
 def llama_post(code_list, program, scale, mode, bitlength, indent):
     # Input
-    n, c, h, w = program[0].shape
+    n = program[0].shape[0]
+    c = program[0].shape[1]
+    dims = program[0].shape[2:]
+    # n, c, h, w = program[0].shape
     code_list.append(
         f"""
     
@@ -157,12 +163,12 @@ int main(int __argc, char**__argv){'{'}
         net.init(scale);
         std::string weights_file = __argv[3];
         net.load(weights_file);
-        Tensor4D<i64> input({iterate_list([n, h, w, c])});
-        auto actual_image = take_input({iterate_list([n, h, w, c])});
+        Tensor<i64> input({'{'}{iterate_list([n]+ dims +[c])}{'}'});
+        auto actual_image = take_input({iterate_list([n]+ dims +[c])});
           input.load(actual_image, scale);
         print_dot_graph(net.root);
         net.forward(input);
-        net.activation.print(scale);
+        print(net.activation, 64);
         return 0;
     {'}'}
 
@@ -189,9 +195,9 @@ int main(int __argc, char**__argv){'{'}
     {'}'}
     llama->initializeInferencePartyA(net.root);
 
-    Tensor4D<u64> input({iterate_list([n, h, w, c])});
+    Tensor<u64> input({'{'}{iterate_list([n]+ dims +[c])}{'}'});
     if(party == CLIENT){'{'}
-         auto actual_image = take_input({iterate_list([n, h, w, c])});
+         auto actual_image = take_input({iterate_list([n]+ dims +[c])});
          input.load(actual_image, scale);
     {'}'}
     llama->initializeInferencePartyB(input);
@@ -203,7 +209,7 @@ int main(int __argc, char**__argv){'{'}
     auto &output = net.activation;
     llama->outputA(output);
     if (party == CLIENT) {'{'}
-        blprint(output, LlamaConfig::bitlength - scale, scale);
+        print(output, LlamaConfig::bitlength);
     {'}'}
     llama->finalize();
 {'}'}
@@ -267,7 +273,7 @@ def prepare_export(program, var_dict, value_info, mode, scale, bitlength, backen
     code_list.append(f"{tab_space * (indent)}{'}'}\n")
 
     # 3rd Pass
-    code_list.append(f"{tab_space * (indent)}Tensor4D<T>& _forward(Tensor4D<T> &input)")
+    code_list.append(f"{tab_space * (indent)}Tensor<T>& _forward(Tensor<T> &input)")
     code_list.append(f"{tab_space * (indent)}{'{'}")
     for idx, node in enumerate(program):
         if isinstance(node, Node):

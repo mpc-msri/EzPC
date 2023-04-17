@@ -65,6 +65,12 @@ class IR(Backend):
         Node.opset_version = model.opset_import[0].version
         logger.info(f"Model Received : opset version : {Node.opset_version}")
 
+        batch_size = optimizations.check_batch_size(model)
+        logger.info(f"Batch Size : {batch_size}")
+        if batch_size == 0:
+            logger.error("Batch Size 0 is not supported")
+            sys.exit()
+
         model = optimizations.optimise(model)
         logger.info("Model Optimized")
 
