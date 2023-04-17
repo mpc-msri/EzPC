@@ -29,6 +29,23 @@ public:
     LayerGraphNode<T> *graphNode = nullptr;
     bool isOwner = true;
 
+    T value_at(const std::vector<u64> &idx) const
+    {
+        always_assert(idx.size() == this->shape.size());
+        u64 offset = 0;
+        for (u64 i = 0; i < idx.size(); i++)
+        {
+            always_assert(idx[i] < this->shape[i]);
+            u64 stride = 1;
+            for (u64 j = i + 1; j < idx.size(); j++)
+            {
+                stride *= this->shape[j];
+            }
+            offset += idx[i] * stride;
+        }
+        return this->data[offset];
+    }
+
     void allocate(const std::vector<u64> &s) {
         always_assert(isOwner);
         this->shape = s;
