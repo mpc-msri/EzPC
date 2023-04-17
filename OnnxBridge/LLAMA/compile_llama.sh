@@ -25,7 +25,7 @@ echo "
 cmake_minimum_required (VERSION 3.13) 
 project(sytorch)
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS \"\${CMAKE_CXX_FLAGS} -Wno-write-strings -Wno-unused-result -maes -Wno-ignored-attributes -march=native -Wno-deprecated-declarations -fopenmp\")
+set(CMAKE_CXX_FLAGS \"\${CMAKE_CXX_FLAGS} -Wno-write-strings -Wno-unused-result -maes -Wno-ignored-attributes -march=native -Wno-deprecated-declarations -fopenmp -fconcepts\")
 find_package (Eigen3 3.3 REQUIRED NO_MODULE)
 find_package(Threads REQUIRED)
 add_subdirectory($sytorch_dir/ext/cryptoTools $pd/cryptoTools)

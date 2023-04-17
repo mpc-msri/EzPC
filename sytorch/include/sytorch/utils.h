@@ -27,49 +27,27 @@ auto make_float_vector( size_t first, Args... sizes)
 	return _ret;
 }
 
-//n h w c
-inline auto take_input(int n, int h, int w, int c)
+inline std::vector<float> take_input(size_t last)
 {
-    auto tmp0 = make_float_vector( n, h, w, c);
-
-    for (uint32_t i0 = 0; i0 < n; i0++)
+    std::vector<float> _ret;
+    for (size_t i = 0; i < last; i++)
     {
-        for (uint32_t i1 = 0; i1 < c; i1++)
-        {
-            for (uint32_t i2 = 0; i2 < h; i2++)
-            {
-                for (uint32_t i3 = 0; i3 < w; i3++)
-                {
-                    std::cin >> tmp0[i0][i2][i3][i1];
-                }
-            }
-        }
+        std::cin >> _ret[i];
     }
-    return tmp0;
+    return _ret;
 }
 
-// n h w d c
-inline auto take_input(int n, int h, int w, int d, int c)
+template <typename... Args>
+auto take_input(size_t first, Args... sizes)
 {
-    auto tmp0 = make_float_vector(n, h, w, d, c);
-
-    for (uint32_t i0 = 0; i0 < n; i0++)
+    auto _inner = take_input(sizes...);
+    std::vector<decltype(_inner)> _ret;
+    _ret.push_back(_inner);
+    for (size_t i = 1; i < first; i++)
     {
-        for (uint32_t i1 = 0; i1 < c; i1++)
-        {
-            for (uint32_t i2 = 0; i2 < h; i2++)
-            {
-                for (uint32_t i3 = 0; i3 < w; i3++)
-                {
-                    for (uint32_t i4 = 0; i4 < d; i4++)
-                    {
-                        std::cin >> tmp0[i0][i2][i3][i4][i1];
-                    }
-                }
-            }
-        }
+        _ret.push_back(take_input(sizes...));
     }
-    return tmp0;
+    return _ret;
 }
 
 template <typename T>
