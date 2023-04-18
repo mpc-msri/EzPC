@@ -78,6 +78,16 @@ struct Conv2DKey{
     GroupElement *a, *b, *c;    
 };
 
+struct Conv3DKey{
+    int Bin, Bout;
+    int N, D, H, W, CI, FD, FH, FW, CO,
+        zPadDLeft, zPadDRight, 
+        zPadHLeft, zPadHRight, 
+        zPadWLeft, zPadWRight,
+        strideD, strideH, strideW;
+    GroupElement *a, *b, *c;    
+};
+
 struct ScmpKeyPack
 {
     int Bin, Bout;

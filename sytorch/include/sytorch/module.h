@@ -84,6 +84,7 @@ public:
         Tensor<T> ip(shape);
         ip.graphNode = new LayerGraphNode<T>();
         ip.graphNode->layer = new PlaceHolderLayer<T>("Input");
+        ip.graphNode->layer->currentInputShape = shape;
         ip.graphNode->allNodesInExecutionOrderRef = &allNodesInExecutionOrder;
         Layer<T>::fakeExecution = true;
         auto &res = this->_forward(ip);

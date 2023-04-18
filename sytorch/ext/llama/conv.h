@@ -37,3 +37,19 @@ void EvalConv2D(int party, const Conv2DKey &key,
     int zPadHLeft, int zPadHRight, 
     int zPadWLeft, int zPadWRight,
     int strideH, int strideW, GroupElement* input, GroupElement* filter, GroupElement* output);
+
+std::pair<Conv3DKey, Conv3DKey> KeyGenConv3D(
+    int Bin, int Bout,
+    int N, int D, int H, int W, int CI, int FD, int FH, int FW, int CO,
+    int zPadDLeft, int zPadDRight, 
+    int zPadHLeft, int zPadHRight, 
+    int zPadWLeft, int zPadWRight,
+    int strideD, int strideH, int strideW,
+    GroupElement *rin1,  GroupElement * rin2, GroupElement * rout);
+
+void EvalConv3D(int party, const Conv3DKey &key,
+    int N, int D, int H, int W, int CI, int FD, int FH, int FW, int CO,
+    int zPadDLeft, int zPadDRight, 
+    int zPadHLeft, int zPadHRight, 
+    int zPadWLeft, int zPadWRight,
+    int strideD, int strideH, int strideW, GroupElement* input, GroupElement* filter, GroupElement* output);

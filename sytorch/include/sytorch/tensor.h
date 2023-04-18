@@ -14,10 +14,16 @@ typedef int64_t i64;
 typedef int32_t i32;
 
 template <typename T>
+class Tensor5D;
+
+template <typename T>
 class Tensor4D;
 
 template <typename T>
 class Tensor2D;
+
+template <typename T>
+class Tensor1D;
 
 template <typename T>
 class Tensor {
@@ -194,6 +200,12 @@ public:
         }
     }
 
+    Tensor5D<T> as_5d()
+    {
+        assert(this->shape.size() == 5);
+        return Tensor5D<T>(this->data, this->shape[0], this->shape[1], this->shape[2], this->shape[3], this->shape[4]);
+    }
+    
     Tensor4D<T> as_4d()
     {
         assert(this->shape.size() == 4);
@@ -204,6 +216,16 @@ public:
     {
         always_assert(this->shape.size() == 2);
         return Tensor2D<T>(this->data, this->shape[0], this->shape[1]);
+    }
+
+    void addBias(const Tensor1D<T> &bias)
+    {
+        always_assert(this->shape.back() == bias.size);
+        u64 sz = bias.size;
+        for (u64 i = 0; i < this->size(); ++i)
+        {
+            this->data[i] += bias.data[i % sz];
+        }
     }
 };
 
@@ -578,3 +600,61 @@ public:
     }
 
 };
+
+
+template <typename T>
+class Tensor5D {
+public:
+    u64 d1, d2, d3, d4, d5;
+    T* data;
+    bool isOwner = true;
+
+    Tensor5D(u64 d1, u64 d2, u64 d3, u64 d4, u64 d5) : d1(d1), d2(d2), d3(d3), d4(d4), d5(d5) {
+        data = new T[d1 * d2 * d3 * d4 * d5];
+    }
+
+    Tensor5D(T* data, u64 d1, u64 d2, u64 d3, u64 d4, u64 d5) : data(data), d1(d1), d2(d2), d3(d3), d4(d4), d5(d5) {
+        isOwner = false;
+    }
+
+    ~Tensor5D() {
+        if (isOwner) {
+            delete[] data;
+        }
+    }
+
+    void resize(u64 d1, u64 d2, u64 d3, u64 d4, u64 d5) {
+        always_assert(isOwner);
+        if (this->d1 == d1 && this->d2 == d2 && this->d3 == d3 && this->d4 == d4 && this->d5 == d5) {
+            return;
+        }
+        delete[] data;
+        this->d1 = d1;
+        this->d2 = d2;
+        this->d3 = d3;
+        this->d4 = d4;
+        this->d5 = d5;
+        data = new T[d1 * d2 * d3 * d4 * d5];
+    }
+
+    void resize(const std::vector<u64> &shape) {
+        always_assert(isOwner);
+        resize(shape[0], shape[1], shape[2], shape[3], shape[4]);
+    }
+
+    T& operator()(u64 i, u64 j, u64 k, u64 l, u64 m) const {
+        assert(i < d1);
+        assert(j < d2);
+        assert(k < d3);
+        assert(l < d4);
+        assert(m < d5);
+        return data[i * d2 * d3 * d4 * d5 + j * d3 * d4 * d5 + k * d4 * d5 + l * d5 + m];
+    }
+
+    Tensor<T> as_nd()
+    {
+        return Tensor<T>(data, {d1, d2, d3, d4, d5});
+    }
+
+};
+

@@ -239,3 +239,77 @@ void print(const Tensor<T> &p, u64 bw = sizeof(T) * 8)
         }
     }
 }
+
+template <typename T>
+Tensor2D<T> reshapeInputTransposed3d(const Tensor5D<T> &input, u64 padding, u64 stride, u64 FD, u64 FH, u64 FW) {
+    u64 D = input.d2;
+    u64 H = input.d3;
+    u64 W = input.d4;
+    u64 CI = input.d5;
+    u64 newD = (((D + 2*padding - FD)/stride) + 1);
+    u64 newH = (((H + 2*padding - FH)/stride) + 1);
+	u64 newW = (((W + 2*padding - FW)/stride) + 1);
+	u64 reshapedIPCols = input.d1 * newD * newH * newW;
+    Tensor2D<T> reshaped(reshapedIPCols, FD * FH * FW * CI);
+    i64 linIdxFilterMult = 0;
+	for (i64 n = 0; n < input.d1; n++){
+        i64 leftTopCornerD = 0 - padding;
+        i64 extremeRightBottomCornerD = D - 1 + padding;
+        while((leftTopCornerD + FD - 1) <= extremeRightBottomCornerD) {
+            i64 leftTopCornerH = 0 - padding;
+            i64 extremeRightBottomCornerH = H - 1 + padding;
+            while((leftTopCornerH + FH - 1) <= extremeRightBottomCornerH){
+                i64 leftTopCornerW = 0 - padding;
+                i64 extremeRightBottomCornerW = W - 1 + padding;
+                while((leftTopCornerW + FW - 1) <= extremeRightBottomCornerW){
+
+                    for (i64 fd = 0; fd < FD; fd++) {
+                        for (i64 fh = 0; fh < FH; fh++){
+                            for (i64 fw = 0; fw < FW; fw++){
+                                i64 curPosD = leftTopCornerD + fd;
+                                i64 curPosH = leftTopCornerH + fh;
+                                i64 curPosW = leftTopCornerW + fw;
+                                for (i64 ci = 0; ci < CI; ci++){
+                                    if ((((curPosD < 0) || (curPosD >= D)) || ((curPosH < 0) || (curPosH >= H)) || ((curPosW < 0) || (curPosW >= W)))){
+                                        reshaped(linIdxFilterMult, fd*(FH*FW*CI) + (fh*FW*CI) + (fw*CI) + ci) = 0L;
+                                    }
+                                    else{
+                                        reshaped(linIdxFilterMult, fd*(FH*FW*CI) + (fh*FW*CI) + (fw*CI) + ci) = input(n, curPosD, curPosH, curPosW, ci);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    linIdxFilterMult = linIdxFilterMult + 1;
+                    leftTopCornerW = leftTopCornerW + stride;
+                }
+                leftTopCornerH = leftTopCornerH + stride;
+            }
+            leftTopCornerD = leftTopCornerD + stride;
+		}
+	}
+    return reshaped;
+}
+
+template <typename T>
+void reshapeOutput3d(const Tensor2D<T> &output, u64 d1, u64 d2, u64 d3, u64 d4, u64 d5, Tensor5D<T> &res) {
+    assert(res.d1 == d1);
+    assert(res.d2 == d2);
+    assert(res.d3 == d3);
+    assert(res.d4 == d4);
+    assert(res.d5 == d5);
+    assert(output.d1 == d5);
+    assert(output.d2 == d1 * d2 * d3 * d4);
+    for(int i = 0; i < d1; i++) {
+        for(int j = 0; j < d2; j++) {
+            for(int k = 0; k < d3; k++) {
+                for(int l = 0; l < d4; l++) {
+                    for(int m = 0; m < d5; m++) {
+                        res(i, j, k, l, m) = output(m, i * d2 * d3 * d4 + j * d3 * d4 + k * d4 + l);
+                    }
+                }
+            }
+        }
+    }
+}

@@ -56,6 +56,7 @@ public:
         if (fakeExecution) {
             activation.graphNode = new LayerGraphNode<T>();
             node = activation.graphNode;
+            currentInputShape = a.shape;
             activation.graphNode->layer = this;
             activation.graphNode->parents.push_back(a.graphNode);
             activation.graphNode->allNodesInExecutionOrderRef = a.graphNode->allNodesInExecutionOrderRef;
@@ -150,6 +151,64 @@ public:
         u64 newH = (((inShape[1] + 2*padding - fh)/stride) + 1);
         u64 newW = (((inShape[2] + 2*padding - fw)/stride) + 1);
         return {inShape[0], newH, newW, co};
+    }
+};
+
+template <typename T>
+class Conv3D : public Layer<T> {
+public:
+    Tensor<T> inp;
+    Tensor2D<T> filter;
+    Tensor1D<T> bias;
+    u64 ci, co;
+    u64 fd, fh, fw, padding, stride;
+
+    Conv3D(u64 ci, u64 co, u64 f, u64 padding = 0, u64 stride = 1, bool useBias = false) : Layer<T>("Conv3D"), ci(ci), co(co), fd(f), fh(f), fw(f), 
+        padding(padding), stride(stride), filter(co, f * f * f * ci), bias(co), inp({0,0,0,0,0})
+    {
+        this->doTruncationForward = true;
+        this->useBias = useBias;
+    }
+
+    Conv3D(u64 ci, u64 co, const std::array<u64, 3> f, u64 padding = 0, u64 stride = 1, bool useBias = false) : Layer<T>("Conv3D"), ci(ci), co(co), fd(f[0]), fh(f[1]), fw(f[2]), 
+        padding(padding), stride(stride), filter(co, f[0] * f[1] * f[2] * ci), bias(co), inp({0,0,0,0,0})
+    {
+        this->doTruncationForward = true;
+        this->useBias = useBias;
+    }
+
+    void _initScale(u64 scale) {
+        double xavier = 1.0 / sqrt(ci * fd * fh * fw);
+        filter.randomize(xavier * (1ULL<<scale));
+        if (this->useBias)
+            bias.randomize(xavier * (1ULL<<(2*scale)));
+    }
+
+    void _resize(const std::vector<u64> &shape) {
+        always_assert(shape.size() == 5);
+        always_assert(shape[4] == ci);
+        inp.resize(shape);
+    }
+
+    void forward_internal(Tensor<T> &a, bool train = true) {
+        always_assert(a.shape.size() == 5);
+        assert(a.shape[4] == ci);
+        inp.copy(a);
+        auto act_5d = this->activation.as_5d();
+        this->backend->conv3D(fd, fh, fw, padding, stride, ci, co, a.as_5d(), filter, act_5d);
+        if (this->useBias)
+            this->activation.addBias(bias);
+    }
+
+    Tensor2D<T>& getweights() { return filter; }
+    Tensor1D<T>& getbias() { return bias; }
+
+    std::vector<u64> get_output_dims(const std::vector<u64> &inShape) {
+        always_assert(inShape.size() == 5);
+        u64 newD = (((inShape[1] + 2*padding - fd)/stride) + 1);
+        u64 newH = (((inShape[2] + 2*padding - fh)/stride) + 1);
+        u64 newW = (((inShape[3] + 2*padding - fw)/stride) + 1);
+        return {inShape[0], newD, newH, newW, co};
     }
 };
 
@@ -414,20 +473,15 @@ public:
     }
 
     void initScale(u64 scale) {
-        std::runtime_error("PlaceHolderLayer only to be used for tree traversal");
-    }
-
-    void _resize(const std::vector<u64> &shape) {
-        std::runtime_error("PlaceHolderLayer only to be used for tree traversal");
+        throw std::runtime_error("PlaceHolderLayer only to be used for tree traversal");
     }
 
     void forward_internal(Tensor<T> &a, bool train = true) {
-        std::runtime_error("PlaceHolderLayer only to be used for tree traversal");
+        throw std::runtime_error("PlaceHolderLayer only to be used for tree traversal");
     }
 
     std::vector<u64> get_output_dims(const std::vector<u64> &inShape) {
-        std::runtime_error("PlaceHolderLayer only to be used for tree traversal");
-        return {};
+        return inShape;
     }
 };
 

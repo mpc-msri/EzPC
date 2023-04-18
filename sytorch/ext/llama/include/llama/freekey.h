@@ -78,6 +78,12 @@ inline void freeConv2dKey(Conv2DKey &key){
     delete[] key.c;
 }
 
+inline void freeConv3dKey(Conv3DKey &key){
+    delete[] key.a;
+    delete[] key.b;
+    delete[] key.c;
+}
+
 inline void freeReluKeyPack(ReluKeyPack &key)
 {
     if (!LlamaConfig::dealer->ramdisk) {
