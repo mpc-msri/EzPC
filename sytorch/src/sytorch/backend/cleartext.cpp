@@ -88,6 +88,18 @@ void ClearText<T>::relu(const Tensor<T> &in, const Tensor<T> &out, const Tensor<
 }
 
 template <typename T>
+void ClearText<T>::sqrt(const Tensor<T> &in, const Tensor<T> &out, const Tensor<T> &dsqrt, u64 scale)
+{
+    assert(in.is_same_shape(out));
+    assert(in.is_same_shape(dsqrt));
+    fastfor(in.size(), [&](u64 i)
+            {
+        dsqrt.data[i] = in.data[i] / (1ULL << scale);
+        dsqrt.data[i] = std::sqrt(dsqrt.data[i]);
+        out.data[i] = dsqrt.data[i] * (1ULL << scale); });
+}
+
+template <typename T>
 void ClearText<T>::truncate(T *in, T *out, u64 shift, u64 size, u8 mode) {
     fastfor(size, [&] (u64 i) {
         if constexpr (std::is_floating_point<T>::value) {

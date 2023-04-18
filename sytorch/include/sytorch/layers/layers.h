@@ -394,6 +394,29 @@ public:
 };
 
 template <typename T>
+class Sqrt : public Layer<T>
+{
+public:
+    Tensor<T> dsqrt;
+    Sqrt() : Layer<T>("Sqrt"), dsqrt({0}) {}
+
+    void _resize(const std::vector<u64> &shape)
+    {
+        this->dsqrt.resize(shape);
+    }
+
+    void forward_internal(Tensor<T> &a, bool train = true)
+    {
+        this->backend->sqrt(a, this->activation, this->dsqrt, this->scale);
+    }
+
+    std::vector<u64> get_output_dims(const std::vector<u64> &inShape)
+    {
+        return inShape;
+    }
+};
+
+template <typename T>
 class BatchNorm2dInference : public Layer<T> {
 public:
     Tensor1D<T> A; // scale = s

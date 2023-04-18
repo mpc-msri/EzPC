@@ -16,6 +16,7 @@ func_map = {
     "AveragePool": "AvgPool2D",
     "GlobalAveragePool": "GlobalAvgPool2D",
     "Add": "add",
+    "Sqrt": "Sqrt",
 }
 non_sequential = ["Concat", "Add"]
 tab_space = "     "
@@ -55,6 +56,7 @@ def inputs_to_take(node):
         "Add": -1,
         "BatchNormalization": 1,
         "GlobalAveragePool": 1,
+        "Sqrt": 1,
     }
     return tmp_dict[node]
 

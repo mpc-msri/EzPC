@@ -45,6 +45,11 @@ class Operator:
         return str(f"{'   ' * indent}new ReLU<T>();")
 
     @classmethod
+    def Sqrt(cls, attributes, inputs, outputs, value_info, var_dict, mode, indent):
+        logger.debug("Inside Sqrt function call.")
+        return str(f"{'   ' * indent}new Sqrt<T>();")
+
+    @classmethod
     def BatchNormalization(
         cls, attributes, inputs, outputs, value_info, var_dict, mode, indent
     ):
