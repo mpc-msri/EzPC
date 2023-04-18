@@ -428,32 +428,6 @@ void Sigmoid(int32_t s1, int32_t s2, int32_t s3, int32_t s4, auto &inArr, auto &
     }
 }
 
-// tanh(x) = 2 * sigmoid(2 * x) - 1
-void Tanh(int32_t s1, vector<FPArray> &inArr, vector<FPArray> &outArr)
-{
-
-    const FPArray one = __public_float_to_baba(1.0, ALICE);
-    const FPArray two = __public_float_to_baba(2.0, ALICE);
-
-    // 2 * x
-    auto twice_input = make_vector_float(ALICE, s1);
-    for (int i = 0; i < s1; i++)
-    {
-        twice_input[i] = Mul(inArr[i], two);
-    }
-
-    // sigmoid(2 * x)
-    auto sigmoid_twice_input = make_vector_float(ALICE, s1);
-    Sigmoid(s1, twice_input, sigmoid_twice_input);
-
-    // tanh(x) = 2 * sigmoid(2 * x) - 1
-    for (int i = 0; i < s1; i++)
-    {
-        outArr[i] = Mul(two, sigmoid_twice_input[i]);
-        outArr[i] = __fp_op->sub(outArr[i], one);
-    }
-}
-
 void Tanh(int32_t s1, int32_t s2, auto &inArr, auto &outArr)
 {
     int32_t size = (s1 * s2);

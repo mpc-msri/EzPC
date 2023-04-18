@@ -495,7 +495,6 @@ void ElemWiseDiv(int32_t s1, vector<FPArray>& arr1, vector<FPArray>& arr2, vecto
 	delete[] arr1_e ; delete[] arr2_e ; delete[] out_e ;
 }
 
-
 void scalarMultiplication(int32_t s, float scalar, vector<FPArray>& inArr, vector<FPArray>& outArr) {
 	int m_bits, e_bits ;
 	m_bits = inArr[0].m_bits ;
@@ -1500,6 +1499,81 @@ void Ln(
 	delete[] in_e ; delete[] out_e ;
 }
 
+void Sqrt_thread(
+	int tid, int sz, int m_bits, int e_bits,
+	uint8_t *in_s, uint8_t *in_z, uint64_t *in_m, uint64_t *in_e,   
+	uint8_t *out_s, uint8_t *out_z, uint64_t *out_m, uint64_t *out_e
+	) {
+
+	FPArray in_flat = fpopArr[tid]->input(WHICHPARTY, sz, in_s, in_z, in_m, in_e, m_bits, e_bits) ;
+	FPArray out_flat = fpopArr[tid]->sqrt(in_flat) ;
+
+	memcpy(out_s, out_flat.s, sz*sizeof(uint8_t)) ;
+	memcpy(out_z, out_flat.z, sz*sizeof(uint8_t)) ;
+	memcpy(out_m, out_flat.m, sz*sizeof(uint64_t)) ;
+	memcpy(out_e, out_flat.e, sz*sizeof(uint64_t)) ;
+}
+
+void Sqrt(
+	int32_t s1, 
+	vector<FPArray> &inArr, 
+	vector<FPArray> &outArr) {
+	int m_bits, e_bits ;
+	m_bits = inArr[0].m_bits ;
+	e_bits = inArr[0].e_bits ;
+
+	uint8_t *in_s = new uint8_t[s1] ;
+	uint8_t *in_z = new uint8_t[s1] ;
+	uint64_t *in_m = new uint64_t[s1] ;
+	uint64_t *in_e = new uint64_t[s1] ;
+	for (int i = 0 ; i < s1 ; i++) {
+		in_s[i] = inArr[i].s[0] ;
+		in_z[i] = inArr[i].z[0] ;
+		in_m[i] = inArr[i].m[0] ;
+		in_e[i] = inArr[i].e[0] ;
+	}
+
+	uint8_t *out_s = new uint8_t[s1] ;
+	uint8_t *out_z = new uint8_t[s1] ;
+	uint64_t *out_m = new uint64_t[s1] ;
+	uint64_t *out_e = new uint64_t[s1] ;
+
+	vector<int> chunks = get_chunks(s1, __nt) ;
+	thread threads[MAX_THREADS] ;
+	int offset = 0 ;
+	for (int i = 0 ; i < __nt ; i++) {
+		if (chunks[i] > 0) {
+			threads[i] = thread(Sqrt_thread,
+				i, chunks[i], m_bits, e_bits,
+				in_s + offset, in_z + offset, in_m + offset, in_e + offset,
+				out_s + offset, out_z + offset, out_m + offset, out_e + offset
+			) ;
+			offset += chunks[i] ;
+		}
+	}
+
+	for (int i = 0 ; i < __nt ; i++)
+		if (chunks[i] > 0)
+			threads[i].join() ;
+
+	for (int i = 0 ; i < s1 ; i++) {
+		outArr[i].m_bits = m_bits ;
+		outArr[i].e_bits = e_bits ;
+
+		outArr[i].s[0] = out_s[i] ;
+		outArr[i].z[0] = out_z[i] ;
+		outArr[i].m[0] = out_m[i] ;
+		outArr[i].e[0] = out_e[i] ;
+	}
+
+	delete[] in_s ; delete[] out_s ;
+	delete[] in_z ; delete[] out_z ;
+	delete[] in_m ; delete[] out_m ;
+	delete[] in_e ; delete[] out_e ;
+}
+
+
+
 void Sigmoid_thread(
 	int tid, int sz, int m_bits, int e_bits,
 	uint8_t *in_s, uint8_t *in_z, uint64_t *in_m, uint64_t *in_e,   
@@ -2438,3 +2512,97 @@ void computeMSELoss(int32_t m, int32_t s, vector<vector<FPArray>> &target, vecto
 	ElemWiseMul(m, subbed, subbed, loss_terms);
 	getLoss(m, loss_terms, loss);
 }
+
+
+
+
+void Gelu_thread(
+	int tid, int sz, int m_bits, int e_bits,
+	uint8_t *in_s, uint8_t *in_z, uint64_t *in_m, uint64_t *in_e,   
+	uint8_t *out_s, uint8_t *out_z, uint64_t *out_m, uint64_t *out_e
+	) {
+
+	FPArray in_flat = fpopArr[tid]->input(WHICHPARTY, sz, in_s, in_z, in_m, in_e, m_bits, e_bits) ;
+
+	// 0.5 * x * (1 + np.tanh(np.sqrt(2 / np.pi) * (x + 0.044715 * x**3))
+	FPArray half_flat = fpopArr[tid]->input<float>(ALICE, sz, (float)0.5, m_bits, e_bits) ;
+	FPArray one_flat = fpopArr[tid]->input<float>(ALICE, sz, (float)1.0, m_bits, e_bits) ;
+	FPArray const1_flat = fpopArr[tid]->input<float>(ALICE, sz, (float)0.79788, m_bits, e_bits) ;
+	FPArray const2_flat = fpopArr[tid]->input<float>(ALICE, sz, (float)0.044715, m_bits, e_bits) ;
+
+	FPArray x2 = fpopArr[tid]->mul(in_flat, in_flat) ;
+	FPArray x3 = fpopArr[tid]->mul(x2, in_flat) ;
+	FPArray c2x3 = fpopArr[tid]->mul(x2, const2_flat) ;	
+	FPArray tanh_arg_mul1 = fpopArr[tid]->add(in_flat, c2x3) ;
+	FPArray tanh_arg = fpopArr[tid]->mul(tanh_arg_mul1, const1_flat) ;
+	FPArray tanh_out ;
+	if (m_bits == 23)
+		tanh_out = fpmathArr[tid]->tanh_fp32(in_flat) ;
+	else if (m_bits == 7)
+		tanh_out = fpmathArr[tid]->tanh_bf16(in_flat) ;
+
+	FPArray out_mul2 = fpopArr[tid]->add(one_flat, tanh_out) ;
+	FPArray out_mul1 = fpopArr[tid]->mul(half_flat, in_flat) ;
+	FPArray out_flat = fpopArr[tid]->mul(out_mul1, out_mul2) ; 
+
+	memcpy(out_s, out_flat.s, sz*sizeof(uint8_t)) ;
+	memcpy(out_z, out_flat.z, sz*sizeof(uint8_t)) ;
+	memcpy(out_m, out_flat.m, sz*sizeof(uint64_t)) ;
+	memcpy(out_e, out_flat.e, sz*sizeof(uint64_t)) ;
+}
+
+void Gelu(int32_t s1, vector<FPArray> &inArr, vector<FPArray> &outArr) {
+	int m_bits, e_bits ;
+	m_bits = inArr[0].m_bits ;
+	e_bits = inArr[0].e_bits ;
+
+	uint8_t *in_s = new uint8_t[s1] ;
+	uint8_t *in_z = new uint8_t[s1] ;
+	uint64_t *in_m = new uint64_t[s1] ;
+	uint64_t *in_e = new uint64_t[s1] ;
+	for (int i = 0 ; i < s1 ; i++) {
+		in_s[i] = inArr[i].s[0] ;
+		in_z[i] = inArr[i].z[0] ;
+		in_m[i] = inArr[i].m[0] ;
+		in_e[i] = inArr[i].e[0] ;
+	}
+
+	uint8_t *out_s = new uint8_t[s1] ;
+	uint8_t *out_z = new uint8_t[s1] ;
+	uint64_t *out_m = new uint64_t[s1] ;
+	uint64_t *out_e = new uint64_t[s1] ;
+
+	vector<int> chunks = get_chunks(s1, __nt) ;
+	thread threads[MAX_THREADS] ;
+	int offset = 0 ;
+	for (int i = 0 ; i < __nt ; i++) {
+		if (chunks[i] > 0) {
+			threads[i] = thread(Gelu_thread,
+				i, chunks[i], m_bits, e_bits,
+				in_s + offset, in_z + offset, in_m + offset, in_e + offset,
+				out_s + offset, out_z + offset, out_m + offset, out_e + offset
+			) ;
+			offset += chunks[i] ;
+		}
+	}
+
+	for (int i = 0 ; i < __nt ; i++)
+		if (chunks[i] > 0)
+			threads[i].join() ;
+
+	for (int i = 0 ; i < s1 ; i++) {
+		outArr[i].m_bits = m_bits ;
+		outArr[i].e_bits = e_bits ;
+
+		outArr[i].s[0] = out_s[i] ;
+		outArr[i].z[0] = out_z[i] ;
+		outArr[i].m[0] = out_m[i] ;
+		outArr[i].e[0] = out_e[i] ;
+	}
+
+	delete[] in_s ;
+	delete[] in_z ;
+	delete[] in_m ;
+	delete[] in_e ;
+}
+

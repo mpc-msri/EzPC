@@ -120,7 +120,7 @@ void BatchNormalization(int32_t s1, int32_t s2, int32_t s3, int32_t s4, auto &in
     FusedBatchNorm4411(s1, s2, s3, s4, inArr, multArr, biasArr, outputArr);
 }
 
-void Conv2DReshapeMatMulOPGroup(int32_t N, int32_t finalH, int32_t finalW, int32_t CO, int32_t g, int32_t G, vector<vector<FPArray>> &inputArr, vector<vector<vector<vector<FPArray>>>> &outputArr)
+void __onnxbridge_Conv2DReshapeMatMulOPGroup(int32_t N, int32_t finalH, int32_t finalW, int32_t CO, int32_t g, int32_t G, vector<vector<FPArray>> &inputArr, vector<vector<vector<vector<FPArray>>>> &outputArr)
 {
     int32_t COG = (CO / G);
     int32_t startCO = (g * COG);
@@ -139,7 +139,7 @@ void Conv2DReshapeMatMulOPGroup(int32_t N, int32_t finalH, int32_t finalW, int32
     }
 }
 
-void Conv2DReshapeFilterGroup(int32_t FH, int32_t FW, int32_t CI, int32_t CO, int32_t g, int32_t G, vector<vector<vector<vector<FPArray>>>> &inputArr, vector<vector<FPArray>> &outputArr)
+void __onnxbridge_Conv2DReshapeFilterGroup(int32_t FH, int32_t FW, int32_t CI, int32_t CO, int32_t g, int32_t G, vector<vector<vector<vector<FPArray>>>> &inputArr, vector<vector<FPArray>> &outputArr)
 {
     int32_t CIG = (CI / G);
     int32_t COG = (CO / G);
@@ -161,7 +161,7 @@ void Conv2DReshapeFilterGroup(int32_t FH, int32_t FW, int32_t CI, int32_t CO, in
     }
 }
 
-void Conv2DReshapeInputGroup(int32_t N, int32_t H, int32_t W, int32_t CI, int32_t FH, int32_t FW, int32_t zPadHLeft, int32_t zPadHRight, int32_t zPadWLeft, int32_t zPadWRight, int32_t strideH, int32_t strideW, int32_t g, int32_t G, int32_t RRows, int32_t RCols, vector<vector<vector<vector<FPArray>>>> &inputArr, vector<vector<FPArray>> &outputArr)
+void __onnxbridge_Conv2DReshapeInputGroup(int32_t N, int32_t H, int32_t W, int32_t CI, int32_t FH, int32_t FW, int32_t zPadHLeft, int32_t zPadHRight, int32_t zPadWLeft, int32_t zPadWRight, int32_t strideH, int32_t strideW, int32_t g, int32_t G, int32_t RRows, int32_t RCols, vector<vector<vector<vector<FPArray>>>> &inputArr, vector<vector<FPArray>> &outputArr)
 {
     int32_t linIdxFilterMult = 0;
     int32_t CIG = (CI / G);
@@ -213,7 +213,7 @@ void Conv2DReshapeInputGroup(int32_t N, int32_t H, int32_t W, int32_t CI, int32_
     }
 }
 
-void Conv2DGroupWrapper(
+void __onnxbridge_Conv2DGroupWrapper(
     int32_t N, int32_t CI, int32_t H, int32_t W, int32_t FH, int32_t FW, int32_t CO,
     int32_t zPadHLeft, int32_t zPadHRight, int32_t zPadWLeft, int32_t zPadWRight,
     int32_t strideH, int32_t strideW, int32_t G,
@@ -236,14 +236,14 @@ void Conv2DGroupWrapper(
         vector<vector<FPArray>> filterReshaped = make_vector_float(ALICE, reshapedFilterRows, reshapedFilterCols);
         vector<vector<FPArray>> matmulOP = make_vector_float(ALICE, reshapedFilterRows, reshapedIPCols);
 
-        Conv2DReshapeFilterGroup(FH, FW, CI, CO, g, G, filterArr, filterReshaped);
-        Conv2DReshapeInputGroup(N, H, W, CI, FH, FW, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideH, strideW, g, G, reshapedIPRows, reshapedIPCols, inputArr, inputReshaped);
+        __onnxbridge_Conv2DReshapeFilterGroup(FH, FW, CI, CO, g, G, filterArr, filterReshaped);
+        __onnxbridge_Conv2DReshapeInputGroup(N, H, W, CI, FH, FW, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideH, strideW, g, G, reshapedIPRows, reshapedIPCols, inputArr, inputReshaped);
         MatMul(reshapedFilterRows, reshapedFilterCols, reshapedIPCols, filterReshaped, inputReshaped, matmulOP);
-        Conv2DReshapeMatMulOPGroup(N, outH, outW, CO, g, G, matmulOP, outArr);
+        __onnxbridge_Conv2DReshapeMatMulOPGroup(N, outH, outW, CO, g, G, matmulOP, outArr);
     }
 }
 
-void ConvAdd(int32_t s1, int32_t s2, int32_t s3, int32_t s4,
+void __onnxbridge_ConvAdd(int32_t s1, int32_t s2, int32_t s3, int32_t s4,
              vector<vector<vector<vector<FPArray>>>> &inArr,
              vector<FPArray> &biasArr,
              vector<vector<vector<vector<FPArray>>>> &outArr)

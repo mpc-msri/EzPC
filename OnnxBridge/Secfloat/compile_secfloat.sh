@@ -52,6 +52,7 @@ target_link_libraries($BINARY_NAME SCI::SCI-SecfloatML )
 cmake --log-level=ERROR .
 
 cmake --build . --parallel
+exit
 rm -rf ../$BINARY_NAME 
 mv $BINARY_NAME ../$DIR
 cd ..

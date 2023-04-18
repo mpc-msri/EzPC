@@ -176,6 +176,8 @@ auto make_vector_float_rand(int party, size_t first, Args... sizes)
 vector<int> get_chunks(int items, int slots);
 tuple<BoolArray,BoolArray,FixArray,FixArray> get_components(int tid, const FPArray &x);
 
+void Transpose(int32_t s1, int32_t s2, vector<vector<FPArray>> &inArr, vector<vector<FPArray>> &outArr) ;
+
 void ElemWiseAdd(int32_t s1, vector<FPArray> &arr1, vector<FPArray> &arr2, vector<FPArray> &outArr);
 
 void ElemWiseSub(int32_t s1, vector<FPArray> &arr1, vector<FPArray> &arr2, vector<FPArray> &outArr);
@@ -249,6 +251,8 @@ void Softmax2(
 	vector<vector<FPArray>> &outArr);
 
 void Ln(int32_t s1, vector<FPArray> &inArr, vector<FPArray> &outArr);
+
+void Sqrt(int32_t s1, vector<FPArray> &inArr, vector<FPArray> &outArr);
 
 void Sigmoid(int32_t s1, vector<FPArray>& inArr, vector<FPArray>& outArr) ; 
 
@@ -327,5 +331,11 @@ void PoolProp(
 // Backward functions
 
 void computeMSELoss(int32_t m, int32_t s, vector<vector<FPArray>> &target, vector<vector<FPArray>> &fwdOut, vector<FPArray> &loss);
+
+
+// GPT
+
+void Gelu(int32_t s1, vector<FPArray> &inArr, vector<FPArray> &outArr) ;
+
 
 #endif
