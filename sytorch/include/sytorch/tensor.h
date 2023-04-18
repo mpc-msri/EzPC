@@ -156,12 +156,58 @@ public:
         fill(0);
     }
 
+    void input(int scale)
+    {
+        for (u64 i = 0; i < size(); i++)
+        {
+            std::cin >> data[i];
+            data[i] = (i64)(data[i] * (1LL << scale));
+        }
+    }
+
+    void print()
+    {
+        std::cout << "Tensor(";
+        for (int i = 0; i < this->shape.size(); i++)
+        {
+            std::cout << this->shape[i] << ", ";
+        }
+        std::cout << ")" << std::endl;
+        for (u64 i = 0; i < size(); i++)
+        {
+            std::cout << data[i] << " ";
+        }
+        std::cout << std::endl;
+    }
+
     void printshape() {
         std::cout << "(";
         for(int i = 0; i < this->shape.size(); i++) {
             std::cout << this->shape[i] << ", ";
         }
         std::cout << ")" << std::endl;
+    }
+
+    T multidir_broadcast_value(const std::vector<u64> &broadcast_shape, const std::vector<u64> &idx) const
+    {
+        always_assert(broadcast_shape.size() >= this->shape.size());
+        always_assert(broadcast_shape.size() == idx.size());
+        int num_broadcast_dims = broadcast_shape.size() - this->shape.size();
+        std::vector<u64> new_idx;
+        for (u64 i = 0; i < this->shape.size(); i++)
+        {
+            always_assert(this->shape[i] == 1 || this->shape[i] == broadcast_shape[i + num_broadcast_dims]);
+            if (this->shape[i] == 1)
+            {
+                new_idx.push_back(0);
+            }
+            else
+            {
+                always_assert(idx[i + num_broadcast_dims] < this->shape[i]);
+                new_idx.push_back(idx[i + num_broadcast_dims]);
+            }
+        }
+        return this->value_at(new_idx);
     }
 
     void load(const std::vector<std::vector<std::vector<std::vector<std::vector<float>>>>> &arr, int scale)
