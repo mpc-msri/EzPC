@@ -43,6 +43,7 @@ public:
     void matmulTransposeB(const Tensor2D<T> &a, const Tensor2D<T> &b, Tensor2D<T> &c);
 
     void conv2D(u64 fh, u64 fw, u64 padding, u64 stride, u64 ci, u64 co, const Tensor4D<T> &input, const Tensor2D<T> &filter, Tensor4D<T> &output);
+    void conv3D(u64 fd, u64 fh, u64 fw, u64 padding, u64 stride, u64 ci, u64 co, const Tensor5D<T> &input, const Tensor2D<T> &filter, Tensor5D<T> &output);
 
     void relu(const Tensor<T> &in, const Tensor<T> &out, const Tensor<T> &drelu, u64 scale, int mode);
     // void truncate(const Tensor4D<T> &in, const Tensor4D<T> &out, u64 shift);

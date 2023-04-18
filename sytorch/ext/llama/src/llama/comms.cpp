@@ -403,6 +403,45 @@ void Peer::send_conv2d_key(const Conv2DKey &k) {
     }
 }
 
+void Peer::send_conv3d_key(const Conv3DKey &k) {
+    int N = k.N;
+    int D = k.D;
+    int H = k.H;
+    int W = k.W;
+    int CO = k.CO;
+    int CI = k.CI;
+    int FD = k.FD;
+    int FH = k.FH;
+    int FW = k.FW;
+    int zPadDLeft = k.zPadDLeft;
+    int zPadDRight = k.zPadDRight;
+    int zPadHLeft = k.zPadHLeft;
+    int zPadHRight = k.zPadHRight; 
+    int zPadWLeft = k.zPadWLeft;
+    int zPadWRight = k.zPadWRight;;
+    int strideH = k.strideH;
+    int strideW = k.strideW;
+    int strideD = k.strideD;
+
+    int d0 = N;
+    int d1 = ((D - FD + (zPadDLeft + zPadDRight)) / strideD) + 1;
+    int d2 = ((H - FH + (zPadHLeft + zPadHRight)) / strideH) + 1;
+    int d3 = ((W - FW + (zPadWLeft + zPadWRight)) / strideW) + 1;
+    int d4 = CO;
+
+    for(size_t i = 0; i < N * D * H * W * CI; ++i) {
+        send_ge(k.a[i], k.Bin);
+    }
+
+    for(size_t i = 0; i < FD * FH * FW * CI * CO; ++i) {
+        send_ge(k.b[i], k.Bin);
+    }
+
+    for(size_t i = 0; i < d0 * d1 * d2 * d3 * d4; ++i) {
+        send_ge(k.c[i], k.Bout);
+    }
+}
+
 void Peer::send_dcf_keypack(const DCFKeyPack &kp) {
     for (int i = 0; i < kp.Bin + 1; ++i) {
         send_block(kp.k[i]);
@@ -1011,6 +1050,61 @@ Conv2DKey Dealer::recv_conv2d_key(int Bin, int Bout, int64_t N, int64_t H, int64
                 }
             }
         }
+    }
+    return k;
+}
+
+Conv3DKey Dealer::recv_conv3d_key(int Bin, int Bout, int64_t N, int64_t D, int64_t H, int64_t W,
+                   int64_t CI, int64_t FD, int64_t FH, int64_t FW, int64_t CO,
+                   int64_t zPadDLeft, int64_t zPadDRight,
+                   int64_t zPadHLeft, int64_t zPadHRight, 
+                   int64_t zPadWLeft, int64_t zPadWRight, 
+                   int64_t strideD, int64_t strideH, int64_t strideW) {
+    Conv3DKey k;
+    k.Bin = Bin;
+    k.Bout = Bout;
+    k.N = N;
+    k.D = D;
+    k.H = H;
+    k.W = W;
+    k.CO = CO;
+    k.CI = CI;
+    k.FD = FD;
+    k.FH = FH;
+    k.FW = FW;
+    k.zPadDLeft = zPadDLeft;
+    k.zPadDRight = zPadDRight;
+    k.zPadHLeft = zPadHLeft;
+    k.zPadHRight = zPadHRight; 
+    k.zPadWLeft = zPadWLeft;
+    k.zPadWRight = zPadWRight;
+    k.strideD = strideD;
+    k.strideH = strideH;
+    k.strideW = strideW;
+
+    int d0 = N;
+    int d1 = ((D - FD + (zPadDLeft + zPadDRight)) / strideD) + 1;
+    int d2 = ((H - FH + (zPadHLeft + zPadHRight)) / strideH) + 1;
+    int d3 = ((W - FW + (zPadWLeft + zPadWRight)) / strideW) + 1;
+    int d4 = CO;
+
+    k.a = make_array<GroupElement>(N, D, H, W, CI);
+    k.b = make_array<GroupElement>(FD, FH, FW, CI, CO);
+    k.c = make_array<GroupElement>(d0, d1, d2, d3, d4);
+
+    for(size_t i = 0; i < N * D * H * W * CI; ++i) {
+        k.a[i] = (party == SERVER ? GroupElement(prngShared.get<uint64_t>()) : recv_ge(Bin));
+        mod(k.a[i], Bin);
+    }
+
+    for(size_t i = 0; i < FD * FH * FW * CI * CO; ++i) {
+        k.b[i] = (party == SERVER ? GroupElement(prngShared.get<uint64_t>()) : recv_ge(Bin));
+        mod(k.b[i], Bin);
+    }
+
+    for(size_t i = 0; i < d0 * d1 * d2 * d3 * d4; ++i) {
+        k.c[i] = (party == SERVER ? GroupElement(prngShared.get<uint64_t>()) : recv_ge(Bout));
+        mod(k.c[i], Bout);
     }
     return k;
 }
