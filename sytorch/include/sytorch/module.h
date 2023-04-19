@@ -20,7 +20,7 @@ public:
 
     virtual Tensor<T>& _forward(Tensor<T> &input) = 0;
 
-    SytorchModule() : activation({0, 0, 0, 0}), allNodesInExecutionOrder(0)
+    SytorchModule() : activation({}), allNodesInExecutionOrder(0)
     {
 
     }
@@ -79,39 +79,22 @@ public:
         return concatLayerMap[id];
     }
 
-    void init(const std::vector<u64> &shape, u64 scale)
+    void genGraphAndExecutionOrder()
     {
-        Tensor<T> ip(shape);
+        Tensor<T> ip({});
+        ip.graphGenMode = true;
         ip.graphNode = new LayerGraphNode<T>();
         ip.graphNode->layer = new PlaceHolderLayer<T>("Input");
-        ip.graphNode->layer->currentInputShape = shape;
+        ip.graphNode->layer->currentInputShape = {};
         ip.graphNode->allNodesInExecutionOrderRef = &allNodesInExecutionOrder;
-        Layer<T>::fakeExecution = true;
         auto &res = this->_forward(ip);
-        Layer<T>::fakeExecution = false;
+        ip.graphGenMode = false;
         root = ip.graphNode;
-        activation.resize(res.shape);
-        
-        topologicalApply(root, [=](LayerGraphNode<T> *node, LayerGraphNode<T> *_root) {
-            node->layer->init(node->layer->currentInputShape, scale);
-        });
-
-        this->scale = scale;
-        generateAddLayerMap();
-        generateConcatLayerMap();
     }
 
     void init(u64 scale)
     {
-        Tensor<T> ip({0, 0, 0, 0});
-        ip.graphNode = new LayerGraphNode<T>();
-        ip.graphNode->layer = new PlaceHolderLayer<T>("Input");
-        ip.graphNode->allNodesInExecutionOrderRef = &allNodesInExecutionOrder;
-        Layer<T>::fakeExecution = true;
-        auto &res = this->_forward(ip);
-        Layer<T>::fakeExecution = false;
-        root = ip.graphNode;
-        
+        genGraphAndExecutionOrder();
         topologicalApply(root, [=](LayerGraphNode<T> *node, LayerGraphNode<T> *_root) {
             node->layer->initScale(scale);
         });
@@ -250,7 +233,10 @@ public:
 
     void add(std::vector<Tensor<T> *> &arr, Tensor<T> &c)
     {
-        if (Layer<T>::fakeExecution) {
+        if (arr[0]->graphGenMode) {
+            for (auto &a : arr) {
+                always_assert(a->graphGenMode);
+            }
             c.graphNode = new LayerGraphNode<T>();
             c.graphNode->layer = new PlaceHolderLayer<T>("Add");
             for (auto &a : arr) {
@@ -259,6 +245,7 @@ public:
             }
             c.graphNode->allNodesInExecutionOrderRef = arr[0]->graphNode->allNodesInExecutionOrderRef;
             c.graphNode->allNodesInExecutionOrderRef->push_back(c.graphNode);
+            c.graphGenMode = true;
             return;
         }
 
@@ -306,7 +293,10 @@ public:
     // doesnt have assertions, don't use directly, use the variadic version only
     void concat(std::vector<Tensor<T> *> &arr, Tensor<T> &c)
     {
-        if (Layer<T>::fakeExecution) {
+        if (arr[0]->graphGenMode) {
+            for (auto &a : arr) {
+                always_assert(a->graphGenMode);
+            }
             c.graphNode = new LayerGraphNode<T>();
             c.graphNode->layer = new PlaceHolderLayer<T>("Concat");
             for (auto &a : arr) {
@@ -315,6 +305,7 @@ public:
             }
             c.graphNode->allNodesInExecutionOrderRef = arr[0]->graphNode->allNodesInExecutionOrderRef;
             c.graphNode->allNodesInExecutionOrderRef->push_back(c.graphNode);
+            c.graphGenMode = true;
             return;
         }
 

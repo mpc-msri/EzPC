@@ -22,8 +22,6 @@ public:
     int forwardTruncationMode = 0;
     bool useBias = true;
 
-    // we set this to true when we want to generate the execution graph without actually executing the layers
-    static bool fakeExecution;
     LayerGraphNode<T> *node = nullptr;
 
     Layer(const std::string &name) : activation({0}), name(name) {
@@ -53,20 +51,23 @@ public:
     virtual void forward_internal(Tensor<T> &a, bool train = true) = 0;
     
     Tensor<T>& forward(Tensor<T> &a, bool train = true) {
-        if (fakeExecution) {
-            activation.graphNode = new LayerGraphNode<T>();
-            node = activation.graphNode;
-            currentInputShape = a.shape;
-            activation.graphNode->layer = this;
-            activation.graphNode->parents.push_back(a.graphNode);
-            activation.graphNode->allNodesInExecutionOrderRef = a.graphNode->allNodesInExecutionOrderRef;
-            activation.graphNode->allNodesInExecutionOrderRef->push_back(activation.graphNode);
-            a.graphNode->children.push_back(activation.graphNode);
+        if (a.graphGenMode) {
+            node = new LayerGraphNode<T>();
+            auto parentNode = a.graphNode;
+            node->layer = this;
+            
+            node->allNodesInExecutionOrderRef = parentNode->allNodesInExecutionOrderRef;
+            node->allNodesInExecutionOrderRef->push_back(node);
+            
+            node->parents.push_back(parentNode);
+            parentNode->children.push_back(node);
 
-            auto outdims = this->get_output_dims(a.shape);
-            activation.resize(outdims);
+            activation.graphNode = node;
+            activation.graphGenMode = true;
             return activation;
         }
+
+        activation.graphGenMode = false;
         resize(a.shape);
         if (node != nullptr) {
             node->currTensor = &activation;
@@ -148,6 +149,7 @@ public:
 
     std::vector<u64> get_output_dims(const std::vector<u64> &inShape) {
         always_assert(inShape.size() == 4);
+        always_assert(inShape[3] == ci);
         u64 newH = (((inShape[1] + 2*padding - fh)/stride) + 1);
         u64 newW = (((inShape[2] + 2*padding - fw)/stride) + 1);
         return {inShape[0], newH, newW, co};
@@ -205,6 +207,7 @@ public:
 
     std::vector<u64> get_output_dims(const std::vector<u64> &inShape) {
         always_assert(inShape.size() == 5);
+        always_assert(inShape[4] == ci);
         u64 newD = (((inShape[1] + 2*padding - fd)/stride) + 1);
         u64 newH = (((inShape[2] + 2*padding - fh)/stride) + 1);
         u64 newW = (((inShape[3] + 2*padding - fw)/stride) + 1);
@@ -390,7 +393,7 @@ public:
 
     std::vector<u64> get_output_dims(const std::vector<u64> &inShape) {
         always_assert(inShape.size() == 2);
-        // assert(inShape[1] == in);
+        assert(inShape[1] == in);
         return {inShape[0], out};
     }
 };
@@ -536,6 +539,7 @@ public:
 
     std::vector<u64> get_output_dims(const std::vector<u64> &inShape) {
         always_assert(inShape.size() == 5);
+        always_assert(inShape[4] == ci);
         u64 newD = (((inShape[1] - 1)*stride + fd - 2*padding));
         u64 newH = (((inShape[2] - 1)*stride + fh - 2*padding));
         u64 newW = (((inShape[3] - 1)*stride + fw - 2*padding));
@@ -561,6 +565,3 @@ public:
         return inShape;
     }
 };
-
-template <typename T>
-bool Layer<T>::fakeExecution = false;
