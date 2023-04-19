@@ -21,6 +21,7 @@ public:
     int mode = 0; // only used in ReLU in llama improved to decide between relu and reluext, might need something cleaner?
     int forwardTruncationMode = 0;
     bool useBias = true;
+    bool isTrainingMode = false;
 
     LayerGraphNode<T> *node = nullptr;
 
@@ -48,9 +49,9 @@ public:
         _resize(shape);
     };
 
-    virtual void forward_internal(Tensor<T> &a, bool train = true) = 0;
+    virtual void _forward(Tensor<T> &a) = 0;
     
-    Tensor<T>& forward(Tensor<T> &a, bool train = true) {
+    Tensor<T>& forward(Tensor<T> &a) {
         if (a.graphGenMode) {
             node = new LayerGraphNode<T>();
             auto parentNode = a.graphNode;
@@ -76,7 +77,7 @@ public:
         if (doPreSignExtension) {
             this->backend->signext(a, scale);
         }
-        forward_internal(a, train);
+        _forward(a);
         if (doTruncationForward) {
             this->backend->truncateForward(activation, scale, forwardTruncationMode);
         }
@@ -95,6 +96,14 @@ public:
 
     virtual void setBackend(Backend<T> *b) {
         backend = b;
+    }
+
+    void train() {
+        isTrainingMode = true;
+    }
+
+    void eval() {
+        isTrainingMode = false;
     }
 };
 
@@ -131,13 +140,15 @@ public:
     void _resize(const std::vector<u64> &shape) {
         always_assert(shape.size() == 4);
         always_assert(shape[3] == ci);
-        inp.resize(shape);
+        if (this->isTrainingMode)
+            inp.resize(shape);
     }
 
-    void forward_internal(Tensor<T> &a, bool train = true) {
+    void _forward(Tensor<T> &a) {
         always_assert(a.shape.size() == 4);
         assert(a.shape[3] == ci);
-        inp.copy(a);
+        if (this->isTrainingMode)
+            inp.copy(a);
         auto act_4d = this->activation.as_4d();
         this->backend->conv2D(fh, fw, padding, stride, ci, co, a.as_4d(), filter, act_4d);
         if (this->useBias)
@@ -189,13 +200,15 @@ public:
     void _resize(const std::vector<u64> &shape) {
         always_assert(shape.size() == 5);
         always_assert(shape[4] == ci);
-        inp.resize(shape);
+        if (this->isTrainingMode)
+            inp.resize(shape);
     }
 
-    void forward_internal(Tensor<T> &a, bool train = true) {
+    void _forward(Tensor<T> &a) {
         always_assert(a.shape.size() == 5);
         assert(a.shape[4] == ci);
-        inp.copy(a);
+        if (this->isTrainingMode)
+            inp.copy(a);
         auto act_5d = this->activation.as_5d();
         this->backend->conv3D(fd, fh, fw, padding, stride, ci, co, a.as_5d(), filter, act_5d);
         if (this->useBias)
@@ -226,7 +239,7 @@ public:
         always_assert(shape.size() == 4);
     }
 
-    void forward_internal(Tensor<T> &a, bool train = true) {
+    void _forward(Tensor<T> &a) {
         always_assert(a.shape.size() == 4);
         this->backend->avgPool2D(ks, padding, stride, a.as_4d(), this->activation.as_4d(), this->scale.as_4d());
     }
@@ -250,7 +263,7 @@ public:
         always_assert(shape.size() == 4);
     }
 
-    void forward_internal(Tensor<T> &a, bool train = true) {
+    void _forward(Tensor<T> &a) {
         this->backend->sumPool2D(ks, padding, stride, a.as_4d(), this->activation.as_4d());
     }
 
@@ -275,7 +288,7 @@ public:
         this->maxIndex.resize(this->activation.shape);
     }
 
-    void forward_internal(Tensor<T> &a, bool train = true) {
+    void _forward(Tensor<T> &a) {
         auto a_4d = a.as_4d();
         auto act_4d = this->activation.as_4d();
         this->backend->maxPool2D(ks, padding, stride, a_4d, act_4d, maxIndex, this->scale, this->mode);
@@ -295,7 +308,7 @@ public:
 
     Flatten() : Layer<T>("Flatten") {}
 
-    void forward_internal(Tensor<T> &a, bool train = true) {
+    void _forward(Tensor<T> &a) {
         if (a.shape.size() == 4) {
             auto a_4d = a.as_4d();
             auto act_2d = this->activation.as_2d();
@@ -379,7 +392,7 @@ public:
         inp.resize(shape);
     }
 
-    void forward_internal(Tensor<T> &a, bool train = true) {
+    void _forward(Tensor<T> &a) {
         this->inp.copy(a);
         auto a_2d = a.as_2d();
         auto act_2d = this->activation.as_2d();
@@ -408,7 +421,7 @@ public:
         this->drelu.resize(shape);
     }
 
-    void forward_internal(Tensor<T> &a, bool train = true) {
+    void _forward(Tensor<T> &a) {
         this->backend->relu(a, this->activation, this->drelu, this->scale, this->mode);
     }
 
@@ -434,10 +447,10 @@ public:
         always_assert(shape[3] == this->A.size);
     }
 
-    void forward_internal(Tensor<T> &a, bool train = true) {
+    void _forward(Tensor<T> &a) {
         always_assert(a.shape.size() == 4);
         assert(a.shape[3] == this->A.size);
-        if (train) {
+        if (this->isTrainingMode) {
             std::runtime_error("BatchNorm2dInference should not be used in training mode");
         }
         else {
@@ -457,7 +470,7 @@ class Identity: public Layer<T> {
 public:
     Identity() :  Layer<T>("Identity") {}
 
-    void forward_internal(Tensor<T> &a, bool train = true) {
+    void _forward(Tensor<T> &a) {
         this->activation.copy(a);
     }
 
@@ -477,7 +490,7 @@ public:
         always_assert(shape[1] == shape[2]);
     }
     
-    void forward_internal(Tensor<T> &a, bool train = true) {
+    void _forward(Tensor<T> &a) {
         auto a_4d = a.as_4d();
         auto act_4d = this->activation.as_4d();
         this->backend->avgPool2D(a_4d.d2, 0, 1, a_4d, act_4d, this->scale);
@@ -525,7 +538,7 @@ public:
         always_assert(shape[4] == ci);
     }
 
-    void forward_internal(Tensor<T> &a, bool train = true) {
+    void _forward(Tensor<T> &a) {
         always_assert(a.shape.size() == 5);
         assert(a.shape[4] == ci);
         auto act_5d = this->activation.as_5d();
@@ -557,7 +570,7 @@ public:
         throw std::runtime_error("PlaceHolderLayer only to be used for tree traversal");
     }
 
-    void forward_internal(Tensor<T> &a, bool train = true) {
+    void _forward(Tensor<T> &a) {
         throw std::runtime_error("PlaceHolderLayer only to be used for tree traversal");
     }
 
