@@ -312,6 +312,27 @@ public:
                 }
             }
         }
+        else if (a.shape.size() == 5) {
+            auto a_5d = a.as_5d();
+            auto act_2d = this->activation.as_2d();
+            u64 d1 = a.shape[0];
+            u64 d2 = a.shape[1];
+            u64 d3 = a.shape[2];
+            u64 d4 = a.shape[3];
+            u64 d5 = a.shape[4];
+
+            for (u64 i = 0; i < d1; i++) {
+                for (u64 j = 0; j < d2; j++) {
+                    for (u64 k = 0; k < d3; k++) {
+                        for (u64 l = 0; l < d4; l++) {
+                            for (u64 m = 0; m < d5; ++m) {
+                                act_2d(i, m * d2 * d3 * d4 + j * d3 * d4 + k * d4 + l) = a_5d(i, j, k, l, m);
+                            }
+                        }
+                    }
+                }
+            }
+        }
         else {
             u64 sz = a.size();
             for (u64 i = 0; i < sz; i++) {
