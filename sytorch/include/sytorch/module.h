@@ -386,4 +386,18 @@ public:
         auto res = collect(args...);
         return concat(res);
     }
+
+    void train()
+    {
+        topologicalApply(root, [=](LayerGraphNode<T> *node, LayerGraphNode<T> *_root) {
+            node->layer->train();
+        });
+    }
+
+    void eval()
+    {
+        topologicalApply(root, [=](LayerGraphNode<T> *node, LayerGraphNode<T> *_root) {
+            node->layer->eval();
+        });
+    }
 };
