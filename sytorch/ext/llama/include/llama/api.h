@@ -49,6 +49,14 @@ void Conv2DGroupWrapper(int64_t N, int64_t H, int64_t W,
                         int64_t strideW, int64_t G,
                         MASK_PAIR(GroupElement *inputArr), MASK_PAIR(GroupElement *filterArr), MASK_PAIR(GroupElement *outArr));
 
+void Conv3DWrapper(int32_t N, int32_t D, int32_t H, int32_t W,
+            int32_t CI, int32_t FD, int32_t FH, int32_t FW,
+            int32_t CO, int32_t zPadDLeft, int32_t zPadDRight, int32_t zPadHLeft,
+            int32_t zPadHRight, int32_t zPadWLeft,
+            int32_t zPadWRight, int32_t strideD, int32_t strideH,
+            int32_t strideW, GroupElement *inputArr, GroupElement *filterArr,
+            GroupElement *outArr);
+
 void ElemWiseActModelVectorMult(int32_t size, MASK_PAIR(GroupElement *inArr),
                                 MASK_PAIR(GroupElement *multArrVec), MASK_PAIR(GroupElement *outputArr));
 

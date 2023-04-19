@@ -124,7 +124,7 @@ public:
     void zero()
     {
         topologicalApply(root, [](LayerGraphNode<T> *node, LayerGraphNode<T> *_root) {
-            if (node->layer->name == "Conv2D" || node->layer->name == "FC") {
+            if (node->layer->name == "Conv2D" || node->layer->name == "FC" || node->layer->name == "Conv3D") {
                 node->layer->getweights().fill(0);
                 node->layer->getbias().fill(0);
             }

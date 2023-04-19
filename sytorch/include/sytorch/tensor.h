@@ -477,6 +477,10 @@ public:
         }
     }
 
+    Tensor<T> as_nd()
+    {
+        return Tensor<T>(data, {d1, d2});
+    }
 };
 
 template <typename T>

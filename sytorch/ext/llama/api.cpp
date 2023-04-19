@@ -279,7 +279,7 @@ void Conv2DWrapper(int32_t N, int32_t H, int32_t W,
 
 }
 
-void Conv3D(int32_t N, int32_t D, int32_t H, int32_t W,
+void Conv3DWrapper(int32_t N, int32_t D, int32_t H, int32_t W,
             int32_t CI, int32_t FD, int32_t FH, int32_t FW,
             int32_t CO, int32_t zPadDLeft, int32_t zPadDRight, int32_t zPadHLeft,
             int32_t zPadHRight, int32_t zPadWLeft,
