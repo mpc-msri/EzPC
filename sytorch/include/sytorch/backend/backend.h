@@ -65,6 +65,9 @@ public:
     virtual void batchNorm2dInference(const Tensor1D<T> &A, const Tensor1D<T> &B, const Tensor4D<T> &x, Tensor4D<T> &y, u64 scale) NOT_IMPLEMENTED;
     virtual void signext(Tensor<T> &x, u64 scale) NOT_IMPLEMENTED;
 
+    // add API
+    virtual void add(const std::vector<Tensor<T> *> &in, const Tensor<T> &out) NOT_IMPLEMENTED;
+
     virtual void optimize(LayerGraphNode<T> *root)
     {
         

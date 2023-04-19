@@ -399,4 +399,10 @@ public:
         // this->truncateForward(y, scale);
 
     }
+
+    void add(const std::vector<Tensor<T> *> &in, const Tensor<T> &out) {
+        auto ct = new ClearText<T>;
+        ct->add(in, out);
+        delete ct;
+    }
 };

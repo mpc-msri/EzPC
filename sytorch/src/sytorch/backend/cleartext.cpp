@@ -294,6 +294,23 @@ void ClearText<T>::batchNorm2dInference(const Tensor1D<T> &A, const Tensor1D<T> 
     });
 }
 
+template <typename T>
+void ClearText<T>::add(const std::vector<Tensor<T> *> &in, const Tensor<T> &out)
+{
+    always_assert(in.size() > 0);
+    always_assert(out.size() == in[0]->size());
+    for (int i = 0; i < in.size(); i++) {
+        always_assert(out.size() == in[i]->size());
+    }
+    fastfor(out.size(), [&](int i) {
+        T sum = 0;
+        for (int j = 0; j < in.size(); j++) {
+            sum += in[j]->data[i];
+        }
+        out.data[i] = sum;
+    });
+}
+
 template class ClearText<i64>;
 template class ClearText<i32>;
 template class ClearText<u64>;

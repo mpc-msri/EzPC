@@ -402,11 +402,10 @@ std::vector<T *> collect(T &first, Args & ... args)
     collectHelper(res, args...);
     return res;
 }
-
 template <typename T, typename... Args>
-void collectHelper(std::vector<T *> &res, T &a)
+void collectHelper(std::vector<T *> &res)
 {
-    res.push_back(&a);
+
 }
 
 template <typename T, typename... Args>
@@ -414,4 +413,13 @@ void collectHelper(std::vector<T *> &res, T &a, Args & ... args)
 {
     res.push_back(&a);
     collectHelper(res, args...);
+}
+
+template <typename T>
+std::vector<std::vector<u64>> getShapes(const std::vector<Tensor<T> *> &tensors) {
+    std::vector<std::vector<u64>> shapes;
+    for (auto tensor : tensors) {
+        shapes.push_back(tensor->shape);
+    }
+    return shapes;
 }

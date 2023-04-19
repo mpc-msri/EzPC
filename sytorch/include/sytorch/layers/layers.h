@@ -8,7 +8,6 @@ template <typename T>
 class Layer {
 public:
     std::string name;
-    std::vector<u64> currentInputShape;
     Tensor<T> activation;
     Backend<T> *backend = nullptr;
 
@@ -29,11 +28,6 @@ public:
         backend = new ClearText<T>();
     }
 
-    void init(const std::vector<u64> &shape, u64 scale) {
-        initScale(scale);
-        resize(shape);
-    }
-
     virtual void _initScale(u64 scale) {};
     void initScale(u64 scale) {
         always_assert(std::is_integral<T>::value || scale == 0);
@@ -41,41 +35,63 @@ public:
         _initScale(scale);
     };
     
-    virtual void _resize(const std::vector<u64> &shape) {};
-    void resize(const std::vector<u64> &shape) {
-        currentInputShape = shape;
-        auto outdims = this->get_output_dims(shape);
+    virtual void _resize(const std::vector<std::vector<u64>> &shapes) {};
+    void resize(const std::vector<std::vector<u64>> &shapes) {
+        auto outdims = this->get_output_dims(shapes);
         activation.resize(outdims);
-        _resize(shape);
-    };
+        _resize(shapes);
+    }
 
     virtual void _forward(Tensor<T> &a) = 0;
+    virtual void _forward(std::vector<Tensor<T> *> &a) { 
+        if (a.size() != 1)
+            throw std::runtime_error("variable input cardinality not supported in this layer");
+       _forward(*a[0]); 
+    };
     
-    Tensor<T>& forward(Tensor<T> &a) {
-        if (a.graphGenMode) {
+    template <typename... Args>
+    Tensor<T>& forward(Args & ... args) {
+        std::vector<Tensor<T> *> a = collect(args...);
+        return forward(a);
+    }
+
+    Tensor<T>& forward(std::vector<Tensor<T> *> &a) {
+        if (a[0]->graphGenMode) {
+            for (auto &i : a) {
+                always_assert(i->graphGenMode);
+            }
             node = new LayerGraphNode<T>();
-            auto parentNode = a.graphNode;
             node->layer = this;
-            
-            node->allNodesInExecutionOrderRef = parentNode->allNodesInExecutionOrderRef;
+            node->allNodesInExecutionOrderRef = a[0]->graphNode->allNodesInExecutionOrderRef;
             node->allNodesInExecutionOrderRef->push_back(node);
-            
-            node->parents.push_back(parentNode);
-            parentNode->children.push_back(node);
+
+            for(auto &i : a) {
+                auto parentNode = i->graphNode;
+                always_assert(parentNode->allNodesInExecutionOrderRef == node->allNodesInExecutionOrderRef);
+                node->parents.push_back(parentNode);
+                parentNode->children.push_back(node);
+            }
 
             activation.graphNode = node;
             activation.graphGenMode = true;
             return activation;
         }
 
-        activation.graphGenMode = false;
-        resize(a.shape);
-        if (node != nullptr) {
-            node->currTensor = &activation;
-            activation.graphNode = node;
+        // check if we have the graph generated already
+        always_assert(node != nullptr);
+        for(auto &i : a) {
+            always_assert(i->graphNode != nullptr);
         }
+        
+        activation.graphGenMode = false;
+        resize(getShapes(a));
+        node->currTensor = &activation;
+        activation.graphNode = node;
+
         if (doPreSignExtension) {
-            this->backend->signext(a, scale);
+            for(auto &i : a) {
+                this->backend->signext(*i, scale);
+            }
         }
         _forward(a);
         if (doTruncationForward) {
@@ -84,15 +100,15 @@ public:
         if (doPostSignExtension) {
             this->backend->signext(activation, scale);
         }
-        if (a.graphNode != nullptr) {
-            bool gcHappened = a.graphNode->incrementAndGc();
+        for(auto &i : a) {
+            i->graphNode->incrementAndGc();
         }
         return activation;
     }
 
     virtual Tensor2D<T>& getweights() { throw std::runtime_error("not implemented"); };
     virtual Tensor1D<T>& getbias() { throw std::runtime_error("not implemented"); };
-    virtual std::vector<u64> get_output_dims(const std::vector<u64> &inShape) = 0;
+    virtual std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) = 0;
 
     virtual void setBackend(Backend<T> *b) {
         backend = b;
@@ -137,7 +153,9 @@ public:
             bias.randomize(xavier * (1ULL<<(2*scale)));
     }
 
-    void _resize(const std::vector<u64> &shape) {
+    void _resize(const std::vector<std::vector<u64>> &shapes) {
+        always_assert(shapes.size() == 1);
+        auto &shape = shapes[0];
         always_assert(shape.size() == 4);
         always_assert(shape[3] == ci);
         if (this->isTrainingMode)
@@ -158,7 +176,9 @@ public:
     Tensor2D<T>& getweights() { return filter; }
     Tensor1D<T>& getbias() { return bias; }
 
-    std::vector<u64> get_output_dims(const std::vector<u64> &inShape) {
+    std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {
+        always_assert(inShapes.size() == 1);
+        auto &inShape = inShapes[0];
         always_assert(inShape.size() == 4);
         always_assert(inShape[3] == ci);
         u64 newH = (((inShape[1] + 2*padding - fh)/stride) + 1);
@@ -197,7 +217,9 @@ public:
             bias.randomize(xavier * (1ULL<<(2*scale)));
     }
 
-    void _resize(const std::vector<u64> &shape) {
+    void _resize(const std::vector<std::vector<u64>> &shapes) {
+        always_assert(shapes.size() == 1);
+        auto &shape = shapes[0];
         always_assert(shape.size() == 5);
         always_assert(shape[4] == ci);
         if (this->isTrainingMode)
@@ -218,7 +240,9 @@ public:
     Tensor2D<T>& getweights() { return filter; }
     Tensor1D<T>& getbias() { return bias; }
 
-    std::vector<u64> get_output_dims(const std::vector<u64> &inShape) {
+    std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {
+        always_assert(inShapes.size() == 1);
+        auto &inShape = inShapes[0];
         always_assert(inShape.size() == 5);
         always_assert(inShape[4] == ci);
         u64 newD = (((inShape[1] + 2*padding - fd)/stride) + 1);
@@ -235,7 +259,9 @@ public:
 
     AvgPool2D(u64 ks, u64 padding = 0, u64 _stride = 0) : Layer<T>("AvgPool2D"), ks(ks), padding(padding), stride(_stride == 0 ? ks : _stride) {}
 
-    void _resize(const std::vector<u64> &shape) {
+    void _resize(const std::vector<std::vector<u64>> &shapes) {
+        always_assert(shapes.size() == 1);
+        auto &shape = shapes[0];
         always_assert(shape.size() == 4);
     }
 
@@ -244,7 +270,9 @@ public:
         this->backend->avgPool2D(ks, padding, stride, a.as_4d(), this->activation.as_4d(), this->scale.as_4d());
     }
 
-    std::vector<u64> get_output_dims(const std::vector<u64> &inShape) {
+    std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {
+        always_assert(inShapes.size() == 1);
+        auto &inShape = inShapes[0];
         always_assert(inShape.size() == 4);
         u64 newH = (((inShape[1] + 2*padding - ks)/stride) + 1);
         u64 newW = (((inShape[2] + 2*padding - ks)/stride) + 1);
@@ -259,7 +287,9 @@ public:
 
     SumPool2D(u64 ks, u64 padding = 0, u64 _stride = 0) : Layer<T>("SumPool2D"), ks(ks), padding(padding), stride(_stride == 0 ? ks : _stride) {}
 
-    void _resize(const std::vector<u64> &shape) {
+    void _resize(const std::vector<std::vector<u64>> &shapes) {
+        always_assert(shapes.size() == 1);
+        auto &shape = shapes[0];
         always_assert(shape.size() == 4);
     }
 
@@ -267,7 +297,9 @@ public:
         this->backend->sumPool2D(ks, padding, stride, a.as_4d(), this->activation.as_4d());
     }
 
-    std::vector<u64> get_output_dims(const std::vector<u64> &inShape) {
+    std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {
+        always_assert(inShapes.size() == 1);
+        auto &inShape = inShapes[0];
         always_assert(inShape.size() == 4);
         u64 newH = (((inShape[1] + 2*padding - ks)/stride) + 1);
         u64 newW = (((inShape[2] + 2*padding - ks)/stride) + 1);
@@ -283,7 +315,9 @@ public:
 
     MaxPool2D(u64 ks, u64 padding = 0, u64 _stride = 0) : Layer<T>("MaxPool2D"), ks(ks), padding(padding), stride(_stride == 0 ? ks : _stride), maxIndex(0,0,0,0) {}
 
-    void _resize(const std::vector<u64> &shape) {
+    void _resize(const std::vector<std::vector<u64>> &shapes) {
+        always_assert(shapes.size() == 1);
+        auto &shape = shapes[0];
         always_assert(shape.size() == 4);
         this->maxIndex.resize(this->activation.shape);
     }
@@ -294,8 +328,9 @@ public:
         this->backend->maxPool2D(ks, padding, stride, a_4d, act_4d, maxIndex, this->scale, this->mode);
     }
 
-    std::vector<u64> get_output_dims(const std::vector<u64> &inShape) {
-        always_assert(inShape.size() == 4);
+    std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {
+        always_assert(inShapes.size() == 1);
+        auto &inShape = inShapes[0];
         u64 newH = (((inShape[1] + 2*padding - ks)/stride) + 1);
         u64 newW = (((inShape[2] + 2*padding - ks)/stride) + 1);
         return {inShape[0], newH, newW, inShape[3]};
@@ -307,6 +342,12 @@ class Flatten : public Layer<T> {
 public:
 
     Flatten() : Layer<T>("Flatten") {}
+
+    void _resize(const std::vector<std::vector<u64>> &shapes) {
+        always_assert(shapes.size() == 1);
+        auto &shape = shapes[0];
+        always_assert(shape.size() >= 2);
+    }
 
     void _forward(Tensor<T> &a) {
         if (a.shape.size() == 4) {
@@ -357,7 +398,9 @@ public:
         }
     }
 
-    std::vector<u64> get_output_dims(const std::vector<u64> &inShape) {
+    std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {
+        always_assert(inShapes.size() == 1);
+        auto &inShape = inShapes[0];
         u64 prod = 1;
         for(int i = 1; i < inShape.size(); i++) {
             prod *= inShape[i];
@@ -386,7 +429,9 @@ public:
             bias.randomize(xavier * (1ULL<<(2*scale)));
     }
 
-    void _resize(const std::vector<u64> &shape) {
+    void _resize(const std::vector<std::vector<u64>> &shapes) {
+        always_assert(shapes.size() == 1);
+        auto &shape = shapes[0];
         always_assert(shape.size() == 2);
         always_assert(shape[1] == in);
         inp.resize(shape);
@@ -404,7 +449,9 @@ public:
     Tensor2D<T>& getweights() { return weight; }
     Tensor1D<T>& getbias() { return bias; }
 
-    std::vector<u64> get_output_dims(const std::vector<u64> &inShape) {
+    std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {
+        always_assert(inShapes.size() == 1);
+        auto &inShape = inShapes[0];
         always_assert(inShape.size() == 2);
         assert(inShape[1] == in);
         return {inShape[0], out};
@@ -417,7 +464,9 @@ public:
     Tensor<T> drelu;
     ReLU() :  Layer<T>("ReLU"), drelu({0}) {}
 
-    void _resize(const std::vector<u64> &shape) {
+    void _resize(const std::vector<std::vector<u64>> &shapes) {
+        always_assert(shapes.size() == 1);
+        auto &shape = shapes[0];
         this->drelu.resize(shape);
     }
 
@@ -425,7 +474,9 @@ public:
         this->backend->relu(a, this->activation, this->drelu, this->scale, this->mode);
     }
 
-    std::vector<u64> get_output_dims(const std::vector<u64> &inShape) {
+    std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {
+        always_assert(inShapes.size() == 1);
+        auto &inShape = inShapes[0];
         return inShape;
     }
 };
@@ -442,7 +493,9 @@ public:
         this->doTruncationForward = true;
     }
 
-    void _resize(const std::vector<u64> &shape) {
+    void _resize(const std::vector<std::vector<u64>> &shapes) {
+        always_assert(shapes.size() == 1);
+        auto &shape = shapes[0];
         always_assert(shape.size() == 4);
         always_assert(shape[3] == this->A.size);
     }
@@ -458,7 +511,9 @@ public:
         }
     }
 
-    std::vector<u64> get_output_dims(const std::vector<u64> &inShape) {
+    std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {
+        always_assert(inShapes.size() == 1);
+        auto &inShape = inShapes[0];
         always_assert(inShape.size() == 4);
         always_assert(inShape[3] == this->A.size);
         return inShape;
@@ -474,7 +529,9 @@ public:
         this->activation.copy(a);
     }
 
-    std::vector<u64> get_output_dims(const std::vector<u64> &inShape) {
+    std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {
+        always_assert(inShapes.size() == 1);
+        auto &inShape = inShapes[0];
         return inShape;
     }
 };
@@ -485,7 +542,9 @@ public:
 
     GlobalAvgPool2D() : Layer<T>("GlobalAvgPool2D") {}
 
-    void _resize(const std::vector<u64> &shape) {
+    void _resize(const std::vector<std::vector<u64>> &shapes) {
+        always_assert(shapes.size() == 1);
+        auto &shape = shapes[0];
         always_assert(shape.size() == 4);
         always_assert(shape[1] == shape[2]);
     }
@@ -496,7 +555,9 @@ public:
         this->backend->avgPool2D(a_4d.d2, 0, 1, a_4d, act_4d, this->scale);
     }
 
-    std::vector<u64> get_output_dims(const std::vector<u64> &inShape) {
+    std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {
+        always_assert(inShapes.size() == 1);
+        auto &inShape = inShapes[0];
         always_assert(inShape.size() == 4);
         always_assert(inShape[1] == inShape[2]);
         return {inShape[0], 1, 1, inShape[3]};
@@ -533,7 +594,9 @@ public:
             bias.randomize(xavier * (1ULL<<(2*scale)));
     }
 
-    void _resize(const std::vector<u64> &shape) {
+    void _resize(const std::vector<std::vector<u64>> &shapes) {
+        always_assert(shapes.size() == 1);
+        auto &shape = shapes[0];
         always_assert(shape.size() == 5);
         always_assert(shape[4] == ci);
     }
@@ -550,7 +613,9 @@ public:
     Tensor2D<T>& getweights() { return filter; }
     Tensor1D<T>& getbias() { return bias; }
 
-    std::vector<u64> get_output_dims(const std::vector<u64> &inShape) {
+    std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {
+        always_assert(inShapes.size() == 1);
+        auto &inShape = inShapes[0];
         always_assert(inShape.size() == 5);
         always_assert(inShape[4] == ci);
         u64 newD = (((inShape[1] - 1)*stride + fd - 2*padding));
@@ -574,7 +639,41 @@ public:
         throw std::runtime_error("PlaceHolderLayer only to be used for tree traversal");
     }
 
-    std::vector<u64> get_output_dims(const std::vector<u64> &inShape) {
+    std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {
+        always_assert(inShapes.size() == 1);
+        auto &inShape = inShapes[0];
+        return inShape;
+    }
+};
+
+template <typename T>
+class Add: public Layer<T> {
+public:
+    Add() :  Layer<T>("Add") {}
+
+    void _resize(const std::vector<std::vector<u64>> &shapes) {
+        auto &shape0 = shapes[0];
+        for (auto &shape : shapes) {
+            always_assert(shape.size() == shape0.size());
+            for (u64 i = 0; i < shape.size(); i++) {
+                always_assert(shape[i] == shape0[i]);
+            }
+        }
+    }
+
+    void _forward(std::vector<Tensor<T> *> &a) {
+        this->backend->add(a, this->activation);
+    }
+
+    std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {
+        auto &shape0 = inShapes[0];
+        for (auto &shape : inShapes) {
+            always_assert(shape.size() == shape0.size());
+            for (u64 i = 0; i < shape.size(); i++) {
+                always_assert(shape[i] == shape0[i]);
+            }
+        }
+        auto &inShape = inShapes[0];
         return inShape;
     }
 };

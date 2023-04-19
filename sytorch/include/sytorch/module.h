@@ -78,7 +78,6 @@ public:
         ip.graphGenMode = true;
         ip.graphNode = new LayerGraphNode<T>();
         ip.graphNode->layer = new PlaceHolderLayer<T>("Input");
-        ip.graphNode->layer->currentInputShape = {};
         ip.graphNode->allNodesInExecutionOrderRef = &allNodesInExecutionOrder;
         auto &res = this->_forward(ip);
         ip.graphGenMode = false;
@@ -203,11 +202,12 @@ public:
         delete[] floatWeights;
     }
 
-    void add(std::vector<Tensor<T> *> &arr, Tensor<T> &c)
+    Tensor<T> add(std::vector<Tensor<T> *> &arr)
     {
+        Tensor<T> c(arr[0]->shape);
         if (arr[0]->graphGenMode) {
             functionalGraphGen("Add", arr, c);
-            return;
+            return c;
         }
 
         // check if all tensors have same dimensions
@@ -232,12 +232,6 @@ public:
         for (auto &a : arr) {
             bool gcHappened = a->graphNode->incrementAndGc();
         }
-    }
-
-    Tensor<T> add(std::vector<Tensor<T> *> &arr)
-    {
-        Tensor<T> c(arr[0]->shape);
-        add(arr, c);
         return c;
     }
 
