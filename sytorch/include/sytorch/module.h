@@ -2,6 +2,7 @@
 #include <fstream>
 #include <filesystem>
 #include <map>
+#include <algorithm>
 
 template <typename T>
 class SytorchModule {
@@ -12,9 +13,12 @@ public:
     LayerGraphNode<T> *root = nullptr;
     bool debug = true;
     u64 scale;
-    std::map<std::string, LayerGraphNode<T> *> addLayerMap;
-    std::map<std::string, LayerGraphNode<T> *> concatLayerMap;
+    // std::map<std::string, LayerGraphNode<T> *> addLayerMap;
+    // std::map<std::string, LayerGraphNode<T> *> concatLayerMap;
     std::vector<LayerGraphNode<T> *> allNodesInExecutionOrder;
+
+    const std::vector<std::string> functionalLayers = {"Add", "Concat"};
+    std::map<std::string, LayerGraphNode<T> *> functionalLayerMap;
 
 public:
 
@@ -25,58 +29,47 @@ public:
 
     }
 
-    void generateAddLayerMap()
+    void generateFunctionalLayerMap()
     {
-        addLayerMap.clear();
+        functionalLayerMap.clear();
         topologicalApply(root, [=](LayerGraphNode<T> *node, LayerGraphNode<T> *_root) {
-            if (node->layer->name == "Add") {
-                std::string id = "";
+            if (std::find(functionalLayers.begin(), functionalLayers.end(), node->layer->name) != functionalLayers.end()) {
+                std::string id = node->layer->name;
                 for(auto& parent: node->parents) {
                     id += "|" + std::to_string((uint64_t)(parent));
                 }
-                addLayerMap[id] = node;
+                functionalLayerMap[id] = node;
             }
         });
     }
 
-    void generateConcatLayerMap()
+    LayerGraphNode<T> *getFunctionalNode(const std::string &layerName, std::vector<Tensor<T> *> ips)
     {
-        concatLayerMap.clear();
-        topologicalApply(root, [=](LayerGraphNode<T> *node, LayerGraphNode<T> *_root) {
-            if (node->layer->name == "Concat") {
-                std::string id = "";
-                for(auto& parent: node->parents) {
-                    id += "|" + std::to_string((uint64_t)(parent));
-                }
-                concatLayerMap[id] = node;
-            }
-        });
-    }
-
-    LayerGraphNode<T> *getAddNode(std::vector<Tensor<T> *> ips)
-    {
-        std::string id = "";
+        std::string id = layerName;
         for(auto& ip: ips) {
             id += "|" + std::to_string((uint64_t)(ip->graphNode));
         }
-        if (addLayerMap.find(id) == addLayerMap.end()) {
-            std::cerr << "Add layer not found" << std::endl;
+        if (functionalLayerMap.find(id) == functionalLayerMap.end()) {
+            std::cerr << "Layer not found" << std::endl;
             exit(1);
         }
-        return addLayerMap[id];
+        return functionalLayerMap[id];
     }
 
-    LayerGraphNode<T> *getConcatNode(std::vector<Tensor<T> *> ips)
+    void functionalGraphGen(const std::string &layerName, std::vector<Tensor<T> *> &arr, Tensor<T> &c)
     {
-        std::string id = "";
-        for(auto& ip: ips) {
-            id += "|" + std::to_string((uint64_t)(ip->graphNode));
+        for (auto &a : arr) {
+            always_assert(a->graphGenMode);
         }
-        if (concatLayerMap.find(id) == concatLayerMap.end()) {
-            std::cerr << "Concat layer not found" << std::endl;
-            exit(1);
+        c.graphNode = new LayerGraphNode<T>();
+        c.graphNode->layer = new PlaceHolderLayer<T>(layerName);
+        for (auto &a : arr) {
+            c.graphNode->parents.push_back(a->graphNode);
+            a->graphNode->children.push_back(c.graphNode);
         }
-        return concatLayerMap[id];
+        c.graphNode->allNodesInExecutionOrderRef = arr[0]->graphNode->allNodesInExecutionOrderRef;
+        c.graphNode->allNodesInExecutionOrderRef->push_back(c.graphNode);
+        c.graphGenMode = true;
     }
 
     void genGraphAndExecutionOrder()
@@ -100,8 +93,7 @@ public:
         });
 
         this->scale = scale;
-        generateAddLayerMap();
-        generateConcatLayerMap();
+        generateFunctionalLayerMap();
     }
 
     void zero()
@@ -211,41 +203,10 @@ public:
         delete[] floatWeights;
     }
 
-    template <typename... Args>
-    std::vector<Tensor<T> *> collect(Args & ... args)
-    {
-        std::vector<Tensor<T> *> res;
-        collectHelper(res, args...);
-        return res;
-    }
-
-    void collectHelper(std::vector<Tensor<T> *> &res, Tensor<T> &a)
-    {
-        res.push_back(&a);
-    }
-
-    template <typename... Args>
-    void collectHelper(std::vector<Tensor<T> *> &res, Tensor<T> &a, Args & ... args)
-    {
-        res.push_back(&a);
-        collectHelper(res, args...);
-    }
-
     void add(std::vector<Tensor<T> *> &arr, Tensor<T> &c)
     {
         if (arr[0]->graphGenMode) {
-            for (auto &a : arr) {
-                always_assert(a->graphGenMode);
-            }
-            c.graphNode = new LayerGraphNode<T>();
-            c.graphNode->layer = new PlaceHolderLayer<T>("Add");
-            for (auto &a : arr) {
-                c.graphNode->parents.push_back(a->graphNode);
-                a->graphNode->children.push_back(c.graphNode);
-            }
-            c.graphNode->allNodesInExecutionOrderRef = arr[0]->graphNode->allNodesInExecutionOrderRef;
-            c.graphNode->allNodesInExecutionOrderRef->push_back(c.graphNode);
-            c.graphGenMode = true;
+            functionalGraphGen("Add", arr, c);
             return;
         }
 
@@ -256,7 +217,7 @@ public:
             }
         }
 
-        auto cNode = getAddNode(arr);
+        auto cNode = getFunctionalNode("Add", arr);
         cNode->currTensor = &c;
         c.graphNode = cNode;
 
@@ -270,9 +231,6 @@ public:
 
         for (auto &a : arr) {
             bool gcHappened = a->graphNode->incrementAndGc();
-            // if (gcHappened) {
-            //     std::cerr << "Output of " << a->graphNode->layer->name << " cleared" << std::endl;
-            // }
         }
     }
 
@@ -294,54 +252,14 @@ public:
     void concat(std::vector<Tensor<T> *> &arr, Tensor<T> &c)
     {
         if (arr[0]->graphGenMode) {
-            for (auto &a : arr) {
-                always_assert(a->graphGenMode);
-            }
-            c.graphNode = new LayerGraphNode<T>();
-            c.graphNode->layer = new PlaceHolderLayer<T>("Concat");
-            for (auto &a : arr) {
-                c.graphNode->parents.push_back(a->graphNode);
-                a->graphNode->children.push_back(c.graphNode);
-            }
-            c.graphNode->allNodesInExecutionOrderRef = arr[0]->graphNode->allNodesInExecutionOrderRef;
-            c.graphNode->allNodesInExecutionOrderRef->push_back(c.graphNode);
-            c.graphGenMode = true;
+            functionalGraphGen("Concat", arr, c);
             return;
         }
 
-        // check if all tensors have same dimensions except the last one
-        // for (int i = 1; i < arr.size(); ++i) {
-        //     if (arr[i]->d1 != arr[0]->d1 || arr[i]->d2 != arr[0]->d2 || arr[i]->d3 != arr[0]->d3) {
-        //         throw std::runtime_error("All tensors must have same dimensions");
-        //     }
-        // }
-
-        auto cNode = getConcatNode(arr);
+        auto cNode = getFunctionalNode("Concat", arr);
         cNode->currTensor = &c;
         c.graphNode = cNode;
 
-        // u64 d4 = 0;
-        // for (auto &a : arr) {
-        //     d4 += a->d4;
-        // }
-
-        // if (c.d1 != arr[0]->d1 || c.d2 != arr[0]->d2 || c.d3 != arr[0]->d3 || c.d4 != d4) {
-        //     throw std::runtime_error("Output tensor must have correct dimensions");
-        // }
-
-        // u64 d4Idx = 0;
-        // for (auto &a : arr) {
-        //     for (int i = 0; i < c.d1; ++i) {
-        //         for (int j = 0; j < c.d2; ++j) {
-        //             for (int k = 0; k < c.d3; ++k) {
-        //                 for (int l = 0; l < a->d4; ++l) {
-        //                     c(i, j, k, d4Idx + l) = a->operator()(i, j, k, l);
-        //                 }
-        //             }
-        //         }
-        //     }
-        //     d4Idx += a->d4;
-        // }
         u64 sz = c.size();
         for(int i = 0; i < sz; ++i)
         {
@@ -357,9 +275,6 @@ public:
 
         for (auto &a : arr) {
             bool gcHappened = a->graphNode->incrementAndGc();
-            // if (gcHappened) {
-            //     std::cerr << "Output of " << a->graphNode->layer->name << " cleared" << std::endl;
-            // }
         }
     }
 

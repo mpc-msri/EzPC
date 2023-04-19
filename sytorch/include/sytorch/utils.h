@@ -393,3 +393,25 @@ void convTranspose3dLoop(
         }
     }
 }
+
+template <typename T, typename... Args>
+std::vector<T *> collect(T &first, Args & ... args)
+{
+    std::vector<T *> res;
+    res.push_back(&first);
+    collectHelper(res, args...);
+    return res;
+}
+
+template <typename T, typename... Args>
+void collectHelper(std::vector<T *> &res, T &a)
+{
+    res.push_back(&a);
+}
+
+template <typename T, typename... Args>
+void collectHelper(std::vector<T *> &res, T &a, Args & ... args)
+{
+    res.push_back(&a);
+    collectHelper(res, args...);
+}
