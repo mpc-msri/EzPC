@@ -77,6 +77,26 @@ void ClearText<T>::conv3D(u64 fd, u64 fh, u64 fw, u64 padding, u64 stride, u64 c
 }
 
 template <typename T>
+void ClearText<T>::convTranspose3D(u64 fd, u64 fh, u64 fw, u64 padding, u64 stride, u64 ci, u64 co, const Tensor5D<T> &input, const Tensor2D<T> &filter, Tensor5D<T> &output)
+    {
+        assert(input.d5 == ci);
+        assert(filter.d1 == co);
+        assert(filter.d2 == fd * fh * fw * ci);
+        u64 newD = (((input.d2 - 1)*stride + fd - 2*padding));
+        u64 newH = (((input.d3 - 1)*stride + fh - 2*padding));
+        u64 newW = (((input.d4 - 1)*stride + fw - 2*padding));
+        assert(output.d1 == input.d1);
+        assert(output.d2 == newD);
+        assert(output.d3 == newH);
+        assert(output.d4 == newW);
+        assert(output.d5 == co);
+
+        convTranspose3dLoop<T>(input.d1, input.d2, input.d3, input.d4, input.d5, fd, fh, fw, co, 
+            padding, padding, padding, padding, padding, padding, stride, stride, stride, 
+            output.d2, output.d3, output.d4, input.data, filter.data, output.data);
+    }
+
+template <typename T>
 void ClearText<T>::relu(const Tensor<T> &in, const Tensor<T> &out, const Tensor<T> &drelu, u64 scale, int mode) {
     assert(in.is_same_shape(out));
     assert(in.is_same_shape(drelu));

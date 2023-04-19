@@ -487,6 +487,62 @@ public:
     }
 };
 
+
+template <typename T>
+class ConvTranspose3D : public Layer<T> {
+public:
+    Tensor2D<T> filter;
+    Tensor1D<T> bias;
+    u64 ci, co;
+    u64 fd, fh, fw, padding, stride;
+
+    ConvTranspose3D(u64 ci, u64 co, u64 f, u64 padding = 0, u64 stride = 1, bool useBias = false) : Layer<T>("ConvTranspose3D"), ci(ci), co(co), fd(f), fh(f), fw(f), 
+        padding(padding), stride(stride), filter(co, f * f * f * ci), bias(co)
+    {
+        this->doTruncationForward = true;
+        this->useBias = useBias;
+    }
+
+    ConvTranspose3D(u64 ci, u64 co, const std::array<u64, 3> f, u64 padding = 0, u64 stride = 1, bool useBias = false) : Layer<T>("ConvTranspose3D"), ci(ci), co(co), fd(f[0]), fh(f[1]), fw(f[2]), 
+        padding(padding), stride(stride), filter(co, f[0] * f[1] * f[2] * ci), bias(co)
+    {
+        this->doTruncationForward = true;
+        this->useBias = useBias;
+    }
+
+    void _initScale(u64 scale) {
+        double xavier = 1.0 / sqrt(ci * fd * fh * fw);
+        filter.randomize(xavier * (1ULL<<scale));
+        if (this->useBias)
+            bias.randomize(xavier * (1ULL<<(2*scale)));
+    }
+
+    void _resize(const std::vector<u64> &shape) {
+        always_assert(shape.size() == 5);
+        always_assert(shape[4] == ci);
+    }
+
+    void forward_internal(Tensor<T> &a, bool train = true) {
+        always_assert(a.shape.size() == 5);
+        assert(a.shape[4] == ci);
+        auto act_5d = this->activation.as_5d();
+        this->backend->convTranspose3D(fd, fh, fw, padding, stride, ci, co, a.as_5d(), filter, act_5d);
+        if (this->useBias)
+            this->activation.addBias(bias);
+    }
+
+    Tensor2D<T>& getweights() { return filter; }
+    Tensor1D<T>& getbias() { return bias; }
+
+    std::vector<u64> get_output_dims(const std::vector<u64> &inShape) {
+        always_assert(inShape.size() == 5);
+        u64 newD = (((inShape[1] - 1)*stride + fd - 2*padding));
+        u64 newH = (((inShape[2] - 1)*stride + fh - 2*padding));
+        u64 newW = (((inShape[3] - 1)*stride + fw - 2*padding));
+        return {inShape[0], newD, newH, newW, co};
+    }
+};
+
 template <typename T>
 class PlaceHolderLayer : public Layer<T> {
 public:

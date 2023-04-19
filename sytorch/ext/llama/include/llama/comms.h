@@ -129,6 +129,8 @@ public:
 
     void send_sign_extend2_key(const SignExtend2KeyPack &kp, int bin, int bout);
 
+    void send_triple_key(const TripleKeyPack &kp);
+
     void send_uint8_array(const uint8_t *data, int size);
 
     void recv_uint8_array(uint8_t *data, int size);
@@ -251,6 +253,8 @@ public:
     ReluExtendKeyPack recv_relu_extend_key(int Bin, int Bout);
 
     SignExtend2KeyPack recv_sign_extend2_key(int Bin, int Bout);
+
+    TripleKeyPack recv_triple_key(int bw, int64_t na, int64_t nb, int64_t nc);
 
 };
 

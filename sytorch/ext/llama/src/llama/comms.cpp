@@ -679,6 +679,21 @@ void Peer::send_sign_extend2_key(const SignExtend2KeyPack &kp, int bin, int bout
     send_ge(kp.p[1], bout);
 }
 
+void Peer::send_triple_key(const TripleKeyPack &kp)
+{
+    for(size_t i = 0; i < kp.na; ++i) {
+        send_ge(kp.a[i], kp.bw);
+    }
+
+    for(size_t i = 0; i < kp.nb; ++i) {
+        send_ge(kp.b[i], kp.bw);
+    }
+
+    for(size_t i = 0; i < kp.nc; ++i) {
+        send_ge(kp.c[i], kp.bw);
+    }
+}
+
 GroupElement Peer::recv_input() {
     char buf[8];
     if (useFile) {
@@ -1471,4 +1486,32 @@ SignExtend2KeyPack Dealer::recv_sign_extend2_key(int Bin, int Bout)
     kp.p[0] = recv_ge(Bout);
     kp.p[1] = recv_ge(Bout);
     return kp;
+}
+
+TripleKeyPack Dealer::recv_triple_key(int bw, int64_t na, int64_t nb, int64_t nc)
+{
+    TripleKeyPack k;
+    k.bw = bw;
+    k.na = na;
+    k.nb = nb;
+    k.nc = nc;
+    k.a = make_array<GroupElement>(na);
+    k.b = make_array<GroupElement>(nb);
+    k.c = make_array<GroupElement>(nc);
+
+    for(size_t i = 0; i < na; ++i) {
+        k.a[i] = (party == SERVER ? GroupElement(prngShared.get<uint64_t>()) : recv_ge(bw));
+        mod(k.a[i], bw);
+    }
+
+    for(size_t i = 0; i < nb; ++i) {
+        k.b[i] = (party == SERVER ? GroupElement(prngShared.get<uint64_t>()) : recv_ge(bw));
+        mod(k.b[i], bw);
+    }
+
+    for(size_t i = 0; i < nc; ++i) {
+        k.c[i] = (party == SERVER ? GroupElement(prngShared.get<uint64_t>()) : recv_ge(bw));
+        mod(k.c[i], bw);
+    }
+    return k;
 }

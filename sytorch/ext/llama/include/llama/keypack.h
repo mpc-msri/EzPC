@@ -88,6 +88,12 @@ struct Conv3DKey{
     GroupElement *a, *b, *c;    
 };
 
+struct TripleKeyPack {
+    int bw;
+    int64_t na, nb, nc;
+    GroupElement *a, *b, *c;
+};
+
 struct ScmpKeyPack
 {
     int Bin, Bout;
