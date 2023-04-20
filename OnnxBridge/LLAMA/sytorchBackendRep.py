@@ -5,18 +5,27 @@ from utils.backend_helper import iterate_list
 from utils.nodes import Node
 from utils.onnx_nodes import OnnxNode
 
-func_map = {
-    "Relu": "ReLU",
-    "Conv": "Conv2D",
-    "MaxPool": "MaxPool2D",
-    "Flatten": "Flatten",
-    "Gemm": "FC",
-    "Concat": "concat",
-    "BatchNormalization": "BatchNorm2dInference",
-    "AveragePool": "AvgPool2D",
-    "GlobalAveragePool": "GlobalAvgPool2D",
-    "Add": "add",
-}
+
+def func_call(node, value_info):
+    """
+    Maps the onnx node to the corresponding function call in the backend.
+    """
+    func_map = {
+        "Relu": "ReLU",
+        "Conv": f"{'Conv3D' if len(value_info[node.inputs[0]][1]) == 5 else 'Conv2D'}",
+        "MaxPool": "MaxPool2D",
+        "Flatten": "Flatten",
+        "Gemm": "FC",
+        "Concat": "concat",
+        "BatchNormalization": "BatchNorm2dInference",
+        "AveragePool": "AvgPool2D",
+        "GlobalAveragePool": "GlobalAvgPool2D",
+        "Add": "add",
+        "ConvTranspose": "ConvTranspose3D",
+    }
+    return func_map[node.op_type]
+
+
 non_sequential = ["Concat", "Add"]
 tab_space = "     "
 
@@ -55,6 +64,7 @@ def inputs_to_take(node):
         "Add": -1,
         "BatchNormalization": 1,
         "GlobalAveragePool": 1,
+        "ConvTranspose": 1,
     }
     return tmp_dict[node]
 
@@ -254,7 +264,7 @@ def prepare_export(program, var_dict, value_info, mode, scale, bitlength, backen
         if isinstance(node, Node) and node.op_type not in non_sequential:
             number_of_nodes += 1
             code_list.append(
-                f"{tab_space * (indent)}{func_map[node.op_type]}<T> *{node_names[idx]};"
+                f"{tab_space * (indent)}{func_call(node, value_info)}<T> *{node_names[idx]};"
             )
     code_list.append(f"{tab_space * (indent)}\n\n")
 
@@ -276,11 +286,11 @@ def prepare_export(program, var_dict, value_info, mode, scale, bitlength, backen
         if isinstance(node, Node):
             if node.op_type in non_sequential:
                 code_list.append(
-                    f"{tab_space * (indent + 1)}auto {var_dict[node.outputs[0]]} = {func_map[node.op_type]}({iterate_list([var_dict[x] for x in node.inputs])});"
+                    f"{tab_space * (indent + 1)}auto {var_dict[node.outputs[0]]} = {func_call(node, value_info)}({iterate_list([var_dict[x] for x in node.inputs])});"
                 )
             else:
                 code_list.append(
-                    f"{tab_space * (indent + 1)}auto &{var_dict[node.outputs[0]]} = {node_names[idx]}->forward({iterate_list([var_dict[x] for x in node.inputs[:inputs_to_take(node.op_type)]])}, false);"
+                    f"{tab_space * (indent + 1)}auto &{var_dict[node.outputs[0]]} = {node_names[idx]}->forward({iterate_list([var_dict[x] for x in node.inputs[:inputs_to_take(node.op_type)]])});"
                 )
     code_list.append(f"{tab_space * (indent + 1)}return {var_dict[program[-1].name]};")
     code_list.append(f"{tab_space * (indent)}{'}'}\n")

@@ -102,9 +102,44 @@ class Operator:
                 f"{CI}, {CO}, {filterShape}, {pad}, {stride}{isBias}"
                 f");"
             )
-            # ) + cls.Truncate(
-            #     attributes, inputs, outputs, value_info, var_dict, mode, indent
-            # )
+        elif spatial_size == 3:
+            assert len(inputs) == 2 or len(inputs) == 3
+            assert len(attributes["strides"]) == 3
+            assert value_info[inputs[1]][1][2:] == tuple(attributes["kernel_shape"])
+            CI = value_info[inputs[0]][1][1]
+            CO = value_info[outputs[0]][1][1]
+            filterShape = value_info[inputs[1]][1][2]
+            pad = pads[0]
+            stride = attributes["strides"][0]
+            isBias = ", true" if len(inputs) == 3 else ""
+            return str(
+                f"{'   ' * indent}new Conv3D<T>("
+                f"{CI}, {CO}, {filterShape}, {pad}, {stride}{isBias}"
+                f");"
+            )
+
+    @classmethod
+    def ConvTranspose(
+        cls, attributes, inputs, outputs, value_info, var_dict, mode, indent
+    ):
+        logger.debug("Inside ConvTranspose function call.")
+        pads = get_padding(attributes, inputs, outputs, value_info, var_dict)
+        spatial_size = len(value_info[inputs[0]][1]) - 2
+        if spatial_size == 3:
+            assert len(inputs) == 2 or len(inputs) == 3
+            assert len(attributes["strides"]) == 3
+            assert value_info[inputs[1]][1][2:] == tuple(attributes["kernel_shape"])
+            CI = value_info[inputs[0]][1][1]
+            CO = value_info[outputs[0]][1][1]
+            filterShape = value_info[inputs[1]][1][2]
+            pad = pads[0]
+            stride = attributes["strides"][0]
+            isBias = ", true" if len(inputs) == 3 else ""
+            return str(
+                f"{'   ' * indent}new ConvTranspose3D<T>("
+                f"{CI}, {CO}, {filterShape}, {pad}, {stride}{isBias}"
+                f");"
+            )
 
     @classmethod
     def MaxPool(cls, attributes, inputs, outputs, value_info, var_dict, mode, indent):
