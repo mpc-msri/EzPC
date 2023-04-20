@@ -1,6 +1,7 @@
 import math
 
 from utils import logger
+from utils.backend_helper import iterate_list
 
 
 def get_padding(attributes, inputs, output, value_info, var_dict):
@@ -48,6 +49,13 @@ class Operator:
     def Sqrt(cls, attributes, inputs, outputs, value_info, var_dict, mode, indent):
         logger.debug("Inside Sqrt function call.")
         return str(f"{'   ' * indent}new Sqrt<T>();")
+
+    @classmethod
+    def Pow(cls, attributes, inputs, outputs, value_info, var_dict, mode, indent):
+        logger.debug("Inside Pow function call.")
+        return str(
+            f"{'   ' * indent}new Pow<T>({'{'}{iterate_list(value_info[outputs[0]][1])}{'}'},{'{'}{iterate_list(value_info[inputs[1]][1])}{'}'});"
+        )
 
     @classmethod
     def BatchNormalization(

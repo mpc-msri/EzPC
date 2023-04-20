@@ -17,6 +17,7 @@ func_map = {
     "GlobalAveragePool": "GlobalAvgPool2D",
     "Add": "add",
     "Sqrt": "Sqrt",
+    "Pow": "Pow",
 }
 non_sequential = ["Concat", "Add"]
 tab_space = "     "
@@ -57,6 +58,7 @@ def inputs_to_take(node):
         "BatchNormalization": 1,
         "GlobalAveragePool": 1,
         "Sqrt": 1,
+        "Pow": 1,
     }
     return tmp_dict[node]
 
@@ -120,7 +122,7 @@ int main(int argc, char**__argv){'{'}
         input.input(scale);
         print_dot_graph(net.root);
         net.forward(input);
-        print(net.activation, 64);
+        print(net.activation, scale, 64);
         return 0;
     {'}'}
 
@@ -168,7 +170,7 @@ int main(int __argc, char**__argv){'{'}
         input.input(scale);
         print_dot_graph(net.root);
         net.forward(input);
-        print(net.activation, 64);
+        print(net.activation, scale, 64);
         return 0;
     {'}'}
 
@@ -282,7 +284,7 @@ def prepare_export(program, var_dict, value_info, mode, scale, bitlength, backen
                 )
             else:
                 code_list.append(
-                    f"{tab_space * (indent + 1)}auto &{var_dict[node.outputs[0]]} = {node_names[idx]}->forward({iterate_list([var_dict[x] for x in node.inputs[:inputs_to_take(node.op_type)]])}, false);"
+                    f"{tab_space * (indent + 1)}auto &{var_dict[node.outputs[0]]} = {node_names[idx]}->forward({iterate_list([var_dict[x] for x in node.inputs[:inputs_to_take(node.op_type)]])});"
                 )
     code_list.append(f"{tab_space * (indent + 1)}return {var_dict[program[-1].name]};")
     code_list.append(f"{tab_space * (indent)}{'}'}\n")

@@ -90,6 +90,7 @@ public:
 
     virtual Tensor2D<T>& getweights() { throw std::runtime_error("not implemented"); };
     virtual Tensor1D<T>& getbias() { throw std::runtime_error("not implemented"); };
+    virtual Tensor<T> &getinput2() { throw std::runtime_error("not implemented"); };
     virtual std::vector<u64> get_output_dims(const std::vector<u64> &inShape) = 0;
 
     virtual void setBackend(Backend<T> *b) {
@@ -414,6 +415,33 @@ public:
     {
         return inShape;
     }
+};
+
+template <typename T>
+class Pow : public Layer<T>
+{
+public:
+    Tensor<T> dpow;
+    Tensor<T> exp;
+    std::vector<u64> out_shape;
+    Pow(const std::vector<u64> out_shape, const std::vector<u64> exp_shape) : Layer<T>("Pow"), dpow({0}), out_shape(out_shape), exp(exp_shape) {}
+
+    void _resize(const std::vector<u64> &shape)
+    {
+        this->dpow.resize(shape);
+    }
+
+    void forward_internal(Tensor<T> &a, bool train = true)
+    {
+        this->backend->pow(a, this->exp, this->activation, this->dpow, this->scale, this->out_shape);
+    }
+
+    std::vector<u64> get_output_dims(const std::vector<u64> &inShape)
+    {
+        return inShape;
+    }
+
+    Tensor<T> &getinput2() { return exp; }
 };
 
 template <typename T>

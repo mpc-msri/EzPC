@@ -171,7 +171,7 @@ public:
         }
     }
 
-    void print()
+    void print(int scale = 0)
     {
         std::cout << "Tensor(";
         for (int i = 0; i < this->shape.size(); i++)
@@ -181,7 +181,7 @@ public:
         std::cout << ")" << std::endl;
         for (u64 i = 0; i < size(); i++)
         {
-            std::cout << data[i] << " ";
+            std::cout << data[i] / (1LL << scale) << " ";
         }
         std::cout << std::endl;
     }

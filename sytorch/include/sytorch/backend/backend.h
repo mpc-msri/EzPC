@@ -56,6 +56,9 @@ public:
     // sqrt API
     virtual void sqrt(const Tensor<T> &in, const Tensor<T> &out, const Tensor<T> &dsqrt, u64 scale) NOT_IMPLEMENTED;
 
+    // pow API
+    virtual void pow(const Tensor<T> &in, const Tensor<T> &exp, const Tensor<T> &out, const Tensor<T> &dpow, u64 scale, std::vector<u64> &out_shape) NOT_IMPLEMENTED;
+
     // avgpool API
     virtual void div(const Tensor<T> &in, T divisor, u64 scale) NOT_IMPLEMENTED;
     virtual void sumPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> &in, Tensor4D<T> &out) NOT_IMPLEMENTED;

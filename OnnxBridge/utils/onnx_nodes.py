@@ -68,6 +68,11 @@ class OnnxNode:
         logger.debug("Sqrt is OK!")
 
     @classmethod
+    def Pow(cls, node):
+        assert len(node.inputs) == 2
+        logger.debug("Pow is OK!")
+
+    @classmethod
     def Div(cls, node):
         # todo is div there or not? in athos it takes one input
         pass

@@ -241,6 +241,34 @@ void print(const Tensor<T> &p, u64 bw = sizeof(T) * 8)
 }
 
 template <typename T>
+void print(const Tensor<T> &p, u64 scale, u64 bw = sizeof(T) * 8)
+{
+    u64 d = p.shape.back();
+    for (u64 i = 0; i < p.size(); ++i)
+    {
+        i64 val;
+        if (bw == sizeof(T) * 8)
+        {
+            val = p.data[i];
+        }
+        else
+        {
+            val = (p.data[i] + (1LL << (bw - 1))) % (1LL << bw);
+            val -= (1LL << (bw - 1));
+        }
+        std::cout << ((double)val) / (1LL << scale);
+        if ((i + 1) % d == 0)
+        {
+            std::cout << std::endl;
+        }
+        else
+        {
+            std::cout << " ";
+        }
+    }
+}
+
+template <typename T>
 Tensor2D<T> reshapeInputTransposed3d(const Tensor5D<T> &input, u64 padding, u64 stride, u64 FD, u64 FH, u64 FW) {
     u64 D = input.d2;
     u64 H = input.d3;
@@ -312,4 +340,22 @@ void reshapeOutput3d(const Tensor2D<T> &output, u64 d1, u64 d2, u64 d3, u64 d4, 
             }
         }
     }
+}
+
+template <typename T>
+bool broadcastable(const Tensor<T> &a, std::vector<u64> &broadcast_shape)
+{
+    if (a.shape.size() > broadcast_shape.size())
+    {
+        return false;
+    }
+    int diff = broadcast_shape.size() - a.shape.size();
+    for (i64 i = a.shape.size() - 1; i >= 0; --i)
+    {
+        if (a.shape[i] != broadcast_shape[i + diff] && a.shape[i] != 1 && broadcast_shape[i + diff] != 1)
+        {
+            return false;
+        }
+    }
+    return true;
 }
