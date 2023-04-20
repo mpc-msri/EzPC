@@ -32,8 +32,10 @@ class Tensor {
 public:
     T *data;
     std::vector<u64> shape;
-    LayerGraphNode<T> *graphNode = nullptr;
     bool isOwner = true;
+
+    bool graphGenMode = false;
+    LayerGraphNode<T> *graphNode = nullptr;
 
     T value_at(const std::vector<u64> &idx) const
     {
@@ -73,9 +75,7 @@ public:
             return;
         }
         delete[] data;
-        for(auto &d : this->shape) {
-            d = 0;
-        }
+        this->shape = {};
         isFreed = true;
     }
 
@@ -477,6 +477,10 @@ public:
         }
     }
 
+    Tensor<T> as_nd()
+    {
+        return Tensor<T>(data, {d1, d2});
+    }
 };
 
 template <typename T>

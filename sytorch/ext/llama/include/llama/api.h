@@ -49,6 +49,14 @@ void Conv2DGroupWrapper(int64_t N, int64_t H, int64_t W,
                         int64_t strideW, int64_t G,
                         MASK_PAIR(GroupElement *inputArr), MASK_PAIR(GroupElement *filterArr), MASK_PAIR(GroupElement *outArr));
 
+void Conv3DWrapper(int32_t N, int32_t D, int32_t H, int32_t W,
+            int32_t CI, int32_t FD, int32_t FH, int32_t FW,
+            int32_t CO, int32_t zPadDLeft, int32_t zPadDRight, int32_t zPadHLeft,
+            int32_t zPadHRight, int32_t zPadWLeft,
+            int32_t zPadWRight, int32_t strideD, int32_t strideH,
+            int32_t strideW, GroupElement *inputArr, GroupElement *filterArr,
+            GroupElement *outArr);
+
 void ElemWiseActModelVectorMult(int32_t size, MASK_PAIR(GroupElement *inArr),
                                 MASK_PAIR(GroupElement *multArrVec), MASK_PAIR(GroupElement *outputArr));
 
@@ -109,5 +117,30 @@ void FloatToFix(int size, GroupElement *inp, GroupElement *out, int scale);
 
 void ReluExtend(int size, int bin, int bout, GroupElement *x, GroupElement *y, GroupElement *drelu);
 void SignExtend2(int size, int bin, int bout, GroupElement *x, GroupElement *y);
+
+void ConvTranspose3DWrapper(int64_t N, 
+    int64_t D, 
+    int64_t H, 
+    int64_t W, 
+    int64_t CI, 
+    int64_t FD, 
+    int64_t FH, 
+    int64_t FW, 
+    int64_t CO, 
+    int64_t zPadDLeft, 
+    int64_t zPadDRight, 
+    int64_t zPadHLeft, 
+    int64_t zPadHRight, 
+    int64_t zPadWLeft, 
+    int64_t zPadWRight, 
+    int64_t strideD, 
+    int64_t strideH, 
+    int64_t strideW, 
+    int64_t outD, 
+    int64_t outH, 
+    int64_t outW, 
+    GroupElement* inputArr, 
+    GroupElement* filterArr, 
+    GroupElement* outArr);
 
 void reconstruct(int32_t size, GroupElement *arr, int bw);

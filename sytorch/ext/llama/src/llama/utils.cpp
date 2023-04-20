@@ -562,3 +562,81 @@ void Conv3DPlaintext(int N, int D, int H, int W, int CI,
         Conv3DReshapeOutputPartial(N, newD, newH, newW, CO, cache.matmulResult, outArr, i);
     }
 }
+
+void ConvTranspose3DLoopInnerClear(
+    int64_t N, 
+    int64_t D, 
+    int64_t H, 
+    int64_t W, 
+    int64_t CI, 
+    int64_t FD, 
+    int64_t FH, 
+    int64_t FW, 
+    int64_t CO, 
+    int64_t zPadDLeft, 
+    int64_t zPadDRight, 
+    int64_t zPadHLeft, 
+    int64_t zPadHRight, 
+    int64_t zPadWLeft, 
+    int64_t zPadWRight, 
+    int64_t strideD, 
+    int64_t strideH, 
+    int64_t strideW, 
+    int64_t outD, 
+    int64_t outH, 
+    int64_t outW, 
+    GroupElement* inputArr, 
+    GroupElement* filterArr, 
+    GroupElement* outArr)
+{
+    zPadDLeft = FD - 1 - zPadDLeft;
+    zPadDRight = FD - 1 - zPadDRight;
+    zPadHLeft = FH - 1 - zPadHLeft;
+    zPadHRight = FH - 1 - zPadHRight;
+    zPadWLeft = FW - 1 - zPadWLeft;
+    zPadWRight = FW - 1 - zPadWRight;
+
+    #pragma omp parallel for collapse(5)
+    for (int64_t n =  0; n < N; n++){
+        for (int64_t d =  0; d < outD; d++){
+            for (int64_t h =  0; h < outH; h++){
+                for (int64_t w =  0; w < outW; w++){
+                    for (int64_t co =  0; co < CO; co++){
+                        
+                        GroupElement val =  0;
+                        for (int64_t ci =  0; ci < CI; ci++){
+                            for (int64_t fd = d; fd < (d + FD); fd++){
+                                for (int64_t fh = h; fh < (h + FH); fh++){
+                                    for (int64_t fw = w; fw < (w + FW); fw++){
+
+                                        int64_t curPosD = ((fd - zPadDLeft) / strideD);
+                                        int64_t curPosH = ((fh - zPadHLeft) / strideH);
+                                        int64_t curPosW = ((fw - zPadWLeft) / strideW);
+
+                                        if ((curPosD >=  0) &&
+                                            (curPosH >=  0) &&
+                                            (curPosW >=  0) &&
+                                            (curPosD < D) &&
+                                            (curPosH < H) &&
+                                            (curPosW < W) &&
+                                            (((fd - zPadDLeft) % strideD) == 0) &&
+                                            (((fh - zPadHLeft) % strideH) == 0) &&
+                                            (((fw - zPadWLeft) % strideW) == 0))
+                                        {
+                                            int32_t curFilterPosD = FD + d - fd -  1;
+                                            int32_t curFilterPosH = FH + h - fh -  1;
+                                            int32_t curFilterPosW = FW + w - fw -  1;
+                                            val += (Arr5DIdx(inputArr, N, D, H, W, CI, n, curPosD, curPosH, curPosW, ci) * Arr5DIdx(filterArr, CO, FD, FH, FW, CI, co, curFilterPosD, curFilterPosH, curFilterPosW, ci));
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        Arr5DIdx(outArr, N, outD, outH, outW, CO, n, d, h, w, co) =  val;
+                        // std::cout << "setting element at (" << n << " " << d << " " << h << " " << w << " " << co << ")" << std::endl;
+                    }
+                }
+            }
+        }
+    }
+}

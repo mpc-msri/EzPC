@@ -62,8 +62,8 @@ void ClearText<T>::conv3D(u64 fd, u64 fh, u64 fw, u64 padding, u64 stride, u64 c
     assert(filter.d1 == co);
     assert(filter.d2 == fd * fh * fw * ci);
     u64 newD = (((input.d2 + 2*padding - fd)/stride) + 1);
-    u64 newH = (((input.d2 + 2*padding - fh)/stride) + 1);
-    u64 newW = (((input.d3 + 2*padding - fw)/stride) + 1);
+    u64 newH = (((input.d3 + 2*padding - fh)/stride) + 1);
+    u64 newW = (((input.d4 + 2*padding - fw)/stride) + 1);
     assert(output.d1 == input.d1);
     assert(output.d2 == newD);
     assert(output.d3 == newH);
@@ -75,6 +75,26 @@ void ClearText<T>::conv3D(u64 fd, u64 fh, u64 fw, u64 padding, u64 stride, u64 c
     matmulTransposeB(filter, reshapedInput, tempOutput);
     reshapeOutput3d<T>(tempOutput, input.d1, newD, newH, newW, co, output);
 }
+
+template <typename T>
+void ClearText<T>::convTranspose3D(u64 fd, u64 fh, u64 fw, u64 padding, u64 stride, u64 ci, u64 co, const Tensor5D<T> &input, const Tensor2D<T> &filter, Tensor5D<T> &output)
+    {
+        assert(input.d5 == ci);
+        assert(filter.d1 == co);
+        assert(filter.d2 == fd * fh * fw * ci);
+        u64 newD = (((input.d2 - 1)*stride + fd - 2*padding));
+        u64 newH = (((input.d3 - 1)*stride + fh - 2*padding));
+        u64 newW = (((input.d4 - 1)*stride + fw - 2*padding));
+        assert(output.d1 == input.d1);
+        assert(output.d2 == newD);
+        assert(output.d3 == newH);
+        assert(output.d4 == newW);
+        assert(output.d5 == co);
+
+        convTranspose3dLoop<T>(input.d1, input.d2, input.d3, input.d4, input.d5, fd, fh, fw, co, 
+            padding, padding, padding, padding, padding, padding, stride, stride, stride, 
+            output.d2, output.d3, output.d4, input.data, filter.data, output.data);
+    }
 
 template <typename T>
 void ClearText<T>::relu(const Tensor<T> &in, const Tensor<T> &out, const Tensor<T> &drelu, u64 scale, int mode) {
@@ -313,6 +333,23 @@ void ClearText<T>::batchNorm2dInference(const Tensor1D<T> &A, const Tensor1D<T> 
                 }
             }
         }
+    });
+}
+
+template <typename T>
+void ClearText<T>::add(const std::vector<Tensor<T> *> &in, const Tensor<T> &out)
+{
+    always_assert(in.size() > 0);
+    always_assert(out.size() == in[0]->size());
+    for (int i = 0; i < in.size(); i++) {
+        always_assert(out.size() == in[i]->size());
+    }
+    fastfor(out.size(), [&](int i) {
+        T sum = 0;
+        for (int j = 0; j < in.size(); j++) {
+            sum += in[j]->data[i];
+        }
+        out.data[i] = sum;
     });
 }
 

@@ -49,6 +49,7 @@ public:
     // conv API
     virtual void conv2D(u64 fh, u64 fw, u64 padding, u64 stride, u64 ci, u64 co, const Tensor4D<T> &input, const Tensor2D<T> &filter, Tensor4D<T> &output) NOT_IMPLEMENTED;
     virtual void conv3D(u64 fd, u64 fh, u64 fw, u64 padding, u64 stride, u64 ci, u64 co, const Tensor5D<T> &input, const Tensor2D<T> &filter, Tensor5D<T> &output) NOT_IMPLEMENTED;
+    virtual void convTranspose3D(u64 fd, u64 fh, u64 fw, u64 padding, u64 stride, u64 ci, u64 co, const Tensor5D<T> &input, const Tensor2D<T> &filter, Tensor5D<T> &output) NOT_IMPLEMENTED;
 
     // relu API
     virtual void relu(const Tensor<T> &in, const Tensor<T> &out, const Tensor<T> &drelu, u64 scale, int mode) NOT_IMPLEMENTED;
@@ -69,6 +70,9 @@ public:
 
     virtual void batchNorm2dInference(const Tensor1D<T> &A, const Tensor1D<T> &B, const Tensor4D<T> &x, Tensor4D<T> &y, u64 scale) NOT_IMPLEMENTED;
     virtual void signext(Tensor<T> &x, u64 scale) NOT_IMPLEMENTED;
+
+    // add API
+    virtual void add(const std::vector<Tensor<T> *> &in, const Tensor<T> &out) NOT_IMPLEMENTED;
 
     virtual void optimize(LayerGraphNode<T> *root)
     {
