@@ -47,6 +47,9 @@ public:
     void convTranspose3D(u64 fd, u64 fh, u64 fw, u64 padding, u64 stride, u64 ci, u64 co, const Tensor5D<T> &input, const Tensor2D<T> &filter, Tensor5D<T> &output);
 
     void relu(const Tensor<T> &in, const Tensor<T> &out, const Tensor<T> &drelu, u64 scale, int mode);
+    void sqrt(const Tensor<T> &in, const Tensor<T> &out, const Tensor<T> &dsqrt, u64 scale);
+    void pow(const Tensor<T> &in, const Tensor<T> &exp, const Tensor<T> &out, const Tensor<T> &dpow, u64 scale, std::vector<u64> &out_shape);
+
     // void truncate(const Tensor4D<T> &in, const Tensor4D<T> &out, u64 shift);
     // void truncate(const Tensor4D<T> &in, u64 shift);
     // void truncate(const Tensor2D<T> &in, u64 shift);

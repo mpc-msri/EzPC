@@ -196,6 +196,14 @@ public:
                 }
                 wIdx += 4 * channel;
             }
+            else if (layer->name.find("Pow") != std::string::npos)
+            {
+                auto &exp = layer->getinput2();
+                for (int j = 0; j < exp.size(); ++j)
+                    exp.data[j] = i64(floatWeights[wIdx + j] * (1LL << scale));
+
+                wIdx += exp.size();
+            }
         }
 
         always_assert(wIdx == numParameters);

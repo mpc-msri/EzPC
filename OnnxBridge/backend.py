@@ -133,6 +133,8 @@ class IR(Backend):
             "GlobalAveragePool",
             "Add",
             "ConvTranspose",
+            "Sqrt",
+            "Pow",
         ]
         implemented_secfloat = [
             "Relu",

@@ -108,6 +108,48 @@ void ClearText<T>::relu(const Tensor<T> &in, const Tensor<T> &out, const Tensor<
 }
 
 template <typename T>
+void ClearText<T>::sqrt(const Tensor<T> &in, const Tensor<T> &out, const Tensor<T> &dsqrt, u64 scale)
+{
+    assert(in.is_same_shape(out));
+    assert(in.is_same_shape(dsqrt));
+    fastfor(in.size(), [&](u64 i)
+            {
+        dsqrt.data[i] = in.data[i] / (1ULL << scale);
+        dsqrt.data[i] = std::sqrt(dsqrt.data[i]);
+        out.data[i] = dsqrt.data[i] * (1ULL << scale); });
+}
+
+template <typename T>
+void ClearText<T>::pow(const Tensor<T> &in, const Tensor<T> &exp, const Tensor<T> &out, const Tensor<T> &dpow, u64 scale, std::vector<u64> &out_shape)
+{
+    assert(broadcastable(in, out_shape));
+    assert(broadcastable(exp, out_shape));
+
+    std::vector<u64> idx(in.shape.size(), 0);
+    fastfor(out.size(), [&](u64 i)
+            {
+        T ex = exp.multidir_broadcast_value(out_shape, idx);
+        dpow.data[i] = in.data[i] / (1ULL << scale);
+        ex = ex / (1ULL << scale);
+        dpow.data[i] = std::pow(dpow.data[i], ex);
+        out.data[i] = dpow.data[i] * (1ULL << scale);
+
+        // update idx
+        for (int j = idx.size() - 1; j >= 0; j--)
+        {
+            idx[j]++;
+            if (idx[j] == out_shape[j])
+            {
+                idx[j] = 0;
+            }
+            else
+            {
+                break;
+            }
+        } });
+}
+
+template <typename T>
 void ClearText<T>::truncate(T *in, T *out, u64 shift, u64 size, u8 mode) {
     fastfor(size, [&] (u64 i) {
         if constexpr (std::is_floating_point<T>::value) {

@@ -22,9 +22,10 @@ def func_call(node, value_info):
         "GlobalAveragePool": "GlobalAvgPool2D",
         "Add": "add",
         "ConvTranspose": "ConvTranspose3D",
+        "Sqrt": "Sqrt",
+        "Pow": "Pow",
     }
     return func_map[node.op_type]
-
 
 non_sequential = ["Concat", "Add"]
 tab_space = "     "
@@ -65,6 +66,8 @@ def inputs_to_take(node):
         "BatchNormalization": 1,
         "GlobalAveragePool": 1,
         "ConvTranspose": 1,
+        "Sqrt": 1,
+        "Pow": 1,
     }
     return tmp_dict[node]
 
@@ -128,7 +131,7 @@ int main(int argc, char**__argv){'{'}
         input.input(scale);
         print_dot_graph(net.root);
         net.forward(input);
-        print(net.activation, 64);
+        print(net.activation, scale, 64);
         return 0;
     {'}'}
 
@@ -176,7 +179,7 @@ int main(int __argc, char**__argv){'{'}
         input.input(scale);
         print_dot_graph(net.root);
         net.forward(input);
-        print(net.activation, 64);
+        print(net.activation, scale, 64);
         return 0;
     {'}'}
 
