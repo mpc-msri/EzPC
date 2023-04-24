@@ -242,14 +242,14 @@ void print(const Tensor<T> &p, u64 bw = sizeof(T) * 8)
 }
 
 template <typename T>
-Tensor2D<T> reshapeInputTransposed3d(const Tensor5D<T> &input, u64 pd, u64 ph, u64 pw, u64 stride, u64 FD, u64 FH, u64 FW) {
+Tensor2D<T> reshapeInputTransposed3d(const Tensor5D<T> &input, u64 pd, u64 ph, u64 pw, u64 sd, u64 sh, u64 sw, u64 FD, u64 FH, u64 FW) {
     u64 D = input.d2;
     u64 H = input.d3;
     u64 W = input.d4;
     u64 CI = input.d5;
-    u64 newD = (((D + 2*pd - FD)/stride) + 1);
-    u64 newH = (((H + 2*ph - FH)/stride) + 1);
-	u64 newW = (((W + 2*pw - FW)/stride) + 1);
+    u64 newD = (((D + 2*pd - FD)/sd) + 1);
+    u64 newH = (((H + 2*ph - FH)/sh) + 1);
+	u64 newW = (((W + 2*pw - FW)/sw) + 1);
 	u64 reshapedIPCols = input.d1 * newD * newH * newW;
     Tensor2D<T> reshaped(reshapedIPCols, FD * FH * FW * CI);
     i64 linIdxFilterMult = 0;
@@ -283,11 +283,11 @@ Tensor2D<T> reshapeInputTransposed3d(const Tensor5D<T> &input, u64 pd, u64 ph, u
                     }
 
                     linIdxFilterMult = linIdxFilterMult + 1;
-                    leftTopCornerW = leftTopCornerW + stride;
+                    leftTopCornerW = leftTopCornerW + sw;
                 }
-                leftTopCornerH = leftTopCornerH + stride;
+                leftTopCornerH = leftTopCornerH + sh;
             }
-            leftTopCornerD = leftTopCornerD + stride;
+            leftTopCornerD = leftTopCornerD + sd;
 		}
 	}
     return reshaped;
@@ -446,4 +446,12 @@ void printscale(const Tensor<T> &p, u64 scale, u64 bw = sizeof(T) * 8)
             std::cout << " ";
         }
     }
+}
+
+inline void printshape(const std::vector<u64> &shape) {
+    std::cout << "(";
+    for(int i = 0; i < shape.size(); i++) {
+        std::cout << shape[i] << ", ";
+    }
+    std::cout << ")" << std::endl;
 }

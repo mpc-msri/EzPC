@@ -196,25 +196,35 @@ public:
     u64 ci, co;
     u64 fd, fh, fw;
     u64 pd, ph, pw;
-    u64 stride;
+    u64 sd, sh, sw;
 
     Conv3D(u64 ci, u64 co, u64 f, u64 padding = 0, u64 stride = 1, bool useBias = false) : Layer<T>("Conv3D"), ci(ci), co(co), fd(f), fh(f), fw(f), 
-        pd(padding), ph(padding), pw(padding), stride(stride), filter(co, f * f * f * ci), bias(co), inp({0,0,0,0,0})
+        pd(padding), ph(padding), pw(padding), sd(stride), sh(stride), sw(stride), filter(co, f * f * f * ci), bias(co), inp({0,0,0,0,0})
     {
         this->doTruncationForward = true;
         this->useBias = useBias;
     }
 
     Conv3D(u64 ci, u64 co, const std::array<u64, 3> f, u64 padding = 0, u64 stride = 1, bool useBias = false) : Layer<T>("Conv3D"), ci(ci), co(co), fd(f[0]), fh(f[1]), fw(f[2]), 
-        pd(padding), ph(padding), pw(padding), stride(stride), filter(co, f[0] * f[1] * f[2] * ci), bias(co), inp({0,0,0,0,0})
+        pd(padding), ph(padding), pw(padding), sd(stride), sh(stride), sw(stride), filter(co, f[0] * f[1] * f[2] * ci), bias(co), inp({0,0,0,0,0})
     {
         this->doTruncationForward = true;
         this->useBias = useBias;
     }
 
     Conv3D(u64 ci, u64 co, const std::array<u64, 3> f, const std::array<u64, 3> padding = {0, 0, 0}, u64 stride = 1, bool useBias = false) : Layer<T>("Conv3D"), ci(ci), co(co), fd(f[0]), fh(f[1]), fw(f[2]), 
-        pd(padding[0]), ph(padding[1]), pw(padding[2]), stride(stride), filter(co, f[0] * f[1] * f[2] * ci), bias(co), inp({0,0,0,0,0})
+        pd(padding[0]), ph(padding[1]), pw(padding[2]), sd(stride), sh(stride), sw(stride), filter(co, f[0] * f[1] * f[2] * ci), bias(co), inp({0,0,0,0,0})
     {
+        this->doTruncationForward = true;
+        this->useBias = useBias;
+    }
+
+    Conv3D(u64 ci, u64 co, const std::array<u64, 3> f, const std::array<u64, 6> padding = {0, 0, 0, 0, 0, 0}, const std::array<u64, 3> stride = {1, 1, 1}, bool useBias = false) : Layer<T>("Conv3D"), ci(ci), co(co), fd(f[0]), fh(f[1]), fw(f[2]), 
+        pd(padding[0]), ph(padding[1]), pw(padding[2]), sd(stride[0]), sh(stride[1]), sw(stride[2]), filter(co, f[0] * f[1] * f[2] * ci), bias(co), inp({0,0,0,0,0})
+    {
+        always_assert(padding[3] == padding[0]);
+        always_assert(padding[4] == padding[1]);
+        always_assert(padding[5] == padding[2]);
         this->doTruncationForward = true;
         this->useBias = useBias;
     }
@@ -241,7 +251,7 @@ public:
         if (this->isTrainingMode)
             inp.copy(a);
         auto act_5d = this->activation.as_5d();
-        this->backend->conv3D(fd, fh, fw, pd, ph, pw, stride, ci, co, a.as_5d(), filter, act_5d);
+        this->backend->conv3D(fd, fh, fw, pd, ph, pw, sd, sh, sw, ci, co, a.as_5d(), filter, act_5d);
         if (this->useBias)
             this->activation.addBias(bias);
     }
@@ -254,9 +264,9 @@ public:
         auto &inShape = inShapes[0];
         always_assert(inShape.size() == 5);
         always_assert(inShape[4] == ci);
-        u64 newD = (((inShape[1] + 2*pd - fd)/stride) + 1);
-        u64 newH = (((inShape[2] + 2*ph - fh)/stride) + 1);
-        u64 newW = (((inShape[3] + 2*pw - fw)/stride) + 1);
+        u64 newD = (((inShape[1] + 2*pd - fd)/sd) + 1);
+        u64 newH = (((inShape[2] + 2*ph - fh)/sh) + 1);
+        u64 newW = (((inShape[3] + 2*pw - fw)/sw) + 1);
         return {inShape[0], newD, newH, newW, co};
     }
 };
@@ -516,7 +526,8 @@ public:
             std::runtime_error("BatchNorm2dInference should not be used in training mode");
         }
         else {
-            this->backend->batchNorm2dInference(this->A, this->B, a.as_4d(), this->activation.as_4d(), this->scale);
+            auto act_4d = this->activation.as_4d();
+            this->backend->batchNorm2dInference(this->A, this->B, a.as_4d(), act_4d, this->scale);
         }
     }
 
@@ -580,18 +591,30 @@ public:
     Tensor2D<T> filter;
     Tensor1D<T> bias;
     u64 ci, co;
-    u64 fd, fh, fw, padding, stride;
+    u64 fd, fh, fw;
+    u64 pd, ph, pw;
+    u64 sd, sh, sw;
 
     ConvTranspose3D(u64 ci, u64 co, u64 f, u64 padding = 0, u64 stride = 1, bool useBias = false) : Layer<T>("ConvTranspose3D"), ci(ci), co(co), fd(f), fh(f), fw(f), 
-        padding(padding), stride(stride), filter(co, f * f * f * ci), bias(co)
+        pd(padding), ph(padding), pw(padding), sd(stride), sh(stride), sw(stride), filter(co, f * f * f * ci), bias(co)
     {
         this->doTruncationForward = true;
         this->useBias = useBias;
     }
 
     ConvTranspose3D(u64 ci, u64 co, const std::array<u64, 3> f, u64 padding = 0, u64 stride = 1, bool useBias = false) : Layer<T>("ConvTranspose3D"), ci(ci), co(co), fd(f[0]), fh(f[1]), fw(f[2]), 
-        padding(padding), stride(stride), filter(co, f[0] * f[1] * f[2] * ci), bias(co)
+        pd(padding), ph(padding), pw(padding), sd(stride), sh(stride), sw(stride), filter(co, f[0] * f[1] * f[2] * ci), bias(co)
     {
+        this->doTruncationForward = true;
+        this->useBias = useBias;
+    }
+
+    ConvTranspose3D(u64 ci, u64 co, const std::array<u64, 3> f, const std::array<u64, 6> padding = {0, 0, 0, 0, 0, 0}, const std::array<u64, 3> stride = {1, 1, 1}, bool useBias = false) : Layer<T>("ConvTranspose3D"), ci(ci), co(co), fd(f[0]), fh(f[1]), fw(f[2]), 
+        pd(padding[0]), ph(padding[1]), pw(padding[2]), sd(stride[0]), sh(stride[1]), sw(stride[2]), filter(co, f[0] * f[1] * f[2] * ci), bias(co)
+    {
+        always_assert(padding[3] == padding[0]);
+        always_assert(padding[4] == padding[1]);
+        always_assert(padding[5] == padding[2]);
         this->doTruncationForward = true;
         this->useBias = useBias;
     }
@@ -614,7 +637,7 @@ public:
         always_assert(a.shape.size() == 5);
         assert(a.shape[4] == ci);
         auto act_5d = this->activation.as_5d();
-        this->backend->convTranspose3D(fd, fh, fw, padding, stride, ci, co, a.as_5d(), filter, act_5d);
+        this->backend->convTranspose3D(fd, fh, fw, pd, ph, pw, sd, sh, sw, ci, co, a.as_5d(), filter, act_5d);
         if (this->useBias)
             this->activation.addBias(bias);
     }
@@ -627,9 +650,9 @@ public:
         auto &inShape = inShapes[0];
         always_assert(inShape.size() == 5);
         always_assert(inShape[4] == ci);
-        u64 newD = (((inShape[1] - 1)*stride + fd - 2*padding));
-        u64 newH = (((inShape[2] - 1)*stride + fh - 2*padding));
-        u64 newW = (((inShape[3] - 1)*stride + fw - 2*padding));
+        u64 newD = (((inShape[1] - 1)*sd + fd - 2*pd));
+        u64 newH = (((inShape[2] - 1)*sh + fh - 2*ph));
+        u64 newW = (((inShape[3] - 1)*sw + fw - 2*pw));
         return {inShape[0], newD, newH, newW, co};
     }
 };
@@ -683,7 +706,7 @@ public:
         for (auto &shape : inShapes) {
             always_assert(shape.size() == shape0.size());
             for (u64 i = 0; i < shape.size(); i++) {
-                always_assert(shape[i] == shape0[i]);
+                assert(shape[i] == shape0[i]);
             }
         }
         auto &inShape = inShapes[0];

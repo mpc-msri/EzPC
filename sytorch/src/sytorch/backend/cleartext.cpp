@@ -56,35 +56,35 @@ void ClearText<T>::conv2D(u64 fh, u64 fw, u64 padding, u64 stride, u64 ci, u64 c
 }
 
 template <typename T>
-void ClearText<T>::conv3D(u64 fd, u64 fh, u64 fw, u64 pd, u64 ph, u64 pw, u64 stride, u64 ci, u64 co, const Tensor5D<T> &input, const Tensor2D<T> &filter, Tensor5D<T> &output)
+void ClearText<T>::conv3D(u64 fd, u64 fh, u64 fw, u64 pd, u64 ph, u64 pw, u64 sd, u64 sh, u64 sw, u64 ci, u64 co, const Tensor5D<T> &input, const Tensor2D<T> &filter, Tensor5D<T> &output)
 {
     assert(input.d5 == ci);
     assert(filter.d1 == co);
     assert(filter.d2 == fd * fh * fw * ci);
-    u64 newD = (((input.d2 + 2*pd - fd)/stride) + 1);
-    u64 newH = (((input.d3 + 2*ph - fh)/stride) + 1);
-    u64 newW = (((input.d4 + 2*pw - fw)/stride) + 1);
+    u64 newD = (((input.d2 + 2*pd - fd)/sd) + 1);
+    u64 newH = (((input.d3 + 2*ph - fh)/sh) + 1);
+    u64 newW = (((input.d4 + 2*pw - fw)/sw) + 1);
     assert(output.d1 == input.d1);
     assert(output.d2 == newD);
     assert(output.d3 == newH);
     assert(output.d4 == newW);
     assert(output.d5 == co);
 
-    Tensor2D<T> reshapedInput = reshapeInputTransposed3d<T>(input, pd, ph, pw, stride, fd, fh, fw);
+    Tensor2D<T> reshapedInput = reshapeInputTransposed3d<T>(input, pd, ph, pw, sd, sh, sw, fd, fh, fw);
     Tensor2D<T> tempOutput(filter.d1, reshapedInput.d1);
     matmulTransposeB(filter, reshapedInput, tempOutput);
     reshapeOutput3d<T>(tempOutput, input.d1, newD, newH, newW, co, output);
 }
 
 template <typename T>
-void ClearText<T>::convTranspose3D(u64 fd, u64 fh, u64 fw, u64 padding, u64 stride, u64 ci, u64 co, const Tensor5D<T> &input, const Tensor2D<T> &filter, Tensor5D<T> &output)
+void ClearText<T>::convTranspose3D(u64 fd, u64 fh, u64 fw, u64 pd, u64 ph, u64 pw, u64 sd, u64 sh, u64 sw, u64 ci, u64 co, const Tensor5D<T> &input, const Tensor2D<T> &filter, Tensor5D<T> &output)
     {
         assert(input.d5 == ci);
         assert(filter.d1 == co);
         assert(filter.d2 == fd * fh * fw * ci);
-        u64 newD = (((input.d2 - 1)*stride + fd - 2*padding));
-        u64 newH = (((input.d3 - 1)*stride + fh - 2*padding));
-        u64 newW = (((input.d4 - 1)*stride + fw - 2*padding));
+        u64 newD = (((input.d2 - 1)*sd + fd - 2*pd));
+        u64 newH = (((input.d3 - 1)*sh + fh - 2*ph));
+        u64 newW = (((input.d4 - 1)*sw + fw - 2*pw));
         assert(output.d1 == input.d1);
         assert(output.d2 == newD);
         assert(output.d3 == newH);
@@ -92,7 +92,7 @@ void ClearText<T>::convTranspose3D(u64 fd, u64 fh, u64 fw, u64 padding, u64 stri
         assert(output.d5 == co);
 
         convTranspose3dLoop<T>(input.d1, input.d2, input.d3, input.d4, input.d5, fd, fh, fw, co, 
-            padding, padding, padding, padding, padding, padding, stride, stride, stride, 
+            pd, pd, ph, ph, pw, pw, sd, sh, sw,
             output.d2, output.d3, output.d4, input.data, filter.data, output.data);
     }
 
