@@ -68,6 +68,9 @@ public:
     // add API
     virtual void add(const std::vector<Tensor<T> *> &in, const Tensor<T> &out) NOT_IMPLEMENTED;
 
+    virtual void gelu(const Tensor<T> &in, const Tensor<T> &out, u64 scale) NOT_IMPLEMENTED;
+    virtual void softmax(Tensor<T> &in, Tensor<T> &out, u64 scale) NOT_IMPLEMENTED;
+
     virtual void optimize(LayerGraphNode<T> *root)
     {
         

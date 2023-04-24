@@ -305,6 +305,81 @@ void ClearText<T>::add(const std::vector<Tensor<T> *> &in, const Tensor<T> &out)
     });
 }
 
+template <typename T>
+T tanh(T x, u64 scale) {
+    double d = ((double) x) / (1LL << scale);
+    return (T) (tanh(d) * (1LL << scale));
+}
+
+template <typename T>
+void ClearText<T>::gelu(const Tensor<T> &in, const Tensor<T> &out, u64 scale)
+{
+    always_assert(in.size() == out.size());
+    T t1 = (T) (sqrt(2.0 / M_PI) * (1LL << scale));
+    T t2 = (T) (0.044715 * (1LL << scale));
+    fastfor(in.size(), [&](u64 i) {
+        T t = in.data[i] * in.data[i];
+        truncate(t, scale);
+        t = t * in.data[i];
+        truncate(t, scale);
+        t = t * t2;
+        truncate(t, scale);
+        t = t + in.data[i];
+        t = t * t1;
+        truncate(t, scale);
+        t = tanh(t, scale);
+        t = t + (1LL << scale);
+        t = t * in.data[i];
+        truncate(t, scale+1);
+        out.data[i] = t;
+    });
+}
+
+template <typename T>
+void ClearText<T>::softmax(Tensor<T> &_in, Tensor<T> &_out, u64 scale)
+{
+    always_assert(_in.shape.size() == 2);
+    always_assert(_out.shape.size() == 2);
+    always_assert(_in.shape[0] == _out.shape[0]);
+    always_assert(_in.shape[1] == _out.shape[1]);
+    always_assert(std::is_integral<T>::value || (scale == 0));
+
+    auto in = _in.as_2d();
+    auto out = _out.as_2d();
+    auto batchSize = in.d1;
+    auto numClasses = in.d2;
+    for(int b = 0; b < batchSize; ++b) {
+        T max = in(b, 0);
+        for(u64 j = 1; j < numClasses; ++j) {
+            if(in(b, j) > max) {
+                max = in(b, j);
+            }
+        }
+        double den = 0.0;
+        double exps[numClasses];
+        for(u64 j = 0; j < numClasses; ++j) {
+            double x = in(b, j) - max;
+            if (scale == 0) {
+                exps[j] = std::exp(x);
+            } else {
+                exps[j] = std::exp(x / (1ULL << scale));
+            }
+            den += exps[j];
+        }
+        den = den * batchSize;
+
+        for(u64 j = 0; j < numClasses; ++j) {
+            if (scale == 0) {
+                out(b, j) = exps[j] / den;
+            } else {
+                auto t = (exps[j] / den) * (1ULL << scale);
+                t += rand_float();
+                out(b, j) = (T)(t);
+            }
+        }
+    }
+}
+
 template class ClearText<i64>;
 template class ClearText<i32>;
 template class ClearText<u64>;

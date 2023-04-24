@@ -780,3 +780,28 @@ public:
         return outShape;
     }
 };
+
+template <typename T>
+class GeLU: public Layer<T> {
+public:
+    GeLU() :  Layer<T>("GeLU") {}
+
+    void _resize(const std::vector<std::vector<u64>> &shapes) {
+        always_assert(shapes.size() == 1);
+    }
+
+    void _forward(Tensor<T> &a) {
+        this->backend->gelu(a, this->activation, this->scale);
+    }
+
+    std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {
+        always_assert(inShapes.size() == 1);
+        auto &inShape = inShapes[0];
+        return inShape;
+    }
+};
+
+// template <typename T>
+// class LayerNorm {
+//     LayerNorm() : Layer<T>("LayerNorm") {}
+// };
