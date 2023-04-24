@@ -164,10 +164,11 @@ public:
 
     void input(int scale)
     {
+        double x;
         for (u64 i = 0; i < size(); i++)
         {
-            std::cin >> data[i];
-            data[i] = (i64)(data[i] * (1LL << scale));
+            std::cin >> x;
+            data[i] = (i64)(x * (1LL << scale));
         }
     }
 

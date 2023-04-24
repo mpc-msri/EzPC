@@ -24,8 +24,10 @@ def func_call(node, value_info):
         "ConvTranspose": "ConvTranspose3D",
         "Sqrt": "Sqrt",
         "Pow": "Pow",
+        "Mul": "Mul",
     }
     return func_map[node.op_type]
+
 
 non_sequential = ["Concat", "Add"]
 tab_space = "     "
@@ -68,6 +70,7 @@ def inputs_to_take(node):
         "ConvTranspose": 1,
         "Sqrt": 1,
         "Pow": 1,
+        "Mul": 1,
     }
     return tmp_dict[node]
 

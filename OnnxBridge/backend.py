@@ -135,6 +135,7 @@ class IR(Backend):
             "ConvTranspose",
             "Sqrt",
             "Pow",
+            "Mul",
         ]
         implemented_secfloat = [
             "Relu",

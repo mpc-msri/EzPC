@@ -58,6 +58,13 @@ class Operator:
         )
 
     @classmethod
+    def Mul(cls, attributes, inputs, outputs, value_info, var_dict, mode, indent):
+        logger.debug("Inside Mul function call.")
+        return str(
+            f"{'   ' * indent}new Mul<T>({'{'}{iterate_list(value_info[outputs[0]][1])}{'}'},{'{'}{iterate_list(value_info[inputs[1]][1])}{'}'});"
+        )
+
+    @classmethod
     def BatchNormalization(
         cls, attributes, inputs, outputs, value_info, var_dict, mode, indent
     ):

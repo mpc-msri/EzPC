@@ -196,7 +196,7 @@ public:
                 }
                 wIdx += 4 * channel;
             }
-            else if (layer->name.find("Pow") != std::string::npos)
+            else if (layer->name.find("Pow") != std::string::npos || layer->name.find("Mul") != std::string::npos)
             {
                 auto &exp = layer->getinput2();
                 for (int j = 0; j < exp.size(); ++j)

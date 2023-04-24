@@ -489,18 +489,22 @@ public:
     Tensor<T> dsqrt;
     Sqrt() : Layer<T>("Sqrt"), dsqrt({0}) {}
 
-    void _resize(const std::vector<u64> &shape)
+    void _resize(const std::vector<std::vector<u64>> &shapes)
     {
-        this->dsqrt.resize(shape);
+        always_assert(shapes.size() == 1);
+        auto &shape = shapes[0];
+        this->drelu.resize(shape);
     }
 
-    void forward_internal(Tensor<T> &a, bool train = true)
+    void _forward(Tensor<T> &a)
     {
         this->backend->sqrt(a, this->activation, this->dsqrt, this->scale);
     }
 
-    std::vector<u64> get_output_dims(const std::vector<u64> &inShape)
+    std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes)
     {
+        always_assert(inShapes.size() == 1);
+        auto &inShape = inShapes[0];
         return inShape;
     }
 };
@@ -514,22 +518,57 @@ public:
     std::vector<u64> out_shape;
     Pow(const std::vector<u64> out_shape, const std::vector<u64> exp_shape) : Layer<T>("Pow"), dpow({0}), out_shape(out_shape), exp(exp_shape) {}
 
-    void _resize(const std::vector<u64> &shape)
+    void _resize(const std::vector<std::vector<u64>> &shapes)
     {
+        always_assert(shapes.size() == 1);
+        auto &shape = shapes[0];
         this->dpow.resize(shape);
     }
 
-    void forward_internal(Tensor<T> &a, bool train = true)
+    void _forward(Tensor<T> &a)
     {
         this->backend->pow(a, this->exp, this->activation, this->dpow, this->scale, this->out_shape);
     }
 
-    std::vector<u64> get_output_dims(const std::vector<u64> &inShape)
+    std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes)
     {
+        always_assert(inShapes.size() == 1);
+        auto &inShape = inShapes[0];
         return inShape;
     }
 
     Tensor<T> &getinput2() { return exp; }
+};
+
+template <typename T>
+class Mul : public Layer<T>
+{
+public:
+    Tensor<T> dmul;
+    Tensor<T> input2;
+    std::vector<u64> out_shape;
+    Mul(const std::vector<u64> out_shape, const std::vector<u64> in2_shape) : Layer<T>("Mul"), dmul({0}), out_shape(out_shape), input2(in2_shape) {}
+
+    void _resize(const std::vector<std::vector<u64>> &shapes)
+    {
+        always_assert(shapes.size() == 1);
+        auto &shape = shapes[0];
+        this->dmul.resize(shape);
+    }
+
+    void _forward(Tensor<T> &a)
+    {
+        this->backend->mul(a, this->input2, this->activation, this->dmul, this->scale, this->out_shape);
+    }
+
+    std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes)
+    {
+        always_assert(inShapes.size() == 1);
+        auto &inShape = inShapes[0];
+        return inShape;
+    }
+
+    Tensor<T> &getinput2() { return input2; }
 };
 
 template <typename T>
