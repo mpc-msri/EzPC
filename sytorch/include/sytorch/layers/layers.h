@@ -572,6 +572,37 @@ public:
 };
 
 template <typename T>
+class Sub : public Layer<T>
+{
+public:
+    Tensor<T> dsub;
+    Tensor<T> input2;
+    std::vector<u64> out_shape;
+    Sub(const std::vector<u64> out_shape, const std::vector<u64> in2_shape) : Layer<T>("Sub"), dsub({0}), out_shape(out_shape), input2(in2_shape) {}
+
+    void _resize(const std::vector<std::vector<u64>> &shapes)
+    {
+        always_assert(shapes.size() == 1);
+        auto &shape = shapes[0];
+        this->dsub.resize(shape);
+    }
+
+    void _forward(Tensor<T> &a)
+    {
+        this->backend->sub(a, this->input2, this->activation, this->dsub, this->scale, this->out_shape);
+    }
+
+    std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes)
+    {
+        always_assert(inShapes.size() == 1);
+        auto &inShape = inShapes[0];
+        return inShape;
+    }
+
+    Tensor<T> &getinput2() { return input2; }
+};
+
+template <typename T>
 class BatchNorm2dInference : public Layer<T> {
 public:
     Tensor1D<T> A; // scale = s

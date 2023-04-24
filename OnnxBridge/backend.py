@@ -136,6 +136,7 @@ class IR(Backend):
             "Sqrt",
             "Pow",
             "Mul",
+            "Sub",
         ]
         implemented_secfloat = [
             "Relu",

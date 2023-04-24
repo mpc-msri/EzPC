@@ -25,6 +25,7 @@ def func_call(node, value_info):
         "Sqrt": "Sqrt",
         "Pow": "Pow",
         "Mul": "Mul",
+        "Sub": "Sub",
     }
     return func_map[node.op_type]
 
@@ -71,6 +72,7 @@ def inputs_to_take(node):
         "Sqrt": 1,
         "Pow": 1,
         "Mul": 1,
+        "Sub": 1,
     }
     return tmp_dict[node]
 
