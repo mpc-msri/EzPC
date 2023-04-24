@@ -286,7 +286,7 @@ def prepare_export(program, var_dict, value_info, mode, scale, bitlength, backen
         if isinstance(node, Node):
             if node.op_type in non_sequential:
                 code_list.append(
-                    f"{tab_space * (indent + 1)}auto {var_dict[node.outputs[0]]} = {func_call(node, value_info)}({iterate_list([var_dict[x] for x in node.inputs])});"
+                    f"{tab_space * (indent + 1)}auto &{var_dict[node.outputs[0]]} = {func_call(node, value_info)}({iterate_list([var_dict[x] for x in node.inputs])});"
                 )
             else:
                 code_list.append(
