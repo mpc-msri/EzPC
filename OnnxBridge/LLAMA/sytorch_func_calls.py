@@ -75,6 +75,14 @@ def get_padding_3d(attributes, inputs, output, value_info, var_dict):
         return pads
 
 
+def get_dilation(attributes, inputs, output, value_info, var_dict):
+    return (
+        attributes["dilations"]
+        if "dilations" in attributes.keys()
+        else [1 for _ in range(len(value_info[inputs[0]][1]) - 2)]
+    )
+
+
 class Operator:
     """
     Class preparing the Function Calls specific for each function.
@@ -153,10 +161,11 @@ class Operator:
             filterShape = value_info[inputs[1]][1]
             pad = pads[0]
             strides = attributes["strides"]
+            dilations = get_dilation(attributes, inputs, outputs, value_info, var_dict)
             isBias = ", true" if len(inputs) == 3 else ""
             return str(
                 f"{'   ' * indent}new Conv3D<T>("
-                f"{CI}, {CO}, {'{'}{iterate_list(filterShape[2:])}{'}'}, {'{'}{iterate_list(pads)}{'}'}, {'{'}{iterate_list(strides)}{'}'}{isBias}"
+                f"{CI}, {CO}, {'{'}{iterate_list(filterShape[2:])}{'}'}, {'{'}{iterate_list(pads)}{'}'}, {'{'}{iterate_list(strides)}{'}'},{'{'}{iterate_list(dilations)}{'}'}{isBias}"
                 f");"
             )
 
@@ -176,10 +185,11 @@ class Operator:
             filterShape = value_info[inputs[1]][1]
             pad = pads[0]
             strides = attributes["strides"]
+            dilations = get_dilation(attributes, inputs, outputs, value_info, var_dict)
             isBias = ", true" if len(inputs) == 3 else ""
             return str(
                 f"{'   ' * indent}new ConvTranspose3D<T>("
-                f"{CI}, {CO}, {'{'}{iterate_list(filterShape[2:])}{'}'}, {'{'}{iterate_list(pads)}{'}'}, {'{'}{iterate_list(strides)}{'}'}{isBias}"
+                f"{CI}, {CO}, {'{'}{iterate_list(filterShape[2:])}{'}'}, {'{'}{iterate_list(pads)}{'}'}, {'{'}{iterate_list(strides)}{'}'}, {'{'}{iterate_list(dilations)}{'}'}{isBias}"
                 f");"
             )
 
