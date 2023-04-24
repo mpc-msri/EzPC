@@ -156,7 +156,7 @@ class Operator:
             isBias = ", true" if len(inputs) == 3 else ""
             return str(
                 f"{'   ' * indent}new Conv3D<T>("
-                f"{CI}, {CO}, {'{'}{iterate_list(filterShape)}{'}'}, {'{'}{iterate_list(pads)}{'}'}, {'{'}{iterate_list(strides)}{'}'}{isBias}"
+                f"{CI}, {CO}, {'{'}{iterate_list(filterShape[2:])}{'}'}, {'{'}{iterate_list(pads)}{'}'}, {'{'}{iterate_list(strides)}{'}'}{isBias}"
                 f");"
             )
 
@@ -179,7 +179,7 @@ class Operator:
             isBias = ", true" if len(inputs) == 3 else ""
             return str(
                 f"{'   ' * indent}new ConvTranspose3D<T>("
-                f"{CI}, {CO}, {'{'}{iterate_list(filterShape)}{'}'}, {'{'}{iterate_list(pads)}{'}'}, {'{'}{iterate_list(strides)}{'}'}{isBias}"
+                f"{CI}, {CO}, {'{'}{iterate_list(filterShape[2:])}{'}'}, {'{'}{iterate_list(pads)}{'}'}, {'{'}{iterate_list(strides)}{'}'}{isBias}"
                 f");"
             )
 
