@@ -447,14 +447,15 @@ void LayerNormalization(int32_t s1, int32_t s2, vector<vector<FPArray>> &input, 
 void EmbedLayerNormalization(int32_t batch_size, int32_t seq_len, vector<vector<FPArray>> &input_ids, vector<vector<FPArray>> &transformer_wte_weight, vector<vector<FPArray>> &transformer_wpe_weight, vector<FPArray> &transformer_h_ln_1_weight, vector<FPArray> &transformer_h_ln_1_bias, vector<vector<FPArray>> &position_ids, vector<vector<vector<FPArray>>> &EmbedLayerNormalization_output, vector<vector<vector<FPArray>>> &EmbedLayerNormalization_dummy_mask_index, vector<vector<vector<FPArray>>> &EmbedLayerNormalization_embedding_sum, int32_t embedding_len = 768){
 	for(int32_t b = 0; b < batch_size; b++) {
 
-        auto add1 = make_vector_float(ALICE, seq_len, embedding_len) ;
-        auto add2 = make_vector_float(ALICE, seq_len, embedding_len) ;
-        auto added = make_vector_float(ALICE, seq_len, embedding_len) ;
+        auto add1 = make_vector_float_rand(ALICE, seq_len, embedding_len) ;
+        auto add2 = make_vector_float_rand(ALICE, seq_len, embedding_len) ;
+        auto added = make_vector_float_rand(ALICE, seq_len, embedding_len) ;
 
         for(int32_t i1 = 0; i1 < seq_len; i1++) {
             for(int32_t i2 = 0; i2 < embedding_len; i2++) {
-                add1[i1][i2] = transformer_wte_weight[input_ids[b][i1]][i2] ;
-                add2[i1][i2] = transformer_wpe_weight[position_ids[b][i1]][i2] ;
+                // add1[i1][i2] = transformer_wte_weight[input_ids[b][i1]][i2] ;
+                // add2[i1][i2] = transformer_wpe_weight[position_ids[b][i1]][i2] ;
+                ;
             }
         }
 
@@ -548,8 +549,7 @@ void MatMulBatch(int32_t batch_size, int32_t M1D1, int32_t M1D2, int32_t M2D1, i
 
 ///////////////////////
 
-auto input1(int d1, int party)
-{
+auto input1(int d1, int party) {
     auto tmp0 = make_vector_float(party, d1);
 
     float *__tmp_in_tmp0 = new float[1];
@@ -722,7 +722,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable attention_mask of shape ['batch_size', 'total_seq_len'] as var3
     if (__party == ALICE) cout << "Input var3:" << endl;
-    auto var3 = input2(batch_size, total_seq_len, ALICE);
+    auto var3 = make_vector_float(ALICE, batch_size, total_seq_len);
 
     // Function Call to Cast with inputs ['attention_mask'] and gives output ['attention_mask_int32']
     auto var165 = make_vector_float(ALICE, batch_size, total_seq_len);
@@ -733,7 +733,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable input_ids of shape ['batch_size', 'seq_len'] as var1
     if (__party == ALICE) cout << "Input var1:" << endl;
-    auto var1 = input2(batch_size, seq_len, ALICE);
+    auto var1 = make_vector_float(ALICE, batch_size, seq_len);
 
     // Function Call to Cast with inputs ['input_ids'] and gives output ['197_int32']
     auto var166 = make_vector_float(ALICE, batch_size, seq_len);
@@ -743,7 +743,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable position_ids of shape ['batch_size', 'seq_len'] as var2
     if (__party == ALICE) cout << "Input var2:" << endl;
-    auto var2 = input2(batch_size, seq_len, ALICE);
+    auto var2 = make_vector_float(ALICE, batch_size, seq_len);
 
     // Function Call to Cast with inputs ['position_ids'] and gives output ['205_int32']
     auto var167 = make_vector_float(ALICE, batch_size, seq_len);
@@ -753,19 +753,19 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.wte.weight of shape [50257, 768] as var16
     if (__party == BOB) cout << "Input var16:" << endl;
-    auto var16 = input2(50257, 768, BOB);
+    auto var16 = make_vector_float(BOB, 50257, 768);
 
     // Declaration and Input for variable transformer.wpe.weight of shape [1024, 768] as var17
     if (__party == BOB) cout << "Input var17:" << endl;
-    auto var17 = input2(1024, 768, BOB);
+    auto var17 = make_vector_float(BOB, 1024, 768);
 
     // Declaration and Input for variable transformer.h.0.ln_1.weight of shape [768] as var18
     if (__party == BOB) cout << "Input var18:" << endl;
-    auto var18 = input1(768, BOB);
+    auto var18 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.0.ln_1.bias of shape [768] as var19
     if (__party == BOB) cout << "Input var19:" << endl;
-    auto var19 = input1(768, BOB);
+    auto var19 = make_vector_float(BOB, 768);
 
     // Function Call to EmbedLayerNormalization with inputs ['197_int32', '', 'transformer.wte.weight', 'transformer.wpe.weight', '', 'transformer.h.0.ln_1.weight', 'transformer.h.0.ln_1.bias', '', '205_int32'] and gives output ['EmbedLayerNormalization_0_output', 'EmbedLayerNormalization_0_dummy_mask_index', 'EmbedLayerNormalization_0_embedding_sum']
     auto var168 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -779,11 +779,11 @@ int main(int __argc, char **__argv)
     
     // Declaration and Input for variable transformer.h.0.attn.c_attn.weight of shape [768, 2304] as var20
     if (__party == BOB) cout << "Input var20:" << endl;
-    auto var20 = input2(768, 2304, BOB);
+    auto var20 = make_vector_float(BOB, 768, 2304);
 
     // Declaration and Input for variable transformer.h.0.attn.c_attn.bias of shape [2304] as var21
     if (__party == BOB) cout << "Input var21:" << endl;
-    auto var21 = input1(2304, BOB);
+    auto var21 = make_vector_float(BOB, 2304);
 
     // Function Call to Attention with inputs ['EmbedLayerNormalization_0_output', 'transformer.h.0.attn.c_attn.weight', 'transformer.h.0.attn.c_attn.bias', 'attention_mask_int32', 'past_0'] and gives output ['GptAttention_0_output', 'present_0']
     auto var171 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -795,7 +795,7 @@ int main(int __argc, char **__argv)
     
     // Declaration and Input for variable transformer.h.0.attn.c_proj.weight of shape [768, 768] as var22
     if (__party == BOB) cout << "Input var22:" << endl;
-    auto var22 = input2(768, 768, BOB);
+    auto var22 = make_vector_float(BOB, 768, 768);
 
     // Function Call to MatMul with inputs ['GptAttention_0_output', 'transformer.h.0.attn.c_proj.weight'] and gives output ['GptAttention_0_matmul_output']
     auto var173 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -805,15 +805,15 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.0.ln_2.weight of shape [768] as var24
     if (__party == BOB) cout << "Input var24:" << endl;
-    auto var24 = input1(768, BOB);
+    auto var24 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.0.ln_2.bias of shape [768] as var25
     if (__party == BOB) cout << "Input var25:" << endl;
-    auto var25 = input1(768, BOB);
+    auto var25 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.0.attn.c_proj.bias of shape [768] as var23
     if (__party == BOB) cout << "Input var23:" << endl;
-    auto var23 = input1(768, BOB);
+    auto var23 = make_vector_float(BOB, 768);
 
     // Function Call to SkipLayerNormalization with inputs ['EmbedLayerNormalization_0_embedding_sum', 'GptAttention_0_matmul_output', 'transformer.h.0.ln_2.weight', 'transformer.h.0.ln_2.bias', 'transformer.h.0.attn.c_proj.bias'] and gives output ['FullyConnect_MatMul_0_input', '', '', '398']
     auto var174 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -824,7 +824,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.0.mlp.c_fc.weight of shape [768, 3072] as var26
     if (__party == BOB) cout << "Input var26:" << endl;
-    auto var26 = input2(768, 3072, BOB);
+    auto var26 = make_vector_float(BOB, 768, 3072);
 
     // Function Call to MatMul with inputs ['FullyConnect_MatMul_0_input', 'transformer.h.0.mlp.c_fc.weight'] and gives output ['FullyConnect_MatMul_0_output']
     auto var177 = make_vector_float(ALICE, batch_size, seq_len, 3072);
@@ -834,7 +834,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.0.mlp.c_fc.bias of shape [3072] as var27
     if (__party == BOB) cout << "Input var27:" << endl;
-    auto var27 = input1(3072, BOB);
+    auto var27 = make_vector_float(BOB, 3072);
 
     // Function Call to FastGelu with inputs ['FullyConnect_MatMul_0_output', 'transformer.h.0.mlp.c_fc.bias'] and gives output ['FullyConnect_MatMul_1_input']
     auto var178 = make_vector_float(ALICE, batch_size, seq_len, 3072);
@@ -845,7 +845,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.0.mlp.c_proj.weight of shape [3072, 768] as var28
     if (__party == BOB) cout << "Input var28:" << endl;
-    auto var28 = input2(3072, 768, BOB);
+    auto var28 = make_vector_float(BOB, 3072, 768);
 
     // Function Call to MatMul with inputs ['FullyConnect_MatMul_1_input', 'transformer.h.0.mlp.c_proj.weight'] and gives output ['FullyConnect_MatMul_1_output']
     auto var179 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -855,15 +855,15 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.1.ln_1.weight of shape [768] as var30
     if (__party == BOB) cout << "Input var30:" << endl;
-    auto var30 = input1(768, BOB);
+    auto var30 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.1.ln_1.bias of shape [768] as var31
     if (__party == BOB) cout << "Input var31:" << endl;
-    auto var31 = input1(768, BOB);
+    auto var31 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.0.mlp.c_proj.bias of shape [768] as var29
     if (__party == BOB) cout << "Input var29:" << endl;
-    auto var29 = input1(768, BOB);
+    auto var29 = make_vector_float(BOB, 768);
 
     // Function Call to SkipLayerNormalization with inputs ['398', 'FullyConnect_MatMul_1_output', 'transformer.h.1.ln_1.weight', 'transformer.h.1.ln_1.bias', 'transformer.h.0.mlp.c_proj.bias'] and gives output ['482', '', '', '471']
     auto var180 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -878,11 +878,11 @@ int main(int __argc, char **__argv)
     
     // Declaration and Input for variable transformer.h.1.attn.c_attn.weight of shape [768, 2304] as var32
     if (__party == BOB) cout << "Input var32:" << endl;
-    auto var32 = input2(768, 2304, BOB);
+    auto var32 = make_vector_float(BOB, 768, 2304);
 
     // Declaration and Input for variable transformer.h.1.attn.c_attn.bias of shape [2304] as var33
     if (__party == BOB) cout << "Input var33:" << endl;
-    auto var33 = input1(2304, BOB);
+    auto var33 = make_vector_float(BOB, 2304);
 
     // Function Call to Attention with inputs ['482', 'transformer.h.1.attn.c_attn.weight', 'transformer.h.1.attn.c_attn.bias', 'attention_mask_int32', 'past_1'] and gives output ['GptAttention_1_output', 'present_1']
     auto var182 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -892,7 +892,7 @@ int main(int __argc, char **__argv)
     output2(var182[0], seq_len, 768, ALICE); ///////////////////////////
     // Declaration and Input for variable transformer.h.1.attn.c_proj.weight of shape [768, 768] as var34
     if (__party == BOB) cout << "Input var34:" << endl;
-    auto var34 = input2(768, 768, BOB);
+    auto var34 = make_vector_float(BOB, 768, 768);
 
     // Function Call to MatMul with inputs ['GptAttention_1_output', 'transformer.h.1.attn.c_proj.weight'] and gives output ['GptAttention_1_matmul_output']
     auto var184 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -902,15 +902,15 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.1.ln_2.weight of shape [768] as var36
     if (__party == BOB) cout << "Input var36:" << endl;
-    auto var36 = input1(768, BOB);
+    auto var36 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.1.ln_2.bias of shape [768] as var37
     if (__party == BOB) cout << "Input var37:" << endl;
-    auto var37 = input1(768, BOB);
+    auto var37 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.1.attn.c_proj.bias of shape [768] as var35
     if (__party == BOB) cout << "Input var35:" << endl;
-    auto var35 = input1(768, BOB);
+    auto var35 = make_vector_float(BOB, 768);
 
     // Function Call to SkipLayerNormalization with inputs ['471', 'GptAttention_1_matmul_output', 'transformer.h.1.ln_2.weight', 'transformer.h.1.ln_2.bias', 'transformer.h.1.attn.c_proj.bias'] and gives output ['FullyConnect_MatMul_2_input', '', '', '643']
     auto var185 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -921,7 +921,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.1.mlp.c_fc.weight of shape [768, 3072] as var38
     if (__party == BOB) cout << "Input var38:" << endl;
-    auto var38 = input2(768, 3072, BOB);
+    auto var38 = make_vector_float(BOB, 768, 3072);
 
     // Function Call to MatMul with inputs ['FullyConnect_MatMul_2_input', 'transformer.h.1.mlp.c_fc.weight'] and gives output ['FullyConnect_MatMul_2_output']
     auto var187 = make_vector_float(ALICE, batch_size, seq_len, 3072);
@@ -931,7 +931,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.1.mlp.c_fc.bias of shape [3072] as var39
     if (__party == BOB) cout << "Input var39:" << endl;
-    auto var39 = input1(3072, BOB);
+    auto var39 = make_vector_float(BOB, 3072);
 
     // Function Call to FastGelu with inputs ['FullyConnect_MatMul_2_output', 'transformer.h.1.mlp.c_fc.bias'] and gives output ['FullyConnect_MatMul_3_input']
     auto var188 = make_vector_float(ALICE, batch_size, seq_len, 3072);
@@ -942,7 +942,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.1.mlp.c_proj.weight of shape [3072, 768] as var40
     if (__party == BOB) cout << "Input var40:" << endl;
-    auto var40 = input2(3072, 768, BOB);
+    auto var40 = make_vector_float(BOB, 3072, 768);
 
     // Function Call to MatMul with inputs ['FullyConnect_MatMul_3_input', 'transformer.h.1.mlp.c_proj.weight'] and gives output ['FullyConnect_MatMul_3_output']
     auto var189 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -952,15 +952,15 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.2.ln_1.weight of shape [768] as var42
     if (__party == BOB) cout << "Input var42:" << endl;
-    auto var42 = input1(768, BOB);
+    auto var42 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.2.ln_1.bias of shape [768] as var43
     if (__party == BOB) cout << "Input var43:" << endl;
-    auto var43 = input1(768, BOB);
+    auto var43 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.1.mlp.c_proj.bias of shape [768] as var41
     if (__party == BOB) cout << "Input var41:" << endl;
-    auto var41 = input1(768, BOB);
+    auto var41 = make_vector_float(BOB, 768);
 
     // Function Call to SkipLayerNormalization with inputs ['643', 'FullyConnect_MatMul_3_output', 'transformer.h.2.ln_1.weight', 'transformer.h.2.ln_1.bias', 'transformer.h.1.mlp.c_proj.bias'] and gives output ['727', '', '', '716']
     auto var190 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -971,11 +971,11 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.2.attn.c_attn.weight of shape [768, 2304] as var44
     if (__party == BOB) cout << "Input var44:" << endl;
-    auto var44 = input2(768, 2304, BOB);
+    auto var44 = make_vector_float(BOB, 768, 2304);
 
     // Declaration and Input for variable transformer.h.2.attn.c_attn.bias of shape [2304] as var45
     if (__party == BOB) cout << "Input var45:" << endl;
-    auto var45 = input1(2304, BOB);
+    auto var45 = make_vector_float(BOB, 2304);
 
     // Function Call to Attention with inputs ['727', 'transformer.h.2.attn.c_attn.weight', 'transformer.h.2.attn.c_attn.bias', 'attention_mask_int32', 'past_2'] and gives output ['GptAttention_2_output', 'present_2']
     auto var192 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -985,7 +985,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.2.attn.c_proj.weight of shape [768, 768] as var46
     if (__party == BOB) cout << "Input var46:" << endl;
-    auto var46 = input2(768, 768, BOB);
+    auto var46 = make_vector_float(BOB, 768, 768);
 
     // Function Call to MatMul with inputs ['GptAttention_2_output', 'transformer.h.2.attn.c_proj.weight'] and gives output ['GptAttention_2_matmul_output']
     auto var194 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -995,15 +995,15 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.2.ln_2.weight of shape [768] as var48
     if (__party == BOB) cout << "Input var48:" << endl;
-    auto var48 = input1(768, BOB);
+    auto var48 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.2.ln_2.bias of shape [768] as var49
     if (__party == BOB) cout << "Input var49:" << endl;
-    auto var49 = input1(768, BOB);
+    auto var49 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.2.attn.c_proj.bias of shape [768] as var47
     if (__party == BOB) cout << "Input var47:" << endl;
-    auto var47 = input1(768, BOB);
+    auto var47 = make_vector_float(BOB, 768);
 
     // Function Call to SkipLayerNormalization with inputs ['716', 'GptAttention_2_matmul_output', 'transformer.h.2.ln_2.weight', 'transformer.h.2.ln_2.bias', 'transformer.h.2.attn.c_proj.bias'] and gives output ['FullyConnect_MatMul_4_input', '', '', '888']
     auto var195 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1014,7 +1014,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.2.mlp.c_fc.weight of shape [768, 3072] as var50
     if (__party == BOB) cout << "Input var50:" << endl;
-    auto var50 = input2(768, 3072, BOB);
+    auto var50 = make_vector_float(BOB, 768, 3072);
 
     // Function Call to MatMul with inputs ['FullyConnect_MatMul_4_input', 'transformer.h.2.mlp.c_fc.weight'] and gives output ['FullyConnect_MatMul_4_output']
     auto var197 = make_vector_float(ALICE, batch_size, seq_len, 3072);
@@ -1024,7 +1024,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.2.mlp.c_fc.bias of shape [3072] as var51
     if (__party == BOB) cout << "Input var51:" << endl;
-    auto var51 = input1(3072, BOB);
+    auto var51 = make_vector_float(BOB, 3072);
 
     // Function Call to FastGelu with inputs ['FullyConnect_MatMul_4_output', 'transformer.h.2.mlp.c_fc.bias'] and gives output ['FullyConnect_MatMul_5_input']
     auto var198 = make_vector_float(ALICE, batch_size, seq_len, 3072);
@@ -1034,7 +1034,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.2.mlp.c_proj.weight of shape [3072, 768] as var52
     if (__party == BOB) cout << "Input var52:" << endl;
-    auto var52 = input2(3072, 768, BOB);
+    auto var52 = make_vector_float(BOB, 3072, 768);
 
     // Function Call to MatMul with inputs ['FullyConnect_MatMul_5_input', 'transformer.h.2.mlp.c_proj.weight'] and gives output ['FullyConnect_MatMul_5_output']
     auto var199 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1044,15 +1044,15 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.3.ln_1.weight of shape [768] as var54
     if (__party == BOB) cout << "Input var54:" << endl;
-    auto var54 = input1(768, BOB);
+    auto var54 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.3.ln_1.bias of shape [768] as var55
     if (__party == BOB) cout << "Input var55:" << endl;
-    auto var55 = input1(768, BOB);
+    auto var55 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.2.mlp.c_proj.bias of shape [768] as var53
     if (__party == BOB) cout << "Input var53:" << endl;
-    auto var53 = input1(768, BOB);
+    auto var53 = make_vector_float(BOB, 768);
 
     // Function Call to SkipLayerNormalization with inputs ['888', 'FullyConnect_MatMul_5_output', 'transformer.h.3.ln_1.weight', 'transformer.h.3.ln_1.bias', 'transformer.h.2.mlp.c_proj.bias'] and gives output ['972', '', '', '961']
     auto var200 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1063,11 +1063,11 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.3.attn.c_attn.weight of shape [768, 2304] as var56
     if (__party == BOB) cout << "Input var56:" << endl;
-    auto var56 = input2(768, 2304, BOB);
+    auto var56 = make_vector_float(BOB, 768, 2304);
 
     // Declaration and Input for variable transformer.h.3.attn.c_attn.bias of shape [2304] as var57
     if (__party == BOB) cout << "Input var57:" << endl;
-    auto var57 = input1(2304, BOB);
+    auto var57 = make_vector_float(BOB, 2304);
 
     // Function Call to Attention with inputs ['972', 'transformer.h.3.attn.c_attn.weight', 'transformer.h.3.attn.c_attn.bias', 'attention_mask_int32', 'past_3'] and gives output ['GptAttention_3_output', 'present_3']
     auto var202 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1077,7 +1077,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.3.attn.c_proj.weight of shape [768, 768] as var58
     if (__party == BOB) cout << "Input var58:" << endl;
-    auto var58 = input2(768, 768, BOB);
+    auto var58 = make_vector_float(BOB, 768, 768);
 
     // Function Call to MatMul with inputs ['GptAttention_3_output', 'transformer.h.3.attn.c_proj.weight'] and gives output ['GptAttention_3_matmul_output']
     auto var204 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1087,15 +1087,15 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.3.ln_2.weight of shape [768] as var60
     if (__party == BOB) cout << "Input var60:" << endl;
-    auto var60 = input1(768, BOB);
+    auto var60 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.3.ln_2.bias of shape [768] as var61
     if (__party == BOB) cout << "Input var61:" << endl;
-    auto var61 = input1(768, BOB);
+    auto var61 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.3.attn.c_proj.bias of shape [768] as var59
     if (__party == BOB) cout << "Input var59:" << endl;
-    auto var59 = input1(768, BOB);
+    auto var59 = make_vector_float(BOB, 768);
 
     // Function Call to SkipLayerNormalization with inputs ['961', 'GptAttention_3_matmul_output', 'transformer.h.3.ln_2.weight', 'transformer.h.3.ln_2.bias', 'transformer.h.3.attn.c_proj.bias'] and gives output ['FullyConnect_MatMul_6_input', '', '', '1133']
     auto var205 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1106,7 +1106,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.3.mlp.c_fc.weight of shape [768, 3072] as var62
     if (__party == BOB) cout << "Input var62:" << endl;
-    auto var62 = input2(768, 3072, BOB);
+    auto var62 = make_vector_float(BOB, 768, 3072);
 
     // Function Call to MatMul with inputs ['FullyConnect_MatMul_6_input', 'transformer.h.3.mlp.c_fc.weight'] and gives output ['FullyConnect_MatMul_6_output']
     auto var207 = make_vector_float(ALICE, batch_size, seq_len, 3072);
@@ -1116,7 +1116,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.3.mlp.c_fc.bias of shape [3072] as var63
     if (__party == BOB) cout << "Input var63:" << endl;
-    auto var63 = input1(3072, BOB);
+    auto var63 = make_vector_float(BOB, 3072);
 
     // Function Call to FastGelu with inputs ['FullyConnect_MatMul_6_output', 'transformer.h.3.mlp.c_fc.bias'] and gives output ['FullyConnect_MatMul_7_input']
     auto var208 = make_vector_float(ALICE, batch_size, seq_len, 3072);
@@ -1126,7 +1126,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.3.mlp.c_proj.weight of shape [3072, 768] as var64
     if (__party == BOB) cout << "Input var64:" << endl;
-    auto var64 = input2(3072, 768, BOB);
+    auto var64 = make_vector_float(BOB, 3072, 768);
 
     // Function Call to MatMul with inputs ['FullyConnect_MatMul_7_input', 'transformer.h.3.mlp.c_proj.weight'] and gives output ['FullyConnect_MatMul_7_output']
     auto var209 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1136,15 +1136,15 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.4.ln_1.weight of shape [768] as var66
     if (__party == BOB) cout << "Input var66:" << endl;
-    auto var66 = input1(768, BOB);
+    auto var66 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.4.ln_1.bias of shape [768] as var67
     if (__party == BOB) cout << "Input var67:" << endl;
-    auto var67 = input1(768, BOB);
+    auto var67 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.3.mlp.c_proj.bias of shape [768] as var65
     if (__party == BOB) cout << "Input var65:" << endl;
-    auto var65 = input1(768, BOB);
+    auto var65 = make_vector_float(BOB, 768);
 
     // Function Call to SkipLayerNormalization with inputs ['1133', 'FullyConnect_MatMul_7_output', 'transformer.h.4.ln_1.weight', 'transformer.h.4.ln_1.bias', 'transformer.h.3.mlp.c_proj.bias'] and gives output ['1217', '', '', '1206']
     auto var210 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1155,11 +1155,11 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.4.attn.c_attn.weight of shape [768, 2304] as var68
     if (__party == BOB) cout << "Input var68:" << endl;
-    auto var68 = input2(768, 2304, BOB);
+    auto var68 = make_vector_float(BOB, 768, 2304);
 
     // Declaration and Input for variable transformer.h.4.attn.c_attn.bias of shape [2304] as var69
     if (__party == BOB) cout << "Input var69:" << endl;
-    auto var69 = input1(2304, BOB);
+    auto var69 = make_vector_float(BOB, 2304);
 
     // Function Call to Attention with inputs ['1217', 'transformer.h.4.attn.c_attn.weight', 'transformer.h.4.attn.c_attn.bias', 'attention_mask_int32', 'past_4'] and gives output ['GptAttention_4_output', 'present_4']
     auto var212 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1169,7 +1169,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.4.attn.c_proj.weight of shape [768, 768] as var70
     if (__party == BOB) cout << "Input var70:" << endl;
-    auto var70 = input2(768, 768, BOB);
+    auto var70 = make_vector_float(BOB, 768, 768);
 
     // Function Call to MatMul with inputs ['GptAttention_4_output', 'transformer.h.4.attn.c_proj.weight'] and gives output ['GptAttention_4_matmul_output']
     auto var214 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1179,15 +1179,15 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.4.ln_2.weight of shape [768] as var72
     if (__party == BOB) cout << "Input var72:" << endl;
-    auto var72 = input1(768, BOB);
+    auto var72 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.4.ln_2.bias of shape [768] as var73
     if (__party == BOB) cout << "Input var73:" << endl;
-    auto var73 = input1(768, BOB);
+    auto var73 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.4.attn.c_proj.bias of shape [768] as var71
     if (__party == BOB) cout << "Input var71:" << endl;
-    auto var71 = input1(768, BOB);
+    auto var71 = make_vector_float(BOB, 768);
 
     // Function Call to SkipLayerNormalization with inputs ['1206', 'GptAttention_4_matmul_output', 'transformer.h.4.ln_2.weight', 'transformer.h.4.ln_2.bias', 'transformer.h.4.attn.c_proj.bias'] and gives output ['FullyConnect_MatMul_8_input', '', '', '1378']
     auto var215 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1198,7 +1198,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.4.mlp.c_fc.weight of shape [768, 3072] as var74
     if (__party == BOB) cout << "Input var74:" << endl;
-    auto var74 = input2(768, 3072, BOB);
+    auto var74 = make_vector_float(BOB, 768, 3072);
 
     // Function Call to MatMul with inputs ['FullyConnect_MatMul_8_input', 'transformer.h.4.mlp.c_fc.weight'] and gives output ['FullyConnect_MatMul_8_output']
     auto var217 = make_vector_float(ALICE, batch_size, seq_len, 3072);
@@ -1208,7 +1208,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.4.mlp.c_fc.bias of shape [3072] as var75
     if (__party == BOB) cout << "Input var75:" << endl;
-    auto var75 = input1(3072, BOB);
+    auto var75 = make_vector_float(BOB, 3072);
 
     // Function Call to FastGelu with inputs ['FullyConnect_MatMul_8_output', 'transformer.h.4.mlp.c_fc.bias'] and gives output ['FullyConnect_MatMul_9_input']
     auto var218 = make_vector_float(ALICE, batch_size, seq_len, 3072);
@@ -1218,7 +1218,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.4.mlp.c_proj.weight of shape [3072, 768] as var76
     if (__party == BOB) cout << "Input var76:" << endl;
-    auto var76 = input2(3072, 768, BOB);
+    auto var76 = make_vector_float(BOB, 3072, 768);
 
     // Function Call to MatMul with inputs ['FullyConnect_MatMul_9_input', 'transformer.h.4.mlp.c_proj.weight'] and gives output ['FullyConnect_MatMul_9_output']
     auto var219 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1228,15 +1228,15 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.5.ln_1.weight of shape [768] as var78
     if (__party == BOB) cout << "Input var78:" << endl;
-    auto var78 = input1(768, BOB);
+    auto var78 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.5.ln_1.bias of shape [768] as var79
     if (__party == BOB) cout << "Input var79:" << endl;
-    auto var79 = input1(768, BOB);
+    auto var79 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.4.mlp.c_proj.bias of shape [768] as var77
     if (__party == BOB) cout << "Input var77:" << endl;
-    auto var77 = input1(768, BOB);
+    auto var77 = make_vector_float(BOB, 768);
 
     // Function Call to SkipLayerNormalization with inputs ['1378', 'FullyConnect_MatMul_9_output', 'transformer.h.5.ln_1.weight', 'transformer.h.5.ln_1.bias', 'transformer.h.4.mlp.c_proj.bias'] and gives output ['1462', '', '', '1451']
     auto var220 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1247,11 +1247,11 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.5.attn.c_attn.weight of shape [768, 2304] as var80
     if (__party == BOB) cout << "Input var80:" << endl;
-    auto var80 = input2(768, 2304, BOB);
+    auto var80 = make_vector_float(BOB, 768, 2304);
 
     // Declaration and Input for variable transformer.h.5.attn.c_attn.bias of shape [2304] as var81
     if (__party == BOB) cout << "Input var81:" << endl;
-    auto var81 = input1(2304, BOB);
+    auto var81 = make_vector_float(BOB, 2304);
 
     // Function Call to Attention with inputs ['1462', 'transformer.h.5.attn.c_attn.weight', 'transformer.h.5.attn.c_attn.bias', 'attention_mask_int32', 'past_5'] and gives output ['GptAttention_5_output', 'present_5']
     auto var222 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1261,7 +1261,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.5.attn.c_proj.weight of shape [768, 768] as var82
     if (__party == BOB) cout << "Input var82:" << endl;
-    auto var82 = input2(768, 768, BOB);
+    auto var82 = make_vector_float(BOB, 768, 768);
 
     // Function Call to MatMul with inputs ['GptAttention_5_output', 'transformer.h.5.attn.c_proj.weight'] and gives output ['GptAttention_5_matmul_output']
     auto var224 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1271,15 +1271,15 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.5.ln_2.weight of shape [768] as var84
     if (__party == BOB) cout << "Input var84:" << endl;
-    auto var84 = input1(768, BOB);
+    auto var84 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.5.ln_2.bias of shape [768] as var85
     if (__party == BOB) cout << "Input var85:" << endl;
-    auto var85 = input1(768, BOB);
+    auto var85 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.5.attn.c_proj.bias of shape [768] as var83
     if (__party == BOB) cout << "Input var83:" << endl;
-    auto var83 = input1(768, BOB);
+    auto var83 = make_vector_float(BOB, 768);
 
     // Function Call to SkipLayerNormalization with inputs ['1451', 'GptAttention_5_matmul_output', 'transformer.h.5.ln_2.weight', 'transformer.h.5.ln_2.bias', 'transformer.h.5.attn.c_proj.bias'] and gives output ['FullyConnect_MatMul_10_input', '', '', '1623']
     auto var225 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1290,7 +1290,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.5.mlp.c_fc.weight of shape [768, 3072] as var86
     if (__party == BOB) cout << "Input var86:" << endl;
-    auto var86 = input2(768, 3072, BOB);
+    auto var86 = make_vector_float(BOB, 768, 3072);
 
     // Function Call to MatMul with inputs ['FullyConnect_MatMul_10_input', 'transformer.h.5.mlp.c_fc.weight'] and gives output ['FullyConnect_MatMul_10_output']
     auto var227 = make_vector_float(ALICE, batch_size, seq_len, 3072);
@@ -1300,7 +1300,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.5.mlp.c_fc.bias of shape [3072] as var87
     if (__party == BOB) cout << "Input var87:" << endl;
-    auto var87 = input1(3072, BOB);
+    auto var87 = make_vector_float(BOB, 3072);
 
     // Function Call to FastGelu with inputs ['FullyConnect_MatMul_10_output', 'transformer.h.5.mlp.c_fc.bias'] and gives output ['FullyConnect_MatMul_11_input']
     auto var228 = make_vector_float(ALICE, batch_size, seq_len, 3072);
@@ -1310,7 +1310,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.5.mlp.c_proj.weight of shape [3072, 768] as var88
     if (__party == BOB) cout << "Input var88:" << endl;
-    auto var88 = input2(3072, 768, BOB);
+    auto var88 = make_vector_float(BOB, 3072, 768);
 
     // Function Call to MatMul with inputs ['FullyConnect_MatMul_11_input', 'transformer.h.5.mlp.c_proj.weight'] and gives output ['FullyConnect_MatMul_11_output']
     auto var229 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1320,15 +1320,15 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.6.ln_1.weight of shape [768] as var90
     if (__party == BOB) cout << "Input var90:" << endl;
-    auto var90 = input1(768, BOB);
+    auto var90 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.6.ln_1.bias of shape [768] as var91
     if (__party == BOB) cout << "Input var91:" << endl;
-    auto var91 = input1(768, BOB);
+    auto var91 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.5.mlp.c_proj.bias of shape [768] as var89
     if (__party == BOB) cout << "Input var89:" << endl;
-    auto var89 = input1(768, BOB);
+    auto var89 = make_vector_float(BOB, 768);
 
     // Function Call to SkipLayerNormalization with inputs ['1623', 'FullyConnect_MatMul_11_output', 'transformer.h.6.ln_1.weight', 'transformer.h.6.ln_1.bias', 'transformer.h.5.mlp.c_proj.bias'] and gives output ['1707', '', '', '1696']
     auto var230 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1339,11 +1339,11 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.6.attn.c_attn.weight of shape [768, 2304] as var92
     if (__party == BOB) cout << "Input var92:" << endl;
-    auto var92 = input2(768, 2304, BOB);
+    auto var92 = make_vector_float(BOB, 768, 2304);
 
     // Declaration and Input for variable transformer.h.6.attn.c_attn.bias of shape [2304] as var93
     if (__party == BOB) cout << "Input var93:" << endl;
-    auto var93 = input1(2304, BOB);
+    auto var93 = make_vector_float(BOB, 2304);
 
     // Function Call to Attention with inputs ['1707', 'transformer.h.6.attn.c_attn.weight', 'transformer.h.6.attn.c_attn.bias', 'attention_mask_int32', 'past_6'] and gives output ['GptAttention_6_output', 'present_6']
     auto var232 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1353,7 +1353,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.6.attn.c_proj.weight of shape [768, 768] as var94
     if (__party == BOB) cout << "Input var94:" << endl;
-    auto var94 = input2(768, 768, BOB);
+    auto var94 = make_vector_float(BOB, 768, 768);
 
     // Function Call to MatMul with inputs ['GptAttention_6_output', 'transformer.h.6.attn.c_proj.weight'] and gives output ['GptAttention_6_matmul_output']
     auto var234 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1363,15 +1363,15 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.6.ln_2.weight of shape [768] as var96
     if (__party == BOB) cout << "Input var96:" << endl;
-    auto var96 = input1(768, BOB);
+    auto var96 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.6.ln_2.bias of shape [768] as var97
     if (__party == BOB) cout << "Input var97:" << endl;
-    auto var97 = input1(768, BOB);
+    auto var97 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.6.attn.c_proj.bias of shape [768] as var95
     if (__party == BOB) cout << "Input var95:" << endl;
-    auto var95 = input1(768, BOB);
+    auto var95 = make_vector_float(BOB, 768);
 
     // Function Call to SkipLayerNormalization with inputs ['1696', 'GptAttention_6_matmul_output', 'transformer.h.6.ln_2.weight', 'transformer.h.6.ln_2.bias', 'transformer.h.6.attn.c_proj.bias'] and gives output ['FullyConnect_MatMul_12_input', '', '', '1868']
     auto var235 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1382,7 +1382,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.6.mlp.c_fc.weight of shape [768, 3072] as var98
     if (__party == BOB) cout << "Input var98:" << endl;
-    auto var98 = input2(768, 3072, BOB);
+    auto var98 = make_vector_float(BOB, 768, 3072);
 
     // Function Call to MatMul with inputs ['FullyConnect_MatMul_12_input', 'transformer.h.6.mlp.c_fc.weight'] and gives output ['FullyConnect_MatMul_12_output']
     auto var237 = make_vector_float(ALICE, batch_size, seq_len, 3072);
@@ -1392,7 +1392,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.6.mlp.c_fc.bias of shape [3072] as var99
     if (__party == BOB) cout << "Input var99:" << endl;
-    auto var99 = input1(3072, BOB);
+    auto var99 = make_vector_float(BOB, 3072);
 
     // Function Call to FastGelu with inputs ['FullyConnect_MatMul_12_output', 'transformer.h.6.mlp.c_fc.bias'] and gives output ['FullyConnect_MatMul_13_input']
     auto var238 = make_vector_float(ALICE, batch_size, seq_len, 3072);
@@ -1402,7 +1402,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.6.mlp.c_proj.weight of shape [3072, 768] as var100
     if (__party == BOB) cout << "Input var100:" << endl;
-    auto var100 = input2(3072, 768, BOB);
+    auto var100 = make_vector_float(BOB, 3072, 768);
 
     // Function Call to MatMul with inputs ['FullyConnect_MatMul_13_input', 'transformer.h.6.mlp.c_proj.weight'] and gives output ['FullyConnect_MatMul_13_output']
     auto var239 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1412,15 +1412,15 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.7.ln_1.weight of shape [768] as var102
     if (__party == BOB) cout << "Input var102:" << endl;
-    auto var102 = input1(768, BOB);
+    auto var102 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.7.ln_1.bias of shape [768] as var103
     if (__party == BOB) cout << "Input var103:" << endl;
-    auto var103 = input1(768, BOB);
+    auto var103 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.6.mlp.c_proj.bias of shape [768] as var101
     if (__party == BOB) cout << "Input var101:" << endl;
-    auto var101 = input1(768, BOB);
+    auto var101 = make_vector_float(BOB, 768);
 
     // Function Call to SkipLayerNormalization with inputs ['1868', 'FullyConnect_MatMul_13_output', 'transformer.h.7.ln_1.weight', 'transformer.h.7.ln_1.bias', 'transformer.h.6.mlp.c_proj.bias'] and gives output ['1952', '', '', '1941']
     auto var240 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1431,11 +1431,11 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.7.attn.c_attn.weight of shape [768, 2304] as var104
     if (__party == BOB) cout << "Input var104:" << endl;
-    auto var104 = input2(768, 2304, BOB);
+    auto var104 = make_vector_float(BOB, 768, 2304);
 
     // Declaration and Input for variable transformer.h.7.attn.c_attn.bias of shape [2304] as var105
     if (__party == BOB) cout << "Input var105:" << endl;
-    auto var105 = input1(2304, BOB);
+    auto var105 = make_vector_float(BOB, 2304);
 
     // Function Call to Attention with inputs ['1952', 'transformer.h.7.attn.c_attn.weight', 'transformer.h.7.attn.c_attn.bias', 'attention_mask_int32', 'past_7'] and gives output ['GptAttention_7_output', 'present_7']
     auto var242 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1445,7 +1445,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.7.attn.c_proj.weight of shape [768, 768] as var106
     if (__party == BOB) cout << "Input var106:" << endl;
-    auto var106 = input2(768, 768, BOB);
+    auto var106 = make_vector_float(BOB, 768, 768);
 
     // Function Call to MatMul with inputs ['GptAttention_7_output', 'transformer.h.7.attn.c_proj.weight'] and gives output ['GptAttention_7_matmul_output']
     auto var244 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1455,15 +1455,15 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.7.ln_2.weight of shape [768] as var108
     if (__party == BOB) cout << "Input var108:" << endl;
-    auto var108 = input1(768, BOB);
+    auto var108 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.7.ln_2.bias of shape [768] as var109
     if (__party == BOB) cout << "Input var109:" << endl;
-    auto var109 = input1(768, BOB);
+    auto var109 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.7.attn.c_proj.bias of shape [768] as var107
     if (__party == BOB) cout << "Input var107:" << endl;
-    auto var107 = input1(768, BOB);
+    auto var107 = make_vector_float(BOB, 768);
 
     // Function Call to SkipLayerNormalization with inputs ['1941', 'GptAttention_7_matmul_output', 'transformer.h.7.ln_2.weight', 'transformer.h.7.ln_2.bias', 'transformer.h.7.attn.c_proj.bias'] and gives output ['FullyConnect_MatMul_14_input', '', '', '2113']
     auto var245 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1474,7 +1474,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.7.mlp.c_fc.weight of shape [768, 3072] as var110
     if (__party == BOB) cout << "Input var110:" << endl;
-    auto var110 = input2(768, 3072, BOB);
+    auto var110 = make_vector_float(BOB, 768, 3072);
 
     // Function Call to MatMul with inputs ['FullyConnect_MatMul_14_input', 'transformer.h.7.mlp.c_fc.weight'] and gives output ['FullyConnect_MatMul_14_output']
     auto var247 = make_vector_float(ALICE, batch_size, seq_len, 3072);
@@ -1484,7 +1484,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.7.mlp.c_fc.bias of shape [3072] as var111
     if (__party == BOB) cout << "Input var111:" << endl;
-    auto var111 = input1(3072, BOB);
+    auto var111 = make_vector_float(BOB, 3072);
 
     // Function Call to FastGelu with inputs ['FullyConnect_MatMul_14_output', 'transformer.h.7.mlp.c_fc.bias'] and gives output ['FullyConnect_MatMul_15_input']
     auto var248 = make_vector_float(ALICE, batch_size, seq_len, 3072);
@@ -1494,7 +1494,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.7.mlp.c_proj.weight of shape [3072, 768] as var112
     if (__party == BOB) cout << "Input var112:" << endl;
-    auto var112 = input2(3072, 768, BOB);
+    auto var112 = make_vector_float(BOB, 3072, 768);
 
     // Function Call to MatMul with inputs ['FullyConnect_MatMul_15_input', 'transformer.h.7.mlp.c_proj.weight'] and gives output ['FullyConnect_MatMul_15_output']
     auto var249 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1504,15 +1504,15 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.8.ln_1.weight of shape [768] as var114
     if (__party == BOB) cout << "Input var114:" << endl;
-    auto var114 = input1(768, BOB);
+    auto var114 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.8.ln_1.bias of shape [768] as var115
     if (__party == BOB) cout << "Input var115:" << endl;
-    auto var115 = input1(768, BOB);
+    auto var115 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.7.mlp.c_proj.bias of shape [768] as var113
     if (__party == BOB) cout << "Input var113:" << endl;
-    auto var113 = input1(768, BOB);
+    auto var113 = make_vector_float(BOB, 768);
 
     // Function Call to SkipLayerNormalization with inputs ['2113', 'FullyConnect_MatMul_15_output', 'transformer.h.8.ln_1.weight', 'transformer.h.8.ln_1.bias', 'transformer.h.7.mlp.c_proj.bias'] and gives output ['2197', '', '', '2186']
     auto var250 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1523,11 +1523,11 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.8.attn.c_attn.weight of shape [768, 2304] as var116
     if (__party == BOB) cout << "Input var116:" << endl;
-    auto var116 = input2(768, 2304, BOB);
+    auto var116 = make_vector_float(BOB, 768, 2304);
 
     // Declaration and Input for variable transformer.h.8.attn.c_attn.bias of shape [2304] as var117
     if (__party == BOB) cout << "Input var117:" << endl;
-    auto var117 = input1(2304, BOB);
+    auto var117 = make_vector_float(BOB, 2304);
 
     // Function Call to Attention with inputs ['2197', 'transformer.h.8.attn.c_attn.weight', 'transformer.h.8.attn.c_attn.bias', 'attention_mask_int32', 'past_8'] and gives output ['GptAttention_8_output', 'present_8']
     auto var252 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1537,7 +1537,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.8.attn.c_proj.weight of shape [768, 768] as var118
     if (__party == BOB) cout << "Input var118:" << endl;
-    auto var118 = input2(768, 768, BOB);
+    auto var118 = make_vector_float(BOB, 768, 768);
 
     // Function Call to MatMul with inputs ['GptAttention_8_output', 'transformer.h.8.attn.c_proj.weight'] and gives output ['GptAttention_8_matmul_output']
     auto var254 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1547,15 +1547,15 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.8.ln_2.weight of shape [768] as var120
     if (__party == BOB) cout << "Input var120:" << endl;
-    auto var120 = input1(768, BOB);
+    auto var120 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.8.ln_2.bias of shape [768] as var121
     if (__party == BOB) cout << "Input var121:" << endl;
-    auto var121 = input1(768, BOB);
+    auto var121 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.8.attn.c_proj.bias of shape [768] as var119
     if (__party == BOB) cout << "Input var119:" << endl;
-    auto var119 = input1(768, BOB);
+    auto var119 = make_vector_float(BOB, 768);
 
     // Function Call to SkipLayerNormalization with inputs ['2186', 'GptAttention_8_matmul_output', 'transformer.h.8.ln_2.weight', 'transformer.h.8.ln_2.bias', 'transformer.h.8.attn.c_proj.bias'] and gives output ['FullyConnect_MatMul_16_input', '', '', '2358']
     auto var255 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1566,7 +1566,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.8.mlp.c_fc.weight of shape [768, 3072] as var122
     if (__party == BOB) cout << "Input var122:" << endl;
-    auto var122 = input2(768, 3072, BOB);
+    auto var122 = make_vector_float(BOB, 768, 3072);
 
     // Function Call to MatMul with inputs ['FullyConnect_MatMul_16_input', 'transformer.h.8.mlp.c_fc.weight'] and gives output ['FullyConnect_MatMul_16_output']
     auto var257 = make_vector_float(ALICE, batch_size, seq_len, 3072);
@@ -1576,7 +1576,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.8.mlp.c_fc.bias of shape [3072] as var123
     if (__party == BOB) cout << "Input var123:" << endl;
-    auto var123 = input1(3072, BOB);
+    auto var123 = make_vector_float(BOB, 3072);
 
     // Function Call to FastGelu with inputs ['FullyConnect_MatMul_16_output', 'transformer.h.8.mlp.c_fc.bias'] and gives output ['FullyConnect_MatMul_17_input']
     auto var258 = make_vector_float(ALICE, batch_size, seq_len, 3072);
@@ -1586,7 +1586,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.8.mlp.c_proj.weight of shape [3072, 768] as var124
     if (__party == BOB) cout << "Input var124:" << endl;
-    auto var124 = input2(3072, 768, BOB);
+    auto var124 = make_vector_float(BOB, 3072, 768);
 
     // Function Call to MatMul with inputs ['FullyConnect_MatMul_17_input', 'transformer.h.8.mlp.c_proj.weight'] and gives output ['FullyConnect_MatMul_17_output']
     auto var259 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1596,15 +1596,15 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.9.ln_1.weight of shape [768] as var126
     if (__party == BOB) cout << "Input var126:" << endl;
-    auto var126 = input1(768, BOB);
+    auto var126 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.9.ln_1.bias of shape [768] as var127
     if (__party == BOB) cout << "Input var127:" << endl;
-    auto var127 = input1(768, BOB);
+    auto var127 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.8.mlp.c_proj.bias of shape [768] as var125
     if (__party == BOB) cout << "Input var125:" << endl;
-    auto var125 = input1(768, BOB);
+    auto var125 = make_vector_float(BOB, 768);
 
     // Function Call to SkipLayerNormalization with inputs ['2358', 'FullyConnect_MatMul_17_output', 'transformer.h.9.ln_1.weight', 'transformer.h.9.ln_1.bias', 'transformer.h.8.mlp.c_proj.bias'] and gives output ['2442', '', '', '2431']
     auto var260 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1615,11 +1615,11 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.9.attn.c_attn.weight of shape [768, 2304] as var128
     if (__party == BOB) cout << "Input var128:" << endl;
-    auto var128 = input2(768, 2304, BOB);
+    auto var128 = make_vector_float(BOB, 768, 2304);
 
     // Declaration and Input for variable transformer.h.9.attn.c_attn.bias of shape [2304] as var129
     if (__party == BOB) cout << "Input var129:" << endl;
-    auto var129 = input1(2304, BOB);
+    auto var129 = make_vector_float(BOB, 2304);
 
     // Function Call to Attention with inputs ['2442', 'transformer.h.9.attn.c_attn.weight', 'transformer.h.9.attn.c_attn.bias', 'attention_mask_int32', 'past_9'] and gives output ['GptAttention_9_output', 'present_9']
     auto var262 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1629,7 +1629,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.9.attn.c_proj.weight of shape [768, 768] as var130
     if (__party == BOB) cout << "Input var130:" << endl;
-    auto var130 = input2(768, 768, BOB);
+    auto var130 = make_vector_float(BOB, 768, 768);
 
     // Function Call to MatMul with inputs ['GptAttention_9_output', 'transformer.h.9.attn.c_proj.weight'] and gives output ['GptAttention_9_matmul_output']
     auto var264 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1639,15 +1639,15 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.9.ln_2.weight of shape [768] as var132
     if (__party == BOB) cout << "Input var132:" << endl;
-    auto var132 = input1(768, BOB);
+    auto var132 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.9.ln_2.bias of shape [768] as var133
     if (__party == BOB) cout << "Input var133:" << endl;
-    auto var133 = input1(768, BOB);
+    auto var133 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.9.attn.c_proj.bias of shape [768] as var131
     if (__party == BOB) cout << "Input var131:" << endl;
-    auto var131 = input1(768, BOB);
+    auto var131 = make_vector_float(BOB, 768);
 
     // Function Call to SkipLayerNormalization with inputs ['2431', 'GptAttention_9_matmul_output', 'transformer.h.9.ln_2.weight', 'transformer.h.9.ln_2.bias', 'transformer.h.9.attn.c_proj.bias'] and gives output ['FullyConnect_MatMul_18_input', '', '', '2603']
     auto var265 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1658,7 +1658,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.9.mlp.c_fc.weight of shape [768, 3072] as var134
     if (__party == BOB) cout << "Input var134:" << endl;
-    auto var134 = input2(768, 3072, BOB);
+    auto var134 = make_vector_float(BOB, 768, 3072);
 
     // Function Call to MatMul with inputs ['FullyConnect_MatMul_18_input', 'transformer.h.9.mlp.c_fc.weight'] and gives output ['FullyConnect_MatMul_18_output']
     auto var267 = make_vector_float(ALICE, batch_size, seq_len, 3072);
@@ -1668,7 +1668,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.9.mlp.c_fc.bias of shape [3072] as var135
     if (__party == BOB) cout << "Input var135:" << endl;
-    auto var135 = input1(3072, BOB);
+    auto var135 = make_vector_float(BOB, 3072);
 
     // Function Call to FastGelu with inputs ['FullyConnect_MatMul_18_output', 'transformer.h.9.mlp.c_fc.bias'] and gives output ['FullyConnect_MatMul_19_input']
     auto var268 = make_vector_float(ALICE, batch_size, seq_len, 3072);
@@ -1678,7 +1678,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.9.mlp.c_proj.weight of shape [3072, 768] as var136
     if (__party == BOB) cout << "Input var136:" << endl;
-    auto var136 = input2(3072, 768, BOB);
+    auto var136 = make_vector_float(BOB, 3072, 768);
 
     // Function Call to MatMul with inputs ['FullyConnect_MatMul_19_input', 'transformer.h.9.mlp.c_proj.weight'] and gives output ['FullyConnect_MatMul_19_output']
     auto var269 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1688,15 +1688,15 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.10.ln_1.weight of shape [768] as var138
     if (__party == BOB) cout << "Input var138:" << endl;
-    auto var138 = input1(768, BOB);
+    auto var138 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.10.ln_1.bias of shape [768] as var139
     if (__party == BOB) cout << "Input var139:" << endl;
-    auto var139 = input1(768, BOB);
+    auto var139 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.9.mlp.c_proj.bias of shape [768] as var137
     if (__party == BOB) cout << "Input var137:" << endl;
-    auto var137 = input1(768, BOB);
+    auto var137 = make_vector_float(BOB, 768);
 
     // Function Call to SkipLayerNormalization with inputs ['2603', 'FullyConnect_MatMul_19_output', 'transformer.h.10.ln_1.weight', 'transformer.h.10.ln_1.bias', 'transformer.h.9.mlp.c_proj.bias'] and gives output ['2687', '', '', '2676']
     auto var270 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1707,11 +1707,11 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.10.attn.c_attn.weight of shape [768, 2304] as var140
     if (__party == BOB) cout << "Input var140:" << endl;
-    auto var140 = input2(768, 2304, BOB);
+    auto var140 = make_vector_float(BOB, 768, 2304);
 
     // Declaration and Input for variable transformer.h.10.attn.c_attn.bias of shape [2304] as var141
     if (__party == BOB) cout << "Input var141:" << endl;
-    auto var141 = input1(2304, BOB);
+    auto var141 = make_vector_float(BOB, 2304);
 
     // Function Call to Attention with inputs ['2687', 'transformer.h.10.attn.c_attn.weight', 'transformer.h.10.attn.c_attn.bias', 'attention_mask_int32', 'past_10'] and gives output ['GptAttention_10_output', 'present_10']
     auto var272 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1721,7 +1721,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.10.attn.c_proj.weight of shape [768, 768] as var142
     if (__party == BOB) cout << "Input var142:" << endl;
-    auto var142 = input2(768, 768, BOB);
+    auto var142 = make_vector_float(BOB, 768, 768);
 
     // Function Call to MatMul with inputs ['GptAttention_10_output', 'transformer.h.10.attn.c_proj.weight'] and gives output ['GptAttention_10_matmul_output']
     auto var274 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1731,15 +1731,15 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.10.ln_2.weight of shape [768] as var144
     if (__party == BOB) cout << "Input var144:" << endl;
-    auto var144 = input1(768, BOB);
+    auto var144 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.10.ln_2.bias of shape [768] as var145
     if (__party == BOB) cout << "Input var145:" << endl;
-    auto var145 = input1(768, BOB);
+    auto var145 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.10.attn.c_proj.bias of shape [768] as var143
     if (__party == BOB) cout << "Input var143:" << endl;
-    auto var143 = input1(768, BOB);
+    auto var143 = make_vector_float(BOB, 768);
 
     // Function Call to SkipLayerNormalization with inputs ['2676', 'GptAttention_10_matmul_output', 'transformer.h.10.ln_2.weight', 'transformer.h.10.ln_2.bias', 'transformer.h.10.attn.c_proj.bias'] and gives output ['FullyConnect_MatMul_20_input', '', '', '2848']
     auto var275 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1750,7 +1750,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.10.mlp.c_fc.weight of shape [768, 3072] as var146
     if (__party == BOB) cout << "Input var146:" << endl;
-    auto var146 = input2(768, 3072, BOB);
+    auto var146 = make_vector_float(BOB, 768, 3072);
 
     // Function Call to MatMul with inputs ['FullyConnect_MatMul_20_input', 'transformer.h.10.mlp.c_fc.weight'] and gives output ['FullyConnect_MatMul_20_output']
     auto var277 = make_vector_float(ALICE, batch_size, seq_len, 3072);
@@ -1760,7 +1760,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.10.mlp.c_fc.bias of shape [3072] as var147
     if (__party == BOB) cout << "Input var147:" << endl;
-    auto var147 = input1(3072, BOB);
+    auto var147 = make_vector_float(BOB, 3072);
 
     // Function Call to FastGelu with inputs ['FullyConnect_MatMul_20_output', 'transformer.h.10.mlp.c_fc.bias'] and gives output ['FullyConnect_MatMul_21_input']
     auto var278 = make_vector_float(ALICE, batch_size, seq_len, 3072);
@@ -1770,7 +1770,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.10.mlp.c_proj.weight of shape [3072, 768] as var148
     if (__party == BOB) cout << "Input var148:" << endl;
-    auto var148 = input2(3072, 768, BOB);
+    auto var148 = make_vector_float(BOB, 3072, 768);
 
     // Function Call to MatMul with inputs ['FullyConnect_MatMul_21_input', 'transformer.h.10.mlp.c_proj.weight'] and gives output ['FullyConnect_MatMul_21_output']
     auto var279 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1780,15 +1780,15 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.11.ln_1.weight of shape [768] as var150
     if (__party == BOB) cout << "Input var150:" << endl;
-    auto var150 = input1(768, BOB);
+    auto var150 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.11.ln_1.bias of shape [768] as var151
     if (__party == BOB) cout << "Input var151:" << endl;
-    auto var151 = input1(768, BOB);
+    auto var151 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.10.mlp.c_proj.bias of shape [768] as var149
     if (__party == BOB) cout << "Input var149:" << endl;
-    auto var149 = input1(768, BOB);
+    auto var149 = make_vector_float(BOB, 768);
 
     // Function Call to SkipLayerNormalization with inputs ['2848', 'FullyConnect_MatMul_21_output', 'transformer.h.11.ln_1.weight', 'transformer.h.11.ln_1.bias', 'transformer.h.10.mlp.c_proj.bias'] and gives output ['2932', '', '', '2921']
     auto var280 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1799,11 +1799,11 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.11.attn.c_attn.weight of shape [768, 2304] as var152
     if (__party == BOB) cout << "Input var152:" << endl;
-    auto var152 = input2(768, 2304, BOB);
+    auto var152 = make_vector_float(BOB, 768, 2304);
 
     // Declaration and Input for variable transformer.h.11.attn.c_attn.bias of shape [2304] as var153
     if (__party == BOB) cout << "Input var153:" << endl;
-    auto var153 = input1(2304, BOB);
+    auto var153 = make_vector_float(BOB, 2304);
 
     // Function Call to Attention with inputs ['2932', 'transformer.h.11.attn.c_attn.weight', 'transformer.h.11.attn.c_attn.bias', 'attention_mask_int32', 'past_11'] and gives output ['GptAttention_11_output', 'present_11']
     auto var282 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1813,7 +1813,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.11.attn.c_proj.weight of shape [768, 768] as var154
     if (__party == BOB) cout << "Input var154:" << endl;
-    auto var154 = input2(768, 768, BOB);
+    auto var154 = make_vector_float(BOB, 768, 768);
 
     // Function Call to MatMul with inputs ['GptAttention_11_output', 'transformer.h.11.attn.c_proj.weight'] and gives output ['GptAttention_11_matmul_output']
     auto var284 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1823,15 +1823,15 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.11.ln_2.weight of shape [768] as var156
     if (__party == BOB) cout << "Input var156:" << endl;
-    auto var156 = input1(768, BOB);
+    auto var156 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.11.ln_2.bias of shape [768] as var157
     if (__party == BOB) cout << "Input var157:" << endl;
-    auto var157 = input1(768, BOB);
+    auto var157 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.11.attn.c_proj.bias of shape [768] as var155
     if (__party == BOB) cout << "Input var155:" << endl;
-    auto var155 = input1(768, BOB);
+    auto var155 = make_vector_float(BOB, 768);
 
     // Function Call to SkipLayerNormalization with inputs ['2921', 'GptAttention_11_matmul_output', 'transformer.h.11.ln_2.weight', 'transformer.h.11.ln_2.bias', 'transformer.h.11.attn.c_proj.bias'] and gives output ['FullyConnect_MatMul_22_input', '', '', '3093']
     auto var285 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1842,7 +1842,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.11.mlp.c_fc.weight of shape [768, 3072] as var158
     if (__party == BOB) cout << "Input var158:" << endl;
-    auto var158 = input2(768, 3072, BOB);
+    auto var158 = make_vector_float(BOB, 768, 3072);
 
     // Function Call to MatMul with inputs ['FullyConnect_MatMul_22_input', 'transformer.h.11.mlp.c_fc.weight'] and gives output ['FullyConnect_MatMul_22_output']
     auto var287 = make_vector_float(ALICE, batch_size, seq_len, 3072);
@@ -1852,7 +1852,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.h.11.mlp.c_fc.bias of shape [3072] as var159
     if (__party == BOB) cout << "Input var159:" << endl;
-    auto var159 = input1(3072, BOB);
+    auto var159 = make_vector_float(BOB, 3072);
 
     // Function Call to FastGelu with inputs ['FullyConnect_MatMul_22_output', 'transformer.h.11.mlp.c_fc.bias'] and gives output ['FullyConnect_MatMul_23_input']
     auto var288 = make_vector_float(ALICE, batch_size, seq_len, 3072);
@@ -1863,7 +1863,7 @@ int main(int __argc, char **__argv)
     
     // Declaration and Input for variable transformer.h.11.mlp.c_proj.weight of shape [3072, 768] as var160
     if (__party == BOB) cout << "Input var160:" << endl;
-    auto var160 = input2(3072, 768, BOB);
+    auto var160 = make_vector_float(BOB, 3072, 768);
 
     // Function Call to MatMul with inputs ['FullyConnect_MatMul_23_input', 'transformer.h.11.mlp.c_proj.weight'] and gives output ['FullyConnect_MatMul_23_output']
     auto var289 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1873,15 +1873,15 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable transformer.ln_f.weight of shape [768] as var162
     if (__party == BOB) cout << "Input var162:" << endl;
-    auto var162 = input1(768, BOB);
+    auto var162 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.ln_f.bias of shape [768] as var163
     if (__party == BOB) cout << "Input var163:" << endl;
-    auto var163 = input1(768, BOB);
+    auto var163 = make_vector_float(BOB, 768);
 
     // Declaration and Input for variable transformer.h.11.mlp.c_proj.bias of shape [768] as var161
     if (__party == BOB) cout << "Input var161:" << endl;
-    auto var161 = input1(768, BOB);
+    auto var161 = make_vector_float(BOB, 768);
 
     // Function Call to SkipLayerNormalization with inputs ['3093', 'FullyConnect_MatMul_23_output', 'transformer.ln_f.weight', 'transformer.ln_f.bias', 'transformer.h.11.mlp.c_proj.bias'] and gives output ['3177']
     auto var290 = make_vector_float(ALICE, batch_size, seq_len, 768);
@@ -1891,7 +1891,7 @@ int main(int __argc, char **__argv)
 
     // Declaration and Input for variable 3452 of shape [768, 50257] as var164
     if (__party == BOB) cout << "Input var164:" << endl;
-    auto var164 = input2(768, 50257, BOB);
+    auto var164 = make_vector_float(BOB, 768, 50257);
 
     // Function Call to MatMul with inputs ['3177', '3452'] and gives output ['logits']
     auto var291 = make_vector_float(ALICE, batch_size, seq_len, 50257);

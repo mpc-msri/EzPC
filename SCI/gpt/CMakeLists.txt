@@ -8,5 +8,6 @@ macro(add_network_beacon name)
 endmacro()
 
 
-add_network_beacon(gpt)
-add_network_beacon(secure_gpt)
+add_network_beacon(gpt_simulate)
+# add_network_beacon(secure_gpt)
+add_network_beacon(secure_gpt_bench)

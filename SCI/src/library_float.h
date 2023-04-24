@@ -328,4 +328,8 @@ void PoolProp(
 
 void computeMSELoss(int32_t m, int32_t s, vector<vector<FPArray>> &target, vector<vector<FPArray>> &fwdOut, vector<FPArray> &loss);
 
+void Gelu(int32_t s1, vector<FPArray> &inArr, vector<FPArray> &outArr) ;
+
+void Sqrt(int32_t s1, vector<FPArray> &inArr, vector<FPArray> &outArr) ;
+
 #endif
