@@ -13,12 +13,10 @@ public:
     LayerGraphNode<T> *root = nullptr;
     bool debug = true;
     u64 scale;
-    // std::map<std::string, LayerGraphNode<T> *> addLayerMap;
-    // std::map<std::string, LayerGraphNode<T> *> concatLayerMap;
-    std::vector<LayerGraphNode<T> *> allNodesInExecutionOrder;
 
-    const std::vector<std::string> functionalLayers = {"Add", "Concat"};
-    std::map<std::string, LayerGraphNode<T> *> functionalLayerMap;
+    std::vector<LayerGraphNode<T> *> allNodesInExecutionOrder;
+    const std::vector<std::string> functionalLayers = {"Add", "Concat", "GeLU", "SoftMax"};
+    static std::map<std::string, LayerGraphNode<T> *> functionalLayerMap;
 
 public:
 
@@ -57,7 +55,7 @@ public:
     }
 
     template <typename LayerType>
-    Tensor<T>& functionalGraphGen(std::vector<Tensor<T> *> &arr)
+    Tensor<T>& functionalGraphGen(std::vector<Tensor<T> *> arr)
     {
         for (auto &a : arr) {
             always_assert(a->graphGenMode);
@@ -114,11 +112,17 @@ public:
 
     Tensor<T>& forward(Tensor<T> &input)
     {
-        topologicalApply(root, [](LayerGraphNode<T> *node, LayerGraphNode<T> *_root) {
-            node->numUsages = 0;
-        });
-        input.graphNode = root;
-        input.graphNode->currTensor = &input;
+        if (input.graphGenMode) {
+            return this->_forward(input);
+        }
+
+        if (input.graphNode == nullptr) { // when the module is a top level module
+            topologicalApply(root, [](LayerGraphNode<T> *node, LayerGraphNode<T> *_root) {
+                node->numUsages = 0;
+            });
+            input.graphNode = root;
+            input.graphNode->currTensor = &input;
+        }
         if (debug) {
             auto& res = this->_forward(input);
             this->activation.resize(res.shape);
@@ -234,6 +238,30 @@ public:
         return concat(res);
     }
 
+    Tensor<T>& gelu(Tensor<T> &a)
+    {
+        if (a.graphGenMode) {
+            auto &c = functionalGraphGen<GeLU<T>>({&a});
+            return c;
+        }
+
+        auto cNode = getFunctionalNode("GeLU", {&a});
+        auto &c = cNode->layer->forward(a);
+        return c;
+    }
+
+    Tensor<T>& softmax(Tensor<T> &a)
+    {
+        if (a.graphGenMode) {
+            auto &c = functionalGraphGen<SoftMax<T>>({&a});
+            return c;
+        }
+
+        auto cNode = getFunctionalNode("SoftMax", {&a});
+        auto &c = cNode->layer->forward(a);
+        return c;
+    }
+
     void train()
     {
         topologicalApply(root, [=](LayerGraphNode<T> *node, LayerGraphNode<T> *_root) {
@@ -248,3 +276,6 @@ public:
         });
     }
 };
+
+template <typename T>
+std::map<std::string, LayerGraphNode<T> *> SytorchModule<T>::functionalLayerMap = std::map<std::string, LayerGraphNode<T> *>();

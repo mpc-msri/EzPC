@@ -345,3 +345,9 @@ inline void printshape(const std::vector<u64> &shape) {
     }
     std::cout << ")" << std::endl;
 }
+
+inline void sytorch_init()
+{
+    prngWeights.SetSeed(osuCrypto::toBlock(0, 0));
+    prngStr.SetSeed(osuCrypto::toBlock(time(NULL)));
+}
