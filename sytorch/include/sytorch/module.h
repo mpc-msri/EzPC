@@ -56,20 +56,14 @@ public:
         return functionalLayerMap[id];
     }
 
-    void functionalGraphGen(const std::string &layerName, std::vector<Tensor<T> *> &arr, Tensor<T> &c)
+    template <typename LayerType>
+    Tensor<T>& functionalGraphGen(std::vector<Tensor<T> *> &arr)
     {
         for (auto &a : arr) {
             always_assert(a->graphGenMode);
         }
-        c.graphNode = new LayerGraphNode<T>();
-        c.graphNode->layer = new PlaceHolderLayer<T>(layerName);
-        for (auto &a : arr) {
-            c.graphNode->parents.push_back(a->graphNode);
-            a->graphNode->children.push_back(c.graphNode);
-        }
-        c.graphNode->allNodesInExecutionOrderRef = arr[0]->graphNode->allNodesInExecutionOrderRef;
-        c.graphNode->allNodesInExecutionOrderRef->push_back(c.graphNode);
-        c.graphGenMode = true;
+        auto layer = new LayerType();
+        return layer->forward(arr);
     }
 
     void genGraphAndExecutionOrder()
@@ -202,90 +196,34 @@ public:
         delete[] floatWeights;
     }
 
-    Tensor<T> add(std::vector<Tensor<T> *> &arr)
+    Tensor<T>& add(std::vector<Tensor<T> *> &arr)
     {
-        Tensor<T> c(arr[0]->shape);
         if (arr[0]->graphGenMode) {
-            functionalGraphGen("Add", arr, c);
+            auto &c = functionalGraphGen<Add<T>>(arr);
             return c;
         }
 
-        // check if all tensors have same dimensions
-        for (int i = 1; i < arr.size(); ++i) {
-            if (arr[i]->is_same_shape(*arr[0]) == false) {
-                throw std::runtime_error("All tensors must have same dimensions");
-            }
-        }
-
         auto cNode = getFunctionalNode("Add", arr);
-        cNode->currTensor = &c;
-        c.graphNode = cNode;
-
-        u64 sz = c.size();
-        for (int i = 0; i < sz; ++i) {
-            c.data[i] = 0;
-            for (auto &a : arr) {
-                c.data[i] += a->data[i];
-            }
-        }
-
-        for (auto &a : arr) {
-            bool gcHappened = a->graphNode->incrementAndGc();
-        }
+        auto &c = cNode->layer->forward(arr);
         return c;
     }
 
     template <typename... Args>
-    Tensor<T> add(Args & ... args)
+    Tensor<T>& add(Args & ... args)
     {
         auto res = collect(args...);
         return add(res);
     }
 
-    // doesnt have assertions, don't use directly, use the variadic version only
-    void concat(std::vector<Tensor<T> *> &arr, Tensor<T> &c)
+    Tensor<T>& concat(std::vector<Tensor<T> *> &arr)
     {
         if (arr[0]->graphGenMode) {
-            functionalGraphGen("Concat", arr, c);
-            return;
+            auto &c = functionalGraphGen<Concat<T>>(arr);
+            return c;
         }
 
         auto cNode = getFunctionalNode("Concat", arr);
-        cNode->currTensor = &c;
-        c.graphNode = cNode;
-
-        u64 sz = c.size();
-        for(int i = 0; i < sz; ++i)
-        {
-            u64 l = i % c.shape.back();
-            for(auto &a : arr) {
-                if(l < a->shape.back()) {
-                    c.data[i] = a->data[i];
-                    break;
-                }
-                l -= a->shape.back();
-            }
-        }
-
-        for (auto &a : arr) {
-            bool gcHappened = a->graphNode->incrementAndGc();
-        }
-    }
-
-    Tensor<T> concat(std::vector<Tensor<T> *> &arr)
-    {
-        u64 channels = 0;
-        for (auto &a : arr) {
-            always_assert(a->shape.size() == arr[0]->shape.size());
-            for (int i = 0; i < a->shape.size() - 1; ++i) {
-                always_assert(a->shape[i] == arr[0]->shape[i]);
-            }
-            channels += a->shape.back();
-        }
-        std::vector<u64> shape = arr[0]->shape;
-        shape.back() = channels;
-        Tensor<T> c(shape);
-        concat(arr, c);
+        auto &c = cNode->layer->forward(arr);
         return c;
     }
 

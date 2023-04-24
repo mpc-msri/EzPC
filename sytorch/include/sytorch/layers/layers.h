@@ -674,6 +674,10 @@ public:
         this->backend->add(a, this->activation);
     }
 
+    void _forward(Tensor<T> &a) {
+        this->activation.copy(a);
+    }
+
     std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {
         auto &shape0 = inShapes[0];
         for (auto &shape : inShapes) {
@@ -684,5 +688,63 @@ public:
         }
         auto &inShape = inShapes[0];
         return inShape;
+    }
+};
+
+// concat along the last axis (channel)
+template <typename T>
+class Concat: public Layer<T> {
+public:
+    Concat() :  Layer<T>("Concat") {}
+
+    void _resize(const std::vector<std::vector<u64>> &shapes) {
+        auto &shape0 = shapes[0];
+        for (auto &shape : shapes) {
+            for (u64 i = 0; i < shape.size() - 1; i++) {
+                always_assert(shape[i] == shape0[i]);
+            }
+        }
+    }
+
+    void _forward(std::vector<Tensor<T> *> &arr) {
+        u64 outchannels = 0;
+        u64 sz = 0;
+        for (auto &t : arr) {
+            outchannels += t->shape.back();
+            sz += t->size();
+        }
+
+        for(int i = 0; i < sz; ++i)
+        {
+            u64 l = i % outchannels;
+            for(auto &a : arr) {
+                if(l < a->shape.back()) {
+                    this->activation.data[i] = a->data[i];
+                    break;
+                }
+                l -= a->shape.back();
+            }
+        }
+
+    }
+
+    void _forward(Tensor<T> &a) {
+        this->activation.copy(a);
+    }
+
+    std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {
+        auto &shape0 = inShapes[0];
+        for (auto &shape : inShapes) {
+            for (u64 i = 0; i < shape.size() - 1; i++) {
+                always_assert(shape[i] == shape0[i]);
+            }
+        }
+
+        std::vector<u64> outShape = shape0;
+        outShape.back() = 0;
+        for (auto &shape : inShapes) {
+            outShape.back() += shape.back();
+        }
+        return outShape;
     }
 };
