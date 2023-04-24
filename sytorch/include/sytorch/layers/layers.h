@@ -194,17 +194,26 @@ public:
     Tensor2D<T> filter;
     Tensor1D<T> bias;
     u64 ci, co;
-    u64 fd, fh, fw, padding, stride;
+    u64 fd, fh, fw;
+    u64 pd, ph, pw;
+    u64 stride;
 
     Conv3D(u64 ci, u64 co, u64 f, u64 padding = 0, u64 stride = 1, bool useBias = false) : Layer<T>("Conv3D"), ci(ci), co(co), fd(f), fh(f), fw(f), 
-        padding(padding), stride(stride), filter(co, f * f * f * ci), bias(co), inp({0,0,0,0,0})
+        pd(padding), ph(padding), pw(padding), stride(stride), filter(co, f * f * f * ci), bias(co), inp({0,0,0,0,0})
     {
         this->doTruncationForward = true;
         this->useBias = useBias;
     }
 
     Conv3D(u64 ci, u64 co, const std::array<u64, 3> f, u64 padding = 0, u64 stride = 1, bool useBias = false) : Layer<T>("Conv3D"), ci(ci), co(co), fd(f[0]), fh(f[1]), fw(f[2]), 
-        padding(padding), stride(stride), filter(co, f[0] * f[1] * f[2] * ci), bias(co), inp({0,0,0,0,0})
+        pd(padding), ph(padding), pw(padding), stride(stride), filter(co, f[0] * f[1] * f[2] * ci), bias(co), inp({0,0,0,0,0})
+    {
+        this->doTruncationForward = true;
+        this->useBias = useBias;
+    }
+
+    Conv3D(u64 ci, u64 co, const std::array<u64, 3> f, const std::array<u64, 3> padding = {0, 0, 0}, u64 stride = 1, bool useBias = false) : Layer<T>("Conv3D"), ci(ci), co(co), fd(f[0]), fh(f[1]), fw(f[2]), 
+        pd(padding[0]), ph(padding[1]), pw(padding[2]), stride(stride), filter(co, f[0] * f[1] * f[2] * ci), bias(co), inp({0,0,0,0,0})
     {
         this->doTruncationForward = true;
         this->useBias = useBias;
@@ -232,7 +241,7 @@ public:
         if (this->isTrainingMode)
             inp.copy(a);
         auto act_5d = this->activation.as_5d();
-        this->backend->conv3D(fd, fh, fw, padding, stride, ci, co, a.as_5d(), filter, act_5d);
+        this->backend->conv3D(fd, fh, fw, pd, ph, pw, stride, ci, co, a.as_5d(), filter, act_5d);
         if (this->useBias)
             this->activation.addBias(bias);
     }
@@ -245,9 +254,9 @@ public:
         auto &inShape = inShapes[0];
         always_assert(inShape.size() == 5);
         always_assert(inShape[4] == ci);
-        u64 newD = (((inShape[1] + 2*padding - fd)/stride) + 1);
-        u64 newH = (((inShape[2] + 2*padding - fh)/stride) + 1);
-        u64 newW = (((inShape[3] + 2*padding - fw)/stride) + 1);
+        u64 newD = (((inShape[1] + 2*pd - fd)/stride) + 1);
+        u64 newH = (((inShape[2] + 2*ph - fh)/stride) + 1);
+        u64 newW = (((inShape[3] + 2*pw - fw)/stride) + 1);
         return {inShape[0], newD, newH, newW, co};
     }
 };

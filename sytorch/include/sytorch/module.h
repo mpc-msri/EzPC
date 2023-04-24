@@ -159,7 +159,7 @@ public:
         size_t wIdx = 0;
         for (auto &node: allNodesInExecutionOrder) {
             auto layer = node->layer;
-            if(layer->name.find("Conv2D") != std::string::npos || layer->name.find("FC") != std::string::npos) {
+            if(layer->name == "Conv2D" || layer->name == "FC" || layer->name == "Conv3D" || layer->name == "ConvTranspose3D") {
                 auto& weights = layer->getweights();
                 for (int j = 0; j < weights.d1; j++) {
                     for(int k = 0; k < weights.d2; ++k) {

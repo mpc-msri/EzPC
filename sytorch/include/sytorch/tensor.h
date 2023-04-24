@@ -166,8 +166,9 @@ public:
     {
         for (u64 i = 0; i < size(); i++)
         {
-            std::cin >> data[i];
-            data[i] = (i64)(data[i] * (1LL << scale));
+            double d;
+            std::cin >> d;
+            data[i] = (i64)(d * (1LL << scale));
         }
     }
 

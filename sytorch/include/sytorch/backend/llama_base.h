@@ -74,7 +74,7 @@ public:
     void initializeInferencePartyA(LayerGraphNode<T> *root) {
          topologicalApply(root, [&](LayerGraphNode<T> *node, LayerGraphNode<T> *_root) {
             auto layer = node->layer;
-            if(layer->name.find("Conv2D") != std::string::npos || layer->name.find("FC") != std::string::npos) {
+            if(layer->name == "Conv2D" || layer->name == "FC" || layer->name == "Conv3D" || layer->name == "ConvTranspose3D") {
                 auto& weights = layer->getweights();
                 auto& bias = layer->getbias();
                 if(LlamaConfig::party == 1){
@@ -130,7 +130,7 @@ public:
         // DEALER selects the inital weights and sends them to parties as keys
         for(int i = 0; i < model.layers.size(); ++i)
         {
-            if (model.layers[i]->name == "Conv2D" || model.layers[i]->name == "FC")
+            if (model.layers[i]->name == "Conv2D" || model.layers[i]->name == "FC" || model.layers[i]->name == "Conv3D" || model.layers[i]->name == "ConvTranspose3D")
             {
                 auto &weights = model.layers[i]->getweights();
                 auto &bias = model.layers[i]->getbias();
@@ -277,14 +277,14 @@ public:
             input.data, input.data, filter.data, filter.data, output.data, output.data);
     }
 
-    void conv3D(u64 fd, u64 fh, u64 fw, u64 padding, u64 stride, u64 ci, u64 co, const Tensor5D<T> &input, const Tensor2D<T> &filter, Tensor5D<T> &output)
+    void conv3D(u64 fd, u64 fh, u64 fw, u64 pd, u64 ph, u64 pw, u64 stride, u64 ci, u64 co, const Tensor5D<T> &input, const Tensor2D<T> &filter, Tensor5D<T> &output)
     {
         assert(input.d5 == ci);
         assert(filter.d1 == co);
         assert(filter.d2 == fd * fh * fw * ci);
-        u64 newD = (((input.d2 + 2*padding - fd)/stride) + 1);
-        u64 newH = (((input.d3 + 2*padding - fh)/stride) + 1);
-        u64 newW = (((input.d4 + 2*padding - fw)/stride) + 1);
+        u64 newD = (((input.d2 + 2*pd - fd)/stride) + 1);
+        u64 newH = (((input.d3 + 2*ph - fh)/stride) + 1);
+        u64 newW = (((input.d4 + 2*pw - fw)/stride) + 1);
         assert(output.d1 == input.d1);
         assert(output.d2 == newD);
         assert(output.d3 == newH);
@@ -292,7 +292,7 @@ public:
         assert(output.d5 == co);
 
         Conv3DWrapper(input.d1, input.d2, input.d3, input.d4, input.d5, fd, fh, fw, co, 
-            padding, padding, padding, padding, padding, padding, stride, stride, stride, 
+            pd, pd, ph, ph, pw, pw, stride, stride, stride, 
             input.data, filter.data, output.data);
     }
 

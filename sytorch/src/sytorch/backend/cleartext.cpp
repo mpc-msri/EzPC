@@ -56,21 +56,21 @@ void ClearText<T>::conv2D(u64 fh, u64 fw, u64 padding, u64 stride, u64 ci, u64 c
 }
 
 template <typename T>
-void ClearText<T>::conv3D(u64 fd, u64 fh, u64 fw, u64 padding, u64 stride, u64 ci, u64 co, const Tensor5D<T> &input, const Tensor2D<T> &filter, Tensor5D<T> &output)
+void ClearText<T>::conv3D(u64 fd, u64 fh, u64 fw, u64 pd, u64 ph, u64 pw, u64 stride, u64 ci, u64 co, const Tensor5D<T> &input, const Tensor2D<T> &filter, Tensor5D<T> &output)
 {
     assert(input.d5 == ci);
     assert(filter.d1 == co);
     assert(filter.d2 == fd * fh * fw * ci);
-    u64 newD = (((input.d2 + 2*padding - fd)/stride) + 1);
-    u64 newH = (((input.d3 + 2*padding - fh)/stride) + 1);
-    u64 newW = (((input.d4 + 2*padding - fw)/stride) + 1);
+    u64 newD = (((input.d2 + 2*pd - fd)/stride) + 1);
+    u64 newH = (((input.d3 + 2*ph - fh)/stride) + 1);
+    u64 newW = (((input.d4 + 2*pw - fw)/stride) + 1);
     assert(output.d1 == input.d1);
     assert(output.d2 == newD);
     assert(output.d3 == newH);
     assert(output.d4 == newW);
     assert(output.d5 == co);
 
-    Tensor2D<T> reshapedInput = reshapeInputTransposed3d<T>(input, padding, stride, fd, fh, fw);
+    Tensor2D<T> reshapedInput = reshapeInputTransposed3d<T>(input, pd, ph, pw, stride, fd, fh, fw);
     Tensor2D<T> tempOutput(filter.d1, reshapedInput.d1);
     matmulTransposeB(filter, reshapedInput, tempOutput);
     reshapeOutput3d<T>(tempOutput, input.d1, newD, newH, newW, co, output);

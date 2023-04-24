@@ -242,26 +242,26 @@ void print(const Tensor<T> &p, u64 bw = sizeof(T) * 8)
 }
 
 template <typename T>
-Tensor2D<T> reshapeInputTransposed3d(const Tensor5D<T> &input, u64 padding, u64 stride, u64 FD, u64 FH, u64 FW) {
+Tensor2D<T> reshapeInputTransposed3d(const Tensor5D<T> &input, u64 pd, u64 ph, u64 pw, u64 stride, u64 FD, u64 FH, u64 FW) {
     u64 D = input.d2;
     u64 H = input.d3;
     u64 W = input.d4;
     u64 CI = input.d5;
-    u64 newD = (((D + 2*padding - FD)/stride) + 1);
-    u64 newH = (((H + 2*padding - FH)/stride) + 1);
-	u64 newW = (((W + 2*padding - FW)/stride) + 1);
+    u64 newD = (((D + 2*pd - FD)/stride) + 1);
+    u64 newH = (((H + 2*ph - FH)/stride) + 1);
+	u64 newW = (((W + 2*pw - FW)/stride) + 1);
 	u64 reshapedIPCols = input.d1 * newD * newH * newW;
     Tensor2D<T> reshaped(reshapedIPCols, FD * FH * FW * CI);
     i64 linIdxFilterMult = 0;
 	for (i64 n = 0; n < input.d1; n++){
-        i64 leftTopCornerD = 0 - padding;
-        i64 extremeRightBottomCornerD = D - 1 + padding;
+        i64 leftTopCornerD = 0 - pd;
+        i64 extremeRightBottomCornerD = D - 1 + pd;
         while((leftTopCornerD + FD - 1) <= extremeRightBottomCornerD) {
-            i64 leftTopCornerH = 0 - padding;
-            i64 extremeRightBottomCornerH = H - 1 + padding;
+            i64 leftTopCornerH = 0 - ph;
+            i64 extremeRightBottomCornerH = H - 1 + ph;
             while((leftTopCornerH + FH - 1) <= extremeRightBottomCornerH){
-                i64 leftTopCornerW = 0 - padding;
-                i64 extremeRightBottomCornerW = W - 1 + padding;
+                i64 leftTopCornerW = 0 - pw;
+                i64 extremeRightBottomCornerW = W - 1 + pw;
                 while((leftTopCornerW + FW - 1) <= extremeRightBottomCornerW){
 
                     for (i64 fd = 0; fd < FD; fd++) {
@@ -422,4 +422,28 @@ std::vector<std::vector<u64>> getShapes(const std::vector<Tensor<T> *> &tensors)
         shapes.push_back(tensor->shape);
     }
     return shapes;
+}
+
+template <typename T>
+void printscale(const Tensor<T> &p, u64 scale, u64 bw = sizeof(T) * 8)
+{
+    u64 d = p.shape.back();
+    for (u64 i = 0; i < p.size(); ++i)
+    {
+        i64 val;
+        if (bw == sizeof(T) * 8) {
+            val = p.data[i];
+        }
+        else {
+            val = (p.data[i] + (1LL << (bw - 1))) % (1LL << bw);
+            val -= (1LL << (bw - 1));
+        }
+        std::cout << (double) val / (1LL << scale);
+        if ((i + 1) % d == 0) {
+            std::cout << std::endl;
+        }
+        else {
+            std::cout << " ";
+        }
+    }
 }
