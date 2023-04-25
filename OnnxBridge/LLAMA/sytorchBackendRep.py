@@ -128,7 +128,7 @@ int main(int argc, char**__argv){'{'}
         input.input(scale);
         print_dot_graph(net.root);
         net.forward(input);
-        print(net.activation, 64);
+        print(net.activation, scale, 64);
         return 0;
     {'}'}
 
@@ -176,7 +176,7 @@ int main(int __argc, char**__argv){'{'}
         input.input(scale);
         print_dot_graph(net.root);
         net.forward(input);
-        print(net.activation, 64);
+        print(net.activation, scale, 64);
         return 0;
     {'}'}
 
@@ -216,7 +216,7 @@ int main(int __argc, char**__argv){'{'}
     auto &output = net.activation;
     llama->outputA(output);
     if (party == CLIENT) {'{'}
-        print(output, LlamaConfig::bitlength);
+        print(output, scale, LlamaConfig::bitlength);
     {'}'}
     llama->finalize();
 {'}'}
