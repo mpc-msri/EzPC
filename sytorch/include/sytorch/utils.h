@@ -149,99 +149,6 @@ void transposeFilter(u64 fh, u64 fw, u64 ci, u64 co, const Tensor2D<T> &filter, 
 }
 
 template <typename T>
-void blprint(const Tensor4D<T> &p, u64 bw)
-{
-    for (int i = 0; i < p.d1; ++i) {
-        for (int j = 0; j < p.d2; ++j) {
-            for (int k = 0; k < p.d3; ++k) {
-                for (int l = 0; l < p.d4; ++l) {
-                    i64 val;
-                    if (bw == 64) {
-                        val = p(i, j, k, l);
-                    }
-                    else {
-                        val = (p(i, j, k, l) + (1LL << (bw - 1))) % (1LL << bw);
-                        val -= (1LL << (bw - 1));
-                    }
-                    std::cout << val << " ";
-                }
-                if (p.d4 > 1) {
-                    std::cout << std::endl;
-                }
-            }
-            if (p.d3 > 1) {
-                std::cout << std::endl;
-            }
-        }
-        if (p.d2 > 1) {
-            std::cout << std::endl;
-        }
-    }
-    if (p.d1 > 1) {
-        std::cout << std::endl;
-    }
-}
-
-template <typename T>
-void blprint(const Tensor4D<T> &p, u64 bw, u64 scale)
-{
-    for (int i = 0; i < p.d1; ++i) {
-        for (int j = 0; j < p.d2; ++j) {
-            for (int k = 0; k < p.d3; ++k) {
-                for (int l = 0; l < p.d4; ++l) {
-                    if (bw == 64) {
-                        std::cout << ((double)p(i, j, k, l)) / (1LL << scale) << " ";
-                        continue;
-                    }
-                    else {
-                        i64 val = (p(i, j, k, l) + (1LL << (bw - 1))) % (1LL << bw);
-                        val -= (1LL << (bw - 1));
-                        std::cout << ((double)val) / (1LL << scale) << " ";
-                    }
-                }
-                if (p.d4 > 1) {
-                    std::cout << std::endl;
-                }
-            }
-            if (p.d3 > 1) {
-                std::cout << std::endl;
-            }
-        }
-        if (p.d2 > 1) {
-            std::cout << std::endl;
-        }
-    }
-    if (p.d1 > 1) {
-        std::cout << std::endl;
-    }
-}
-
-
-template <typename T>
-void print(const Tensor<T> &p, u64 bw = sizeof(T) * 8)
-{
-    u64 d = p.shape.back();
-    for (u64 i = 0; i < p.size(); ++i)
-    {
-        i64 val;
-        if (bw == sizeof(T) * 8) {
-            val = p.data[i];
-        }
-        else {
-            val = (p.data[i] + (1LL << (bw - 1))) % (1LL << bw);
-            val -= (1LL << (bw - 1));
-        }
-        std::cout << val;
-        if ((i + 1) % d == 0) {
-            std::cout << std::endl;
-        }
-        else {
-            std::cout << " ";
-        }
-    }
-}
-
-template <typename T>
 Tensor2D<T> reshapeInputTransposed3d(const Tensor5D<T> &input, u64 pd, u64 ph, u64 pw, u64 sd, u64 sh, u64 sw, u64 FD, u64 FH, u64 FW) {
     u64 D = input.d2;
     u64 H = input.d3;
@@ -425,7 +332,7 @@ std::vector<std::vector<u64>> getShapes(const std::vector<Tensor<T> *> &tensors)
 }
 
 template <typename T>
-void printscale(const Tensor<T> &p, u64 scale, u64 bw = sizeof(T) * 8)
+void print(const Tensor<T> &p, u64 scale, u64 bw)
 {
     u64 d = p.shape.back();
     for (u64 i = 0; i < p.size(); ++i)
@@ -446,6 +353,12 @@ void printscale(const Tensor<T> &p, u64 scale, u64 bw = sizeof(T) * 8)
             std::cout << " ";
         }
     }
+}
+
+template <typename T>
+void print(const Tensor<T> &p, u64 scale)
+{
+    print(p, scale, sizeof(T) * 8);
 }
 
 inline void printshape(const std::vector<u64> &shape) {
