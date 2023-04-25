@@ -74,8 +74,8 @@ class OnnxNode:
 
     @classmethod
     def Div(cls, node):
-        # todo is div there or not? in athos it takes one input
-        pass
+        assert len(node.inputs) == 2
+        logger.debug("Div is OK!")
 
     @classmethod
     def Add(cls, node):

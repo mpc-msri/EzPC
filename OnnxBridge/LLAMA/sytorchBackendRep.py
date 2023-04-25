@@ -26,6 +26,7 @@ def func_call(node, value_info):
         "Pow": "Pow",
         "Mul": "Mul",
         "Sub": "Sub",
+        "Div": "Div",
     }
     return func_map[node.op_type]
 
@@ -51,7 +52,7 @@ def create_func_names(program):
     return node_names
 
 
-def inputs_to_take(node):
+def inputs_to_take(node, output_list):
     """
     Tells how many inputs are to be used during the forward pass
     :param node: node op type
@@ -73,11 +74,17 @@ def inputs_to_take(node):
         "Pow": 1,
         "Mul": 1,
         "Sub": 1,
+        "Div": 1,
     }
-    return tmp_dict[node]
+    broadcast_nodes = ["Sub", "Div"]
+    if node.op_type in broadcast_nodes:
+        input2_as_param = True if node.inputs[1] not in output_list else False
+        if not input2_as_param:
+            return tmp_dict[node.op_type] + 1
+    return tmp_dict[node.op_type]
 
 
-def prepare_func(node, var_dict, value_info, input_taken, mode, indent):
+def prepare_func(node, var_dict, value_info, input_taken, output_list, mode, indent):
     """
     Adds code for Operator Nodes in Code-List in CPP Format.
     :param code_list: Code-List in CPP Format.
@@ -95,6 +102,7 @@ def prepare_func(node, var_dict, value_info, input_taken, mode, indent):
         node.outputs,
         value_info,
         var_dict,
+        output_list,
         mode,
         indent + 1,
     )
@@ -244,6 +252,7 @@ def prepare_export(program, var_dict, value_info, mode, scale, bitlength, backen
     indent = 1
     input_taken = []  # list of variables already input
     input_dict = dict()
+    outputs_list = []
     logger.info("Starting Export...")
 
     # Check nodes for assertions and modifications
@@ -274,6 +283,7 @@ def prepare_export(program, var_dict, value_info, mode, scale, bitlength, backen
             code_list.append(
                 f"{tab_space * (indent)}{func_call(node, value_info)}<T> *{node_names[idx]};"
             )
+            outputs_list.append(node.outputs[0])
     code_list.append(f"{tab_space * (indent)}\n\n")
 
     # 2nd Pass
@@ -283,7 +293,7 @@ def prepare_export(program, var_dict, value_info, mode, scale, bitlength, backen
     for idx, node in enumerate(program):
         if isinstance(node, Node) and node.op_type not in non_sequential:
             code_list.append(
-                f"{tab_space * (indent + 1)}{node_names[idx]} = {prepare_func(node, var_dict, value_info, input_taken, mode, 0)}"
+                f"{tab_space * (indent + 1)}{node_names[idx]} = {prepare_func(node, var_dict, value_info, input_taken, outputs_list, mode, 0)}"
             )
     code_list.append(f"{tab_space * (indent)}{'}'}\n")
 
@@ -298,7 +308,7 @@ def prepare_export(program, var_dict, value_info, mode, scale, bitlength, backen
                 )
             else:
                 code_list.append(
-                    f"{tab_space * (indent + 1)}auto &{var_dict[node.outputs[0]]} = {node_names[idx]}->forward({iterate_list([var_dict[x] for x in node.inputs[:inputs_to_take(node.op_type)]])});"
+                    f"{tab_space * (indent + 1)}auto &{var_dict[node.outputs[0]]} = {node_names[idx]}->forward({iterate_list([var_dict[x] for x in node.inputs[:inputs_to_take(node, outputs_list)]])});"
                 )
     code_list.append(f"{tab_space * (indent + 1)}return {var_dict[program[-1].name]};")
     code_list.append(f"{tab_space * (indent)}{'}'}\n")

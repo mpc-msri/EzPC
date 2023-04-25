@@ -137,6 +137,7 @@ class IR(Backend):
             "Pow",
             "Mul",
             "Sub",
+            "Div",
         ]
         implemented_secfloat = [
             "Relu",

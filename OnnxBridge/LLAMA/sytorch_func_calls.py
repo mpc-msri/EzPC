@@ -4,7 +4,7 @@ from utils import logger
 from utils.backend_helper import iterate_list
 
 
-def get_padding(attributes, inputs, output, value_info, var_dict):
+def get_padding(attributes, inputs, output, value_info):
     if "pads" in attributes.keys():
         return attributes["pads"]
     elif "auto_pad" in attributes.keys() and (
@@ -41,75 +41,210 @@ class Operator:
     """
 
     @classmethod
-    def Relu(cls, attributes, inputs, outputs, value_info, var_dict, mode, indent):
+    def Relu(
+        cls,
+        attributes,
+        inputs,
+        outputs,
+        value_info,
+        var_dict,
+        output_list,
+        mode,
+        indent,
+    ):
         logger.debug("Inside Relu function call.")
         return str(f"{'   ' * indent}new ReLU<T>();")
 
     @classmethod
-    def Sqrt(cls, attributes, inputs, outputs, value_info, var_dict, mode, indent):
+    def Sqrt(
+        cls,
+        attributes,
+        inputs,
+        outputs,
+        value_info,
+        var_dict,
+        output_list,
+        mode,
+        indent,
+    ):
         logger.debug("Inside Sqrt function call.")
         return str(f"{'   ' * indent}new Sqrt<T>();")
 
     @classmethod
-    def Pow(cls, attributes, inputs, outputs, value_info, var_dict, mode, indent):
+    def Pow(
+        cls,
+        attributes,
+        inputs,
+        outputs,
+        value_info,
+        var_dict,
+        output_list,
+        mode,
+        indent,
+    ):
         logger.debug("Inside Pow function call.")
         return str(
             f"{'   ' * indent}new Pow<T>({'{'}{iterate_list(value_info[outputs[0]][1])}{'}'},{'{'}{iterate_list(value_info[inputs[1]][1])}{'}'});"
         )
 
     @classmethod
-    def Mul(cls, attributes, inputs, outputs, value_info, var_dict, mode, indent):
+    def Mul(
+        cls,
+        attributes,
+        inputs,
+        outputs,
+        value_info,
+        var_dict,
+        output_list,
+        mode,
+        indent,
+    ):
         logger.debug("Inside Mul function call.")
         return str(
             f"{'   ' * indent}new Mul<T>({'{'}{iterate_list(value_info[outputs[0]][1])}{'}'},{'{'}{iterate_list(value_info[inputs[1]][1])}{'}'});"
         )
 
     @classmethod
-    def Sub(cls, attributes, inputs, outputs, value_info, var_dict, mode, indent):
+    def Sub(
+        cls,
+        attributes,
+        inputs,
+        outputs,
+        value_info,
+        var_dict,
+        output_list,
+        mode,
+        indent,
+    ):
         logger.debug("Inside Sub function call.")
+        input2_as_param = "true" if inputs[1] not in output_list else "false"
         return str(
-            f"{'   ' * indent}new Sub<T>({'{'}{iterate_list(value_info[outputs[0]][1])}{'}'},{'{'}{iterate_list(value_info[inputs[1]][1])}{'}'});"
+            f"{'   ' * indent}new Sub<T>({'{'}{iterate_list(value_info[outputs[0]][1])}{'}'},{'{'}{iterate_list(value_info[inputs[1]][1])}{'}'}, {input2_as_param});"
+        )
+
+    @classmethod
+    def Div(
+        cls,
+        attributes,
+        inputs,
+        outputs,
+        value_info,
+        var_dict,
+        output_list,
+        mode,
+        indent,
+    ):
+        logger.debug("Inside Div function call.")
+        input2_as_param = "true" if inputs[1] not in output_list else "false"
+        return str(
+            f"{'   ' * indent}new Div<T>({'{'}{iterate_list(value_info[outputs[0]][1])}{'}'},{'{'}{iterate_list(value_info[inputs[1]][1])}{'}'}, {input2_as_param});"
         )
 
     @classmethod
     def BatchNormalization(
-        cls, attributes, inputs, outputs, value_info, var_dict, mode, indent
+        cls,
+        attributes,
+        inputs,
+        outputs,
+        value_info,
+        var_dict,
+        output_list,
+        mode,
+        indent,
     ):
         logger.debug("Inside BatchNorm function call.")
         shape = value_info[inputs[1]][1][0]
         return str(f"{'   ' * indent}new BatchNorm2dInference<T>({shape});")
 
     @classmethod
-    def Concat(cls, attributes, inputs, outputs, value_info, var_dict, mode, indent):
+    def Concat(
+        cls,
+        attributes,
+        inputs,
+        outputs,
+        value_info,
+        var_dict,
+        output_list,
+        mode,
+        indent,
+    ):
         logger.debug("Inside Concat function call.")
         return str(f"{'   ' * indent}new Concat<T>();")
 
     @classmethod
     def GlobalAveragePool(
-        cls, attributes, inputs, outputs, value_info, var_dict, mode, indent
+        cls,
+        attributes,
+        inputs,
+        outputs,
+        value_info,
+        var_dict,
+        output_list,
+        mode,
+        indent,
     ):
         logger.debug("Inside GlobalAveragePool function call.")
         return str(f"{'   ' * indent}new GlobalAvgPool2D<T>();")
 
     @classmethod
-    def Add(cls, attributes, inputs, outputs, value_info, var_dict, mode, indent):
+    def Add(
+        cls,
+        attributes,
+        inputs,
+        outputs,
+        value_info,
+        var_dict,
+        output_list,
+        mode,
+        indent,
+    ):
         logger.debug("Inside Add function call.")
         return str(f"{'   ' * indent}new Add<T>();")
 
     @classmethod
-    def Truncate(cls, attributes, inputs, outputs, value_info, var_dict, mode, indent):
+    def Truncate(
+        cls,
+        attributes,
+        inputs,
+        outputs,
+        value_info,
+        var_dict,
+        output_list,
+        mode,
+        indent,
+    ):
         logger.debug("Inside Truncate function call.")
         return str(f"{'   ' * indent}new Truncate<T>(scale);")
 
     @classmethod
-    def Softmax(cls, attributes, inputs, outputs, value_info, var_dict, mode, indent):
+    def Softmax(
+        cls,
+        attributes,
+        inputs,
+        outputs,
+        value_info,
+        var_dict,
+        output_list,
+        mode,
+        indent,
+    ):
         logger.debug("Inside Softmax function call.")
         # todo: check format
 
     @classmethod
-    def Conv(cls, attributes, inputs, outputs, value_info, var_dict, mode, indent):
+    def Conv(
+        cls,
+        attributes,
+        inputs,
+        outputs,
+        value_info,
+        var_dict,
+        output_list,
+        mode,
+        indent,
+    ):
         logger.debug("Inside Conv function call.")
-        pads = get_padding(attributes, inputs, outputs, value_info, var_dict)
+        pads = get_padding(attributes, inputs, outputs, value_info)
 
         spatial_size = len(value_info[inputs[0]][1]) - 2
         if spatial_size == 2:
@@ -147,10 +282,18 @@ class Operator:
 
     @classmethod
     def ConvTranspose(
-        cls, attributes, inputs, outputs, value_info, var_dict, mode, indent
+        cls,
+        attributes,
+        inputs,
+        outputs,
+        value_info,
+        var_dict,
+        output_list,
+        mode,
+        indent,
     ):
         logger.debug("Inside ConvTranspose function call.")
-        pads = get_padding(attributes, inputs, outputs, value_info, var_dict)
+        pads = get_padding(attributes, inputs, outputs, value_info)
         spatial_size = len(value_info[inputs[0]][1]) - 2
         if spatial_size == 3:
             assert len(inputs) == 2 or len(inputs) == 3
@@ -169,9 +312,19 @@ class Operator:
             )
 
     @classmethod
-    def MaxPool(cls, attributes, inputs, outputs, value_info, var_dict, mode, indent):
+    def MaxPool(
+        cls,
+        attributes,
+        inputs,
+        outputs,
+        value_info,
+        var_dict,
+        output_list,
+        mode,
+        indent,
+    ):
         logger.debug("Inside MaxPool function call.")
-        pads = get_padding(attributes, inputs, outputs, value_info, var_dict)
+        pads = get_padding(attributes, inputs, outputs, value_info)
         filter_shape = attributes["kernel_shape"][0]
         pad = pads[0]
         stride = attributes["strides"][0]
@@ -183,10 +336,18 @@ class Operator:
 
     @classmethod
     def AveragePool(
-        cls, attributes, inputs, outputs, value_info, var_dict, mode, indent
+        cls,
+        attributes,
+        inputs,
+        outputs,
+        value_info,
+        var_dict,
+        output_list,
+        mode,
+        indent,
     ):
         logger.debug("Inside AveragePool function call.")
-        pads = get_padding(attributes, inputs, outputs, value_info, var_dict)
+        pads = get_padding(attributes, inputs, outputs, value_info)
         filter_shape = attributes["kernel_shape"][0]
         pad = pads[0]
         stride = attributes["strides"][0]
@@ -197,24 +358,51 @@ class Operator:
         )
 
     @classmethod
-    def Flatten(cls, attributes, inputs, outputs, value_info, var_dict, mode, indent):
+    def Flatten(
+        cls,
+        attributes,
+        inputs,
+        outputs,
+        value_info,
+        var_dict,
+        output_list,
+        mode,
+        indent,
+    ):
         logger.debug("Inside Flatten function call.")
         return str(f"{'   ' * indent}new Flatten<T>();")
 
     @classmethod
-    def Reshape(cls, attributes, inputs, outputs, value_info, var_dict, mode, indent):
+    def Reshape(
+        cls,
+        attributes,
+        inputs,
+        outputs,
+        value_info,
+        var_dict,
+        output_list,
+        mode,
+        indent,
+    ):
         logger.debug("Inside Reshape function call.")
         return str(f"{'   ' * indent}new Reshape<T>();")
         # todo : check format
 
     @classmethod
-    def Gemm(cls, attributes, inputs, outputs, value_info, var_dict, mode, indent):
+    def Gemm(
+        cls,
+        attributes,
+        inputs,
+        outputs,
+        value_info,
+        var_dict,
+        output_list,
+        mode,
+        indent,
+    ):
         logger.debug("Inside Gemm function call.")
         inn = value_info[inputs[0]][1][1]
         out = value_info[outputs[0]][1][1]
         isBias = ", true" if len(inputs) == 3 else ""
 
         return str(f"{'   ' * indent}new FC<T>(" f"{inn}, {out}{isBias}" f");")
-        # ) + cls.Truncate(
-        #     attributes, inputs, outputs, value_info, var_dict, mode, indent
-        # )
