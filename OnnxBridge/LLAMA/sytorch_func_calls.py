@@ -141,6 +141,24 @@ class Operator:
         )
 
     @classmethod
+    def Add(
+        cls,
+        attributes,
+        inputs,
+        outputs,
+        value_info,
+        var_dict,
+        output_list,
+        mode,
+        indent,
+    ):
+        logger.debug("Inside Add function call.")
+        input2_as_param = "true" if inputs[1] not in output_list else "false"
+        return str(
+            f"{'   ' * indent}new Add_gen<T>({'{'}{iterate_list(value_info[outputs[0]][1])}{'}'},{'{'}{iterate_list(value_info[inputs[1]][1])}{'}'}, {input2_as_param});"
+        )
+
+    @classmethod
     def BatchNormalization(
         cls,
         attributes,
@@ -185,21 +203,6 @@ class Operator:
     ):
         logger.debug("Inside GlobalAveragePool function call.")
         return str(f"{'   ' * indent}new GlobalAvgPool2D<T>();")
-
-    @classmethod
-    def Add(
-        cls,
-        attributes,
-        inputs,
-        outputs,
-        value_info,
-        var_dict,
-        output_list,
-        mode,
-        indent,
-    ):
-        logger.debug("Inside Add function call.")
-        return str(f"{'   ' * indent}new Add<T>();")
 
     @classmethod
     def Truncate(

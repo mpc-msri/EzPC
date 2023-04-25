@@ -204,7 +204,7 @@ public:
 
                 wIdx += exp.size();
             }
-            else if (layer->name.find("Sub") != std::string::npos || layer->name.find("Div") != std::string::npos)
+            else if (layer->name.find("Sub") != std::string::npos || layer->name.find("Div") != std::string::npos || layer->name.find("Add_gen") != std::string::npos)
             {
                 if (layer->input2_as_param == true)
                 {

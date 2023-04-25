@@ -675,6 +675,57 @@ public:
 };
 
 template <typename T>
+class Add_gen : public Layer<T>
+{
+public:
+    Tensor<T> dadd;
+    Tensor<T> input2;
+    std::vector<u64> out_shape;
+    Add_gen(const std::vector<u64> out_shape, const std::vector<u64> in2_shape, bool input2_as_param = false) : Layer<T>("Add_gen"), dadd({0}), out_shape(out_shape), input2(in2_shape)
+    {
+        this->input2_as_param = input2_as_param;
+    }
+
+    void _resize(const std::vector<std::vector<u64>> &shapes)
+    {
+        always_assert(shapes.size() == 1 or shapes.size() == 2);
+        auto &shape = shapes[0];
+        this->dadd.resize(shape);
+    }
+
+    void _forward(Tensor<T> &a)
+    {
+        this->backend->add_gen(a, this->input2, this->activation, this->dadd, this->scale, this->out_shape);
+    }
+
+    void _forward(Tensor<T> &a, Tensor<T> &b)
+    {
+        this->backend->add_gen(a, b, this->activation, this->dadd, this->scale, this->out_shape);
+    }
+
+    void _forward(std::vector<Tensor<T> *> &a)
+    {
+        always_assert(a.size() == 1 or a.size() == 2);
+        if (a.size() == 1)
+        {
+            this->backend->add_gen(*a[0], this->input2, this->activation, this->dadd, this->scale, this->out_shape);
+        }
+        else
+        {
+            this->backend->add_gen(*a[0], *a[1], this->activation, this->dadd, this->scale, this->out_shape);
+        }
+    }
+
+    std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes)
+    {
+        always_assert(inShapes.size() == 1 or inShapes.size() == 2);
+        return this->out_shape;
+    }
+
+    Tensor<T> &getinput2() { return input2; }
+};
+
+template <typename T>
 class BatchNorm2dInference : public Layer<T> {
 public:
     Tensor1D<T> A; // scale = s

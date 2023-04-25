@@ -52,6 +52,7 @@ public:
     void mul(const Tensor<T> &in, const Tensor<T> &in2, const Tensor<T> &out, const Tensor<T> &dpow, u64 scale, std::vector<u64> &out_shape);
     void sub(const Tensor<T> &in, const Tensor<T> &in2, const Tensor<T> &out, const Tensor<T> &dpow, u64 scale, std::vector<u64> &out_shape);
     void div_gen(const Tensor<T> &in, const Tensor<T> &in2, const Tensor<T> &out, const Tensor<T> &dpow, u64 scale, std::vector<u64> &out_shape);
+    void add_gen(const Tensor<T> &in, const Tensor<T> &in2, const Tensor<T> &out, const Tensor<T> &dpow, u64 scale, std::vector<u64> &out_shape);
 
     // void truncate(const Tensor4D<T> &in, const Tensor4D<T> &out, u64 shift);
     // void truncate(const Tensor4D<T> &in, u64 shift);

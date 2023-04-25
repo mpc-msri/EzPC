@@ -20,7 +20,7 @@ def func_call(node, value_info):
         "BatchNormalization": "BatchNorm2dInference",
         "AveragePool": "AvgPool2D",
         "GlobalAveragePool": "GlobalAvgPool2D",
-        "Add": "add",
+        "Add": "Add_gen",
         "ConvTranspose": "ConvTranspose3D",
         "Sqrt": "Sqrt",
         "Pow": "Pow",
@@ -31,7 +31,7 @@ def func_call(node, value_info):
     return func_map[node.op_type]
 
 
-non_sequential = ["Concat", "Add"]
+non_sequential = ["Concat"]
 tab_space = "     "
 
 
@@ -66,7 +66,7 @@ def inputs_to_take(node, output_list):
         "Flatten": 1,
         "AveragePool": 1,
         "Concat": -1,
-        "Add": -1,
+        "Add": 1,
         "BatchNormalization": 1,
         "GlobalAveragePool": 1,
         "ConvTranspose": 1,
@@ -232,7 +232,7 @@ int main(int __argc, char**__argv){'{'}
     auto &output = net.activation;
     llama->outputA(output);
     if (party == CLIENT) {'{'}
-        print(output, LlamaConfig::bitlength);
+        print(output, scale, LlamaConfig::bitlength);
     {'}'}
     llama->finalize();
 {'}'}

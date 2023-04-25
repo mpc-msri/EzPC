@@ -240,6 +240,36 @@ void ClearText<T>::div_gen(const Tensor<T> &in, const Tensor<T> &in2, const Tens
 }
 
 template <typename T>
+void ClearText<T>::add_gen(const Tensor<T> &in, const Tensor<T> &in2, const Tensor<T> &out, const Tensor<T> &dpow, u64 scale, std::vector<u64> &out_shape)
+{
+    assert(broadcastable(in, out_shape));
+    assert(broadcastable(in2, out_shape));
+
+    std::vector<u64> idx(in.shape.size(), 0);
+    fastfor(out.size(), [&](u64 i)
+            {
+        T ex = in2.multidir_broadcast_value(out_shape, idx);
+        dpow.data[i] = in.data[i] / (1LL << scale);
+        ex = ex / (1LL << scale);
+        dpow.data[i] = dpow.data[i] + ex;
+        out.data[i] = dpow.data[i] * (1LL << scale);
+
+        // update idx
+        for (int j = idx.size() - 1; j >= 0; j--)
+        {
+            idx[j]++;
+            if (idx[j] == out_shape[j])
+            {
+                idx[j] = 0;
+            }
+            else
+            {
+                break;
+            }
+        } });
+}
+
+template <typename T>
 void ClearText<T>::truncate(T *in, T *out, u64 shift, u64 size, u8 mode) {
     fastfor(size, [&] (u64 i) {
         if constexpr (std::is_floating_point<T>::value) {
