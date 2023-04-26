@@ -15,11 +15,11 @@ The `compile_networks.py` folder contains 5 networks. Please check the class def
 
 ## Microbenchmarks
 
-The scripts to reproduce the microbenchmark results on the [INSERT PAPER HERE]
+The scripts to reproduce the microbenchmark results on the paper [Secure Floating-Point Training](https://eprint.iacr.org/2023/467)
 
 ## Benchmarks
 
-The scripts to reproduce the benchmark results on the [INSERT PAPER HERE]
+The scripts to reproduce the benchmark results on the paper [Secure Floating-Point Training](https://eprint.iacr.org/2023/467)
 
 # Usage
 
