@@ -351,3 +351,28 @@ inline void sytorch_init()
     prngWeights.SetSeed(osuCrypto::toBlock(0, 0));
     prngStr.SetSeed(osuCrypto::toBlock(time(NULL)));
 }
+
+template <typename T>
+void qkv_split(Tensor2D<T> &x, Tensor4D<T> &y, u64 n_heads)
+{
+    always_assert(x.d2 % 3 == 0);
+    u64 n_seq = x.d1;
+    u64 n_embd = x.d2 / 3;
+    always_assert(n_embd % n_heads == 0);
+    always_assert(y.d1 == 3);
+    always_assert(y.d2 == n_heads);
+    always_assert(y.d3 == n_seq);
+    always_assert(y.d4 == n_embd / n_heads);
+
+    for (u64 i = 0; i < n_seq; ++i)
+    {
+        for (u64 j = 0; j < n_embd; ++j)
+        {
+            u64 head = j / (n_embd / n_heads);
+            u64 pos = j % (n_embd / n_heads);
+            y(0, head, i, pos) = x(i, j);
+            y(1, head, i, pos) = x(i, j + n_embd);
+            y(2, head, i, pos) = x(i, j + 2 * n_embd);
+        }
+    }
+}
