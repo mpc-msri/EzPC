@@ -138,6 +138,7 @@ class IR(Backend):
             "Mul",
             "Sub",
             "Div",
+            "ReduceMean",
         ]
         implemented_secfloat = [
             "Relu",
