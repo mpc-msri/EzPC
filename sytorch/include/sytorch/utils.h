@@ -1,5 +1,6 @@
 #pragma once
 #include <sytorch/tensor.h>
+#include <llama/array.h>
 #include <queue>
 #include <set>
 #include <fstream>
@@ -25,42 +26,6 @@ auto make_float_vector( size_t first, Args... sizes)
 		_ret.push_back(make_float_vector( sizes...));
 	}
 	return _ret;
-}
-
-//n h w c
-inline auto take_input(int n, int h, int w, int c)
-{
-    auto tmp0 = make_float_vector( n, h, w, c);
-
-    for (uint32_t i0 = 0; i0 < n; i0++)
-    {
-        for (uint32_t i1 = 0; i1 < c; i1++)
-        {
-            for (uint32_t i2 = 0; i2 < h; i2++)
-            {
-                for (uint32_t i3 = 0; i3 < w; i3++)
-                {
-                    std::cin >> tmp0[i0][i2][i3][i1];
-                }
-            }
-        }
-    }
-    return tmp0;
-}
-
-template <typename T>
-Tensor2D<T> reshapeFilter(const Tensor4D<T> &filter) {
-    Tensor2D<T> res(filter.d4, filter.d1 * filter.d2 * filter.d3);
-    for(int i = 0; i < filter.d4; i++) {
-        for(int j = 0; j < filter.d1; j++) {
-            for(int k = 0; k < filter.d2; k++) {
-                for(int l = 0; l < filter.d3; l++) {
-                    res(i, j * filter.d2 * filter.d3 + k * filter.d3 + l) = filter(j, k, l, i);
-                }
-            }
-        }
-    }
-    return res;
 }
 
 template <typename T>
@@ -161,69 +126,222 @@ void transposeFilter(u64 fh, u64 fw, u64 ci, u64 co, const Tensor2D<T> &filter, 
 }
 
 template <typename T>
-void blprint(const Tensor4D<T> &p, u64 bw)
-{
-    for (int i = 0; i < p.d1; ++i) {
-        for (int j = 0; j < p.d2; ++j) {
-            for (int k = 0; k < p.d3; ++k) {
-                for (int l = 0; l < p.d4; ++l) {
-                    i64 val;
-                    if (bw == 64) {
-                        val = p(i, j, k, l);
+Tensor2D<T> reshapeInputTransposed3d(const Tensor5D<T> &input, u64 pd, u64 ph, u64 pw, u64 sd, u64 sh, u64 sw, u64 FD, u64 FH, u64 FW) {
+    u64 D = input.d2;
+    u64 H = input.d3;
+    u64 W = input.d4;
+    u64 CI = input.d5;
+    u64 newD = (((D + 2*pd - FD)/sd) + 1);
+    u64 newH = (((H + 2*ph - FH)/sh) + 1);
+	u64 newW = (((W + 2*pw - FW)/sw) + 1);
+	u64 reshapedIPCols = input.d1 * newD * newH * newW;
+    Tensor2D<T> reshaped(reshapedIPCols, FD * FH * FW * CI);
+    i64 linIdxFilterMult = 0;
+	for (i64 n = 0; n < input.d1; n++){
+        i64 leftTopCornerD = 0 - pd;
+        i64 extremeRightBottomCornerD = D - 1 + pd;
+        while((leftTopCornerD + FD - 1) <= extremeRightBottomCornerD) {
+            i64 leftTopCornerH = 0 - ph;
+            i64 extremeRightBottomCornerH = H - 1 + ph;
+            while((leftTopCornerH + FH - 1) <= extremeRightBottomCornerH){
+                i64 leftTopCornerW = 0 - pw;
+                i64 extremeRightBottomCornerW = W - 1 + pw;
+                while((leftTopCornerW + FW - 1) <= extremeRightBottomCornerW){
+
+                    for (i64 fd = 0; fd < FD; fd++) {
+                        for (i64 fh = 0; fh < FH; fh++){
+                            for (i64 fw = 0; fw < FW; fw++){
+                                i64 curPosD = leftTopCornerD + fd;
+                                i64 curPosH = leftTopCornerH + fh;
+                                i64 curPosW = leftTopCornerW + fw;
+                                for (i64 ci = 0; ci < CI; ci++){
+                                    if ((((curPosD < 0) || (curPosD >= D)) || ((curPosH < 0) || (curPosH >= H)) || ((curPosW < 0) || (curPosW >= W)))){
+                                        reshaped(linIdxFilterMult, fd*(FH*FW*CI) + (fh*FW*CI) + (fw*CI) + ci) = 0L;
+                                    }
+                                    else{
+                                        reshaped(linIdxFilterMult, fd*(FH*FW*CI) + (fh*FW*CI) + (fw*CI) + ci) = input(n, curPosD, curPosH, curPosW, ci);
+                                    }
+                                }
+                            }
+                        }
                     }
-                    else {
-                        val = (p(i, j, k, l) + (1LL << (bw - 1))) % (1LL << bw);
-                        val -= (1LL << (bw - 1));
-                    }
-                    std::cout << val << " ";
+
+                    linIdxFilterMult = linIdxFilterMult + 1;
+                    leftTopCornerW = leftTopCornerW + sw;
                 }
-                if (p.d4 > 1) {
-                    std::cout << std::endl;
+                leftTopCornerH = leftTopCornerH + sh;
+            }
+            leftTopCornerD = leftTopCornerD + sd;
+		}
+	}
+    return reshaped;
+}
+
+template <typename T>
+void reshapeOutput3d(const Tensor2D<T> &output, u64 d1, u64 d2, u64 d3, u64 d4, u64 d5, Tensor5D<T> &res) {
+    assert(res.d1 == d1);
+    assert(res.d2 == d2);
+    assert(res.d3 == d3);
+    assert(res.d4 == d4);
+    assert(res.d5 == d5);
+    assert(output.d1 == d5);
+    assert(output.d2 == d1 * d2 * d3 * d4);
+    for(int i = 0; i < d1; i++) {
+        for(int j = 0; j < d2; j++) {
+            for(int k = 0; k < d3; k++) {
+                for(int l = 0; l < d4; l++) {
+                    for(int m = 0; m < d5; m++) {
+                        res(i, j, k, l, m) = output(m, i * d2 * d3 * d4 + j * d3 * d4 + k * d4 + l);
+                    }
                 }
             }
-            if (p.d3 > 1) {
-                std::cout << std::endl;
-            }
         }
-        if (p.d2 > 1) {
-            std::cout << std::endl;
-        }
-    }
-    if (p.d1 > 1) {
-        std::cout << std::endl;
     }
 }
 
 template <typename T>
-void blprint(const Tensor4D<T> &p, u64 bw, u64 scale)
+void convTranspose3dLoop(
+    int64_t N, 
+    int64_t D, 
+    int64_t H, 
+    int64_t W, 
+    int64_t CI, 
+    int64_t FD, 
+    int64_t FH, 
+    int64_t FW, 
+    int64_t CO, 
+    int64_t zPadDLeft, 
+    int64_t zPadDRight, 
+    int64_t zPadHLeft, 
+    int64_t zPadHRight, 
+    int64_t zPadWLeft, 
+    int64_t zPadWRight, 
+    int64_t strideD, 
+    int64_t strideH, 
+    int64_t strideW, 
+    int64_t outD, 
+    int64_t outH, 
+    int64_t outW, 
+    T* inputArr, 
+    T* filterArr, 
+    T* outArr)
 {
-    for (int i = 0; i < p.d1; ++i) {
-        for (int j = 0; j < p.d2; ++j) {
-            for (int k = 0; k < p.d3; ++k) {
-                for (int l = 0; l < p.d4; ++l) {
-                    if (bw == 64) {
-                        std::cout << ((double)p(i, j, k, l)) / (1LL << scale) << " ";
-                        continue;
-                    }
-                    else {
-                        i64 val = (p(i, j, k, l) + (1LL << (bw - 1))) % (1LL << bw);
-                        val -= (1LL << (bw - 1));
-                        std::cout << ((double)val) / (1LL << scale) << " ";
+    zPadDLeft = FD - 1 - zPadDLeft;
+    zPadDRight = FD - 1 - zPadDRight;
+    zPadHLeft = FH - 1 - zPadHLeft;
+    zPadHRight = FH - 1 - zPadHRight;
+    zPadWLeft = FW - 1 - zPadWLeft;
+    zPadWRight = FW - 1 - zPadWRight;
+
+    #pragma omp parallel for collapse(5)
+    for (int64_t n =  0; n < N; n++){
+        for (int64_t d =  0; d < outD; d++){
+            for (int64_t h =  0; h < outH; h++){
+                for (int64_t w =  0; w < outW; w++){
+                    for (int64_t co =  0; co < CO; co++){
+                        
+                        T val =  0;
+                        for (int64_t ci =  0; ci < CI; ci++){
+                            for (int64_t fd = d; fd < (d + FD); fd++){
+                                for (int64_t fh = h; fh < (h + FH); fh++){
+                                    for (int64_t fw = w; fw < (w + FW); fw++){
+
+                                        int64_t curPosD = ((fd - zPadDLeft) / strideD);
+                                        int64_t curPosH = ((fh - zPadHLeft) / strideH);
+                                        int64_t curPosW = ((fw - zPadWLeft) / strideW);
+
+                                        if ((curPosD >=  0) &&
+                                            (curPosH >=  0) &&
+                                            (curPosW >=  0) &&
+                                            (curPosD < D) &&
+                                            (curPosH < H) &&
+                                            (curPosW < W) &&
+                                            (((fd - zPadDLeft) % strideD) == 0) &&
+                                            (((fh - zPadHLeft) % strideH) == 0) &&
+                                            (((fw - zPadWLeft) % strideW) == 0))
+                                        {
+                                            int32_t curFilterPosD = FD + d - fd -  1;
+                                            int32_t curFilterPosH = FH + h - fh -  1;
+                                            int32_t curFilterPosW = FW + w - fw -  1;
+                                            val += (Arr5DIdx(inputArr, N, D, H, W, CI, n, curPosD, curPosH, curPosW, ci) * Arr5DIdx(filterArr, CO, FD, FH, FW, CI, co, curFilterPosD, curFilterPosH, curFilterPosW, ci));
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        Arr5DIdx(outArr, N, outD, outH, outW, CO, n, d, h, w, co) =  val;
+                        // std::cout << "setting element at (" << n << " " << d << " " << h << " " << w << " " << co << ")" << std::endl;
                     }
                 }
-                if (p.d4 > 1) {
-                    std::cout << std::endl;
-                }
-            }
-            if (p.d3 > 1) {
-                std::cout << std::endl;
             }
         }
-        if (p.d2 > 1) {
+    }
+}
+
+template <typename T, typename... Args>
+std::vector<T *> collect(T &first, Args & ... args)
+{
+    std::vector<T *> res;
+    res.push_back(&first);
+    collectHelper(res, args...);
+    return res;
+}
+template <typename T, typename... Args>
+void collectHelper(std::vector<T *> &res)
+{
+
+}
+
+template <typename T, typename... Args>
+void collectHelper(std::vector<T *> &res, T &a, Args & ... args)
+{
+    res.push_back(&a);
+    collectHelper(res, args...);
+}
+
+template <typename T>
+std::vector<std::vector<u64>> getShapes(const std::vector<Tensor<T> *> &tensors) {
+    std::vector<std::vector<u64>> shapes;
+    for (auto tensor : tensors) {
+        shapes.push_back(tensor->shape);
+    }
+    return shapes;
+}
+
+template <typename T>
+void print(const Tensor<T> &p, u64 scale, u64 bw)
+{
+    u64 d = p.shape.back();
+    for (u64 i = 0; i < p.size(); ++i)
+    {
+        i64 val;
+        if (bw == sizeof(T) * 8) {
+            val = p.data[i];
+        }
+        else {
+            val = (p.data[i] + (1LL << (bw - 1))) % (1LL << bw);
+            val -= (1LL << (bw - 1));
+        }
+        std::cout << (double) val / (1LL << scale);
+        if ((i + 1) % d == 0) {
             std::cout << std::endl;
         }
+        else {
+            std::cout << " ";
+        }
     }
-    if (p.d1 > 1) {
-        std::cout << std::endl;
+}
+
+template <typename T>
+void print(const Tensor<T> &p, u64 scale)
+{
+    print(p, scale, sizeof(T) * 8);
+}
+
+inline void printshape(const std::vector<u64> &shape) {
+    std::cout << "(";
+    for(int i = 0; i < shape.size(); i++) {
+        std::cout << shape[i] << ", ";
     }
+    std::cout << ")" << std::endl;
 }

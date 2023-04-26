@@ -4,144 +4,277 @@
 #include <sytorch/backend/cleartext.h>
 #include <string>
 
-struct layer_dims {
-    u64 n, h, w, c;
-
-    u64 size() {
-        return n * h * w * c;
-    }
-};
-
 template <typename T>
 class Layer {
 public:
     std::string name;
-    Tensor4D<T> activation;
-    Tensor4D<T> inputDerivative;
+    Tensor<T> activation;
+    Backend<T> *backend = nullptr;
+
+    // config options
     bool doTruncationForward = false;
     bool doPreSignExtension = false;
     bool doPostSignExtension = false;
     bool isFirst = false;
     u64 scale = 0;
-    Backend<T> *backend = nullptr;
-    static bool fakeExecution;
     int mode = 0; // only used in ReLU in llama improved to decide between relu and reluext, might need something cleaner?
     int forwardTruncationMode = 0;
-    LayerGraphNode<T> *node = nullptr;
     bool useBias = true;
+    bool isTrainingMode = false;
 
-    Layer(const std::string &id) : activation(0,0,0,0), inputDerivative(0,0,0,0), name(id) {
+    LayerGraphNode<T> *node = nullptr;
+
+    Layer(const std::string &name) : activation({0}), name(name) {
         backend = new ClearText<T>();
     }
-    void init(u64 d1, u64 d2, u64 d3, u64 d4, u64 scale) {
-        initScale(scale);
-        resize(d1, d2, d3, d4);
+
+    virtual void _initScale(u64 scale) {};
+    void initScale(u64 scale) {
+        always_assert(std::is_integral<T>::value || scale == 0);
+        this->scale = scale;
+        _initScale(scale);
+    };
+    
+    virtual void _resize(const std::vector<std::vector<u64>> &shapes) {};
+    void resize(const std::vector<std::vector<u64>> &shapes) {
+        auto outdims = this->get_output_dims(shapes);
+        activation.resize(outdims);
+        _resize(shapes);
     }
-    virtual void initScale(u64 scale) {};
-    virtual void resize(u64 d1, u64 d2, u64 d3, u64 d4) = 0;
-    virtual void forward_internal(Tensor4D<T> &a, bool train = true) = 0;
-    Tensor4D<T>& forward(Tensor4D<T> &a, bool train = true) {
-        if (fakeExecution) {
-            activation.graphNode = new LayerGraphNode<T>();
-            node = activation.graphNode;
-            activation.graphNode->layer = this;
-            activation.graphNode->parents.push_back(a.graphNode);
-            activation.graphNode->allNodesInExecutionOrderRef = a.graphNode->allNodesInExecutionOrderRef;
-            activation.graphNode->allNodesInExecutionOrderRef->push_back(activation.graphNode);
-            a.graphNode->children.push_back(activation.graphNode);
-            layer_dims indims = {a.d1, a.d2, a.d3, a.d4};
-            layer_dims outdims = this->get_output_dims(indims);
-            activation.resize(outdims.n, outdims.h, outdims.w, outdims.c);
-            inputDerivative.resize(a.d1, a.d2, a.d3, a.d4);
+
+    virtual void _forward(Tensor<T> &a) = 0;
+    virtual void _forward(std::vector<Tensor<T> *> &a) { 
+        if (a.size() != 1)
+            throw std::runtime_error("variable input cardinality not supported in this layer");
+       _forward(*a[0]); 
+    };
+    
+    template <typename... Args>
+    Tensor<T>& forward(Args & ... args) {
+        std::vector<Tensor<T> *> a = collect(args...);
+        return forward(a);
+    }
+
+    Tensor<T>& forward(std::vector<Tensor<T> *> &a) {
+        if (a[0]->graphGenMode) {
+            for (auto &i : a) {
+                always_assert(i->graphGenMode);
+            }
+            node = new LayerGraphNode<T>();
+            node->layer = this;
+            node->allNodesInExecutionOrderRef = a[0]->graphNode->allNodesInExecutionOrderRef;
+            node->allNodesInExecutionOrderRef->push_back(node);
+
+            for(auto &i : a) {
+                auto parentNode = i->graphNode;
+                always_assert(parentNode->allNodesInExecutionOrderRef == node->allNodesInExecutionOrderRef);
+                node->parents.push_back(parentNode);
+                parentNode->children.push_back(node);
+            }
+
+            activation.graphNode = node;
+            activation.graphGenMode = true;
             return activation;
         }
-        if (a.d1 != inputDerivative.d1 || a.d2 != inputDerivative.d2 || a.d3 != inputDerivative.d3 || a.d4 != inputDerivative.d4) {
-            resize(a.d1, a.d2, a.d3, a.d4);
+
+        // check if we have the graph generated already
+        always_assert(node != nullptr);
+        for(auto &i : a) {
+            always_assert(i->graphNode != nullptr);
         }
-        if (node != nullptr) {
-            node->currTensor = &activation;
-            activation.graphNode = node;
-        }
+        
+        activation.graphGenMode = false;
+        resize(getShapes(a));
+        node->currTensor = &activation;
+        activation.graphNode = node;
+
         if (doPreSignExtension) {
-            this->backend->signext(a, scale);
+            for(auto &i : a) {
+                this->backend->signext(*i, scale);
+            }
         }
-        forward_internal(a, train);
+        _forward(a);
         if (doTruncationForward) {
             this->backend->truncateForward(activation, scale, forwardTruncationMode);
         }
         if (doPostSignExtension) {
             this->backend->signext(activation, scale);
         }
-        if (a.graphNode != nullptr) {
-            bool gcHappened = a.graphNode->incrementAndGc();
-            // if (gcHappened) {
-            //     std::cerr << "Output of " << a.graphNode->layer->name << " cleared" << std::endl;
-            // }
+        for(auto &i : a) {
+            i->graphNode->incrementAndGc();
         }
         return activation;
     }
 
     virtual Tensor2D<T>& getweights() { throw std::runtime_error("not implemented"); };
-    virtual Tensor<T>& getbias() { throw std::runtime_error("not implemented"); };
-    virtual struct layer_dims get_output_dims(struct layer_dims &in) = 0;
+    virtual Tensor1D<T>& getbias() { throw std::runtime_error("not implemented"); };
+    virtual std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) = 0;
+
     virtual void setBackend(Backend<T> *b) {
         backend = b;
+    }
+
+    void train() {
+        isTrainingMode = true;
+    }
+
+    void eval() {
+        isTrainingMode = false;
     }
 };
 
 template <typename T>
 class Conv2D : public Layer<T> {
 public:
-    Tensor4D<T> inp;
+    Tensor<T> inp;
     Tensor2D<T> filter;
-    Tensor2D<T> filterGrad;
-    Tensor2D<T> Vw;
-    Tensor<T> bias;
-    Tensor<T> biasGrad;
-    Tensor<T> Vb;
-    u64 ci, co, ks, padding, stride;
+    Tensor1D<T> bias;
+    u64 ci, co;
+    u64 fh, fw, padding, stride;
 
-    Conv2D(u64 ci, u64 co, u64 ks, u64 padding = 0, u64 stride = 1, bool useBias = false) : Layer<T>("Conv2D"), ci(ci), co(co), ks(ks), padding(padding), 
-        stride(stride), filter(co, ks * ks * ci), filterGrad(co, ks * ks * ci), Vw(co, ks * ks * ci), bias(co), biasGrad(co), Vb(co), inp(0,0,0,0)
+    Conv2D(u64 ci, u64 co, u64 f, u64 padding = 0, u64 stride = 1, bool useBias = false) : Layer<T>("Conv2D"), ci(ci), co(co), fh(f), fw(f), 
+        padding(padding), stride(stride), filter(co, f * f * ci), bias(co), inp({0,0,0,0})
     {
         this->doTruncationForward = true;
         this->useBias = useBias;
     }
 
-    void initScale(u64 scale) {
-        always_assert(std::is_integral<T>::value || scale == 0);
-        this->scale = scale;
-        double xavier = 1.0 / sqrt(ci * ks * ks);
+    Conv2D(u64 ci, u64 co, const std::array<u64, 2> f, u64 padding = 0, u64 stride = 1, bool useBias = false) : Layer<T>("Conv2D"), ci(ci), co(co), fh(f[0]), fw(f[1]), 
+        padding(padding), stride(stride), filter(co, f[0] * f[1] * ci), bias(co), inp({0,0,0,0})
+    {
+        this->doTruncationForward = true;
+        this->useBias = useBias;
+    }
+
+    void _initScale(u64 scale) {
+        double xavier = 1.0 / sqrt(ci * fh * fw);
         filter.randomize(xavier * (1ULL<<scale));
-        bias.randomize(xavier * (1ULL<<(2*scale)));
-        Vw.fill(0);
-        Vb.fill(0);
-    }
-
-    void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
-        always_assert(d4 == ci);
-        this->inputDerivative.resize(d1, d2, d3, d4);
-        inp.resize(d1, d2, d3, d4);
-        u64 newH = (((d2 + 2*padding - ks)/stride) + 1);
-        u64 newW = (((d3 + 2*padding - ks)/stride) + 1);
-        this->activation.resize(d1, newH, newW, co);
-    }
-
-    void forward_internal(Tensor4D<T> &a, bool train = true) {
-        assert(a.d4 == ci);
-        inp.copy(a);
-        this->backend->conv2D(ks, ks, padding, stride, ci, co, a, filter, this->activation);
         if (this->useBias)
-        this->activation.addBias(bias);
+            bias.randomize(xavier * (1ULL<<(2*scale)));
+    }
+
+    void _resize(const std::vector<std::vector<u64>> &shapes) {
+        always_assert(shapes.size() == 1);
+        auto &shape = shapes[0];
+        always_assert(shape.size() == 4);
+        always_assert(shape[3] == ci);
+        if (this->isTrainingMode)
+            inp.resize(shape);
+    }
+
+    void _forward(Tensor<T> &a) {
+        always_assert(a.shape.size() == 4);
+        assert(a.shape[3] == ci);
+        if (this->isTrainingMode)
+            inp.copy(a);
+        auto act_4d = this->activation.as_4d();
+        this->backend->conv2D(fh, fw, padding, stride, ci, co, a.as_4d(), filter, act_4d);
+        if (this->useBias)
+            this->activation.as_4d().addBias(bias);
     }
 
     Tensor2D<T>& getweights() { return filter; }
-    Tensor<T>& getbias() { return bias; }
+    Tensor1D<T>& getbias() { return bias; }
 
-    struct layer_dims get_output_dims(struct layer_dims &in) {
-        u64 newH = (((in.h + 2*padding - ks)/stride) + 1);
-        u64 newW = (((in.w + 2*padding - ks)/stride) + 1);
-        return {in.n, newH, newW, co};
+    std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {
+        always_assert(inShapes.size() == 1);
+        auto &inShape = inShapes[0];
+        always_assert(inShape.size() == 4);
+        always_assert(inShape[3] == ci);
+        u64 newH = (((inShape[1] + 2*padding - fh)/stride) + 1);
+        u64 newW = (((inShape[2] + 2*padding - fw)/stride) + 1);
+        return {inShape[0], newH, newW, co};
+    }
+};
+
+template <typename T>
+class Conv3D : public Layer<T> {
+public:
+    Tensor<T> inp;
+    Tensor2D<T> filter;
+    Tensor1D<T> bias;
+    u64 ci, co;
+    u64 fd, fh, fw;
+    u64 pd, ph, pw;
+    u64 sd, sh, sw;
+    u64 dd, dh, dw;
+
+    Conv3D(u64 ci, u64 co, u64 f, u64 padding = 0, u64 stride = 1, u64 dialation = 1, bool useBias = false) : Layer<T>("Conv3D"), ci(ci), co(co), fd(f), fh(f), fw(f), 
+        pd(padding), ph(padding), pw(padding), sd(stride), sh(stride), sw(stride), filter(co, f * f * f * ci), bias(co), inp({0,0,0,0,0})
+    {
+        always_assert(dialation == 1);
+        this->doTruncationForward = true;
+        this->useBias = useBias;
+    }
+
+    Conv3D(u64 ci, u64 co, const std::array<u64, 3> f, u64 padding = 0, u64 stride = 1, u64 dialation = 1, bool useBias = false) : Layer<T>("Conv3D"), ci(ci), co(co), fd(f[0]), fh(f[1]), fw(f[2]), 
+        pd(padding), ph(padding), pw(padding), sd(stride), sh(stride), sw(stride), dd(dialation), dh(dialation), dw(dialation), filter(co, f[0] * f[1] * f[2] * ci), bias(co), inp({0,0,0,0,0})
+    {
+        always_assert(dialation == 1);
+        this->doTruncationForward = true;
+        this->useBias = useBias;
+    }
+
+    Conv3D(u64 ci, u64 co, const std::array<u64, 3> f, const std::array<u64, 3> padding = {0, 0, 0}, u64 stride = 1, u64 dialation = 1, bool useBias = false) : Layer<T>("Conv3D"), ci(ci), co(co), fd(f[0]), fh(f[1]), fw(f[2]), 
+        pd(padding[0]), ph(padding[1]), pw(padding[2]), sd(stride), sh(stride), sw(stride), dd(dialation), dh(dialation), dw(dialation), filter(co, f[0] * f[1] * f[2] * ci), bias(co), inp({0,0,0,0,0})
+    {
+        always_assert(dialation == 1);
+        this->doTruncationForward = true;
+        this->useBias = useBias;
+    }
+
+    Conv3D(u64 ci, u64 co, const std::array<u64, 3> f, const std::array<u64, 6> padding = {0, 0, 0, 0, 0, 0}, const std::array<u64, 3> stride = {1, 1, 1}, const std::array<u64, 3> dialation = {1, 1, 1}, bool useBias = false) : Layer<T>("Conv3D"), ci(ci), co(co), fd(f[0]), fh(f[1]), fw(f[2]), 
+        pd(padding[0]), ph(padding[1]), pw(padding[2]), sd(stride[0]), sh(stride[1]), sw(stride[2]), dd(dialation[0]), dh(dialation[1]), dw(dialation[2]), filter(co, f[0] * f[1] * f[2] * ci), bias(co), inp({0,0,0,0,0})
+    {
+        always_assert(dialation[0] == 1);
+        always_assert(dialation[1] == 1);
+        always_assert(dialation[2] == 1);
+        always_assert(padding[3] == padding[0]);
+        always_assert(padding[4] == padding[1]);
+        always_assert(padding[5] == padding[2]);
+        this->doTruncationForward = true;
+        this->useBias = useBias;
+    }
+
+    void _initScale(u64 scale) {
+        double xavier = 1.0 / sqrt(ci * fd * fh * fw);
+        filter.randomize(xavier * (1ULL<<scale));
+        if (this->useBias)
+            bias.randomize(xavier * (1ULL<<(2*scale)));
+    }
+
+    void _resize(const std::vector<std::vector<u64>> &shapes) {
+        always_assert(shapes.size() == 1);
+        auto &shape = shapes[0];
+        always_assert(shape.size() == 5);
+        always_assert(shape[4] == ci);
+        if (this->isTrainingMode)
+            inp.resize(shape);
+    }
+
+    void _forward(Tensor<T> &a) {
+        always_assert(a.shape.size() == 5);
+        assert(a.shape[4] == ci);
+        if (this->isTrainingMode)
+            inp.copy(a);
+        auto act_5d = this->activation.as_5d();
+        this->backend->conv3D(fd, fh, fw, pd, ph, pw, sd, sh, sw, dd, dh, dw, ci, co, a.as_5d(), filter, act_5d);
+        if (this->useBias)
+            this->activation.addBias(bias);
+    }
+
+    Tensor2D<T>& getweights() { return filter; }
+    Tensor1D<T>& getbias() { return bias; }
+
+    std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {
+        always_assert(inShapes.size() == 1);
+        auto &inShape = inShapes[0];
+        always_assert(inShape.size() == 5);
+        always_assert(inShape[4] == ci);
+        u64 newD = (((inShape[1] + 2*pd - fd - (fd-1)*(dd-1))/sd) + 1);
+        u64 newH = (((inShape[2] + 2*ph - fh - (fh-1)*(dh-1))/sh) + 1);
+        u64 newW = (((inShape[3] + 2*pw - fw - (fw-1)*(dw-1))/sw) + 1);
+        return {inShape[0], newD, newH, newW, co};
     }
 };
 
@@ -152,24 +285,24 @@ public:
 
     AvgPool2D(u64 ks, u64 padding = 0, u64 _stride = 0) : Layer<T>("AvgPool2D"), ks(ks), padding(padding), stride(_stride == 0 ? ks : _stride) {}
 
-    void initScale(u64 scale) {
-        always_assert(std::is_integral<T>::value || scale == 0);
-        this->scale = scale;
+    void _resize(const std::vector<std::vector<u64>> &shapes) {
+        always_assert(shapes.size() == 1);
+        auto &shape = shapes[0];
+        always_assert(shape.size() == 4);
     }
 
-    void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
-        this->inputDerivative.resize(d1, d2, d3, d4);
-        this->activation.resize(d1, (d2 + 2*padding - ks)/stride + 1, (d3 + 2*padding - ks)/stride + 1, d4);
-    }
-    
-    void forward_internal(Tensor4D<T> &a, bool train = true) {
-        this->backend->avgPool2D(ks, padding, stride, a, this->activation, this->scale);
+    void _forward(Tensor<T> &a) {
+        always_assert(a.shape.size() == 4);
+        this->backend->avgPool2D(ks, padding, stride, a.as_4d(), this->activation.as_4d(), this->scale.as_4d());
     }
 
-    struct layer_dims get_output_dims(struct layer_dims &in) {
-        u64 newH = (((in.h + 2*padding - ks)/stride) + 1);
-        u64 newW = (((in.w + 2*padding - ks)/stride) + 1);
-        return {in.n, newH, newW, in.c};
+    std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {
+        always_assert(inShapes.size() == 1);
+        auto &inShape = inShapes[0];
+        always_assert(inShape.size() == 4);
+        u64 newH = (((inShape[1] + 2*padding - ks)/stride) + 1);
+        u64 newW = (((inShape[2] + 2*padding - ks)/stride) + 1);
+        return {inShape[0], newH, newW, inShape[3]};
     }
 };
 
@@ -180,24 +313,23 @@ public:
 
     SumPool2D(u64 ks, u64 padding = 0, u64 _stride = 0) : Layer<T>("SumPool2D"), ks(ks), padding(padding), stride(_stride == 0 ? ks : _stride) {}
 
-    void initScale(u64 scale) {
-        always_assert(std::is_integral<T>::value || scale == 0);
-        this->scale = scale;
-    }
-    
-    void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
-        this->inputDerivative.resize(d1, d2, d3, d4);
-        this->activation.resize(d1, (d2 + 2*padding - ks)/stride + 1, (d3 + 2*padding - ks)/stride + 1, d4);
+    void _resize(const std::vector<std::vector<u64>> &shapes) {
+        always_assert(shapes.size() == 1);
+        auto &shape = shapes[0];
+        always_assert(shape.size() == 4);
     }
 
-    void forward_internal(Tensor4D<T> &a, bool train = true) {
-        this->backend->sumPool2D(ks, padding, stride, a, this->activation);
+    void _forward(Tensor<T> &a) {
+        this->backend->sumPool2D(ks, padding, stride, a.as_4d(), this->activation.as_4d());
     }
 
-    struct layer_dims get_output_dims(struct layer_dims &in) {
-        u64 newH = (((in.h + 2*padding - ks)/stride) + 1);
-        u64 newW = (((in.w + 2*padding - ks)/stride) + 1);
-        return {in.n, newH, newW, in.c};
+    std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {
+        always_assert(inShapes.size() == 1);
+        auto &inShape = inShapes[0];
+        always_assert(inShape.size() == 4);
+        u64 newH = (((inShape[1] + 2*padding - ks)/stride) + 1);
+        u64 newW = (((inShape[2] + 2*padding - ks)/stride) + 1);
+        return {inShape[0], newH, newW, inShape[3]};
     }
 };
 
@@ -209,183 +341,208 @@ public:
 
     MaxPool2D(u64 ks, u64 padding = 0, u64 _stride = 0) : Layer<T>("MaxPool2D"), ks(ks), padding(padding), stride(_stride == 0 ? ks : _stride), maxIndex(0,0,0,0) {}
 
-    void initScale(u64 scale) {
-        always_assert(std::is_integral<T>::value || scale == 0);
-        this->scale = scale;
+    void _resize(const std::vector<std::vector<u64>> &shapes) {
+        always_assert(shapes.size() == 1);
+        auto &shape = shapes[0];
+        always_assert(shape.size() == 4);
+        this->maxIndex.resize(this->activation.shape);
     }
 
-    void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
-        this->inputDerivative.resize(d1, d2, d3, d4);
-        this->activation.resize(d1, (d2 + 2*padding - ks)/stride + 1, (d3 + 2*padding - ks)/stride + 1, d4);
-        this->maxIndex.resize(d1, (d2 + 2*padding - ks)/stride + 1, (d3 + 2*padding - ks)/stride + 1, d4);
+    void _forward(Tensor<T> &a) {
+        auto a_4d = a.as_4d();
+        auto act_4d = this->activation.as_4d();
+        this->backend->maxPool2D(ks, padding, stride, a_4d, act_4d, maxIndex, this->scale, this->mode);
     }
 
-    void forward_internal(Tensor4D<T> &a, bool train = true) {
-        this->backend->maxPool2D(ks, padding, stride, a, this->activation, maxIndex, this->scale, this->mode);
-    }
-
-    struct layer_dims get_output_dims(struct layer_dims &in) {
-        u64 newH = (((in.h + 2*padding - ks)/stride) + 1);
-        u64 newW = (((in.w + 2*padding - ks)/stride) + 1);
-        return {in.n, newH, newW, in.c};
+    std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {
+        always_assert(inShapes.size() == 1);
+        auto &inShape = inShapes[0];
+        u64 newH = (((inShape[1] + 2*padding - ks)/stride) + 1);
+        u64 newW = (((inShape[2] + 2*padding - ks)/stride) + 1);
+        return {inShape[0], newH, newW, inShape[3]};
     }
 };
 
 template <typename T>
 class Flatten : public Layer<T> {
 public:
-    u64 d1, d2, d3, d4;
 
     Flatten() : Layer<T>("Flatten") {}
 
-    void initScale(u64 scale) {
-        always_assert(std::is_integral<T>::value || scale == 0);
-        this->scale = scale;
+    void _resize(const std::vector<std::vector<u64>> &shapes) {
+        always_assert(shapes.size() == 1);
+        auto &shape = shapes[0];
+        always_assert(shape.size() >= 2);
     }
 
-    void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
-        this->d1 = d1;
-        this->d2 = d2;
-        this->d3 = d3;
-        this->d4 = d4;
-        this->inputDerivative.resize(d1, d2, d3, d4);
-        this->activation.resize(d1, d2 * d3 * d4, 1, 1);
-    }
+    void _forward(Tensor<T> &a) {
+        if (a.shape.size() == 4) {
+            auto a_4d = a.as_4d();
+            auto act_2d = this->activation.as_2d();
+            u64 d1 = a.shape[0];
+            u64 d2 = a.shape[1];
+            u64 d3 = a.shape[2];
+            u64 d4 = a.shape[3];
 
-    void forward_internal(Tensor4D<T> &a, bool train = true) {
-        for (u64 i = 0; i < d1; i++) {
-            for (u64 j = 0; j < d2; j++) {
-                for (u64 k = 0; k < d3; k++) {
-                    for (u64 l = 0; l < d4; l++) {
-                        // this->activation(i, j * d3 * d4 + k * d4 + l, 0, 0) = a(i, j, k, l);
-                        this->activation(i, l * d2 * d3 + j * d3 + k, 0, 0) = a(i, j, k, l);
+            for (u64 i = 0; i < d1; i++) {
+                for (u64 j = 0; j < d2; j++) {
+                    for (u64 k = 0; k < d3; k++) {
+                        for (u64 l = 0; l < d4; l++) {
+                            // this->activation(i, j * d3 * d4 + k * d4 + l, 0, 0) = a(i, j, k, l);
+                            act_2d(i, l * d2 * d3 + j * d3 + k) = a_4d(i, j, k, l);
+                        }
                     }
                 }
             }
         }
+        else if (a.shape.size() == 5) {
+            auto a_5d = a.as_5d();
+            auto act_2d = this->activation.as_2d();
+            u64 d1 = a.shape[0];
+            u64 d2 = a.shape[1];
+            u64 d3 = a.shape[2];
+            u64 d4 = a.shape[3];
+            u64 d5 = a.shape[4];
+
+            for (u64 i = 0; i < d1; i++) {
+                for (u64 j = 0; j < d2; j++) {
+                    for (u64 k = 0; k < d3; k++) {
+                        for (u64 l = 0; l < d4; l++) {
+                            for (u64 m = 0; m < d5; ++m) {
+                                act_2d(i, m * d2 * d3 * d4 + j * d3 * d4 + k * d4 + l) = a_5d(i, j, k, l, m);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        else {
+            u64 sz = a.size();
+            for (u64 i = 0; i < sz; i++) {
+                this->activation.data[i] = a.data[i];
+            }
+        }
     }
 
-    struct layer_dims get_output_dims(struct layer_dims &in) {
-        return {in.n, in.h * in.w * in.c, 1, 1};
+    std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {
+        always_assert(inShapes.size() == 1);
+        auto &inShape = inShapes[0];
+        u64 prod = 1;
+        for(int i = 1; i < inShape.size(); i++) {
+            prod *= inShape[i];
+        }
+        return {inShape[0], prod};
     }
 };
 
 template <typename T>
 class FC : public Layer<T> {
 public:
-    Tensor4D<T> inp;
+    Tensor<T> inp;
     Tensor2D<T> weight;
-    Tensor2D<T> weightGrad;
-    Tensor2D<T> Vw;
-    Tensor<T> bias;
-    Tensor<T> Vb;
+    Tensor1D<T> bias;
     u64 in, out;
 
-    FC(u64 in, u64 out, bool useBias = false) : Layer<T>("FC"), in(in), out(out), weight(in, out), bias(out), inp(0,0,0,0), weightGrad(in,out), Vw(in,out), Vb(out) {
+    FC(u64 in, u64 out, bool useBias = false) : Layer<T>("FC"), in(in), out(out), weight(in, out), bias(out), inp({0,0,0,0}) {
         this->doTruncationForward = true;
         this->useBias = useBias;
     }
 
-    void initScale(u64 scale) {
-        always_assert(std::is_integral<T>::value || scale == 0);
-        this->scale = scale;
+    void _initScale(u64 scale) {
         double xavier = 1.0 / sqrt(in);
         weight.randomize(xavier * (1ULL<<scale));
         if (this->useBias)
-        bias.randomize(xavier * (1ULL<<(2*scale)));
-        Vw.fill(0);
-        Vb.fill(0);
+            bias.randomize(xavier * (1ULL<<(2*scale)));
     }
 
-    void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
-        always_assert(d2 == in);
-        always_assert((d3 == 1) && (d4 == 1));
-        inp.resize(d1, in, 1, 1);
-        this->inputDerivative.resize(d1, in, 1, 1);
-        this->activation.resize(d1, out, 1, 1);
+    void _resize(const std::vector<std::vector<u64>> &shapes) {
+        always_assert(shapes.size() == 1);
+        auto &shape = shapes[0];
+        always_assert(shape.size() == 2);
+        always_assert(shape[1] == in);
+        inp.resize(shape);
     }
 
-    void forward_internal(Tensor4D<T> &a, bool train = true) {
+    void _forward(Tensor<T> &a) {
         this->inp.copy(a);
-        this->backend->matmul(a, weight, this->activation);
+        auto a_2d = a.as_2d();
+        auto act_2d = this->activation.as_2d();
+        this->backend->matmul(a_2d, weight, act_2d);
         if (this->useBias)
-        this->activation.addBias2D(bias);
+            this->activation.as_2d().addBias2D(bias);
     }
 
     Tensor2D<T>& getweights() { return weight; }
-    Tensor<T>& getbias() { return bias; }
+    Tensor1D<T>& getbias() { return bias; }
 
-    struct layer_dims get_output_dims(struct layer_dims &in) {
-        return {in.n, out, 1, 1};
+    std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {
+        always_assert(inShapes.size() == 1);
+        auto &inShape = inShapes[0];
+        always_assert(inShape.size() == 2);
+        assert(inShape[1] == in);
+        return {inShape[0], out};
     }
 };
 
 template <typename T>
 class ReLU: public Layer<T> {
 public:
-    Tensor4D<T> drelu;
-    ReLU() :  Layer<T>("ReLU"), drelu(0,0,0,0) {}
+    Tensor<T> drelu;
+    ReLU() :  Layer<T>("ReLU"), drelu({0}) {}
 
-    void initScale(u64 scale) {
-        always_assert(std::is_integral<T>::value || scale == 0);
-        this->scale = scale;
+    void _resize(const std::vector<std::vector<u64>> &shapes) {
+        always_assert(shapes.size() == 1);
+        auto &shape = shapes[0];
+        this->drelu.resize(shape);
     }
 
-    void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
-        this->inputDerivative.resize(d1, d2, d3, d4);
-        this->activation.resize(d1, d2, d3, d4);
-        this->drelu.resize(d1, d2, d3, d4);
-    }
-
-    void forward_internal(Tensor4D<T> &a, bool train = true) {
-        // std::cout << "== ReLU forward ==" << std::endl;
-        // std::cout << "a: "; a.print();
+    void _forward(Tensor<T> &a) {
         this->backend->relu(a, this->activation, this->drelu, this->scale, this->mode);
     }
 
-    struct layer_dims get_output_dims(struct layer_dims &in) {
-        return {in.n, in.h, in.w, in.c};
+    std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {
+        always_assert(inShapes.size() == 1);
+        auto &inShape = inShapes[0];
+        return inShape;
     }
 };
 
 template <typename T>
-class BatchNorm2dInference : public Layer<T> {
+class BatchNormInference : public Layer<T> {
 public:
-    Tensor<T> A; // scale = s
-    Tensor<T> B; // scale = 2s
+    Tensor1D<T> A; // scale = s
+    Tensor1D<T> B; // scale = 2s
 
-    BatchNorm2dInference(u64 channels) : Layer<T>("BatchNorm2dInference"), A(channels), B(channels) {
+    BatchNormInference(u64 channels) : Layer<T>("BatchNormInference"), A(channels), B(channels) {
         this->A.fill(0);
         this->B.fill(0);
         this->doTruncationForward = true;
     }
 
-    void initScale(u64 scale) {
-        always_assert(std::is_integral<T>::value || scale == 0);
-        this->scale = scale;
+    void _resize(const std::vector<std::vector<u64>> &shapes) {
+        always_assert(shapes.size() == 1);
+        auto &shape = shapes[0];
+        // always_assert(shape.size() == 4);
+        always_assert(shape.back() == this->A.size);
     }
 
-    void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
-        this->inputDerivative.resize(d1, d2, d3, d4);
-        this->activation.resize(d1, d2, d3, d4);
-    }
-
-    void forward_internal(Tensor4D<T> &a, bool train = true) {
-        assert(a.d4 == this->A.size);
-        if (train) {
-            std::runtime_error("BatchNorm2dInference should not be used in training mode");
+    void _forward(Tensor<T> &a) {
+        // always_assert(a.shape.size() == 4);
+        assert(a.shape.back() == this->A.size);
+        if (this->isTrainingMode) {
+            std::runtime_error("BatchNormInference should not be used in training mode");
         }
         else {
-            this->backend->batchNorm2dInference(this->A, this->B, a, this->activation, this->scale);
+            this->backend->batchNormInference(this->A, this->B, a, this->activation, this->scale);
         }
     }
 
-    void backward(const Tensor4D<T> &e) {
-        std::runtime_error("BatchNorm2dInference should not be used in training mode");
-    }
-
-    struct layer_dims get_output_dims(struct layer_dims &in) {
-        return {in.n, in.h, in.w, in.c};
+    std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {
+        always_assert(inShapes.size() == 1);
+        auto &inShape = inShapes[0];
+        // always_assert(inShape.size() == 4);
+        always_assert(inShape.back() == this->A.size);
+        return inShape;
     }
 };
 
@@ -394,26 +551,14 @@ class Identity: public Layer<T> {
 public:
     Identity() :  Layer<T>("Identity") {}
 
-    void initScale(u64 scale) {
-        always_assert(std::is_integral<T>::value || scale == 0);
-        this->scale = scale;
-    }
-
-    void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
-        this->inputDerivative.resize(d1, d2, d3, d4);
-        this->activation.resize(d1, d2, d3, d4);
-    }
-
-    void forward_internal(Tensor4D<T> &a, bool train = true) {
+    void _forward(Tensor<T> &a) {
         this->activation.copy(a);
     }
 
-    void backward(const Tensor4D<T> &e) {
-        this->inputDerivative.copy(e);
-    }
-
-    struct layer_dims get_output_dims(struct layer_dims &in) {
-        return {in.n, in.h, in.w, in.c};
+    std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {
+        always_assert(inShapes.size() == 1);
+        auto &inShape = inShapes[0];
+        return inShape;
     }
 };
 
@@ -423,23 +568,101 @@ public:
 
     GlobalAvgPool2D() : Layer<T>("GlobalAvgPool2D") {}
 
-    void initScale(u64 scale) {
-        always_assert(std::is_integral<T>::value || scale == 0);
-        this->scale = scale;
-    }
-
-    void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
-        always_assert(d2 == d3);
-        this->inputDerivative.resize(d1, d2, d3, d4);
-        this->activation.resize(d1, 1, 1, d4);
+    void _resize(const std::vector<std::vector<u64>> &shapes) {
+        always_assert(shapes.size() == 1);
+        auto &shape = shapes[0];
+        always_assert(shape.size() == 4);
+        always_assert(shape[1] == shape[2]);
     }
     
-    void forward_internal(Tensor4D<T> &a, bool train = true) {
-        this->backend->avgPool2D(a.d2, 0, 1, a, this->activation, this->scale);
+    void _forward(Tensor<T> &a) {
+        auto a_4d = a.as_4d();
+        auto act_4d = this->activation.as_4d();
+        this->backend->avgPool2D(a_4d.d2, 0, 1, a_4d, act_4d, this->scale);
     }
 
-    struct layer_dims get_output_dims(struct layer_dims &in) {
-        return {in.n, 1, 1, in.c};
+    std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {
+        always_assert(inShapes.size() == 1);
+        auto &inShape = inShapes[0];
+        always_assert(inShape.size() == 4);
+        always_assert(inShape[1] == inShape[2]);
+        return {inShape[0], 1, 1, inShape[3]};
+    }
+};
+
+
+template <typename T>
+class ConvTranspose3D : public Layer<T> {
+public:
+    Tensor2D<T> filter;
+    Tensor1D<T> bias;
+    u64 ci, co;
+    u64 fd, fh, fw;
+    u64 pd, ph, pw;
+    u64 sd, sh, sw;
+
+    ConvTranspose3D(u64 ci, u64 co, u64 f, u64 padding = 0, u64 stride = 1, bool useBias = false) : Layer<T>("ConvTranspose3D"), ci(ci), co(co), fd(f), fh(f), fw(f), 
+        pd(padding), ph(padding), pw(padding), sd(stride), sh(stride), sw(stride), filter(co, f * f * f * ci), bias(co)
+    {
+        this->doTruncationForward = true;
+        this->useBias = useBias;
+    }
+
+    ConvTranspose3D(u64 ci, u64 co, const std::array<u64, 3> f, u64 padding = 0, u64 stride = 1, bool useBias = false) : Layer<T>("ConvTranspose3D"), ci(ci), co(co), fd(f[0]), fh(f[1]), fw(f[2]), 
+        pd(padding), ph(padding), pw(padding), sd(stride), sh(stride), sw(stride), filter(co, f[0] * f[1] * f[2] * ci), bias(co)
+    {
+        this->doTruncationForward = true;
+        this->useBias = useBias;
+    }
+
+    ConvTranspose3D(u64 ci, u64 co, const std::array<u64, 3> f, const std::array<u64, 6> padding = {0, 0, 0, 0, 0, 0}, const std::array<u64, 3> stride = {1, 1, 1}, const std::array<u64, 3> dialation = {1, 1, 1}, bool useBias = false) : Layer<T>("ConvTranspose3D"), ci(ci), co(co), fd(f[0]), fh(f[1]), fw(f[2]), 
+        pd(padding[0]), ph(padding[1]), pw(padding[2]), sd(stride[0]), sh(stride[1]), sw(stride[2]), filter(co, f[0] * f[1] * f[2] * ci), bias(co)
+    {
+        always_assert(dialation[0] == 1);
+        always_assert(dialation[1] == 1);
+        always_assert(dialation[2] == 1);
+        always_assert(padding[3] == padding[0]);
+        always_assert(padding[4] == padding[1]);
+        always_assert(padding[5] == padding[2]);
+        this->doTruncationForward = true;
+        this->useBias = useBias;
+    }
+
+    void _initScale(u64 scale) {
+        double xavier = 1.0 / sqrt(ci * fd * fh * fw);
+        filter.randomize(xavier * (1ULL<<scale));
+        if (this->useBias)
+            bias.randomize(xavier * (1ULL<<(2*scale)));
+    }
+
+    void _resize(const std::vector<std::vector<u64>> &shapes) {
+        always_assert(shapes.size() == 1);
+        auto &shape = shapes[0];
+        always_assert(shape.size() == 5);
+        always_assert(shape[4] == ci);
+    }
+
+    void _forward(Tensor<T> &a) {
+        always_assert(a.shape.size() == 5);
+        assert(a.shape[4] == ci);
+        auto act_5d = this->activation.as_5d();
+        this->backend->convTranspose3D(fd, fh, fw, pd, ph, pw, sd, sh, sw, ci, co, a.as_5d(), filter, act_5d);
+        if (this->useBias)
+            this->activation.addBias(bias);
+    }
+
+    Tensor2D<T>& getweights() { return filter; }
+    Tensor1D<T>& getbias() { return bias; }
+
+    std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {
+        always_assert(inShapes.size() == 1);
+        auto &inShape = inShapes[0];
+        always_assert(inShape.size() == 5);
+        always_assert(inShape[4] == ci);
+        u64 newD = (((inShape[1] - 1)*sd + fd - 2*pd));
+        u64 newH = (((inShape[2] - 1)*sh + fh - 2*ph));
+        u64 newW = (((inShape[3] - 1)*sw + fw - 2*pw));
+        return {inShape[0], newD, newH, newW, co};
     }
 };
 
@@ -450,22 +673,110 @@ public:
     }
 
     void initScale(u64 scale) {
-        std::runtime_error("PlaceHolderLayer only to be used for tree traversal");
+        throw std::runtime_error("PlaceHolderLayer only to be used for tree traversal");
     }
 
-    void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
-        std::runtime_error("PlaceHolderLayer only to be used for tree traversal");
+    void _forward(Tensor<T> &a) {
+        throw std::runtime_error("PlaceHolderLayer only to be used for tree traversal");
     }
 
-    void forward_internal(Tensor4D<T> &a, bool train = true) {
-        std::runtime_error("PlaceHolderLayer only to be used for tree traversal");
-    }
-
-    struct layer_dims get_output_dims(struct layer_dims &in) {
-        std::runtime_error("PlaceHolderLayer only to be used for tree traversal");
-        return {0, 0, 0, 0};
+    std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {
+        always_assert(inShapes.size() == 1);
+        auto &inShape = inShapes[0];
+        return inShape;
     }
 };
 
 template <typename T>
-bool Layer<T>::fakeExecution = false;
+class Add: public Layer<T> {
+public:
+    Add() :  Layer<T>("Add") {}
+
+    void _resize(const std::vector<std::vector<u64>> &shapes) {
+        auto &shape0 = shapes[0];
+        for (auto &shape : shapes) {
+            always_assert(shape.size() == shape0.size());
+            for (u64 i = 0; i < shape.size(); i++) {
+                always_assert(shape[i] == shape0[i]);
+            }
+        }
+    }
+
+    void _forward(std::vector<Tensor<T> *> &a) {
+        this->backend->add(a, this->activation);
+    }
+
+    void _forward(Tensor<T> &a) {
+        this->activation.copy(a);
+    }
+
+    std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {
+        auto &shape0 = inShapes[0];
+        for (auto &shape : inShapes) {
+            always_assert(shape.size() == shape0.size());
+            for (u64 i = 0; i < shape.size(); i++) {
+                assert(shape[i] == shape0[i]);
+            }
+        }
+        auto &inShape = inShapes[0];
+        return inShape;
+    }
+};
+
+// concat along the last axis (channel)
+template <typename T>
+class Concat: public Layer<T> {
+public:
+    Concat() :  Layer<T>("Concat") {}
+
+    void _resize(const std::vector<std::vector<u64>> &shapes) {
+        auto &shape0 = shapes[0];
+        for (auto &shape : shapes) {
+            for (u64 i = 0; i < shape.size() - 1; i++) {
+                always_assert(shape[i] == shape0[i]);
+            }
+        }
+    }
+
+    void _forward(std::vector<Tensor<T> *> &arr) {
+        u64 outchannels = 0;
+        u64 sz = 0;
+        for (auto &t : arr) {
+            outchannels += t->shape.back();
+            sz += t->size();
+        }
+
+        for(int i = 0; i < sz; ++i)
+        {
+            u64 l = i % outchannels;
+            for(auto &a : arr) {
+                if(l < a->shape.back()) {
+                    this->activation.data[i] = a->data[i];
+                    break;
+                }
+                l -= a->shape.back();
+            }
+        }
+
+    }
+
+    void _forward(Tensor<T> &a) {
+        this->activation.copy(a);
+    }
+
+    std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {
+        auto &shape0 = inShapes[0];
+        for (auto &shape : inShapes) {
+            for (u64 i = 0; i < shape.size() - 1; i++) {
+                always_assert(shape[i] == shape0[i]);
+            }
+        }
+
+        std::vector<u64> outShape = shape0;
+        outShape.back() = 0;
+        for (auto &shape : inShapes) {
+            outShape.back() += shape.back();
+        }
+        return outShape;
+    }
+};

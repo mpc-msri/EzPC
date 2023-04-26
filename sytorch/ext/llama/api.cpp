@@ -279,6 +279,81 @@ void Conv2DWrapper(int32_t N, int32_t H, int32_t W,
 
 }
 
+void Conv3DWrapper(int32_t N, int32_t D, int32_t H, int32_t W,
+            int32_t CI, int32_t FD, int32_t FH, int32_t FW,
+            int32_t CO, int32_t zPadDLeft, int32_t zPadDRight, int32_t zPadHLeft,
+            int32_t zPadHRight, int32_t zPadWLeft,
+            int32_t zPadWRight, int32_t strideD, int32_t strideH,
+            int32_t strideW, GroupElement *inputArr, GroupElement *filterArr,
+            GroupElement *outArr)
+{
+    std::cerr << ">> Conv3D - Start" << std::endl;
+    int d0 = N;
+    int d1 = ((D - FD + (zPadDLeft + zPadDRight)) / strideD) + 1;
+    int d2 = ((H - FH + (zPadHLeft + zPadHRight)) / strideH) + 1;
+    int d3 = ((W - FW + (zPadWLeft + zPadWRight)) / strideW) + 1;
+    int d4 = CO;
+
+    if (party == DEALER) {
+        auto local_start = std::chrono::high_resolution_clock::now();
+        
+        // not good for in place operations
+        for(int i = 0; i < d0 * d1 * d2 * d3 * d4; ++i) {
+            outArr[i] = random_ge(bitlength);
+        }
+
+        auto keys = KeyGenConv3D(bitlength, bitlength, N, D, H, W, CI, FD, FH, FW, CO,
+            zPadDLeft, zPadDRight, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideD, strideH, strideW, 
+            inputArr, filterArr, outArr);
+        
+        auto local_end = std::chrono::high_resolution_clock::now();
+        
+        // server->send_conv2d_key(keys.first);
+        freeConv3dKey(keys.first);
+        client->send_conv3d_key(keys.second);
+        freeConv3dKey(keys.second);
+        auto local_time_taken = std::chrono::duration_cast<std::chrono::microseconds>(local_end -
+                                                            local_start).count();
+        dealerMicroseconds += local_time_taken;
+        std::cerr << "   Dealer Time = " << local_time_taken / 1000.0 << " milliseconds\n";
+    }
+    else {
+
+        auto keyread_start = std::chrono::high_resolution_clock::now();
+        auto key = dealer->recv_conv3d_key(bitlength, bitlength, N, D, H, W, CI, FD, FH, FW, CO, zPadDLeft, zPadDRight, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideD, strideH, strideW);
+        auto keyread_end = std::chrono::high_resolution_clock::now();
+        auto keyread_time_taken = std::chrono::duration_cast<std::chrono::milliseconds>(keyread_end - keyread_start).count();
+
+        peer->sync();
+        uint64_t eigen_start = eigenMicroseconds;
+        auto local_start = std::chrono::high_resolution_clock::now();
+        EvalConv3D(party, key, N, D, H, W, CI, FD, FH, FW, CO, zPadDLeft, zPadDRight, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideD, strideH, strideW, inputArr, filterArr, outArr);
+        auto t1 = std::chrono::high_resolution_clock::now();
+        uint64_t onlineComm0 = peer->bytesReceived + peer->bytesSent;
+        reconstruct(d0 * d1 * d2 * d3 * d4, outArr, bitlength);
+        uint64_t onlineComm1 = peer->bytesReceived + peer->bytesSent;
+        convOnlineComm += (onlineComm1 - onlineComm0);
+        auto local_end = std::chrono::high_resolution_clock::now();
+        
+        freeConv3dKey(key);
+        auto compute_time = std::chrono::duration_cast<std::chrono::microseconds>(t1 -
+                                                            local_start).count();
+        auto reconstruct_time = std::chrono::duration_cast<std::chrono::microseconds>(local_end -
+                                                            t1).count();
+        convEvalMicroseconds += (reconstruct_time + compute_time);
+        evalMicroseconds += (reconstruct_time + compute_time);
+        std::cerr << "   Key Read Time = " << keyread_time_taken << " milliseconds\n";
+        std::cerr << "   Compute Time = " << compute_time / 1000.0 << " milliseconds\n";
+        std::cerr << "      Eigen Time = " << (eigenMicroseconds - eigen_start) / 1000.0 << " milliseconds\n";
+        std::cerr << "   Reconstruct Time = " << reconstruct_time / 1000.0 << " milliseconds\n";
+        std::cerr << "   Online Time = " << (reconstruct_time + compute_time) / 1000.0 << " milliseconds\n";
+        std::cerr << "   Online Comm = " << (onlineComm1 - onlineComm0) << " bytes\n";
+    }
+
+    std::cerr << ">> Conv3D - End" << std::endl;
+
+}
+
 void Conv2DGroupWrapper(int64_t N, int64_t H, int64_t W,
                         int64_t CI, int64_t FH, int64_t FW,
                         int64_t CO, int64_t zPadHLeft,
@@ -1338,4 +1413,94 @@ void MaxPoolOneHot(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH, int32
     }
     delete[] curr;
     std::cerr << ">> MaxPoolOneHot - End" << std::endl;
+}
+
+void ConvTranspose3DWrapper(int64_t N, 
+    int64_t D, 
+    int64_t H, 
+    int64_t W, 
+    int64_t CI, 
+    int64_t FD, 
+    int64_t FH, 
+    int64_t FW, 
+    int64_t CO, 
+    int64_t zPadDLeft, 
+    int64_t zPadDRight, 
+    int64_t zPadHLeft, 
+    int64_t zPadHRight, 
+    int64_t zPadWLeft, 
+    int64_t zPadWRight, 
+    int64_t strideD, 
+    int64_t strideH, 
+    int64_t strideW, 
+    int64_t outD, 
+    int64_t outH, 
+    int64_t outW, 
+    GroupElement* inputArr, 
+    GroupElement* filterArr, 
+    GroupElement* outArr)
+{
+    std::cerr << ">> ConvTranspose3D - Start" << std::endl;
+    always_assert(outD == (D - 1) * strideD - zPadDLeft - zPadDRight + FD);
+    always_assert(outH == (H - 1) * strideH - zPadHLeft - zPadHRight + FH);
+    always_assert(outW == (W - 1) * strideW - zPadWLeft - zPadWRight + FW);
+
+    if (party == DEALER) {
+        auto local_start = std::chrono::high_resolution_clock::now();
+        
+        // not good for in place operations
+        for(int i = 0; i < N * outD * outH * outW * CO; ++i) {
+            outArr[i] = random_ge(bitlength);
+        }
+
+        auto keys = KeyGenConvTranspose3D(bitlength, N, D, H, W, CI, FD, FH, FW, CO, zPadDLeft, zPadDRight, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideD, strideH, strideW, outD, outH, outW, inputArr, filterArr, outArr);
+        
+        auto local_end = std::chrono::high_resolution_clock::now();
+
+        client->send_triple_key(keys.second);
+        freeTripleKey(keys.second);
+        auto local_time_taken = std::chrono::duration_cast<std::chrono::microseconds>(local_end -
+                                                            local_start).count();
+        dealerMicroseconds += local_time_taken;
+        std::cerr << "   Dealer Time = " << local_time_taken / 1000.0 << " milliseconds\n";
+    }
+    else {
+
+        auto keyread_start = std::chrono::high_resolution_clock::now();
+        auto key = dealer->recv_triple_key(bitlength, N * D * H * W * CI, CI * FD * FH * FW * CO, N * outD * outH * outW * CO);
+        auto keyread_end = std::chrono::high_resolution_clock::now();
+        auto keyread_time_taken = std::chrono::duration_cast<std::chrono::milliseconds>(keyread_end - keyread_start).count();
+
+        peer->sync();
+
+        auto local_start = std::chrono::high_resolution_clock::now();
+        
+        EvalConvTranspose3D(party, key, N, D, H, W, CI, FD, FH, FW, CO, 
+            zPadDLeft, zPadDRight, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, 
+            strideD, strideH, strideW, outD, outH, outW, inputArr, filterArr, outArr);
+        
+        auto t1 = std::chrono::high_resolution_clock::now();
+        uint64_t onlineComm0 = peer->bytesReceived + peer->bytesSent;
+        
+        reconstruct(N * outD * outH * outW * CO, outArr, bitlength);
+
+        uint64_t onlineComm1 = peer->bytesReceived + peer->bytesSent;
+        convOnlineComm += (onlineComm1 - onlineComm0);
+        auto local_end = std::chrono::high_resolution_clock::now();
+
+        freeTripleKey(key);
+        auto compute_time = std::chrono::duration_cast<std::chrono::microseconds>(t1 - local_start).count();
+        auto reconstruct_time = std::chrono::duration_cast<std::chrono::microseconds>(local_end - t1).count();
+        
+        convEvalMicroseconds += (reconstruct_time + compute_time);
+        evalMicroseconds += (reconstruct_time + compute_time);
+        std::cerr << "   Key Read Time = " << keyread_time_taken << " milliseconds\n";
+        std::cerr << "   Compute Time = " << compute_time / 1000.0 << " milliseconds\n";
+        std::cerr << "   Reconstruct Time = " << reconstruct_time / 1000.0 << " milliseconds\n";
+        std::cerr << "   Online Time = " << (reconstruct_time + compute_time) / 1000.0 << " milliseconds\n";
+        std::cerr << "   Online Comm = " << (onlineComm1 - onlineComm0) << " bytes\n";
+    }
+
+    std::cerr << ">> ConvTranspose3D - End" << std::endl;
+
 }

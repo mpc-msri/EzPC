@@ -83,6 +83,8 @@ public:
 
     void send_conv2d_key(const Conv2DKey &k);
 
+    void send_conv3d_key(const Conv3DKey &k);
+
     void send_dcf_keypack(const DCFKeyPack &kp);
 
     void send_ddcf_keypack(const DualDCFKeyPack &kp);
@@ -126,6 +128,8 @@ public:
     void send_relu_extend_key(const ReluExtendKeyPack &kp, int bin, int bout);
 
     void send_sign_extend2_key(const SignExtend2KeyPack &kp, int bin, int bout);
+
+    void send_triple_key(const TripleKeyPack &kp);
 
     void send_uint8_array(const uint8_t *data, int size);
 
@@ -201,6 +205,13 @@ public:
                    int64_t zPadWRight, int64_t strideH,
                    int64_t strideW);
 
+    Conv3DKey recv_conv3d_key(int bin, int bout, int64_t N, int64_t D, int64_t H, int64_t W,
+                   int64_t CI, int64_t FD, int64_t FH, int64_t FW, int64_t CO,
+                   int64_t zPadDLeft, int64_t zPadDRight,
+                   int64_t zPadHLeft, int64_t zPadHRight, 
+                   int64_t zPadWLeft, int64_t zPadWRight, 
+                   int64_t strideD, int64_t strideH, int64_t strideW);
+
     ReluKeyPack recv_relu_key(int Bin, int Bout);
 
     MaxpoolKeyPack recv_maxpool_key(int Bin, int Bout);
@@ -242,6 +253,8 @@ public:
     ReluExtendKeyPack recv_relu_extend_key(int Bin, int Bout);
 
     SignExtend2KeyPack recv_sign_extend2_key(int Bin, int Bout);
+
+    TripleKeyPack recv_triple_key(int bw, int64_t na, int64_t nb, int64_t nc);
 
 };
 

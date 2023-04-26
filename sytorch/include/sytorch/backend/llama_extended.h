@@ -8,16 +8,10 @@ template <typename T>
 class LlamaExtended : public LlamaBase<T> {
 public:
 
-    void relu(const Tensor4D<T> &in, const Tensor4D<T> &out, const Tensor4D<T> &drelu, u64 scale, int mode) {
-        assert(in.d1 == out.d1);
-        assert(in.d2 == out.d2);
-        assert(in.d3 == out.d3);
-        assert(in.d4 == out.d4);
-        assert(in.d1 == drelu.d1);
-        assert(in.d2 == drelu.d2);
-        assert(in.d3 == drelu.d3);
-        assert(in.d4 == drelu.d4);
-        int sz = in.d1 * in.d2 * in.d3 * in.d4;
+    void relu(const Tensor<T> &in, const Tensor<T> &out, const Tensor<T> &drelu, u64 scale, int mode) {
+        assert(in.is_same_shape(out));
+        assert(in.is_same_shape(drelu));
+        int sz = in.size();
         Relu(sz, in.data, in.data, out.data, out.data, drelu.data);
     }
 
@@ -35,7 +29,7 @@ public:
     void maxPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> &in, Tensor4D<T> &out, Tensor4D<u64> &maxIdx, u64 scale, u8 mode) {
         assert(in.d1 == out.d1);
         assert(in.d4 == out.d4);
-        Tensor<T> maxBit((ks * ks - 1) * out.d1 * out.d2 * out.d3 * out.d4);
+        Tensor1D<T> maxBit((ks * ks - 1) * out.d1 * out.d2 * out.d3 * out.d4);
         maxIdx.resize(ks * ks * out.d1, out.d2, out.d3, out.d4);
         MaxPool(out.d1, out.d2, out.d3, out.d4, ks, ks, padding, padding, padding, padding, stride, stride, in.d1, in.d2, in.d3, in.d4, in.data, in.data, out.data, out.data, maxBit.data);
         MaxPoolOneHot(out.d1, out.d2, out.d3, out.d4, ks, ks, maxBit.data, maxIdx.data);
@@ -51,7 +45,7 @@ public:
                 LayerGraphNode<T> *child = node->children[0];
                 if (child->layer->doTruncationForward) {
                     // no optimization possible
-                    // this is set to true for FC, Conv2D and BatchNorm2dInference
+                    // this is set to true for FC, Conv2D and BatchNormInference
                 }
                 else {
                     if (child->layer->name == "MaxPool2D" || child->layer->name == "ReLU") {

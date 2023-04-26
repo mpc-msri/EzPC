@@ -5,18 +5,27 @@ from utils.backend_helper import iterate_list
 from utils.nodes import Node
 from utils.onnx_nodes import OnnxNode
 
-func_map = {
-    "Relu": "ReLU",
-    "Conv": "Conv2D",
-    "MaxPool": "MaxPool2D",
-    "Flatten": "Flatten",
-    "Gemm": "FC",
-    "Concat": "concat",
-    "BatchNormalization": "BatchNorm2dInference",
-    "AveragePool": "AvgPool2D",
-    "GlobalAveragePool": "GlobalAvgPool2D",
-    "Add": "add",
-}
+
+def func_call(node, value_info):
+    """
+    Maps the onnx node to the corresponding function call in the backend.
+    """
+    func_map = {
+        "Relu": "ReLU",
+        "Conv": f"{'Conv3D' if len(value_info[node.inputs[0]][1]) == 5 else 'Conv2D'}",
+        "MaxPool": "MaxPool2D",
+        "Flatten": "Flatten",
+        "Gemm": "FC",
+        "Concat": "concat",
+        "BatchNormalization": "BatchNorm2dInference",
+        "AveragePool": "AvgPool2D",
+        "GlobalAveragePool": "GlobalAvgPool2D",
+        "Add": "add",
+        "ConvTranspose": "ConvTranspose3D",
+    }
+    return func_map[node.op_type]
+
+
 non_sequential = ["Concat", "Add"]
 tab_space = "     "
 
@@ -55,6 +64,7 @@ def inputs_to_take(node):
         "Add": -1,
         "BatchNormalization": 1,
         "GlobalAveragePool": 1,
+        "ConvTranspose": 1,
     }
     return tmp_dict[node]
 
@@ -90,7 +100,10 @@ def cleartext_pre(code_list, program, scale, mode, indent):
 
 def cleartext_post(code_list, program, scale, mode, indent):
     # Input
-    n, c, h, w = program[0].shape
+    n = program[0].shape[0]
+    c = program[0].shape[1]
+    dims = program[0].shape[2:]
+    # n, c, h, w = program[0].shape
     code_list.append(
         f"""
 
@@ -111,12 +124,11 @@ int main(int argc, char**__argv){'{'}
         net.init(scale);
         std::string weights_file = __argv[3];
         net.load(weights_file);
-        Tensor4D<i64> input({iterate_list([n, h, w, c])});
-        auto actual_image = take_input({iterate_list([n, h, w, c])});
-          input.load(actual_image, scale);
+        Tensor<i64> input({'{'}{iterate_list([n]+ dims +[c])}{'}'});
+        input.input_nchw(scale);
         print_dot_graph(net.root);
         net.forward(input);
-        net.activation.print(scale);
+        print(net.activation, scale, 64);
         return 0;
     {'}'}
 
@@ -134,7 +146,10 @@ def llama_pre(code_list, program, scale, mode, bitlength, indent):
 
 def llama_post(code_list, program, scale, mode, bitlength, indent):
     # Input
-    n, c, h, w = program[0].shape
+    n = program[0].shape[0]
+    c = program[0].shape[1]
+    dims = program[0].shape[2:]
+    # n, c, h, w = program[0].shape
     code_list.append(
         f"""
     
@@ -157,12 +172,11 @@ int main(int __argc, char**__argv){'{'}
         net.init(scale);
         std::string weights_file = __argv[3];
         net.load(weights_file);
-        Tensor4D<i64> input({iterate_list([n, h, w, c])});
-        auto actual_image = take_input({iterate_list([n, h, w, c])});
-          input.load(actual_image, scale);
+        Tensor<i64> input({'{'}{iterate_list([n]+ dims +[c])}{'}'});
+        input.input_nchw(scale);
         print_dot_graph(net.root);
         net.forward(input);
-        net.activation.print(scale);
+        print(net.activation, scale, 64);
         return 0;
     {'}'}
 
@@ -189,10 +203,9 @@ int main(int __argc, char**__argv){'{'}
     {'}'}
     llama->initializeInferencePartyA(net.root);
 
-    Tensor4D<u64> input({iterate_list([n, h, w, c])});
+    Tensor<u64> input({'{'}{iterate_list([n]+ dims +[c])}{'}'});
     if(party == CLIENT){'{'}
-         auto actual_image = take_input({iterate_list([n, h, w, c])});
-         input.load(actual_image, scale);
+         input.input_nchw(scale);
     {'}'}
     llama->initializeInferencePartyB(input);
 
@@ -203,7 +216,7 @@ int main(int __argc, char**__argv){'{'}
     auto &output = net.activation;
     llama->outputA(output);
     if (party == CLIENT) {'{'}
-        blprint(output, LlamaConfig::bitlength - scale, scale);
+        print(output, scale, LlamaConfig::bitlength);
     {'}'}
     llama->finalize();
 {'}'}
@@ -251,7 +264,7 @@ def prepare_export(program, var_dict, value_info, mode, scale, bitlength, backen
         if isinstance(node, Node) and node.op_type not in non_sequential:
             number_of_nodes += 1
             code_list.append(
-                f"{tab_space * (indent)}{func_map[node.op_type]}<T> *{node_names[idx]};"
+                f"{tab_space * (indent)}{func_call(node, value_info)}<T> *{node_names[idx]};"
             )
     code_list.append(f"{tab_space * (indent)}\n\n")
 
@@ -267,17 +280,17 @@ def prepare_export(program, var_dict, value_info, mode, scale, bitlength, backen
     code_list.append(f"{tab_space * (indent)}{'}'}\n")
 
     # 3rd Pass
-    code_list.append(f"{tab_space * (indent)}Tensor4D<T>& _forward(Tensor4D<T> &input)")
+    code_list.append(f"{tab_space * (indent)}Tensor<T>& _forward(Tensor<T> &input)")
     code_list.append(f"{tab_space * (indent)}{'{'}")
     for idx, node in enumerate(program):
         if isinstance(node, Node):
             if node.op_type in non_sequential:
                 code_list.append(
-                    f"{tab_space * (indent + 1)}auto {var_dict[node.outputs[0]]} = {func_map[node.op_type]}({iterate_list([var_dict[x] for x in node.inputs])});"
+                    f"{tab_space * (indent + 1)}auto &{var_dict[node.outputs[0]]} = {func_call(node, value_info)}({iterate_list([var_dict[x] for x in node.inputs])});"
                 )
             else:
                 code_list.append(
-                    f"{tab_space * (indent + 1)}auto &{var_dict[node.outputs[0]]} = {node_names[idx]}->forward({iterate_list([var_dict[x] for x in node.inputs[:inputs_to_take(node.op_type)]])}, false);"
+                    f"{tab_space * (indent + 1)}auto &{var_dict[node.outputs[0]]} = {node_names[idx]}->forward({iterate_list([var_dict[x] for x in node.inputs[:inputs_to_take(node.op_type)]])});"
                 )
     code_list.append(f"{tab_space * (indent + 1)}return {var_dict[program[-1].name]};")
     code_list.append(f"{tab_space * (indent)}{'}'}\n")

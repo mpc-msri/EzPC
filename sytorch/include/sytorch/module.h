@@ -2,134 +2,102 @@
 #include <fstream>
 #include <filesystem>
 #include <map>
+#include <algorithm>
 
 template <typename T>
 class SytorchModule {
 public:
 
-    Tensor4D<T> activation;
+    Tensor<T> activation;
     Backend<T> *backend = new ClearText<T>;
     LayerGraphNode<T> *root = nullptr;
     bool debug = true;
     u64 scale;
-    std::map<std::string, LayerGraphNode<T> *> addLayerMap;
-    std::map<std::string, LayerGraphNode<T> *> concatLayerMap;
+    // std::map<std::string, LayerGraphNode<T> *> addLayerMap;
+    // std::map<std::string, LayerGraphNode<T> *> concatLayerMap;
     std::vector<LayerGraphNode<T> *> allNodesInExecutionOrder;
+
+    const std::vector<std::string> functionalLayers = {"Add", "Concat"};
+    std::map<std::string, LayerGraphNode<T> *> functionalLayerMap;
 
 public:
 
-    virtual Tensor4D<T>& _forward(Tensor4D<T> &input) = 0;
+    virtual Tensor<T>& _forward(Tensor<T> &input) = 0;
 
-    SytorchModule() : activation(0, 0, 0, 0), allNodesInExecutionOrder(0)
+    SytorchModule() : activation({}), allNodesInExecutionOrder(0)
     {
 
     }
 
-    void generateAddLayerMap()
+    void generateFunctionalLayerMap()
     {
-        addLayerMap.clear();
+        functionalLayerMap.clear();
         topologicalApply(root, [=](LayerGraphNode<T> *node, LayerGraphNode<T> *_root) {
-            if (node->layer->name == "Add") {
-                std::string id = "";
+            if (std::find(functionalLayers.begin(), functionalLayers.end(), node->layer->name) != functionalLayers.end()) {
+                std::string id = node->layer->name;
                 for(auto& parent: node->parents) {
                     id += "|" + std::to_string((uint64_t)(parent));
                 }
-                addLayerMap[id] = node;
+                functionalLayerMap[id] = node;
             }
         });
     }
 
-    void generateConcatLayerMap()
+    LayerGraphNode<T> *getFunctionalNode(const std::string &layerName, std::vector<Tensor<T> *> ips)
     {
-        concatLayerMap.clear();
-        topologicalApply(root, [=](LayerGraphNode<T> *node, LayerGraphNode<T> *_root) {
-            if (node->layer->name == "Concat") {
-                std::string id = "";
-                for(auto& parent: node->parents) {
-                    id += "|" + std::to_string((uint64_t)(parent));
-                }
-                concatLayerMap[id] = node;
-            }
-        });
-    }
-
-    LayerGraphNode<T> *getAddNode(std::vector<Tensor4D<T> *> ips)
-    {
-        std::string id = "";
+        std::string id = layerName;
         for(auto& ip: ips) {
             id += "|" + std::to_string((uint64_t)(ip->graphNode));
         }
-        if (addLayerMap.find(id) == addLayerMap.end()) {
-            std::cerr << "Add layer not found" << std::endl;
+        if (functionalLayerMap.find(id) == functionalLayerMap.end()) {
+            std::cerr << "Layer not found" << std::endl;
             exit(1);
         }
-        return addLayerMap[id];
+        return functionalLayerMap[id];
     }
 
-    LayerGraphNode<T> *getConcatNode(std::vector<Tensor4D<T> *> ips)
+    template <typename LayerType>
+    Tensor<T>& functionalGraphGen(std::vector<Tensor<T> *> &arr)
     {
-        std::string id = "";
-        for(auto& ip: ips) {
-            id += "|" + std::to_string((uint64_t)(ip->graphNode));
+        for (auto &a : arr) {
+            always_assert(a->graphGenMode);
         }
-        if (concatLayerMap.find(id) == concatLayerMap.end()) {
-            std::cerr << "Concat layer not found" << std::endl;
-            exit(1);
-        }
-        return concatLayerMap[id];
+        auto layer = new LayerType();
+        return layer->forward(arr);
     }
 
-    void init(u64 d1, u64 d2, u64 d3, u64 d4, u64 scale)
+    void genGraphAndExecutionOrder()
     {
-        Tensor4D<T> ip(d1, d2, d3, d4);
+        Tensor<T> ip({});
+        ip.graphGenMode = true;
         ip.graphNode = new LayerGraphNode<T>();
         ip.graphNode->layer = new PlaceHolderLayer<T>("Input");
         ip.graphNode->allNodesInExecutionOrderRef = &allNodesInExecutionOrder;
-        Layer<T>::fakeExecution = true;
         auto &res = this->_forward(ip);
-        Layer<T>::fakeExecution = false;
+        ip.graphGenMode = false;
         root = ip.graphNode;
-        activation.resize(res.d1, res.d2, res.d3, res.d4);
-        
-        topologicalApply(root, [=](LayerGraphNode<T> *node, LayerGraphNode<T> *_root) {
-            auto &inp = node->layer->inputDerivative;
-            node->layer->init(inp.d1, inp.d2, inp.d3, inp.d4, scale);
-        });
-
-        this->scale = scale;
-        generateAddLayerMap();
-        generateConcatLayerMap();
     }
 
     void init(u64 scale)
     {
-        Tensor4D<T> ip(0, 0, 0, 0);
-        ip.graphNode = new LayerGraphNode<T>();
-        ip.graphNode->layer = new PlaceHolderLayer<T>("Input");
-        ip.graphNode->allNodesInExecutionOrderRef = &allNodesInExecutionOrder;
-        Layer<T>::fakeExecution = true;
-        auto &res = this->_forward(ip);
-        Layer<T>::fakeExecution = false;
-        root = ip.graphNode;
-        
+        genGraphAndExecutionOrder();
         topologicalApply(root, [=](LayerGraphNode<T> *node, LayerGraphNode<T> *_root) {
             node->layer->initScale(scale);
         });
 
         this->scale = scale;
-        generateAddLayerMap();
-        generateConcatLayerMap();
+        generateFunctionalLayerMap();
     }
 
     void zero()
     {
         topologicalApply(root, [](LayerGraphNode<T> *node, LayerGraphNode<T> *_root) {
-            if (node->layer->name == "Conv2D" || node->layer->name == "FC") {
+            if (node->layer->name == "Conv2D" || node->layer->name == "FC" || node->layer->name == "Conv3D" || node->layer->name == "ConvTranspose3D") {
                 node->layer->getweights().fill(0);
                 node->layer->getbias().fill(0);
             }
-            else if (node->layer->name == "BatchNorm2dInference") {
-                BatchNorm2dInference<T> *bn = (BatchNorm2dInference<T> *) node->layer;
+            else if (node->layer->name == "BatchNormInference") {
+                BatchNormInference<T> *bn = (BatchNormInference<T> *) node->layer;
                 bn->A.fill(0);
                 bn->B.fill(0);
             }
@@ -144,7 +112,7 @@ public:
         backend = b;
     }
 
-    Tensor4D<T>& forward(Tensor4D<T> &input)
+    Tensor<T>& forward(Tensor<T> &input)
     {
         topologicalApply(root, [](LayerGraphNode<T> *node, LayerGraphNode<T> *_root) {
             node->numUsages = 0;
@@ -153,13 +121,13 @@ public:
         input.graphNode->currTensor = &input;
         if (debug) {
             auto& res = this->_forward(input);
-            this->activation.resize(res.d1, res.d2, res.d3, res.d4);
+            this->activation.resize(res.shape);
             this->activation.copy(res);
             return this->activation;
         }
         else {
             auto& res = this->_forward(input); // todo: calculate using the generated graph
-            this->activation.resize(res.d1, res.d2, res.d3, res.d4);
+            this->activation.resize(res.shape);
             this->activation.copy(res);
             return this->activation;
         }
@@ -185,7 +153,7 @@ public:
         size_t wIdx = 0;
         for (auto &node: allNodesInExecutionOrder) {
             auto layer = node->layer;
-            if(layer->name.find("Conv2D") != std::string::npos || layer->name.find("FC") != std::string::npos) {
+            if(layer->name == "Conv2D" || layer->name == "FC" || layer->name == "Conv3D" || layer->name == "ConvTranspose3D") {
                 auto& weights = layer->getweights();
                 for (int j = 0; j < weights.d1; j++) {
                     for(int k = 0; k < weights.d2; ++k) {
@@ -209,8 +177,8 @@ public:
                 else
                     bias.fill(0);
             }
-            else if (layer->name.find("BatchNorm2dInference") != std::string::npos) {
-                auto bn = (BatchNorm2dInference<T>*) layer;
+            else if (layer->name.find("BatchNormInference") != std::string::npos) {
+                auto bn = (BatchNormInference<T>*) layer;
                 auto channel = bn->A.size;
                 auto gammaPtr = floatWeights + wIdx;
                 auto betaPtr = floatWeights + wIdx + channel;
@@ -228,157 +196,55 @@ public:
         delete[] floatWeights;
     }
 
-    template <typename... Args>
-    std::vector<Tensor4D<T> *> collect(Args & ... args)
+    Tensor<T>& add(std::vector<Tensor<T> *> &arr)
     {
-        std::vector<Tensor4D<T> *> res;
-        collectHelper(res, args...);
-        return res;
-    }
-
-    void collectHelper(std::vector<Tensor4D<T> *> &res, Tensor4D<T> &a)
-    {
-        res.push_back(&a);
-    }
-
-    template <typename... Args>
-    void collectHelper(std::vector<Tensor4D<T> *> &res, Tensor4D<T> &a, Args & ... args)
-    {
-        res.push_back(&a);
-        collectHelper(res, args...);
-    }
-
-    void add(std::vector<Tensor4D<T> *> &arr, Tensor4D<T> &c)
-    {
-        if (Layer<T>::fakeExecution) {
-            c.graphNode = new LayerGraphNode<T>();
-            c.graphNode->layer = new PlaceHolderLayer<T>("Add");
-            for (auto &a : arr) {
-                c.graphNode->parents.push_back(a->graphNode);
-                a->graphNode->children.push_back(c.graphNode);
-            }
-            c.graphNode->allNodesInExecutionOrderRef = arr[0]->graphNode->allNodesInExecutionOrderRef;
-            c.graphNode->allNodesInExecutionOrderRef->push_back(c.graphNode);
-            return;
+        if (arr[0]->graphGenMode) {
+            auto &c = functionalGraphGen<Add<T>>(arr);
+            return c;
         }
 
-        // check if all tensors have same dimensions
-        for (int i = 1; i < arr.size(); ++i) {
-            if (arr[i]->d1 != arr[0]->d1 || arr[i]->d2 != arr[0]->d2 || arr[i]->d3 != arr[0]->d3 || arr[i]->d4 != arr[0]->d4) {
-                throw std::runtime_error("All tensors must have same dimensions");
-            }
-        }
-
-        auto cNode = getAddNode(arr);
-        cNode->currTensor = &c;
-        c.graphNode = cNode;
-
-        for (int i = 0; i < c.d1; ++i) {
-            for (int j = 0; j < c.d2; ++j) {
-                for (int k = 0; k < c.d3; ++k) {
-                    for (int l = 0; l < c.d4; ++l) {
-                        c(i, j, k, l) = 0;
-                        for (auto &a : arr) {
-                            c(i, j, k, l) += a->operator()(i, j, k, l);
-                        }
-                    }
-                }
-            }
-        }
-
-        for (auto &a : arr) {
-            bool gcHappened = a->graphNode->incrementAndGc();
-            // if (gcHappened) {
-            //     std::cerr << "Output of " << a->graphNode->layer->name << " cleared" << std::endl;
-            // }
-        }
-    }
-
-    Tensor4D<T> add(std::vector<Tensor4D<T> *> &arr)
-    {
-        Tensor4D<T> c(arr[0]->d1, arr[0]->d2, arr[0]->d3, arr[0]->d4);
-        add(arr, c);
+        auto cNode = getFunctionalNode("Add", arr);
+        auto &c = cNode->layer->forward(arr);
         return c;
     }
 
     template <typename... Args>
-    Tensor4D<T> add(Args & ... args)
+    Tensor<T>& add(Args & ... args)
     {
         auto res = collect(args...);
         return add(res);
     }
 
-    void concat(std::vector<Tensor4D<T> *> &arr, Tensor4D<T> &c)
+    Tensor<T>& concat(std::vector<Tensor<T> *> &arr)
     {
-        if (Layer<T>::fakeExecution) {
-            c.graphNode = new LayerGraphNode<T>();
-            c.graphNode->layer = new PlaceHolderLayer<T>("Concat");
-            for (auto &a : arr) {
-                c.graphNode->parents.push_back(a->graphNode);
-                a->graphNode->children.push_back(c.graphNode);
-            }
-            c.graphNode->allNodesInExecutionOrderRef = arr[0]->graphNode->allNodesInExecutionOrderRef;
-            c.graphNode->allNodesInExecutionOrderRef->push_back(c.graphNode);
-            return;
+        if (arr[0]->graphGenMode) {
+            auto &c = functionalGraphGen<Concat<T>>(arr);
+            return c;
         }
 
-        // check if all tensors have same dimensions except the last one
-        for (int i = 1; i < arr.size(); ++i) {
-            if (arr[i]->d1 != arr[0]->d1 || arr[i]->d2 != arr[0]->d2 || arr[i]->d3 != arr[0]->d3) {
-                throw std::runtime_error("All tensors must have same dimensions");
-            }
-        }
-
-        auto cNode = getConcatNode(arr);
-        cNode->currTensor = &c;
-        c.graphNode = cNode;
-
-        u64 d4 = 0;
-        for (auto &a : arr) {
-            d4 += a->d4;
-        }
-
-        if (c.d1 != arr[0]->d1 || c.d2 != arr[0]->d2 || c.d3 != arr[0]->d3 || c.d4 != d4) {
-            throw std::runtime_error("Output tensor must have correct dimensions");
-        }
-
-        u64 d4Idx = 0;
-        for (auto &a : arr) {
-            for (int i = 0; i < c.d1; ++i) {
-                for (int j = 0; j < c.d2; ++j) {
-                    for (int k = 0; k < c.d3; ++k) {
-                        for (int l = 0; l < a->d4; ++l) {
-                            c(i, j, k, d4Idx + l) = a->operator()(i, j, k, l);
-                        }
-                    }
-                }
-            }
-            d4Idx += a->d4;
-        }
-
-        for (auto &a : arr) {
-            bool gcHappened = a->graphNode->incrementAndGc();
-            // if (gcHappened) {
-            //     std::cerr << "Output of " << a->graphNode->layer->name << " cleared" << std::endl;
-            // }
-        }
-    }
-
-    Tensor4D<T> concat(std::vector<Tensor4D<T> *> &arr)
-    {
-        u64 d4 = 0;
-        for (auto &a : arr) {
-            d4 += a->d4;
-        }
-        Tensor4D<T> c(arr[0]->d1, arr[0]->d2, arr[0]->d3, d4);
-        concat(arr, c);
+        auto cNode = getFunctionalNode("Concat", arr);
+        auto &c = cNode->layer->forward(arr);
         return c;
     }
 
     template <typename... Args>
-    Tensor4D<T> concat(Args & ... args)
+    Tensor<T> concat(Args & ... args)
     {
         auto res = collect(args...);
         return concat(res);
+    }
+
+    void train()
+    {
+        topologicalApply(root, [=](LayerGraphNode<T> *node, LayerGraphNode<T> *_root) {
+            node->layer->train();
+        });
+    }
+
+    void eval()
+    {
+        topologicalApply(root, [=](LayerGraphNode<T> *node, LayerGraphNode<T> *_root) {
+            node->layer->eval();
+        });
     }
 };

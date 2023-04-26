@@ -244,6 +244,15 @@ def optimise(model):
     return optimized_model
 
 
+def check_batch_size(model):
+    """
+    Returns the batch size .
+    :param model: Onnx Model
+    :return: batch size
+    """
+    return model.graph.input[0].type.tensor_type.shape.dim[0].dim_value
+
+
 # This does constant folding and eliminates nodes like Shape.
 # Also annotates each node with shape information.
 def infer_shapes(model):

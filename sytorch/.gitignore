@@ -17,5 +17,7 @@ logs/
 temp/
 graph.dot
 graph.png
+graph.pdf
 venv/
 demo/
+scratch/
