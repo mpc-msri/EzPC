@@ -125,7 +125,7 @@ int main(int argc, char**__argv){'{'}
         std::string weights_file = __argv[3];
         net.load(weights_file);
         Tensor<i64> input({'{'}{iterate_list([n]+ dims +[c])}{'}'});
-        input.input(scale);
+        input.input_nchw(scale);
         print_dot_graph(net.root);
         net.forward(input);
         print(net.activation, scale, 64);
@@ -173,7 +173,7 @@ int main(int __argc, char**__argv){'{'}
         std::string weights_file = __argv[3];
         net.load(weights_file);
         Tensor<i64> input({'{'}{iterate_list([n]+ dims +[c])}{'}'});
-        input.input(scale);
+        input.input_nchw(scale);
         print_dot_graph(net.root);
         net.forward(input);
         print(net.activation, scale, 64);
@@ -205,7 +205,7 @@ int main(int __argc, char**__argv){'{'}
 
     Tensor<u64> input({'{'}{iterate_list([n]+ dims +[c])}{'}'});
     if(party == CLIENT){'{'}
-         input.input(scale);
+         input.input_nchw(scale);
     {'}'}
     llama->initializeInferencePartyB(input);
 
