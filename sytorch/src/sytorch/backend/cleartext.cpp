@@ -380,6 +380,47 @@ void ClearText<T>::softmax(Tensor<T> &_in, Tensor<T> &_out, u64 scale)
     }
 }
 
+template <typename T>
+T invsqrt(T x, u64 scale)
+{
+    double d = ((double) x) / (1LL << scale);
+    return (T) ((1.0 / sqrt(d)) * (1LL << scale));
+}
+
+template <typename T>
+void ClearText<T>::layernorm(const Tensor1D<T> &A, const Tensor1D<T> &B, const Tensor<T> &x, Tensor<T> &y, u64 scale)
+{
+    always_assert(A.size == B.size);
+    always_assert(A.size == x.shape.back());
+    always_assert(x.is_same_shape(y));
+    
+    u64 channels = x.shape.back();
+
+    fastfor(x.size() / channels, [&](u64 i) {
+        T mean = 0;
+        T var = 0;
+        for (u64 j = 0; j < channels; j++) {
+            mean += x.data[i * channels + j];
+        }
+        mean = mean / channels;
+        for (u64 j = 0; j < channels; j++) {
+            var += (x.data[i * channels + j] - mean) * (x.data[i * channels + j] - mean);
+        }
+        var = var / channels;
+        truncate(var, scale);
+        var = invsqrt(var, scale);
+        for (u64 j = 0; j < channels; j++) {
+            y.data[i * channels + j] = (x.data[i * channels + j] - mean) * var;
+        }
+    });
+
+    Backend<T>::truncate(y, scale);
+
+    fastfor(x.size(), [&](u64 i) {
+        y.data[i] = y.data[i] * A(i % channels) + B(i % channels);
+    });
+}
+
 template class ClearText<i64>;
 template class ClearText<i32>;
 template class ClearText<u64>;

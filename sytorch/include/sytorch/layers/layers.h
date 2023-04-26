@@ -823,7 +823,34 @@ public:
     }
 };
 
-// template <typename T>
-// class LayerNorm {
-//     LayerNorm() : Layer<T>("LayerNorm") {}
-// };
+template <typename T>
+class LayerNorm: public Layer<T> {
+public:
+    Tensor1D<T> A; // scale = s
+    Tensor1D<T> B; // scale = 2s
+
+    LayerNorm(u64 channels) : Layer<T>("LayerNorm"), A(channels), B(channels) {
+        this->A.fill(0);
+        this->B.fill(0);
+        this->doTruncationForward = true;
+    }
+
+    void _resize(const std::vector<std::vector<u64>> &shapes) {
+        always_assert(shapes.size() == 1);
+        auto &shape = shapes[0];
+        always_assert(shape.back() == this->A.size);
+    }
+
+    void _forward(Tensor<T> &a) {
+        // always_assert(a.shape.size() == 4);
+        assert(a.shape.back() == this->A.size);
+        this->backend->layernorm(this->A, this->B, a, this->activation, this->scale);
+    }
+
+    std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {
+        always_assert(inShapes.size() == 1);
+        auto &inShape = inShapes[0];
+        always_assert(inShape.back() == this->A.size);
+        return inShape;
+    }
+};
