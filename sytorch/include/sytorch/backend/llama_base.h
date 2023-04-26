@@ -92,8 +92,8 @@ public:
                     }
                 }
             }
-            else if (layer->name.find("BatchNorm2dInference") != std::string::npos) {
-                auto bn = (BatchNorm2dInference<T>*) layer;
+            else if (layer->name.find("BatchNormInference") != std::string::npos) {
+                auto bn = (BatchNormInference<T>*) layer;
                 auto channel = bn->A.size;
                 if(LlamaConfig::party == 1){
                     input_layer(nullptr, bn->A.data, channel, 2);
@@ -277,14 +277,17 @@ public:
             input.data, input.data, filter.data, filter.data, output.data, output.data);
     }
 
-    void conv3D(u64 fd, u64 fh, u64 fw, u64 pd, u64 ph, u64 pw, u64 sd, u64 sh, u64 sw, u64 ci, u64 co, const Tensor5D<T> &input, const Tensor2D<T> &filter, Tensor5D<T> &output)
+    void conv3D(u64 fd, u64 fh, u64 fw, u64 pd, u64 ph, u64 pw, u64 sd, u64 sh, u64 sw, u64 dd, u64 dh, u64 dw, u64 ci, u64 co, const Tensor5D<T> &input, const Tensor2D<T> &filter, Tensor5D<T> &output)
     {
         assert(input.d5 == ci);
         assert(filter.d1 == co);
         assert(filter.d2 == fd * fh * fw * ci);
-        u64 newD = (((input.d2 + 2*pd - fd)/sd) + 1);
-        u64 newH = (((input.d3 + 2*ph - fh)/sh) + 1);
-        u64 newW = (((input.d4 + 2*pw - fw)/sw) + 1);
+        always_assert(dd == 1);
+        always_assert(dh == 1);
+        always_assert(dw == 1);
+        u64 newD = (((input.d2 + 2*pd - fd - (fd-1)*(dd-1))/sd) + 1);
+        u64 newH = (((input.d3 + 2*ph - fh - (fh-1)*(dh-1))/sh) + 1);
+        u64 newW = (((input.d4 + 2*pw - fw - (fw-1)*(dw-1))/sw) + 1);
         assert(output.d1 == input.d1);
         assert(output.d2 == newD);
         assert(output.d3 == newH);
@@ -364,39 +367,26 @@ public:
         return y;
     }
 
-    void batchNorm2dInference(const Tensor1D<T> &A, const Tensor1D<T> &B, const Tensor4D<T> &x, Tensor4D<T> &y, u64 scale)
+    void batchNormInference(const Tensor1D<T> &A, const Tensor1D<T> &B, const Tensor<T> &x, Tensor<T> &y, u64 scale)
     {
         assert(A.size == B.size);
-        assert(A.size == x.d4);
-        assert(x.d4 == y.d4);
-        assert(x.d1 == y.d1);
-        assert(x.d2 == y.d2);
-        assert(x.d3 == y.d3);
-        // replicate A and B
-        Tensor4D<T> A2(x.d1, x.d2, x.d3, x.d4);
-        for (int i = 0; i < x.d1; ++i) {
-            for(int j = 0; j < x.d2; ++j) {
-                for(int k = 0; k < x.d3; ++k) {
-                    for(int l = 0; l < x.d4; ++l) {
-                        A2(i, j, k, l) = A(l);
-                    }
-                }
-            }
+        assert(A.size == x.shape.back());
+        assert(x.is_same_shape(y));
+        u64 channels = x.shape.back();
+        // replicate A
+        Tensor<T> A2(x.shape);
+
+        for (u64 i = 0; i < x.size(); ++i)
+        {
+            A2.data[i] = A.data[i % channels];
         }
 
-        ElemWiseSecretSharedVectorMult(x.d1 * x.d2 * x.d3 * x.d4, x.data, x.data, A2.data, A2.data, y.data, y.data);
+        ElemWiseSecretSharedVectorMult(x.size(), x.data, x.data, A2.data, A2.data, y.data, y.data);
 
-        for(int i = 0; i < x.d1; ++i) {
-            for(int j = 0; j < x.d2; ++j) {
-                for(int k = 0; k < x.d3; ++k) {
-                    for(int l = 0; l < x.d4; ++l) {
-                        y(i, j, k, l) += B(l);
-                    }
-                }
-            }
+        for (u64 i = 0; i < x.size(); ++i)
+        {
+            y.data[i] += B.data[i % channels];
         }
-
-        // this->truncateForward(y, scale);
 
     }
 

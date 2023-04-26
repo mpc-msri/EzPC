@@ -45,7 +45,7 @@ public:
                 LayerGraphNode<T> *child = node->children[0];
                 if (child->layer->doTruncationForward) {
                     // no optimization possible
-                    // this is set to true for FC, Conv2D and BatchNorm2dInference
+                    // this is set to true for FC, Conv2D and BatchNormInference
                 }
                 else {
                     if (child->layer->name == "MaxPool2D" || child->layer->name == "ReLU") {

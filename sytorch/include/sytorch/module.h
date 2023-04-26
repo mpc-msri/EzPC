@@ -96,8 +96,8 @@ public:
                 node->layer->getweights().fill(0);
                 node->layer->getbias().fill(0);
             }
-            else if (node->layer->name == "BatchNorm2dInference") {
-                BatchNorm2dInference<T> *bn = (BatchNorm2dInference<T> *) node->layer;
+            else if (node->layer->name == "BatchNormInference") {
+                BatchNormInference<T> *bn = (BatchNormInference<T> *) node->layer;
                 bn->A.fill(0);
                 bn->B.fill(0);
             }
@@ -177,8 +177,8 @@ public:
                 else
                     bias.fill(0);
             }
-            else if (layer->name.find("BatchNorm2dInference") != std::string::npos) {
-                auto bn = (BatchNorm2dInference<T>*) layer;
+            else if (layer->name.find("BatchNormInference") != std::string::npos) {
+                auto bn = (BatchNormInference<T>*) layer;
                 auto channel = bn->A.size;
                 auto gammaPtr = floatWeights + wIdx;
                 auto betaPtr = floatWeights + wIdx + channel;

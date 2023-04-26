@@ -197,31 +197,38 @@ public:
     u64 fd, fh, fw;
     u64 pd, ph, pw;
     u64 sd, sh, sw;
+    u64 dd, dh, dw;
 
-    Conv3D(u64 ci, u64 co, u64 f, u64 padding = 0, u64 stride = 1, bool useBias = false) : Layer<T>("Conv3D"), ci(ci), co(co), fd(f), fh(f), fw(f), 
+    Conv3D(u64 ci, u64 co, u64 f, u64 padding = 0, u64 stride = 1, u64 dialation = 1, bool useBias = false) : Layer<T>("Conv3D"), ci(ci), co(co), fd(f), fh(f), fw(f), 
         pd(padding), ph(padding), pw(padding), sd(stride), sh(stride), sw(stride), filter(co, f * f * f * ci), bias(co), inp({0,0,0,0,0})
     {
+        always_assert(dialation == 1);
         this->doTruncationForward = true;
         this->useBias = useBias;
     }
 
-    Conv3D(u64 ci, u64 co, const std::array<u64, 3> f, u64 padding = 0, u64 stride = 1, bool useBias = false) : Layer<T>("Conv3D"), ci(ci), co(co), fd(f[0]), fh(f[1]), fw(f[2]), 
-        pd(padding), ph(padding), pw(padding), sd(stride), sh(stride), sw(stride), filter(co, f[0] * f[1] * f[2] * ci), bias(co), inp({0,0,0,0,0})
+    Conv3D(u64 ci, u64 co, const std::array<u64, 3> f, u64 padding = 0, u64 stride = 1, u64 dialation = 1, bool useBias = false) : Layer<T>("Conv3D"), ci(ci), co(co), fd(f[0]), fh(f[1]), fw(f[2]), 
+        pd(padding), ph(padding), pw(padding), sd(stride), sh(stride), sw(stride), dd(dialation), dh(dialation), dw(dialation), filter(co, f[0] * f[1] * f[2] * ci), bias(co), inp({0,0,0,0,0})
     {
+        always_assert(dialation == 1);
         this->doTruncationForward = true;
         this->useBias = useBias;
     }
 
-    Conv3D(u64 ci, u64 co, const std::array<u64, 3> f, const std::array<u64, 3> padding = {0, 0, 0}, u64 stride = 1, bool useBias = false) : Layer<T>("Conv3D"), ci(ci), co(co), fd(f[0]), fh(f[1]), fw(f[2]), 
-        pd(padding[0]), ph(padding[1]), pw(padding[2]), sd(stride), sh(stride), sw(stride), filter(co, f[0] * f[1] * f[2] * ci), bias(co), inp({0,0,0,0,0})
+    Conv3D(u64 ci, u64 co, const std::array<u64, 3> f, const std::array<u64, 3> padding = {0, 0, 0}, u64 stride = 1, u64 dialation = 1, bool useBias = false) : Layer<T>("Conv3D"), ci(ci), co(co), fd(f[0]), fh(f[1]), fw(f[2]), 
+        pd(padding[0]), ph(padding[1]), pw(padding[2]), sd(stride), sh(stride), sw(stride), dd(dialation), dh(dialation), dw(dialation), filter(co, f[0] * f[1] * f[2] * ci), bias(co), inp({0,0,0,0,0})
     {
+        always_assert(dialation == 1);
         this->doTruncationForward = true;
         this->useBias = useBias;
     }
 
-    Conv3D(u64 ci, u64 co, const std::array<u64, 3> f, const std::array<u64, 6> padding = {0, 0, 0, 0, 0, 0}, const std::array<u64, 3> stride = {1, 1, 1}, bool useBias = false) : Layer<T>("Conv3D"), ci(ci), co(co), fd(f[0]), fh(f[1]), fw(f[2]), 
-        pd(padding[0]), ph(padding[1]), pw(padding[2]), sd(stride[0]), sh(stride[1]), sw(stride[2]), filter(co, f[0] * f[1] * f[2] * ci), bias(co), inp({0,0,0,0,0})
+    Conv3D(u64 ci, u64 co, const std::array<u64, 3> f, const std::array<u64, 6> padding = {0, 0, 0, 0, 0, 0}, const std::array<u64, 3> stride = {1, 1, 1}, const std::array<u64, 3> dialation = {1, 1, 1}, bool useBias = false) : Layer<T>("Conv3D"), ci(ci), co(co), fd(f[0]), fh(f[1]), fw(f[2]), 
+        pd(padding[0]), ph(padding[1]), pw(padding[2]), sd(stride[0]), sh(stride[1]), sw(stride[2]), dd(dialation[0]), dh(dialation[1]), dw(dialation[2]), filter(co, f[0] * f[1] * f[2] * ci), bias(co), inp({0,0,0,0,0})
     {
+        always_assert(dialation[0] == 1);
+        always_assert(dialation[1] == 1);
+        always_assert(dialation[2] == 1);
         always_assert(padding[3] == padding[0]);
         always_assert(padding[4] == padding[1]);
         always_assert(padding[5] == padding[2]);
@@ -251,7 +258,7 @@ public:
         if (this->isTrainingMode)
             inp.copy(a);
         auto act_5d = this->activation.as_5d();
-        this->backend->conv3D(fd, fh, fw, pd, ph, pw, sd, sh, sw, ci, co, a.as_5d(), filter, act_5d);
+        this->backend->conv3D(fd, fh, fw, pd, ph, pw, sd, sh, sw, dd, dh, dw, ci, co, a.as_5d(), filter, act_5d);
         if (this->useBias)
             this->activation.addBias(bias);
     }
@@ -264,9 +271,9 @@ public:
         auto &inShape = inShapes[0];
         always_assert(inShape.size() == 5);
         always_assert(inShape[4] == ci);
-        u64 newD = (((inShape[1] + 2*pd - fd)/sd) + 1);
-        u64 newH = (((inShape[2] + 2*ph - fh)/sh) + 1);
-        u64 newW = (((inShape[3] + 2*pw - fw)/sw) + 1);
+        u64 newD = (((inShape[1] + 2*pd - fd - (fd-1)*(dd-1))/sd) + 1);
+        u64 newH = (((inShape[2] + 2*ph - fh - (fh-1)*(dh-1))/sh) + 1);
+        u64 newW = (((inShape[3] + 2*pw - fw - (fw-1)*(dw-1))/sw) + 1);
         return {inShape[0], newD, newH, newW, co};
     }
 };
@@ -501,12 +508,12 @@ public:
 };
 
 template <typename T>
-class BatchNorm2dInference : public Layer<T> {
+class BatchNormInference : public Layer<T> {
 public:
     Tensor1D<T> A; // scale = s
     Tensor1D<T> B; // scale = 2s
 
-    BatchNorm2dInference(u64 channels) : Layer<T>("BatchNorm2dInference"), A(channels), B(channels) {
+    BatchNormInference(u64 channels) : Layer<T>("BatchNormInference"), A(channels), B(channels) {
         this->A.fill(0);
         this->B.fill(0);
         this->doTruncationForward = true;
@@ -515,27 +522,26 @@ public:
     void _resize(const std::vector<std::vector<u64>> &shapes) {
         always_assert(shapes.size() == 1);
         auto &shape = shapes[0];
-        always_assert(shape.size() == 4);
-        always_assert(shape[3] == this->A.size);
+        // always_assert(shape.size() == 4);
+        always_assert(shape.back() == this->A.size);
     }
 
     void _forward(Tensor<T> &a) {
-        always_assert(a.shape.size() == 4);
-        assert(a.shape[3] == this->A.size);
+        // always_assert(a.shape.size() == 4);
+        assert(a.shape.back() == this->A.size);
         if (this->isTrainingMode) {
-            std::runtime_error("BatchNorm2dInference should not be used in training mode");
+            std::runtime_error("BatchNormInference should not be used in training mode");
         }
         else {
-            auto act_4d = this->activation.as_4d();
-            this->backend->batchNorm2dInference(this->A, this->B, a.as_4d(), act_4d, this->scale);
+            this->backend->batchNormInference(this->A, this->B, a, this->activation, this->scale);
         }
     }
 
     std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {
         always_assert(inShapes.size() == 1);
         auto &inShape = inShapes[0];
-        always_assert(inShape.size() == 4);
-        always_assert(inShape[3] == this->A.size);
+        // always_assert(inShape.size() == 4);
+        always_assert(inShape.back() == this->A.size);
         return inShape;
     }
 };
@@ -609,9 +615,12 @@ public:
         this->useBias = useBias;
     }
 
-    ConvTranspose3D(u64 ci, u64 co, const std::array<u64, 3> f, const std::array<u64, 6> padding = {0, 0, 0, 0, 0, 0}, const std::array<u64, 3> stride = {1, 1, 1}, bool useBias = false) : Layer<T>("ConvTranspose3D"), ci(ci), co(co), fd(f[0]), fh(f[1]), fw(f[2]), 
+    ConvTranspose3D(u64 ci, u64 co, const std::array<u64, 3> f, const std::array<u64, 6> padding = {0, 0, 0, 0, 0, 0}, const std::array<u64, 3> stride = {1, 1, 1}, const std::array<u64, 3> dialation = {1, 1, 1}, bool useBias = false) : Layer<T>("ConvTranspose3D"), ci(ci), co(co), fd(f[0]), fh(f[1]), fw(f[2]), 
         pd(padding[0]), ph(padding[1]), pw(padding[2]), sd(stride[0]), sh(stride[1]), sw(stride[2]), filter(co, f[0] * f[1] * f[2] * ci), bias(co)
     {
+        always_assert(dialation[0] == 1);
+        always_assert(dialation[1] == 1);
+        always_assert(dialation[2] == 1);
         always_assert(padding[3] == padding[0]);
         always_assert(padding[4] == padding[1]);
         always_assert(padding[5] == padding[2]);
