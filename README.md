@@ -2,7 +2,7 @@
 
 **Reference Papers:**  
 
-[Secure Floating-Point Training](about:blank)  
+[Secure Floating-Point Training](https://eprint.iacr.org/2023/467)  
 Deevashwer Rathee, Anwesh Bhattacharya, Divya Gupta, Rahul Sharma, Dawn Song  
 *USENIX Security 2023*
 
