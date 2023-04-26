@@ -27,6 +27,7 @@ def func_call(node, value_info):
         "Mul": "Mul",
         "Sub": "Sub",
         "Div": "Div",
+        "ReduceMean": "ReduceMean",
     }
     return func_map[node.op_type]
 
@@ -75,6 +76,7 @@ def inputs_to_take(node, output_list):
         "Mul": 1,
         "Sub": 1,
         "Div": 1,
+        "ReduceMean": 1,
     }
     broadcast_nodes = ["Sub", "Div"]
     if node.op_type in broadcast_nodes:

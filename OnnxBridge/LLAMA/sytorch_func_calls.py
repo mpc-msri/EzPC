@@ -71,6 +71,21 @@ class Operator:
         return str(f"{'   ' * indent}new Sqrt<T>();")
 
     @classmethod
+    def ReduceMean(
+        cls,
+        attributes,
+        inputs,
+        outputs,
+        value_info,
+        var_dict,
+        output_list,
+        mode,
+        indent,
+    ):
+        logger.debug("Inside ReduceMean function call.")
+        return str(f"{'   ' * indent}new ReduceMean<T>({attributes['axes'][0]});")
+
+    @classmethod
     def Pow(
         cls,
         attributes,

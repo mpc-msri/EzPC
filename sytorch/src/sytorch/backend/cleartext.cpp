@@ -435,6 +435,42 @@ void ClearText<T>::maxPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> 
 }
 
 template <typename T>
+void ClearText<T>::reduceMean(u64 axis, const Tensor<T> &in, Tensor<T> &out, u64 scale)
+{
+    if (in.shape.size() == 1)
+    {
+        assert(axis == 0);
+        assert(out.shape.size() == 1);
+        fastfor(in.shape[0], [&](int i)
+                { out.data[0] += in.data[i]; });
+        out.data[0] /= in.shape[0];
+    }
+    else if (in.shape.size() == 2)
+    {
+        assert(axis == 0 || axis == 1);
+        assert(out.shape.size() == 2);
+        if (axis == 0)
+        {
+            fastfor(in.shape[1], [&](int j)
+                    {
+                fastfor(in.shape[0], [&](int i) {
+                    out.data[j] += in.data[i*in.shape[1] + j];
+                });
+                out.data[j] /= in.shape[0]; });
+        }
+        else
+        {
+            fastfor(in.shape[0], [&](int i)
+                    {
+                fastfor(in.shape[1], [&](int j) {
+                    out.data[i] += in.data[i*in.shape[1] + j];
+                });
+                out.data[i] /= in.shape[1]; });
+        }
+    }
+}
+
+template <typename T>
 void ClearText<T>::batchNorm2dInference(const Tensor1D<T> &A, const Tensor1D<T> &B, const Tensor4D<T> &x, Tensor4D<T> &y, u64 scale)
 {
     assert(A.size == B.size);

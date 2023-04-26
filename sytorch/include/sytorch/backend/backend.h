@@ -80,6 +80,9 @@ public:
     // maxpool API
     virtual void maxPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> &in, Tensor4D<T> &out, Tensor4D<u64> &maxIdx, u64 scale, u8 mode) NOT_IMPLEMENTED;
 
+    // reducemean API
+    virtual void reduceMean(u64 axis, const Tensor<T> &in, Tensor<T> &out, u64 scale) NOT_IMPLEMENTED;
+
     virtual void batchNorm2dInference(const Tensor1D<T> &A, const Tensor1D<T> &B, const Tensor4D<T> &x, Tensor4D<T> &y, u64 scale) NOT_IMPLEMENTED;
     virtual void signext(Tensor<T> &x, u64 scale) NOT_IMPLEMENTED;
 

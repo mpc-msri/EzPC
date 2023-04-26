@@ -126,15 +126,15 @@ class OnnxNode:
 
     @classmethod
     def ReduceMean(cls, node):
-        keepdims = node.attrs["keepdims"]
+        keepdims = node.attrs["keepdims"] if "keepdims" in node.attrs else 1
         axes = node.attrs["axes"]
 
         # currently handling only this case
         # currently support only 0 case
-        assert keepdims == 0
-        assert len(axes) == 2
+        assert keepdims == 1
+        assert len(axes) == 1
         assert len(node.inputs) == 1
-        del node.attrs["keepdims"]
+        print(node)
         logger.debug("ReduceMean is OK! (with possible modifications)")
 
     @classmethod

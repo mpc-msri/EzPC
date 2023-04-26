@@ -340,6 +340,64 @@ public:
 };
 
 template <typename T>
+class ReduceMean : public Layer<T>
+{
+public:
+    i64 axis;
+
+    ReduceMean(i64 axis) : Layer<T>("ReduceMean"), axis(axis) {}
+
+    void _resize(const std::vector<std::vector<u64>> &shapes)
+    {
+        always_assert(shapes.size() == 1);
+        auto &shape = shapes[0];
+        if (this->axis < 0)
+        {
+            this->axis = shape.size() + this->axis;
+        }
+        always_assert(this->axis < shape.size());
+
+        std::vector<u64> newShape;
+        for (u64 i = 0; i < shape.size(); i++)
+        {
+            if (i != axis)
+            {
+                newShape.push_back(shape[i]);
+            }
+            else
+            {
+                newShape.push_back(1);
+            }
+        }
+        this->activation.resize(newShape);
+    }
+
+    void _forward(Tensor<T> &a)
+    {
+        this->backend->reduceMean(axis, a, this->activation, this->scale);
+    }
+
+    std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes)
+    {
+        always_assert(inShapes.size() == 1);
+        auto &inShape = inShapes[0];
+        std::vector<u64> newShape;
+        for (u64 i = 0; i < inShape.size(); i++)
+        {
+            if (i != axis)
+            {
+                newShape.push_back(inShape[i]);
+            }
+            else
+            {
+                newShape.push_back(1);
+            }
+        }
+        return newShape;
+    }
+};
+
+template <typename T>
 class Flatten : public Layer<T> {
 public:
 
