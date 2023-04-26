@@ -99,7 +99,7 @@ class Operator:
     ):
         logger.debug("Inside BatchNorm function call.")
         shape = value_info[inputs[1]][1][0]
-        return str(f"{'   ' * indent}new BatchNorm2dInference<T>({shape});")
+        return str(f"{'   ' * indent}new BatchNormInference<T>({shape});")
 
     @classmethod
     def Concat(cls, attributes, inputs, outputs, value_info, var_dict, mode, indent):
