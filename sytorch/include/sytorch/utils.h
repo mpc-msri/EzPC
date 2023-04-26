@@ -28,29 +28,6 @@ auto make_float_vector( size_t first, Args... sizes)
 	return _ret;
 }
 
-inline std::vector<float> take_input(size_t last)
-{
-    std::vector<float> _ret;
-    for (size_t i = 0; i < last; i++)
-    {
-        std::cin >> _ret[i];
-    }
-    return _ret;
-}
-
-template <typename... Args>
-auto take_input(size_t first, Args... sizes)
-{
-    auto _inner = take_input(sizes...);
-    std::vector<decltype(_inner)> _ret;
-    _ret.push_back(_inner);
-    for (size_t i = 1; i < first; i++)
-    {
-        _ret.push_back(take_input(sizes...));
-    }
-    return _ret;
-}
-
 template <typename T>
 Tensor2D<T> reshapeInputTransposed(const Tensor4D<T> &input, u64 padding, u64 stride, u64 FH, u64 FW) {
     u64 newH = (((input.d2 + 2*padding - FH)/stride) + 1);
