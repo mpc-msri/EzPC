@@ -1,4 +1,5 @@
 #include "inout.cpp"
+#include "concat.cpp"
 
 extern float intToFloat(int32_t m);
 extern void Softmax2(int32_t s1, int32_t s2, vector<vector<FPArray>> &inArr, vector<vector<FPArray>> &outArr);

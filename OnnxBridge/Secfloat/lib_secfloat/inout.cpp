@@ -5,9 +5,9 @@
 #include <fstream>
 #include "library_float.h"
 
-auto input1(int d1, int party)
+vector<FPArray> input1(int d1, int party)
 {
-    auto tmp0 = make_vector_float(party, d1);
+    vector<FPArray> tmp0 = make_vector_float(party, d1);
 
     float *__tmp_in_tmp0 = new float[1];
 
@@ -24,9 +24,9 @@ auto input1(int d1, int party)
     return tmp0;
 }
 
-auto input2(int d1, int d2, int party)
+vector<vector<FPArray>> input2(int d1, int d2, int party)
 {
-    auto tmp0 = make_vector_float(party, d1, d2);
+    vector<vector<FPArray>> tmp0 = make_vector_float(party, d1, d2);
 
     float *__tmp_in_tmp0 = new float[1];
 
@@ -46,9 +46,9 @@ auto input2(int d1, int d2, int party)
     return tmp0;
 }
 
-auto input3(int d1, int d2, int d3, int party)
+vector<vector<vector<FPArray>>> input3(int d1, int d2, int d3, int party)
 {
-    auto tmp0 = make_vector_float(party, d1, d2, d3);
+    vector<vector<vector<FPArray>>> tmp0 = make_vector_float(party, d1, d2, d3);
 
     float *__tmp_in_tmp0 = new float[1];
 
@@ -71,9 +71,9 @@ auto input3(int d1, int d2, int d3, int party)
     return tmp0;
 }
 
-auto input4(int d1, int d2, int d3, int d4, int party)
+vector<vector<vector<vector<FPArray>>>> input4(int d1, int d2, int d3, int d4, int party)
 {
-    auto tmp0 = make_vector_float(party, d1, d2, d3, d4);
+    vector<vector<vector<vector<FPArray>>>> tmp0 = make_vector_float(party, d1, d2, d3, d4);
 
     float *__tmp_in_tmp0 = new float[1];
 
@@ -98,7 +98,7 @@ auto input4(int d1, int d2, int d3, int d4, int party)
     return tmp0;
 }
 
-void output1(auto name, int d1, int party)
+void output1(vector<FPArray> &name, int d1, int party)
 {
     for (uint32_t i0 = 0; i0 < d1; i0++)
     {
@@ -111,7 +111,7 @@ void output1(auto name, int d1, int party)
     }
 }
 
-void output2(auto name, int d1, int d2, int party)
+void output2(vector<vector<FPArray>> &name, int d1, int d2, int party)
 {
     for (uint32_t i0 = 0; i0 < d1; i0++)
     {
@@ -127,7 +127,7 @@ void output2(auto name, int d1, int d2, int party)
     }
 }
 
-void output3(auto name, int d1, int d2, int d3, int party)
+void output3(vector<vector<vector<FPArray>>> &name, int d1, int d2, int d3, int party)
 {
     for (uint32_t i0 = 0; i0 < d1; i0++)
     {
@@ -146,7 +146,7 @@ void output3(auto name, int d1, int d2, int d3, int party)
     }
 }
 
-void output4(auto name, int d1, int d2, int d3, int d4, int party)
+void output4(vector<vector<vector<vector<FPArray>>>> &name, int d1, int d2, int d3, int d4, int party)
 {
     for (uint32_t i0 = 0; i0 < d1; i0++)
     {
