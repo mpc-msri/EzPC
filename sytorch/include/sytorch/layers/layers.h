@@ -523,7 +523,7 @@ public:
         always_assert(shapes.size() == 1);
         auto &shape = shapes[0];
         // always_assert(shape.size() == 4);
-        always_assert(shape.back() == this->A.size);
+        always_assert(shape.back() == this->A.d1);
     }
 
     void _forward(Tensor<T> &a) {
@@ -544,7 +544,7 @@ public:
         always_assert(inShapes.size() == 1);
         auto &inShape = inShapes[0];
         // always_assert(inShape.size() == 4);
-        always_assert(inShape.back() == this->A.size);
+        always_assert(inShape.back() == this->A.d1);
         return inShape;
     }
 };
@@ -841,12 +841,12 @@ public:
     void _resize(const std::vector<std::vector<u64>> &shapes) {
         always_assert(shapes.size() == 1);
         auto &shape = shapes[0];
-        always_assert(shape.back() == this->A.size);
+        always_assert(shape.back() == this->A.d1);
     }
 
     void _forward(Tensor<T> &a) {
         // always_assert(a.shape.size() == 4);
-        assert(a.shape.back() == this->A.size);
+        assert(a.shape.back() == this->A.d1);
         this->backend->layernorm(this->A, this->B, a, this->activation, this->scale);
     }
 
@@ -856,7 +856,7 @@ public:
     std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {
         always_assert(inShapes.size() == 1);
         auto &inShape = inShapes[0];
-        always_assert(inShape.back() == this->A.size);
+        always_assert(inShape.back() == this->A.d1);
         return inShape;
     }
 };

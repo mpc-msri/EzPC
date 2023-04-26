@@ -482,6 +482,12 @@ public:
         return Tensor<T>(data, {d1, d2, d3, d4});
     }
 
+    void fill(T val) {
+        for (u64 i = 0; i < size(); i++) {
+            this->data[i] = val;
+        }
+    }
+
 };
 
 
