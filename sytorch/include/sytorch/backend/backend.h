@@ -36,7 +36,7 @@ public:
     }
     
     void truncate(const Tensor1D<T> &in, u64 shift, u8 mode = 0) {
-        truncate(in.data, in.data, shift, in.size, mode);
+        truncate(in.data, in.data, shift, in.d1, mode);
     }
 
     void truncate(T &in, u64 shift, u8 mode = 0) {
@@ -71,6 +71,7 @@ public:
     virtual void gelu(const Tensor<T> &in, const Tensor<T> &out, u64 scale) NOT_IMPLEMENTED;
     virtual void softmax(Tensor<T> &in, Tensor<T> &out, u64 scale) NOT_IMPLEMENTED;
     virtual void layernorm(const Tensor1D<T> &A, const Tensor1D<T> &B, const Tensor<T> &x, Tensor<T> &y, u64 scale) NOT_IMPLEMENTED;
+    virtual void addbias(Tensor<T> &x, const Tensor1D<T> &bias) NOT_IMPLEMENTED;
 
     virtual void optimize(LayerGraphNode<T> *root)
     {

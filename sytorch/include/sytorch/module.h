@@ -90,15 +90,8 @@ public:
     void zero()
     {
         topologicalApply(root, [](LayerGraphNode<T> *node, LayerGraphNode<T> *_root) {
-            if (node->layer->name == "Conv2D" || node->layer->name == "FC" || node->layer->name == "Conv3D" || node->layer->name == "ConvTranspose3D") {
-                node->layer->getweights().fill(0);
-                node->layer->getbias().fill(0);
-            }
-            else if (node->layer->name == "BatchNormInference") {
-                BatchNormInference<T> *bn = (BatchNormInference<T> *) node->layer;
-                bn->A.fill(0);
-                bn->B.fill(0);
-            }
+            node->layer->getweights().zero();
+            node->layer->getbias().zero();
         });
     }
 
@@ -157,33 +150,9 @@ public:
         size_t wIdx = 0;
         for (auto &node: allNodesInExecutionOrder) {
             auto layer = node->layer;
-            if(layer->name == "Conv2D" || layer->name == "FC" || layer->name == "Conv3D" || layer->name == "ConvTranspose3D") {
-                auto& weights = layer->getweights();
-                for (int j = 0; j < weights.d1; j++) {
-                    for(int k = 0; k < weights.d2; ++k) {
-                        weights(j, k) = i64(floatWeights[wIdx + weights.d2 * j + k] * (1LL << scale));
-                    }
-                }
-
-                auto wSize = weights.d1 * weights.d2;
-                wIdx += wSize;
-
-                auto& bias = layer->getbias();
-                if (layer->useBias) {
-
-                    for (int j = 0; j < bias.size; ++j) {
-                        bias(j) = i64(floatWeights[wIdx + j] * (1LL << (2*scale)));
-                    }
-
-                    wSize = bias.size;
-                    wIdx += wSize;
-                }
-                else
-                    bias.fill(0);
-            }
-            else if (layer->name.find("BatchNormInference") != std::string::npos) {
+            if (layer->name == "BatchNormInference") {
                 auto bn = (BatchNormInference<T>*) layer;
-                auto channel = bn->A.size;
+                auto channel = bn->A.d1;
                 auto gammaPtr = floatWeights + wIdx;
                 auto betaPtr = floatWeights + wIdx + channel;
                 auto meanPtr = floatWeights + wIdx + 2 * channel;
@@ -193,6 +162,27 @@ public:
                     bn->B(j) = i64((betaPtr[j] - gammaPtr[j] * meanPtr[j] / std::sqrt(varPtr[j])) * (1LL << (2 * scale)));
                 }
                 wIdx += 4 * channel;
+            }
+            else {
+                auto weights = layer->getweights();
+                for (u64 j = 0; j < weights.size; j++) {
+                    weights.data[j] = i64(floatWeights[wIdx + j] * (1LL << scale));
+                }
+
+                wIdx += weights.size;
+
+                auto bias = layer->getbias();
+                if (layer->useBias) {
+
+                    for (u64 j = 0; j < bias.size; ++j) {
+                        bias.data[j] = i64(floatWeights[wIdx + j] * (1LL << (2*scale)));
+                    }
+
+                    wIdx += bias.size;
+                }
+                else {
+                    bias.zero();
+                }
             }
         }
 

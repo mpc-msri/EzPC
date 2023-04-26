@@ -106,8 +106,8 @@ public:
         return activation;
     }
 
-    virtual Tensor2D<T>& getweights() { throw std::runtime_error("not implemented"); };
-    virtual Tensor1D<T>& getbias() { throw std::runtime_error("not implemented"); };
+    virtual TensorRef<T> getweights() { return TensorRef<T>(nullptr, 0); };
+    virtual TensorRef<T> getbias() { return TensorRef<T>(nullptr, 0); };
     virtual std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) = 0;
 
     virtual void setBackend(Backend<T> *b) {
@@ -170,11 +170,11 @@ public:
         auto act_4d = this->activation.as_4d();
         this->backend->conv2D(fh, fw, padding, stride, ci, co, a.as_4d(), filter, act_4d);
         if (this->useBias)
-            this->activation.as_4d().addBias(bias);
+            this->backend->addbias(this->activation, bias);
     }
 
-    Tensor2D<T>& getweights() { return filter; }
-    Tensor1D<T>& getbias() { return bias; }
+    TensorRef<T> getweights() { return filter.ref(); }
+    TensorRef<T> getbias() { return bias.ref(); }
 
     std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {
         always_assert(inShapes.size() == 1);
@@ -260,11 +260,11 @@ public:
         auto act_5d = this->activation.as_5d();
         this->backend->conv3D(fd, fh, fw, pd, ph, pw, sd, sh, sw, dd, dh, dw, ci, co, a.as_5d(), filter, act_5d);
         if (this->useBias)
-            this->activation.addBias(bias);
+            this->backend->addbias(this->activation, bias);
     }
 
-    Tensor2D<T>& getweights() { return filter; }
-    Tensor1D<T>& getbias() { return bias; }
+    TensorRef<T> getweights() { return filter.ref(); }
+    TensorRef<T> getbias() { return bias.ref(); }
 
     std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {
         always_assert(inShapes.size() == 1);
@@ -469,11 +469,11 @@ public:
         auto act_2d = this->activation.as_2d();
         this->backend->matmul(a_2d, weight, act_2d);
         if (this->useBias)
-            this->activation.as_2d().addBias2D(bias);
+            this->backend->addbias(this->activation, bias);
     }
 
-    Tensor2D<T>& getweights() { return weight; }
-    Tensor1D<T>& getbias() { return bias; }
+    TensorRef<T> getweights() { return weight.ref(); }
+    TensorRef<T> getbias() { return bias.ref(); }
 
     std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {
         always_assert(inShapes.size() == 1);
@@ -536,6 +536,9 @@ public:
             this->backend->batchNormInference(this->A, this->B, a, this->activation, this->scale);
         }
     }
+
+    TensorRef<T> getweights() { return A.ref(); }
+    TensorRef<T> getbias() { return B.ref(); }
 
     std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {
         always_assert(inShapes.size() == 1);
@@ -648,11 +651,11 @@ public:
         auto act_5d = this->activation.as_5d();
         this->backend->convTranspose3D(fd, fh, fw, pd, ph, pw, sd, sh, sw, ci, co, a.as_5d(), filter, act_5d);
         if (this->useBias)
-            this->activation.addBias(bias);
+            this->backend->addbias(this->activation, bias);
     }
 
-    Tensor2D<T>& getweights() { return filter; }
-    Tensor1D<T>& getbias() { return bias; }
+    TensorRef<T> getweights() { return filter.ref(); }
+    TensorRef<T> getbias() { return bias.ref(); }
 
     std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {
         always_assert(inShapes.size() == 1);
@@ -846,6 +849,9 @@ public:
         assert(a.shape.back() == this->A.size);
         this->backend->layernorm(this->A, this->B, a, this->activation, this->scale);
     }
+
+    TensorRef<T> getweights() { return A.ref(); }
+    TensorRef<T> getbias() { return B.ref(); }
 
     std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {
         always_assert(inShapes.size() == 1);

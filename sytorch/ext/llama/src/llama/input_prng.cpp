@@ -93,6 +93,7 @@ void input_layer_owner_thread(int thread_idx, int size, int owner, GroupElement 
 
 void input_layer(GroupElement *x, GroupElement *x_mask, int size, int owner)
 {
+    if (size == 0) return;
     if (party == DEALER) {
         TIME_THIS_BLOCK_FOR_INPUT_IF(
             std::thread thread_pool[num_threads];

@@ -278,8 +278,8 @@ void ClearText<T>::maxPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> 
 template <typename T>
 void ClearText<T>::batchNormInference(const Tensor1D<T> &A, const Tensor1D<T> &B, const Tensor<T> &x, Tensor<T> &y, u64 scale)
 {
-    assert(A.size == B.size);
-    assert(A.size == x.shape.back());
+    assert(A.d1 == B.d1);
+    assert(A.d1 == x.shape.back());
     assert(x.is_same_shape(y));
     u64 channels = x.shape.back();
 
@@ -390,8 +390,8 @@ T invsqrt(T x, u64 scale)
 template <typename T>
 void ClearText<T>::layernorm(const Tensor1D<T> &A, const Tensor1D<T> &B, const Tensor<T> &x, Tensor<T> &y, u64 scale)
 {
-    always_assert(A.size == B.size);
-    always_assert(A.size == x.shape.back());
+    always_assert(A.d1 == B.d1);
+    always_assert(A.d1 == x.shape.back());
     always_assert(x.is_same_shape(y));
     
     u64 channels = x.shape.back();
@@ -418,6 +418,15 @@ void ClearText<T>::layernorm(const Tensor1D<T> &A, const Tensor1D<T> &B, const T
 
     fastfor(x.size(), [&](u64 i) {
         y.data[i] = y.data[i] * A(i % channels) + B(i % channels);
+    });
+}
+
+template <typename T>
+void ClearText<T>::addbias(Tensor<T> &x, const Tensor1D<T> &bias)
+{
+    always_assert(x.shape.back() == bias.d1);
+    fastfor(x.size(), [&](u64 i) {
+        x.data[i] += bias(i % bias.d1);
     });
 }
 

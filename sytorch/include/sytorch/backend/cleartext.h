@@ -63,4 +63,5 @@ public:
     void gelu(const Tensor<T> &in, const Tensor<T> &out, u64 scale);
     void softmax(Tensor<T> &in, Tensor<T> &out, u64 scale);
     void layernorm(const Tensor1D<T> &A, const Tensor1D<T> &B, const Tensor<T> &x, Tensor<T> &y, u64 scale);
+    void addbias(Tensor<T> &x, const Tensor1D<T> &bias);
 };
