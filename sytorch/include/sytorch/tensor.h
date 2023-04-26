@@ -172,6 +172,26 @@ public:
         }
     }
 
+    void input_nchw(int scale)
+    {
+        always_assert(this->shape.size() >= 2); // atleast batch and channel axis
+        
+        u64 batch_size = shape[0];
+        u64 num_channel = shape.back();
+        u64 rest_size = size() / (batch_size * num_channel);
+        
+        for (u64 i = 0; i < size(); i++)
+        {
+            double d;
+            std::cin >> d;
+            u64 curr_batch = i / (num_channel * rest_size);
+            u64 curr_channel = (i / rest_size) % num_channel;
+            u64 curr_rest = i % rest_size;
+            u64 new_idx = curr_batch * (num_channel * rest_size) + curr_rest * num_channel + curr_channel;
+            data[new_idx] = (i64)(d * (1LL << scale));
+        }
+    }
+
     void print()
     {
         std::cout << "Tensor(";
