@@ -195,6 +195,23 @@ public:
         std::cout << ")" << std::endl;
     }
 
+    bool broadcastable(std::vector<u64> broadcast_shape)
+    {
+        if (this->shape.size() > broadcast_shape.size())
+        {
+            return false;
+        }
+        int diff = broadcast_shape.size() - this->shape.size();
+        for (i64 i = this->shape.size() - 1; i >= 0; --i)
+        {
+            if (this->shape[i] != broadcast_shape[i + diff] && this->shape[i] != 1 && broadcast_shape[i + diff] != 1)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
     T multidir_broadcast_value(const std::vector<u64> &broadcast_shape, const std::vector<u64> &idx) const
     {
         always_assert(broadcast_shape.size() >= this->shape.size());
@@ -215,6 +232,28 @@ public:
             }
         }
         return this->value_at(new_idx);
+    }
+
+    Tensor<T> return_broadcasted_tensor(const std::vector<u64> &broadcast_shape) const
+    {
+        always_assert(broadcastable(broadcast_shape));
+        always_assert(broadcast_shape.size() >= this->shape.size());
+        Tensor<T> res(broadcast_shape);
+        std::vector<u64> idx(this->shape.size(), 0);
+        for (u64 i = 0; i < res.size(); i++)
+        {
+            res.data[i] = this->value_at(idx);
+            for (int j = idx.size() - 1; j >= 0; j--)
+            {
+                idx[j]++;
+                if (idx[j] < this->shape[j])
+                {
+                    break;
+                }
+                idx[j] = 0;
+            }
+        }
+        return res;
     }
 
     void load(const std::vector<std::vector<std::vector<std::vector<std::vector<float>>>>> &arr, int scale)

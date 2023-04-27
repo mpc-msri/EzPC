@@ -122,61 +122,31 @@ void ClearText<T>::sqrt(const Tensor<T> &in, const Tensor<T> &out, const Tensor<
 template <typename T>
 void ClearText<T>::pow(const Tensor<T> &in, const Tensor<T> &exp, const Tensor<T> &out, const Tensor<T> &dpow, u64 scale, std::vector<u64> &out_shape)
 {
-    assert(broadcastable(in, out_shape));
-    assert(broadcastable(exp, out_shape));
+    assert(in.broadcastable(out_shape));
+    assert(exp.broadcastable(out_shape));
 
-    std::vector<u64> idx(in.shape.size(), 0);
+    Tensor<T> broadcasted_exp = exp.return_broadcasted_tensor(out_shape);
+    double val1, val2;
     fastfor(out.size(), [&](u64 i)
             {
-        T ex = exp.multidir_broadcast_value(out_shape, idx);
-        dpow.data[i] = in.data[i] / (1LL << scale);
-        ex = ex / (1LL << scale);
-        dpow.data[i] = std::pow(dpow.data[i], ex);
-        out.data[i] = dpow.data[i] * (1LL << scale);
-
-        // update idx
-        for (int j = idx.size() - 1; j >= 0; j--)
-        {
-            idx[j]++;
-            if (idx[j] == out_shape[j])
-            {
-                idx[j] = 0;
-            }
-            else
-            {
-                break;
-            }
-        } });
+            val1 = in.data[i] / (1LL << scale);
+            val2 = broadcasted_exp.data[i] / (1LL << scale);
+            out.data[i] = std::pow(val1, val2) * (1LL << scale); });
 }
 
 template <typename T>
 void ClearText<T>::mul(const Tensor<T> &in, const Tensor<T> &in2, const Tensor<T> &out, const Tensor<T> &dpow, u64 scale, std::vector<u64> &out_shape)
 {
-    assert(broadcastable(in, out_shape));
-    assert(broadcastable(in2, out_shape));
+    assert(in.broadcastable(out_shape));
+    assert(in2.broadcastable(out_shape));
 
-    std::vector<u64> idx(in.shape.size(), 0);
+    Tensor<T> broadcasted_exp = in2.return_broadcasted_tensor(out_shape);
+    double val1, val2;
     fastfor(out.size(), [&](u64 i)
             {
-        T ex = in2.multidir_broadcast_value(out_shape, idx);
-        dpow.data[i] = in.data[i] / (1LL << scale);
-        ex = ex / (1LL << scale);
-        dpow.data[i] = dpow.data[i] * ex;
-        out.data[i] = dpow.data[i] * (1LL << scale);
-
-        // update idx
-        for (int j = idx.size() - 1; j >= 0; j--)
-        {
-            idx[j]++;
-            if (idx[j] == out_shape[j])
-            {
-                idx[j] = 0;
-            }
-            else
-            {
-                break;
-            }
-        } });
+            val1 = in.data[i] / (1LL << scale);
+            val2 = broadcasted_exp.data[i] / (1LL << scale);
+            out.data[i] = val1 * val2 * (1LL << scale); });
 }
 
 template <typename T>
