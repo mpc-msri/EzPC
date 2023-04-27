@@ -299,6 +299,45 @@ void collectHelper(std::vector<T *> &res, T &a, Args & ... args)
     collectHelper(res, args...);
 }
 
+template <typename T, typename... Args>
+void collectByValueHelper(std::vector<T> &res)
+{
+
+}
+
+template <typename T, typename... Args>
+void collectByValueHelper(std::vector<T> &res, T a, Args ... args)
+{
+    res.push_back(a);
+    collectByValueHelper(res, args...);
+}
+
+template <typename T, typename... Args>
+std::vector<T> collectByValue(T first, Args ... args)
+{
+    std::vector<T> res;
+    res.push_back(first);
+    collectByValueHelper(res, args...);
+    return res;
+}
+
+template <typename... Args>
+std::string paramstring(Args ... args)
+{
+    std::stringstream ss;
+    auto arr = collectByValue(args...);
+    for (u64 i = 0; i < arr.size(); ++i)
+    {
+        ss << std::to_string(arr[i]) << "|";
+    }
+    return ss.str();
+}
+
+inline std::string paramstring()
+{
+    return "";
+}
+
 template <typename T>
 std::vector<std::vector<u64>> getShapes(const std::vector<Tensor<T> *> &tensors) {
     std::vector<std::vector<u64>> shapes;

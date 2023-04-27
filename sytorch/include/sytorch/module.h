@@ -15,7 +15,7 @@ public:
     u64 scale;
 
     std::vector<LayerGraphNode<T> *> allNodesInExecutionOrder;
-    const std::vector<std::string> functionalLayers = {"Add", "Concat", "GeLU", "SoftMax"};
+    const std::vector<std::string> functionalLayers = {"Add", "Concat", "GeLU", "SoftMax", "Split", "View", "Transpose", "_MatMul"};
     static std::map<std::string, LayerGraphNode<T> *> functionalLayerMap;
 
 public:
@@ -36,17 +36,22 @@ public:
                 for(auto& parent: node->parents) {
                     id += "|" + std::to_string((uint64_t)(parent));
                 }
+                id = id + "|" + node->layer->paramstring;
+                // make sure it already doesn't exist
+                always_assert(functionalLayerMap.find(id) == functionalLayerMap.end());
                 functionalLayerMap[id] = node;
             }
         });
     }
 
-    LayerGraphNode<T> *getFunctionalNode(const std::string &layerName, std::vector<Tensor<T> *> ips)
+    template <typename... Args>
+    LayerGraphNode<T> *getFunctionalNode(const std::string &layerName, std::vector<Tensor<T> *> ips, Args ... args)
     {
         std::string id = layerName;
         for(auto& ip: ips) {
             id += "|" + std::to_string((uint64_t)(ip->graphNode));
         }
+        id = id + "|" + paramstring(args...);
         if (functionalLayerMap.find(id) == functionalLayerMap.end()) {
             std::cerr << "Layer not found" << std::endl;
             exit(1);
@@ -54,13 +59,14 @@ public:
         return functionalLayerMap[id];
     }
 
-    template <typename LayerType>
-    Tensor<T>& functionalGraphGen(std::vector<Tensor<T> *> arr)
+    template <typename LayerType, typename... Args>
+    Tensor<T>& functionalGraphGen(std::vector<Tensor<T> *> arr, Args ... args)
     {
         for (auto &a : arr) {
             always_assert(a->graphGenMode);
         }
-        auto layer = new LayerType();
+        auto layer = new LayerType(args...);
+        layer->paramstring = paramstring(args...);
         return layer->forward(arr);
     }
 
@@ -249,6 +255,55 @@ public:
 
         auto cNode = getFunctionalNode("SoftMax", {&a});
         auto &c = cNode->layer->forward(a);
+        return c;
+    }
+
+    Tensor<T>& split(Tensor<T> &a, u64 n_splits) 
+    {
+        if (a.graphGenMode) {
+            auto &c = functionalGraphGen<Split<T>>({&a}, n_splits);
+            return c;
+        }
+
+        auto cNode = getFunctionalNode("Split", {&a}, n_splits);
+        auto &c = cNode->layer->forward(a);
+        return c;
+    }
+
+    Tensor<T>& view(Tensor<T> &a, u64 idx)
+    {
+        if (a.graphGenMode) {
+            auto &c = functionalGraphGen<View<T>>({&a}, idx);
+            return c;
+        }
+
+        auto cNode = getFunctionalNode("View", {&a}, idx);
+        auto &c = cNode->layer->forward(a);
+        return c;
+    }
+
+    Tensor<T>& transpose(Tensor<T> &a)
+    {
+        if (a.graphGenMode) {
+            auto &c = functionalGraphGen<Transpose<T>>({&a});
+            return c;
+        }
+
+        auto cNode = getFunctionalNode("Transpose", {&a});
+        auto &c = cNode->layer->forward(a);
+        return c;
+    }
+
+    Tensor<T>& matmul(Tensor<T> &a, Tensor<T> &b)
+    {
+        if (a.graphGenMode) {
+            auto &c = functionalGraphGen<_MatMul<T>>({&a, &b});
+            return c;
+        }
+
+        auto cNode = getFunctionalNode("_MatMul", {&a, &b});
+        std::vector<Tensor<T> *> arr = {&a, &b};
+        auto &c = cNode->layer->forward(arr);
         return c;
     }
 

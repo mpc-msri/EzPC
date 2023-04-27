@@ -159,10 +159,11 @@ public:
         }
     }
 
-    void copy(const Tensor<T> &other) {
+    void copy(const Tensor<T> &other, bool copyGraph = true) {
         assert_same_shape(other);
         memcpy(data, other.data, size() * sizeof(T));
-        this->graphNode = other.graphNode;
+        if (copyGraph)
+            this->graphNode = other.graphNode;
     }
 
     void fill(T x) {
@@ -296,6 +297,15 @@ public:
     {
         always_assert(this->shape.size() == 2);
         return Tensor2D<T>(this->data, this->shape[0], this->shape[1]);
+    }
+
+    Tensor<T> view(u64 i)
+    {
+        assert(i < shape[0]);
+        u64 newsize = size() / shape[0];
+        auto newshape = shape;
+        newshape.erase(newshape.begin());
+        return Tensor<T>(data + i * newsize, newshape);
     }
 };
 
