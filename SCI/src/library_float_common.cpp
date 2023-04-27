@@ -2450,19 +2450,19 @@ void Gelu_thread(
 	// 0.5 * x * (1 + np.tanh(np.sqrt(2 / np.pi) * (x + 0.044715 * x**3))
 	FPArray half_flat = fpopArr[tid]->input<float>(ALICE, sz, (float)0.5, m_bits, e_bits) ;
 	FPArray one_flat = fpopArr[tid]->input<float>(ALICE, sz, (float)1.0, m_bits, e_bits) ;
-	FPArray const1_flat = fpopArr[tid]->input<float>(ALICE, sz, (float)0.79788, m_bits, e_bits) ;
+	FPArray const1_flat = fpopArr[tid]->input<float>(ALICE, sz, (float)0.797884, m_bits, e_bits) ;
 	FPArray const2_flat = fpopArr[tid]->input<float>(ALICE, sz, (float)0.044715, m_bits, e_bits) ;
 
 	FPArray x2 = fpopArr[tid]->mul(in_flat, in_flat) ;
 	FPArray x3 = fpopArr[tid]->mul(x2, in_flat) ;
-	FPArray c2x3 = fpopArr[tid]->mul(x2, const2_flat) ;	
+	FPArray c2x3 = fpopArr[tid]->mul(x3, const2_flat) ;	
 	FPArray tanh_arg_mul1 = fpopArr[tid]->add(in_flat, c2x3) ;
 	FPArray tanh_arg = fpopArr[tid]->mul(tanh_arg_mul1, const1_flat) ;
 	FPArray tanh_out ;
 	if (m_bits == 23)
-		tanh_out = fpmathArr[tid]->tanh_fp32(in_flat) ;
+		tanh_out = fpmathArr[tid]->tanh_fp32(tanh_arg) ;
 	else if (m_bits == 7)
-		tanh_out = fpmathArr[tid]->tanh_bf16(in_flat) ;
+		tanh_out = fpmathArr[tid]->tanh_bf16(tanh_arg) ;
 
 	FPArray out_mul2 = fpopArr[tid]->add(one_flat, tanh_out) ;
 	FPArray out_mul1 = fpopArr[tid]->mul(half_flat, in_flat) ;
