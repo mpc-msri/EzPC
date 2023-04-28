@@ -307,6 +307,12 @@ public:
         return c;
     }
 
+    T invsqrt(double x)
+    {
+        double t = 1/sqrt(x);
+        return T(t * (1LL << scale));
+    }
+
     void train()
     {
         topologicalApply(root, [=](LayerGraphNode<T> *node, LayerGraphNode<T> *_root) {
