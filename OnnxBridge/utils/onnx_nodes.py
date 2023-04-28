@@ -145,6 +145,7 @@ class OnnxNode:
 
     @classmethod
     def Reshape(cls, node):
+        assert len(node.inputs) == 2
         pass
 
     @classmethod

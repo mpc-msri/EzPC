@@ -17,11 +17,12 @@ def func_call(node, value_info):
         "Flatten": "Flatten",
         "Gemm": "FC",
         "Concat": "concat",
-        "BatchNormalization": "BatchNorm2dInference",
+        "BatchNormalization": "BatchNormInference",
         "AveragePool": "AvgPool2D",
         "GlobalAveragePool": "GlobalAvgPool2D",
         "Add": "add",
         "ConvTranspose": "ConvTranspose3D",
+        "Reshape": "Reshape",
     }
     return func_map[node.op_type]
 
@@ -65,6 +66,7 @@ def inputs_to_take(node):
         "BatchNormalization": 1,
         "GlobalAveragePool": 1,
         "ConvTranspose": 1,
+        "Reshape": 1,
     }
     return tmp_dict[node]
 

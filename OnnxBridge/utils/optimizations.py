@@ -140,8 +140,15 @@ def dump_model_weights_as_dat(model, model_dir, model_name):
     exclude.append(
         model.graph.input[0].name
     )  # because we want to exclude input in initializers
+
+    # nodes for which we don't want to dump initializers
+    no_initializer_nodes = ["Reshape"]
+
     initializers = [
-        inp for node in model.graph.node for inp in node.input if inp not in exclude
+        inp
+        for node in model.graph.node
+        for inp in node.input
+        if inp not in exclude and node.op_type not in no_initializer_nodes
     ]
 
     model_name_to_val_dict = {

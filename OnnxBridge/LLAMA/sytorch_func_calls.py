@@ -229,8 +229,9 @@ class Operator:
     @classmethod
     def Reshape(cls, attributes, inputs, outputs, value_info, var_dict, mode, indent):
         logger.debug("Inside Reshape function call.")
-        return str(f"{'   ' * indent}new Reshape<T>();")
-        # todo : check format
+        return str(
+            f"{'   ' * indent}new Reshape<T>({'{'}{iterate_list(value_info[outputs[0]][1])}{'}'});"
+        )
 
     @classmethod
     def Gemm(cls, attributes, inputs, outputs, value_info, var_dict, mode, indent):
