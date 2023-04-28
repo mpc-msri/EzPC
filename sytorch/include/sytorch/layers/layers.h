@@ -545,8 +545,7 @@ template <typename T>
 class Sqrt : public Layer<T>
 {
 public:
-    Tensor<T> dsqrt;
-    Sqrt() : Layer<T>("Sqrt"), dsqrt({0}) {}
+    Sqrt() : Layer<T>("Sqrt") {}
 
     void _resize(const std::vector<std::vector<u64>> &shapes)
     {
@@ -557,7 +556,7 @@ public:
 
     void _forward(Tensor<T> &a)
     {
-        this->backend->sqrt(a, this->activation, this->dsqrt, this->scale);
+        this->backend->sqrt(a, this->activation, this->scale);
     }
 
     std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes)
@@ -572,26 +571,40 @@ template <typename T>
 class Pow : public Layer<T>
 {
 public:
-    Tensor<T> dpow;
     Tensor<T> exp;
     std::vector<u64> out_shape;
-    Pow(const std::vector<u64> out_shape, const std::vector<u64> exp_shape) : Layer<T>("Pow"), dpow({0}), out_shape(out_shape), exp(exp_shape) {}
+    Pow(const std::vector<u64> out_shape, const std::vector<u64> exp_shape, bool input2_as_param = false) : Layer<T>("Pow"), out_shape(out_shape), exp(exp_shape)
+    {
+        this->input2_as_param = input2_as_param;
+    }
 
     void _resize(const std::vector<std::vector<u64>> &shapes)
     {
-        always_assert(shapes.size() == 1);
+        always_assert(shapes.size() == 1 || shapes.size() == 2);
         auto &shape = shapes[0];
-        this->dpow.resize(shape);
     }
 
     void _forward(Tensor<T> &a)
     {
-        this->backend->pow(a, this->exp, this->activation, this->dpow, this->scale, this->out_shape);
+        this->backend->pow(a, this->exp, this->activation, this->scale, this->out_shape);
+    }
+
+    void _forward(std::vector<Tensor<T> *> &a)
+    {
+        always_assert(a.size() == 1 or a.size() == 2);
+        if (a.size() == 1)
+        {
+            this->backend->pow(*a[0], this->input2, this->activation, this->scale, this->out_shape);
+        }
+        else
+        {
+            this->backend->pow(*a[0], *a[1], this->activation, this->scale, this->out_shape);
+        }
     }
 
     std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes)
     {
-        always_assert(inShapes.size() == 1);
+        always_assert(inShapes.size() == 1 or inShapes.size() == 2);
         auto &inShape = inShapes[0];
         return inShape;
     }
@@ -603,26 +616,40 @@ template <typename T>
 class Mul : public Layer<T>
 {
 public:
-    Tensor<T> dmul;
     Tensor<T> input2;
     std::vector<u64> out_shape;
-    Mul(const std::vector<u64> out_shape, const std::vector<u64> in2_shape) : Layer<T>("Mul"), dmul({0}), out_shape(out_shape), input2(in2_shape) {}
+    Mul(const std::vector<u64> out_shape, const std::vector<u64> in2_shape, bool input2_as_param = false) : Layer<T>("Mul"), out_shape(out_shape), input2(in2_shape)
+    {
+        this->input2_as_param = input2_as_param;
+    }
 
     void _resize(const std::vector<std::vector<u64>> &shapes)
     {
-        always_assert(shapes.size() == 1);
+        always_assert(shapes.size() == 1 && shapes[0].size() == 2);
         auto &shape = shapes[0];
-        this->dmul.resize(shape);
     }
 
     void _forward(Tensor<T> &a)
     {
-        this->backend->mul(a, this->input2, this->activation, this->dmul, this->scale, this->out_shape);
+        this->backend->mul(a, this->input2, this->activation, this->scale, this->out_shape);
+    }
+
+    void _forward(std::vector<Tensor<T> *> &a)
+    {
+        always_assert(a.size() == 1 or a.size() == 2);
+        if (a.size() == 1)
+        {
+            this->backend->mul(*a[0], this->input2, this->activation, this->scale, this->out_shape);
+        }
+        else
+        {
+            this->backend->mul(*a[0], *a[1], this->activation, this->scale, this->out_shape);
+        }
     }
 
     std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes)
     {
-        always_assert(inShapes.size() == 1);
+        always_assert(inShapes.size() == 1 or inShapes.size() == 2);
         auto &inShape = inShapes[0];
         return inShape;
     }
@@ -634,10 +661,9 @@ template <typename T>
 class Sub : public Layer<T>
 {
 public:
-    Tensor<T> dsub;
     Tensor<T> input2;
     std::vector<u64> out_shape;
-    Sub(const std::vector<u64> out_shape, const std::vector<u64> in2_shape, bool input2_as_param = false) : Layer<T>("Sub"), dsub({0}), out_shape(out_shape), input2(in2_shape)
+    Sub(const std::vector<u64> out_shape, const std::vector<u64> in2_shape, bool input2_as_param = false) : Layer<T>("Sub"), out_shape(out_shape), input2(in2_shape)
     {
         this->input2_as_param = input2_as_param;
     }
@@ -646,17 +672,11 @@ public:
     {
         always_assert(shapes.size() == 1 or shapes.size() == 2);
         auto &shape = shapes[0];
-        this->dsub.resize(shape);
     }
 
     void _forward(Tensor<T> &a)
     {
-        this->backend->sub(a, this->input2, this->activation, this->dsub, this->scale, this->out_shape);
-    }
-
-    void _forward(Tensor<T> &a, Tensor<T> &b)
-    {
-        this->backend->sub(a, b, this->activation, this->dsub, this->scale, this->out_shape);
+        this->backend->sub(a, this->input2, this->activation, this->scale, this->out_shape);
     }
 
     void _forward(std::vector<Tensor<T> *> &a)
@@ -664,11 +684,11 @@ public:
         always_assert(a.size() == 1 or a.size() == 2);
         if (a.size() == 1)
         {
-            this->backend->sub(*a[0], this->input2, this->activation, this->dsub, this->scale, this->out_shape);
+            this->backend->sub(*a[0], this->input2, this->activation, this->scale, this->out_shape);
         }
         else
         {
-            this->backend->sub(*a[0], *a[1], this->activation, this->dsub, this->scale, this->out_shape);
+            this->backend->sub(*a[0], *a[1], this->activation, this->scale, this->out_shape);
         }
     }
 
@@ -685,10 +705,9 @@ template <typename T>
 class Div : public Layer<T>
 {
 public:
-    Tensor<T> ddiv;
     Tensor<T> input2;
     std::vector<u64> out_shape;
-    Div(const std::vector<u64> out_shape, const std::vector<u64> in2_shape, bool input2_as_param = false) : Layer<T>("Div"), ddiv({0}), out_shape(out_shape), input2(in2_shape)
+    Div(const std::vector<u64> out_shape, const std::vector<u64> in2_shape, bool input2_as_param = false) : Layer<T>("Div"), out_shape(out_shape), input2(in2_shape)
     {
         this->input2_as_param = input2_as_param;
     }
@@ -697,17 +716,11 @@ public:
     {
         always_assert(shapes.size() == 1 or shapes.size() == 2);
         auto &shape = shapes[0];
-        this->ddiv.resize(shape);
     }
 
     void _forward(Tensor<T> &a)
     {
-        this->backend->div_gen(a, this->input2, this->activation, this->ddiv, this->scale, this->out_shape);
-    }
-
-    void _forward(Tensor<T> &a, Tensor<T> &b)
-    {
-        this->backend->div_gen(a, b, this->activation, this->ddiv, this->scale, this->out_shape);
+        this->backend->div_gen(a, this->input2, this->activation, this->scale, this->out_shape);
     }
 
     void _forward(std::vector<Tensor<T> *> &a)
@@ -715,11 +728,11 @@ public:
         always_assert(a.size() == 1 or a.size() == 2);
         if (a.size() == 1)
         {
-            this->backend->div_gen(*a[0], this->input2, this->activation, this->ddiv, this->scale, this->out_shape);
+            this->backend->div_gen(*a[0], this->input2, this->activation, this->scale, this->out_shape);
         }
         else
         {
-            this->backend->div_gen(*a[0], *a[1], this->activation, this->ddiv, this->scale, this->out_shape);
+            this->backend->div_gen(*a[0], *a[1], this->activation, this->scale, this->out_shape);
         }
     }
 
@@ -736,10 +749,9 @@ template <typename T>
 class Add_gen : public Layer<T>
 {
 public:
-    Tensor<T> dadd;
     Tensor<T> input2;
     std::vector<u64> out_shape;
-    Add_gen(const std::vector<u64> out_shape, const std::vector<u64> in2_shape, bool input2_as_param = false) : Layer<T>("Add_gen"), dadd({0}), out_shape(out_shape), input2(in2_shape)
+    Add_gen(const std::vector<u64> out_shape, const std::vector<u64> in2_shape, bool input2_as_param = false) : Layer<T>("Add_gen"), out_shape(out_shape), input2(in2_shape)
     {
         this->input2_as_param = input2_as_param;
     }
@@ -748,17 +760,11 @@ public:
     {
         always_assert(shapes.size() == 1 or shapes.size() == 2);
         auto &shape = shapes[0];
-        this->dadd.resize(shape);
     }
 
     void _forward(Tensor<T> &a)
     {
-        this->backend->add_gen(a, this->input2, this->activation, this->dadd, this->scale, this->out_shape);
-    }
-
-    void _forward(Tensor<T> &a, Tensor<T> &b)
-    {
-        this->backend->add_gen(a, b, this->activation, this->dadd, this->scale, this->out_shape);
+        this->backend->add_gen(a, this->input2, this->activation, this->scale, this->out_shape);
     }
 
     void _forward(std::vector<Tensor<T> *> &a)
@@ -766,11 +772,11 @@ public:
         always_assert(a.size() == 1 or a.size() == 2);
         if (a.size() == 1)
         {
-            this->backend->add_gen(*a[0], this->input2, this->activation, this->dadd, this->scale, this->out_shape);
+            this->backend->add_gen(*a[0], this->input2, this->activation, this->scale, this->out_shape);
         }
         else
         {
-            this->backend->add_gen(*a[0], *a[1], this->activation, this->dadd, this->scale, this->out_shape);
+            this->backend->add_gen(*a[0], *a[1], this->activation, this->scale, this->out_shape);
         }
     }
 

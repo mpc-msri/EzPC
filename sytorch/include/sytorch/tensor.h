@@ -195,7 +195,7 @@ public:
         std::cout << ")" << std::endl;
     }
 
-    bool broadcastable(std::vector<u64> broadcast_shape)
+    bool broadcastable(std::vector<u64> broadcast_shape) const
     {
         if (this->shape.size() > broadcast_shape.size())
         {

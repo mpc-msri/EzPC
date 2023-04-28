@@ -78,7 +78,7 @@ def inputs_to_take(node, output_list):
         "Div": 1,
         "ReduceMean": 1,
     }
-    broadcast_nodes = ["Sub", "Div"]
+    broadcast_nodes = ["Pow", "Mul", "Sub", "Div", "Add"]
     if node.op_type in broadcast_nodes:
         input2_as_param = True if node.inputs[1] not in output_list else False
         if not input2_as_param:

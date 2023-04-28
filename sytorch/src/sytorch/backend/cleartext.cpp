@@ -108,19 +108,20 @@ void ClearText<T>::relu(const Tensor<T> &in, const Tensor<T> &out, const Tensor<
 }
 
 template <typename T>
-void ClearText<T>::sqrt(const Tensor<T> &in, const Tensor<T> &out, const Tensor<T> &dsqrt, u64 scale)
+void ClearText<T>::sqrt(const Tensor<T> &in, const Tensor<T> &out, u64 scale)
 {
     assert(in.is_same_shape(out));
     assert(in.is_same_shape(dsqrt));
+    double val1;
     fastfor(in.size(), [&](u64 i)
             {
-        dsqrt.data[i] = in.data[i] / (1LL << scale);
-        dsqrt.data[i] = std::sqrt(dsqrt.data[i]);
-        out.data[i] = dsqrt.data[i] * (1LL << scale); });
+        val1 = (double)in.data[i] / (1LL << scale);
+        val1 = std::sqrt(val1);
+        out.data[i] = val1 * (1LL << scale); });
 }
 
 template <typename T>
-void ClearText<T>::pow(const Tensor<T> &in, const Tensor<T> &exp, const Tensor<T> &out, const Tensor<T> &dpow, u64 scale, std::vector<u64> &out_shape)
+void ClearText<T>::pow(const Tensor<T> &in, const Tensor<T> &exp, const Tensor<T> &out, u64 scale, std::vector<u64> &out_shape)
 {
     assert(in.broadcastable(out_shape));
     assert(exp.broadcastable(out_shape));
@@ -129,114 +130,69 @@ void ClearText<T>::pow(const Tensor<T> &in, const Tensor<T> &exp, const Tensor<T
     double val1, val2;
     fastfor(out.size(), [&](u64 i)
             {
-            val1 = in.data[i] / (1LL << scale);
-            val2 = broadcasted_exp.data[i] / (1LL << scale);
+            val1 = (double)in.data[i] / (1LL << scale);
+            val2 = (double)broadcasted_exp.data[i] / (1LL << scale);
             out.data[i] = std::pow(val1, val2) * (1LL << scale); });
 }
 
 template <typename T>
-void ClearText<T>::mul(const Tensor<T> &in, const Tensor<T> &in2, const Tensor<T> &out, const Tensor<T> &dpow, u64 scale, std::vector<u64> &out_shape)
+void ClearText<T>::mul(const Tensor<T> &in, const Tensor<T> &in2, const Tensor<T> &out, u64 scale, std::vector<u64> &out_shape)
 {
     assert(in.broadcastable(out_shape));
     assert(in2.broadcastable(out_shape));
 
-    Tensor<T> broadcasted_exp = in2.return_broadcasted_tensor(out_shape);
+    Tensor<T> broadcasted_in2 = in2.return_broadcasted_tensor(out_shape);
     double val1, val2;
     fastfor(out.size(), [&](u64 i)
             {
-            val1 = in.data[i] / (1LL << scale);
-            val2 = broadcasted_exp.data[i] / (1LL << scale);
+            val1 = (double)in.data[i] / (1LL << scale);
+            val2 = (double)broadcasted_in2.data[i] / (1LL << scale);
             out.data[i] = val1 * val2 * (1LL << scale); });
 }
 
 template <typename T>
-void ClearText<T>::sub(const Tensor<T> &in, const Tensor<T> &in2, const Tensor<T> &out, const Tensor<T> &dpow, u64 scale, std::vector<u64> &out_shape)
+void ClearText<T>::sub(const Tensor<T> &in, const Tensor<T> &in2, const Tensor<T> &out, u64 scale, std::vector<u64> &out_shape)
 {
     assert(broadcastable(in, out_shape));
     assert(broadcastable(in2, out_shape));
 
-    std::vector<u64> idx(in.shape.size(), 0);
+    Tensor<T> broadcasted_in2 = in2.return_broadcasted_tensor(out_shape);
+    double val1, val2;
     fastfor(out.size(), [&](u64 i)
             {
-        T ex = in2.multidir_broadcast_value(out_shape, idx);
-        dpow.data[i] = in.data[i] / (1LL << scale);
-        ex = ex / (1LL << scale);
-        dpow.data[i] = dpow.data[i] - ex;
-        out.data[i] = dpow.data[i] * (1LL << scale);
-
-        // update idx
-        for (int j = idx.size() - 1; j >= 0; j--)
-        {
-            idx[j]++;
-            if (idx[j] == out_shape[j])
-            {
-                idx[j] = 0;
-            }
-            else
-            {
-                break;
-            }
-        } });
+        val1 = (double)in.data[i] / (1LL << scale);
+        val2 = (double)broadcasted_in2.data[i] / (1LL << scale);
+        out.data[i] = (val1 - val2) * (1LL << scale); });
 }
 
 template <typename T>
-void ClearText<T>::div_gen(const Tensor<T> &in, const Tensor<T> &in2, const Tensor<T> &out, const Tensor<T> &dpow, u64 scale, std::vector<u64> &out_shape)
+void ClearText<T>::div_gen(const Tensor<T> &in, const Tensor<T> &in2, const Tensor<T> &out, u64 scale, std::vector<u64> &out_shape)
 {
     assert(broadcastable(in, out_shape));
     assert(broadcastable(in2, out_shape));
 
-    std::vector<u64> idx(in.shape.size(), 0);
+    double val1, val2;
+    Tensor<T> broadcasted_in2 = in2.return_broadcasted_tensor(out_shape);
     fastfor(out.size(), [&](u64 i)
             {
-        T ex = in2.multidir_broadcast_value(out_shape, idx);
-        dpow.data[i] = in.data[i] / (1LL << scale);
-        ex = ex / (1LL << scale);
-        dpow.data[i] = dpow.data[i] / ex;
-        out.data[i] = dpow.data[i] * (1LL << scale);
-
-        // update idx
-        for (int j = idx.size() - 1; j >= 0; j--)
-        {
-            idx[j]++;
-            if (idx[j] == out_shape[j])
-            {
-                idx[j] = 0;
-            }
-            else
-            {
-                break;
-            }
-        } });
+        val1 = (double)in.data[i] / (1LL << scale);
+        val2 = (double)broadcasted_in2.data[i] / (1LL << scale);
+        out.data[i] = (val1 / val2) * (1LL << scale); });
 }
 
 template <typename T>
-void ClearText<T>::add_gen(const Tensor<T> &in, const Tensor<T> &in2, const Tensor<T> &out, const Tensor<T> &dpow, u64 scale, std::vector<u64> &out_shape)
+void ClearText<T>::add_gen(const Tensor<T> &in, const Tensor<T> &in2, const Tensor<T> &out, u64 scale, std::vector<u64> &out_shape)
 {
     assert(broadcastable(in, out_shape));
     assert(broadcastable(in2, out_shape));
 
-    std::vector<u64> idx(in.shape.size(), 0);
+    double val1, val2;
+    Tensor<T> broadcasted_in2 = in2.return_broadcasted_tensor(out_shape);
     fastfor(out.size(), [&](u64 i)
             {
-        T ex = in2.multidir_broadcast_value(out_shape, idx);
-        dpow.data[i] = in.data[i] / (1LL << scale);
-        ex = ex / (1LL << scale);
-        dpow.data[i] = dpow.data[i] + ex;
-        out.data[i] = dpow.data[i] * (1LL << scale);
-
-        // update idx
-        for (int j = idx.size() - 1; j >= 0; j--)
-        {
-            idx[j]++;
-            if (idx[j] == out_shape[j])
-            {
-                idx[j] = 0;
-            }
-            else
-            {
-                break;
-            }
-        } });
+        val1 = (double)in.data[i] / (1LL << scale);
+        val2 = (double)broadcasted_in2.data[i] / (1LL << scale);
+        out.data[i] = (val1 + val2) * (1LL << scale); });
 }
 
 template <typename T>

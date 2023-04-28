@@ -55,22 +55,22 @@ public:
     virtual void relu(const Tensor<T> &in, const Tensor<T> &out, const Tensor<T> &drelu, u64 scale, int mode) NOT_IMPLEMENTED;
 
     // sqrt API
-    virtual void sqrt(const Tensor<T> &in, const Tensor<T> &out, const Tensor<T> &dsqrt, u64 scale) NOT_IMPLEMENTED;
+    virtual void sqrt(const Tensor<T> &in, const Tensor<T> &out, u64 scale) NOT_IMPLEMENTED;
 
     // pow API
-    virtual void pow(const Tensor<T> &in, const Tensor<T> &exp, const Tensor<T> &out, const Tensor<T> &dpow, u64 scale, std::vector<u64> &out_shape) NOT_IMPLEMENTED;
+    virtual void pow(const Tensor<T> &in, const Tensor<T> &exp, const Tensor<T> &out, u64 scale, std::vector<u64> &out_shape) NOT_IMPLEMENTED;
 
     // Mul API
-    virtual void mul(const Tensor<T> &in, const Tensor<T> &in2, const Tensor<T> &out, const Tensor<T> &dmul, u64 scale, std::vector<u64> &out_shape) NOT_IMPLEMENTED;
+    virtual void mul(const Tensor<T> &in, const Tensor<T> &in2, const Tensor<T> &out, u64 scale, std::vector<u64> &out_shape) NOT_IMPLEMENTED;
 
     // sub API
-    virtual void sub(const Tensor<T> &in, const Tensor<T> &in2, const Tensor<T> &out, const Tensor<T> &dsub, u64 scale, std::vector<u64> &out_shape) NOT_IMPLEMENTED;
+    virtual void sub(const Tensor<T> &in, const Tensor<T> &in2, const Tensor<T> &out, u64 scale, std::vector<u64> &out_shape) NOT_IMPLEMENTED;
 
     // div API
-    virtual void div_gen(const Tensor<T> &in, const Tensor<T> &in2, const Tensor<T> &out, const Tensor<T> &ddiv, u64 scale, std::vector<u64> &out_shape) NOT_IMPLEMENTED;
+    virtual void div_gen(const Tensor<T> &in, const Tensor<T> &in2, const Tensor<T> &out, u64 scale, std::vector<u64> &out_shape) NOT_IMPLEMENTED;
 
     // add API
-    virtual void add_gen(const Tensor<T> &in, const Tensor<T> &in2, const Tensor<T> &out, const Tensor<T> &dadd, u64 scale, std::vector<u64> &out_shape) NOT_IMPLEMENTED;
+    virtual void add_gen(const Tensor<T> &in, const Tensor<T> &in2, const Tensor<T> &out, u64 scale, std::vector<u64> &out_shape) NOT_IMPLEMENTED;
 
     // avgpool API
     virtual void div(const Tensor<T> &in, T divisor, u64 scale) NOT_IMPLEMENTED;

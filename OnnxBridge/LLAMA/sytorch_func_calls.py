@@ -98,8 +98,9 @@ class Operator:
         indent,
     ):
         logger.debug("Inside Pow function call.")
+        input2_as_param = "true" if inputs[1] not in output_list else "false"
         return str(
-            f"{'   ' * indent}new Pow<T>({'{'}{iterate_list(value_info[outputs[0]][1])}{'}'},{'{'}{iterate_list(value_info[inputs[1]][1])}{'}'});"
+            f"{'   ' * indent}new Pow<T>({'{'}{iterate_list(value_info[outputs[0]][1])}{'}'},{'{'}{iterate_list(value_info[inputs[1]][1])}{'}'}, {input2_as_param});"
         )
 
     @classmethod
@@ -115,8 +116,9 @@ class Operator:
         indent,
     ):
         logger.debug("Inside Mul function call.")
+        input2_as_param = "true" if inputs[1] not in output_list else "false"
         return str(
-            f"{'   ' * indent}new Mul<T>({'{'}{iterate_list(value_info[outputs[0]][1])}{'}'},{'{'}{iterate_list(value_info[inputs[1]][1])}{'}'});"
+            f"{'   ' * indent}new Mul<T>({'{'}{iterate_list(value_info[outputs[0]][1])}{'}'},{'{'}{iterate_list(value_info[inputs[1]][1])}{'}'}, {input2_as_param});"
         )
 
     @classmethod
