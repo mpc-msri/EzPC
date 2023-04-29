@@ -221,12 +221,16 @@ void GemmAdd3(int32_t s1, int32_t s2, int32_t s3,
 	vector<vector<vector<FPArray>>> &outArr);
 
 // hotArr is positive if input is negative
-static vector<BoolArray> DEFAULT_VECTOR;
 void Relu(
 	int32_t s1,
 	vector<FPArray> &inArr,
 	vector<FPArray> &outArr,
-	vector<BoolArray> &hotArr = DEFAULT_VECTOR);
+	vector<BoolArray> &hotArr);
+
+void Relu_nomask(
+	int32_t s1,
+	vector<FPArray> &inArr,
+	vector<FPArray> &outArr) ;
 
 // hotArr is positive if input is negative
 void Leaky_Relu(
@@ -234,7 +238,13 @@ void Leaky_Relu(
 	float alpha,
 	vector<FPArray> &inArr,
 	vector<FPArray> &outArr,
-	vector<BoolArray> &hotArr = DEFAULT_VECTOR);
+	vector<BoolArray> &hotArr);
+
+void Leaky_Relu_nomask(
+	int32_t s1,
+	float alpha,
+	vector<FPArray> &inArr,
+	vector<FPArray> &outArr) ;
 
 void getBiasDer(int32_t m, int32_t s2, vector<vector<FPArray>> &batchSoftDer, vector<FPArray> &biasDer);
 
@@ -293,6 +303,14 @@ void MaxPool(
 	int32_t imgH, int32_t imgW,
 	vector<vector<vector<vector<FPArray>>>>& inArr, 
 	vector<vector<vector<vector<BoolArray>>>> &poolmask, 
+	vector<vector<vector<vector<FPArray>>>>& outArr) ;
+
+void MaxPool_nomask(
+	int32_t N, int32_t H, int32_t W, int32_t C, 
+	int32_t ksizeH, int32_t ksizeW, 
+	int32_t strideH, int32_t strideW,
+	int32_t imgH, int32_t imgW,
+	vector<vector<vector<vector<FPArray>>>>& inArr, 
 	vector<vector<vector<vector<FPArray>>>>& outArr) ;
 
 // Der arr comes in as FH, FW, CI, CO

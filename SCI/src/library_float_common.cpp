@@ -896,6 +896,85 @@ void Relu(
 	delete[] hot ;
 }
 
+void Relu_nomask_thread(
+	int tid, int sz, int m_bits, int e_bits,
+	uint8_t *in_s, uint8_t *in_z, uint64_t *in_m, uint64_t *in_e,   
+	uint8_t *out_s, uint8_t *out_z, uint64_t *out_m, uint64_t *out_e
+	) {
+
+	FPArray in_flat = fpopArr[tid]->input(WHICHPARTY, sz, in_s, in_z, in_m, in_e, m_bits, e_bits) ;
+
+	BoolArray sgn, zero ;
+	FixArray _2, _3 ;
+	std::tie(sgn, zero, _2, _3) = get_components(tid, in_flat) ;
+
+	FPArray zero_flat = fpopArr[tid]->input<float>(ALICE, sz, (float)0.0, m_bits, e_bits) ;
+	FPArray out_flat = fpopArr[tid]->if_else(sgn, zero_flat, in_flat) ;
+
+	memcpy(out_s, out_flat.s, sz*sizeof(uint8_t)) ;
+	memcpy(out_z, out_flat.z, sz*sizeof(uint8_t)) ;
+	memcpy(out_m, out_flat.m, sz*sizeof(uint64_t)) ;
+	memcpy(out_e, out_flat.e, sz*sizeof(uint64_t)) ;
+}
+
+void Relu_nomask(
+	int32_t s1, 
+	vector<FPArray> &inArr, 
+	vector<FPArray> &outArr) {
+	int m_bits, e_bits ;
+	m_bits = inArr[0].m_bits ;
+	e_bits = inArr[0].e_bits ;
+
+	uint8_t *in_s = new uint8_t[s1] ;
+	uint8_t *in_z = new uint8_t[s1] ;
+	uint64_t *in_m = new uint64_t[s1] ;
+	uint64_t *in_e = new uint64_t[s1] ;
+	for (int i = 0 ; i < s1 ; i++) {
+		in_s[i] = inArr[i].s[0] ;
+		in_z[i] = inArr[i].z[0] ;
+		in_m[i] = inArr[i].m[0] ;
+		in_e[i] = inArr[i].e[0] ;
+	}
+
+	uint8_t *out_s = new uint8_t[s1] ;
+	uint8_t *out_z = new uint8_t[s1] ;
+	uint64_t *out_m = new uint64_t[s1] ;
+	uint64_t *out_e = new uint64_t[s1] ;
+
+	vector<int> chunks = get_chunks(s1, __nt) ;
+	thread threads[MAX_THREADS] ;
+	int offset = 0 ;
+	for (int i = 0 ; i < __nt ; i++) {
+		if (chunks[i] > 0) {
+			threads[i] = thread(Relu_nomask_thread,
+				i, chunks[i], m_bits, e_bits,
+				in_s + offset, in_z + offset, in_m + offset, in_e + offset,
+				out_s + offset, out_z + offset, out_m + offset, out_e + offset
+			) ;
+			offset += chunks[i] ;
+		}
+	}
+
+	for (int i = 0 ; i < __nt ; i++)
+		if (chunks[i] > 0)
+			threads[i].join() ;
+
+	for (int i = 0 ; i < s1 ; i++) {
+		outArr[i].m_bits = m_bits ;
+		outArr[i].e_bits = e_bits ;
+
+		outArr[i].s[0] = out_s[i] ;
+		outArr[i].z[0] = out_z[i] ;
+		outArr[i].m[0] = out_m[i] ;
+		outArr[i].e[0] = out_e[i] ;
+	}
+
+	delete[] in_s ; delete[] out_s ;
+	delete[] in_z ; delete[] out_z ;
+	delete[] in_m ; delete[] out_m ;
+	delete[] in_e ; delete[] out_e ;
+}
+
 void Leaky_Relu_thread(
 	float alpha, int tid, int sz, int m_bits, int e_bits,
 	uint8_t *in_s, uint8_t *in_z, uint64_t *in_m, uint64_t *in_e,
@@ -910,7 +989,7 @@ void Leaky_Relu_thread(
 
 	FPArray alpha_flat = __fp_op->input<float>(ALICE, 1, alpha, m_bits, e_bits);
 
-	FPArray alphax_flat = __fp_op->mul(alpha_flat, in_flat);
+	FPArray alphax_flat = fpopArr[tid]->mul(alpha_flat, in_flat);
 	FPArray out_flat = fpopArr[tid]->if_else(sgn, alphax_flat, in_flat);
 
 	memcpy(out_s, out_flat.s, sz * sizeof(uint8_t));
@@ -989,6 +1068,91 @@ void Leaky_Relu(
 	delete[] in_e;
 	delete[] out_e;
 	delete[] hot;
+}
+
+void Leaky_Relu_nomask_thread(
+	float alpha, int tid, int sz, int m_bits, int e_bits,
+	uint8_t *in_s, uint8_t *in_z, uint64_t *in_m, uint64_t *in_e,
+	uint8_t *out_s, uint8_t *out_z, uint64_t *out_m, uint64_t *out_e)
+{
+
+	FPArray in_flat = fpopArr[tid]->input(WHICHPARTY, sz, in_s, in_z, in_m, in_e, m_bits, e_bits);
+	FPArray alpha_flat = __fp_op->input<float>(ALICE, 1, alpha, m_bits, e_bits);
+
+	BoolArray sgn, zero;
+	FixArray _2, _3;
+	std::tie(sgn, zero, _2, _3) = get_components(tid, in_flat);
+
+	FPArray alphax_flat = fpopArr[tid]->mul(alpha_flat, in_flat);
+	FPArray out_flat = fpopArr[tid]->if_else(sgn, alphax_flat, in_flat);
+
+	memcpy(out_s, out_flat.s, sz * sizeof(uint8_t));
+	memcpy(out_z, out_flat.z, sz * sizeof(uint8_t));
+	memcpy(out_m, out_flat.m, sz * sizeof(uint64_t));
+	memcpy(out_e, out_flat.e, sz * sizeof(uint64_t));
+}
+
+void Leaky_Relu_nomask(
+	int32_t s1,
+	float alpha,
+	vector<FPArray> &inArr,
+	vector<FPArray> &outArr)
+{
+	int m_bits, e_bits;
+	m_bits = inArr[0].m_bits;
+	e_bits = inArr[0].e_bits;
+
+	uint8_t *in_s = new uint8_t[s1];
+	uint8_t *in_z = new uint8_t[s1];
+	uint64_t *in_m = new uint64_t[s1];
+	uint64_t *in_e = new uint64_t[s1];
+	for (int i = 0; i < s1; i++)
+	{
+		in_s[i] = inArr[i].s[0];
+		in_z[i] = inArr[i].z[0];
+		in_m[i] = inArr[i].m[0];
+		in_e[i] = inArr[i].e[0];
+	}
+
+	uint8_t *out_s = new uint8_t[s1];
+	uint8_t *out_z = new uint8_t[s1];
+	uint64_t *out_m = new uint64_t[s1];
+	uint64_t *out_e = new uint64_t[s1];
+
+	vector<int> chunks = get_chunks(s1, __nt);
+	thread threads[MAX_THREADS];
+	int offset = 0;
+	for (int i = 0; i < __nt; i++)
+	{
+		if (chunks[i] > 0)
+		{
+			threads[i] = thread(Leaky_Relu_nomask_thread,
+								alpha, i, chunks[i], m_bits, e_bits,
+								in_s + offset, in_z + offset, in_m + offset, in_e + offset,
+								out_s + offset, out_z + offset, out_m + offset, out_e + offset);
+			offset += chunks[i];
+		}
+	}
+
+	for (int i = 0; i < __nt; i++)
+		if (chunks[i] > 0)
+			threads[i].join();
+
+	for (int i = 0; i < s1; i++)
+	{
+		outArr[i].m_bits = m_bits;
+		outArr[i].e_bits = e_bits;
+
+		outArr[i].s[0] = out_s[i];
+		outArr[i].z[0] = out_z[i];
+		outArr[i].m[0] = out_m[i];
+		outArr[i].e[0] = out_e[i];
+	}
+
+	delete[] in_s; delete[] out_s;
+	delete[] in_z; delete[] out_z;
+	delete[] in_m; delete[] out_m;
+	delete[] in_e; delete[] out_e;
 }
 
 void SubtractOne_thread(
@@ -1994,6 +2158,137 @@ void MaxPool(
 	delete[] pooled_m ; delete[] Row_m ; 
 	delete[] pooled_e ; delete[] Row_e ;
 	delete[] Mask ;
+}
+
+void Maxpool_nomask_thread(
+	int tid, int chunk, int filterSize, int m_bits, int e_bits,
+	uint8_t **Row_s, uint8_t **Row_z, uint64_t **Row_m, uint64_t **Row_e,
+	uint8_t *pooled_s, uint8_t *pooled_z, uint64_t *pooled_m, uint64_t *pooled_e
+	) {
+
+	vector<FPArray> maxs ;
+	for (int i = 0 ; i < chunk ; i++) {
+		maxs.push_back(
+			fpopArr[tid]->input(
+				WHICHPARTY, filterSize, Row_s[i], Row_z[i], Row_m[i], Row_e[i], m_bits, e_bits
+			)
+		) ;
+	}
+
+	FPArray filterMax = fpopArr[tid]->max(maxs) ;
+
+	memcpy(pooled_s, filterMax.s, chunk*sizeof(uint8_t)) ;
+	memcpy(pooled_z, filterMax.z, chunk*sizeof(uint8_t)) ;
+	memcpy(pooled_m, filterMax.m, chunk*sizeof(uint64_t)) ;
+	memcpy(pooled_e, filterMax.e, chunk*sizeof(uint64_t)) ;
+}
+
+void MaxPool_nomask(
+	int32_t N, int32_t imgH, int32_t imgW, int32_t C, 
+	int32_t ksizeH, int32_t ksizeW, 
+	int32_t strideH, int32_t strideW,
+	int32_t H, int32_t W,
+	vector<vector<vector<vector<FPArray>>>>& inArr, 
+	vector<vector<vector<vector<FPArray>>>>& outArr) {
+
+	int m_bits = inArr[0][0][0][0].m_bits, e_bits = inArr[0][0][0][0].e_bits ;
+	int size = N*H*C*W ;
+	int filter_size = ksizeH*ksizeW; 
+
+	uint8_t **Row_s = new uint8_t*[size] ;
+	uint8_t **Row_z = new uint8_t*[size] ;
+	uint64_t **Row_m = new uint64_t*[size] ;
+	uint64_t **Row_e = new uint64_t*[size] ;
+
+	uint8_t *pooled_s = new uint8_t[size] ;
+	uint8_t *pooled_z = new uint8_t[size] ;
+	uint64_t *pooled_m = new uint64_t[size] ;
+	uint64_t *pooled_e = new uint64_t[size] ;
+
+	for (int i = 0 ; i < size ; i++) {
+		Row_s[i] = new uint8_t[filter_size] ;
+		Row_z[i] = new uint8_t[filter_size] ;
+		Row_m[i] = new uint64_t[filter_size] ;
+		Row_e[i] = new uint64_t[filter_size] ;
+	}
+
+	for (int n = 0, size_k=0 ; n < N ; n++) {
+		for (int c = 0 ; c < C ; c++) {
+			for (int h = 0 ; h < H ; h++) {
+				for (int w = 0 ; w < W ; w++, size_k++) {
+					for (int kh = 0, filter_k = 0 ; kh < ksizeH ; kh++) {
+						for (int kw = 0 ; kw < ksizeW ; kw++, filter_k++) {
+
+							int img_h = h*strideH + kh ; 
+							int img_w = w*strideW + kw ;
+							uint8_t s, z ;
+							uint64_t m, e ;
+
+							if (img_h < 0 || img_h >= imgH || img_w < 0 || img_w >= imgW) {
+								s = 0 ;
+								z = 1 ;
+								m = 0 ;
+								e = 0 ;
+							} else {
+								s = inArr[n][img_h][img_w][c].s[0] ;
+								z = inArr[n][img_h][img_w][c].z[0] ;
+								m = inArr[n][img_h][img_w][c].m[0] ;
+								e = inArr[n][img_h][img_w][c].e[0] ;
+							}
+
+							Row_s[size_k][filter_k] = s ;
+							Row_z[size_k][filter_k] = z ;
+							Row_m[size_k][filter_k] = m ;
+							Row_e[size_k][filter_k] = e ;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	vector<int> chunks = get_chunks(size, __nt) ;
+	thread threads[MAX_THREADS] ;
+	int offset = 0 ;
+	for (int i = 0 ; i < __nt ; i++) {
+		if (chunks[i] > 0) {
+			threads[i] = thread(Maxpool_nomask_thread,
+				i, chunks[i], filter_size, m_bits, e_bits,
+				Row_s+offset, Row_z+offset, Row_m+offset, Row_e+offset,
+				pooled_s+offset, pooled_z+offset, pooled_m+offset, pooled_e+offset
+			) ;
+			offset += chunks[i] ;
+		}
+	}	
+
+	for (int i = 0 ; i < __nt ; i++)
+		if (chunks[i] > 0)
+			threads[i].join() ;
+	
+	for (uint32_t n = 0, outarr_k=0; n < N; n++) {
+		for (uint32_t c = 0; c < C; c++) {
+			for (uint32_t h = 0; h < H; h++) {
+				for (uint32_t w = 0; w < W; w++, outarr_k++) {
+					outArr[n][h][w][c].s[0] = pooled_s[outarr_k] ;
+					outArr[n][h][w][c].z[0] = pooled_z[outarr_k] ;
+					outArr[n][h][w][c].m[0] = pooled_m[outarr_k] ;
+					outArr[n][h][w][c].e[0] = pooled_e[outarr_k] ;
+				}
+			}
+		}
+	}
+
+	for (int i = 0 ; i < size ; i++) {
+		delete[] Row_s[i] ; 
+		delete[] Row_z[i] ; 
+		delete[] Row_m[i] ; 
+		delete[] Row_e[i] ; 
+	}
+
+	delete[] pooled_s ; delete[] Row_s ; 
+	delete[] pooled_z ; delete[] Row_z ; 
+	delete[] pooled_m ; delete[] Row_m ; 
+	delete[] pooled_e ; delete[] Row_e ;
 }
 
 void vsumIfElse(int32_t s1, int32_t s2, vector<vector<FPArray>>& arr, vector<vector<BoolArray>>& condArr, vector<FPArray>& outArr) {
