@@ -35,193 +35,49 @@ FPArray __public_float_to_baba(float f, int party = ALICE)
     return _ret;
 }
 
-auto Add(const FPArray &x, const FPArray &y)
+void Gemm(int32_t m, int32_t n, int32_t o, int32_t p, float alpha, float beta, int32_t transA, int32_t transB, int32_t x, int32_t k, vector<vector<FPArray>> &A, vector<vector<FPArray>> &B, vector<FPArray> &C, vector<vector<FPArray>> &output)
 {
-    return __fp_op->add(x, y);
-}
-
-auto Mul(const FPArray &x, const FPArray &y)
-{
-    return __fp_op->mul(x, y);
-}
-
-void ElemWiseSecretSharedVectorMult(int32_t s1, auto &arr1, auto &arr2, auto &outArr)
-{
-    for (uint32_t ii = 0; ii < s1; ii++)
+    if (transA)
     {
-        outArr[ii] = Mul(arr1[ii], arr2[ii]);
-    }
-}
-
-void ElemWiseActModelVectorMult(int32_t s1, auto &arr1, auto &arr2, auto &outArr)
-{
-    ElemWiseSecretSharedVectorMult(s1, arr1, arr2, outArr);
-}
-
-void MaxPool(int32_t N, int32_t C, int32_t H, int32_t W, int32_t ksizeH, int32_t ksizeW, int32_t zPadHLeft, int32_t zPadHRight, int32_t zPadWLeft, int32_t zPadWRight, int32_t strideH, int32_t strideW, int32_t N1, int32_t C1, int32_t imgH, int32_t imgW, auto &inArr, auto &outArr)
-{
-    for (uint32_t n = 0; n < N; n++)
-    {
-        for (uint32_t c = 0; c < C; c++)
+        vector<vector<FPArray>> tmpA = make_vector_float(ALICE, n, m);
+        for (uint32_t i = 0; i < m; i++)
         {
-            int32_t leftTopCornerH = (0 - zPadHLeft);
-
-            int32_t extremeRightBottomCornerH = ((imgH - 1) + zPadHRight);
-
-            int32_t ctH = 0;
-
-            while ((((leftTopCornerH + ksizeH) - 1) <= extremeRightBottomCornerH))
+            for (uint32_t j = 0; j < n; j++)
             {
-                int32_t leftTopCornerW = (0 - zPadWLeft);
-
-                int32_t extremeRightBottomCornerW = ((imgW - 1) + zPadWRight);
-
-                int32_t ctW = 0;
-
-                while ((((leftTopCornerW + ksizeW) - 1) <= extremeRightBottomCornerW))
-                {
-                    FPArray maxi = __public_float_to_baba(0., ALICE);
-
-                    if ((((leftTopCornerH < 0) || (leftTopCornerH >= imgH)) || ((leftTopCornerW < 0) || (leftTopCornerW >= imgW))))
-                    {
-                        maxi = __public_float_to_baba(0., ALICE);
-                    }
-                    else
-                    {
-                        maxi = inArr[n][c][leftTopCornerH][leftTopCornerW];
-                    }
-                    for (uint32_t fh = 0; fh < ksizeH; fh++)
-                    {
-                        for (uint32_t fw = 0; fw < ksizeW; fw++)
-                        {
-                            int32_t curPosH = (leftTopCornerH + fh);
-
-                            int32_t curPosW = (leftTopCornerW + fw);
-
-                            FPArray temp = __public_float_to_baba(0., ALICE);
-
-                            if ((((curPosH < 0) || (curPosH >= imgH)) || ((curPosW < 0) || (curPosW >= imgW))))
-                            {
-                                temp = __public_float_to_baba(0., ALICE);
-                            }
-                            else
-                            {
-                                temp = inArr[n][c][curPosH][curPosW];
-                            }
-                            maxi = __fp_op->if_else(__fp_op->LT(__fp_op->sub(maxi, temp), __public_float_to_baba(0., ALICE)), temp, maxi);
-                        }
-                    }
-                    outArr[n][c][ctH][ctW] = maxi;
-
-                    leftTopCornerW = (leftTopCornerW + strideW);
-
-                    ctW = (ctW + 1);
-                }
-
-                leftTopCornerH = (leftTopCornerH + strideH);
-
-                ctH = (ctH + 1);
+                tmpA[j][i] = A[i][j];
             }
         }
+        A = tmpA;
+        swap(m, n);
     }
-}
-
-void AvgPool(int32_t N, int32_t C, int32_t H, int32_t W, int32_t ksizeH, int32_t ksizeW, int32_t zPadHLeft, int32_t zPadHRight, int32_t zPadWLeft, int32_t zPadWRight, int32_t strideH, int32_t strideW, int32_t N1, int32_t C1, int32_t imgH, int32_t imgW, auto &inArr, auto &outArr)
-{
-    int32_t rows = (((N * C) * H) * W);
-
-    auto filterAvg = make_vector_float(ALICE, rows);
-
-    int32_t rowIdx = 0;
-
-    for (uint32_t n = 0; n < N; n++)
+    if (transB)
     {
-        for (uint32_t c = 0; c < C; c++)
+        vector<vector<FPArray>> tmpB = make_vector_float(ALICE, p, o);
+        for (uint32_t i = 0; i < o; i++)
         {
-            int32_t leftTopCornerH = (0 - zPadHLeft);
-
-            int32_t extremeRightBottomCornerH = ((imgH - 1) + zPadHRight);
-
-            int32_t ctH = 0;
-
-            while ((((leftTopCornerH + ksizeH) - 1) <= extremeRightBottomCornerH))
+            for (uint32_t j = 0; j < p; j++)
             {
-                int32_t leftTopCornerW = (0 - zPadWLeft);
-
-                int32_t extremeRightBottomCornerW = ((imgW - 1) + zPadWRight);
-
-                int32_t ctW = 0;
-
-                while ((((leftTopCornerW + ksizeW) - 1) <= extremeRightBottomCornerW))
-                {
-                    FPArray curFilterSum = __public_float_to_baba(0., ALICE);
-
-                    for (uint32_t fh = 0; fh < ksizeH; fh++)
-                    {
-                        for (uint32_t fw = 0; fw < ksizeW; fw++)
-                        {
-                            int32_t curPosH = (leftTopCornerH + fh);
-
-                            int32_t curPosW = (leftTopCornerW + fw);
-
-                            FPArray temp = __public_float_to_baba(0., ALICE);
-
-                            if ((((curPosH < 0) || (curPosH >= imgH)) || ((curPosW < 0) || (curPosW >= imgW))))
-                            {
-                                temp = __public_float_to_baba(0., ALICE);
-                            }
-                            else
-                            {
-                                temp = inArr[n][c][curPosH][curPosW];
-                            }
-                            curFilterSum = __fp_op->add(curFilterSum, temp);
-                        }
-                    }
-                    int32_t ksizeH64 = ksizeH;
-
-                    int32_t ksizeW64 = ksizeW;
-
-                    int32_t filterSz64 = (ksizeH64 * ksizeW64);
-
-                    FPArray curFilterAvg = __fp_op->div(curFilterSum, __public_float_to_baba(intToFloat(filterSz64), ALICE));
-
-                    filterAvg[rowIdx] = curFilterAvg;
-
-                    rowIdx = (rowIdx + 1);
-
-                    leftTopCornerW = (leftTopCornerW + strideW);
-
-                    ctW = (ctW + 1);
-                }
-
-                leftTopCornerH = (leftTopCornerH + strideH);
-
-                ctH = (ctH + 1);
+                tmpB[j][i] = B[i][j];
             }
         }
+        B = tmpB;
+        swap(o, p);
     }
-    for (uint32_t n = 0; n < N; n++)
-    {
-        for (uint32_t c = 0; c < C; c++)
-        {
-            for (uint32_t h = 0; h < H; h++)
-            {
-                for (uint32_t w = 0; w < W; w++)
-                {
-                    outArr[n][c][h][w] = filterAvg[((((((n * C) * H) * W) + ((c * H) * W)) + (h * W)) + w)];
-                }
-            }
-        }
-    }
+
+    vector<vector<FPArray>> tmp = make_vector_float(ALICE, x, k);
+
+    // Performing the matrix multiplication followed by the bias addition
+    MatMul(m, n, p, A, B, tmp);
+    GemmAdd(x,k,tmp,C,output);
 }
 
-void Relu(int32_t s1, int32_t s2, auto &inArr, auto &outArr)
+void Relu(int32_t s1, int32_t s2, vector<vector<FPArray>> &inArr, vector<vector<FPArray>> &outArr)
 {
     int32_t size = (s1 * s2);
 
-    auto reshapedInArr = make_vector_float(ALICE, size);
+    vector<FPArray> reshapedInArr = make_vector_float(ALICE, size);
 
-    auto reshapedOutArr = make_vector_float(ALICE, size);
+    vector<FPArray> reshapedOutArr = make_vector_float(ALICE, size);
 
     for (uint32_t i1 = 0; i1 < s1; i1++)
     {
@@ -232,7 +88,7 @@ void Relu(int32_t s1, int32_t s2, auto &inArr, auto &outArr)
             reshapedInArr[linIdx] = inArr[i1][i2];
         }
     }
-    Relu(size, reshapedInArr, reshapedOutArr);
+    Relu_nomask(size, reshapedInArr, reshapedOutArr);
     for (uint32_t i1 = 0; i1 < s1; i1++)
     {
         for (uint32_t i2 = 0; i2 < s2; i2++)
@@ -244,13 +100,13 @@ void Relu(int32_t s1, int32_t s2, auto &inArr, auto &outArr)
     }
 }
 
-void Relu(int32_t s1, int32_t s2, int32_t s3, int32_t s4, auto &inArr, auto &outArr)
+void Relu(int32_t s1, int32_t s2, int32_t s3, int32_t s4, vector<vector<vector<vector<FPArray>>>> &inArr, vector<vector<vector<vector<FPArray>>>> &outArr)
 {
     int32_t size = (((s1 * s2) * s3) * s4);
 
-    auto reshapedInArr = make_vector_float(ALICE, size);
+    vector<FPArray> reshapedInArr = make_vector_float(ALICE, size);
 
-    auto reshapedOutArr = make_vector_float(ALICE, size);
+    vector<FPArray> reshapedOutArr = make_vector_float(ALICE, size);
 
     for (uint32_t i1 = 0; i1 < s1; i1++)
     {
@@ -268,7 +124,7 @@ void Relu(int32_t s1, int32_t s2, int32_t s3, int32_t s4, auto &inArr, auto &out
         }
     }
 
-    Relu(size, reshapedInArr, reshapedOutArr);
+    Relu_nomask(size, reshapedInArr, reshapedOutArr);
 
     for (uint32_t i1 = 0; i1 < s1; i1++)
     {
@@ -287,13 +143,13 @@ void Relu(int32_t s1, int32_t s2, int32_t s3, int32_t s4, auto &inArr, auto &out
     }
 }
 
-void Leaky_Relu(int32_t s1, int32_t s2, float alpha, auto &inArr, auto &outArr)
+void Leaky_Relu(int32_t s1, int32_t s2, float alpha, vector<vector<FPArray>> &inArr, vector<vector<FPArray>> &outArr)
 {
     int32_t size = (s1 * s2);
 
-    auto reshapedInArr = make_vector_float(ALICE, size);
+    vector<FPArray> reshapedInArr = make_vector_float(ALICE, size);
 
-    auto reshapedOutArr = make_vector_float(ALICE, size);
+    vector<FPArray> reshapedOutArr = make_vector_float(ALICE, size);
 
     for (uint32_t i1 = 0; i1 < s1; i1++)
     {
@@ -304,7 +160,7 @@ void Leaky_Relu(int32_t s1, int32_t s2, float alpha, auto &inArr, auto &outArr)
             reshapedInArr[linIdx] = inArr[i1][i2];
         }
     }
-    Leaky_Relu(size, alpha, reshapedInArr, reshapedOutArr);
+    Leaky_Relu_nomask(size, alpha, reshapedInArr, reshapedOutArr);
     for (uint32_t i1 = 0; i1 < s1; i1++)
     {
         for (uint32_t i2 = 0; i2 < s2; i2++)
@@ -316,13 +172,13 @@ void Leaky_Relu(int32_t s1, int32_t s2, float alpha, auto &inArr, auto &outArr)
     }
 }
 
-void Leaky_Relu(int32_t s1, int32_t s2, int32_t s3, int32_t s4, float alpha, auto &inArr, auto &outArr)
+void Leaky_Relu(int32_t s1, int32_t s2, int32_t s3, int32_t s4, float alpha, vector<vector<vector<vector<FPArray>>>> &inArr, vector<vector<vector<vector<FPArray>>>> &outArr)
 {
     int32_t size = (((s1 * s2) * s3) * s4);
 
-    auto reshapedInArr = make_vector_float(ALICE, size);
+    vector<FPArray> reshapedInArr = make_vector_float(ALICE, size);
 
-    auto reshapedOutArr = make_vector_float(ALICE, size);
+    vector<FPArray> reshapedOutArr = make_vector_float(ALICE, size);
 
     for (uint32_t i1 = 0; i1 < s1; i1++)
     {
@@ -339,7 +195,7 @@ void Leaky_Relu(int32_t s1, int32_t s2, int32_t s3, int32_t s4, float alpha, aut
             }
         }
     }
-    Leaky_Relu(size, alpha, reshapedInArr, reshapedOutArr);
+    Leaky_Relu_nomask(size, alpha, reshapedInArr, reshapedOutArr);
     for (uint32_t i1 = 0; i1 < s1; i1++)
     {
         for (uint32_t i2 = 0; i2 < s2; i2++)
@@ -357,13 +213,13 @@ void Leaky_Relu(int32_t s1, int32_t s2, int32_t s3, int32_t s4, float alpha, aut
     }
 }
 
-void Sigmoid(int32_t s1, int32_t s2, auto &inArr, auto &outArr)
+void Sigmoid(int32_t s1, int32_t s2, vector<vector<FPArray>> &inArr, vector<vector<FPArray>> &outArr)
 {
     int32_t size = (s1 * s2);
 
-    auto reshapedInArr = make_vector_float(ALICE, size);
+    vector<FPArray> reshapedInArr = make_vector_float(ALICE, size);
 
-    auto reshapedOutArr = make_vector_float(ALICE, size);
+    vector<FPArray> reshapedOutArr = make_vector_float(ALICE, size);
 
     for (uint32_t i1 = 0; i1 < s1; i1++)
     {
@@ -386,13 +242,13 @@ void Sigmoid(int32_t s1, int32_t s2, auto &inArr, auto &outArr)
     }
 }
 
-void Sigmoid(int32_t s1, int32_t s2, int32_t s3, int32_t s4, auto &inArr, auto &outArr)
+void Sigmoid(int32_t s1, int32_t s2, int32_t s3, int32_t s4, vector<vector<vector<vector<FPArray>>>> &inArr, vector<vector<vector<vector<FPArray>>>> &outArr)
 {
     int32_t size = (((s1 * s2) * s3) * s4);
 
-    auto reshapedInArr = make_vector_float(ALICE, size);
+    vector<FPArray> reshapedInArr = make_vector_float(ALICE, size);
 
-    auto reshapedOutArr = make_vector_float(ALICE, size);
+    vector<FPArray> reshapedOutArr = make_vector_float(ALICE, size);
 
     for (uint32_t i1 = 0; i1 < s1; i1++)
     {
@@ -429,13 +285,13 @@ void Sigmoid(int32_t s1, int32_t s2, int32_t s3, int32_t s4, auto &inArr, auto &
     }
 }
 
-void Tanh(int32_t s1, int32_t s2, auto &inArr, auto &outArr)
+void Tanh(int32_t s1, int32_t s2, vector<vector<FPArray>> &inArr, vector<vector<FPArray>> &outArr)
 {
     int32_t size = (s1 * s2);
 
-    auto reshapedInArr = make_vector_float(ALICE, size);
+    vector<FPArray> reshapedInArr = make_vector_float(ALICE, size);
 
-    auto reshapedOutArr = make_vector_float(ALICE, size);
+    vector<FPArray> reshapedOutArr = make_vector_float(ALICE, size);
 
     for (uint32_t i1 = 0; i1 < s1; i1++)
     {
@@ -458,13 +314,13 @@ void Tanh(int32_t s1, int32_t s2, auto &inArr, auto &outArr)
     }
 }
 
-void Tanh(int32_t s1, int32_t s2, int32_t s3, int32_t s4, auto &inArr, auto &outArr)
+void Tanh(int32_t s1, int32_t s2, int32_t s3, int32_t s4, vector<vector<vector<vector<FPArray>>>> &inArr, vector<vector<vector<vector<FPArray>>>> &outArr)
 {
     int32_t size = (((s1 * s2) * s3) * s4);
 
-    auto reshapedInArr = make_vector_float(ALICE, size);
+    vector<FPArray> reshapedInArr = make_vector_float(ALICE, size);
 
-    auto reshapedOutArr = make_vector_float(ALICE, size);
+    vector<FPArray> reshapedOutArr = make_vector_float(ALICE, size);
 
     for (uint32_t i1 = 0; i1 < s1; i1++)
     {

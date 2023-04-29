@@ -2031,7 +2031,7 @@ void vsumIfElse(int32_t s1, int32_t s2, vector<vector<FPArray>>& arr, vector<vec
 	vectorSum2(s1, s2, conded_unflat, outArr) ;
 }
 
-void ConvAdd(int32_t s1, int32_t s2, int32_t s3, int32_t s4, 
+void ConvAdd(int32_t N, int32_t H, int32_t W, int32_t C, 
 	vector<vector<vector<vector<FPArray>>>>& inArr, 
 	vector<FPArray>& biasArr, 
 	vector<vector<vector<vector<FPArray>>>>& outArr) {
@@ -2040,18 +2040,18 @@ void ConvAdd(int32_t s1, int32_t s2, int32_t s3, int32_t s4,
 
 	m_bits = inArr[0][0][0][0].m_bits ;
 	e_bits = inArr[0][0][0][0].e_bits ;
-	sz = s1*s2*s3*s4 ;
+	sz = N*H*W*C ;
 
 	vector<FPArray> arr1 = make_vector_float(ALICE, sz) ;
 	vector<FPArray> arr2 = make_vector_float(ALICE, sz) ;
 	vector<FPArray> out = make_vector_float(ALICE, sz) ;
 
-	for (int i1=0 ; i1 < s1 ; i1++) {
-		for (int i2 = 0 ; i2 < s2 ; i2++) {
-			for (int i3 = 0 ; i3 < s3 ; i3++) {
-				for (int i4 = 0 ; i4 < s4 ; i4++) {
-					arr1[i1*s2*s3*s4 + i2*s3*s4 + i3*s4 + i4] = inArr[i1][i2][i3][i4] ;
-					arr2[i1*s2*s3*s4 + i2*s3*s4 + i3*s4 + i4] = biasArr[i4] ;
+	for (int i1=0 ; i1 < N ; i1++) {
+		for (int i2 = 0 ; i2 < H ; i2++) {
+			for (int i3 = 0 ; i3 < W ; i3++) {
+				for (int i4 = 0 ; i4 < C ; i4++) {
+					arr1[i1*H*W*C + i2*W*C + i3*C + i4] = inArr[i1][i2][i3][i4] ;
+					arr2[i1*H*W*C + i2*W*C + i3*C + i4] = biasArr[i4] ;
 				}
 			}
 		}
@@ -2059,11 +2059,11 @@ void ConvAdd(int32_t s1, int32_t s2, int32_t s3, int32_t s4,
 
 	ElemWiseAdd(sz, arr1, arr2, out) ;
 
-	for (int i1=0 ; i1 < s1 ; i1++) {
-		for (int i2 = 0 ; i2 < s2 ; i2++) {
-			for (int i3 = 0 ; i3 < s3 ; i3++) {
-				for (int i4 = 0 ; i4 < s4 ; i4++) {
-					outArr[i1][i2][i3][i4] = out[i1*s2*s3*s4 + i2*s3*s4 + i3*s4 + i4] ;
+	for (int i1=0 ; i1 < N ; i1++) {
+		for (int i2 = 0 ; i2 < H ; i2++) {
+			for (int i3 = 0 ; i3 < W ; i3++) {
+				for (int i4 = 0 ; i4 < C ; i4++) {
+					outArr[i1][i2][i3][i4] = out[i1*H*W*C + i2*W*C + i3*C + i4] ;
 				}
 			}
 		}
