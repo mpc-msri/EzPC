@@ -281,6 +281,21 @@ public:
         }
     }
 
+    void load(const std::string filename, u64 scale)
+    {
+        size_t size_in_bytes = std::filesystem::file_size(filename);
+        always_assert(size_in_bytes == size() * 4);
+        float *floatInput = new float[size()];
+        std::ifstream file(filename, std::ios::binary);
+        file.read((char*) floatInput, size_in_bytes);
+        file.close();
+        for(u64 i = 0; i < size(); ++i)
+        {
+            data[i] = (i64)(floatInput[i] * (1LL << scale));
+        }
+        delete[] floatInput;
+    }
+
     Tensor5D<T> as_5d()
     {
         assert(this->shape.size() == 5);

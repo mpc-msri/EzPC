@@ -753,9 +753,10 @@ public:
         for(int i = 0; i < sz; ++i)
         {
             u64 l = i % outchannels;
+            u64 rest = i / outchannels;
             for(auto &a : arr) {
                 if(l < a->shape.back()) {
-                    this->activation.data[i] = a->data[i];
+                    this->activation.data[i] = a->data[rest * a->shape.back() + l];
                     break;
                 }
                 l -= a->shape.back();
@@ -994,5 +995,31 @@ public:
         always_assert(shape1.size() == 2);
         always_assert(shape0[1] == shape1[0]);
         return {shape0[0], shape1[1]};
+    }
+};
+
+
+template <typename T>
+class _ScalarMul: public Layer<T> {
+public:
+    double scalar;
+
+    _ScalarMul(double scalar) :  Layer<T>("_ScalarMul"), scalar(scalar) {
+        this->doTruncationForward = true;
+    }
+
+    void _resize(const std::vector<std::vector<u64>> &shapes) {
+        always_assert(shapes.size() == 1);
+    }
+
+    void _forward(Tensor<T> &a) {
+        T scalarFix = scalar * (1LL << this->scale);
+        this->backend->scalarmul(a, scalarFix, this->activation);
+    }
+
+    std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {
+        always_assert(inShapes.size() == 1);
+        auto &shape0 = inShapes[0];
+        return shape0;
     }
 };

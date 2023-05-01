@@ -408,11 +408,11 @@ void ClearText<T>::layernorm(const Tensor1D<T> &A, const Tensor1D<T> &B, const T
         for (u64 j = 0; j < channels; j++) {
             mean += x.data[i * channels + j];
         }
-        mean = mean / channels;
+        mean = mean / T(channels);
         for (u64 j = 0; j < channels; j++) {
             var += (x.data[i * channels + j] - mean) * (x.data[i * channels + j] - mean);
         }
-        var = var / channels;
+        var = var / T(channels);
         truncate(var, scale);
         var = invsqrt(var, scale);
         for (u64 j = 0; j < channels; j++) {
@@ -479,6 +479,15 @@ void ClearText<T>::attention(Tensor4D<T> &qkv_heads, Tensor4D<T> &output, u64 sc
         matmul(tmp, v, out);
         Backend<T>::truncate(out, scale);
     }
+}
+
+template <typename T>
+void ClearText<T>::scalarmul(Tensor<T> &x, T scalar, Tensor<T> &y)
+{
+    always_assert(x.is_same_shape(y));
+    fastfor(x.size(), [&](u64 i) {
+        y.data[i] = x.data[i] * scalar;
+    });
 }
 
 template class ClearText<i64>;

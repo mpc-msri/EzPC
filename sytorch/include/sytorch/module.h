@@ -15,7 +15,7 @@ public:
     u64 scale;
 
     std::vector<LayerGraphNode<T> *> allNodesInExecutionOrder;
-    const std::vector<std::string> functionalLayers = {"Add", "Concat", "GeLU", "SoftMax", "Split", "View", "Transpose", "_MatMul"};
+    const std::vector<std::string> functionalLayers = {"Add", "Concat", "GeLU", "SoftMax", "Split", "View", "Transpose", "_MatMul", "_ScalarMul"};
     static std::map<std::string, LayerGraphNode<T> *> functionalLayerMap;
 
 public:
@@ -304,6 +304,18 @@ public:
         auto cNode = getFunctionalNode("_MatMul", {&a, &b});
         std::vector<Tensor<T> *> arr = {&a, &b};
         auto &c = cNode->layer->forward(arr);
+        return c;
+    }
+
+    Tensor<T>& scalarmul(Tensor<T> &a, double scalar)
+    {
+        if (a.graphGenMode) {
+            auto &c = functionalGraphGen<_ScalarMul<T>>({&a}, scalar);
+            return c;
+        }
+
+        auto cNode = getFunctionalNode("_ScalarMul", {&a}, scalar);
+        auto &c = cNode->layer->forward(a);
         return c;
     }
 

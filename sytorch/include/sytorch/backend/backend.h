@@ -73,6 +73,7 @@ public:
     virtual void layernorm(const Tensor1D<T> &A, const Tensor1D<T> &B, const Tensor<T> &x, Tensor<T> &y, u64 scale) NOT_IMPLEMENTED;
     virtual void addbias(Tensor<T> &x, const Tensor1D<T> &bias) NOT_IMPLEMENTED;
     virtual void attention(Tensor4D<T> &qkv_heads, Tensor4D<T> &output, u64 scale) NOT_IMPLEMENTED;
+    virtual void scalarmul(Tensor<T> &x, T scalar, Tensor<T> &y) NOT_IMPLEMENTED;
 
     virtual void optimize(LayerGraphNode<T> *root)
     {
