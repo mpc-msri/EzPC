@@ -182,6 +182,7 @@ public:
                 }
                 else
                     bias.fill(0);
+                std::cout << "Loaded " << layer->name << " with " << wIdx << " weights" << std::endl;
             }
             else if (layer->name.find("BatchNorm2dInference") != std::string::npos) {
                 auto bn = (BatchNorm2dInference<T>*) layer;
@@ -196,15 +197,7 @@ public:
                 }
                 wIdx += 4 * channel;
             }
-            else if (layer->name.find("Pow") != std::string::npos || layer->name.find("Mul") != std::string::npos)
-            {
-                auto &exp = layer->getinput2();
-                for (int j = 0; j < exp.size(); ++j)
-                    exp.data[j] = i64(floatWeights[wIdx + j] * (1LL << scale));
-
-                wIdx += exp.size();
-            }
-            else if (layer->name.find("Sub") != std::string::npos || layer->name.find("Div") != std::string::npos || layer->name.find("Add_gen") != std::string::npos)
+            else if (layer->name.find("Pow") != std::string::npos || layer->name.find("Mul") != std::string::npos || layer->name.find("Sub") != std::string::npos || layer->name.find("Div") != std::string::npos || layer->name.find("Add_gen") != std::string::npos)
             {
                 if (layer->input2_as_param == true)
                 {
@@ -214,9 +207,11 @@ public:
 
                     wIdx += exp.size();
                 }
+                std::cout << "Loaded " << layer->name << " with " << wIdx << " weights" << std::endl;
             }
         }
-
+        std::cout << "Loaded " << wIdx << " weights" << std::endl;
+        std::cout << "Total " << numParameters << " weights" << std::endl;
         always_assert(wIdx == numParameters);
         delete[] floatWeights;
     }

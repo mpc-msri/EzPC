@@ -103,4 +103,7 @@ def proto_val_to_dimension_tuple(proto_val):
     """
     Gives the dimensions of the Proto Value in Tuple form.
     """
-    return tuple([dim.dim_value for dim in proto_val.type.tensor_type.shape.dim])
+    if list(proto_val.type.tensor_type.shape.dim) == []:
+        return tuple([1])
+    else:
+        return tuple([dim.dim_value for dim in proto_val.type.tensor_type.shape.dim])

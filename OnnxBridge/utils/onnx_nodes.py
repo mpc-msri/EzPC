@@ -134,7 +134,6 @@ class OnnxNode:
         assert keepdims == 1
         assert len(axes) == 1
         assert len(node.inputs) == 1
-        print(node)
         logger.debug("ReduceMean is OK! (with possible modifications)")
 
     @classmethod

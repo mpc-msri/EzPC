@@ -551,7 +551,6 @@ public:
     {
         always_assert(shapes.size() == 1);
         auto &shape = shapes[0];
-        this->drelu.resize(shape);
     }
 
     void _forward(Tensor<T> &a)
@@ -594,7 +593,7 @@ public:
         always_assert(a.size() == 1 or a.size() == 2);
         if (a.size() == 1)
         {
-            this->backend->pow(*a[0], this->input2, this->activation, this->scale, this->out_shape);
+            this->backend->pow(*a[0], this->exp, this->activation, this->scale, this->out_shape);
         }
         else
         {
