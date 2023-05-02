@@ -367,31 +367,33 @@ void ClearText<T>::reduceMean(u64 axis, const Tensor<T> &in, Tensor<T> &out, u64
     {
         assert(axis == 0);
         assert(out.shape.size() == 1);
+        double sum = 0;
         fastfor(in.shape[0], [&](int i)
-                { out.data[0] += in.data[i]; });
-        out.data[0] /= in.shape[0];
+                { sum += in.data[i] / (double)(1LL << scale); });
+        out.data[0] = (sum / in.shape[0]) * (1LL << scale);
     }
     else if (in.shape.size() == 2)
     {
         assert(axis == 0 || axis == 1);
         assert(out.shape.size() == 2);
+        double sum = 0;
         if (axis == 0)
         {
             fastfor(in.shape[1], [&](int j)
                     {
                 fastfor(in.shape[0], [&](int i) {
-                    out.data[j] += in.data[i*in.shape[1] + j];
+                    sum += in.data[i*in.shape[1] + j]/(double)(1LL << scale);
                 });
-                out.data[j] /= in.shape[0]; });
+                out.data[j] =  (sum/in.shape[0]) * (1LL <<scale); });
         }
         else
         {
             fastfor(in.shape[0], [&](int i)
                     {
                 fastfor(in.shape[1], [&](int j) {
-                    out.data[i] += in.data[i*in.shape[1] + j];
+                    sum += in.data[i*in.shape[1] + j]/(double)(1LL << scale);
                 });
-                out.data[i] /= in.shape[1]; });
+                out.data[i] =  (sum/in.shape[1]) * (1LL <<scale); });
         }
     }
 }

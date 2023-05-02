@@ -182,7 +182,7 @@ public:
         std::cout << ")" << std::endl;
         for (u64 i = 0; i < size(); i++)
         {
-            std::cout << data[i] / (1LL << scale) << " ";
+            std::cout << data[i] / (double)(1LL << scale) << " ";
         }
         std::cout << std::endl;
     }

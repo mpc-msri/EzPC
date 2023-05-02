@@ -182,7 +182,6 @@ public:
                 }
                 else
                     bias.fill(0);
-                std::cout << "Loaded " << layer->name << " with " << wIdx << " weights" << std::endl;
             }
             else if (layer->name.find("BatchNorm2dInference") != std::string::npos) {
                 auto bn = (BatchNorm2dInference<T>*) layer;
@@ -207,11 +206,8 @@ public:
 
                     wIdx += exp.size();
                 }
-                std::cout << "Loaded " << layer->name << " with " << wIdx << " weights" << std::endl;
             }
         }
-        std::cout << "Loaded " << wIdx << " weights" << std::endl;
-        std::cout << "Total " << numParameters << " weights" << std::endl;
         always_assert(wIdx == numParameters);
         delete[] floatWeights;
     }
