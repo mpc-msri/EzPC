@@ -1,26 +1,6 @@
 #include "inout.cpp"
 #include "concat.cpp"
-
-extern float intToFloat(int32_t m);
-extern void Softmax2(int32_t s1, int32_t s2, vector<vector<FPArray>> &inArr, vector<vector<FPArray>> &outArr);
-extern void Ln(int32_t s1, vector<FPArray> &inArr, vector<FPArray> &outArr);
-extern void getOutDer(int32_t s1, int32_t s2, vector<vector<FPArray>> &batchSoft, vector<vector<FPArray>> &lab, vector<vector<FPArray>> &der);
-extern void MatMul(int32_t s1, int32_t s2, int32_t s3, vector<vector<FPArray>> &mat1, vector<vector<FPArray>> &mat2, vector<vector<FPArray>> &mat3);
-extern void GemmAdd(int32_t s1, int32_t s2, vector<vector<FPArray>> &prod, vector<FPArray> &bias, vector<vector<FPArray>> &out);
-extern void dotProduct2(int32_t s1, int32_t s2, vector<vector<FPArray>> &arr1, vector<vector<FPArray>> &arr2, vector<FPArray> &outArr);
-extern void Relu(int32_t s1, vector<FPArray> &inArr, vector<FPArray> &outArr, vector<BoolArray> &hotArr);
-extern void LeakyRelu(int32_t s1, float alpha, vector<FPArray> &inArr, vector<FPArray> &outArr, vector<BoolArray> &hotArr);
-extern void getBiasDer(int32_t s1, int32_t s2, vector<vector<FPArray>> &der, vector<FPArray> &biasDer);
-extern void IfElse(int32_t s1, vector<FPArray> &dat, vector<BoolArray> &hot, vector<FPArray> &out, bool flip);
-extern void updateWeights(int32_t s, float lr, vector<FPArray> &bias, vector<FPArray> &der);
-extern void getLoss(int32_t m, vector<FPArray> &lossTerms, vector<FPArray> &loss);
-extern void computeMSELoss(int32_t m, int32_t s, vector<vector<FPArray>> &target, vector<vector<FPArray>> &fwdOut, vector<FPArray> &loss);
-extern void Sigmoid(int32_t s1, vector<FPArray> &inArr, vector<FPArray> &outArr);
-
-void ElemWiseAdd(int32_t s1, vector<FPArray> &arr1, vector<FPArray> &arr2, vector<FPArray> &outArr);
-void ElemWiseSub(int32_t s1, vector<FPArray> &arr1, vector<FPArray> &arr2, vector<FPArray> &outArr);
-void ElemWiseMul(int32_t s1, vector<FPArray> &arr1, vector<FPArray> &arr2, vector<FPArray> &outArr);
-void ElemWiseDiv(int32_t s1, vector<FPArray> &arr1, vector<FPArray> &arr2, vector<FPArray> &outArr) ;
+#include "common.cpp"
 
 FPArray __public_float_to_arithmetic(float f, int party = ALICE)
 {
@@ -613,7 +593,8 @@ void BatchNormalization(
 	vector<FPArray> &multArr,
 	vector<FPArray> &biasArr,
 	vector<vector<vector<vector<FPArray>>>> &outArr
-) {
+) 
+{
     vector<vector<vector<vector<FPArray>>>> mult_expanded = make_vector_float(ALICE, N, C, H, W);
     vector<vector<vector<vector<FPArray>>>> bias_expanded = make_vector_float(ALICE, N, C, H, W);
 

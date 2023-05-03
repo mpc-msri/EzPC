@@ -162,20 +162,21 @@ def prepare_export(program, var_dict, value_info, backend, file_path):
     input_dict = dict()
 
     if backend == "SECFLOAT":
-        code_list.append(f'#include "{file_path}/lib_secfloat/common.cpp" \n\n\n')
+        code_list.append(
+            f'#include "{file_path}/lib_secfloat/link_secfloat.cpp" \n\n\n'
+        )
         code_list.append(
             "int main(int __argc, char **__argv)\n{\n\n      __init(__argc, __argv);\n"
         )
     elif backend == "SECFLOAT_CLEARTEXT":
         code_list.append(
-            f'#include "{file_path}/lib_cleartext/cleartext_common.cpp" \n\n\n'
+            f'#include "{file_path}/lib_cleartext/link_secfloat_cleartext.cpp" \n\n\n'
         )
         code_list.append(
             "int main(int __argc, char **__argv)\n{\n\n     int __party=0;\n"
         )
 
     for node in program:
-
         func = getattr(OnnxNode, node.op_type)
         func(node)
 
@@ -184,7 +185,6 @@ def prepare_export(program, var_dict, value_info, backend, file_path):
 
     logger.info("Starting Export...")
     for node in program:
-
         if isinstance(node, Input):
             input_dict[node.name] = node
         elif isinstance(node, Node):

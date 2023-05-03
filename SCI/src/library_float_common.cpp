@@ -2788,6 +2788,7 @@ void PoolProp(
 	}
 }
 
+
 void computeMSELoss(int32_t m, int32_t s, vector<vector<FPArray>> &target, vector<vector<FPArray>> &fwdOut, vector<FPArray> &loss)
 {
 	vector<FPArray> target_flat = make_vector_float(ALICE, m);
