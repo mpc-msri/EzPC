@@ -313,6 +313,14 @@ void MaxPool_nomask(
 	vector<vector<vector<vector<FPArray>>>>& inArr, 
 	vector<vector<vector<vector<FPArray>>>>& outArr) ;
 
+void Avgpool(
+	int32_t N, int32_t H, int32_t W, int32_t C, 
+	int32_t ksizeH, int32_t ksizeW, 
+	int32_t strideH, int32_t strideW,
+	int32_t imgH, int32_t imgW,
+	vector<vector<vector<vector<FPArray>>>>& inArr, 
+	vector<vector<vector<vector<FPArray>>>>& outArr) ;
+
 // Der arr comes in as FH, FW, CI, CO
 // Der arr is filled as CO, CI, FH, FW
 void ConvDerWrapper(
@@ -349,7 +357,6 @@ void PoolProp(
 // Backward functions
 
 void computeMSELoss(int32_t m, int32_t s, vector<vector<FPArray>> &target, vector<vector<FPArray>> &fwdOut, vector<FPArray> &loss);
-
 
 // GPT
 

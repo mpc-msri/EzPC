@@ -1,11 +1,6 @@
 #include <iostream>
 #include "link_secfloat.cpp"
 
-// void Flatten(int32_t x, int32_t y, vector<vector<FPArray>> &A, vector<FPArray> &output)
-// {
-//     (&output) = *reinterpret_cast<int(*)[x][y]>(A);
-// }
-
 // void BatchNormalization(int32_t s1, int32_t s2, int32_t s3, int32_t s4, vector<vector<vector<vector<FPArray>>>> &inArr, vector<FPArray> &multArr, vector<FPArray> &biasArr, vector<vector<vector<vector<FPArray>>>> &outputArr)
 // {
 //     int32_t inpSize = (((s1 * s2) * s3) * s4);
@@ -136,6 +131,17 @@ void __onnxbridge_MaxPool(int32_t N, int32_t C, int32_t H, int32_t W, int32_t ks
 
     vector<vector<vector<vector<FPArray>>>> outputArr_reshaped = make_vector_float(ALICE, N, H, W, C) ;
     MaxPool_nomask(N, imgH, imgW, C, ksizeH, ksizeW, strideH, strideW, H, W, inputArr_reshaped, outputArr_reshaped) ;
+
+    NHWC_to_NCHW(N, H, W, C, outputArr_reshaped, outArr) ;
+}
+
+void __onnxbridge_AvgPool(int32_t N, int32_t C, int32_t H, int32_t W, int32_t ksizeH, int32_t ksizeW, int32_t strideH, int32_t strideW, int32_t imgH, int32_t imgW, vector<vector<vector<vector<FPArray>>>> &inArr, vector<vector<vector<vector<FPArray>>>> &outArr)
+{
+    vector<vector<vector<vector<FPArray>>>> inputArr_reshaped = make_vector_float(ALICE, N, imgH, imgW, C) ;
+    NCHW_to_NHWC(N, C, imgH, imgW, inArr, inputArr_reshaped) ;
+
+    vector<vector<vector<vector<FPArray>>>> outputArr_reshaped = make_vector_float(ALICE, N, H, W, C) ;
+    Avgpool(N, imgH, imgW, C, ksizeH, ksizeW, strideH, strideW, H, W, inputArr_reshaped, outputArr_reshaped) ;
 
     NHWC_to_NCHW(N, H, W, C, outputArr_reshaped, outArr) ;
 }

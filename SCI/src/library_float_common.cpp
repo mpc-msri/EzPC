@@ -2628,7 +2628,6 @@ void GetPooledDer(
 	}
 }
 
-
 void PoolProp(
 	int32_t BATCH, int32_t outc, int32_t img2, int32_t imgp, int32_t img1, 
 	int32_t pk, int32_t ps,
