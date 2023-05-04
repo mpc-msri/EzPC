@@ -1,5 +1,4 @@
 #include "inout.cpp"
-#include "concat.cpp"
 #include "common.cpp"
 
 FPArray __public_float_to_arithmetic(float f, int party = ALICE)

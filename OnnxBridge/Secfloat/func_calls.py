@@ -198,7 +198,6 @@ class Operator:
     def GlobalAveragePool(
         cls, attributes, inputs, outputs, value_info, var_dict, indent
     ):
-        print("Inside global average pool")
         logger.debug("Inside GloablAveragePool function call.")
         return str(
             f"{'   ' * indent}__onnxbridge_AvgPool("
