@@ -270,7 +270,7 @@ public:
         return c;
     }
 
-    Tensor<T>& view(Tensor<T> &a, u64 idx)
+    Tensor<T>& view(Tensor<T> &a, i64 idx)
     {
         if (a.graphGenMode) {
             auto &c = functionalGraphGen<View<T>>({&a}, idx);

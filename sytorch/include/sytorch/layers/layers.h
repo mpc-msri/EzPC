@@ -903,26 +903,28 @@ public:
 template <typename T>
 class View: public Layer<T> {
 public:
-    u64 idx;
+    i64 idx;
 
-    View(u64 idx) :  Layer<T>("View"), idx(idx) {}
+    View(i64 idx) :  Layer<T>("View"), idx(idx) {}
 
     void _resize(const std::vector<std::vector<u64>> &shapes) {
         always_assert(shapes.size() == 1);
-        auto &shape = shapes[0];
-        always_assert(idx < shape[0]);
+        // auto &shape = shapes[0];
+        // always_assert(idx < shape[0]);
     }
 
     void _forward(Tensor<T> &a) {
-        always_assert(idx < a.shape[0]);
-        auto v = a.view(idx);
+        // always_assert(idx < a.shape[0]);
+        // std::cout << (idx % a.shape[0]) << std::endl;
+        u64 i = (idx + a.shape[0]) % a.shape[0];
+        auto v = a.view(i);
         this->activation.copy(v, false);
     }
 
     std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {
         always_assert(inShapes.size() == 1);
         auto shape = inShapes[0];
-        always_assert(idx < shape[0]);
+        // always_assert(idx < shape[0]);
         shape.erase(shape.begin());
         return shape;
     }

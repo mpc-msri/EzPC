@@ -357,4 +357,10 @@ public:
         ct->addbias(x, bias);
         delete ct;
     }
+
+    void scalarmul(Tensor<T> &x, T scalar, Tensor<T> &y) {
+        auto ct = new ClearText<T>;
+        ct->scalarmul(x, scalar, y);
+        delete ct;
+    }
 };

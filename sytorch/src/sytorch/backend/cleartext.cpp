@@ -437,51 +437,6 @@ void ClearText<T>::addbias(Tensor<T> &x, const Tensor1D<T> &bias)
 }
 
 template <typename T>
-void ClearText<T>::attention(Tensor4D<T> &qkv_heads, Tensor4D<T> &output, u64 scale)
-{
-    always_assert(qkv_heads.d1 == 3);
-    u64 n_heads = qkv_heads.d2;
-    u64 n_seq = qkv_heads.d3;
-    u64 d_k = qkv_heads.d4;
-    u64 n_embd = d_k * n_heads;
-    always_assert(output.d1 == 1);
-    always_assert(output.d2 == n_heads);
-    always_assert(output.d3 == n_seq);
-    always_assert(output.d4 == d_k);
-
-    u64 divisor = invsqrt_i2f(d_k, scale);
-    // std::cout << "d_k = " << d_k << std::endl;
-    // std::cout << "divisor = " << divisor << std::endl;
-
-    Tensor2D<T> tmp(n_seq, n_seq);
-    for(u64 head = 0; head < n_heads; ++head) 
-    {
-        Tensor2D<T> q(qkv_heads.data + head * n_seq * d_k, n_seq, d_k);
-        Tensor2D<T> k(qkv_heads.data + (n_heads + head) * n_seq * d_k, n_seq, d_k);
-        Tensor2D<T> v(qkv_heads.data + (2 * n_heads + head) * n_seq * d_k, n_seq, d_k);
-        Tensor2D<T> out(output.data + head * n_seq * d_k, n_seq, d_k);
-
-        // tmp = q * k^T
-        matmulTransposeB(q, k, tmp);
-        Backend<T>::truncate(tmp, scale);
-
-        // tmp = tmp / sqrt(d_k)
-        for (u64 j = 0; j < tmp.size(); ++j)
-        {
-            tmp.data[j] *= divisor;
-        }
-        Backend<T>::truncate(tmp, scale);
-
-        // tmp = softmax(tmp)
-        auto tmp_nd = tmp.as_nd();
-        softmax(tmp_nd, tmp_nd, scale);
-        // out = tmp * v
-        matmul(tmp, v, out);
-        Backend<T>::truncate(out, scale);
-    }
-}
-
-template <typename T>
 void ClearText<T>::scalarmul(Tensor<T> &x, T scalar, Tensor<T> &y)
 {
     always_assert(x.is_same_shape(y));

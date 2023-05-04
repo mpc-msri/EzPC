@@ -37,6 +37,132 @@ public:
         // maxIdx.template print<1>();
     }
 
+    void gelu(const Tensor<T> &in, const Tensor<T> &out, u64 scale)
+    {
+        u64 sz = in.size();
+        always_assert(sz == out.size());
+        T t1 = (T) (sqrt(2.0 / M_PI) * (1LL << scale));
+        T t2 = (T) (0.044715 * (1LL << scale));
+        auto ct = new ClearText<T>;
+        // t = x^2
+        ElemWiseActModelVectorMult(sz, in.data, in.data, in.data, in.data, out.data, out.data);
+        Backend<T>::truncate(out, scale);
+        
+        // t = x^3
+        ElemWiseActModelVectorMult(sz, out.data, out.data, in.data, in.data, out.data, out.data);
+        Backend<T>::truncate(out, scale);
+        
+        // t = x^3 * 0.044715
+        ct->fastfor(sz, [&](u64 i) {
+            out.data[i] = out.data[i] * t2;
+        });
+        Backend<T>::truncate(out, scale);
+
+        // t = x^3 * 0.044715 + x
+        ct->fastfor(sz, [&](u64 i) {
+            out.data[i] = out.data[i] + in.data[i];
+        });
+
+        // t = (x^3 * 0.044715 + x )* sqrt(2/pi)
+        ct->fastfor(sz, [&](u64 i) {
+            out.data[i] = out.data[i] * t1;
+        });
+        Backend<T>::truncate(out, scale);
+
+        // t = tanh((x^3 * 0.044715 + x) * sqrt(2/pi))
+        // TODO: teehee
+
+        // t = 1 + tanh((x^3 * 0.044715 + x) * sqrt(2/pi))
+        ct->fastfor(sz, [&](u64 i) {
+            out.data[i] = out.data[i] + (1LL << scale);
+        });
+
+        // t = x * (1 + tanh((x^3 * 0.044715 + x) * sqrt(2/pi))) / 2
+        ElemWiseActModelVectorMult(sz, out.data, out.data, in.data, in.data, out.data, out.data);
+        Backend<T>::truncate(out, scale + 1);
+
+        delete ct;
+    }
+
+    void softmax(Tensor<T> &in, Tensor<T> &out, u64 scale)
+    {
+        // TODO: teehee
+    }
+
+    void layernorm(const Tensor1D<T> &A, const Tensor1D<T> &B, const Tensor<T> &x, Tensor<T> &y, u64 scale)
+    {
+        always_assert(A.d1 == B.d1);
+        always_assert(A.d1 == x.shape.back());
+        always_assert(x.is_same_shape(y));
+        
+        u64 channels = x.shape.back();
+
+        auto ct = new ClearText<T>;
+        auto shape2 = x.shape;
+        shape2.pop_back();
+
+        Tensor<T> tmp(x.shape);
+        Tensor<T> mean(shape2);
+        Tensor<T> var(shape2);
+
+        ct->fastfor(x.size() / channels, [&](u64 i) {
+            mean.data[i] = 0;
+            for (u64 j = 0; j < channels; j++) {
+                mean.data[i] += x.data[i * channels + j];
+            }
+        });
+
+        div(mean, channels, scale);
+
+        ct->fastfor(x.size() / channels, [&](u64 i) {
+            for (u64 j = 0; j < channels; j++) {
+                tmp.data[i * channels + j] = x.data[i * channels + j] - mean.data[i];
+            }
+        });
+
+        ElemWiseActModelVectorMult(tmp.size(), tmp.data, tmp.data, tmp.data, tmp.data, tmp.data, tmp.data);
+
+        ct->fastfor(x.size() / channels, [&](u64 i) {
+            var.data[i] = 0;
+            for (u64 j = 0; j < channels; j++) {
+                var.data[i] += tmp.data[i * channels + j];
+            }
+        });
+
+        Backend<T>::truncate(var, scale);
+        div(var, channels, scale);
+
+        // TODO: invvar = invsqrt(var)
+        auto &invvar = var;
+
+        ct->fastfor(x.size() / channels, [&](u64 i) {
+            for (u64 j = 0; j < channels; j++) {
+                tmp.data[i * channels + j] = x.data[i * channels + j] - mean.data[i];
+                y.data[i * channels + j] = invvar.data[i];
+            }
+        });
+
+        ElemWiseActModelVectorMult(tmp.size(), tmp.data, tmp.data, y.data, y.data, y.data, y.data);
+        Backend<T>::truncate(y, scale);
+
+        auto &Aexpand = tmp;
+        ct->fastfor(x.size() / channels, [&](u64 i) {
+            for (u64 j = 0; j < channels; j++) {
+                Aexpand.data[i * channels + j] = A(j);
+            }
+        });
+        ElemWiseActModelVectorMult(tmp.size(), Aexpand.data, Aexpand.data, y.data, y.data, y.data, y.data);
+
+        ct->fastfor(x.size() / channels, [&](u64 i) {
+            for (u64 j = 0; j < channels; j++) {
+                y.data[i * channels + j] += B(j);
+            }
+        });
+
+        delete ct;
+    }
+
+
     void doOptimize(LayerGraphNode<T> *node, LayerGraphNode<T> *root)
     {
         if (node->layer->doTruncationForward) {
