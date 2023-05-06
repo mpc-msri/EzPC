@@ -87,6 +87,7 @@ public:
     void softmax(Tensor<T> &in, Tensor<T> &out, u64 scale)
     {
         // TODO: teehee
+        out.copy(in, false);
     }
 
     void layernorm(const Tensor1D<T> &A, const Tensor1D<T> &B, const Tensor<T> &x, Tensor<T> &y, u64 scale)
@@ -112,7 +113,7 @@ public:
             }
         });
 
-        div(mean, channels, scale);
+        LlamaBase<T>::div(mean, channels, scale);
 
         ct->fastfor(x.size() / channels, [&](u64 i) {
             for (u64 j = 0; j < channels; j++) {
@@ -130,7 +131,7 @@ public:
         });
 
         Backend<T>::truncate(var, scale);
-        div(var, channels, scale);
+        LlamaBase<T>::div(var, channels, scale);
 
         // TODO: invvar = invsqrt(var)
         auto &invvar = var;

@@ -7,6 +7,7 @@
 #include <sytorch/graph.h>
 #include <llama/assert.h>
 #include <cmath>
+#include <filesystem>
 
 typedef uint64_t u64;
 typedef uint8_t u8;
