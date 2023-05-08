@@ -17,7 +17,7 @@ def func_call(node, value_info):
         "Flatten": "Flatten",
         "Gemm": "FC",
         "Concat": "concat",
-        "BatchNormalization": "BatchNorm2dInference",
+        "BatchNormalization": "BatchNormInference",
         "AveragePool": "AvgPool2D",
         "GlobalAveragePool": "GlobalAvgPool2D",
         "Add": "add",
