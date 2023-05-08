@@ -29,7 +29,7 @@ public:
 
     void generateFunctionalLayerMap()
     {
-        functionalLayerMap.clear();
+        // functionalLayerMap.clear();
         topologicalApply(root, [=](LayerGraphNode<T> *node, LayerGraphNode<T> *_root) {
             if (std::find(functionalLayers.begin(), functionalLayers.end(), node->layer->name) != functionalLayers.end()) {
                 std::string id = node->layer->name;
@@ -53,7 +53,7 @@ public:
         }
         id = id + "|" + paramstring(args...);
         if (functionalLayerMap.find(id) == functionalLayerMap.end()) {
-            std::cerr << "Layer not found" << std::endl;
+            std::cerr << "Layer not found = \"" << id << "\"" << std::endl;
             exit(1);
         }
         return functionalLayerMap[id];
@@ -194,6 +194,55 @@ public:
 
         always_assert(wIdx == numParameters);
         delete[] floatWeights;
+    }
+
+    void dumpi64(const std::string weightsFile)
+    {
+        std::ofstream file(weightsFile, std::ios::binary);
+        u64 scale = this->scale;
+
+        for (auto &node: allNodesInExecutionOrder) {
+            auto layer = node->layer;
+            if (layer->name == "BatchNormInference") {
+                auto bn = (BatchNormInference<T>*) layer;
+                auto channel = bn->A.d1;
+            
+                for (int j = 0; j < channel; ++j) {
+                    i64 v = bn->A(j);
+                    file.write((char *)(&v), sizeof(i64));
+                }
+                for (int j = 0; j < channel; ++j) {
+                    i64 v = bn->B(j);
+                    file.write((char *)(&v), sizeof(i64));
+                }
+                for (int j = 0; j < channel; ++j) {
+                    i64 v = 0;
+                    file.write((char *)(&v), sizeof(i64));
+                }
+                for (int j = 0; j < channel; ++j) {
+                    i64 v = (1LL << scale);
+                    file.write((char *)(&v), sizeof(i64));
+                }
+
+            }
+            else {
+                auto weights = layer->getweights();
+                for (u64 j = 0; j < weights.size; j++) {
+                    i64 v = weights.data[j];
+                    file.write((char *)(&v), sizeof(i64));
+                }
+
+                auto bias = layer->getbias();
+                if (layer->useBias) {
+
+                    for (u64 j = 0; j < bias.size; ++j) {
+                        i64 v = bias.data[j];
+                        file.write((char *)(&v), sizeof(i64));
+                    }
+                }
+            }
+        }
+
     }
 
     Tensor<T>& add(std::vector<Tensor<T> *> &arr)

@@ -11,6 +11,7 @@ void ClearText<T>::matmul(const Tensor2D<T> &a, const Tensor2D<T> &b, Tensor2D<T
     Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eB(b.data, b.d1, b.d2);
     Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eC(c.data, c.d1, c.d2);
     eC = eA * eB;
+    modbw(c);
 }
 
 template <typename T>
@@ -23,6 +24,7 @@ void ClearText<T>::matmulTransposeA(const Tensor2D<T> &a, const Tensor2D<T> &b, 
     Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eB(b.data, b.d1, b.d2);
     Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eC(c.data, c.d1, c.d2);
     eC = eA * eB;
+    modbw(c);
 }
 
 template <typename T>
@@ -34,6 +36,7 @@ void ClearText<T>::matmulTransposeB(const Tensor2D<T> &a, const Tensor2D<T> &b, 
     Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>> eB(b.data, b.d2, b.d1);
     Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eC(c.data, c.d1, c.d2);
     eC = eA * eB;
+    modbw(c);
 }
 
 template <typename T>
@@ -53,6 +56,7 @@ void ClearText<T>::conv2D(u64 fh, u64 fw, u64 padding, u64 stride, u64 ci, u64 c
     Tensor2D<T> tempOutput(filter.d1, reshapedInput.d1);
     matmulTransposeB(filter, reshapedInput, tempOutput);
     reshapeOutput<T>(tempOutput, input.d1, (((input.d2 + 2*padding - fh)/stride) + 1), (((input.d3 + 2*padding - fw)/stride) + 1), co, output);
+    modbw(output);
 }
 
 template <typename T>
@@ -77,6 +81,7 @@ void ClearText<T>::conv3D(u64 fd, u64 fh, u64 fw, u64 pd, u64 ph, u64 pw, u64 sd
     Tensor2D<T> tempOutput(filter.d1, reshapedInput.d1);
     matmulTransposeB(filter, reshapedInput, tempOutput);
     reshapeOutput3d<T>(tempOutput, input.d1, newD, newH, newW, co, output);
+    modbw(output);
 }
 
 template <typename T>
@@ -97,6 +102,7 @@ void ClearText<T>::convTranspose3D(u64 fd, u64 fh, u64 fw, u64 pd, u64 ph, u64 p
         convTranspose3dLoop<T>(input.d1, input.d2, input.d3, input.d4, input.d5, fd, fh, fw, co, 
             pd, pd, ph, ph, pw, pw, sd, sh, sw,
             output.d2, output.d3, output.d4, input.data, filter.data, output.data);
+        modbw(output);
     }
 
 template <typename T>
@@ -116,7 +122,7 @@ void ClearText<T>::truncate(T *in, T *out, u64 shift, u64 size, u8 mode) {
         if constexpr (std::is_floating_point<T>::value) {
             out[i] = in[i] / ((T)(1ULL << shift));
         } else {
-            if(localTruncationEmulation) {
+            if constexpr (localTruncationEmulation) {
                 u64 a = prngStr.get<u64>();
                 u64 b = ((u64)in[i]) - a;
                 a = a >> shift;
@@ -124,9 +130,9 @@ void ClearText<T>::truncate(T *in, T *out, u64 shift, u64 size, u8 mode) {
                 out[i] = a + b;
                 return;
             }
-            u64 x0 = ((u64)in[i]) % (1ULL << shift);
-            in[i] = in[i] >> shift;
-            if (probablistic) {
+            out[i] = in[i] >> shift;
+            if constexpr (probablistic) {
+                u64 x0 = ((u64)in[i]) % (1ULL << shift);
                 u64 r = rand() % (1ULL << shift);
                 out[i] += (x0 < r ? 0 : 1); 
             }
@@ -184,10 +190,11 @@ void ClearText<T>::truncate(T &in, u64 shift) {
             in += (x0 < r ? 0 : 1); 
         }
     }
+    modbw(in);
 }
 
 template <typename T>
-void ClearText<T>::div(const Tensor<T> &in, T divisor, u64 scale) {
+void ClearText<T>::div(Tensor<T> &in, T divisor, u64 scale) {
     // fastfor(in.size(), [&] (u64 i) {
     //     in.data[i] = in.data[i] / divisor;
     // });
@@ -197,6 +204,7 @@ void ClearText<T>::div(const Tensor<T> &in, T divisor, u64 scale) {
     fastfor(in.size(), [&] (u64 i) {
         in.data[i] *= divfp;
     });
+    modbw(in);
     Backend<T>::truncate(in, scale, 3);
 }
 
@@ -228,7 +236,8 @@ void ClearText<T>::sumPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> 
 template <typename T>
 void ClearText<T>::avgPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> &in, Tensor4D<T> &out, u64 scale) {
     sumPool2D(ks, padding, stride, in, out);
-    div(out.as_nd(), (T)(ks*ks), scale);
+    auto out_nd = out.as_nd();
+    div(out_nd, (T)(ks*ks), scale);
 }
 
 template <typename T>
@@ -289,7 +298,7 @@ void ClearText<T>::batchNormInference(const Tensor1D<T> &A, const Tensor1D<T> &B
 }
 
 template <typename T>
-void ClearText<T>::add(const std::vector<Tensor<T> *> &in, const Tensor<T> &out)
+void ClearText<T>::add(const std::vector<Tensor<T> *> &in, Tensor<T> &out)
 {
     always_assert(in.size() > 0);
     always_assert(out.size() == in[0]->size());
@@ -303,6 +312,7 @@ void ClearText<T>::add(const std::vector<Tensor<T> *> &in, const Tensor<T> &out)
         }
         out.data[i] = sum;
     });
+    modbw(out);
 }
 
 template <typename T>
@@ -318,18 +328,24 @@ void ClearText<T>::gelu(const Tensor<T> &in, const Tensor<T> &out, u64 scale)
     T t1 = (T) (sqrt(2.0 / M_PI) * (1LL << scale));
     T t2 = (T) (0.044715 * (1LL << scale));
     fastfor(in.size(), [&](u64 i) {
-        T t = in.data[i] * in.data[i];
+        T ini = in.data[i];
+        T t = ini * ini;
+        modbw(t);
         truncate(t, scale);
-        t = t * in.data[i];
+        t = t * ini;
+        modbw(t);
         truncate(t, scale);
         t = t * t2;
+        modbw(t);
         truncate(t, scale);
-        t = t + in.data[i];
+        t = t + ini;
         t = t * t1;
+        modbw(t);
         truncate(t, scale);
         t = tanh(t, scale);
         t = t + (1LL << scale);
-        t = t * in.data[i];
+        t = t * ini;
+        modbw(t);
         truncate(t, scale+1);
         out.data[i] = t;
     });
@@ -362,7 +378,7 @@ void ClearText<T>::softmax(Tensor<T> &_in, Tensor<T> &_out, u64 scale)
             if (scale == 0) {
                 exps[j] = std::exp(x);
             } else {
-                exps[j] = std::exp(x / (1ULL << scale));
+                exps[j] = std::exp(x / (1LL << scale));
             }
             den += exps[j];
         }
@@ -371,8 +387,7 @@ void ClearText<T>::softmax(Tensor<T> &_in, Tensor<T> &_out, u64 scale)
             if (scale == 0) {
                 out(b, j) = exps[j] / den;
             } else {
-                auto t = (exps[j] / den) * (1ULL << scale);
-                t += rand_float();
+                auto t = (exps[j] / den) * (1LL << scale);
                 out(b, j) = (T)(t);
             }
         }
@@ -408,10 +423,12 @@ void ClearText<T>::layernorm(const Tensor1D<T> &A, const Tensor1D<T> &B, const T
         for (u64 j = 0; j < channels; j++) {
             mean += x.data[i * channels + j];
         }
+        modbw(mean);
         mean = mean / T(channels);
         for (u64 j = 0; j < channels; j++) {
             var += (x.data[i * channels + j] - mean) * (x.data[i * channels + j] - mean);
         }
+        modbw(var);
         var = var / T(channels);
         truncate(var, scale);
         var = invsqrt(var, scale);
@@ -419,6 +436,7 @@ void ClearText<T>::layernorm(const Tensor1D<T> &A, const Tensor1D<T> &B, const T
             y.data[i * channels + j] = (x.data[i * channels + j] - mean) * var;
         }
     });
+    modbw(y);
 
     Backend<T>::truncate(y, scale);
 
@@ -434,6 +452,7 @@ void ClearText<T>::addbias(Tensor<T> &x, const Tensor1D<T> &bias)
     fastfor(x.size(), [&](u64 i) {
         x.data[i] += bias(i % bias.d1);
     });
+    modbw(x);
 }
 
 template <typename T>
@@ -443,6 +462,7 @@ void ClearText<T>::scalarmul(Tensor<T> &x, T scalar, Tensor<T> &y)
     fastfor(x.size(), [&](u64 i) {
         y.data[i] = x.data[i] * scalar;
     });
+    modbw(y);
 }
 
 template class ClearText<i64>;

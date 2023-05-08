@@ -162,7 +162,12 @@ public:
 
     void copy(const Tensor<T> &other, bool copyGraph = true) {
         assert_same_shape(other);
-        memcpy(data, other.data, size() * sizeof(T));
+        // memcpy(data, other.data, size() * sizeof(T));
+        #pragma omp parallel for
+        for(u64 i = 0; i < size(); ++i)
+        {
+            data[i] = other.data[i];
+        }
         if (copyGraph)
             this->graphNode = other.graphNode;
     }

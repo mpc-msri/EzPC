@@ -55,7 +55,7 @@ public:
     virtual void relu(const Tensor<T> &in, const Tensor<T> &out, const Tensor<T> &drelu, u64 scale, int mode) NOT_IMPLEMENTED;
 
     // avgpool API
-    virtual void div(const Tensor<T> &in, T divisor, u64 scale) NOT_IMPLEMENTED;
+    virtual void div(Tensor<T> &in, T divisor, u64 scale) NOT_IMPLEMENTED;
     virtual void sumPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> &in, Tensor4D<T> &out) NOT_IMPLEMENTED;
     virtual void avgPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> &in, Tensor4D<T> &out, u64 scale) NOT_IMPLEMENTED;
     
@@ -66,7 +66,7 @@ public:
     virtual void signext(Tensor<T> &x, u64 scale) NOT_IMPLEMENTED;
 
     // add API
-    virtual void add(const std::vector<Tensor<T> *> &in, const Tensor<T> &out) NOT_IMPLEMENTED;
+    virtual void add(const std::vector<Tensor<T> *> &in, Tensor<T> &out) NOT_IMPLEMENTED;
 
     virtual void gelu(const Tensor<T> &in, const Tensor<T> &out, u64 scale) NOT_IMPLEMENTED;
     virtual void softmax(Tensor<T> &in, Tensor<T> &out, u64 scale) NOT_IMPLEMENTED;
