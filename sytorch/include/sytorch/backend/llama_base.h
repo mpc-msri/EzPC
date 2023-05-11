@@ -63,11 +63,11 @@ public:
     void initializeInferencePartyB(Tensor<T>&data){
         u64 size = data.size();
         if(LlamaConfig::party == 1){
-            input_layer(nullptr,data.data, size, 3);
+                input_no_prng_with_frontend(nullptr, data.data, size, 3);
         }
         else{
             Tensor<T> tmp(data.shape);
-            input_layer(data.data, tmp.data, size, 3);
+            input_no_prng_with_frontend(data.data, tmp.data, size, 3);
         }
     }
 

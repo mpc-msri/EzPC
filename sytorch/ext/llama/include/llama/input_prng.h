@@ -26,6 +26,8 @@ SOFTWARE.
 
 void input_prng_init();
 void input_layer(GroupElement *x, GroupElement *x_mask, int size, int owner);
+void input_no_prng_with_frontend(GroupElement *x, GroupElement *x_mask, int size, int owner);
+// void input_layer_frontend(GroupElement *x, GroupElement *x_mask, int size, int owner);
 
 #define TIME_THIS_BLOCK_FOR_INPUT_IF(x, condition, accumulator) \
 {\

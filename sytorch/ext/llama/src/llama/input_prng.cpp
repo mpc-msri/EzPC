@@ -131,10 +131,10 @@ void input_layer(GroupElement *x, GroupElement *x_mask, int size, int owner)
                 x[size-1] = x[size-1] + x_mask[size-1];
             }
         , true, accumulatedInputTimeOffline)
-        
+
         TIME_THIS_BLOCK_FOR_INPUT_IF(
             peer->send_batched_input(x, size, bitlength);
-        , true, (owner == SERVER ? accumulatedInputTimeOffline : accumulatedInputTimeOnline))
+            , true, (owner == SERVER ? accumulatedInputTimeOffline : accumulatedInputTimeOnline))
     }
     else {
         uint64_t *tmp = new uint64_t[size];
@@ -150,3 +150,94 @@ void input_layer(GroupElement *x, GroupElement *x_mask, int size, int owner)
     }
     counter[owner - SERVER] += size;
 }
+
+void input_no_prng_with_frontend(GroupElement *x, GroupElement *x_mask, int size, int owner)
+{
+    if (party == DEALER)
+    {
+        std::ofstream f("masks.dat");
+        for (int i = 0; i < size; ++i)
+        {
+            x_mask[i] = random_ge(bitlength);
+            f << x_mask[i] << std::endl;
+        }
+    }
+    else if (party == owner)
+    {
+        std::ifstream f("masks.dat");
+        for (int i = 0; i < size; ++i)
+        {
+            f >> x_mask[i];
+            x[i] = x[i] + x_mask[i];
+        }
+        peer->send_batched_input(x, size, bitlength);
+    }
+    else
+    {
+        uint64_t *tmp = new uint64_t[size];
+        peer->recv_batched_input(tmp, size, bitlength);
+        for (int i = 0; i < size; ++i)
+        {
+            x[i] = tmp[i];
+        }
+        delete[] tmp;
+    }
+}
+
+// void input_layer_frontend(GroupElement *x, GroupElement *x_mask, int size, int owner)
+// {
+//     if (party == DEALER)
+//     {
+//         TIME_THIS_BLOCK_FOR_INPUT_IF(
+//             std::ofstream f("masks.txt");
+//             std::thread thread_pool[num_threads];
+//             for (int i = 0; i < num_threads; ++i) {
+//                 thread_pool[i] = std::thread(input_layer_dealer_thread, i, size / 2, owner, x_mask);
+//             } for (int i = 0; i < num_threads; ++i) {
+//                 thread_pool[i].join();
+//             } if (size % 2 == 1) {
+//                 auto pair = get_input_mask_pair(size / 2, owner);
+//                 x_mask[size - 1] = _mm_extract_epi64(pair, 0);
+//                 f << x_mask[size - 1] << std::endl;
+//             },
+//             true, accumulatedInputTimeOffline)
+//     }
+//     else if (party == owner)
+//     {
+//         // for(int i = 0; i < size; ++i) {
+//         //     std::cin >> x[i];
+//         // }
+//         // generate and add masks
+//         TIME_THIS_BLOCK_FOR_INPUT_IF(
+//             std::ifstream f("masks.txt");
+//             std::thread thread_pool[num_threads];
+//             for (int i = 0; i < num_threads; ++i) {
+//                 thread_pool[i] = std::thread(input_layer_owner_thread, i, size / 2, owner, x, x_mask);
+//             } for (int i = 0; i < num_threads; ++i) {
+//                 thread_pool[i].join();
+//             } if (size % 2 == 1) {
+//                 f >> x_mask[size - 1];
+//                 x[size - 1] = x[size - 1] + x_mask[size - 1];
+//             },
+//             true, accumulatedInputTimeOffline)
+
+//         TIME_THIS_BLOCK_FOR_INPUT_IF(
+//             peer->send_batched_input(x, size, bitlength);
+//             , true, (owner == SERVER ? accumulatedInputTimeOffline : accumulatedInputTimeOnline))
+//     }
+//     else
+//     {
+//         uint64_t *tmp = new uint64_t[size];
+//         peer->recv_batched_input(tmp, 1, bitlength);
+//         TIME_THIS_BLOCK_FOR_INPUT_IF(
+//             peer->recv_batched_input(tmp + 1, size - 1, bitlength);
+//             , true, (owner == SERVER ? accumulatedInputTimeOffline : accumulatedInputTimeOnline))
+//         // todo: parallelize this maybe?
+//         for (int i = 0; i < size; ++i)
+//         {
+//             x[i] = tmp[i];
+//         }
+//         delete[] tmp;
+//     }
+//     counter[owner - SERVER] += size;
+// }
