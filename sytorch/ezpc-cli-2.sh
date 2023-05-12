@@ -111,10 +111,11 @@ bg_magenta='\033[0;45m'
 bg_cyan='\033[0;46m'
 clear='\033[0m'
 
-if [ "$1" = "clean" ]; then
+if [ "\$1" = "clean" ]; then
   shopt -s extglob
   echo -e "\${bg_yellow}Cleaning up\${clear}"
-  rm -rf !(server.sh)
+  find . -type f -not -name 'server.sh' -delete
+  find . -type d -not -name 'server.sh' -delete
   echo -e "\${bg_green}Cleaned up\${clear}"
   shopt -u extglob
   exit 0
@@ -128,6 +129,9 @@ echo -e "Play Area: \${bg_green}\$current_dir\${clear}"
 # Clone sytorch
 echo -e "\${bg_green}Cloning sytorch repository\${clear}"
 git clone https://github.com/mpc-msri/EzPC
+cd EzPC
+git switch hf-demo
+cd ..
 wait
 
 sytorch="\$current_dir/EzPC/sytorch"
@@ -196,10 +200,10 @@ bg_magenta='\033[0;45m'
 bg_cyan='\033[0;46m'
 clear='\033[0m'
 
-if [ "$1" = "clean" ]; then
+if [ "\$1" = "clean" ]; then
   shopt -s extglob
   echo -e "\${bg_yellow}Cleaning up\${clear}"
-  rm -rf !(dealer.sh)
+  find . -type f,d -not -name 'dealer.sh' -delete
   echo -e "\${bg_green}Cleaned up\${clear}"
   shopt -u extglob
   exit 0
@@ -270,10 +274,12 @@ mkdir server
 mv server.dat server/server.dat
 mkdir client
 mv client.dat client/client.dat
+mkdir frontend
+mv masks.dat frontend/masks.dat
 
 # Key generation and serving key files
 echo -e "\${bg_green}Starting a Python server to serve keys file\${clear}"
-python \$sytorch/scripts/dealer.py $SERVER_IP 
+python \$sytorch/scripts/dealer.py $DEALER_IP 
 
 EOF
 # Finish generating Dealer Script
@@ -296,10 +302,10 @@ bg_magenta='\033[0;45m'
 bg_cyan='\033[0;46m'
 clear='\033[0m'
 
-if [ "$1" = "clean" ]; then
+if [ "\$1" = "clean" ]; then
   shopt -s extglob
   echo -e "\${bg_yellow}Cleaning up\${clear}"
-  rm -rf !(client-o*)
+  find . -type f,d -not -name 'client-o*' -delete
   echo -e "\${bg_green}Cleaned up\${clear}"
   shopt -u extglob
   exit 0
@@ -380,10 +386,10 @@ bg_magenta='\033[0;45m'
 bg_cyan='\033[0;46m'
 clear='\033[0m'
 
-if [ "$1" = "clean" ]; then
+if [ "\$1" = "clean" ]; then
   shopt -s extglob
   echo -e "\${bg_yellow}Cleaning up\${clear}"
-  rm -rf !(client-o*)
+  find . -type f,d -not -name 'client-o*' -delete
   echo -e "\${bg_green}Cleaned up\${clear}"
   shopt -u extglob
   exit 0
