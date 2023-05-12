@@ -28,19 +28,10 @@ class FileHandler(FTPHandler):
     def on_file_sent(self, file):
         self.log(f"Ip of {self.username} is {self.remote_ip}")
 
-        # Calculate the MD hash of the file
-        # hasher = hashlib.md5()
-        # with open(file, "rb") as f:
-        #     buf = f.read()
-        #     hasher.update(buf)
-        # md_hash = hasher.hexdigest()
-
         if self.username == "server":
             FileHandler.files_served_to_server += 1
-            # self.log(f"MD5 hash of server.dat is {md_hash}")
         elif self.username == "client":
             FileHandler.files_served_to_client += 1
-            # self.log(f"MD5 hash of client.dat is {md_hash}")
 
         self.log(f"Files served to client: {FileHandler.files_served_to_client}")
         self.log(f"Files served to server: {FileHandler.files_served_to_server}")
@@ -74,6 +65,7 @@ def main():
     # anonymous user
     authorizer.add_user("server", "server", "./server", perm="elradfmwMT")
     authorizer.add_user("client", "client", "./client", perm="elradfmwMT")
+    authorizer.add_user("frontend", "frontend", "./frontend", perm="elradfmwMT")
 
     # Instantiate FTP handler class
     handler = FileHandler
@@ -83,6 +75,7 @@ def main():
     handler.banner = "pyftpdlib based ftpd ready."
 
     # Instantiate FTP server class and listen on 0.0.0.0:2121
+    handler.passive_ports = range(60000, 65535)
     address = (sys.argv[1], 9000)
     server = ThreadedFTPServer(address, handler)
 

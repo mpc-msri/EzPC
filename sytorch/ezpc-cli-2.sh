@@ -203,7 +203,8 @@ clear='\033[0m'
 if [ "\$1" = "clean" ]; then
   shopt -s extglob
   echo -e "\${bg_yellow}Cleaning up\${clear}"
-  find . -type f,d -not -name 'dealer.sh' -delete
+  find . -type f -not -name 'dealer.sh' -delete
+  find . -type d -not -name 'dealer.sh' -delete
   echo -e "\${bg_green}Cleaned up\${clear}"
   shopt -u extglob
   exit 0
@@ -240,6 +241,9 @@ done
 # Clone sytorch
 echo -e "\${bg_green}Cloning sytorch repository\${clear}"
 git clone https://github.com/mpc-msri/EzPC
+cd EzPC
+git switch hf-demo
+cd ..
 wait
 
 sytorch="\$current_dir/EzPC/sytorch"
