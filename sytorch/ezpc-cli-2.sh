@@ -309,7 +309,8 @@ clear='\033[0m'
 if [ "\$1" = "clean" ]; then
   shopt -s extglob
   echo -e "\${bg_yellow}Cleaning up\${clear}"
-  find . -type f,d -not -name 'client-o*' -delete
+  find . -type f -not -name 'client-o*' -delete
+  find . -type d -not -name 'client-o*' -delete
   echo -e "\${bg_green}Cleaned up\${clear}"
   shopt -u extglob
   exit 0
@@ -346,6 +347,9 @@ echo -e "\${bg_green}Downloaded Server Files\${clear}"
 # Clone sytorch
 echo -e "\${bg_green}Cloning sytorch repository\${clear}"
 git clone https://github.com/mpc-msri/EzPC
+cd EzPC
+git switch hf-demo
+cd ..
 wait
 
 sytorch="\$current_dir/EzPC/sytorch"
@@ -372,9 +376,15 @@ echo -e "\${bg_green}Compiling the model\${clear}"
 \$onnxbridge/LLAMA/compile_llama.sh "${Model_Name}_${BACKEND}_${SCALE}.cpp"
 wait
 
-
+# for first inference
+python $sytorch/scripts/download_keys.py $Dealer_url client client client.dat
+wait
+echo -e "${bg_green}Downloaded Dealer Keys File${clear}"
 
 wait
+
+cp \$sytorch/scripts/app.py app.py
+flask run --host=0.0.0.0 --port=5000
 
 EOF
 
@@ -393,7 +403,8 @@ clear='\033[0m'
 if [ "\$1" = "clean" ]; then
   shopt -s extglob
   echo -e "\${bg_yellow}Cleaning up\${clear}"
-  find . -type f,d -not -name 'client-o*' -delete
+  find . -type f -not -name 'client-o*' -delete
+  find . -type d -not -name 'client-o*' -delete
   echo -e "\${bg_green}Cleaned up\${clear}"
   shopt -u extglob
   exit 0
@@ -410,27 +421,15 @@ current_dir=\$(pwd)
 sytorch="\$current_dir/EzPC/sytorch"
 onnxbridge="\$current_dir/EzPC/OnnxBridge"
 
-# Download Keys from Dealer
-echo -e "\${bg_green}Downloading keys from Dealer\${clear}"
-# Set the dealer IP address and port number
-Dealer_url="$DEALER_IP"
 
-# Get the keys from the Dealer
-python \$sytorch/scripts/download_keys.py \$Dealer_url client client client.dat
-wait
-echo -e "\${bg_green}Downloaded Dealer Keys File\${clear}"
-
-# Copy the input image
-cp \$IMAGE_PATH .
 # get input file name
 File_NAME=\$(basename \$IMAGE_PATH)
 Image_Name=\${File_NAME%.*}
 
 # Prepare the input
 echo -e "\${bg_green}Preparing the input\${clear}"
-python $preprocess_image_file \$File_NAME
-wait
 python \$onnxbridge/helper/convert_np_to_float_inp.py --inp \$Image_Name.npy --out \$Image_Name.inp
+wait
 
 
 # Run the model
@@ -441,6 +440,15 @@ echo -e "\${bg_green}Running the model\${clear}"
 echo -e "\${bg_green}Printing the output\${clear}"
 cat output.txt
 echo -e "\${bg_green}Finished\${clear}"
+
+# Download Keys from Dealer
+echo -e "\${bg_green}Downloading keys from Dealer\${clear}"
+# Set the dealer IP address and port number
+Dealer_url="$DEALER_IP"
+
+# Get the keys from the Dealer for next inference
+python \$sytorch/scripts/download_keys.py \$Dealer_url client client client.dat
+echo -e "\${bg_green}Downloaded Dealer Keys File\${clear}"
 
 EOF
 echo "Finished generating Client Script"
