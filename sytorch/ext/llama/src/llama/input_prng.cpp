@@ -164,12 +164,6 @@ void input_no_prng_with_frontend(GroupElement *x, GroupElement *x_mask, int size
     }
     else if (party == owner)
     {
-        std::ifstream f("masks.dat");
-        for (int i = 0; i < size; ++i)
-        {
-            f >> x_mask[i];
-            x[i] = x[i] + x_mask[i];
-        }
         peer->send_batched_input(x, size, bitlength);
     }
     else

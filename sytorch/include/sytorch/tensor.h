@@ -188,7 +188,7 @@ public:
             u64 curr_channel = (i / rest_size) % num_channel;
             u64 curr_rest = i % rest_size;
             u64 new_idx = curr_batch * (num_channel * rest_size) + curr_rest * num_channel + curr_channel;
-            data[new_idx] = (i64)(d * (1LL << scale));
+            data[new_idx] = (i64)d;
         }
     }
 
