@@ -377,7 +377,7 @@ echo -e "\${bg_green}Compiling the model\${clear}"
 wait
 
 # for first inference
-python $sytorch/scripts/download_keys.py $Dealer_url client client client.dat
+python \$sytorch/scripts/download_keys.py $Dealer_url client client client.dat
 wait
 echo -e "${bg_green}Downloaded Dealer Keys File${clear}"
 
