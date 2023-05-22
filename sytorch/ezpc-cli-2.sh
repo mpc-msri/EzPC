@@ -283,7 +283,7 @@ mv masks.dat frontend/masks.dat
 
 # Key generation and serving key files
 echo -e "\${bg_green}Starting a Python server to serve keys file\${clear}"
-python \$sytorch/scripts/dealer.py $DEALER_IP 
+python \$sytorch/scripts/dealer.py 0.0.0.0 
 
 EOF
 # Finish generating Dealer Script
@@ -376,8 +376,12 @@ echo -e "\${bg_green}Compiling the model\${clear}"
 \$onnxbridge/LLAMA/compile_llama.sh "${Model_Name}_${BACKEND}_${SCALE}.cpp"
 wait
 
+# Download Keys from Dealer
+echo -e "\${bg_green}Downloading keys from Dealer\${clear}"
+# Set the dealer IP address and port number
+Dealer_url="$DEALER_IP"
 # for first inference
-python $sytorch/scripts/download_keys.py $Dealer_url client client client.dat
+python \$sytorch/scripts/download_keys.py \$Dealer_url client client client.dat
 wait
 echo -e "${bg_green}Downloaded Dealer Keys File${clear}"
 
