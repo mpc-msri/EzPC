@@ -111,10 +111,11 @@ bg_magenta='\033[0;45m'
 bg_cyan='\033[0;46m'
 clear='\033[0m'
 
-if [ "$1" = "clean" ]; then
+if [ "\$1" = "clean" ]; then
   shopt -s extglob
   echo -e "\${bg_yellow}Cleaning up\${clear}"
-  rm -rf !(server.sh)
+  find . -type f -not -name 'server.sh' -delete
+  find . -type d -not -name 'server.sh' -delete
   echo -e "\${bg_green}Cleaned up\${clear}"
   shopt -u extglob
   exit 0
@@ -196,10 +197,11 @@ bg_magenta='\033[0;45m'
 bg_cyan='\033[0;46m'
 clear='\033[0m'
 
-if [ "$1" = "clean" ]; then
+if [ "\$1" = "clean" ]; then
   shopt -s extglob
   echo -e "\${bg_yellow}Cleaning up\${clear}"
-  rm -rf !(dealer.sh)
+  find . -type f -not -name 'dealer.sh' -delete
+  find . -type d -not -name 'dealer.sh' -delete
   echo -e "\${bg_green}Cleaned up\${clear}"
   shopt -u extglob
   exit 0
@@ -273,7 +275,7 @@ mv client.dat client/client.dat
 
 # Key generation and serving key files
 echo -e "\${bg_green}Starting a Python server to serve keys file\${clear}"
-python \$sytorch/scripts/dealer.py $SERVER_IP 
+python \$sytorch/scripts/dealer.py $DEALER_IP  
 
 EOF
 # Finish generating Dealer Script
@@ -296,10 +298,11 @@ bg_magenta='\033[0;45m'
 bg_cyan='\033[0;46m'
 clear='\033[0m'
 
-if [ "$1" = "clean" ]; then
+if [ "\$1" = "clean" ]; then
   shopt -s extglob
   echo -e "\${bg_yellow}Cleaning up\${clear}"
-  rm -rf !(client-o*)
+  find . -type f -not -name 'client-o*' -delete
+  find . -type d -not -name 'client-o*' -delete
   echo -e "\${bg_green}Cleaned up\${clear}"
   shopt -u extglob
   exit 0
@@ -380,10 +383,11 @@ bg_magenta='\033[0;45m'
 bg_cyan='\033[0;46m'
 clear='\033[0m'
 
-if [ "$1" = "clean" ]; then
+if [ "\$1" = "clean" ]; then
   shopt -s extglob
   echo -e "\${bg_yellow}Cleaning up\${clear}"
-  rm -rf !(client-o*)
+  find . -type f -not -name 'client-o*' -delete
+  find . -type d -not -name 'client-o*' -delete
   echo -e "\${bg_green}Cleaned up\${clear}"
   shopt -u extglob
   exit 0

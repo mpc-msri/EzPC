@@ -29,13 +29,13 @@ Using the above instructions, we now demonstrate LeNet inference on MNIST images
 
 ```bash
 sudo apt update
-sudo apt install libeigen3-dev cmake build-essential git
+sudo apt install libeigen3-dev cmake build-essential git zip
 ```
 
 2. On all machines, install the python dependencies in a virtual environment.
 
 ```bash
-sudo apt install python3.10-venv
+sudo apt install python3.8-venv
 python3 -m venv venv
 source venv/bin/activate
 wget https://raw.githubusercontent.com/mpc-msri/EzPC/master/OnnxBridge/requirements.txt

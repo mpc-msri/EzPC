@@ -293,7 +293,9 @@ public:
 
     void _forward(Tensor<T> &a) {
         always_assert(a.shape.size() == 4);
-        this->backend->avgPool2D(ks, padding, stride, a.as_4d(), this->activation.as_4d(), this->scale.as_4d());
+        auto act_4d = this->activation.as_4d();
+        auto a_4d = a.as_4d();
+        this->backend->avgPool2D(ks, padding, stride, a_4d, act_4d, this->scale);
     }
 
     std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {

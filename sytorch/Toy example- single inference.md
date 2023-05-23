@@ -27,7 +27,7 @@ Using the above instructions, we now demonstrate LeNet inference on MNIST images
 
 ```
 sudo apt update
-sudo apt install libeigen3-dev cmake build-essential git
+sudo apt install libeigen3-dev cmake build-essential git zip
 ```
 
 2. On both machines, install the python dependencies in a virtual environment.
