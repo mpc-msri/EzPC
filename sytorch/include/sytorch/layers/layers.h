@@ -531,7 +531,7 @@ public:
 
     void _forward(Tensor<T> &a) {
         // always_assert(a.shape.size() == 4);
-        assert(a.shape.back() == this->A.size);
+        assert(a.shape.back() == this->A.d1);
         if (this->isTrainingMode) {
             std::runtime_error("BatchNormInference should not be used in training mode");
         }
