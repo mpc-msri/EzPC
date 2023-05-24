@@ -277,7 +277,7 @@ public:
     }
 
     template <typename... Args>
-    Tensor<T> concat(Args & ... args)
+    Tensor<T>& concat(Args & ... args)
     {
         auto res = collect(args...);
         return concat(res);
