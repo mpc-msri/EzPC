@@ -55,38 +55,38 @@ Integer __tac_var2 = b;
 Integer __tac_var3 = __tac_var2.operator>>( (uint32_t)2);
 c = __tac_var3;
 /* Temporary variable for sub-expression on source location: (43,5-43,6) */
-Integer __tac_var4 = __tac_var2;
+Integer __tac_var4 = b;
 /* Temporary variable for sub-expression on source location: (43,5-43,10) */
-Integer __tac_var5 = __tac_var2.operator<<( (uint32_t)2);
+Integer __tac_var5 = __tac_var4.operator<<( (uint32_t)2);
 c = __tac_var5;
 /* Temporary variable for sub-expression on source location: (44,5-44,6) */
 Integer __tac_var6 = a;
 /* Temporary variable for sub-expression on source location: (44,7-44,8) */
-Integer __tac_var7 = __tac_var2;
+Integer __tac_var7 = b;
 /* Temporary variable for sub-expression on source location: (44,5-44,8) */
-Integer __tac_var8 = __tac_var6.operator^(__tac_var2);
+Integer __tac_var8 = __tac_var6.operator^(__tac_var7);
 c = __tac_var8;
 /* Temporary variable for sub-expression on source location: (45,5-45,6) */
-Integer __tac_var9 = __tac_var6;
+Integer __tac_var9 = a;
 /* Temporary variable for sub-expression on source location: (45,7-45,8) */
-Integer __tac_var10 = __tac_var2;
+Integer __tac_var10 = b;
 /* Temporary variable for sub-expression on source location: (45,5-45,8) */
-Integer __tac_var11 = __tac_var6.operator&(__tac_var2);
+Integer __tac_var11 = __tac_var9.operator&(__tac_var10);
 c = __tac_var11;
 /* Temporary variable for sub-expression on source location: (46,5-46,6) */
-Integer __tac_var12 = __tac_var6;
+Integer __tac_var12 = a;
 /* Temporary variable for sub-expression on source location: (46,7-46,8) */
-Integer __tac_var13 = __tac_var2;
+Integer __tac_var13 = b;
 /* Temporary variable for sub-expression on source location: (46,5-46,8) */
-Integer __tac_var14 = __tac_var6.operator|(__tac_var2);
+Integer __tac_var14 = __tac_var12.operator|(__tac_var13);
 c = __tac_var14;
 /* Temporary variable for sub-expression on source location: (47,5-47,10) */
 int32_t __tac_var15 = (pow( (int32_t)2,  (int32_t)10));
 c = Integer(bitlen, __tac_var15, PUBLIC);
 /* Temporary variable for sub-expression on source location: (48,5-48,6) */
-Integer __tac_var16 = __tac_var2;
+Integer __tac_var16 = b;
 /* Temporary variable for sub-expression on source location: (48,5-48,11) */
-Integer __tac_var17 = __tac_var2.operator>>( (uint32_t)2);
+Integer __tac_var17 = __tac_var16.operator>>( (uint32_t)2);
 c = __tac_var17;
 /* Temporary variable for sub-expression on source location: (49,5-49,16) */
 bool __tac_var18 = (1 && 0);
@@ -98,30 +98,30 @@ e = Bit(__tac_var19, PUBLIC);
 bool __tac_var20 = (0 ^ 1);
 e = Bit(__tac_var20, PUBLIC);
 /* Temporary variable for sub-expression on source location: (52,5-52,6) */
-Integer __tac_var21 = __tac_var6;
+Integer __tac_var21 = a;
 /* Temporary variable for sub-expression on source location: (52,7-52,8) */
-Integer __tac_var22 = __tac_var2;
-e = __tac_var6.operator>(__tac_var2);
+Integer __tac_var22 = b;
+e = __tac_var21.operator>(__tac_var22);
 /* Temporary variable for sub-expression on source location: (53,6-53,7) */
-Integer __tac_var23 = __tac_var6;
+Integer __tac_var23 = a;
 /* Temporary variable for sub-expression on source location: (53,9-53,10) */
-Integer __tac_var24 = __tac_var2;
-e = __tac_var6.operator==(__tac_var2);
+Integer __tac_var24 = b;
+e = __tac_var23.operator==(__tac_var24);
 /* Temporary variable for sub-expression on source location: (54,5-54,6) */
-Integer __tac_var25 = __tac_var6;
+Integer __tac_var25 = a;
 /* Temporary variable for sub-expression on source location: (54,8-54,9) */
-Integer __tac_var26 = __tac_var2;
-e = __tac_var6.operator>=(__tac_var2);
+Integer __tac_var26 = b;
+e = __tac_var25.operator>=(__tac_var26);
 /* Temporary variable for sub-expression on source location: (55,5-55,6) */
-Integer __tac_var27 = __tac_var6;
+Integer __tac_var27 = a;
 /* Temporary variable for sub-expression on source location: (55,8-55,9) */
-Integer __tac_var28 = __tac_var2;
-e = __tac_var6.operator<=(__tac_var2);
+Integer __tac_var28 = b;
+e = __tac_var27.operator<=(__tac_var28);
 /* Temporary variable for sub-expression on source location: (56,5-56,6) */
-Integer __tac_var29 = __tac_var6;
+Integer __tac_var29 = a;
 /* Temporary variable for sub-expression on source location: (56,7-56,8) */
-Integer __tac_var30 = __tac_var2;
-e = __tac_var6.operator<(__tac_var2);
+Integer __tac_var30 = b;
+e = __tac_var29.operator<(__tac_var30);
 
 
 finalize_semi_honest();

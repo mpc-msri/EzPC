@@ -68,11 +68,11 @@ share* __tac_var2 = put_cons64_gate(ycirc, __tac_var1);
 
 share* signBitX = ycirc->PutANDGate(x, __tac_var2);
 /* Temporary variable for sub-expression on source location: (26,28-26,35) */
-int64_t __tac_var3 = __tac_var1;
+int64_t __tac_var3 = ( (int64_t)1 <<  (int64_t)63);
 /* Temporary variable for sub-expression on source location: (26,28-26,35) */
-share* __tac_var4 = __tac_var2;
+share* __tac_var4 = put_cons64_gate(ycirc, __tac_var3);
 
-share* signBitY = ycirc->PutANDGate(y, __tac_var2);
+share* signBitY = ycirc->PutANDGate(y, __tac_var4);
 /* Temporary variable for sub-expression on source location: (27,10-27,29) */
 share* __tac_var5 = ycirc->PutXORGate(signBitX, signBitY);
 /* Temporary variable for sub-expression on source location: (27,33-27,36) */
@@ -80,9 +80,9 @@ share* __tac_var6 = put_cons64_gate(ycirc,  (uint64_t)0);
 /* Temporary variable for sub-expression on source location: (27,9-27,36) */
 share* __tac_var7 = ycirc->PutGTGate(__tac_var5, __tac_var6);
 /* Temporary variable for sub-expression on source location: (27,53-27,56) */
-share* __tac_var8 = __tac_var6;
+share* __tac_var8 = put_cons64_gate(ycirc,  (uint64_t)0);
 /* Temporary variable for sub-expression on source location: (27,42-27,56) */
-share* __tac_var9 = ycirc->PutGTGate(signBitX, __tac_var6);
+share* __tac_var9 = ycirc->PutGTGate(signBitX, __tac_var8);
 /* Temporary variable for sub-expression on source location: (27,60-27,65) */
 share* __tac_var10 = put_cons1_gate(ycirc, 0);
 /* Temporary variable for sub-expression on source location: (27,68-27,72) */
@@ -110,15 +110,15 @@ share* __tac_var17 = put_cons64_gate(ycirc,  (uint64_t)0);
 /* Temporary variable for sub-expression on source location: (36,10-36,24) */
 share* __tac_var18 = ycirc->PutGTGate(signBitX, __tac_var17);
 /* Temporary variable for sub-expression on source location: (36,29-36,32) */
-share* __tac_var19 = __tac_var17;
+share* __tac_var19 = put_cons64_gate(ycirc,  (uint64_t)0);
 /* Temporary variable for sub-expression on source location: (36,37-36,40) */
-share* __tac_var20 = __tac_var17;
+share* __tac_var20 = put_cons64_gate(ycirc,  (uint64_t)0);
 /* Temporary variable for sub-expression on source location: (36,37-36,45) */
-share* __tac_var21 = ycirc->PutSUBGate(__tac_var17, ux);
+share* __tac_var21 = ycirc->PutSUBGate(__tac_var20, ux);
 /* Temporary variable for sub-expression on source location: (36,36-36,51) */
 share* __tac_var22 = arithmetic_right_shift(ycirc, __tac_var21, y);
 /* Temporary variable for sub-expression on source location: (36,29-36,52) */
-share* __tac_var23 = ycirc->PutSUBGate(__tac_var17, __tac_var22);
+share* __tac_var23 = ycirc->PutSUBGate(__tac_var19, __tac_var22);
 /* Temporary variable for sub-expression on source location: (36,57-36,64) */
 share* __tac_var24 = arithmetic_right_shift(ycirc, ux, y);
 /* Temporary variable for sub-expression on source location: (36,9-36,65) */
@@ -202,7 +202,7 @@ share* longDivision(share* x, share* y, uint32_t getQuotient){
 
 share* q = put_cons64_gate(ycirc,  (uint64_t)0);
 
-share* divisor = q;
+share* divisor = put_cons64_gate(ycirc,  (uint64_t)0);
 
 share* cond = put_cons1_gate(ycirc, 0);
 for (uint32_t iter =  (int32_t)0; iter <  (int32_t)64; iter++){
@@ -256,19 +256,19 @@ share* __tac_var56 = put_cons64_gate(ycirc,  (int64_t)0);
 
 share* isXNeg = signedltbl(x, __tac_var56);
 /* Temporary variable for sub-expression on source location: (100,23-100,25) */
-share* __tac_var57 = __tac_var56;
+share* __tac_var57 = put_cons64_gate(ycirc,  (int64_t)0);
 
-share* isYNeg = signedltbl(y, __tac_var56);
+share* isYNeg = signedltbl(y, __tac_var57);
 /* Temporary variable for sub-expression on source location: (101,26-101,28) */
-share* __tac_var58 = __tac_var56;
+share* __tac_var58 = put_cons64_gate(ycirc,  (int64_t)0);
 /* Temporary variable for sub-expression on source location: (101,26-101,32) */
-share* __tac_var59 = ycirc->PutSUBGate(__tac_var56, x);
+share* __tac_var59 = ycirc->PutSUBGate(__tac_var58, x);
 
 share* ux = ycirc->PutMUXGate(__tac_var59, x, isXNeg);
 /* Temporary variable for sub-expression on source location: (102,26-102,28) */
-share* __tac_var60 = __tac_var56;
+share* __tac_var60 = put_cons64_gate(ycirc,  (int64_t)0);
 /* Temporary variable for sub-expression on source location: (102,26-102,32) */
-share* __tac_var61 = ycirc->PutSUBGate(__tac_var56, y);
+share* __tac_var61 = ycirc->PutSUBGate(__tac_var60, y);
 
 share* uy = ycirc->PutMUXGate(__tac_var61, y, isYNeg);
 
@@ -316,19 +316,19 @@ share* __tac_var68 = put_cons64_gate(ycirc,  (int64_t)0);
 
 share* isXNeg = signedltbl(x, __tac_var68);
 /* Temporary variable for sub-expression on source location: (127,23-127,25) */
-share* __tac_var69 = __tac_var68;
+share* __tac_var69 = put_cons64_gate(ycirc,  (int64_t)0);
 
-share* isYNeg = signedltbl(y, __tac_var68);
+share* isYNeg = signedltbl(y, __tac_var69);
 /* Temporary variable for sub-expression on source location: (128,26-128,28) */
-share* __tac_var70 = __tac_var68;
+share* __tac_var70 = put_cons64_gate(ycirc,  (int64_t)0);
 /* Temporary variable for sub-expression on source location: (128,26-128,32) */
-share* __tac_var71 = ycirc->PutSUBGate(__tac_var68, x);
+share* __tac_var71 = ycirc->PutSUBGate(__tac_var70, x);
 
 share* ux = ycirc->PutMUXGate(__tac_var71, x, isXNeg);
 /* Temporary variable for sub-expression on source location: (129,26-129,28) */
-share* __tac_var72 = __tac_var68;
+share* __tac_var72 = put_cons64_gate(ycirc,  (int64_t)0);
 /* Temporary variable for sub-expression on source location: (129,26-129,32) */
-share* __tac_var73 = ycirc->PutSUBGate(__tac_var68, y);
+share* __tac_var73 = ycirc->PutSUBGate(__tac_var72, y);
 
 share* uy = ycirc->PutMUXGate(__tac_var73, y, isYNeg);
 
@@ -366,7 +366,7 @@ void accessElementOneD(auto& arr, share* idx, auto& result){
 result[ (int32_t)0] = put_cons64_gate(ycirc,  (uint64_t)0);
 
 uint64_t ctr =  (uint64_t)0;
-for (uint32_t i =  (int32_t)0; i <  (int32_t)64; i++){
+for (uint32_t i =  (int32_t)0; i < noOfFeatures; i++){
 /* Temporary variable for sub-expression on source location: (169,14-169,23) */
 share* __tac_var78 = result[ (int32_t)0];
 /* Temporary variable for sub-expression on source location: (169,37-169,40) */
@@ -421,7 +421,7 @@ void infer(auto& modelFeatureChoice, auto& modelThresholdValue, auto& query, aut
 
 share* currentIndex = put_cons64_gate(acirc,  (uint64_t)0);
 
-share* leftOrRight = currentIndex;
+share* leftOrRight = put_cons64_gate(acirc,  (uint64_t)0);
 
 auto currentSharedFeatureChoice = make_vector<share*>( (int32_t)1);
 
@@ -429,13 +429,13 @@ auto currentSharedThreshold = make_vector<share*>( (int32_t)1);
 
 auto currentSharedQueryValue = make_vector<share*>( (int32_t)1);
 currentSharedFeatureChoice[ (int32_t)0] = put_cons64_gate(ycirc,  (uint64_t)0);
-currentSharedThreshold[ (int32_t)0] = currentSharedFeatureChoice[ (int32_t)0];
-currentSharedQueryValue[ (int32_t)0] = currentSharedFeatureChoice[ (int32_t)0];
+currentSharedThreshold[ (int32_t)0] = put_cons64_gate(ycirc,  (uint64_t)0);
+currentSharedQueryValue[ (int32_t)0] = put_cons64_gate(ycirc,  (uint64_t)0);
 
 uint32_t startIdx =  (int32_t)0;
 
 uint32_t endIdx =  (int32_t)0;
-for (uint32_t i =  (int32_t)0; i <  (int32_t)5; i++){
+for (uint32_t i =  (int32_t)0; i < noOfTrees; i++){
 currentIndex = put_cons64_gate(acirc,  (uint64_t)0);
 currentSharedFeatureChoice[ (int32_t)0] = modelFeatureChoice[i][ (int32_t)0];
 currentSharedThreshold[ (int32_t)0] = modelThresholdValue[i][ (int32_t)0];
@@ -456,7 +456,7 @@ share* __tac_var95 = put_cons64_gate(ycirc,  (int64_t)2);
 share* __tac_var96 = ycirc->PutMUXGate(__tac_var94, __tac_var95, __tac_var93);
 leftOrRight = acirc->PutY2AGate(__tac_var96, bcirc);
 /* Temporary variable for sub-expression on source location: (216,11-216,24) */
-int32_t __tac_var97 = ( (int32_t)11 -  (int32_t)1);
+int32_t __tac_var97 = (maxDepthInt -  (int32_t)1);
 for (uint32_t j =  (int32_t)1; j < __tac_var97; j++){
 /* Temporary variable for sub-expression on source location: (218,37-218,40) */
 share* __tac_var98 = put_cons64_gate(acirc,  (uint64_t)2);
@@ -483,11 +483,11 @@ share* __tac_var105 = currentSharedQueryValue[ (int32_t)0];
 /* Temporary variable for sub-expression on source location: (224,18-224,72) */
 share* __tac_var106 = ycirc->PutGTGate(__tac_var104, __tac_var105);
 /* Temporary variable for sub-expression on source location: (224,74-224,76) */
-share* __tac_var107 = __tac_var94;
+share* __tac_var107 = put_cons64_gate(ycirc,  (int64_t)1);
 /* Temporary variable for sub-expression on source location: (224,77-224,79) */
-share* __tac_var108 = __tac_var95;
+share* __tac_var108 = put_cons64_gate(ycirc,  (int64_t)2);
 /* Temporary variable for sub-expression on source location: (224,17-224,79) */
-share* __tac_var109 = ycirc->PutMUXGate(__tac_var94, __tac_var95, __tac_var106);
+share* __tac_var109 = ycirc->PutMUXGate(__tac_var107, __tac_var108, __tac_var106);
 leftOrRight = acirc->PutY2AGate(__tac_var109, bcirc);
 }
 /* Temporary variable for sub-expression on source location: (227,36-227,39) */
@@ -496,12 +496,12 @@ share* __tac_var110 = put_cons64_gate(acirc,  (uint64_t)2);
 share* __tac_var111 = acirc->PutMULGate(currentIndex, __tac_var110);
 currentIndex = acirc->PutADDGate(__tac_var111, leftOrRight);
 /* Temporary variable for sub-expression on source location: (228,21-228,34) */
-int32_t __tac_var112 = __tac_var97;
+int32_t __tac_var112 = (maxDepthInt -  (int32_t)1);
 /* Temporary variable for sub-expression on source location: (228,13-228,35) */
-uint32_t __tac_var113 = pow( (uint32_t)2, __tac_var97);
+uint32_t __tac_var113 = pow( (uint32_t)2, __tac_var112);
 startIdx = (__tac_var113 -  (uint32_t)1);
 /* Temporary variable for sub-expression on source location: (229,11-229,31) */
-uint32_t __tac_var114 = pow( (uint32_t)2,  (int32_t)11);
+uint32_t __tac_var114 = pow( (uint32_t)2, maxDepthInt);
 endIdx = (__tac_var114 -  (uint32_t)1);
 accessElementTwoD(modelThresholdValue, i, currentIndex, currentSharedThreshold, startIdx, endIdx);
 result[i] = currentSharedThreshold[ (int32_t)0];
@@ -520,32 +520,32 @@ acirc = (sharings)[S_ARITH]->GetCircuitBuildRoutine();
 bcirc = (sharings)[S_BOOL]->GetCircuitBuildRoutine();
 
 
-auto inferenceQuery = make_vector<share*>( (int32_t)64);
+auto inferenceQuery = make_vector<share*>(noOfFeatures);
 
-auto modelFeatureChoice = make_vector<share*>( (int32_t)5,  (int32_t)2048);
+auto modelFeatureChoice = make_vector<share*>(noOfTrees, noOfNodes);
 
-auto modelThresholdValue = make_vector<share*>( (int32_t)5,  (int32_t)2048);
+auto modelThresholdValue = make_vector<share*>(noOfTrees, noOfNodes);
 
-auto inferenceResult = make_vector<share*>( (int32_t)5);
+auto inferenceResult = make_vector<share*>(noOfTrees);
 
 share* finalResult = put_cons64_gate(ycirc,  (uint64_t)0);
-for (uint32_t i =  (int32_t)0; i <  (int32_t)64; i++){
+for (uint32_t i =  (int32_t)0; i < noOfFeatures; i++){
 inferenceQuery[i] = put_cons64_gate(ycirc,  (uint64_t)20);
 }
-for (uint32_t i =  (int32_t)0; i <  (int32_t)5; i++){
-for (uint32_t j =  (int32_t)0; j <  (int32_t)2048; j++){
+for (uint32_t i =  (int32_t)0; i < noOfTrees; i++){
+for (uint32_t j =  (int32_t)0; j < noOfNodes; j++){
 /* Temporary variable for sub-expression on source location: (254,31-254,57) */
-uint32_t __tac_var115 = ( (int32_t)2048 %  (int32_t)64);
+uint32_t __tac_var115 = (noOfNodes % noOfFeatures);
 /* Temporary variable for sub-expression on source location: (254,30-254,62) */
 uint64_t __tac_var116 = (__tac_var115 +  (uint64_t)0);
 modelFeatureChoice[i][j] = put_cons64_gate(ycirc, __tac_var116);
 /* Temporary variable for sub-expression on source location: (255,31-255,48) */
-uint64_t __tac_var117 = ( (int32_t)2048 +  (uint64_t)351);
+uint64_t __tac_var117 = (noOfNodes +  (uint64_t)351);
 modelThresholdValue[i][j] = put_cons64_gate(ycirc, __tac_var117);
 }
 }
 infer(modelFeatureChoice, modelThresholdValue, inferenceQuery, inferenceResult);
-for (uint32_t i =  (int32_t)0; i <  (int32_t)5; i++){
+for (uint32_t i =  (int32_t)0; i < noOfTrees; i++){
 /* Temporary variable for sub-expression on source location: (262,16-262,27) */
 share* __tac_var118 = acirc->PutY2AGate(finalResult, bcirc);
 /* Temporary variable for sub-expression on source location: (262,33-262,51) */

@@ -43,7 +43,7 @@ int32_t x4 =  (int32_t)2;
 
 Integer x5 = Integer(bitlen,  (int32_t)2, PUBLIC);
 
-Integer x6 = x5;
+Integer x6 = Integer(bitlen,  (int32_t)2, PUBLIC);
 
 Bit x7 = Bit(0, PUBLIC);
 

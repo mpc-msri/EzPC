@@ -34,7 +34,7 @@ void accessElementOneD(auto& arr, Integer idx, auto& result){
 result[ (int32_t)0] = Integer(bitlen,  (uint64_t)0, PUBLIC);
 
 uint64_t ctr =  (uint64_t)0;
-for (uint32_t i =  (int32_t)0; i <  (int32_t)13; i++){
+for (uint32_t i =  (int32_t)0; i < noOfFeatures; i++){
 /* Temporary variable for sub-expression on source location: (19,14-19,23) */
 Integer __tac_var1 = result[ (int32_t)0];
 /* Temporary variable for sub-expression on source location: (19,37-19,40) */
@@ -89,7 +89,7 @@ void infer(auto& modelFeatureChoice, auto& modelThresholdValue, auto& query, aut
 
 Integer currentIndex = Integer(bitlen,  (uint64_t)0, PUBLIC);
 
-Integer leftOrRight = currentIndex;
+Integer leftOrRight = Integer(bitlen,  (uint64_t)0, PUBLIC);
 
 auto currentSharedFeatureChoice = make_vector<Integer>( (int32_t)1);
 
@@ -97,13 +97,13 @@ auto currentSharedThreshold = make_vector<Integer>( (int32_t)1);
 
 auto currentSharedQueryValue = make_vector<Integer>( (int32_t)1);
 currentSharedFeatureChoice[ (int32_t)0] = Integer(bitlen,  (uint64_t)0, PUBLIC);
-currentSharedThreshold[ (int32_t)0] = currentSharedFeatureChoice[ (int32_t)0];
-currentSharedQueryValue[ (int32_t)0] = currentSharedFeatureChoice[ (int32_t)0];
+currentSharedThreshold[ (int32_t)0] = Integer(bitlen,  (uint64_t)0, PUBLIC);
+currentSharedQueryValue[ (int32_t)0] = Integer(bitlen,  (uint64_t)0, PUBLIC);
 
 uint32_t startIdx =  (int32_t)0;
 
 uint32_t endIdx =  (int32_t)0;
-for (uint32_t i =  (int32_t)0; i <  (int32_t)10; i++){
+for (uint32_t i =  (int32_t)0; i < noOfTrees; i++){
 currentIndex = Integer(bitlen,  (uint64_t)0, PUBLIC);
 currentSharedFeatureChoice[ (int32_t)0] = modelFeatureChoice[i][ (int32_t)0];
 currentSharedThreshold[ (int32_t)0] = modelThresholdValue[i][ (int32_t)0];
@@ -124,7 +124,7 @@ Integer __tac_var18 = Integer(bitlen,  (int64_t)2, PUBLIC);
 Integer __tac_var19 =  If(__tac_var16, __tac_var17, __tac_var18);
 leftOrRight = __tac_var19;
 /* Temporary variable for sub-expression on source location: (72,11-72,24) */
-int32_t __tac_var20 = ( (int32_t)11 -  (int32_t)1);
+int32_t __tac_var20 = (maxDepthInt -  (int32_t)1);
 for (uint32_t j =  (int32_t)1; j < __tac_var20; j++){
 /* Temporary variable for sub-expression on source location: (74,37-74,40) */
 Integer __tac_var21 = Integer(bitlen,  (uint64_t)2, PUBLIC);
@@ -151,11 +151,11 @@ Integer __tac_var28 = currentSharedQueryValue[ (int32_t)0];
 /* Temporary variable for sub-expression on source location: (80,18-80,72) */
 Bit __tac_var29 = __tac_var27.operator>(__tac_var28);
 /* Temporary variable for sub-expression on source location: (80,74-80,76) */
-Integer __tac_var30 = __tac_var17;
+Integer __tac_var30 = Integer(bitlen,  (int64_t)1, PUBLIC);
 /* Temporary variable for sub-expression on source location: (80,77-80,79) */
-Integer __tac_var31 = __tac_var18;
+Integer __tac_var31 = Integer(bitlen,  (int64_t)2, PUBLIC);
 /* Temporary variable for sub-expression on source location: (80,17-80,79) */
-Integer __tac_var32 =  If(__tac_var29, __tac_var17, __tac_var18);
+Integer __tac_var32 =  If(__tac_var29, __tac_var30, __tac_var31);
 leftOrRight = __tac_var32;
 }
 /* Temporary variable for sub-expression on source location: (84,36-84,39) */
@@ -164,12 +164,12 @@ Integer __tac_var33 = Integer(bitlen,  (uint64_t)2, PUBLIC);
 Integer __tac_var34 = currentIndex.operator*(__tac_var33);
 currentIndex = __tac_var34.operator+(leftOrRight);
 /* Temporary variable for sub-expression on source location: (85,21-85,34) */
-int32_t __tac_var35 = __tac_var20;
+int32_t __tac_var35 = (maxDepthInt -  (int32_t)1);
 /* Temporary variable for sub-expression on source location: (85,13-85,35) */
-uint32_t __tac_var36 = pow( (uint32_t)2, __tac_var20);
+uint32_t __tac_var36 = pow( (uint32_t)2, __tac_var35);
 startIdx = (__tac_var36 -  (uint32_t)1);
 /* Temporary variable for sub-expression on source location: (86,11-86,31) */
-uint32_t __tac_var37 = pow( (uint32_t)2,  (int32_t)11);
+uint32_t __tac_var37 = pow( (uint32_t)2, maxDepthInt);
 endIdx = (__tac_var37 -  (uint32_t)1);
 accessElementTwoD(modelThresholdValue, i, currentIndex, currentSharedThreshold, startIdx, endIdx);
 result[i] = currentSharedThreshold[ (int32_t)0];
@@ -189,32 +189,32 @@ NetIO * io = new NetIO(party==ALICE ? nullptr : ip, port);
 setup_semi_honest(io, party);
 
 
-auto inferenceQuery = make_vector<Integer>( (int32_t)13);
+auto inferenceQuery = make_vector<Integer>(noOfFeatures);
 
-auto modelFeatureChoice = make_vector<Integer>( (int32_t)10,  (int32_t)3035);
+auto modelFeatureChoice = make_vector<Integer>(noOfTrees, noOfNodes);
 
-auto modelThresholdValue = make_vector<Integer>( (int32_t)10,  (int32_t)3035);
+auto modelThresholdValue = make_vector<Integer>(noOfTrees, noOfNodes);
 
-auto inferenceResult = make_vector<Integer>( (int32_t)10);
+auto inferenceResult = make_vector<Integer>(noOfTrees);
 
 Integer finalResult = Integer(bitlen,  (uint64_t)0, PUBLIC);
-for (uint32_t i =  (int32_t)0; i <  (int32_t)13; i++){
+for (uint32_t i =  (int32_t)0; i < noOfFeatures; i++){
 inferenceQuery[i] = Integer(bitlen,  (uint64_t)20, PUBLIC);
 }
-for (uint32_t i =  (int32_t)0; i <  (int32_t)10; i++){
-for (uint32_t j =  (int32_t)0; j <  (int32_t)3035; j++){
+for (uint32_t i =  (int32_t)0; i < noOfTrees; i++){
+for (uint32_t j =  (int32_t)0; j < noOfNodes; j++){
 /* Temporary variable for sub-expression on source location: (114,31-114,57) */
-uint32_t __tac_var38 = ( (int32_t)3035 %  (int32_t)13);
+uint32_t __tac_var38 = (noOfNodes % noOfFeatures);
 /* Temporary variable for sub-expression on source location: (114,30-114,62) */
 uint64_t __tac_var39 = (__tac_var38 +  (uint64_t)0);
 modelFeatureChoice[i][j] = Integer(bitlen, __tac_var39, PUBLIC);
 /* Temporary variable for sub-expression on source location: (115,31-115,48) */
-uint64_t __tac_var40 = ( (int32_t)3035 +  (uint64_t)351);
+uint64_t __tac_var40 = (noOfNodes +  (uint64_t)351);
 modelThresholdValue[i][j] = Integer(bitlen, __tac_var40, PUBLIC);
 }
 }
 infer(modelFeatureChoice, modelThresholdValue, inferenceQuery, inferenceResult);
-for (uint32_t i =  (int32_t)0; i <  (int32_t)10; i++){
+for (uint32_t i =  (int32_t)0; i < noOfTrees; i++){
 /* Temporary variable for sub-expression on source location: (124,16-124,27) */
 Integer __tac_var41 = finalResult;
 /* Temporary variable for sub-expression on source location: (124,33-124,51) */

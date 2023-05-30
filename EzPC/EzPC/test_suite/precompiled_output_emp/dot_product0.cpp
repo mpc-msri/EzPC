@@ -35,13 +35,13 @@ NetIO * io = new NetIO(party==ALICE ? nullptr : ip, port);
 setup_semi_honest(io, party);
 
 
-auto w = make_vector<Integer>( (uint32_t)2);
+auto w = make_vector<Integer>(dim);
 if ((party == BOB)) {
 cout << ("Input w:") << endl;
 }
 /* Variable to read the clear value corresponding to the input variable w at (39,1-39,32) */
 uint32_t __tmp_in_w;
-for (uint32_t i0 =  (uint32_t)0; i0 <  (uint32_t)2; i0++){
+for (uint32_t i0 =  (uint32_t)0; i0 < dim; i0++){
 if ((party == BOB)) {
 cin >> __tmp_in_w;
 }
@@ -59,13 +59,13 @@ cin >> __tmp_in_b;
 }
 b = Integer(bitlen, __tmp_in_b, BOB);
 
-auto x = make_vector<Integer>( (uint32_t)2);
+auto x = make_vector<Integer>(dim);
 if ((party == ALICE)) {
 cout << ("Input x:") << endl;
 }
 /* Variable to read the clear value corresponding to the input variable x at (41,1-41,32) */
 uint32_t __tmp_in_x;
-for (uint32_t i0 =  (uint32_t)0; i0 <  (uint32_t)2; i0++){
+for (uint32_t i0 =  (uint32_t)0; i0 < dim; i0++){
 if ((party == ALICE)) {
 cin >> __tmp_in_x;
 }
@@ -76,10 +76,10 @@ Integer acc = Integer(bitlen,  (int32_t)0, PUBLIC);
 
 uint32_t lower =  (uint32_t)0;
 
-uint32_t upper =  (uint32_t)2;
+uint32_t upper = dim;
 /* Temporary variable for sub-expression on source location: (47,8-47,21) */
-uint32_t __tac_var1 = ( (uint32_t)0 -  (uint32_t)0);
-for (uint32_t i = __tac_var1; i <  (uint32_t)2; i++){
+uint32_t __tac_var1 = (lower - lower);
+for (uint32_t i = __tac_var1; i < upper; i++){
 /* Temporary variable for sub-expression on source location: (47,46-47,50) */
 Integer __tac_var2 = w[i];
 /* Temporary variable for sub-expression on source location: (47,53-47,57) */

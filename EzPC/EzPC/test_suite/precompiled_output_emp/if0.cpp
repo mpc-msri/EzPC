@@ -36,7 +36,7 @@ setup_semi_honest(io, party);
 Integer a = Integer(bitlen,  (int32_t)5, PUBLIC);
 
 bool b = 1;
-if (1) {
+if (b) {
 a = Integer(bitlen,  (int32_t)20, PUBLIC);
 } else {
 a = Integer(bitlen,  (int32_t)30, PUBLIC);

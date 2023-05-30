@@ -5,3 +5,15 @@ mpc_venv
 # Vim c_tags files
 c_*
 SEAL
+*.onnx
+.idea/
+.vscode/
+*.sh
+*.dat
+*.npy
+*.txt
+*Zone.Identifier
+*.zip
+*.dot
+*.csv
+*.out
