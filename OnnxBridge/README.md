@@ -45,7 +45,9 @@ Secfloat/compile_secfloat.sh "/path/to/file.cpp"
 ```
 ```bash
 # for LLAMA / CLEARTEXT_LLAMA 
-LLAMA/compile_llama.sh "/path/to/file.cpp"
+LLAMA/compile_llama.sh "/path/to/file.cpp" [-Do_Masking]
+# `-Do_Masking` is an optional argument for the case we are compiling for Frontend,
+# this will then generate masks.dat file
 ```
 ---
 ## Inference with each backend:

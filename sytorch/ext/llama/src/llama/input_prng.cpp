@@ -150,3 +150,30 @@ void input_layer(GroupElement *x, GroupElement *x_mask, int size, int owner)
     }
     counter[owner - SERVER] += size;
 }
+
+void input_no_prng_with_frontend(GroupElement *x, GroupElement *x_mask, int size, int owner)
+{
+    if (party == DEALER)
+    {
+        std::ofstream f("masks.dat");
+        for (int i = 0; i < size; ++i)
+        {
+            x_mask[i] = random_ge(bitlength);
+            f << x_mask[i] << std::endl;
+        }
+    }
+    else if (party == owner)
+    {
+        peer->send_batched_input(x, size, bitlength);
+    }
+    else
+    {
+        uint64_t *tmp = new uint64_t[size];
+        peer->recv_batched_input(tmp, size, bitlength);
+        for (int i = 0; i < size; ++i)
+        {
+            x[i] = tmp[i];
+        }
+        delete[] tmp;
+    }
+}
