@@ -4,6 +4,7 @@
 BACKEND="LLAMA"
 SCALE="15"
 BITLENGTH="40"
+NUMTHREADS="4"
 
 # Parse command-line arguments
 while [[ $# -gt 0 ]]
@@ -45,6 +46,11 @@ do
             shift # past argument
             shift # past value
             ;;
+        -nt|--numthreads)
+            NUMTHREADS="$2"
+            shift # past argument
+            shift # past value
+            ;;
         -preprocess|--preprocess)
             PREPROCESS="$2"
             shift # past argument
@@ -68,7 +74,7 @@ then
     echo "server IP"
     echo "-------------------       --------------" | column -t -s $'\t'
     echo "Usage: $0 -m <full-path/model.onnx> -preprocess <full-path/preprocess_image_file> -s <server-ip>  -d <dealer-ip>"
-    echo "Optional: [-b <backend>] [-scale <scale>] [-bl <bitlength>]"
+    echo "Optional: [-b <backend>] [-scale <scale>] [-bl <bitlength>] [-nt <numthreads>]"
     exit 1
 fi
 
@@ -172,7 +178,7 @@ while true; do
 
     # Model inference
     echo -e "\${bg_green}Running model inference\${clear}"
-    ./${Model_Name}_${BACKEND}_${SCALE} 2 ${Model_Name}_input_weights.dat
+    ./${Model_Name}_${BACKEND}_${SCALE} 2 ${Model_Name}_input_weights.dat ${NUMTHREADS}
     wait
     echo -e "\${bg_green}Model inference completed.\${clear}"
 done
@@ -429,7 +435,7 @@ python \$onnxbridge/helper/convert_np_to_float_inp.py --inp \$Image_Name.npy --o
 
 # Run the model
 echo -e "\${bg_green}Running the model\${clear}"
-./${Model_Name}_${BACKEND}_${SCALE} 3 $SERVER_IP < \$Image_Name.inp > output.txt
+./${Model_Name}_${BACKEND}_${SCALE} 3 $SERVER_IP ${NUMTHREADS} < \$Image_Name.inp > output.txt
 
 # Print the output
 echo -e "\${bg_green}Printing the output\${clear}"
