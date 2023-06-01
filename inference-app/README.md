@@ -1,10 +1,10 @@
-# mlinf
+# Inference App
 This repo gives you a frontend to [EzPC](https://github.com/mpc-msri/EzPC) and enables you to make secure inference for X-ray images in Chexpert Model and get results in a UI based setup. The used protocols follow SMPC as defined under `https://github.com/mpc-msri/EzPC` and gives strong mathematical guarantees that data is not compromised at any step of the Secure Inference.
 
 
 
 # System Requirements
-To successfully execute this demo we will need three **Ubuntu** VMs:
+To successfully execute this demo we will need three **Ubuntu** VMs [tested on Ubuntu 20.04.6 LTS]:
 1. **Dealer** : Works to generate pre-computed randomness and sends it to Client and Server for each inference. 
 2. **Server** : This party owns the model, and _does not share its model weights with Dealer/Client_, hence uses EzPC SMPC to achieve Secure Inference.
 3. **Client** : This party acts as Client, but _does not hold any data by itself_, it gets Masked Image from the frontend, thus this party itself _can't see the image data in cleartext_. On receiving the Masked Image it starts the secure inference with Server and returns the result back to frontend.
@@ -37,7 +37,7 @@ sudo apt install python3.8-venv
 python3 -m venv venv
 source venv/bin/activate
 
-wget https://raw.githubusercontent.com/mpc-msri/mlinf/main/OnnxBridge/requirements.txt
+wget https://raw.githubusercontent.com/mpc-msri/EzPC/master/OnnxBridge/requirements.txt
 pip install --upgrade pip
 sudo apt-get install python3-dev build-essential
 pip install -r requirements.txt
@@ -69,8 +69,8 @@ cd play
 6. **FRONTEND** : On the system being used as the frontend, follow below instructions to setup Webapp
 ```bash
 # clone repo
-git clone https://github.com/mpc-msri/mlinf
-cd mlinf
+git clone https://github.com/mpc-msri/EzPC
+cd EzPC
 
 # create virtual environment and install dependencies 
 sudo apt install python3.8-venv
@@ -78,20 +78,19 @@ python3 -m venv mlinf
 source mlinf/bin/activate
 pip install --upgrade pip
 sudo apt-get install python3-dev build-essential
-pip install -r frontend/requirements.txt
+pip install -r inference-app/requirements.txt
 ```
 
-7. **FRONTEND** : Generate the scripts and transfer them to respective machines. If server, client and dealer are in same virtual network, then pass the private network IP in the ezpc_cli-2.sh command.
+7. **FRONTEND** : Generate the scripts and transfer them to respective machines. If server, client and dealer are in same virtual network, then pass the private network IP in the ezpc_cli-app.sh command.
 ```bash
-cd sytorch
-./ezpc-cli-2.sh -m /home/<user>/CHEXPERT-DEMO/chexpert.onnx -s <SERVER-IP> -d <DEALER-IP>
+cd inference-app
+./ezpc-cli-app.sh -m /home/<user>/CHEXPERT-DEMO/chexpert.onnx -s <SERVER-IP> -d <DEALER-IP> [ -nt <num_threads> ]
 scp server.sh <SERVER-IP>:/home/<user>/CHEXPERT-DEMO/play/
 scp dealer.sh  <DEALER-IP>:/home/<user>/CHEXPERT-DEMO/play/
 scp client-offline.sh <CLIENT-IP>:/home/<user>/CHEXPERT-DEMO/play/
 scp client-online.sh  <CLIENT-IP>:/home/<user>/CHEXPERT-DEMO/play/
-cd ..
 ```
-In the above commands in step 7, the file paths and directories are absolute paths on the Ubuntu VMs used. To know more about the `ezpc-cli-2.sh` script see [link](/sytorch/Toy%20example-%20multiple%20inference.md). <br/><br/>
+In the above commands in step 7, the file paths and directories are absolute paths on the Ubuntu VMs used. To know more about the `ezpc-cli-app.sh` script see [link](/inference-app/Inference-App.md). <br/><br/>
 On all Ubuntu VMs, make the bash scripts executable and execute them.
 
 ```bash
@@ -109,14 +108,14 @@ chmod +x client-offline.sh client-online.sh
 ```
 
 8. **FRONTEND** : run the webapp:
-#### Create a .`env` file inside `/frontend` directory to store the secrets as environment variables ( `_URL` is the IP address of Dealer ), the file should look as below:
+#### Create a .`env` file inside `/inference-app` directory to store the secrets as environment variables ( `_URL` is the IP address of Dealer ), the file should look as below:
     _URL = "X.X.X.X"
     _USER = "frontend"
     _PASSWORD = "frontend"
     _FILE_NAME = "masks.dat"
     _CLIENT_IP = "X.X.X.X"
 
-Download the preprocessing file for image (specific to model) inside `/frontend` directory:
+Download the preprocessing file for image (specific to model) inside `/inference-app` directory:
 ```bash
 # This file takes in image as <class 'PIL.Image.Image'>
 # preprocess it and returns it as a numpy array of size required by Model.
@@ -125,15 +124,14 @@ wget "https://raw.githubusercontent.com/mpc-msri/mlinf/main/frontend/Assets/prep
 ***Note:*** 
 
     Further in case of using some other model for demo and customising WebApp to fit your model,
-    modify the USER_INPUTS in constants.py file in /frontend directory.
+    modify the USER_INPUTS in constants.py file in /inference-app directory.
 
 ```bash
-# cd to frontend app directory
-cd frontend
+# while inside inference-app directory
 python app.py
 ```
 
-Open the url received after running the last command on frontend and play along:
+Open the url received after running the last command on inference-app and play along:
 1. Upload X-ray image.
 2. Get Masks
 3. Mask Image
