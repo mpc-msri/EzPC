@@ -11,6 +11,7 @@ In the above command, the paths are not local, but are the locations on the resp
 - `-b <backend>`: the MPC backend to use (default: `LLAMA`)
 - `-scale <scale>`: the scaling factor for the model input (default: `15`)
 - `-bl <bitlength>`: the bitlength to use for the MPC computation (default: `40`)
+- `-nt <numthreads>`: the number of threads to use for MPC computation (default: `4`)
 
 The script generates 4 scripts:
 
