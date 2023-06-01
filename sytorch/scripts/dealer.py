@@ -74,7 +74,6 @@ def main():
     # anonymous user
     authorizer.add_user("server", "server", "./server", perm="elradfmwMT")
     authorizer.add_user("client", "client", "./client", perm="elradfmwMT")
-    authorizer.add_user("frontend", "frontend", "./frontend", perm="elradfmwMT")
 
     # Instantiate FTP handler class
     handler = FileHandler
@@ -84,7 +83,6 @@ def main():
     handler.banner = "pyftpdlib based ftpd ready."
 
     # Instantiate FTP server class and listen on 0.0.0.0:2121
-    handler.passive_ports = range(60000, 65535)
     address = (sys.argv[1], 9000)
     server = ThreadedFTPServer(address, handler)
 

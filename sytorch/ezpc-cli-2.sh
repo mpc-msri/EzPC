@@ -172,7 +172,7 @@ while true; do
 
     # Model inference
     echo -e "\${bg_green}Running model inference\${clear}"
-    ./${Model_Name}_${BACKEND}_${SCALE} 2 $SERVER_IP ${Model_Name}_input_weights.dat
+    ./${Model_Name}_${BACKEND}_${SCALE} 2 ${Model_Name}_input_weights.dat
     wait
     echo -e "\${bg_green}Model inference completed.\${clear}"
 done
