@@ -64,8 +64,8 @@ class FileHandler(FTPHandler):
             os.system("mv server.dat server/server.dat")
             os.system("mv client.dat client/client.dat")
 
-            # Check if masks.dat exists (means that masking is enabled)
-            if os.path.exists("masks.dat"):
+            # Check if frontend/ exists (means that masking is enabled)
+            if os.path.exists("frontend"):
                 os.system("mv masks.dat frontend/masks.dat")
 
             FileHandler.keys_available = True
@@ -79,8 +79,9 @@ def main():
     # anonymous user
     authorizer.add_user("server", "server", "./server", perm="elradfmwMT")
     authorizer.add_user("client", "client", "./client", perm="elradfmwMT")
-    # Check if masks.dat exists (means that masking is enabled)
-    if os.path.exists("masks.dat"):
+
+    # Check if frontend/ exists (means that masking is enabled)
+    if os.path.exists("frontend"):
         authorizer.add_user("frontend", "frontend", "./frontend", perm="elradfmwMT")
 
     # Instantiate FTP handler class
