@@ -167,19 +167,19 @@ int main(int __argc, char**__argv){'{'}
         weights_file = __argv[2];
     {'}'}
     else if(party == DEALER){'{'}
-        if(__argc > 1){'{'}
+        if(__argc > 2){'{'}
             nt = atoi(__argv[2]);
         {'}'}
     {'}'}
     else if(party == SERVER){'{'}
         weights_file = __argv[2];
-        if(__argc > 2){'{'}
+        if(__argc > 3){'{'}
             nt = atoi(__argv[3]);
         {'}'}
     {'}'}
     else if(party == CLIENT){'{'}
         ip = __argv[2];
-        if(__argc > 2){'{'}
+        if(__argc > 3){'{'}
             nt = atoi(__argv[3]);
         {'}'}
     {'}'}
