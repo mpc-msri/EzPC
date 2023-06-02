@@ -73,6 +73,7 @@ git clone https://github.com/mpc-msri/EzPC
 cd EzPC
 
 # create virtual environment and install dependencies 
+sudo apt update
 sudo apt install python3.8-venv
 python3 -m venv mlinf
 source mlinf/bin/activate
@@ -84,6 +85,7 @@ pip install -r inference-app/requirements.txt
 7. **FRONTEND** : Generate the scripts and transfer them to respective machines. If server, client and dealer are in same virtual network, then pass the private network IP in the ezpc_cli-app.sh command.
 ```bash
 cd inference-app
+chmod +x ezpc-cli-app.sh
 ./ezpc-cli-app.sh -m /home/<user>/CHEXPERT-DEMO/chexpert.onnx -s <SERVER-IP> -d <DEALER-IP> [ -nt <num_threads> ]
 scp server.sh <SERVER-IP>:/home/<user>/CHEXPERT-DEMO/play/
 scp dealer.sh  <DEALER-IP>:/home/<user>/CHEXPERT-DEMO/play/
@@ -108,7 +110,7 @@ chmod +x client-offline.sh client-online.sh
 ```
 
 8. **FRONTEND** : run the webapp:
-#### Create a .`env` file inside `/inference-app` directory to store the secrets as environment variables ( `_URL` is the IP address of Dealer ), the file should look as below:
+#### Create a .`env` file inside `EzPC/inference-app` directory to store the secrets as environment variables ( `_URL` is the IP address of Dealer ), the file should look as below:
     _URL = "X.X.X.X"
     _USER = "frontend"
     _PASSWORD = "frontend"
@@ -119,7 +121,7 @@ Download the preprocessing file for image (specific to model) inside `/inference
 ```bash
 # This file takes in image as <class 'PIL.Image.Image'>
 # preprocess it and returns it as a numpy array of size required by Model.
-wget "https://raw.githubusercontent.com/mpc-msri/mlinf/main/frontend/Assets/preprocess.py" -O preprocess.py
+wget "https://raw.githubusercontent.com/mpc-msri/EzPC/master/inference-app/Assets/preprocess.py" -O preprocess.py
 ```
 ***Note:*** 
 

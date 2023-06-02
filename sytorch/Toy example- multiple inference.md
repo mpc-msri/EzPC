@@ -77,8 +77,8 @@ cd tmp
 
 ```bash
 git clone https://github.com/mpc-msri/EzPC
-cd EzPC
-cd sytorch
+cd EzPC/sytorch
+chmod +x ezpc-cli-2.sh
 ./ezpc-cli-2.sh -m /home/<user>/lenet-demo-server/lenet.onnx -preprocess /home/<user>/lenet-demo-server/preprocess.py -s <SERVER-IP> -d <DEALER-IP>
 scp server.sh <SERVER-IP>:/home/<user>/lenet-demo-server/tmp/
 scp dealer.sh  <DEALER-IP>:/home/<user>/lenet-demo-dealer/tmp/

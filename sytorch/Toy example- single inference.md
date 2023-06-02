@@ -64,8 +64,8 @@ cd tmp
 
 ```
 git clone https://github.com/mpc-msri/EzPC
-cd EzPC
-cd sytorch
+cd EzPC/sytorch
+chmod +x ezpc-cli.sh
 ./ezpc-cli.sh -m /home/<user>/lenet-demo-server/lenet.onnx -preprocess /home/<user>/lenet-demo-server/preprocess.py -s <SERVER-IP> -i /home/<user>/lenet-demo-client/input.jpg
 scp server-offline.sh <SERVER-IP>:/home/<user>/lenet-demo-server/tmp/
 scp server-online.sh  <SERVER-IP>:/home/<user>/lenet-demo-server/tmp/
