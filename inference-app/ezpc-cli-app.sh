@@ -130,8 +130,8 @@ git switch mlinf
 cd ..
 wait
 
-sytorch="\$current_dir/mlinf/sytorch"
-onnxbridge="\$current_dir/mlinf/OnnxBridge"
+sytorch="\$current_dir/EzPC/sytorch"
+onnxbridge="\$current_dir/EzPC/OnnxBridge"
 
 echo "MODEL_DIR: $MODEL_DIR"
 
@@ -241,8 +241,8 @@ git switch mlinf
 cd ..
 wait
 
-sytorch="\$current_dir/mlinf/sytorch"
-onnxbridge="\$current_dir/mlinf/OnnxBridge"
+sytorch="\$current_dir/EzPC/sytorch"
+onnxbridge="\$current_dir/EzPC/OnnxBridge"
 
 # Looking ZIP file from SERVER
 echo "Looking ZIP file from SERVER"
@@ -347,8 +347,8 @@ git switch mlinf
 cd ..
 wait
 
-sytorch="\$current_dir/mlinf/sytorch"
-onnxbridge="\$current_dir/mlinf/OnnxBridge"
+sytorch="\$current_dir/EzPC/sytorch"
+onnxbridge="\$current_dir/EzPC/OnnxBridge"
 
 # Looking ZIP file from SERVER
 echo "Looking ZIP file from SERVER"
@@ -428,8 +428,8 @@ fi
 IMAGE_PATH=\$1
 
 current_dir=\$(pwd)
-sytorch="\$current_dir/mlinf/sytorch"
-onnxbridge="\$current_dir/mlinf/OnnxBridge"
+sytorch="\$current_dir/EzPC/sytorch"
+onnxbridge="\$current_dir/EzPC/OnnxBridge"
 
 
 # get input file name
