@@ -212,7 +212,8 @@ public:
             data[new_idx] = (i64)d;
 #else
             data[new_idx] = (i64)(d * (1LL << scale));
-#endif        }
+#endif        
+        }
     }
 
     void print()
