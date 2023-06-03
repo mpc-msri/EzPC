@@ -7,11 +7,25 @@
 #include <sytorch/graph.h>
 #include <llama/assert.h>
 #include <cmath>
+#include <filesystem>
 
 typedef uint64_t u64;
 typedef uint8_t u8;
 typedef int64_t i64;
 typedef int32_t i32;
+
+template <typename T>
+class TensorRef {
+public:
+    T* data;
+    u64 size;
+    TensorRef(T *data, u64 size) : data(data), size(size) {}
+    void zero() {
+        for(u64 i = 0; i < size; i++) {
+            data[i] = 0;
+        }
+    }
+};
 
 template <typename T>
 class Tensor5D;
@@ -146,10 +160,16 @@ public:
         }
     }
 
-    void copy(const Tensor<T> &other) {
+    void copy(const Tensor<T> &other, bool copyGraph = true) {
         assert_same_shape(other);
-        memcpy(data, other.data, size() * sizeof(T));
-        this->graphNode = other.graphNode;
+        // memcpy(data, other.data, size() * sizeof(T));
+        #pragma omp parallel for
+        for(u64 i = 0; i < size(); ++i)
+        {
+            data[i] = other.data[i];
+        }
+        if (copyGraph)
+            this->graphNode = other.graphNode;
     }
 
     void fill(T x) {
@@ -192,8 +212,7 @@ public:
             data[new_idx] = (i64)d;
 #else
             data[new_idx] = (i64)(d * (1LL << scale));
-#endif
-        }
+#endif        }
     }
 
     void print()
@@ -271,6 +290,21 @@ public:
         }
     }
 
+    void load(const std::string filename, u64 scale)
+    {
+        size_t size_in_bytes = std::filesystem::file_size(filename);
+        always_assert(size_in_bytes == size() * 4);
+        float *floatInput = new float[size()];
+        std::ifstream file(filename, std::ios::binary);
+        file.read((char*) floatInput, size_in_bytes);
+        file.close();
+        for(u64 i = 0; i < size(); ++i)
+        {
+            data[i] = (i64)(floatInput[i] * (1LL << scale));
+        }
+        delete[] floatInput;
+    }
+
     Tensor5D<T> as_5d()
     {
         assert(this->shape.size() == 5);
@@ -289,14 +323,13 @@ public:
         return Tensor2D<T>(this->data, this->shape[0], this->shape[1]);
     }
 
-    void addBias(const Tensor1D<T> &bias)
+    Tensor<T> view(u64 i)
     {
-        always_assert(this->shape.back() == bias.size);
-        u64 sz = bias.size;
-        for (u64 i = 0; i < this->size(); ++i)
-        {
-            this->data[i] += bias.data[i % sz];
-        }
+        assert(i < shape[0]);
+        u64 newsize = size() / shape[0];
+        auto newshape = shape;
+        newshape.erase(newshape.begin());
+        return Tensor<T>(data + i * newsize, newshape);
     }
 };
 
@@ -304,16 +337,14 @@ template <typename T>
 class Tensor1D {
 public:
     T *data;
-    u64 size;
+    u64 d1;
 
-    Tensor1D(u64 s) : size(s), data(new T[s]) {}
+    Tensor1D(u64 s) : d1(s), data(new T[s]) {}
 
     void randomize(double range) {
-        for(u64 i = 0; i < this->size; i++) {
+        for(u64 i = 0; i < this->d1; i++) {
             auto r = (double)prngWeights.get<int32_t>();
             this->data[i] = (T)((r / (1LL << 31)) * range);
-            // this->data[i] = (T)((i % 2) * range);
-            // this->data[i] = ((T)range) / 2;
         }
     }
 
@@ -321,60 +352,22 @@ public:
         delete[] this->data;
     }
 
+    u64 size() const {
+        return d1;
+    }
+
+    TensorRef<T> ref() {
+        return TensorRef<T>(data, size());
+    }
+
     T &operator()(u64 i) const {
-        assert(i < this->size);
+        assert(i < this->d1);
         return this->data[i];
     }
 
-    template <typename T2 = T>
-    void print() const {
-        for (u64 i = 0; i < this->size; i++) {
-            std::cout << (T2)this->data[i] << " ";
-        }
-        std::cout << std::endl;
-    }
-
-    template <int bl>
-    void print() const {
-        for (u64 i = 0; i < this->size; i++) {
-            std::cout << this->data[i] % (1ULL << bl) << " ";
-        }
-        std::cout << std::endl;
-    }
-
-    void print(u64 scale) const {
-        for (u64 i = 0; i < this->size; i++) {
-            std::cout << this->data[i] / ((double)(1ULL<<scale)) << " ";
-        }
-        std::cout << std::endl;
-    }
-
     void fill(T val) {
-        for (u64 i = 0; i < this->size; i++) {
+        for (u64 i = 0; i < this->d1; i++) {
             this->data[i] = val;
-        }
-    }
-
-    bool isnan() const {
-        for (u64 i = 0; i < this->size; i++) {
-            if (toobig(this->data[i])) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    template <typename T2>
-    void copy(const Tensor1D<T2> &other) {
-        assert(this->size == other.size);
-        for (u64 i = 0; i < this->size; i++) {
-            this->data[i] = (T)other.data[i];
-        }
-    }
-
-    void load(const std::vector<float>&arr, int scale){
-        for (u64 i = 0; i < this->size; i++) {
-            this->data[i] = (i64)(arr[i] * (1LL<<scale));
         }
     }
 };
@@ -382,9 +375,9 @@ public:
 template <typename T>
 class Tensor2D {
 public:
-    bool isOwner = true;
-    T *data;
     u64 d1, d2;
+    T *data;
+    bool isOwner = true;
 
     Tensor2D(u64 d1, u64 d2) : d1(d1), d2(d2), data(new T[d1 * d2]) {}
 
@@ -393,12 +386,18 @@ public:
     void randomize(double range) {
         for(u64 i = 0; i < this->d1; i++) {
             for(u64 j = 0; j < this->d2; j++) {
-                // this->data[i * this->d2 + j] = (T)((j % 2) * range);
                 auto r = (double)prngWeights.get<int32_t>();
                 this->data[i * this->d2 + j] = (T)((r / (1LL << 31)) * range);
-                // this->data[i * this->d2 + j] = ((T)range) / 2;
             }
         }
+    }
+
+    u64 size() const {
+        return d1 * d2;
+    }
+
+    TensorRef<T> ref() {
+        return TensorRef<T>(data, size());
     }
 
     void resize(u64 d1, u64 d2) {
@@ -423,81 +422,14 @@ public:
         return this->data[i * this->d2 + j];
     }
 
-    template <typename T2 = T>
-    void print() {
-        for(u64 i = 0; i < this->d1; i++) {
-            for(u64 j = 0; j < this->d2; j++) {
-                std::cout << (T2)this->data[i * this->d2 + j] << " ";
-            }
-            std::cout << std::endl;
-        }
-    }
-
-    void print(u64 scale) {
-        for(u64 i = 0; i < this->d1; i++) {
-            for(u64 j = 0; j < this->d2; j++) {
-                std::cout << this->data[i * this->d2 + j] / ((double)(1ULL<<scale)) << " ";
-            }
-            std::cout << std::endl;
-        }
-    }
-
     void zero() {
-        for(u64 i = 0; i < this->d1; i++) {
-            for(u64 j = 0; j < this->d2; j++) {
-                this->data[i * this->d2 + j] = (T)0;
-            }
-        }
+        fill(0);
     }
 
     void fill(T val) {
         for(u64 i = 0; i < this->d1; i++) {
             for(u64 j = 0; j < this->d2; j++) {
                 this->data[i * this->d2 + j] = val;
-            }
-        }
-    }
-
-    void printshape() const {
-        std::cout << "(" << d1 << ", " << d2 << ")" << std::endl;
-    }
-
-    bool isnan() {
-        for(u64 i = 0; i < this->d1; i++) {
-            for(u64 j = 0; j < this->d2; j++) {
-                if (toobig(this->data[i * this->d2 + j])) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    template <typename T2>
-    void copy(const Tensor2D<T2> &other) {
-        assert(d1 == other.d1);
-        assert(d2 == other.d2);
-        for(u64 i = 0; i < d1; i++) {
-            for(u64 j = 0; j < d2; j++) {
-                this->data[i * this->d2 + j] = (T)other.data[i * other.d2 + j];
-            }
-        }
-    }
-
-    void load(const std::vector<std::vector<float>>&arr, int scale){
-        for(u64 i = 0; i < this->d1; i++) {
-            for(u64 j = 0; j < this->d2; j++) {
-                this->data[i * this->d2 + j] = (i64)(arr[i][j] * (1LL<<scale));
-            }
-        }
-    }
-
-    void addBias2D(const Tensor1D<T> &bias) {
-        assert(bias.size == d2);
-
-        for (u64 i = 0; i < d1; i++) {
-            for (u64 j = 0; j < d2; j++) {
-                data[i * d2 + j] += bias(j);
             }
         }
     }
@@ -529,6 +461,14 @@ public:
         }
     }
 
+    u64 size() const {
+        return d1 * d2 * d3 * d4;
+    }
+
+    TensorRef<T> ref() {
+        return TensorRef<T>(data, size());
+    }
+
     void resize(u64 d1, u64 d2, u64 d3, u64 d4) {
         always_assert(isOwner);
         if (this->d1 == d1 && this->d2 == d2 && this->d3 == d3 && this->d4 == d4) {
@@ -544,20 +484,8 @@ public:
 
     void resize(const std::vector<u64> &shape) {
         always_assert(isOwner);
+        always_assert(shape.size() == 4);
         resize(shape[0], shape[1], shape[2], shape[3]);
-    }
-
-    void addBias(const Tensor1D<T> &bias) {
-        assert(bias.size == d4);
-        for (u64 i = 0; i < d1; i++) {
-            for (u64 j = 0; j < d2; j++) {
-                for (u64 k = 0; k < d3; k++) {
-                    for (u64 l = 0; l < d4; l++) {
-                        data[i * d2 * d3 * d4 + j * d3 * d4 + k * d4 + l] += bias(l);
-                    }
-                }
-            }
-        }
     }
 
     T& operator()(u64 i, u64 j, u64 k, u64 l) const {
@@ -566,80 +494,6 @@ public:
         assert(k < d3);
         assert(l < d4);
         return data[i * d2 * d3 * d4 + j * d3 * d4 + k * d4 + l];
-    }
-
-    template <typename T2 = T>
-    void print() const {
-        for (u64 i = 0; i < d1; i++) {
-            for (u64 j = 0; j < d2; j++) {
-                for (u64 k = 0; k < d3; k++) {
-                    for (u64 l = 0; l < d4; l++) {
-                        std::cout << (T2)data[i * d2 * d3 * d4 + j * d3 * d4 + k * d4 + l] << " ";
-                    }
-                    if (d4 > 1) {
-                        std::cout << std::endl;
-                    }
-                }
-                if (d3 > 1) {
-                    std::cout << std::endl;
-                }
-            }
-            if (d2 > 1) {
-                std::cout << std::endl;
-            }
-        }
-        if (d1 > 1) {
-            std::cout << std::endl;
-        }
-    }
-
-    template <int bl>
-    void print() const {
-        for (u64 i = 0; i < d1; i++) {
-            for (u64 j = 0; j < d2; j++) {
-                for (u64 k = 0; k < d3; k++) {
-                    for (u64 l = 0; l < d4; l++) {
-                        std::cout << data[i * d2 * d3 * d4 + j * d3 * d4 + k * d4 + l] % (1ULL << bl) << " ";
-                    }
-                    if (d4 > 1) {
-                        std::cout << std::endl;
-                    }
-                }
-                if (d3 > 1) {
-                    std::cout << std::endl;
-                }
-            }
-            if (d2 > 1) {
-                std::cout << std::endl;
-            }
-        }
-        if (d1 > 1) {
-            std::cout << std::endl;
-        }
-    }
-
-    void print(const u64 scale) const {
-        for (u64 i = 0; i < d1; i++) {
-            for (u64 j = 0; j < d2; j++) {
-                for (u64 k = 0; k < d3; k++) {
-                    for (u64 l = 0; l < d4; l++) {
-                        std::cout << data[i * d2 * d3 * d4 + j * d3 * d4 + k * d4 + l] / ((double)(1ULL<<scale)) << " ";
-                    }
-                    if (d4 > 1) {
-                        std::cout << std::endl;
-                    }
-                }
-                if (d3 > 1) {
-                    std::cout << std::endl;
-                }
-            }
-            if (d2 > 1) {
-                std::cout << std::endl;
-            }
-        }
-        if (d1 > 1) {
-            std::cout << std::endl;
-        }
     }
 
     u64 argmax(u64 i) {
@@ -657,21 +511,15 @@ public:
         return maxIndex;
     }
 
-    void load(const std::vector<std::vector<std::vector<std::vector<float>>>>&arr, int scale){
-        for (u64 i = 0; i < d1; i++) {
-            for (u64 j = 0; j < d2; j++) {
-                for (u64 k = 0; k < d3; k++) {
-                    for (u64 l = 0; l < d4; l++) {
-                        data[i * d2 * d3 * d4 + j * d3 * d4 + k * d4 + l] = (i64)(arr[i][j][k][l] * (double(1LL<<scale)));
-                    }
-                }
-            }
-        }
-    }
-
     Tensor<T> as_nd()
     {
         return Tensor<T>(data, {d1, d2, d3, d4});
+    }
+
+    void fill(T val) {
+        for (u64 i = 0; i < size(); i++) {
+            this->data[i] = val;
+        }
     }
 
 };
@@ -698,6 +546,14 @@ public:
         }
     }
 
+    u64 size() const {
+        return d1 * d2 * d3 * d4 * d5;
+    }
+
+    TensorRef<T> ref() {
+        return TensorRef<T>(data, size());
+    }
+
     void resize(u64 d1, u64 d2, u64 d3, u64 d4, u64 d5) {
         always_assert(isOwner);
         if (this->d1 == d1 && this->d2 == d2 && this->d3 == d3 && this->d4 == d4 && this->d5 == d5) {
@@ -714,6 +570,7 @@ public:
 
     void resize(const std::vector<u64> &shape) {
         always_assert(isOwner);
+        always_assert(shape.size() == 5);
         resize(shape[0], shape[1], shape[2], shape[3], shape[4]);
     }
 

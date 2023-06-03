@@ -67,7 +67,7 @@ public:
                 input_no_prng_with_frontend(nullptr, data.data, size, 3);
 #else
                 input_layer(nullptr, data.data, size, 3);
-#endif
+#endif        
         }
         else{
             Tensor<T> tmp(data.shape);
@@ -82,35 +82,20 @@ public:
     void initializeInferencePartyA(LayerGraphNode<T> *root) {
          topologicalApply(root, [&](LayerGraphNode<T> *node, LayerGraphNode<T> *_root) {
             auto layer = node->layer;
-            if(layer->name == "Conv2D" || layer->name == "FC" || layer->name == "Conv3D" || layer->name == "ConvTranspose3D") {
-                auto& weights = layer->getweights();
-                auto& bias = layer->getbias();
-                if(LlamaConfig::party == 1){
-                    input_layer(nullptr, weights.data, weights.d1 * weights.d2, 2);
-                    if (layer->useBias) {
-                        input_layer(nullptr, bias.data, bias.size, 2);
-                    }
-                }
-                else{
-                    Tensor2D<T> tmp(weights.d1, weights.d2);
-                    input_layer(weights.data, tmp.data, weights.d1 * weights.d2, 2);
-                    if(layer->useBias){
-                        Tensor1D<T> tmp2(bias.size);
-                        input_layer(bias.data, tmp2.data, bias.size, 2);
-                    }
+            auto weights = layer->getweights();
+            auto bias = layer->getbias();
+            if(LlamaConfig::party == 1){
+                input_layer(nullptr, weights.data, weights.size, 2);
+                if (layer->useBias) {
+                    input_layer(nullptr, bias.data, bias.size, 2);
                 }
             }
-            else if (layer->name.find("BatchNormInference") != std::string::npos) {
-                auto bn = (BatchNormInference<T>*) layer;
-                auto channel = bn->A.size;
-                if(LlamaConfig::party == 1){
-                    input_layer(nullptr, bn->A.data, channel, 2);
-                    input_layer(nullptr, bn->B.data, channel, 2);
-                }
-                else{
-                    Tensor1D<T> tmp(channel);
-                    input_layer(bn->A.data, tmp.data, channel, 2);
-                    input_layer(bn->B.data, tmp.data, channel, 2);
+            else{
+                Tensor1D<T> tmp(weights.size);
+                input_layer(weights.data, tmp.data, weights.size, 2);
+                if(layer->useBias){
+                    Tensor1D<T> tmp2(bias.size);
+                    input_layer(bias.data, tmp2.data, bias.size, 2);
                 }
             }
         });
@@ -133,36 +118,7 @@ public:
         }
     }
 
-    void initializeWeights(Sequential<T> &model)
-    {
-        // DEALER selects the inital weights and sends them to parties as keys
-        for(int i = 0; i < model.layers.size(); ++i)
-        {
-            if (model.layers[i]->name == "Conv2D" || model.layers[i]->name == "FC" || model.layers[i]->name == "Conv3D" || model.layers[i]->name == "ConvTranspose3D")
-            {
-                auto &weights = model.layers[i]->getweights();
-                auto &bias = model.layers[i]->getbias();
-                if (LlamaConfig::party == 1)
-                {
-                    // weights.fill(1);
-                    // bias.fill(1);
-                    LlamaConfig::server->send_ge_array(weights.data, weights.d1 * weights.d2);
-                    LlamaConfig::server->send_ge_array(bias.data, bias.size);
-                    LlamaConfig::client->send_ge_array(weights.data, weights.d1 * weights.d2);
-                    LlamaConfig::client->send_ge_array(bias.data, bias.size);
-                    weights.fill(0);
-                    bias.fill(0);
-                }
-                else
-                {
-                    LlamaConfig::dealer->recv_ge_array(weights.data, weights.d1 * weights.d2);
-                    LlamaConfig::dealer->recv_ge_array(bias.data, bias.size);
-                }
-            }
-        }
-    }
-
-     void outputA(Tensor<T> &a) {
+    void outputA(Tensor<T> &a) {
         outputA(a.data, a.size());
     }
 
@@ -179,11 +135,11 @@ public:
     }
 
     void outputA(Tensor1D<T> &a) {
-        outputA(a.data, a.size);
+        outputA(a.data, a.d1);
     }
 
     void output(Tensor1D<T> &a) {
-        output(a.data, a.size);
+        output(a.data, a.d1);
     }
 
     void outputA(T *a, u64 sz) {
@@ -377,8 +333,8 @@ public:
 
     void batchNormInference(const Tensor1D<T> &A, const Tensor1D<T> &B, const Tensor<T> &x, Tensor<T> &y, u64 scale)
     {
-        assert(A.size == B.size);
-        assert(A.size == x.shape.back());
+        assert(A.d1 == B.d1);
+        assert(A.d1 == x.shape.back());
         assert(x.is_same_shape(y));
         u64 channels = x.shape.back();
         // replicate A
@@ -398,9 +354,21 @@ public:
 
     }
 
-    void add(const std::vector<Tensor<T> *> &in, const Tensor<T> &out) {
+    void add(const std::vector<Tensor<T> *> &in, Tensor<T> &out) {
         auto ct = new ClearText<T>;
         ct->add(in, out);
+        delete ct;
+    }
+
+    void addbias(Tensor<T> &x, const Tensor1D<T> &bias) {
+        auto ct = new ClearText<T>;
+        ct->addbias(x, bias);
+        delete ct;
+    }
+
+    void scalarmul(Tensor<T> &x, T scalar, Tensor<T> &y) {
+        auto ct = new ClearText<T>;
+        ct->scalarmul(x, scalar, y);
         delete ct;
     }
 };

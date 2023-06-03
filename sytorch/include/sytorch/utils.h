@@ -299,6 +299,45 @@ void collectHelper(std::vector<T *> &res, T &a, Args & ... args)
     collectHelper(res, args...);
 }
 
+template <typename T, typename... Args>
+void collectByValueHelper(std::vector<T> &res)
+{
+
+}
+
+template <typename T, typename... Args>
+void collectByValueHelper(std::vector<T> &res, T a, Args ... args)
+{
+    res.push_back(a);
+    collectByValueHelper(res, args...);
+}
+
+template <typename T, typename... Args>
+std::vector<T> collectByValue(T first, Args ... args)
+{
+    std::vector<T> res;
+    res.push_back(first);
+    collectByValueHelper(res, args...);
+    return res;
+}
+
+template <typename... Args>
+std::string paramstring(Args ... args)
+{
+    std::stringstream ss;
+    auto arr = collectByValue(args...);
+    for (u64 i = 0; i < arr.size(); ++i)
+    {
+        ss << std::to_string(arr[i]) << "|";
+    }
+    return ss.str();
+}
+
+inline std::string paramstring()
+{
+    return "";
+}
+
 template <typename T>
 std::vector<std::vector<u64>> getShapes(const std::vector<Tensor<T> *> &tensors) {
     std::vector<std::vector<u64>> shapes;
@@ -344,4 +383,35 @@ inline void printshape(const std::vector<u64> &shape) {
         std::cout << shape[i] << ", ";
     }
     std::cout << ")" << std::endl;
+}
+
+inline void sytorch_init()
+{
+    prngWeights.SetSeed(osuCrypto::toBlock(0, 0));
+    prngStr.SetSeed(osuCrypto::toBlock(time(NULL)));
+}
+
+template <typename T>
+void qkv_split(Tensor2D<T> &x, Tensor4D<T> &y, u64 n_heads)
+{
+    always_assert(x.d2 % 3 == 0);
+    u64 n_seq = x.d1;
+    u64 n_embd = x.d2 / 3;
+    always_assert(n_embd % n_heads == 0);
+    always_assert(y.d1 == 3);
+    always_assert(y.d2 == n_heads);
+    always_assert(y.d3 == n_seq);
+    always_assert(y.d4 == n_embd / n_heads);
+
+    for (u64 i = 0; i < n_seq; ++i)
+    {
+        for (u64 j = 0; j < n_embd; ++j)
+        {
+            u64 head = j / (n_embd / n_heads);
+            u64 pos = j % (n_embd / n_heads);
+            y(0, head, i, pos) = x(i, j);
+            y(1, head, i, pos) = x(i, j + n_embd);
+            y(2, head, i, pos) = x(i, j + 2 * n_embd);
+        }
+    }
 }
