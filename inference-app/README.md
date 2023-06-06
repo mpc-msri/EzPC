@@ -1,5 +1,6 @@
 # Inference App
-This repo gives you a frontend to [EzPC](https://github.com/mpc-msri/EzPC) and enables you to make secure inference for X-ray images in Chexpert Model and get results in a UI based setup. The used protocols follow SMPC as defined under `https://github.com/mpc-msri/EzPC` and gives strong mathematical guarantees that data is not compromised at any step of the Secure Inference.
+This Gradio App gives a frontend to [EzPC](https://github.com/mpc-msri/EzPC) and enables you to make secure inference for images with a pretrained Model and get results in a UI based setup. <br/>
+Following are the system requirements and steps to run the Inference-App for doing secure inferencing on X-ray images with a Chexpert Model.
 
 
 
@@ -135,8 +136,8 @@ python app.py
 
 Open the url received after running the last command on inference-app and play along:
 1. Upload X-ray image.
-2. Get Masks
-3. Mask Image
+2. Get Encryption Keys
+3. Encrypt Image
 4. Start Inference
 
 

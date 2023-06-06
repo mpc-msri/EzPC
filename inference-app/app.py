@@ -93,14 +93,16 @@ with gr.Blocks(theme=gr.themes.Monochrome()) as demo:
         )
 
     # Step 2 Get Mask from Dealer
-    gr.Markdown("### Step 2: Click on the button below to get masks from dealer.")
-    dealer_status = gr.Textbox(
-        label="Status", placeholder="Masks status will be shown here."
+    gr.Markdown(
+        "### Step 2: Click on the button below to get encryption keys from dealer."
     )
-    get_mask_button = gr.Button(value="Get Masks", interactive=True)
+    dealer_status = gr.Textbox(
+        label="Status", placeholder="Encryption Keys status will be shown here."
+    )
+    get_mask_button = gr.Button(value="Get Encryption Keys", interactive=True)
 
     # Step 3 Mask Input Image
-    gr.Markdown("### Step 3: Click on the button below to mask the image.")
+    gr.Markdown("### Step 3: Click on the button below to encrypt the image.")
     with gr.Row():
         in_image = gr.Image(
             value=None,
@@ -112,14 +114,16 @@ with gr.Blocks(theme=gr.themes.Monochrome()) as demo:
         ).style(width=256, height=256)
         out_image = gr.Image(
             value=None,
-            label="Masked Image",
+            label="Encrypted Image",
             shape=(dims["h"], dims["w"]),
             interactive=False,
         ).style(width=256, height=256)
-    mask_button = gr.Button(value="Mask Image", interactive=True)
+    mask_button = gr.Button(value="Encrypt Image", interactive=True)
 
     # Step 4 Start Secure Inference
-    gr.Markdown("### Step 4: Click on the button below to start secure inference.")
+    gr.Markdown(
+        "### Step 4: Click on the button below to start secure inference with Encrypted Image."
+    )
     with gr.Column():
         inference_status = gr.Textbox(
             show_label=False,
@@ -132,7 +136,7 @@ with gr.Blocks(theme=gr.themes.Monochrome()) as demo:
     def show_progress(progress=gr.Progress()):
         for i in range(10):
             time.sleep(0.1)
-            progress(i / 10, desc="Masking Image")
+            progress(i / 10, desc="Encrypting Image")
         return True
 
     def update_input_image(input_image):
@@ -168,7 +172,7 @@ with gr.Blocks(theme=gr.themes.Monochrome()) as demo:
                         pbar.update(len(data))
                         progress(
                             xbar + (1 - xbar) * pbar.n / file_size,
-                            desc="Downloading Mask",
+                            desc="Downloading Encryption Keys",
                         )
 
                     ftp.retrbinary(f"RETR {file_name}", callback)
@@ -176,7 +180,7 @@ with gr.Blocks(theme=gr.themes.Monochrome()) as demo:
             ftp.quit()
             return {
                 dealer_status: gr.update(
-                    value="Masks received from dealer.", visible=True
+                    value="Encryption Keys received from dealer.", visible=True
                 )
             }
 
