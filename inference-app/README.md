@@ -130,6 +130,7 @@ wget "https://raw.githubusercontent.com/mpc-msri/EzPC/master/inference-app/Asset
 cd Assets 
 mkdir examples && cd examples 
 wget "https://raw.githubusercontent.com/drunkenlegend/ezpc-warehouse/main/Chexpert/cardiomegaly.jpg" -O 1.jpg
+cd ../..
 ```
 
 ***Note:*** 
