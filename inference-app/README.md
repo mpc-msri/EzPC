@@ -110,7 +110,7 @@ chmod +x client-offline.sh client-online.sh
 ./client-offline.sh
 ```
 
-8. **FRONTEND** : run the webapp:
+8. **FRONTEND** : setup & run the webapp:
 #### Create a .`env` file inside `EzPC/inference-app` directory to store the secrets as environment variables ( `_URL` is the IP address of Dealer ), the file should look as below:
     _URL = "X.X.X.X"
     _USER = "frontend"
@@ -124,6 +124,14 @@ Download the preprocessing file for image (specific to model) inside `/inference
 # preprocess it and returns it as a numpy array of size required by Model.
 wget "https://raw.githubusercontent.com/mpc-msri/EzPC/master/inference-app/Assets/preprocess.py" -O preprocess.py
 ```
+
+```bash
+# Next we download example image for the app.
+cd Assets 
+mkdir examples && cd examples 
+wget "https://raw.githubusercontent.com/drunkenlegend/ezpc-warehouse/main/Chexpert/cardiomegaly.jpg" -O 1.jpg
+```
+
 ***Note:*** 
 
     Further in case of using some other model for demo and customising WebApp to fit your model,
