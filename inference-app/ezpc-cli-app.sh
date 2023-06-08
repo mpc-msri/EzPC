@@ -51,11 +51,6 @@ do
             shift # past argument
             shift # past value
             ;;
-        -preprocess|--preprocess)
-            PREPROCESS="$2"
-            shift # past argument
-            shift # past value
-            ;;
         *)
             echo "Unknown option: $1"
             exit 1
@@ -64,16 +59,15 @@ do
 done
 
 # Check that required arguments are set
-if [ -z "$MODEL_PATH" ] || [ -z "$SERVER_IP" ] || [ -z "$PREPROCESS" ] || [ -z "$DEALER_IP" ] ;
+if [ -z "$MODEL_PATH" ] || [ -z "$SERVER_IP" ] || [ -z "$DEALER_IP" ] ;
 then
     echo "To run the secure MPC model, please ensure the following:"
     echo "Server Files:             Client Files:       Dealer Files:"
     echo "-------------------       --------------      --------------"
     echo "path to model.onnx        path to image.jpg   dealer IP"
-    echo "path to preprocess.py)"
     echo "server IP"
     echo "-------------------       --------------" | column -t -s $'\t'
-    echo "Usage: $0 -m <full-path/model.onnx> -preprocess <full-path/preprocess_image_file> -s <server-ip>  -d <dealer-ip>"
+    echo "Usage: $0 -m <full-path/model.onnx> -s <server-ip>  -d <dealer-ip>"
     echo "Optional: [-b <backend>] [-scale <scale>] [-bl <bitlength>] [-nt <numthreads>]"
     exit 1
 fi
@@ -82,7 +76,6 @@ fi
 echo ------------------------------
 echo "SERVER Details:"
 echo "Model path: $MODEL_PATH"
-echo "Preprocess path: $PREPROCESS"
 echo "Server IP: $SERVER_IP"
 echo ------------------------------
 echo "CLIENT Details:"
@@ -97,9 +90,6 @@ echo ------------------------------
 File_NAME=$(basename $MODEL_PATH)
 MODEL_DIR=$(dirname $MODEL_PATH)
 Model_Name=${File_NAME%.*}
-
-# Get preprocess file name
-preprocess_image_file=$(basename $PREPROCESS)
 
 # Generating Server Script
 SERVER_SCRIPT="server.sh"
@@ -134,7 +124,7 @@ echo -e "Play Area: \${bg_green}\$current_dir\${clear}"
 
 # Clone sytorch
 echo -e "\${bg_green}Cloning sytorch repository\${clear}"
-git clone https://github.com/mpc-msri/EzPC
+git clone https://github.com/mpc-msri/EzPC.git
 cd EzPC
 git switch mlinf
 cd ..
@@ -148,19 +138,18 @@ echo "MODEL_DIR: $MODEL_DIR"
 # Copy Files to current directory
 echo -e "\${bg_green}Copying files to current directory\${clear}"
 cp $MODEL_PATH .
-cp $PREPROCESS .
 
 # Compile the model
 echo -e "\${bg_green}Compiling the model\${clear}"
 python \$onnxbridge/main.py --path $File_NAME --backend $BACKEND --scale $SCALE --bitlength $BITLENGTH --generate code
 wait
-\$onnxbridge/LLAMA/compile_llama.sh "${Model_Name}_${BACKEND}_${SCALE}.cpp"
+\$onnxbridge/LLAMA/compile_llama.sh "${Model_Name}_${BACKEND}_${SCALE}.cpp" -Do_Masking
 
 # Create a zip file of stripped model to share with client
 zipfile="client_$Model_Name.zip"
 # Create the zip file
 echo -e "\${bg_green}Creating zip file\${clear}"
-zip "\$zipfile" "optimised_$File_NAME" "${Model_Name}_${BACKEND}_${SCALE}.cpp" "$preprocess_image_file"
+zip "\$zipfile" "optimised_$File_NAME" "${Model_Name}_${BACKEND}_${SCALE}.cpp" 
 echo -e "\${bg_green}Zip file created\${clear}"
 wait
 
@@ -246,7 +235,7 @@ done
 
 # Clone sytorch
 echo -e "\${bg_green}Cloning sytorch repository\${clear}"
-git clone https://github.com/mpc-msri/EzPC
+git clone https://github.com/mpc-msri/EzPC.git
 cd EzPC
 git switch mlinf
 cd ..
@@ -272,22 +261,24 @@ wait
 
 # Compile the model
 echo -e "\${bg_green}Compiling the model\${clear}"
-\$onnxbridge/LLAMA/compile_llama.sh "${Model_Name}_${BACKEND}_${SCALE}.cpp"
+\$onnxbridge/LLAMA/compile_llama.sh "${Model_Name}_${BACKEND}_${SCALE}.cpp" -Do_Masking
 wait
 
 # binary to generate keys
 cp ${Model_Name}_${BACKEND}_${SCALE} generate_keys
 
 # Generate keys for 1st inference
-./generate_keys 1
+./generate_keys 1 ${NUMTHREADS}
 mkdir server
 mv server.dat server/server.dat
 mkdir client
 mv client.dat client/client.dat
+mkdir frontend
+mv masks.dat frontend/masks.dat
 
 # Key generation and serving key files
 echo -e "\${bg_green}Starting a Python server to serve keys file\${clear}"
-python \$sytorch/scripts/dealer.py $DEALER_IP  
+python \$sytorch/scripts/dealer.py 0.0.0.0
 
 EOF
 # Finish generating Dealer Script
@@ -350,7 +341,7 @@ echo -e "\${bg_green}Downloaded Server Files\${clear}"
 
 # Clone sytorch
 echo -e "\${bg_green}Cloning sytorch repository\${clear}"
-git clone https://github.com/mpc-msri/EzPC
+git clone https://github.com/mpc-msri/EzPC.git
 cd EzPC
 git switch mlinf
 cd ..
@@ -377,12 +368,33 @@ wait
 
 # Compile the model
 echo -e "\${bg_green}Compiling the model\${clear}"
-\$onnxbridge/LLAMA/compile_llama.sh "${Model_Name}_${BACKEND}_${SCALE}.cpp"
+\$onnxbridge/LLAMA/compile_llama.sh "${Model_Name}_${BACKEND}_${SCALE}.cpp" -Do_Masking
 wait
 
-
+# Download Keys from Dealer
+echo -e "\${bg_green}Downloading keys from Dealer\${clear}"
+# Set the dealer IP address and port number
+Dealer_url="$DEALER_IP"
+# for first inference
+python \$sytorch/scripts/download_keys.py \$Dealer_url client client client.dat
+wait
+echo -e "${bg_green}Downloaded Dealer Keys File${clear}"
 
 wait
+
+cp \$sytorch/scripts/app.py app.py
+
+while true; do
+    echo -e "${bg_yellow}Starting Flask Server${clear}"
+    flask run --host=0.0.0.0 --port=5000
+    echo -e "${bg_yellow}Flask Server Stopped${clear}"
+
+    # Get the keys from the Dealer for next inference
+    echo -e "\${bg_green}Downloading keys from Dealer\${clear}"
+    python \$sytorch/scripts/download_keys.py \$Dealer_url client client client.dat
+    echo -e "\${bg_green}Downloaded Dealer Keys File\${clear}"
+done
+flask run --host=0.0.0.0 --port=5000
 
 EOF
 
@@ -419,27 +431,15 @@ current_dir=\$(pwd)
 sytorch="\$current_dir/EzPC/sytorch"
 onnxbridge="\$current_dir/EzPC/OnnxBridge"
 
-# Download Keys from Dealer
-echo -e "\${bg_green}Downloading keys from Dealer\${clear}"
-# Set the dealer IP address and port number
-Dealer_url="$DEALER_IP"
 
-# Get the keys from the Dealer
-python \$sytorch/scripts/download_keys.py \$Dealer_url client client client.dat
-wait
-echo -e "\${bg_green}Downloaded Dealer Keys File\${clear}"
-
-# Copy the input image
-cp \$IMAGE_PATH .
 # get input file name
 File_NAME=\$(basename \$IMAGE_PATH)
 Image_Name=\${File_NAME%.*}
 
 # Prepare the input
 echo -e "\${bg_green}Preparing the input\${clear}"
-python $preprocess_image_file \$File_NAME
-wait
 python \$onnxbridge/helper/convert_np_to_float_inp.py --inp \$Image_Name.npy --out \$Image_Name.inp
+wait
 
 
 # Run the model
@@ -450,6 +450,7 @@ echo -e "\${bg_green}Running the model\${clear}"
 echo -e "\${bg_green}Printing the output\${clear}"
 cat output.txt
 echo -e "\${bg_green}Finished\${clear}"
+
 
 EOF
 echo "Finished generating Client Script"

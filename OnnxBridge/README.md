@@ -45,7 +45,8 @@ Secfloat/compile_secfloat.sh "/path/to/file.cpp"
 ```
 ```bash
 # for LLAMA / CLEARTEXT_LLAMA 
-LLAMA/compile_llama.sh "/path/to/file.cpp"
+LLAMA/compile_llama.sh "/path/to/file.cpp" [-Do_Masking]
+# `-Do_Masking` is an optional argument if we are compiling for Frontend,this helps generate masks.dat file
 ```
 ---
 ## Inference with each backend:
@@ -84,11 +85,11 @@ python3 main.py --path "/path/to/onnx-file" --generate "code" --backend LLAMA --
 LLAMA/compile_llama.sh "/path/to/file.cpp"
 
 # generate LLAMA keys on client and server machines
-./<network> 1
+./<network> 1 <num_threads>
 
 # start inference on server and client machines
-./<network> 2 <ip> <model_weights_file> // Server
-./<network> 3 <server-ip> < <image_file> // Client
+./<network> 2 <model_weights_file> <num_threads>// Server
+./<network> 3 <server-ip> <num_threads> < <image_file> // Client
 ```
 
 #### **LLAMA Cleartext**
@@ -98,7 +99,7 @@ cd OnnxBridge
 python3 main.py --path "/path/to/onnx-file" --generate "executable" --backend CLEARTEXT_LLAMA --scale scale --bitlength bitlength
 
 # start inference 
-./<network> 0 127.0.0.1 <model_weights_file> < <image_file> 
+./<network> 0 <model_weights_file> < <image_file> 
 ```
 
 

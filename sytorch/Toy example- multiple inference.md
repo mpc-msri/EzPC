@@ -11,6 +11,7 @@ In the above command, the paths are not local, but are the locations on the resp
 - `-b <backend>`: the MPC backend to use (default: `LLAMA`)
 - `-scale <scale>`: the scaling factor for the model input (default: `15`)
 - `-bl <bitlength>`: the bitlength to use for the MPC computation (default: `40`)
+- `-nt <numthreads>`: the number of threads to use for MPC computation (default: `4`)
 
 The script generates 4 scripts:
 
@@ -76,8 +77,8 @@ cd tmp
 
 ```bash
 git clone https://github.com/mpc-msri/EzPC
-cd EzPC
-cd sytorch
+cd EzPC/sytorch
+chmod +x ezpc-cli-2.sh
 ./ezpc-cli-2.sh -m /home/<user>/lenet-demo-server/lenet.onnx -preprocess /home/<user>/lenet-demo-server/preprocess.py -s <SERVER-IP> -d <DEALER-IP>
 scp server.sh <SERVER-IP>:/home/<user>/lenet-demo-server/tmp/
 scp dealer.sh  <DEALER-IP>:/home/<user>/lenet-demo-dealer/tmp/
