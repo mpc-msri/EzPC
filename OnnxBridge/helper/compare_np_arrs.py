@@ -65,3 +65,5 @@ if __name__ == "__main__":
     if args.verbose:
         print(args.inputs[0], ": ", arr1)
         print(args.inputs[1], ": ", arr2)
+
+    assert matching_prec != -1
