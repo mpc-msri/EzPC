@@ -29,6 +29,7 @@ def run_onnx():
 
     # run the model with OnnxRuntime
     os.system(f"python {ezpc_dir}/OnnxBridge/helper/run_onnx.py model.onnx input.npy")
+    assert os.path.exists("onnx_output/expected.npy")
 
 
 def compile_model(backend):
@@ -74,6 +75,15 @@ def run_backend(backend):
 
         # running client
         os.system(f"./model_LLAMA_15 3 127.0.0.1 < input.inp > {raw_output}")
+
+    elif backend == "SECFLOAT_CLEARTEXT":
+        # check if model compiled
+        assert os.path.exists("model_secfloat_ct")
+        assert os.path.exists("model_input_weights.inp")
+
+        os.system(
+            f"cat input.inp model_input_weights.inp | ./model_secfloat_ct > {raw_output}"
+        )
 
     # save the raw output as npy
     os.system(f"python {ezpc_dir}/OnnxBridge/helper/make_np_arr.py {raw_output}")

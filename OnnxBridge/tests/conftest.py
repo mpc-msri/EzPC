@@ -38,7 +38,7 @@ def test_env():
 
 
 def make_dir(path):
-    # print(path)
+    print(path)
     if os.path.exists(path):
         shutil.rmtree(path, ignore_errors=False)
     else:
@@ -59,14 +59,17 @@ def pytest_runtest_makereport(item, call):
 
 @pytest.fixture
 def test_dir(request, test_env):
-    test_name = request.node.name[len("test_") :]
+    print("\nRequest node: ", request.node.name)
+    full_test_name = request.node.name.split("[")[0]
+    test_name = full_test_name[len("test_") :]
     main_test_dir = test_env["test_dir"]
+    print("Main test dir: ", main_test_dir)
     test_dir = os.path.join(main_test_dir, "test_" + test_name)
     make_dir(test_dir)
 
     yield test_dir
     # print("Test dir: ", test_dir)
     # Remove dir only if test passed
-    # if not request.node.rep_call.failed:
-    #     shutil.rmtree(test_dir, ignore_errors=False)
+    if not request.node.rep_call.failed:
+        shutil.rmtree(test_dir, ignore_errors=False)
     return

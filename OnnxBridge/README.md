@@ -72,7 +72,7 @@ cd OnnxBridge
 python3 main.py --path "/path/to/onnx-file" --generate "executable" --backend SECFLOAT_CLEARTEXT
 
 # start inference
-cat input_input.inp model_input_weights_.inp | ./model_secfloat_ct
+cat input_input.inp model_input_weights.inp | ./model_secfloat_ct
 ```
 
 #### **LLAMA**

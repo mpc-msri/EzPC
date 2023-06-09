@@ -87,7 +87,7 @@ def dump_model_weights_as_inp(model, model_dir, model_name):
     :return: Path to saved Model Weights
     """
     weights_path = ""
-    weights_fname = model_name + "_input_weights_.inp"
+    weights_fname = model_name + "_input_weights.inp"
     weights_path = os.path.join(model_dir, weights_fname)
 
     # needed because initializers are not in sequential order and we need to strip them and dump in file

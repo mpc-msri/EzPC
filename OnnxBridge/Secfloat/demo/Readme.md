@@ -27,12 +27,12 @@ python ../../main.py --path "model.onnx" --generate "executable" --backend SECFL
 
 ```
 This generates :
-- A file with model weigths `~/EzPC/OnnxBridge/Secfloat/demo/model_input_weights_.inp` (Secret Server Data) 
+- A file with model weigths `~/EzPC/OnnxBridge/Secfloat/demo/model_input_weights.inp` (Secret Server Data) 
 - A model output binary : `~/EzPC/OnnxBridge/Secfloat/demo/model_secfloat.out` which needs to be passed to client.
 
 Run the following command to start server side computation and wait for client connection:
 ```bash
-./model_secfloat r=2  [port=port] < model_input_weights_.inp
+./model_secfloat r=2  [port=port] < model_input_weights.inp
 ```
 
 # Client Side
