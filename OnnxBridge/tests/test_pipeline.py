@@ -22,9 +22,14 @@ hinet = {
     "input": "https://github.com/drunkenlegend/ezpc-warehouse/raw/main/HiNet_cifar10/image_0.png",
     "preprocess": "https://github.com/drunkenlegend/ezpc-warehouse/raw/main/HiNet_cifar10/preprocess.py",
 }
+chexpert = {
+    "model": "https://github.com/drunkenlegend/ezpc-warehouse/raw/main/Chexpert/chexpert.onnx",
+    "input": "https://github.com/drunkenlegend/ezpc-warehouse/raw/main/Chexpert/cardiomegaly.jpg",
+    "preprocess": "https://github.com/drunkenlegend/ezpc-warehouse/raw/main/Chexpert/preprocess.py",
+}
 
 
-@pytest.mark.parametrize("model", ["lenet", "hinet"])
+@pytest.mark.parametrize("model", ["lenet", "hinet", "chexpert"])
 def test_model(test_dir, backend, model):
     os.chdir(test_dir)
     model = globals()[model]

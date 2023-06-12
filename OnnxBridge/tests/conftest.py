@@ -60,7 +60,9 @@ def pytest_runtest_makereport(item, call):
 @pytest.fixture
 def test_dir(request, test_env):
     print("\nRequest node: ", request.node.name)
-    full_test_name = request.node.name.split("[")[0]
+    test_name_list = request.node.name.split("[")
+    parameter_name = test_name_list[1].split("]")[0]
+    full_test_name = test_name_list[0] + "_" + parameter_name
     test_name = full_test_name[len("test_") :]
     main_test_dir = test_env["test_dir"]
     print("Main test dir: ", main_test_dir)

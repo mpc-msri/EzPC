@@ -107,6 +107,9 @@ def compare_output():
             break
         matching_prec = prec
 
+    print("Secure Output: " + str(arr1))
+    print("Expected Output: " + str(arr2))
+
     if matching_prec == -1:
         print("Output mismatch")
     else:
