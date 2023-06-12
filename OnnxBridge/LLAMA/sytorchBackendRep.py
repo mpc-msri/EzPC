@@ -122,7 +122,7 @@ int main(int argc, char**__argv){'{'}
     if (party == 0) {'{'}
         Net<i64> net;
         net.init(scale);
-        std::string weights_file = __argv[3];
+        std::string weights_file = __argv[2];
         net.load(weights_file);
         Tensor<i64> input({'{'}{iterate_list([n]+ dims +[c])}{'}'});
         input.input_nchw(scale);
@@ -160,6 +160,30 @@ int main(int __argc, char**__argv){'{'}
 
     int party = atoi(__argv[1]);
     std::string ip = "127.0.0.1";
+    int nt=4;
+    std::string weights_file = "";
+
+    if(party == 0){'{'}
+        weights_file = __argv[2];
+    {'}'}
+    else if(party == DEALER){'{'}
+        if(__argc > 2){'{'}
+            nt = atoi(__argv[2]);
+        {'}'}
+    {'}'}
+    else if(party == SERVER){'{'}
+        weights_file = __argv[2];
+        if(__argc > 3){'{'}
+            nt = atoi(__argv[3]);
+        {'}'}
+    {'}'}
+    else if(party == CLIENT){'{'}
+        ip = __argv[2];
+        if(__argc > 3){'{'}
+            nt = atoi(__argv[3]);
+        {'}'}
+    {'}'}
+
 
     using LlamaVersion = LlamaExtended<u64>;
     LlamaVersion *llama = new LlamaVersion();
@@ -170,7 +194,6 @@ int main(int __argc, char**__argv){'{'}
     if (party == 0) {'{'}
         Net<i64> net;
         net.init(scale);
-        std::string weights_file = __argv[3];
         net.load(weights_file);
         Tensor<i64> input({'{'}{iterate_list([n]+ dims +[c])}{'}'});
         input.input_nchw(scale);
@@ -184,10 +207,8 @@ int main(int __argc, char**__argv){'{'}
     LlamaConfig::party = party;
     LlamaConfig::stochasticT = true;
     LlamaConfig::stochasticRT = true;
-    LlamaConfig::num_threads = 4;
-    if(__argc > 2){'{'}
-        ip = __argv[2];
-    {'}'}
+    LlamaConfig::num_threads = nt;
+
     llama->init(ip, true);
 
     Net<u64> net;
@@ -195,7 +216,6 @@ int main(int __argc, char**__argv){'{'}
     net.setBackend(llama);
     net.optimize();
     if(party == SERVER){'{'}
-        std::string weights_file = __argv[3];
         net.load(weights_file);
     {'}'}
     else if(party == DEALER){'{'}

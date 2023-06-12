@@ -13,12 +13,10 @@ public:
     LayerGraphNode<T> *root = nullptr;
     bool debug = true;
     u64 scale;
-    // std::map<std::string, LayerGraphNode<T> *> addLayerMap;
-    // std::map<std::string, LayerGraphNode<T> *> concatLayerMap;
-    std::vector<LayerGraphNode<T> *> allNodesInExecutionOrder;
 
-    const std::vector<std::string> functionalLayers = {"Add", "Concat"};
-    std::map<std::string, LayerGraphNode<T> *> functionalLayerMap;
+    std::vector<LayerGraphNode<T> *> allNodesInExecutionOrder;
+    const std::vector<std::string> functionalLayers = {"Add", "Concat", "GeLU", "SoftMax", "Split", "View", "Transpose", "_MatMul", "_ScalarMul"};
+    static std::map<std::string, LayerGraphNode<T> *> functionalLayerMap;
 
 public:
 
@@ -31,38 +29,44 @@ public:
 
     void generateFunctionalLayerMap()
     {
-        functionalLayerMap.clear();
+        // functionalLayerMap.clear();
         topologicalApply(root, [=](LayerGraphNode<T> *node, LayerGraphNode<T> *_root) {
             if (std::find(functionalLayers.begin(), functionalLayers.end(), node->layer->name) != functionalLayers.end()) {
                 std::string id = node->layer->name;
                 for(auto& parent: node->parents) {
                     id += "|" + std::to_string((uint64_t)(parent));
                 }
+                id = id + "|" + node->layer->paramstring;
+                // make sure it already doesn't exist
+                always_assert(functionalLayerMap.find(id) == functionalLayerMap.end());
                 functionalLayerMap[id] = node;
             }
         });
     }
 
-    LayerGraphNode<T> *getFunctionalNode(const std::string &layerName, std::vector<Tensor<T> *> ips)
+    template <typename... Args>
+    LayerGraphNode<T> *getFunctionalNode(const std::string &layerName, std::vector<Tensor<T> *> ips, Args ... args)
     {
         std::string id = layerName;
         for(auto& ip: ips) {
             id += "|" + std::to_string((uint64_t)(ip->graphNode));
         }
+        id = id + "|" + paramstring(args...);
         if (functionalLayerMap.find(id) == functionalLayerMap.end()) {
-            std::cerr << "Layer not found" << std::endl;
+            std::cerr << "Layer not found = \"" << id << "\"" << std::endl;
             exit(1);
         }
         return functionalLayerMap[id];
     }
 
-    template <typename LayerType>
-    Tensor<T>& functionalGraphGen(std::vector<Tensor<T> *> &arr)
+    template <typename LayerType, typename... Args>
+    Tensor<T>& functionalGraphGen(std::vector<Tensor<T> *> arr, Args ... args)
     {
         for (auto &a : arr) {
             always_assert(a->graphGenMode);
         }
-        auto layer = new LayerType();
+        auto layer = new LayerType(args...);
+        layer->paramstring = paramstring(args...);
         return layer->forward(arr);
     }
 
@@ -92,15 +96,8 @@ public:
     void zero()
     {
         topologicalApply(root, [](LayerGraphNode<T> *node, LayerGraphNode<T> *_root) {
-            if (node->layer->name == "Conv2D" || node->layer->name == "FC" || node->layer->name == "Conv3D" || node->layer->name == "ConvTranspose3D") {
-                node->layer->getweights().fill(0);
-                node->layer->getbias().fill(0);
-            }
-            else if (node->layer->name == "BatchNormInference") {
-                BatchNormInference<T> *bn = (BatchNormInference<T> *) node->layer;
-                bn->A.fill(0);
-                bn->B.fill(0);
-            }
+            node->layer->getweights().zero();
+            node->layer->getbias().zero();
         });
     }
 
@@ -114,11 +111,17 @@ public:
 
     Tensor<T>& forward(Tensor<T> &input)
     {
-        topologicalApply(root, [](LayerGraphNode<T> *node, LayerGraphNode<T> *_root) {
-            node->numUsages = 0;
-        });
-        input.graphNode = root;
-        input.graphNode->currTensor = &input;
+        if (input.graphGenMode) {
+            return this->_forward(input);
+        }
+
+        if (input.graphNode == nullptr) { // when the module is a top level module
+            topologicalApply(root, [](LayerGraphNode<T> *node, LayerGraphNode<T> *_root) {
+                node->numUsages = 0;
+            });
+            input.graphNode = root;
+            input.graphNode->currTensor = &input;
+        }
         if (debug) {
             auto& res = this->_forward(input);
             this->activation.resize(res.shape);
@@ -153,33 +156,9 @@ public:
         size_t wIdx = 0;
         for (auto &node: allNodesInExecutionOrder) {
             auto layer = node->layer;
-            if(layer->name == "Conv2D" || layer->name == "FC" || layer->name == "Conv3D" || layer->name == "ConvTranspose3D") {
-                auto& weights = layer->getweights();
-                for (int j = 0; j < weights.d1; j++) {
-                    for(int k = 0; k < weights.d2; ++k) {
-                        weights(j, k) = i64(floatWeights[wIdx + weights.d2 * j + k] * (1LL << scale));
-                    }
-                }
-
-                auto wSize = weights.d1 * weights.d2;
-                wIdx += wSize;
-
-                auto& bias = layer->getbias();
-                if (layer->useBias) {
-
-                    for (int j = 0; j < bias.size; ++j) {
-                        bias(j) = i64(floatWeights[wIdx + j] * (1LL << (2*scale)));
-                    }
-
-                    wSize = bias.size;
-                    wIdx += wSize;
-                }
-                else
-                    bias.fill(0);
-            }
-            else if (layer->name.find("BatchNormInference") != std::string::npos) {
+            if (layer->name == "BatchNormInference") {
                 auto bn = (BatchNormInference<T>*) layer;
-                auto channel = bn->A.size;
+                auto channel = bn->A.d1;
                 auto gammaPtr = floatWeights + wIdx;
                 auto betaPtr = floatWeights + wIdx + channel;
                 auto meanPtr = floatWeights + wIdx + 2 * channel;
@@ -190,10 +169,80 @@ public:
                 }
                 wIdx += 4 * channel;
             }
+            else {
+                auto weights = layer->getweights();
+                for (u64 j = 0; j < weights.size; j++) {
+                    weights.data[j] = i64(floatWeights[wIdx + j] * (1LL << scale));
+                }
+
+                wIdx += weights.size;
+
+                auto bias = layer->getbias();
+                if (layer->useBias) {
+
+                    for (u64 j = 0; j < bias.size; ++j) {
+                        bias.data[j] = i64(floatWeights[wIdx + j] * (1LL << (2*scale)));
+                    }
+
+                    wIdx += bias.size;
+                }
+                else {
+                    bias.zero();
+                }
+            }
         }
 
         always_assert(wIdx == numParameters);
         delete[] floatWeights;
+    }
+
+    void dumpi64(const std::string weightsFile)
+    {
+        std::ofstream file(weightsFile, std::ios::binary);
+        u64 scale = this->scale;
+
+        for (auto &node: allNodesInExecutionOrder) {
+            auto layer = node->layer;
+            if (layer->name == "BatchNormInference") {
+                auto bn = (BatchNormInference<T>*) layer;
+                auto channel = bn->A.d1;
+            
+                for (int j = 0; j < channel; ++j) {
+                    i64 v = bn->A(j);
+                    file.write((char *)(&v), sizeof(i64));
+                }
+                for (int j = 0; j < channel; ++j) {
+                    i64 v = bn->B(j);
+                    file.write((char *)(&v), sizeof(i64));
+                }
+                for (int j = 0; j < channel; ++j) {
+                    i64 v = 0;
+                    file.write((char *)(&v), sizeof(i64));
+                }
+                for (int j = 0; j < channel; ++j) {
+                    i64 v = (1LL << scale);
+                    file.write((char *)(&v), sizeof(i64));
+                }
+
+            }
+            else {
+                auto weights = layer->getweights();
+                for (u64 j = 0; j < weights.size; j++) {
+                    i64 v = weights.data[j];
+                    file.write((char *)(&v), sizeof(i64));
+                }
+
+                auto bias = layer->getbias();
+                if (layer->useBias) {
+
+                    for (u64 j = 0; j < bias.size; ++j) {
+                        i64 v = bias.data[j];
+                        file.write((char *)(&v), sizeof(i64));
+                    }
+                }
+            }
+        }
+
     }
 
     Tensor<T>& add(std::vector<Tensor<T> *> &arr)
@@ -228,10 +277,101 @@ public:
     }
 
     template <typename... Args>
-    Tensor<T> &concat(Args &...args)
+    Tensor<T>& concat(Args & ... args)
     {
         auto res = collect(args...);
         return concat(res);
+    }
+
+    Tensor<T>& gelu(Tensor<T> &a)
+    {
+        if (a.graphGenMode) {
+            auto &c = functionalGraphGen<GeLU<T>>({&a});
+            return c;
+        }
+
+        auto cNode = getFunctionalNode("GeLU", {&a});
+        auto &c = cNode->layer->forward(a);
+        return c;
+    }
+
+    Tensor<T>& softmax(Tensor<T> &a)
+    {
+        if (a.graphGenMode) {
+            auto &c = functionalGraphGen<SoftMax<T>>({&a});
+            return c;
+        }
+
+        auto cNode = getFunctionalNode("SoftMax", {&a});
+        auto &c = cNode->layer->forward(a);
+        return c;
+    }
+
+    Tensor<T>& split(Tensor<T> &a, u64 n_splits) 
+    {
+        if (a.graphGenMode) {
+            auto &c = functionalGraphGen<Split<T>>({&a}, n_splits);
+            return c;
+        }
+
+        auto cNode = getFunctionalNode("Split", {&a}, n_splits);
+        auto &c = cNode->layer->forward(a);
+        return c;
+    }
+
+    Tensor<T>& view(Tensor<T> &a, i64 idx)
+    {
+        if (a.graphGenMode) {
+            auto &c = functionalGraphGen<View<T>>({&a}, idx);
+            return c;
+        }
+
+        auto cNode = getFunctionalNode("View", {&a}, idx);
+        auto &c = cNode->layer->forward(a);
+        return c;
+    }
+
+    Tensor<T>& transpose(Tensor<T> &a)
+    {
+        if (a.graphGenMode) {
+            auto &c = functionalGraphGen<Transpose<T>>({&a});
+            return c;
+        }
+
+        auto cNode = getFunctionalNode("Transpose", {&a});
+        auto &c = cNode->layer->forward(a);
+        return c;
+    }
+
+    Tensor<T>& matmul(Tensor<T> &a, Tensor<T> &b)
+    {
+        if (a.graphGenMode) {
+            auto &c = functionalGraphGen<_MatMul<T>>({&a, &b});
+            return c;
+        }
+
+        auto cNode = getFunctionalNode("_MatMul", {&a, &b});
+        std::vector<Tensor<T> *> arr = {&a, &b};
+        auto &c = cNode->layer->forward(arr);
+        return c;
+    }
+
+    Tensor<T>& scalarmul(Tensor<T> &a, double scalar)
+    {
+        if (a.graphGenMode) {
+            auto &c = functionalGraphGen<_ScalarMul<T>>({&a}, scalar);
+            return c;
+        }
+
+        auto cNode = getFunctionalNode("_ScalarMul", {&a}, scalar);
+        auto &c = cNode->layer->forward(a);
+        return c;
+    }
+
+    T invsqrt(double x)
+    {
+        double t = 1/sqrt(x);
+        return T(t * (1LL << scale));
     }
 
     void train()
@@ -248,3 +388,6 @@ public:
         });
     }
 };
+
+template <typename T>
+std::map<std::string, LayerGraphNode<T> *> SytorchModule<T>::functionalLayerMap = std::map<std::string, LayerGraphNode<T> *>();
