@@ -41,7 +41,6 @@ jobs:
       - name: Lenet Mnist Cleartext 
         if: always()
         run: |
-            pip install torchvision
             cd OnnxBridge/tests/
             pytest --backend CLEARTEXT_LLAMA -k lenet
         shell: bash
