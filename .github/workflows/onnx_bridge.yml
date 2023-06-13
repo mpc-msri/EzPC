@@ -37,7 +37,7 @@ jobs:
         run: |
             sudo apt-get update -y
             sudo apt install libeigen3-dev cmake build-essential -y
-            pip3 install onnx onnxruntime onnxsim numpy protobuf torchvision idx2numpy -y
+            pip3 install onnx onnxruntime onnxsim numpy protobuf torchvision idx2numpy 
 
       - name: Lenet Mnist Cleartext 
         if: always()
