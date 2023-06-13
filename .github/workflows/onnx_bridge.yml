@@ -35,10 +35,10 @@ jobs:
 
       - name: Install dependencies
         run: |
-            python --version
-            which python
-            pip --version
-            pip freeze
+            python3 --version
+            which python3
+            pip3 --version
+            pip3 freeze
             pip3 install -r OnnxBridge/requirements.txt
 
       - name: Lenet Mnist Cleartext 
