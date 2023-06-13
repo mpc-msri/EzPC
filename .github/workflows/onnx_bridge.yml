@@ -1,0 +1,44 @@
+name: OnnxBridge CI Testing
+
+# Controls when the workflow will run
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+
+  lenet-LLAMA-ct:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    container: 
+      image: drunkenlegend/ezpcsetup:latest
+      options: --user root
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - name: Update Git
+        run: |
+            add-apt-repository ppa:git-core/ppa -y
+            apt-get update
+            apt-get install git -y 
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+            submodules: 'true'
+
+      - name: Lenet Mnist Cleartext 
+        if: always()
+        run: |
+            cd OnnxBridge/tests/
+            pytest --backend CLEARTEXT_LLAMA -k lenet
+        shell: bash
+
+
+
