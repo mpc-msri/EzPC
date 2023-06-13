@@ -12,12 +12,12 @@ def pre_process_input():
     assert os.path.exists("preprocess.py")
 
     # convert jpg -> npy
-    os.system("python preprocess.py input.jpg")
+    os.system("python3 preprocess.py input.jpg")
     assert os.path.exists("input.npy")
 
     # convert npy -> inp
     os.system(
-        f"python {ezpc_dir}/OnnxBridge/helper/convert_np_to_float_inp.py --inp input.npy --out input.inp"
+        f"python3 {ezpc_dir}/OnnxBridge/helper/convert_np_to_float_inp.py --inp input.npy --out input.inp"
     )
     assert os.path.exists("input.inp")
 
