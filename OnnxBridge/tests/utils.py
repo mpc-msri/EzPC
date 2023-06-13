@@ -28,7 +28,7 @@ def run_onnx():
     assert os.path.exists("input.npy")
 
     # run the model with OnnxRuntime
-    os.system(f"python {ezpc_dir}/OnnxBridge/helper/run_onnx.py model.onnx input.npy")
+    os.system(f"python3 {ezpc_dir}/OnnxBridge/helper/run_onnx.py model.onnx input.npy")
     assert os.path.exists("onnx_output/expected.npy")
 
 
@@ -39,11 +39,11 @@ def compile_model(backend):
     # compile the model
     if backend == "LLAMA" or backend == "CLEARTEXT_LLAMA":
         os.system(
-            f"python {ezpc_dir}/OnnxBridge/main.py --path model.onnx --generate executable --backend {backend} --scale 15 --bitlength 40 "
+            f"python3 {ezpc_dir}/OnnxBridge/main.py --path model.onnx --generate executable --backend {backend} --scale 15 --bitlength 40 "
         )
     elif backend == "SECFLOAT" or backend == "SECFLOAT_CLEARTEXT":
         os.system(
-            f"python {ezpc_dir}/OnnxBridge/main.py --path model.onnx --generate executable --backend {backend} "
+            f"python3 {ezpc_dir}/OnnxBridge/main.py --path model.onnx --generate executable --backend {backend} "
         )
 
 
@@ -86,7 +86,7 @@ def run_backend(backend):
         )
 
     # save the raw output as npy
-    os.system(f"python {ezpc_dir}/OnnxBridge/helper/make_np_arr.py {raw_output}")
+    os.system(f"python3 {ezpc_dir}/OnnxBridge/helper/make_np_arr.py {raw_output}")
     assert os.path.exists("output.npy")
 
 
