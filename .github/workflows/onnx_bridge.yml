@@ -33,17 +33,17 @@ jobs:
         with:
             submodules: 'true'
 
-      - name: Install dependencies
-        run: |
-            cd OnnxBridge/
-            pip install --upgrade pip
-            pip freeze
-            pip3 freeze
-            pip3 install -r requirements.txt
-            cd ..
+
 
       - name: Lenet Mnist Cleartext 
         if: always()
+        env:
+            HOME: /root
+            OPAM_SWITCH_PREFIX: /root/.opam/4.10.0
+            CAML_LD_LIBRARY_PATH: /root/.opam/4.10.0/lib/stublibs:/root/.opam/4.10.0/lib/ocaml/stublibs:/root/.opam/4.10.0/lib/ocaml
+            OCAML_TOPLEVEL_PATH: /root/.opam/4.10.0/lib/toplevel
+            MANPATH: :/root/.opam/4.10.0/man
+            PATH: /root/.opam/4.10.0/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
         run: |
             cd OnnxBridge/tests/
             pytest --backend CLEARTEXT_LLAMA -k lenet
