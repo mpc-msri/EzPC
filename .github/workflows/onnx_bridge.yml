@@ -36,6 +36,7 @@ jobs:
       - name: Install dependencies
         run: |
             cd OnnxBridge/
+            pip freeze
             pip install -r requirements.txt
             cd ..
 
