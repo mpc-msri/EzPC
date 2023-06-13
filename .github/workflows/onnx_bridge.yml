@@ -35,8 +35,10 @@ jobs:
 
       - name: Install dependencies
         run: |
+            sudo apt-get remove --auto-remove cmake -y
             sudo apt-get update -y
             sudo apt install libeigen3-dev cmake build-essential -y
+            cmake --version
             pip3 install onnx onnxruntime onnxsim numpy protobuf torchvision idx2numpy 
 
       - name: Lenet Mnist Cleartext 
