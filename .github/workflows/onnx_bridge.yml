@@ -45,6 +45,7 @@ jobs:
             MANPATH: :/root/.opam/4.10.0/man
             PATH: /root/.opam/4.10.0/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
         run: |
+            pip install torchvision
             cd OnnxBridge/tests/
             pytest --backend CLEARTEXT_LLAMA -k lenet
         shell: bash
