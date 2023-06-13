@@ -33,6 +33,12 @@ jobs:
         with:
             submodules: 'true'
 
+      - name: Install dependencies
+        run: |
+            cd OnnxBridge/
+            pip install -r requirements.txt
+            cd ..
+
       - name: Lenet Mnist Cleartext 
         if: always()
         run: |
