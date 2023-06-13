@@ -35,6 +35,7 @@ jobs:
 
       - name: Install dependencies
         run: |
+            sudo apt install python3.7
             python3 --version
             which python3
             pip3 --version
