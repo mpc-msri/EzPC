@@ -35,10 +35,17 @@ jobs:
 
       - name: Install dependencies
         run: |
-            sudo apt-get remove --auto-remove cmake -y
             sudo apt-get update -y
-            sudo apt install libeigen3-dev cmake build-essential -y
+            sudo apt-get install build-essential libssl-dev -y
+            wget https://github.com/Kitware/CMake/releases/download/v3.20.0/cmake-3.20.0.tar.gz
+            tar -zxvf cmake-3.20.0.tar.gz
+            cd cmake-3.20.0
+            ./bootstrap
+            make
+            sudo make install
             cmake --version
+
+            sudo apt install libeigen3-dev  -y
             pip3 install onnx onnxruntime onnxsim numpy protobuf torchvision idx2numpy 
 
       - name: Lenet Mnist Cleartext 
