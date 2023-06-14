@@ -37,11 +37,11 @@ jobs:
         run: |
             apt-get update -y
             
-      - name: Lenet Mnist Cleartext 
+      - name: Lenet Mnist LLAMA
         if: always()
         run: |
             cd OnnxBridge/tests/
-            pytest --backend LLAMA -k lenet
+            pytest --backend LLAMA -v -k lenet
         shell: bash
 
   lenet-LLAMA-ct:
@@ -72,7 +72,7 @@ jobs:
         if: always()
         run: |
             cd OnnxBridge/tests/
-            pytest --backend CLEARTEXT_LLAMA -k lenet
+            pytest --backend CLEARTEXT_LLAMA -v -k lenet
         shell: bash
 
   hinet-LLAMA:
@@ -99,11 +99,11 @@ jobs:
         run: |
             apt-get update -y
             
-      - name: Lenet Mnist Cleartext 
+      - name: HiNet Cifar10 LLAMA
         if: always()
         run: |
             cd OnnxBridge/tests/
-            pytest --backend LLAMA -k hinet
+            pytest --backend LLAMA -v -k hinet
         shell: bash
 
   hinet-LLAMA-ct:
@@ -130,11 +130,11 @@ jobs:
         run: |
             apt-get update -y
             
-      - name: Lenet Mnist Cleartext 
+      - name: HiNet Cifar10 Cleartext 
         if: always()
         run: |
             cd OnnxBridge/tests/
-            pytest --backend CLEARTEXT_LLAMA -k hinet
+            pytest --backend CLEARTEXT_LLAMA -v -k hinet
         shell: bash
 
 
