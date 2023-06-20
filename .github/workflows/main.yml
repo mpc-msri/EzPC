@@ -53,7 +53,9 @@ jobs:
           mkdir gen
           chmod +x runtests.sh
           chmod +x compile_aby.sh
+          ./compile_emp.sh test_suite/precompiled_output_emp/random_forest0.cpp
           ./runtests.sh -genDir gen -genDiff
+          /__w/EzPC/EzPC/EzPC/EzPC/compile_aby.sh gen/random_forest0.cpp
           cd ../..
 
   EMP:
