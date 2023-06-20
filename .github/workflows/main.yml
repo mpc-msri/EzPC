@@ -44,6 +44,7 @@ jobs:
           cmake --build . --target install --parallel
           cd ../..
           cd EzPC/EzPC/
+          make
           eval $(opam config env)
           mkdir gen
           chmod +x runtests.sh
