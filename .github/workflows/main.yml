@@ -13,7 +13,7 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
 
-  ABY-and-EMP:
+  ABY:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
     container: 
@@ -31,26 +31,6 @@ jobs:
         uses: actions/checkout@v3
         with:
             submodules: 'true'
-            
-      - name: Setup and Test EMP
-        env:
-            HOME: /root
-            OPAM_SWITCH_PREFIX: /root/.opam/4.10.0
-            CAML_LD_LIBRARY_PATH: /root/.opam/4.10.0/lib/stublibs:/root/.opam/4.10.0/lib/ocaml/stublibs:/root/.opam/4.10.0/lib/ocaml
-            OCAML_TOPLEVEL_PATH: /root/.opam/4.10.0/lib/toplevel
-            MANPATH: :/root/.opam/4.10.0/man
-            PATH: /root/.opam/4.10.0/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-        run: |
-            pwd
-            cd EzPC/EzPC/
-            make
-            wget https://raw.githubusercontent.com/emp-toolkit/emp-readme/master/scripts/install.py
-            python install.py --deps --tool --ot --sh2pc
-            rm -rf install.py
-            eval $(opam config env)
-            chmod +x runemptests.sh
-            ./runemptests.sh
-            cd ../../
 
       - name: Setup and Test ABY
         env:
@@ -67,9 +47,46 @@ jobs:
           eval $(opam config env)
           mkdir gen
           chmod +x runtests.sh
+          chmod +x compile_aby.sh
           ./runtests.sh -genDir gen -genDiff
           cd ../..
-        shell: bash
+
+  EMP:
+    runs-on: ubuntu-latest
+    container: 
+      image: drunkenlegend/ezpcsetup:latest
+    steps:
+
+      - name: Update Git
+        run: |
+            add-apt-repository ppa:git-core/ppa -y
+            apt-get update
+            apt-get install git -y
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+            submodules: 'true'
+      
+      - name: Setup and Test EMP
+        env:
+          HOME: /root
+          OPAM_SWITCH_PREFIX: /root/.opam/4.10.0
+          CAML_LD_LIBRARY_PATH: /root/.opam/4.10.0/lib/stublibs:/root/.opam/4.10.0/lib/ocaml/stublibs:/root/.opam/4.10.0/lib/ocaml
+          OCAML_TOPLEVEL_PATH: /root/.opam/4.10.0/lib/toplevel
+          MANPATH: :/root/.opam/4.10.0/man
+          PATH: /root/.opam/4.10.0/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+        run: |
+            pwd
+            cd EzPC/EzPC/
+            make
+            wget https://raw.githubusercontent.com/emp-toolkit/emp-readme/master/scripts/install.py
+            python install.py --deps --tool --ot --sh2pc
+            rm -rf install.py
+            eval $(opam config env)
+            chmod +x runemptests.sh
+            ./runemptests.sh
+            cd ../../
           
   # ONNX-CPP:
   #   # The type of runner that the job will run on
