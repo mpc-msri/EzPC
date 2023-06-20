@@ -97,6 +97,8 @@ generateAndDiffCode () {
 
 	echo -e "\n\n------------------------------Match Random-Forest Results-----------------------------"
 
+	ls
+	pwd
 	./compile_aby.sh gen/random_forest0.cpp
 	./random_forest0 -r 0 &
 	./random_forest0 -r 1 > gen_val.txt &
