@@ -65,8 +65,9 @@ jobs:
           cd ../..
           cd EzPC/EzPC/
           eval $(opam config env)
+          mkdir gen
           chmod +x runtests.sh
-          make runtest
+          ./runtests.sh -genDir gen -genDiff
           cd ../..
         shell: bash
           
