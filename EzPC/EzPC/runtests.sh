@@ -101,11 +101,14 @@ generateAndDiffCode () {
 	pwd
 	./compile_aby.sh gen/random_forest0.cpp
 	./random_forest0 -r 0 &
+	# sleep 10 sec
+	sleep 10
 	./random_forest0 -r 1 > gen_val.txt &
 	wait
 
 	./compile_aby.sh test_suite/precompiled_output/random_forest0.cpp
 	./random_forest0 -r 0 &
+	sleep 10
 	./random_forest0 -r 1 > pre_val.txt &
 	wait
 
@@ -121,11 +124,13 @@ generateAndDiffCode () {
 
 	./compile_aby.sh gen/random_forest_polish0.cpp
 	./random_forest_polish0 -r 0 &
+	sleep 10
 	./random_forest_polish0 -r 1 > gen_val.txt &
 	wait
 
 	./compile_aby.sh test_suite/precompiled_output/random_forest_polish0.cpp
 	./random_forest_polish0 -r 0 &
+	sleep 10
 	./random_forest_polish0 -r 1 > pre_val.txt &
 	wait
 
