@@ -2,7 +2,7 @@
 This Gradio App gives a frontend to [EzPC](https://github.com/mpc-msri/EzPC) and enables you to make secure inference for images with a pretrained Model and get results in a UI based setup. <br/>
 
 
-![Inference App Demo Video](https://github.com/drunkenlegend/ezpc-warehouse/blob/main/Artifacts/inference-app-lenet-mnist.gif)
+![Inference App Demo Video](https://github.com/drunkenlegend/ezpc-warehouse/blob/main/Artifacts/inference-app_Lenet.gif)
 
 # System Requirements
 Following are the system requirements and steps to run the Inference-App for doing secure inferencing on X-ray images with a Chexpert Model.
