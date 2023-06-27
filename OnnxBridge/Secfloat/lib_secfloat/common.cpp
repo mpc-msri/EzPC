@@ -34,6 +34,22 @@ void NHWC_to_NCHW(int32_t N, int32_t H, int32_t W, int32_t C, vector<vector<vect
     }
 }
 
+// NCHW_to_NHWC(N, CI, H, W, inputArr, inputArr_reshaped) ;
+// OIFF_to_FFIO(CO, CI, FJ, FW, filterArr, filterArr_reshaped) ;
+
+void OIFF_to_FFIO(int32_t CO, int32_t CI, int32_t FH, int32_t FW, vector<vector<vector<vector<FPArray>>>> &inArr, vector<vector<vector<vector<FPArray>>>> &outArr)
+{
+    for (uint32_t o = 0 ; o < CO ; o++) {
+        for (uint32_t i = 0 ; i < CI ; i++) {
+            for (uint32_t fh = 0 ; fh < FH ; fh++) {
+                for (uint32_t fw = 0 ; fw < FW ; fw++) {
+                    outArr[fh][fw][i][o] = inArr[o][i][fh][fw] ;
+                }
+            }
+        }
+    }
+}
+
 void __onnxbridge_Conv2DGroupWrapper(
     int32_t N, int32_t CI, int32_t H, int32_t W, int32_t FH, int32_t FW, int32_t CO,
     int32_t zPadHLeft, int32_t zPadHRight, int32_t zPadWLeft, int32_t zPadWRight,
@@ -53,11 +69,17 @@ void __onnxbridge_Conv2DGroupWrapper(
 
     vector<vector<vector<vector<FPArray>>>> inputArr_reshaped = make_vector_float(ALICE, N, H, W, CI) ;
     NCHW_to_NHWC(N, CI, H, W, inputArr, inputArr_reshaped) ;
+    // cout << "\tAttempted NCHW_to_NHWC" << endl ;
+
+    vector<vector<vector<vector<FPArray>>>> filterArr_reshaped = make_vector_float(ALICE, FH, FW, CI, CO) ;
+    OIFF_to_FFIO(CO, CI, FH, FW, filterArr, filterArr_reshaped) ;
 
     vector<vector<vector<vector<FPArray>>>> outputArr_reshaped = make_vector_float(ALICE, N, outH, outW, CO) ;
-    Conv2DGroupWrapper(N, H, W, CI, FH, FW, CO, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideH, strideW, G, inputArr_reshaped, filterArr, outputArr_reshaped) ;  
+    Conv2DGroupWrapper(N, H, W, CI, FH, FW, CO, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideH, strideW, G, inputArr_reshaped, filterArr_reshaped, outputArr_reshaped) ;  
+    // cout << "\tAttempted Conv2DGroupoWrapper" << endl ;
 
     NHWC_to_NCHW(N, outH, outW, CO, outputArr_reshaped, outArr) ;
+    // cout << "\tAttempted NHCW_to_NCHW" << endl ;
 }
 
 void __onnxbridge_ConvAdd(int32_t N, int32_t C, int32_t H, int32_t W,
