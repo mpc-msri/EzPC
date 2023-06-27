@@ -13,11 +13,24 @@ def pytest_addoption(parser):
         help="backend : CLEARTEXT_LLAMA | LLAMA | SECFLOAT | SECFLOAT_CLEARTEXT",
         required=True,
     )
+    parser.addoption(
+        "--batch_size",
+        action="store",
+        type=int,
+        help="batch size",
+        required=False,
+    )
 
 
 @pytest.fixture(scope="session")
 def backend(request):
     opt = request.config.getoption("--backend")
+    return opt
+
+
+@pytest.fixture(scope="session")
+def batch_size(request):
+    opt = request.config.getoption("--batch_size")
     return opt
 
 

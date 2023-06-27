@@ -6,29 +6,29 @@ script_directory = os.path.dirname(os.path.abspath(__file__))
 ezpc_dir = os.path.join(script_directory, "..", "..")
 
 
-def pre_process_input():
+def pre_process_input(i):
     # check if input.jpg and preprocess.py exists
-    assert os.path.exists("input.jpg")
+    assert os.path.exists(f"input{i}.jpg")
     assert os.path.exists("preprocess.py")
 
     # convert jpg -> npy
-    os.system("python3 preprocess.py input.jpg")
-    assert os.path.exists("input.npy")
+    os.system(f"python3 preprocess.py input{i}.jpg")
+    assert os.path.exists(f"input{i}.npy")
 
     # convert npy -> inp
     os.system(
-        f"python3 {ezpc_dir}/OnnxBridge/helper/convert_np_to_float_inp.py --inp input.npy --out input.inp"
+        f"python3 {ezpc_dir}/OnnxBridge/helper/convert_np_to_float_inp.py --inp input{i}.npy --out input{i}.inp"
     )
-    assert os.path.exists("input.inp")
+    assert os.path.exists(f"input{i}.inp")
 
 
-def run_onnx():
+def run_onnx(input):
     # check if model.onnx and input.npy exists
     assert os.path.exists("model.onnx")
-    assert os.path.exists("input.npy")
+    assert os.path.exists(input)
 
     # run the model with OnnxRuntime
-    os.system(f"python3 {ezpc_dir}/OnnxBridge/helper/run_onnx.py model.onnx input.npy")
+    os.system(f"python3 {ezpc_dir}/OnnxBridge/helper/run_onnx.py model.onnx {input}")
     assert os.path.exists("onnx_output/expected.npy")
 
 
@@ -47,10 +47,10 @@ def compile_model(backend):
         )
 
 
-def run_backend(backend):
+def run_backend(backend, input):
     # check if model.onnx and input.inp exists
     assert os.path.exists("model.onnx")
-    assert os.path.exists("input.inp")
+    assert os.path.exists(input)
 
     raw_output = os.path.join("raw_output.txt")
     # run the model with backend
@@ -60,7 +60,7 @@ def run_backend(backend):
         assert os.path.exists("model_input_weights.dat")
 
         os.system(
-            f"./model_CLEARTEXT_LLAMA_15 0 model_input_weights.dat < input.inp > {raw_output}"
+            f"./model_CLEARTEXT_LLAMA_15 0 model_input_weights.dat < {input} > {raw_output}"
         )
     elif backend == "LLAMA":
         # check if model compiled
@@ -74,7 +74,7 @@ def run_backend(backend):
         os.system(f"./model_LLAMA_15 2 model_input_weights.dat &")
 
         # running client
-        os.system(f"./model_LLAMA_15 3 127.0.0.1 < input.inp > {raw_output}")
+        os.system(f"./model_LLAMA_15 3 127.0.0.1 < {input} > {raw_output}")
 
     elif backend == "SECFLOAT_CLEARTEXT":
         # check if model compiled
@@ -82,7 +82,7 @@ def run_backend(backend):
         assert os.path.exists("model_input_weights.inp")
 
         os.system(
-            f"cat input.inp model_input_weights.inp | ./model_secfloat_ct > {raw_output}"
+            f"cat {input} model_input_weights.inp | ./model_secfloat_ct > {raw_output}"
         )
 
     # save the raw output as npy
@@ -116,3 +116,30 @@ def compare_output():
         print("Arrays matched upto {} decimal points".format(matching_prec))
 
     assert matching_prec != -1
+
+
+# function to append n numpy array as a single numpy array
+def append_np_arr(model, n):
+    # assert model dictionary has n fields starting with 'input'
+    for i in range(n):
+        assert f"input{i+1}" in model
+    # assert all the input files exist
+    for i in range(n):
+        assert os.path.exists(f"input{i+1}.npy")
+
+    # append all the input files on 1st dimension i.e batch dimension
+    for i in range(n):
+        out = np.load(f"input{i+1}.npy")
+        if i == 0:
+            final_out = out
+        else:
+            final_out = np.append(final_out, out, axis=0)
+
+    # save the final output
+    np.save("batch_input.npy", final_out)
+
+    # convert npy -> inp
+    os.system(
+        f"python3 {ezpc_dir}/OnnxBridge/helper/convert_np_to_float_inp.py --inp batch_input.npy --out batch_input.inp"
+    )
+    assert os.path.exists(f"batch_input.inp")
