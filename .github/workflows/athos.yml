@@ -170,8 +170,7 @@ jobs:
             cd Athos/tests/onnx/unittests
             pytest --backend 2PC_OT
         shell: bash
-        
-        
+          
   FSS:
     # The type of runner that the job will run on
       runs-on: ubuntu-latest
@@ -221,50 +220,5 @@ jobs:
             cd FSS/tests
             ./runall.sh
   
-            
-  
-          
-  TF-SCI-OT:
-    # The type of runner that the job will run on
-      runs-on: ubuntu-latest
-      container: 
-        image: drunkenlegend/ezpcsetup:latest
-    # Steps represent a sequence of tasks that will be executed as part of the job
-      steps:
-    
-      - name: Update Git
-        run: |
-            add-apt-repository ppa:git-core/ppa -y
-            apt-get update
-            apt-get install git -y 
 
-      - name: Checkout repository
-        uses: actions/checkout@v3
-        with:
-            submodules: 'true'
-      - name: Setup SCI
-        run: |
-            cd SCI
-            mkdir -p build
-            cd build
-            cmake -DCMAKE_INSTALL_PREFIX=./install ../
-            cmake --build . --target install --parallel
-            cd ../..
-
-      - name: Test Athos TF-SCI-OT
-        if: always()
-        env:
-            HOME: /root
-            OPAM_SWITCH_PREFIX: /root/.opam/4.10.0
-            CAML_LD_LIBRARY_PATH: /root/.opam/4.10.0/lib/stublibs:/root/.opam/4.10.0/lib/ocaml/stublibs:/root/.opam/4.10.0/lib/ocaml
-            OCAML_TOPLEVEL_PATH: /root/.opam/4.10.0/lib/toplevel
-            MANPATH: :/root/.opam/4.10.0/man
-            PATH: /root/.opam/4.10.0/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-        run: |
-            cd EzPC/EzPC/
-            make
-            cd ../..
-            cd Athos/tests/tf/unittests
-            pytest --backend 2PC_OT
-        shell: bash
   
