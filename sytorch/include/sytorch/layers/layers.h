@@ -109,6 +109,7 @@ public:
 
     virtual TensorRef<T> getweights() { return TensorRef<T>(nullptr, 0); };
     virtual TensorRef<T> getbias() { return TensorRef<T>(nullptr, 0); };
+    virtual TensorRef<u64> get_params() { return TensorRef<u64>(nullptr, 0); };
     virtual std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) = 0;
 
     virtual void setBackend(Backend<T> *b) {
@@ -435,6 +436,218 @@ public:
             prod *= inShape[i];
         }
         return {inShape[0], prod};
+    }
+};
+
+template <typename T>
+class Slice : public Layer<T>
+{
+public:
+    i64 starts, ends, axis, steps;
+    Tensor1D<u64> params;
+
+    Slice() : Layer<T>("Slice"), params(4) {}
+
+    void _resize(const std::vector<std::vector<u64>> &shapes)
+    {
+        always_assert(shapes.size() == 1);
+        auto &shape = shapes[0];
+        always_assert(shape.size() >= 2);
+    }
+
+    void _forward(Tensor<T> &a)
+    {
+        std::cout << "starts: " << starts << " ends: " << ends << " axis: " << axis << " steps: " << steps << std::endl;
+        if (a.shape.size() == 2)
+        {
+            auto a_2d = a.as_2d();
+            auto out_2d = this->activation.as_2d();
+            u64 d1 = a.shape[0];
+            u64 d2 = a.shape[1];
+            for (u64 i = 0, i_o = 0; i < d1;)
+            {
+                if (axis == 0 and (i < starts or i >= ends or (i - starts) % steps == 0))
+                {
+                    i++;
+                    continue;
+                }
+                for (u64 j = 0, j_o = 0; j < d2;)
+                {
+                    if (axis == 1 and (j < starts or j >= ends) and (j - starts) % steps == 0)
+                    {
+                        j++;
+                        continue;
+                    }
+                    out_2d(i_o, j_o) = a_2d(i, j);
+                    j++;
+                    j_o++;
+                }
+                i++;
+                i_o++;
+            }
+        }
+        else if (a.shape.size() == 4)
+        {
+            auto a_4d = a.as_4d();
+            auto out_4d = this->activation.as_4d();
+            u64 d1 = a.shape[0];
+            u64 d2 = a.shape[1];
+            u64 d3 = a.shape[2];
+            u64 d4 = a.shape[3];
+
+            for (u64 i = 0, i_o = 0; i < d1;)
+            {
+                if (axis == 0 and (i < starts or i >= ends or (i - starts) % steps == 0))
+                {
+                    i++;
+                    continue;
+                }
+                for (u64 j = 0, j_o = 0; j < d2;)
+                {
+                    if (axis == 1 and (j < starts or j >= ends) and (j - starts) % steps == 0)
+                    {
+                        j++;
+                        continue;
+                    }
+                    for (u64 k = 0, k_o = 0; k < d3;)
+                    {
+                        if (axis == 2 and (k < starts or k >= ends) and (k - starts) % steps == 0)
+                        {
+                            k++;
+                            continue;
+                        }
+                        for (u64 l = 0, l_o = 0; l < d4;)
+                        {
+                            if (axis == 3 and (l < starts or l >= ends) and (l - starts) % steps == 0)
+                            {
+                                l++;
+                                continue;
+                            }
+                            out_4d(i_o, j_o, k_o, l_o) = a_4d(i, j, k, l);
+                            l++;
+                            l_o++;
+                        }
+                        k++;
+                        k_o++;
+                    }
+                    j++;
+                    j_o++;
+                }
+                i++;
+                i_o++;
+            }
+        }
+        else if (a.shape.size() == 5)
+        {
+            auto a_5d = a.as_5d();
+            auto out_5d = this->activation.as_5d();
+            u64 d1 = a.shape[0];
+            u64 d2 = a.shape[1];
+            u64 d3 = a.shape[2];
+            u64 d4 = a.shape[3];
+            u64 d5 = a.shape[4];
+
+            for (u64 i = 0, i_o = 0; i < d1;)
+            {
+                if (axis == 0 and (i < starts or i >= ends or (i - starts) % steps == 0))
+                {
+                    i++;
+                    continue;
+                }
+                for (u64 j = 0, j_o = 0; j < d2;)
+                {
+                    if (axis == 1 and (j < starts or j >= ends) and (j - starts) % steps == 0)
+                    {
+                        j++;
+                        continue;
+                    }
+                    for (u64 k = 0, k_o = 0; k < d3;)
+                    {
+                        if (axis == 2 and (k < starts or k >= ends) and (k - starts) % steps == 0)
+                        {
+                            k++;
+                            continue;
+                        }
+                        for (u64 l = 0, l_o = 0; l < d4;)
+                        {
+                            if (axis == 3 and (l < starts or l >= ends) and (l - starts) % steps == 0)
+                            {
+                                l++;
+                                continue;
+                            }
+                            for (u64 m = 0, m_o = 0; m < d5;)
+                            {
+                                if (axis == 4 and (m < starts or m >= ends) and (m - starts) % steps == 0)
+                                {
+                                    m++;
+                                    continue;
+                                }
+                                out_5d(i_o, j_o, k_o, l_o, m_o) = a_5d(i, j, k, l, m);
+                                m_o++;
+                                m++;
+                            }
+                            l_o++;
+                            l++;
+                        }
+                        k_o++;
+                        k++;
+                    }
+                    j_o++;
+                    j++;
+                }
+                i_o++;
+                i++;
+            }
+        }
+        else
+        {
+            throw std::runtime_error("Slice operator supported only for 2d, 4d and 5d tensors");
+        }
+    }
+
+    TensorRef<u64> get_params()
+    {
+        return params.ref();
+    }
+
+    std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes)
+    {
+        always_assert(inShapes.size() == 1);
+        auto &inShape = inShapes[0];
+
+        starts = params(0) / (1 << this->scale);
+        ends = i64(params(1)) / (1 << this->scale);
+        axis = params(2) / (1 << this->scale);
+        steps = params(3) / (1 << this->scale);
+        // modifying axis as per nhwc format
+        if (axis >= 2)
+        {
+            axis = axis - 1;
+        }
+        else if (axis == 2)
+        {
+            axis = inShape.size() - 1;
+        }
+
+        // handling case where ends is -ve
+        if (ends < 0)
+        {
+            ends = inShape[axis] + ends;
+        }
+
+        std::vector<u64> output_shape(inShape.size());
+        for (int i = 0; i < inShape.size(); i++)
+        {
+            if (i == axis)
+            {
+                output_shape[i] = (ends - starts) / steps;
+            }
+            else
+            {
+                output_shape[i] = inShape[i];
+            }
+        }
+        return output_shape;
     }
 };
 

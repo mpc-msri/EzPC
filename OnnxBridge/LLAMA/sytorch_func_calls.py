@@ -227,6 +227,11 @@ class Operator:
         return str(f"{'   ' * indent}new Flatten<T>();")
 
     @classmethod
+    def Slice(cls, attributes, inputs, outputs, value_info, var_dict, mode, indent):
+        logger.debug("Inside Slice function call.")
+        return str(f"{'   ' * indent}new Slice<T>();")
+
+    @classmethod
     def Reshape(cls, attributes, inputs, outputs, value_info, var_dict, mode, indent):
         logger.debug("Inside Reshape function call.")
         return str(f"{'   ' * indent}new Reshape<T>();")

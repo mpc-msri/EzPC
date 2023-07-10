@@ -152,6 +152,12 @@ class OnnxNode:
         assert len(node.inputs) == 1
 
     @classmethod
+    def Slice(cls, node):
+        # input: data, starts, ends, axes, steps
+        assert len(node.inputs) == 5
+        logger.debug("Slice is OK!")
+
+    @classmethod
     def Conv(cls, node):
         pass
 

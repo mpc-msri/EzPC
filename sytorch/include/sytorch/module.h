@@ -169,6 +169,15 @@ public:
                 }
                 wIdx += 4 * channel;
             }
+            else if (layer->name == "Slice")
+            {
+                auto params = layer->get_params();
+                for (u64 j = 0; j < params.size; j++)
+                {
+                    params.data[j] = i64(floatWeights[wIdx + j] * (1LL << scale));
+                }
+                wIdx += params.size;
+            }
             else {
                 auto weights = layer->getweights();
                 for (u64 j = 0; j < weights.size; j++) {
