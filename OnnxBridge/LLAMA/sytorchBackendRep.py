@@ -263,7 +263,7 @@ def prepare_export(program, var_dict, value_info, mode, scale, bitlength, backen
     # Check nodes for assertions and modifications
     for node in program:
         func = getattr(OnnxNode, node.op_type)
-        func(node)
+        func(node, value_info)
 
     # Start CPP program
     number_of_nodes = 0

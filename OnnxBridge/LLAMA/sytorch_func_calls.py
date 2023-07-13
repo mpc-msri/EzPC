@@ -229,7 +229,12 @@ class Operator:
     @classmethod
     def Slice(cls, attributes, inputs, outputs, value_info, var_dict, mode, indent):
         logger.debug("Inside Slice function call.")
-        return str(f"{'   ' * indent}new Slice<T>();")
+        starts = attributes["starts"]
+        ends = attributes["ends"]
+        axes = attributes["axes"]
+        steps = attributes["steps"]
+
+        return str(f"{'   ' * indent}new Slice<T>({starts}, {ends}, {axes}, {steps});")
 
     @classmethod
     def Reshape(cls, attributes, inputs, outputs, value_info, var_dict, mode, indent):

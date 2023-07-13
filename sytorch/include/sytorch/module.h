@@ -172,11 +172,14 @@ public:
             else if (layer->name == "Slice")
             {
                 auto params = layer->get_params();
-                for (u64 j = 0; j < params.size; j++)
+                for (u64 i = 0; i < params.size(); i++)
                 {
-                    params.data[j] = i64(floatWeights[wIdx + j] * (1LL << scale));
+                    for (u64 j = 0; j < params[i].size; j++)
+                    {
+                        params[i].data[j] = i64(floatWeights[wIdx + j] * (1LL << scale));
+                    }
+                    wIdx += params[i].size;
                 }
-                wIdx += params.size;
             }
             else {
                 auto weights = layer->getweights();

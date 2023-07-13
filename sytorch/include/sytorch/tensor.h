@@ -349,6 +349,17 @@ public:
         }
     }
 
+    void resize(u64 s)
+    {
+        if (this->d1 == s)
+        {
+            return;
+        }
+        delete[] this->data;
+        this->d1 = s;
+        this->data = new T[s];
+    }
+
     ~Tensor1D() {
         delete[] this->data;
     }
