@@ -460,8 +460,6 @@ public:
 
     void _forward(Tensor<T> &a)
     {
-        // start time
-        auto start = std::chrono::high_resolution_clock::now();
         std::unordered_map<i64, i64> axis_map;
         for (u64 i = 0; i < axes.size(); i++)
         {
@@ -680,11 +678,6 @@ public:
         {
             throw std::runtime_error("Slice operator supported only for 2d, 4d and 5d tensors");
         }
-        // end time
-        auto end = std::chrono::high_resolution_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-        // time in seconds
-        std::cout << "Slice: " << duration.count() / 1000000.0 << std::endl;
     }
 
     std::vector<TensorRef<i64>> get_params()
@@ -720,6 +713,7 @@ public:
             }
             i64 axis = axes.data[i] / (1 << this->scale);
             i64 step = steps.data[i] / (1 << this->scale);
+            assert(step != 0);
 
             // modifying axis as per nhwc format
             if (axis >= 2)
@@ -733,7 +727,12 @@ public:
                 axes.data[i] = axis * (1 << this->scale);
             }
 
-            // handling case where start or end is -ve
+            // handling case where start/end/axes/step is -ve
+            if (axis < 0)
+            {
+                axis = inShapeCopy.size() + axis;
+                axes.data[i] = axis * (1 << this->scale);
+            }
             if (start < 0)
             {
                 start = inShapeCopy[axis] + start;
@@ -744,7 +743,14 @@ public:
                 end = inShapeCopy[axis] + end;
                 ends.data[i] = end * (1 << this->scale);
             }
-
+            if (step < 0)
+            {
+                u64 lost = (end - start - 1) % (-step);
+                start = start + lost;
+                starts.data[i] = start * (1 << this->scale);
+                step = -step;
+                steps.data[i] = step * (1 << this->scale);
+            }
             for (int i = 0; i < inShapeCopy.size(); i++)
             {
                 if (i == axis)
