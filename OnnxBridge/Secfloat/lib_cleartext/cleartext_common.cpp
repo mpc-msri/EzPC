@@ -32,6 +32,23 @@ void NHWC_to_NCHW(int32_t N, int32_t H, int32_t W, int32_t C, vector<vector<vect
     }
 }
 
+void OIFF_to_FFIO(int32_t CO, int32_t CI, int32_t FH, int32_t FW, vector<vector<vector<vector<float>>>> &inArr, vector<vector<vector<vector<float>>>> &outArr)
+{
+    for (uint32_t o = 0; o < CO; o++)
+    {
+        for (uint32_t i = 0; i < CI; i++)
+        {
+            for (uint32_t fh = 0; fh < FH; fh++)
+            {
+                for (uint32_t fw = 0; fw < FW; fw++)
+                {
+                    outArr[fh][fw][i][o] = inArr[o][i][fh][fw];
+                }
+            }
+        }
+    }
+}
+
 void __onnxbridge_MaxPool(int32_t N, int32_t C, int32_t H, int32_t W, int32_t ksizeH, int32_t ksizeW, int32_t strideH, int32_t strideW, int32_t imgH, int32_t imgW, vector<vector<vector<vector<float>>>> &inArr, vector<vector<vector<vector<float>>>> &outArr)
 {
     vector<vector<vector<vector<float>>>> inputArr_reshaped = make_vector<float>(N, imgH, imgW, C) ;
@@ -74,8 +91,11 @@ void __onnxbridge_Conv2DGroupWrapper(
     vector<vector<vector<vector<float>>>> inputArr_reshaped = make_vector<float>(N, H, W, CI) ;
     NCHW_to_NHWC(N, CI, H, W, inputArr, inputArr_reshaped) ;
 
+    vector<vector<vector<vector<float>>>> filterArr_reshaped = make_vector<float>(FH, FW, CI, CO);
+    OIFF_to_FFIO(CO, CI, FH, FW, filterArr, filterArr_reshaped);
+
     vector<vector<vector<vector<float>>>> outputArr_reshaped = make_vector<float>(N, outH, outW, CO) ;
-    Conv2DGroupWrapper(N, H, W, CI, FH, FW, CO, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideH, strideW, G, inputArr_reshaped, filterArr, outputArr_reshaped) ;  
+    Conv2DGroupWrapper(N, H, W, CI, FH, FW, CO, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideH, strideW, G, inputArr_reshaped, filterArr_reshaped, outputArr_reshaped);
 
     NHWC_to_NCHW(N, outH, outW, CO, outputArr_reshaped, outArr) ;
 }

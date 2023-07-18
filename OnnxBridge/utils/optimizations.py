@@ -213,7 +213,7 @@ def strip_weights(model):
     return new_model
 
 
-def relu_maxpool_optimiser(program):
+def relu_maxpool_optimiser(program, value_info):
     """
     Optimises the Onnx Model by replacing the order where MaxPool appears after Relu.
     :param program: Onnx Model as a list of nodes
@@ -226,6 +226,8 @@ def relu_maxpool_optimiser(program):
 
             relu.inputs, maxpool.inputs = maxpool.inputs, relu.inputs
             relu.outputs, maxpool.outputs = maxpool.outputs, relu.outputs
+
+            value_info[maxpool.outputs[0]] = value_info[relu.outputs[0]]
 
             program[idx] = maxpool
             program[idx + 1] = relu

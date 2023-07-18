@@ -196,7 +196,7 @@ class IR(Backend):
         program = process_output_nodes(program, model.graph, var_dict)
         logger.info("Reading Onnx file completed.")
 
-        program = optimizations.relu_maxpool_optimiser(program)
+        program = optimizations.relu_maxpool_optimiser(program, value_info)
         logger.info("Relu Maxpool Optimisation Done.")
 
         # Works only if debugging is on
