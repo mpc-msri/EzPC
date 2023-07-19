@@ -6,6 +6,12 @@ from Secfloat.func_calls import Operator
 from utils.nodes import Node, Input, Output
 from utils.onnx_nodes import OnnxNode
 
+##################
+import re
+from utils import Party
+
+##################
+
 
 def process_delete_list(program):
     """
@@ -60,7 +66,31 @@ def check_variables_to_delete(delete_order_list, code_list, counter, var_dict, i
         code_list.append("\n")
 
 
-def prepare_input(code_list, node, var_dict, input_taken, indent):
+# def prepare_input(code_list, node, var_dict, input_taken, indent):
+#     """
+#     Adds code for Input Nodes in Code-List in CPP Format.
+#     :param code_list: Code-List in CPP Format.
+#     :param node: Input Node to be processed.
+#     :param var_dict: Variable Dictionary.
+#     :param input_taken: List of variables already input to update it with new inputs.
+#     :param indent: Space Indentation.
+#     :return: NA
+#     """
+#     if isinstance(node, Input):
+#         code_list.append(
+#             comment(
+#                 f"Declaration and Input for variable {node.name} of shape {node.shape} as {var_dict[node.name]}",
+#                 indent + 1,
+#             )
+#         )
+#         # code_list.append(decl(var_dict[node.name], node.data_type, node.shape, indent + 1))
+#         code_list.append(
+#             take_input(var_dict[node.name], node.shape, node.party, indent + 1)
+#         )
+#         input_taken.append(node.name)
+
+
+def prepare_input(code_list, node, var_dict, value_info, input_taken, indent):
     """
     Adds code for Input Nodes in Code-List in CPP Format.
     :param code_list: Code-List in CPP Format.
@@ -73,13 +103,18 @@ def prepare_input(code_list, node, var_dict, input_taken, indent):
     if isinstance(node, Input):
         code_list.append(
             comment(
-                f"Declaration and Input for variable {node.name} of shape {node.shape} as {var_dict[node.name]}",
+                f"Declaration and Input for variable {node.name} of shape {list(value_info[node.name][1])} as {var_dict[node.name]}",
                 indent + 1,
             )
         )
         # code_list.append(decl(var_dict[node.name], node.data_type, node.shape, indent + 1))
         code_list.append(
-            take_input(var_dict[node.name], node.shape, node.party, indent + 1)
+            take_input(
+                var_dict[node.name],
+                list(value_info[node.name][1]),
+                node.party,
+                indent + 1,
+            )
         )
         input_taken.append(node.name)
 
@@ -111,21 +146,56 @@ def prepare_func(code_list, node, var_dict, value_info, input_taken, indent):
                     indent + 1,
                 )
             )
-            for output in node.outputs
+            #             for output in node.outputs
+            for i, output in enumerate(node.outputs)
+            if output != "" and re.search("present", output) == None
         ]
         input_taken += node.outputs
 
     operator = getattr(Operator, node.op_type)
-    code_list.append(str(f'{"  " * (indent+1)}cout << "Inside {node.op_type}" << endl;'))
+    code_list.append(
+        str(f'{"  " * (indent+1)}cout << "Inside {node.op_type}" << endl;')
+    )
     code_list.append(
         operator(
             node.attrs, node.inputs, node.outputs, value_info, var_dict, indent + 1
         )
     )
+    ################################################
+    #     if node.outputs is not None:
+    #         [
+    #             code_list.append(
+    #             give_output(var_dict[output], list(value_info[output][1]), Party.ALICE, indent + 1)
+    #         )
+    # #             for output in node.outputs
+    #             for i,output in enumerate(node.outputs) if output!='' and re.search("present", output)==None
+    #         ]
+    ################################################
     code_list.append("")
 
 
-def prepare_output(code_list, node, var_dict, indent):
+# def prepare_output(code_list, node, var_dict, indent):
+#     """
+#     Adds code for Input Nodes in Code-List in CPP Format.
+#     :param code_list: Code-List in CPP Format.
+#     :param node: Input Node to be processed.
+#     :param var_dict: Variable Dictionary.
+#     :param indent: Space Indentation.
+#     :return: NA
+#     """
+#     if isinstance(node, Output):
+#         code_list.append(
+#             comment(
+#                 f"Output of variable '{node.name}' of shape {node.shape} as {var_dict[node.name]} to {node.party.name}",
+#                 indent + 1,
+#             )
+#         )
+#         code_list.append(
+#             give_output(var_dict[node.name], node.shape, node.party, indent + 1)
+#         )
+
+
+def prepare_output(code_list, node, var_dict, value_info, indent):
     """
     Adds code for Input Nodes in Code-List in CPP Format.
     :param code_list: Code-List in CPP Format.
@@ -137,12 +207,17 @@ def prepare_output(code_list, node, var_dict, indent):
     if isinstance(node, Output):
         code_list.append(
             comment(
-                f"Output of variable '{node.name}' of shape {node.shape} as {var_dict[node.name]} to {node.party.name}",
+                f"Output of variable '{node.name}' of shape {list(value_info[node.name][1])} as {var_dict[node.name]} to {node.party.name}",
                 indent + 1,
             )
         )
         code_list.append(
-            give_output(var_dict[node.name], node.shape, node.party, indent + 1)
+            give_output(
+                var_dict[node.name],
+                list(value_info[node.name][1]),
+                node.party,
+                indent + 1,
+            )
         )
 
 
@@ -168,16 +243,19 @@ def prepare_export(program, var_dict, value_info, backend, file_path):
         code_list.append(
             f'#include "{file_path}/lib_cleartext/cleartext_common.cpp" \n'
         )
+        code_list.append("int main(int __argc, char **__argv)\n{\n    int __party=0;\n")
+        ####################################
         code_list.append(
-            "int main(int __argc, char **__argv)\n{\n    int __party=0;\n"
+            "    int batch_size = atoi(__argv[1]) ;\n    int seq_len = atoi(__argv[2]) ;\n    int total_seq_len = atoi(__argv[3]) ;\n    int past_seq_len = atoi(__argv[4]) ;\n"
         )
+        ####################################
 
     for node in program:
-
         func = getattr(OnnxNode, node.op_type)
         func(node)
 
     delete_order_list = process_delete_list(program)
+
     counter = 0
 
     logger.info("Starting Export...")
@@ -185,11 +263,25 @@ def prepare_export(program, var_dict, value_info, backend, file_path):
         if isinstance(node, Input):
             input_dict[node.name] = node
         elif isinstance(node, Node):
+            ###############
+            print("&*&*^")
+            print(str(node.name))
+            ###############
             [
+                #                 prepare_input(
+                #                     code_list, input_dict[input_var], var_dict, input_taken, indent
+                #                 )
                 prepare_input(
-                    code_list, input_dict[input_var], var_dict, input_taken, indent
+                    code_list,
+                    input_dict[input_var],
+                    var_dict,
+                    value_info,
+                    input_taken,
+                    indent,
                 )
                 if input_var not in input_taken
+                and input_var != ""
+                and re.search("past", input_var) == None
                 else None
                 for input_var in node.inputs
             ]
@@ -197,8 +289,9 @@ def prepare_export(program, var_dict, value_info, backend, file_path):
             # check_variables_to_delete(
             #     delete_order_list, code_list, counter, var_dict, indent
             # )
-        elif isinstance(node, Output):
-            prepare_output(code_list, node, var_dict, indent)
+        elif isinstance(node, Output) and re.search("present", node.name) == None:
+            #             prepare_output(code_list, node, var_dict, indent)
+            prepare_output(code_list, node, var_dict, value_info, indent)
 
         counter += 1
 

@@ -13,6 +13,11 @@ from utils.backend_helper import (
     concat_list,
 )
 
+###############
+import re
+
+###############
+
 
 def get_padding(attributes, inputs, output, value_info, var_dict):
     if "auto_pad" in attributes.keys():
@@ -166,7 +171,9 @@ class Operator:
         )
 
     @classmethod
-    def BatchNormalization(cls, attributes, inputs, outputs, value_info, var_dict, indent):
+    def BatchNormalization(
+        cls, attributes, inputs, outputs, value_info, var_dict, indent
+    ):
         logger.debug("Inside BatchNormalization function call.")
         return str(
             f"{'  ' * indent}BatchNormalization("
@@ -195,7 +202,9 @@ class Operator:
         )
 
     @classmethod
-    def GlobalAveragePool(cls, attributes, inputs, outputs, value_info, var_dict, indent):
+    def GlobalAveragePool(
+        cls, attributes, inputs, outputs, value_info, var_dict, indent
+    ):
         logger.debug("Inside GloablAveragePool function call.")
         return str(
             f"{'  ' * indent}AvgPool("
@@ -317,8 +326,8 @@ class Operator:
         # print(value_info[inputs[0]][1])
         # print(value_info[outputs[0]][1])
         # print(attributes)
-        assert(value_info[inputs[0]][1] == value_info[inputs[1]][1])
-        assert(value_info[inputs[0]][1] == value_info[outputs[0]][1])
+        assert value_info[inputs[0]][1] == value_info[inputs[1]][1]
+        assert value_info[inputs[0]][1] == value_info[outputs[0]][1]
         cmmnt = comment("Call Sub(shape,input1,input2,output)\n", indent)
         return str(
             cmmnt + f"{'  ' * indent}ElemWiseSub("
@@ -355,8 +364,8 @@ class Operator:
         # print(value_info[inputs[0]][1])
         # print(value_info[outputs[0]][1])
         # print(attributes)
-        assert(value_info[inputs[0]][1] == value_info[inputs[1]][1])
-        assert(value_info[inputs[0]][1] == value_info[outputs[0]][1])
+        assert value_info[inputs[0]][1] == value_info[inputs[1]][1]
+        assert value_info[inputs[0]][1] == value_info[outputs[0]][1]
         cmmnt = comment("Call Div(shape,input1,input2,output)\n", indent)
         return str(
             cmmnt + f"{'  ' * indent}ElemWiseDiv("
@@ -382,7 +391,7 @@ class Operator:
             f"{iterate_list([var_dict[x] for x in outputs])}"
             f");"
         )
-    
+
     @classmethod
     def Pow(cls, attributes, inputs, outputs, value_info, var_dict, indent):
         logger.debug("Inside Pow function call.")
@@ -393,7 +402,10 @@ class Operator:
         # print(value_info[outputs[0]][1])
         # print(attributes)
         assert value_info[inputs[0]][1] == value_info[outputs[0]][1]
-        assert value_info[inputs[1]][1] == ()
+
+        ############################################
+        #         assert value_info[inputs[1]][1] == ()
+        ############################################
         cmmnt = comment("Call Pow(shape,input1,input2,output)\n", indent)
         return str(
             cmmnt + f"{'  ' * indent}ElemWisePow("
@@ -420,7 +432,7 @@ class Operator:
             f"{iterate_list([var_dict[x] for x in outputs])}"
             f");"
         )
-    
+
     @classmethod
     def Gather(cls, attributes, inputs, outputs, value_info, var_dict, indent):
         logger.debug("Inside Gather function call.")
@@ -431,12 +443,14 @@ class Operator:
         # print(value_info[inputs[1]][1])
         # print(value_info[outputs[0]][1])
         # print(attributes)
-        cmmnt = comment("Call Gather(input_shape,indices_shape,input,indices,output)\n", indent)
-        if 'axes' in attributes:
+        cmmnt = comment(
+            "Call Gather(input_shape,indices_shape,input,indices,output)\n", indent
+        )
+        if "axes" in attributes:
             # TODO: Implement support for multiple axes.
             raise NotImplementedError
         else:
-            if 'axis' in attributes:
+            if "axis" in attributes:
                 # TODO: Implement support for non-zero axis.
                 return str(
                     cmmnt + f"{'  ' * indent}Gather{attributes['axis']}("
@@ -474,7 +488,7 @@ class Operator:
             f"{iterate_list([var_dict[x] for x in outputs])}"
             f");"
         )
-    
+
     @classmethod
     def ConstantOfShape(cls, attributes, inputs, outputs, value_info, var_dict, indent):
         logger.debug("Inside ConstantOfShape function call.")
@@ -483,8 +497,10 @@ class Operator:
         # print(outputs)
         # print(value_info[inputs[0]][1])
         # print(value_info[outputs[0]][1])
-        assert(len(value_info[inputs[0]][1]) == 1)
-        value = int.from_bytes(attributes['value'].raw_data, byteorder="little", signed=True)
+        assert len(value_info[inputs[0]][1]) == 1
+        value = int.from_bytes(
+            attributes["value"].raw_data, byteorder="little", signed=True
+        )
         cmmnt = comment("Call ConstantOfShape(shape,value,input,output)\n", indent)
         return str(
             cmmnt + f"{'  ' * indent}ConstantOfShapeI64("
@@ -495,7 +511,6 @@ class Operator:
             f");"
         )
 
-
     @classmethod
     def NonZero(cls, attributes, inputs, outputs, value_info, var_dict, indent):
         logger.debug("Inside NonZero function call.")
@@ -505,7 +520,7 @@ class Operator:
         # print(value_info[inputs[0]][1])
         # print(value_info[outputs[0]][1])
         # print(attributes)
-        assert(len(value_info[inputs[0]][1]) == 1)
+        assert len(value_info[inputs[0]][1]) == 1
         cmmnt = comment("Call NonZero(shape,input,output)\n", indent)
         return str(
             cmmnt + f"{'  ' * indent}NonZero1D("
@@ -514,7 +529,6 @@ class Operator:
             f"{iterate_list([var_dict[x] for x in outputs])}"
             f");"
         )
-
 
     @classmethod
     def Transpose(cls, attributes, inputs, outputs, value_info, var_dict, indent):
@@ -527,7 +541,46 @@ class Operator:
         # print(attributes)
         cmmnt = comment("Call Transpose(shape,perm,input,output)\n", indent)
         return str(
-            cmmnt + f"{'  ' * indent}Transpose{len(attributes['perm'])}T{iterate_concat_list(attributes['perm'])}("
+            cmmnt
+            + f"{'  ' * indent}Transpose{len(attributes['perm'])}T{iterate_concat_list(attributes['perm'])}("
+            f"{iterate_list(value_info[inputs[0]][1])}, "
+            f"{iterate_list([var_dict[x] for x in inputs])}, "
+            f"{iterate_list([var_dict[x] for x in outputs])}"
+            f");"
+        )
+
+    ####################################################################################################
+    @classmethod
+    def Cast(cls, attributes, inputs, outputs, value_info, var_dict, indent):
+        logger.debug("Inside Cast function call.")
+        #         print(inputs)
+        #         print(outputs)
+        #         print(value_info[inputs[0]][1])
+        #         print(value_info[outputs[0]][1])
+        #         print(attributes['to'])
+        cmmnt = comment("Call Cast(shape, input, output)\n", indent)
+        return str(
+            cmmnt + f"{'  ' * indent}CastTo{attributes['to']}("
+            f"{iterate_list(value_info[inputs[0]][1])}, "
+            f"{iterate_list([var_dict[x] for x in inputs])}, "
+            f"{iterate_list([var_dict[x] for x in outputs])}"
+            f");"
+        )
+
+    #         raise NotImplementedError
+
+    @classmethod
+    def FastGelu(cls, attributes, inputs, outputs, value_info, var_dict, indent):
+        logger.debug("Inside FastGelu function call.")
+        #         print(inputs)
+        #         print(outputs)
+        #         print(value_info[inputs[0]][1])
+        #         print(value_info[inputs[1]][1])
+        #         print(value_info[outputs[0]][1])
+        #         print(attributes['to'])
+        cmmnt = comment("Call FastGelu(shape, input, bias, output)\n", indent)
+        return str(
+            cmmnt + f"{'  ' * indent}FastGelu("
             f"{iterate_list(value_info[inputs[0]][1])}, "
             f"{iterate_list([var_dict[x] for x in inputs])}, "
             f"{iterate_list([var_dict[x] for x in outputs])}"
@@ -535,14 +588,118 @@ class Operator:
         )
 
     @classmethod
-    def Cast(cls, attributes, inputs, outputs, value_info, var_dict, indent):
-        logger.debug("Inside Cast function call.")
-        print(inputs)
-        print(outputs)
-        print(value_info[inputs[0]][1])
-        print(value_info[outputs[0]][1])
-        print(attributes)
-        raise NotImplementedError
+    def EmbedLayerNormalization(
+        cls, attributes, inputs, outputs, value_info, var_dict, indent
+    ):
+        logger.debug("Inside EmbedLayerNormalization function call.")
+        #         print(inputs)
+        #         print(outputs)
+        #         print(value_info[inputs[0]][1])
+        #         print(value_info[inputs[1]][1])
+        #         print(value_info[outputs[0]][1])
+        #         print(attributes['to'])
+        cmmnt = comment(
+            "Call EmbedLayerNormalization(shape, input_ids, transformer_wte_weight, transformer_wpe_weight, transformer_h_ln_1_weight, transformer_h_ln_1_bias, position_ids, EmbedLayerNormalization_output, EmbedLayerNormalization_dummy_mask_index, EmbedLayerNormalization_embedding_sum)\n",
+            indent,
+        )
+        return str(
+            cmmnt + f"{'  ' * indent}EmbedLayerNormalization("
+            f"{iterate_list(value_info[inputs[0]][1])}, "
+            f"{iterate_list([var_dict[j] for i,j in enumerate(inputs) if j!=''])}, "
+            f"{iterate_list([var_dict[j] for i,j in enumerate(outputs) if j!=''])}"
+            f");"
+        )
+
+    @classmethod
+    def SkipLayerNormalization(
+        cls, attributes, inputs, outputs, value_info, var_dict, indent
+    ):
+        logger.debug("Inside SkipLayerNormalization function call.")
+        #         print(inputs)
+        #         print(outputs)
+        #         print(value_info[inputs[0]][1])
+        #         print(value_info[inputs[1]][1])
+        #         print(value_info[outputs[0]][1])
+        #         print(attributes['to'])
+        cmmnt = comment(
+            "Call SkipLayerNormalization(shape, PreviousLayerNormalizationOutput, Attention_matmul_output, transformer_h_ln_weight, transformer_h_ln_bias, transformer_h_attn_c_proj_bias, Output1, Output2)\n",
+            indent,
+        )
+        if len(outputs) == 4:
+            return str(
+                cmmnt + f"{'  ' * indent}SkipLayerNormalization("
+                f"{iterate_list(value_info[inputs[0]][1])}, "
+                f"{iterate_list([var_dict[j] for i,j in enumerate(inputs) if j!=''])}, "
+                f"{iterate_list([var_dict[j] for i,j in enumerate(outputs) if j!=''])}"
+                f");"
+            )
+        else:
+            return str(
+                cmmnt + f"{'  ' * indent}SkipLayerNormalization("
+                f"{iterate_list(value_info[inputs[0]][1])}, "
+                f"{iterate_list([var_dict[j] for i,j in enumerate(inputs) if j!=''])}, "
+                f"{iterate_list([var_dict[j] for i,j in enumerate(outputs) if j!=''])}, "
+                f"{iterate_list([var_dict[j] for i,j in enumerate(outputs) if j!=''])}"
+                f");"
+            )
+
+    @classmethod
+    def Attention(cls, attributes, inputs, outputs, value_info, var_dict, indent):
+        logger.debug("Inside SkipLayerNormalization function call.")
+        #         print(inputs)
+        #         print(outputs)
+        #         print(value_info[inputs[0]][1])
+        #         print(value_info[inputs[1]][1])
+        #         print(value_info[outputs[0]][1])
+        #         print(attributes['to'])
+        cmmnt = comment(
+            "Call Attention(shape, LayerNormalizationOutput, transformer_h_attn_c_attn_weight, transformer_h_attn_c_attn_bias, attention_mask, AttentionOutput)\n",
+            indent,
+        )
+        modified_inputs = [
+            j
+            for i, j in enumerate(inputs)
+            if (j != "" and re.search("past", j) == None)
+        ]
+        modified_outputs = [
+            j
+            for i, j in enumerate(outputs)
+            if (j != "" and re.search("present", j) == None)
+        ]
+        return str(
+            cmmnt + f"{'  ' * indent}Attention("
+            f"{iterate_list(value_info[inputs[0]][1])}, "
+            #             f"{iterate_list([var_dict[j] for i,j in enumerate(inputs) if (j!='' and re.search("past", j)==None)])}, "
+            #             f"{iterate_list([var_dict[j] for i,j in enumerate(outputs) if (j!='' and re.search("present", j)==None)])}"
+            f"{iterate_list([var_dict[x] for x in modified_inputs])}, "
+            f"{iterate_list([var_dict[x] for x in modified_outputs])}"
+            f");"
+        )
+
+    @classmethod
+    def MatMul(cls, attributes, inputs, outputs, value_info, var_dict, indent):
+        logger.debug("Inside MatMul function call.")
+        # print(inputs)
+        # print(outputs)
+        # print(value_info[inputs[0]][1])
+        # print(value_info[outputs[0]][1])
+        # print(attributes)
+        # assert(len(value_info[inputs[0]][1]) == 2)
+        # assert(len(value_info[inputs[1]][1]) == 2)
+        # assert(value_info[inputs[0]][1][1] == value_info[inputs[1]][1][0])
+        # assert(value_info[inputs[0]][1][0] == value_info[outputs[0]][1][0])
+        # assert(value_info[inputs[1]][1][1] == value_info[outputs[0]][1][1])
+        cmmnt = comment("Call MatMulBatch(shape,inputs,output)\n", indent)
+        return str(
+            cmmnt + f"{'  ' * indent}MatMulBatch("
+            f"{iterate_list(value_info[inputs[0]][1])}, "
+            f"{iterate_list(value_info[inputs[1]][1])}, "
+            f"{iterate_list([var_dict[x] for x in inputs])}, "
+            f"{iterate_list([var_dict[x] for x in outputs])}"
+            f");"
+        )
+
+    ####################################################################################################
 
     @classmethod
     def Split(cls, attributes, inputs, outputs, value_info, var_dict, indent):
@@ -551,7 +708,8 @@ class Operator:
         # assert(sum(attributes['split']) == value_info[inputs[0]][1][attributes['axis']])
         cmmnt = comment("Call Split(shape,splits,input,outputs)\n", indent)
         return str(
-            cmmnt + f"{'  ' * indent}Split{attributes['axis']}T{len(attributes['split'])}("
+            cmmnt
+            + f"{'  ' * indent}Split{attributes['axis']}T{len(attributes['split'])}("
             f"{iterate_list(value_info[inputs[0]][1])}, "
             f"{iterate_list(attributes['split'])}, "
             f"{iterate_list([var_dict[x] for x in inputs])}, "
@@ -563,15 +721,17 @@ class Operator:
     def Slice(cls, attributes, inputs, outputs, value_info, var_dict, indent):
         # TODO: Add support for more general slice.
         logger.debug("Inside Slice function call.")
-        assert(len(value_info[inputs[1]][1]) == 1)
-        assert(len(value_info[inputs[2]][1]) == 1)
-        assert(len(value_info[inputs[3]][1]) == 1)
-        assert(len(value_info[inputs[4]][1]) == 1)
-        assert(value_info[inputs[1]][1][0] == 1)
-        assert(value_info[inputs[2]][1][0] == 1)
-        assert(value_info[inputs[3]][1][0] == 1)
-        assert(value_info[inputs[4]][1][0] == 1)
-        cmmnt = comment("Call Slice(shape,starts,ends,axes,steps,input,output)\n", indent)
+        assert len(value_info[inputs[1]][1]) == 1
+        assert len(value_info[inputs[2]][1]) == 1
+        assert len(value_info[inputs[3]][1]) == 1
+        assert len(value_info[inputs[4]][1]) == 1
+        assert value_info[inputs[1]][1][0] == 1
+        assert value_info[inputs[2]][1][0] == 1
+        assert value_info[inputs[3]][1][0] == 1
+        assert value_info[inputs[4]][1][0] == 1
+        cmmnt = comment(
+            "Call Slice(shape,starts,ends,axes,steps,input,output)\n", indent
+        )
         return str(
             cmmnt + f"{'  ' * indent}Slice("
             f"{iterate_list(value_info[inputs[0]][1])}, "
@@ -618,27 +778,3 @@ class Operator:
             f"{iterate_list([var_dict[x] for x in outputs])}"
             f");"
         )
-
-    @classmethod
-    def MatMul(cls, attributes, inputs, outputs, value_info, var_dict, indent):
-        logger.debug("Inside MatMul function call.")
-        # print(inputs)
-        # print(outputs)
-        # print(value_info[inputs[0]][1])
-        # print(value_info[outputs[0]][1])
-        # print(attributes)
-        # assert(len(value_info[inputs[0]][1]) == 2)
-        # assert(len(value_info[inputs[1]][1]) == 2)
-        # assert(value_info[inputs[0]][1][1] == value_info[inputs[1]][1][0])
-        # assert(value_info[inputs[0]][1][0] == value_info[outputs[0]][1][0])
-        # assert(value_info[inputs[1]][1][1] == value_info[outputs[0]][1][1])
-        cmmnt = comment("Call MatMul(shape,inputs,output)\n", indent)
-        return ""
-        # return str(
-        #     cmmnt + f"{'  ' * indent}MatMul2D("
-        #     f"{iterate_list(value_info[inputs[0]][1])}, "
-        #     f"{value_info[inputs[1]][1][1]}, "
-        #     f"{iterate_list([var_dict[x] for x in inputs])}, "
-        #     f"{iterate_list([var_dict[x] for x in outputs])}"
-        #     f");"
-        # )

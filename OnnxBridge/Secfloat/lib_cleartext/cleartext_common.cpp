@@ -1,5 +1,9 @@
 #include "cleartext_library_float.h"
 #include "cleartext_inout.cpp"
+/////////////////////////////////////
+#include "math.h"
+#include <assert.h>
+/////////////////////////////////////
 
 extern float intToFloat(int32_t m);
 extern void Softmax2(int32_t s1, int32_t s2, vector<vector<float>> &inArr, vector<vector<float>> &outArr);
@@ -16,6 +20,271 @@ extern void getLoss(int32_t m, vector<float> &lossTerms, vector<float> &loss);
 extern void computeMSELoss(int32_t m, int32_t s, vector<vector<float>> &target, vector<vector<float>> &fwdOut, vector<float> &loss);
 
 extern void Tanh(int32_t s1, vector<float> &inArr, vector<float> &outArr);
+
+extern void Gelu(int32_t s1, vector<float>& inArr, vector<float>& outArr) ;
+
+void ElemWiseAdd(int32_t s1, int32_t s2, auto &arr1, auto &arr2, auto &outArr) ;
+void Transpose2T10(int32_t s1, int32_t s2, auto &inArr, auto &outArr) ;
+////////////////////////
+void PrintMatrix(int32_t s1, int32_t s2, vector<vector<float>> &m){
+    for(int32_t i1=0; i1<s1; i1++){
+        for(int32_t i2=0; i2<s2; i2++)
+            cout << m[i1][i2] << "\n" ;
+        cout << "\n" ;
+    }
+}
+
+void CastToint32(int32_t s1, vector<int64_t> &inArr, vector<int32_t> &outArr) {
+    for (int32_t i = 0; i < s1; i++) {
+        outArr[i] = (int32_t)inArr[i];
+    }
+}
+
+void CastToint32(int32_t s1, int32_t s2, auto &inArr, auto &outArr) {
+    for (int32_t i1 = 0; i1 < s1; i1++) {
+        for (int32_t i2 = 0; i2 < s2; i2++) {
+            outArr[i1][i2] = (int32_t)inArr[i1][i2];
+        }
+    }
+}
+
+void Gelu2(int32_t s1, int32_t s2, auto &inArr, auto &outArr) {
+    int32_t size = (s1 * s2);
+    auto reshapedInArr = make_vector<float>(size);
+    auto reshapedOutArr = make_vector<float>(size);
+
+    for (int32_t i1 = 0; i1 < s1; i1++) {
+        for (int32_t i2 = 0; i2 < s2; i2++) {
+            int32_t linIdx = ((i1 * s2) + i2);
+            reshapedInArr[linIdx] = inArr[i1][i2];
+        }
+    }
+
+    Gelu(size, reshapedInArr, reshapedOutArr);
+
+    for (int32_t i1 = 0; i1 < s1; i1++) {
+        for (int32_t i2 = 0; i2 < s2; i2++) {
+            int32_t linIdx = ((i1 * s2) + i2);
+            outArr[i1][i2] = reshapedOutArr[linIdx];
+        }
+    }
+}
+
+void FastGelu(int32_t batch_size, int32_t s1, int32_t s2, vector<vector<vector<float>>> &input, vector<float> &bias, vector<vector<vector<float>>> &output){
+    for(int32_t b = 0; b <batch_size; b++){
+        vector<vector<float>> BiasAdded = make_vector<float>(s1, s2);
+        GemmAdd(s1, s2, input[b], bias, BiasAdded) ;
+        Gelu2(s1, s2, BiasAdded, output[b]) ;
+    }
+}
+
+
+void LayerNormalization(int32_t s1, int32_t s2, vector<vector<float>> &input, vector<float> &weight, vector<float> &bias, vector<vector<float>> &output, float epsilon = 0.00001){
+    for(int32_t i1 = 0; i1 <s1; i1++) {
+        float sum = 0 ;
+        for(uint32_t i2 = 0; i2 <s2; i2++){
+            sum += input[i1][i2] ;
+        }
+        float avg = sum/s2 ;
+        
+        float squaredDiffSum = 0 ;
+        for(int32_t i2 = 0; i2 <s2; i2++){
+            squaredDiffSum += pow(input[i1][i2] - avg, 2) ;
+        }
+        float variance = squaredDiffSum/s2 ;
+        float std = sqrt(variance + epsilon) ;
+        
+        for(int32_t i2 = 0; i2 <s2; i2++){
+            output[i1][i2] = ((input[i1][i2]-avg)/std) * weight[i2] + bias[i2] ;
+        }
+    }
+}
+
+
+// void EmbedLayerNormalization(int32_t batch_size, int32_t seq_len, vector<vector<float>> &input_ids, vector<vector<float>> &transformer_wte_weight, vector<vector<float>> &transformer_wpe_weight, vector<float> &transformer_h_ln_1_weight, vector<float> &transformer_h_ln_1_bias, vector<vector<float>> &position_ids, vector<vector<vector<float>>> &EmbedLayerNormalization_output, vector<vector<vector<float>>> &EmbedLayerNormalization_dummy_mask_index, vector<vector<vector<float>>> &EmbedLayerNormalization_embedding_sum, int32_t embedding_len = 768){
+    
+//     for(int32_t b = 0; b <batch_size; b++){
+//         for(int32_t i1 = 0; i1 <seq_len; i1++) {
+//             for(int32_t i2 = 0; i2 <embedding_len; i2++){
+//                 float x = transformer_wte_weight[input_ids[b][i1]][i2] ;
+//                 float y = transformer_wpe_weight[position_ids[b][i1]][i2] ;
+
+//                 EmbedLayerNormalization_embedding_sum[b][i1][i2] = x + y ;
+//             }
+//         }
+        
+//         LayerNormalization(seq_len, embedding_len, EmbedLayerNormalization_embedding_sum[b], transformer_h_ln_1_weight, transformer_h_ln_1_bias, EmbedLayerNormalization_output[b]) ;
+//     }
+    
+// }
+
+
+void EmbedLayerNormalization(int32_t batch_size, int32_t seq_len, vector<vector<vector<float>>> &input, vector<float> &transformer_h_ln_1_weight, vector<float> &transformer_h_ln_1_bias, vector<vector<vector<float>>> &EmbedLayerNormalization_output, vector<vector<vector<float>>> &EmbedLayerNormalization_dummy_mask_index, vector<vector<vector<float>>> &EmbedLayerNormalization_embedding_sum, int32_t embedding_len = 768){
+    
+    for(int32_t b = 0; b <batch_size; b++){
+        for(int32_t i1 = 0; i1 <seq_len; i1++) {
+            for(int32_t i2 = 0; i2 <embedding_len; i2++){
+
+                EmbedLayerNormalization_embedding_sum[b][i1][i2] = input[b][i1][i2] ;
+            }
+        }
+        
+        LayerNormalization(seq_len, embedding_len, EmbedLayerNormalization_embedding_sum[b], transformer_h_ln_1_weight, transformer_h_ln_1_bias, EmbedLayerNormalization_output[b]) ;
+    }
+    
+}
+
+void SkipLayerNormalization(int32_t batch_size, int32_t seq_len, int32_t embedding_len, vector<vector<vector<float>>> &PreviousLayerNormalizationOutput, vector<vector<vector<float>>> &Attention_matmul_output, vector<float> &transformer_h_ln_weight, vector<float> &transformer_h_ln_bias, vector<float> &transformer_h_attn_c_proj_bias, vector<vector<vector<float>>> &Output1, vector<vector<vector<float>>> &Output2){
+    
+    for(int32_t b = 0; b <batch_size; b++){
+        vector<vector<float>> BiasAdded = make_vector<float>(seq_len, embedding_len);
+        GemmAdd(seq_len, embedding_len, Attention_matmul_output[b], transformer_h_attn_c_proj_bias, BiasAdded) ;
+
+        //vector<vector<float>> PrevAdded = make_vector<float>(seq_len, embedding_len);
+        ElemWiseAdd(seq_len, embedding_len, PreviousLayerNormalizationOutput[b], BiasAdded, Output2[b]) ;
+
+        //LayerNormalization(seq_len, embedding_len, PrevAdded, transformer_h_ln_weight, transformer_h_ln_bias, Output1[b]) ;
+        LayerNormalization(seq_len, embedding_len, Output2[b], transformer_h_ln_weight, transformer_h_ln_bias, Output1[b]) ;
+        
+
+//         for(int32_t i1 = 0; i1 <seq_len; i1++) {
+//             for(int32_t i2 = 0; i2 <embedding_len; i2++){
+//                 Output2[b][i1][i2] = Output1[b][i1][i2] ;
+//             }
+//         }
+    }
+}
+
+void Attention_Operation(int32_t s1, int32_t s2, vector<vector<float>> &q, vector<vector<float>> &k, vector<vector<float>> &v, vector<vector<float>> &mask, vector<vector<float>> &output){
+    vector<vector<float>> k_transpose = make_vector<float>(s2, s1) ;
+    Transpose2T10(s1, s2, k, k_transpose) ;
+//     //
+//     cout << "&&&&&&&&&&&&8\n" ;
+//     PrintMatrix(s2, s1, k_transpose) ;
+//     //
+    
+    vector<vector<float>> temp = make_vector<float>(s1, s1) ;
+    MatMul(s1, s2, s1, q, k_transpose, temp) ;
+    
+//     //
+//     cout << "&&&&&&&&&&&&9\n" ;
+//     PrintMatrix(s1, s1, temp) ;
+//     //
+    
+    for(int32_t i = 0; i <s1; i++){
+            for(int32_t j = 0; j <s1; j++){
+                temp[i][j] /= sqrt(s2) ;
+            }
+    }
+    
+//     //
+//     cout << "&&&&&&&&&&&&10\n" ;
+//     PrintMatrix(s1, s1, temp) ;
+//     //
+    ElemWiseAdd(s1, s1, temp, mask, temp) ;
+    
+//     //
+//     cout << "&&&&&&&&&&&&11\n" ;
+//     PrintMatrix(s1, s1, temp) ;
+//     //
+    
+    vector<vector<float>> softmaxed = make_vector<float>(s1, s1) ;
+    Softmax2(s1, s1, temp, softmaxed) ;
+    
+//     //
+//     cout << "&&&&&&&&&&&&12\n" ;
+//     PrintMatrix(s1, s1, softmaxed) ;
+//     //
+    
+    MatMul(s1, s1, s2, softmaxed, v, output) ;
+}
+
+// void Attention(int32_t batch_size, int32_t seq_len, int32_t embedding_len, vector<vector<vector<float>>> &LayerNormalizationOutput, vector<vector<float>> &transformer_h_attn_c_attn_weight, vector<float> &transformer_h_attn_c_attn_bias, vector<vector<float>> &attention_mask, vector<vector<vector<vector<vector<float>>>>> &past, vector<vector<vector<float>>> &AttentionOutput, vector<vector<vector<vector<vector<float>>>>> &present, int32_t num_heads = 12){
+void Attention(int32_t batch_size, int32_t seq_len, int32_t embedding_len, vector<vector<vector<float>>> &LayerNormalizationOutput, vector<vector<float>> &transformer_h_attn_c_attn_weight, vector<float> &transformer_h_attn_c_attn_bias, vector<vector<float>> &attention_mask, vector<vector<vector<float>>> &AttentionOutput, int32_t num_heads = 12){
+    for(int32_t b = 0; b <batch_size; b++){
+        vector<vector<float>> qkv = make_vector<float>(seq_len, 3*embedding_len);
+        MatMul(seq_len, embedding_len, 3*embedding_len, LayerNormalizationOutput[b], transformer_h_attn_c_attn_weight, qkv) ;
+//         //
+//         cout << "&&&&&&&&&&&&1\n" ;
+//         PrintMatrix(seq_len, 3*embedding_len, qkv) ;
+//         //
+        
+        GemmAdd(seq_len, 3*embedding_len, qkv, transformer_h_attn_c_attn_bias, qkv) ;
+        
+        //
+        cout << "&&&&&&&&&&&&2\n" ;
+        PrintMatrix(seq_len, 3*embedding_len, qkv) ;
+        //
+        
+        vector<vector<float>> causal_mask = make_vector<float>(seq_len, seq_len);
+        for(int32_t i = 0; i <seq_len; i++){
+            for(int32_t j = 0; j <seq_len; j++){
+                if (i<j){
+                    causal_mask[i][j] = -10000000000 ;
+                }
+                else{
+                    causal_mask[i][j] = 0 ;
+                }
+            }
+        }
+        
+//         //
+//         cout << "&&&&&&&&&&&&3\n" ;
+//         PrintMatrix(seq_len, seq_len, causal_mask) ;
+//         //
+        
+        for(int32_t n = 0; n <num_heads; n++){
+            vector<vector<float>> q = make_vector<float>(seq_len, embedding_len/num_heads);
+            vector<vector<float>> k = make_vector<float>(seq_len, embedding_len/num_heads);
+            vector<vector<float>> v = make_vector<float>(seq_len, embedding_len/num_heads);
+            vector<vector<float>> head_output = make_vector<float>(seq_len, embedding_len/num_heads);
+            for(int32_t i = 0; i <seq_len; i++){
+                for(int32_t j = 0; j <embedding_len/num_heads; j++){
+                    q[i][j] = qkv[i][n*64 + j] ;
+                    k[i][j] = qkv[i][embedding_len + n*64 + j] ;
+                    v[i][j] = qkv[i][2*embedding_len + n*64 + j] ;           
+                }
+            }
+//             //
+//             cout << "&&&&&&&&&&&&4\n" ;
+//             PrintMatrix(seq_len, embedding_len/num_heads, q) ;
+//             //
+//             //
+//             cout << "&&&&&&&&&&&&5\n" ;
+//             PrintMatrix(seq_len, embedding_len/num_heads, k) ;
+//             //
+//             //
+//             cout << "&&&&&&&&&&&&6\n" ;
+//             PrintMatrix(seq_len, embedding_len/num_heads, v) ;
+//             //
+            
+            Attention_Operation(seq_len,embedding_len/num_heads,q,k,v,causal_mask,head_output) ;
+            
+//             //
+//             cout << "&&&&&&&&&&&&7\n" ;
+//             PrintMatrix(seq_len, embedding_len/num_heads, head_output) ;
+//             //
+            
+            for(int32_t i = 0; i <seq_len; i++){
+                for(int32_t j = 0; j <embedding_len/num_heads; j++){
+                   AttentionOutput[b][i][n*64 + j] = head_output[i][j] ;            
+                }
+            }
+        }
+        
+    }
+}
+
+// M1D1 = Matrix 1 Dimension 1
+void MatMulBatch(int32_t batch_size, int32_t M1D1, int32_t M1D2, int32_t M2D1, int32_t M2D2, vector<vector<vector<float>>> &BatchInp, vector<vector<float>> &MultiplierMat, vector<vector<vector<float>>> &BatchOut){
+    
+    assert(M1D2==M2D1) ;
+    for(int32_t b = 0; b <batch_size; b++){
+        MatMul(M1D1, M1D2, M2D2, BatchInp[b], MultiplierMat, BatchOut[b]) ;
+    }
+    
+}
+///////////////////////
 
 void ElemWiseAdd(int32_t s1, vector<float> &arr1, vector<float> &arr2, vector<float> &outArr) {
     for (int32_t i = 0; i < s1; i++) {

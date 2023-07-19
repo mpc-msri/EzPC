@@ -23,6 +23,7 @@
 SECFLOAT_CPP_FILE=$1
 EZPC_SRC_PATH=$(dirname $0)
 
+
 if [ ! -e "$SECFLOAT_CPP_FILE" ]; then
   echo "Please specify file name of the generated .cpp file using ./ezpc.sh";
   exit;
@@ -32,30 +33,51 @@ BINARY_NAME=$(basename $SECFLOAT_CPP_FILE .cpp)
 DIR="$(dirname "${SECFLOAT_CPP_FILE}")" 
 
 
+
+
 rm -rf build_dir
 mkdir build_dir
 cd build_dir
 eval `opam config env`
 
+
+
 path=$(dirname $0)
+
+
 echo "
 cmake_minimum_required (VERSION 3.13) 
 project (BUILD_IT)
 set(CMAKE_MODULE_PATH \${CMAKE_CURRENT_SOURCE_DIR})
-find_package(SCI REQUIRED PATHS \"$path/../../SCI/build/install\") 
+find_package(SCI REQUIRED PATHS \"../$path/../../SCI/build/install\") 
 add_executable($BINARY_NAME ../$SECFLOAT_CPP_FILE)
 target_include_directories($BINARY_NAME PUBLIC)
 target_compile_options($BINARY_NAME PRIVATE -fconcepts -g)
-target_link_libraries($BINARY_NAME SCI::SCI-FloatML )
+target_link_libraries($BINARY_NAME SCI::SCI-FloatML)
 " > CMakeLists.txt
 
-cmake --log-level=ERROR .
+# path=$(dirname $0)
+# echo $path
+# echo "
+# cmake_minimum_required (VERSION 3.13) 
+# project (BUILD_IT)
+# set(CMAKE_MODULE_PATH \${CMAKE_CURRENT_SOURCE_DIR})
+# find_package(SCI REQUIRED PATHS \"Secfloat/../../SCI/build/install\") 
+# add_executable($BINARY_NAME ../$SECFLOAT_CPP_FILE)
+# target_include_directories($BINARY_NAME PUBLIC)
+# target_compile_options($BINARY_NAME PRIVATE -fconcepts -g)
+# target_link_libraries($BINARY_NAME SCI::SCI-SecfloatML )
+# " > CMakeLists.txt
 
+
+cmake --log-level=ERROR .
 cmake --build . --parallel
+
+
 rm -rf ../$BINARY_NAME 
 mv $BINARY_NAME ../$DIR
 cd ..
-rm -rf build_dir
+# rm -rf build_dir
 
 
 
@@ -65,3 +87,20 @@ if [ -e "../$BINARY_NAME" ]; then
 else
   echo "Output binary: $(dirname $BINARY_NAME)/$BINARY_NAME"  
 fi
+
+
+
+
+
+
+
+
+
+# cmake_minimum_required (VERSION 3.13) 
+# project (BUILD_IT)
+# set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
+# find_package(SCI REQUIRED PATHS "Secfloat/../../SCI/build/install") 
+# add_executable(gpt2-10_secfloat_ct ..//mnt/c/Users/t-mukherjeea/Downloads/Git/SecureGPT/gpt2-10_secfloat_ct.cpp)
+# target_include_directories(gpt2-10_secfloat_ct PUBLIC)
+# target_compile_options(gpt2-10_secfloat_ct PRIVATE -fconcepts -g)
+# target_link_libraries(gpt2-10_secfloat_ct SCI::SCI-FloatML)

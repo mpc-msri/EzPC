@@ -85,6 +85,27 @@ auto input4(int d1, int d2, int d3, int d4, int party)
     return tmp0;
 }
 
+auto input5(int d1, int d2, int d3, int d4, int d5, int party)
+{
+    auto tmp0 = make_vector<float>(d1, d2, d3, d4, d5);
+
+    for (uint32_t i0 = 0; i0 < d1; i0++)
+    {
+        for (uint32_t i1 = 0; i1 < d2; i1++)
+        {
+            for (uint32_t i2 = 0; i2 < d3; i2++)
+            {
+                for (uint32_t i3 = 0; i3 < d4; i3++)
+                {
+                    for (uint32_t i4 = 0; i4 < d5; i4++)
+                        cin >> tmp0[i0][i1][i2][i3][i4];
+                }
+            }
+        }
+    }
+    return tmp0;
+}
+
 void output1(auto name, int d1, int party)
 {
     for (uint32_t i0 = 0; i0 < d1; i0++)
@@ -129,6 +150,24 @@ void output4(auto name, int d1, int d2, int d3, int d4, int party)
                 for (uint32_t i3 = 0; i3 < d4; i3++)
                 {
                     cout << name[i0][i1][i2][i3] << endl;
+                }
+            }
+        }
+    }
+}
+
+void output5(auto name, int d1, int d2, int d3, int d4, int d5, int party)
+{
+    for (uint32_t i0 = 0; i0 < d1; i0++)
+    {
+        for (uint32_t i1 = 0; i1 < d2; i1++)
+        {
+            for (uint32_t i2 = 0; i2 < d3; i2++)
+            {
+                for (uint32_t i3 = 0; i3 < d4; i3++)
+                {
+                    for (uint32_t i4 = 0; i4 < d5; i4++)
+                        cout << name[i0][i1][i2][i3][i4] << endl;
                 }
             }
         }
