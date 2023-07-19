@@ -85,6 +85,17 @@ def run_backend(backend, input):
             f"cat {input} model_input_weights.inp | ./model_secfloat_ct > {raw_output}"
         )
 
+    elif backend == "SECFLOAT":
+        # check if model compiled
+        assert os.path.exists("model_secfloat")
+        assert os.path.exists("model_input_weights.inp")
+
+        # running server
+        os.system(f"./model_secfloat r=2 < model_input_weights.inp &")
+
+        # running client
+        os.system(f"./model_secfloat r=1 < {input} > {raw_output}")
+
     # save the raw output as npy
     os.system(f"python3 {ezpc_dir}/OnnxBridge/helper/make_np_arr.py {raw_output}")
     assert os.path.exists("output.npy")
