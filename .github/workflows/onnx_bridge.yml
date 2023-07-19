@@ -165,6 +165,7 @@ jobs:
       - name: Install dependencies
         run: |
             apt-get update -y
+            apt install libgmp-dev libmpfr-dev -y
 
       - name: Build Secfloat
         run: |
