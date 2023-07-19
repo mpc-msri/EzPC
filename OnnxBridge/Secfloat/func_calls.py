@@ -115,7 +115,7 @@ class Operator:
             convadd = ""
             if len(inputs) == 3:
                 convadd = str(
-                    f"{'   ' * indent}ConvAdd("
+                    f"{'   ' * indent}__onnxbridge_ConvAdd("
                     f"{iterate_list(value_info[outputs[0]][1])}, "
                     f"{var_dict[outputs[0]]}, {var_dict[inputs[2]]}, {var_dict[outputs[0]]}"
                     f");"
@@ -123,7 +123,7 @@ class Operator:
                 pass
             return (
                 str(
-                    f"{'   ' * indent}Conv2DGroupWrapper("
+                    f"{'   ' * indent}__onnxbridge_Conv2DGroupWrapper("
                     f"{N}, {CI}, {H}, {W}, "
                     f"{filterShape[2]}, {filterShape[3]}, {value_info[inputs[1]][1][0]}, "
                     f"{(iterate_list(pads))}, "
@@ -141,12 +141,11 @@ class Operator:
         logger.debug("Inside MaxPool function call.")
         pads = get_padding(attributes, inputs, outputs, value_info, var_dict)
         return str(
-            f"{'   ' * indent}MaxPool("
+            f"{'   ' * indent}__onnxbridge_MaxPool("
             f"{iterate_list(value_info[outputs[0]][1])}, "
             f"{attributes['kernel_shape'][0]}, {attributes['kernel_shape'][1]}, "
-            f"{iterate_list(pads)}, "
             f"{attributes['strides'][0]}, {attributes['strides'][1]}, "
-            f"{iterate_list(value_info[inputs[0]][1])}, "
+            f"{iterate_list(value_info[inputs[0]][1][-2:])}, "
             f"{iterate_list([var_dict[x] for x in inputs])}, "
             f"{iterate_list([var_dict[x] for x in outputs])}"
             f");"
@@ -184,12 +183,12 @@ class Operator:
         logger.debug("Inside AveragePool function call.")
         pads = get_padding(attributes, inputs, outputs, value_info, var_dict)
         return str(
-            f"{'   ' * indent}AvgPool("
+            f"{'   ' * indent}__onnxbridge_AvgPool("
             f"{iterate_list(value_info[outputs[0]][1])}, "
             f"{attributes['kernel_shape'][0]}, {attributes['kernel_shape'][1]}, "
-            f"{iterate_list(pads)}, "
+            #            f"{iterate_list(pads)}, "
             f"{attributes['strides'][0]}, {attributes['strides'][1]}, "
-            f"{iterate_list(value_info[inputs[0]][1])}, "
+            f"{iterate_list(value_info[inputs[0]][1][-2:])}, "
             f"{iterate_list([var_dict[x] for x in inputs])}, "
             f"{iterate_list([var_dict[x] for x in outputs])}"
             f");"
@@ -201,10 +200,10 @@ class Operator:
     ):
         logger.debug("Inside GloablAveragePool function call.")
         return str(
-            f"{'   ' * indent}AvgPool("
+            f"{'   ' * indent}__onnxbridge_AvgPool("
             f"{iterate_list(value_info[outputs[0]][1])}, "
-            f"{value_info[inputs[0]][1][2]}, {value_info[inputs[0]][1][3]}, 0, 0, 0, 0, 1, 1, "
-            f"{iterate_list(value_info[inputs[0]][1])}, "
+            f"{value_info[inputs[0]][1][2]}, {value_info[inputs[0]][1][3]}, 1, 1, "
+            f"{iterate_list(value_info[inputs[0]][1][-2:])}, "
             f"{iterate_list([var_dict[x] for x in inputs])}, "
             f"{iterate_list([var_dict[x] for x in outputs])}"
             f");"

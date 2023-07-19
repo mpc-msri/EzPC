@@ -59,6 +59,7 @@ void GemmAdd(int32_t s1, int32_t s2, vector<vector<float>>& prod, vector<float>&
 void dotProduct2(int32_t s1, int32_t s2, vector<vector<float>>& arr1, vector<vector<float>>& arr2, vector<float>& outArr);
 void vsumIfElse(int32_t s1, int32_t s2, vector<vector<float>> &arr, vector<vector<bool>>& hotarr, vector<float>& outArr) ;
 void Relu(int32_t s1, vector<float>& inArr, vector<float>& outArr, vector<bool>& hotArr);
+void Relu_nomask(int32_t s1, vector<float>& inArr, vector<float>& outArr);
 void getBiasDer(int32_t s1, int32_t s2, vector<vector<float>>& der, vector<float>& biasDer);
 void IfElse(int32_t s1, vector<float>& dat, vector<bool>& hot, vector<float>& out, bool flip);
 void updateWeights(int32_t s, float lr, vector<float>& bias, vector<float>& der);
@@ -90,6 +91,22 @@ void MaxPool(
 	int32_t imgH, int32_t imgW,
 	vector<vector<vector<vector<float>>>>& inArr, 
 	vector<vector<vector<vector<bool>>>> &poolmask, 
+	vector<vector<vector<vector<float>>>>& outArr) ;
+
+void MaxPool_nomask(
+	int32_t N, int32_t H, int32_t W, int32_t C, 
+	int32_t ksizeH, int32_t ksizeW, 
+	int32_t strideH, int32_t strideW,
+	int32_t imgH, int32_t imgW,
+	vector<vector<vector<vector<float>>>>& inArr, 
+	vector<vector<vector<vector<float>>>>& outArr) ;
+
+void AvgPool(
+	int32_t N, int32_t H, int32_t W, int32_t C, 
+	int32_t ksizeH, int32_t ksizeW, 
+	int32_t strideH, int32_t strideW,
+	int32_t imgH, int32_t imgW,
+	vector<vector<vector<vector<float>>>>& inArr, 
 	vector<vector<vector<vector<float>>>>& outArr) ;
 
 void ConvDerWrapper(

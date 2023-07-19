@@ -19,9 +19,9 @@ auto make_vector_float(int party, size_t first, Args... sizes)
 return make_vector<float>(first, sizes...);
 }
 
-auto input1(int d1, int party)
+vector<float> input1(int d1, int party)
 {
-    auto tmp0 = make_vector<float>(d1);
+    vector<float> tmp0 = make_vector<float>(d1);
 
     for (uint32_t i0 = 0; i0 < d1; i0++)
     {
@@ -31,9 +31,9 @@ auto input1(int d1, int party)
     return tmp0;
 }
 
-auto input2(int d1, int d2, int party)
+vector<vector<float>> input2(int d1, int d2, int party)
 {
-    auto tmp0 = make_vector<float>(d1, d2);
+    vector<vector<float>> tmp0 = make_vector<float>(d1, d2);
 
     for (uint32_t i0 = 0; i0 < d1; i0++)
     {
@@ -46,9 +46,9 @@ auto input2(int d1, int d2, int party)
     return tmp0;
 }
 
-auto input3(int d1, int d2, int d3, int party)
+vector<vector<vector<float>>> input3(int d1, int d2, int d3, int party)
 {
-    auto tmp0 = make_vector<float>(d1, d2, d3);
+    vector<vector<vector<float>>> tmp0 = make_vector<float>(d1, d2, d3);
 
     for (uint32_t i0 = 0; i0 < d1; i0++)
     {
@@ -64,9 +64,9 @@ auto input3(int d1, int d2, int d3, int party)
     return tmp0;
 }
 
-auto input4(int d1, int d2, int d3, int d4, int party)
+vector<vector<vector<vector<float>>>> input4(int d1, int d2, int d3, int d4, int party)
 {
-    auto tmp0 = make_vector<float>(d1, d2, d3, d4);
+    vector<vector<vector<vector<float>>>> tmp0 = make_vector<float>(d1, d2, d3, d4);
 
     for (uint32_t i0 = 0; i0 < d1; i0++)
     {
@@ -85,7 +85,7 @@ auto input4(int d1, int d2, int d3, int d4, int party)
     return tmp0;
 }
 
-void output1(auto name, int d1, int party)
+void output1(vector<float> &name, int d1, int party)
 {
     for (uint32_t i0 = 0; i0 < d1; i0++)
     {
@@ -93,7 +93,7 @@ void output1(auto name, int d1, int party)
     }
 }
 
-void output2(auto name, int d1, int d2, int party)
+void output2(vector<vector<float>> &name, int d1, int d2, int party)
 {
     for (uint32_t i0 = 0; i0 < d1; i0++)
     {
@@ -104,7 +104,7 @@ void output2(auto name, int d1, int d2, int party)
     }
 }
 
-void output3(auto name, int d1, int d2, int d3, int party)
+void output3(vector<vector<vector<float>>> &name, int d1, int d2, int d3, int party)
 {
     for (uint32_t i0 = 0; i0 < d1; i0++)
     {
@@ -118,7 +118,7 @@ void output3(auto name, int d1, int d2, int d3, int party)
     }
 }
 
-void output4(auto name, int d1, int d2, int d3, int d4, int party)
+void output4(vector<vector<vector<vector<float>>>> &name, int d1, int d2, int d3, int d4, int party)
 {
     for (uint32_t i0 = 0; i0 < d1; i0++)
     {

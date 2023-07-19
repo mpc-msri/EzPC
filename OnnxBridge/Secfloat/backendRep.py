@@ -5,6 +5,10 @@ from utils.backend_helper import decl, comment, take_input, delete_variable, giv
 from Secfloat.func_calls import Operator
 from utils.nodes import Node, Input, Output
 from utils.onnx_nodes import OnnxNode
+from utils.concat import write_concat_implementations
+
+
+concat_len_list = []
 
 
 def process_delete_list(program):
@@ -118,6 +122,11 @@ def prepare_func(code_list, node, var_dict, value_info, input_taken, indent):
 
     operator = getattr(Operator, node.op_type)
     code_list.append(str(f'{"   " * (indent+1)}cout<<"Inside {node.op_type}"<<endl;'))
+    if node.op_type == "Concat":
+        l = len(node.inputs)
+        if l not in concat_len_list:
+            concat_len_list.append(l)
+
     code_list.append(
         operator(
             node.attrs, node.inputs, node.outputs, value_info, var_dict, indent + 1
@@ -162,20 +171,21 @@ def prepare_export(program, var_dict, value_info, backend, file_path):
     input_dict = dict()
 
     if backend == "SECFLOAT":
-        code_list.append(f'#include "{file_path}/lib_secfloat/common.cpp" \n\n\n')
+        code_list.append(
+            f'#include "{file_path}/lib_secfloat/link_secfloat.cpp" \n\n\n'
+        )
         code_list.append(
             "int main(int __argc, char **__argv)\n{\n\n      __init(__argc, __argv);\n"
         )
     elif backend == "SECFLOAT_CLEARTEXT":
         code_list.append(
-            f'#include "{file_path}/lib_cleartext/cleartext_common.cpp" \n\n\n'
+            f'#include "{file_path}/lib_cleartext/link_secfloat_cleartext.cpp" \n\n\n'
         )
         code_list.append(
             "int main(int __argc, char **__argv)\n{\n\n     int __party=0;\n"
         )
 
     for node in program:
-
         func = getattr(OnnxNode, node.op_type)
         func(node)
 
@@ -184,7 +194,6 @@ def prepare_export(program, var_dict, value_info, backend, file_path):
 
     logger.info("Starting Export...")
     for node in program:
-
         if isinstance(node, Input):
             input_dict[node.name] = node
         elif isinstance(node, Node):
@@ -209,6 +218,10 @@ def prepare_export(program, var_dict, value_info, backend, file_path):
     code_list.append("      return 0;\n")
     code_list.append("}")
     logger.info("Completed Export.")
+
+    # print("The first item in the code list is: ", code_list[0])
+    # print("The second item in the code list is: ", code_list[1])
+    # print(f"Need to insert concat for --> {concat_len_list}")
 
     return code_list
 
@@ -237,6 +250,17 @@ class FzpcBackendRep(BackendRep):
         code_list = prepare_export(
             self.program_AST, self.var_dict, self.value_info, self.backend, file_path
         )
+
+        # Check if need to insert concat implementations
+        if concat_len_list != []:
+            # import_concat_line = get_concat_implementations(concat_len_list)
+            include_concat_line = f'#include "{self.file_name}_concat{ct}.cpp" \n\n\n'
+            write_concat_implementations(
+                concat_len_list,
+                self.backend,
+                self.path + f"/{self.file_name}_concat{ct}.cpp",
+            )
+            code_list = code_list[:1] + [include_concat_line] + code_list[1:]
 
         with open(self.path + f"/{self.file_name}_secfloat{ct}.cpp", "w") as fp:
             fp.write("\n".join(code_list))

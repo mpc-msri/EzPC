@@ -49,16 +49,15 @@ target_compile_options($BINARY_NAME PRIVATE -fconcepts -g)
 target_link_libraries($BINARY_NAME SCI::SCI-SecfloatML )
 " > CMakeLists.txt
 
+
 cmake --log-level=ERROR .
 
 cmake --build . --parallel
-exit
+
 rm -rf ../$BINARY_NAME 
 mv $BINARY_NAME ../$DIR
 cd ..
 rm -rf build_dir
-
-
 
 if [ -e "../$BINARY_NAME" ]; then
   echo "Compilation failed"
