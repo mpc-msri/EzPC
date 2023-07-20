@@ -181,7 +181,6 @@ jobs:
         run: |
             cd OnnxBridge/tests/
             pytest --backend SECFLOAT -v -k "lenet and not batch"
-            pytest --backend SECFLOAT -v -k "hinet and not batch"
         shell: bash
 
   Secfloat-ct:
@@ -223,5 +222,6 @@ jobs:
         run: |
             cd OnnxBridge/tests/
             pytest --backend SECFLOAT_CLEARTEXT -v -k "lenet and not batch"
+            pytest --backend SECFLOAT_CLEARTEXT -v -k "hinet and not batch"
         shell: bash
 
