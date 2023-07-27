@@ -306,12 +306,13 @@ void MaxPool(
 	vector<vector<vector<vector<FPArray>>>>& outArr) ;
 
 void MaxPool_nomask(
-	int32_t N, int32_t H, int32_t W, int32_t C, 
-	int32_t ksizeH, int32_t ksizeW, 
+	int32_t N, int32_t H, int32_t W, int32_t C,
+	int32_t ksizeH, int32_t ksizeW,
 	int32_t strideH, int32_t strideW,
 	int32_t imgH, int32_t imgW,
-	vector<vector<vector<vector<FPArray>>>>& inArr, 
-	vector<vector<vector<vector<FPArray>>>>& outArr) ;
+	vector<vector<vector<vector<FPArray>>>> &inArr,
+	vector<vector<vector<vector<FPArray>>>> &outArr,
+	int32_t padHLeft = 0, int32_t padHRight = 0, int32_t padWLeft = 0, int32_t padWRight = 0);
 
 void Avgpool(
 	int32_t N, int32_t H, int32_t W, int32_t C, 

@@ -2184,12 +2184,20 @@ void Maxpool_nomask_thread(
 }
 
 void MaxPool_nomask(
-	int32_t N, int32_t imgH, int32_t imgW, int32_t C, 
-	int32_t ksizeH, int32_t ksizeW, 
+	int32_t N, int32_t imgH, int32_t imgW, int32_t C,
+	int32_t ksizeH, int32_t ksizeW,
 	int32_t strideH, int32_t strideW,
 	int32_t H, int32_t W,
-	vector<vector<vector<vector<FPArray>>>>& inArr, 
-	vector<vector<vector<vector<FPArray>>>>& outArr) {
+	vector<vector<vector<vector<FPArray>>>> &inArr,
+	vector<vector<vector<vector<FPArray>>>> &outArr,
+	int32_t padHLeft, int32_t padHRight, int32_t padWLeft, int32_t padWRight)
+{
+
+	if (padHLeft != 0 or padHRight != 0 or padWLeft != 0 or padWRight != 0)
+	{
+		cout << "Padding not iplemented in Secfloat MaxPool_nomask" << endl;
+		exit(0);
+	}
 
 	int m_bits = inArr[0][0][0][0].m_bits, e_bits = inArr[0][0][0][0].e_bits ;
 	int size = N*H*C*W ;
