@@ -49,15 +49,21 @@ void OIFF_to_FFIO(int32_t CO, int32_t CI, int32_t FH, int32_t FW, vector<vector<
     }
 }
 
-void __onnxbridge_MaxPool(int32_t N, int32_t C, int32_t H, int32_t W, int32_t ksizeH, int32_t ksizeW, int32_t strideH, int32_t strideW, int32_t imgH, int32_t imgW, vector<vector<vector<vector<float>>>> &inArr, vector<vector<vector<vector<float>>>> &outArr)
+void __onnxbridge_MaxPool(int32_t N, int32_t C, int32_t H, int32_t W,
+                          int32_t ksizeH, int32_t ksizeW,
+                          int32_t strideH, int32_t strideW,
+                          int32_t imgH, int32_t imgW,
+                          vector<vector<vector<vector<float>>>> &inArr,
+                          vector<vector<vector<vector<float>>>> &outArr,
+                          int32_t padHLeft, int32_t padHRight, int32_t padWLeft, int32_t padWRight)
 {
-    vector<vector<vector<vector<float>>>> inputArr_reshaped = make_vector<float>(N, imgH, imgW, C) ;
-    NCHW_to_NHWC(N, C, imgH, imgW, inArr, inputArr_reshaped) ;
+    vector<vector<vector<vector<float>>>> inputArr_reshaped = make_vector<float>(N, imgH, imgW, C);
+    NCHW_to_NHWC(N, C, imgH, imgW, inArr, inputArr_reshaped);
 
-    vector<vector<vector<vector<float>>>> outputArr_reshaped = make_vector<float>(N, H, W, C) ;
-    MaxPool_nomask(N, imgH, imgW, C, ksizeH, ksizeW, strideH, strideW, H, W, inputArr_reshaped, outputArr_reshaped) ;
+    vector<vector<vector<vector<float>>>> outputArr_reshaped = make_vector<float>(N, H, W, C);
+    MaxPool_nomask(N, imgH, imgW, C, ksizeH, ksizeW, strideH, strideW, H, W, inputArr_reshaped, outputArr_reshaped, padHLeft, padHRight, padWLeft, padWRight);
 
-    NHWC_to_NCHW(N, H, W, C, outputArr_reshaped, outArr) ;
+    NHWC_to_NCHW(N, H, W, C, outputArr_reshaped, outArr);
 }
 
 void __onnxbridge_AvgPool(int32_t N, int32_t C, int32_t H, int32_t W, int32_t ksizeH, int32_t ksizeW, int32_t strideH, int32_t strideW, int32_t imgH, int32_t imgW, vector<vector<vector<vector<float>>>> &inArr, vector<vector<vector<vector<float>>>> &outArr)

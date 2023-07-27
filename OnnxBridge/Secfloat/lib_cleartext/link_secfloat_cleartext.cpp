@@ -413,49 +413,26 @@ void Gemm(int32_t m, int32_t n, int32_t o, int32_t p, float alpha, float beta, i
     GemmAdd(x, k, tmp, C, output);
 }
 
-void BatchNormalization(int32_t s1, int32_t s2, int32_t s3, int32_t s4, vector<vector<vector<vector<float>>>> &inArr, vector<float> &multArr, vector<float> &biasArr, vector<vector<vector<vector<float>>>> &outputArr)
+void BatchNormalization(int32_t N, int32_t C, int32_t H, int32_t W, vector<vector<vector<vector<float>>>> &inArr, vector<float> &multArr, vector<float> &biasArr, vector<vector<vector<vector<float>>>> &outArr)
 {
-    int32_t inpSize = (((s1 * s2) * s3) * s4);
+    vector<vector<vector<vector<float>>>> mult_expanded = make_vector_float(ALICE, N, C, H, W);
+    vector<vector<vector<vector<float>>>> bias_expanded = make_vector_float(ALICE, N, C, H, W);
 
-    vector<float> inArrReshaped = make_vector<float>(inpSize);
-
-    vector<float> multArrReshaped = make_vector<float>(inpSize);
-
-    vector<float> multExprAns = make_vector<float>(inpSize);
-
-    for (uint32_t i1 = 0; i1 < s1; i1++)
+    for (int32_t i = 0; i < N; i++)
     {
-        for (uint32_t i2 = 0; i2 < s4; i2++)
+        for (int32_t j = 0; j < C; j++)
         {
-            for (uint32_t i3 = 0; i3 < s3; i3++)
+            for (int32_t k = 0; k < H; k++)
             {
-                for (uint32_t i4 = 0; i4 < s2; i4++)
+                for (int32_t l = 0; l < W; l++)
                 {
-                    int32_t linIdx = ((((((i1 * s2) * s3) * s4) + ((i2 * s3) * s4)) + (i3 * s4)) + i4);
-
-                    inArrReshaped[linIdx] = inArr[i1][i4][i2][i3];
-
-                    multArrReshaped[linIdx] = multArr[i4];
+                    mult_expanded[i][j][k][l] = multArr[j];
+                    bias_expanded[i][j][k][l] = biasArr[j];
                 }
             }
         }
     }
 
-    ElemWiseMul(inpSize, inArrReshaped, multArrReshaped, multExprAns);
-
-    for (uint32_t i1 = 0; i1 < s1; i1++)
-    {
-        for (uint32_t i2 = 0; i2 < s4; i2++)
-        {
-            for (uint32_t i3 = 0; i3 < s3; i3++)
-            {
-                for (uint32_t i4 = 0; i4 < s2; i4++)
-                {
-                    int32_t linIdx = ((((((i1 * s2) * s3) * s4) + ((i2 * s3) * s4)) + (i3 * s4)) + i4);
-
-                    outputArr[i1][i4][i2][i3] = (multExprAns[linIdx] + biasArr[i4]);
-                }
-            }
-        }
-    }
+    ElemWiseMul4(N, C, H, W, inArr, mult_expanded, outArr);
+    ElemWiseAdd4(N, C, H, W, outArr, bias_expanded, outArr);
 }

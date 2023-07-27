@@ -147,7 +147,8 @@ class Operator:
             f"{attributes['strides'][0]}, {attributes['strides'][1]}, "
             f"{iterate_list(value_info[inputs[0]][1][-2:])}, "
             f"{iterate_list([var_dict[x] for x in inputs])}, "
-            f"{iterate_list([var_dict[x] for x in outputs])}"
+            f"{iterate_list([var_dict[x] for x in outputs])}, "
+            f"{iterate_list(pads)}"
             f");"
         )
 

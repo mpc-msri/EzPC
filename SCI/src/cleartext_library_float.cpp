@@ -21,6 +21,7 @@ SOFTWARE.
 
 #include "cleartext_library_float.h"
 #include "math.h"
+#include "float.h"
 
 using namespace std ;
 
@@ -446,65 +447,54 @@ void MaxPool(
 }
 
 void MaxPool_nomask(
-	int32_t N, int32_t imgH, int32_t imgW, int32_t C, 
-	int32_t ksizeH, int32_t ksizeW, 
+	int32_t N, int32_t imgH, int32_t imgW, int32_t C,
+	int32_t ksizeH, int32_t ksizeW,
 	int32_t strideH, int32_t strideW,
 	int32_t H, int32_t W,
-	vector<vector<vector<vector<float>>>>& inArr, 
-	vector<vector<vector<vector<float>>>>& outArr) {
-	int size = N*H*C*W ;
-	int filter_size = ksizeH*ksizeW; 
+	vector<vector<vector<vector<float>>>> &inArr,
+	vector<vector<vector<vector<float>>>> &outArr,
+	int32_t padHLeft, int32_t padHRight, int32_t padWLeft, int32_t padWRight)
+{
+	for (int n = 0; n < N; n++)
+	{
+		for (int c = 0; c < C; c++)
+		{
+			int32_t ctH = 0;
+			for (int h = 0 - padHLeft; h + ksizeH <= imgH + padHRight; h += strideH)
+			{
+				int32_t ctW = 0;
+				for (int w = 0 - padWLeft; w + ksizeW <= imgW + padWRight; w += strideW)
+				{
+					float maxi = -FLT_MAX;
 
-	for (int n = 0, size_k=0 ; n < N ; n++) {
-		for (int c = 0 ; c < C ; c++) {
-			for (int h = 0 ; h < H ; h++) {
-				for (int w = 0 ; w < W ; w++, size_k++) {
-					float max_val ;
-					int max_h, max_w ;
-					int img_h, img_w ;
-					img_h = h*strideH ;
-					img_w = w*strideW ;
+					if (!(h < 0 || h >= imgH || w < 0 || w >= imgW))
+						maxi = inArr[n][h][w][c];
 
-					if (img_h < 0 || img_h >= imgH || img_w < 0 || img_w >= imgW) {
-						max_val = 0.0 ;
-						max_h = -1 ;
-						max_w = -1 ;
-					}
-					else {
-						max_val = inArr[n][img_h][img_w][c] ;
-						max_h = 0 ;
-						max_w = 0 ;
-					}
-						
-					for (int kh = 0, filter_k = 0 ; kh < ksizeH ; kh++) {
-						img_h = h*strideH + kh ; 
-
-						for (int kw = 0 ; kw < ksizeW ; kw++, filter_k++) {
-							img_w = w*strideW + kw ;
-							float val ;
-							int this_h, this_w ;
-
-							if (img_h < 0 || img_h >= imgH || img_w < 0 || img_w >= imgW) {
-								val = 0.0 ;			
-								this_h = -1 ;
-								this_w = -1 ;
-							}	
-							else {
-								val = inArr[n][img_h][img_w][c] ;
-								this_h = kh ;
-								this_w = kw ;
+					// std::cout << h << "," << w << " maxi1: " << maxi << std::endl;
+					for (int kh = 0; kh < ksizeH; kh++)
+					{
+						for (int kw = 0; kw < ksizeW; kw++)
+						{
+							int32_t cur_h = h + kh;
+							int32_t cur_w = w + kw;
+							if (cur_h < 0 || cur_h >= imgH || cur_w < 0 || cur_w >= imgW)
+							{
+								continue;
 							}
-								
-							if (val > max_val) {
-								max_val = val ;
-								max_h = this_h ;
-								max_w = this_w ;
+							else
+							{
+								float val = inArr[n][cur_h][cur_w][c];
+								// std::cout << cur_h << "," << cur_w << " val: " << val << " bool: " << (val > maxi) << std::endl;
+								maxi = std::max(maxi, inArr[n][cur_h][cur_w][c]);
 							}
 						}
 					}
 
-					outArr[n][h][w][c] = max_val ;
+					// std::cout << h << "," << w << " maxi2: " << maxi << std::endl;
+					outArr[n][ctH][ctW][c] = maxi;
+					ctW++;
 				}
+				ctH++;
 			}
 		}
 	}
