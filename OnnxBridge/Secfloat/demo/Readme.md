@@ -27,12 +27,12 @@ python ../../main.py --path "model.onnx" --generate "executable" --backend SECFL
 
 ```
 This generates :
-- A file with model weigths `~/EzPC/OnnxBridge/Secfloat/demo/model_input_weights_.inp` (Secret Server Data) 
+- A file with model weigths `~/EzPC/OnnxBridge/Secfloat/demo/model_input_weights.inp` (Secret Server Data) 
 - A model output binary : `~/EzPC/OnnxBridge/Secfloat/demo/model_secfloat.out` which needs to be passed to client.
 
 Run the following command to start server side computation and wait for client connection:
 ```bash
-./model_secfloat r=2  [port=port] < model_input_weights_.inp
+./model_secfloat r=2  [port=port] < model_input_weights.inp
 ```
 
 # Client Side
@@ -63,11 +63,11 @@ This dumps model output as a flattened numpy array(1-D) in output.npy .
 ## Verify Output
 To verify if everything is working as expected, run the input image with the model itself using the onnx runtime:
 ```bash
-python ../../helper/run_onnx.py "input.npy"
+python ../../helper/run_onnx.py model.onnx "input.npy"
 ```
 It dumps the output in `onnx_output/input.npy` and also prints it on the screen. To compare the both outputs do:
 ```bash
-python ../../helper/compare_np_arrs.py -i onnx_output/input.npy output.npy
+python ../../helper/compare_np_arrs.py -i onnx_output/expected.npy output.npy
 ```
 You should get output similar to:
 ```bash

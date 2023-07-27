@@ -9,12 +9,12 @@ def convert_raw_output_to_np(filename):
     array = []
     with open(filename, "r") as f:
         for line in f:
-            match = matcher.fullmatch(line.rstrip())
-            if match:
-                number = match.group(0)
-
-                array.append(float(number))
-                print(number)
+            numbers = line.split(" ")
+            for number in numbers:
+                match = matcher.fullmatch(number.rstrip())
+                if match:
+                    number = match.group(0)
+                    array.append(float(number))
     return np.array(array)
 
 

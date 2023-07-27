@@ -21,6 +21,7 @@ SOFTWARE.
 
 #include "cleartext_library_float.h"
 #include "math.h"
+#include "float.h"
 
 using namespace std ;
 
@@ -226,6 +227,13 @@ void Relu(int32_t s1, vector<float>& inArr, vector<float>& outArr, vector<bool>&
 		outArr[i1] = hotArr[i1] ? 0.0 : inArr[i1] ;	
 	}
 }
+
+void Relu_nomask(int32_t s1, vector<float>& inArr, vector<float>& outArr) {
+	for (uint32_t i1 = 0; i1 < s1; i1++){
+		outArr[i1] = (inArr[i1] < 0.) ? 0.0 : inArr[i1] ;	
+	}
+}
+
 
 
 void Conv2DReshapeMatMulOPGroup(int32_t N, int32_t finalH, int32_t finalW, int32_t CO, int32_t g, int32_t G, vector<vector<float>>& inputArr, vector<vector<vector<vector<float>>>>& outputArr){
@@ -437,6 +445,110 @@ void MaxPool(
 		}
 	}
 }
+
+void MaxPool_nomask(
+	int32_t N, int32_t imgH, int32_t imgW, int32_t C,
+	int32_t ksizeH, int32_t ksizeW,
+	int32_t strideH, int32_t strideW,
+	int32_t H, int32_t W,
+	vector<vector<vector<vector<float>>>> &inArr,
+	vector<vector<vector<vector<float>>>> &outArr,
+	int32_t padHLeft, int32_t padHRight, int32_t padWLeft, int32_t padWRight)
+{
+	for (int n = 0; n < N; n++)
+	{
+		for (int c = 0; c < C; c++)
+		{
+			int32_t ctH = 0;
+			for (int h = 0 - padHLeft; h + ksizeH <= imgH + padHRight; h += strideH)
+			{
+				int32_t ctW = 0;
+				for (int w = 0 - padWLeft; w + ksizeW <= imgW + padWRight; w += strideW)
+				{
+					float maxi = -FLT_MAX;
+
+					if (!(h < 0 || h >= imgH || w < 0 || w >= imgW))
+						maxi = inArr[n][h][w][c];
+
+					// std::cout << h << "," << w << " maxi1: " << maxi << std::endl;
+					for (int kh = 0; kh < ksizeH; kh++)
+					{
+						for (int kw = 0; kw < ksizeW; kw++)
+						{
+							int32_t cur_h = h + kh;
+							int32_t cur_w = w + kw;
+							if (cur_h < 0 || cur_h >= imgH || cur_w < 0 || cur_w >= imgW)
+							{
+								continue;
+							}
+							else
+							{
+								float val = inArr[n][cur_h][cur_w][c];
+								// std::cout << cur_h << "," << cur_w << " val: " << val << " bool: " << (val > maxi) << std::endl;
+								maxi = std::max(maxi, inArr[n][cur_h][cur_w][c]);
+							}
+						}
+					}
+
+					// std::cout << h << "," << w << " maxi2: " << maxi << std::endl;
+					outArr[n][ctH][ctW][c] = maxi;
+					ctW++;
+				}
+				ctH++;
+			}
+		}
+	}
+}
+
+void AvgPool(
+	int32_t N, int32_t imgH, int32_t imgW, int32_t C, 
+	int32_t ksizeH, int32_t ksizeW, 
+	int32_t strideH, int32_t strideW,
+	int32_t H, int32_t W,
+	vector<vector<vector<vector<float>>>>& inArr, 
+	vector<vector<vector<vector<float>>>>& outArr) {
+	int size = N*H*C*W ;
+	int filter_size = ksizeH*ksizeW; 
+
+	for (int n = 0, size_k=0 ; n < N ; n++) {
+		for (int c = 0 ; c < C ; c++) {
+			for (int h = 0 ; h < H ; h++) {
+				for (int w = 0 ; w < W ; w++, size_k++) {
+					float avg_val = 0.0 ;
+					int img_h, img_w ;
+					img_h = h*strideH ;
+					img_w = w*strideW ;
+						
+					for (int kh = 0, filter_k = 0 ; kh < ksizeH ; kh++) {
+						img_h = h*strideH + kh ; 
+
+						for (int kw = 0 ; kw < ksizeW ; kw++, filter_k++) {
+							img_w = w*strideW + kw ;
+							float val ;
+							int this_h, this_w ;
+
+							if (img_h < 0 || img_h >= imgH || img_w < 0 || img_w >= imgW) {
+								val = 0.0 ;			
+								this_h = -1 ;
+								this_w = -1 ;
+							}	
+							else {
+								val = inArr[n][img_h][img_w][c] ;
+								this_h = kh ;
+								this_w = kw ;
+							}
+								
+							avg_val += val ;
+						}
+					}
+
+					outArr[n][h][w][c] = avg_val/filter_size ;
+				}
+			}
+		}
+	}
+}
+
 
 void ConvDerReshapeMatMulOPGroup(int32_t N, int32_t finalH, int32_t finalW, int32_t CO, int32_t g, int32_t G, 
 vector<vector<float>>& inputArr, 

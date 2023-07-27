@@ -99,12 +99,15 @@ generateAndDiffCode () {
 
 	./compile_aby.sh gen/random_forest0.cpp
 	./random_forest0 -r 0 &
-	./random_forest0 -r 1 > gen_val.txt &
+	# sleep 10 sec
+	sleep 10
+	./random_forest0 -r 1 > gen_val.txt 
 	wait
 
 	./compile_aby.sh test_suite/precompiled_output/random_forest0.cpp
 	./random_forest0 -r 0 &
-	./random_forest0 -r 1 > pre_val.txt &
+	sleep 10
+	./random_forest0 -r 1 > pre_val.txt 
 	wait
 
 	if cmp -s gen_val.txt pre_val.txt 
@@ -119,12 +122,14 @@ generateAndDiffCode () {
 
 	./compile_aby.sh gen/random_forest_polish0.cpp
 	./random_forest_polish0 -r 0 &
-	./random_forest_polish0 -r 1 > gen_val.txt &
+	sleep 10
+	./random_forest_polish0 -r 1 > gen_val.txt 
 	wait
 
 	./compile_aby.sh test_suite/precompiled_output/random_forest_polish0.cpp
 	./random_forest_polish0 -r 0 &
-	./random_forest_polish0 -r 1 > pre_val.txt &
+	sleep 10
+	./random_forest_polish0 -r 1 > pre_val.txt 
 	wait
 
 	if cmp -s gen_val.txt pre_val.txt 
@@ -139,6 +144,7 @@ generateAndDiffCode () {
 	then
 		exit 1
 	fi
+	exit 0
 }
 
 generateCodeAndForceCopyForFile () {
