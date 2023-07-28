@@ -209,9 +209,9 @@ public:
             u64 curr_rest = i % rest_size;
             u64 new_idx = curr_batch * (num_channel * rest_size) + curr_rest * num_channel + curr_channel;
 #ifdef Do_Masking
-            data[new_idx] = (i64)d;
+            data[new_idx] = (T)d;
 #else
-            data[new_idx] = (i64)(d * (1LL << scale));
+            data[new_idx] = (T)(d * (1LL << scale));
 #endif        
         }
     }
