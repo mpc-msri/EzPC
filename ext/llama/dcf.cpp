@@ -355,3 +355,189 @@ void evalDualDCF(int party, GroupElement* res, GroupElement idx, const DualDCFKe
         res[i] = res[i] + key.sb[i];
     }
 }
+
+// Real Endpoints
+std::pair<DCFET1KeyPack, DCFET1KeyPack> keyGenDCFET1(int Bin, GroupElement idx, GroupElement payload)
+{
+
+    static const block notOneBlock = toBlock(~0, ~1);
+    static const block notThreeBlock = toBlock(~0, ~3);
+    static const block TwoBlock = toBlock(0, 2);
+    static const block ThreeBlock = toBlock(0, 3);
+    const static block pt[4] = {ZeroBlock, OneBlock, TwoBlock, ThreeBlock};
+
+    int tid = omp_get_thread_num();
+    auto s = LlamaConfig::prngs[tid].get<std::array<block, 2>>();
+    block si[2][2];
+    block vi[2][2];
+
+    GroupElement V_alpha = 0;
+
+    block *k0 = new block[Bin + 1 - 7];
+    block *k1 = new block[Bin + 1 - 7];
+    uint64_t V_cw = 0;
+    uint64_t tL_cw = 0;
+    uint64_t tR_cw = 0;
+
+    s[0] = (s[0] & notOneBlock) ^ ((s[1] & OneBlock) ^ OneBlock);
+    k0[0] = s[0];
+    k1[0] = s[1];
+    block ct[4];
+
+    for (int i = 0; i < Bin - 7; ++i)
+    {
+        const u8 keep = static_cast<uint8_t>(idx >> (Bin - 1 - i)) & 1;
+
+        auto ss0 = s[0] & notOneBlock;
+        auto ss1 = s[1] & notOneBlock;
+
+        AES ak0(ss0);
+        AES ak1(ss1);
+        ak0.ecbEncFourBlocks(pt, ct);
+        si[0][0] = ct[0];
+        si[0][1] = ct[1];
+        vi[0][0] = ct[2];
+        vi[0][1] = ct[3];
+        ak1.ecbEncFourBlocks(pt, ct);
+        si[1][0] = ct[0];
+        si[1][1] = ct[1];
+        vi[1][0] = ct[2];
+        vi[1][1] = ct[3];
+
+        auto ti0 = lsb(s[0]);
+        auto ti1 = lsb(s[1]);
+        GroupElement sign = (ti1 == 1) ? -1 : +1;
+
+        GroupElement vi_01_converted;
+        GroupElement vi_11_converted;
+        GroupElement vi_10_converted;
+        GroupElement vi_00_converted;
+
+        vi_00_converted = lsb(vi[0][keep]);
+        vi_10_converted = lsb(vi[1][keep]);
+        vi_01_converted = lsb(vi[0][keep ^ 1]);
+        vi_11_converted = lsb(vi[1][keep ^ 1]);
+
+        GroupElement V_cw_i = sign * (- V_alpha - vi_01_converted + vi_11_converted);
+        if (keep == 1)
+        {
+            V_cw_i = V_cw_i + sign * payload;
+        }
+        V_cw_i = V_cw_i & 1;
+        V_alpha = V_alpha - vi_10_converted + vi_00_converted + sign * V_cw_i;
+
+        std::array<block, 2> siXOR{si[0][0] ^ si[1][0], si[0][1] ^ si[1][1]};
+
+        uint64_t tL_cw_i = lsb(si[0][0]) ^ lsb(si[1][0]) ^ keep ^ 1;
+        uint64_t tR_cw_i = lsb(si[0][1]) ^ lsb(si[1][1]) ^ keep;
+
+        // take scw to be the bits [127, 2] as scw = s0_loss ^ s1_loss
+        auto scw = si[0][keep ^ 1] ^ si[1][keep ^ 1] & notOneBlock;
+
+        k0[i + 1] = k1[i + 1] = scw;
+        V_cw = (V_cw << 1) | V_cw_i;
+        tL_cw = (tL_cw << 1) | tL_cw_i;
+        tR_cw = (tR_cw << 1) | tR_cw_i;
+
+        auto si0Keep = si[0][keep];
+        auto si1Keep = si[1][keep];
+
+        // extract the t^Keep_CW bit
+        auto TKeep = toBlock(0, keep == 0 ? tL_cw_i : tR_cw_i);
+
+        // set the next level of s,t
+        s[0] = si0Keep ^ (zeroAndAllOne[ti0] & (scw ^ TKeep));
+        s[1] = si1Keep ^ (zeroAndAllOne[ti1] & (scw ^ TKeep));
+    }
+
+    uint8_t t1last = lsb(s[1]);
+    GroupElement sign = (t1last == 1) ? -1 : +1;
+    block leaf = ZeroBlock;
+    GroupElement r = idx % 128;
+    for (int i = 0; i < 128; ++i)
+    {
+        uint64_t leaf_i = sign * ( isb(s[1], i) - isb(s[0], i) - V_alpha);
+        if (i < r) leaf_i += sign * payload;
+        leaf_i = leaf_i & 1;
+        if (i < 64)
+            leaf = leaf | toBlock(0, leaf_i << i);
+        else
+            leaf = leaf | toBlock(leaf_i << (i-64), 0);
+    }
+
+    return std::make_pair(DCFET1KeyPack(Bin, k0, V_cw, tL_cw, tR_cw, leaf), DCFET1KeyPack(Bin, k1, V_cw, tL_cw, tR_cw, leaf));
+}
+
+DCFNode evalDCFET1(int party, GroupElement idx, const DCFET1KeyPack &key)
+{
+    static const block notOneBlock = toBlock(~0, ~1);
+    static const block TwoBlock = toBlock(0, 2);
+    static const block ThreeBlock = toBlock(0, 3);
+    static const std::array<block, 2> ptL = {ZeroBlock, TwoBlock};
+    static const std::array<block, 2> ptR = {OneBlock, ThreeBlock};
+    GroupElement V = 0;
+    block s = key.k[0] & notOneBlock;
+    uint8_t t = lsb(key.k[0]);
+    std::cout << "t: " << uint64_t(t) << std::endl;
+    GroupElement sign = 1 - 2 * party;
+
+    for (int i = 0; i < key.Bin - 7; ++i)
+    {
+        uint8_t keep = static_cast<uint8_t>(idx >> (key.Bin - 1 - i)) & 1;
+
+        AES ak(s);
+        block ct[2];
+        uint8_t t_cw;
+
+        if (keep == 0)
+        {
+            ak.ecbEncTwoBlocks(ptL.data(), ct);
+            t_cw = (key.tL_cw >> (key.Bin - 8 - i)) & 1;
+        }
+        else
+        {
+            ak.ecbEncTwoBlocks(ptR.data(), ct);
+            t_cw = (key.tR_cw >> (key.Bin - 8 - i)) & 1;
+        }
+
+        block si = ct[0] & notOneBlock;
+        uint8_t ti = lsb(ct[0]);
+        block vi = ct[1];
+
+        V = V + sign * lsb(vi);
+        if (t == 1)
+        {
+            si = si ^ key.k[i + 1];
+            ti = ti ^ t_cw;
+            V = V + sign * ((key.V_cw >> (key.Bin - 8 - i)) & 1);
+        }
+
+        s = si;
+        t = ti;
+    }
+
+    DCFNode node;
+    node.s = s;
+    node.t = t;
+    node.v = V;
+    return node;
+}
+
+GroupElement evalDCFET1_finalize(int party, GroupElement idx, DCFNode &node, const DCFET1KeyPack &key)
+{
+    GroupElement r = idx % 128;
+    block s = node.s;
+    s = s ^ toBlock(0, node.t);
+
+    GroupElement V = node.v;
+    GroupElement sign = 1 - 2 * party;
+    if (node.t)
+    {
+        V = V + sign * (isb(node.s, r) + isb(key.leaf, r));
+    }
+    else
+    {
+        V = V + sign * (isb(node.s, r));
+    }
+    return V & 1;
+}

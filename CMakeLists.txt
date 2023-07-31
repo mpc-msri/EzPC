@@ -78,3 +78,8 @@ add_executable(resnet18_acc
     resnet18_acc.cpp
 )
 target_link_libraries (resnet18_acc ${PROJECT_NAME})
+
+add_executable(dcftest 
+    dcftest.cpp
+)
+target_link_libraries (dcftest ${PROJECT_NAME})

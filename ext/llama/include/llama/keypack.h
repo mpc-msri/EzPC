@@ -258,3 +258,22 @@ struct SignExtend2KeyPack
     GroupElement rw;
     GroupElement p[2];
 };
+
+struct DCFET1KeyPack{
+    int Bin;
+    osuCrypto::block *k;   // size Bin+1
+    uint64_t V_cw;   // bitsize Bout, size Bin
+    uint64_t tL_cw, tR_cw;
+    osuCrypto::block leaf;
+
+    DCFET1KeyPack(int Bin, osuCrypto::block *k, uint64_t V_cw, uint64_t tL_cw, uint64_t tR_cw, osuCrypto::block leaf) 
+        : Bin(Bin), k(k), V_cw(V_cw), tL_cw(tL_cw), tR_cw(tR_cw), leaf(leaf) {}
+    
+    DCFET1KeyPack() {
+        Bin = 0;
+        k = nullptr;
+        V_cw = 0;
+        tL_cw = 0;
+        tR_cw = 0;
+    }
+};
