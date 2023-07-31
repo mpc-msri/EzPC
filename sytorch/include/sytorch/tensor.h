@@ -301,7 +301,7 @@ public:
         file.close();
         for(u64 i = 0; i < size(); ++i)
         {
-            data[i] = (i64)(floatInput[i] * (1LL << scale));
+            data[i] = (T)(floatInput[i] * (1LL << scale));
         }
         delete[] floatInput;
     }
