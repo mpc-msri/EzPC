@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <map>
 #include <algorithm>
+#include <sytorch/backend/default.h>
 
 template <typename T>
 class SytorchModule {
@@ -181,7 +182,8 @@ public:
                 if (layer->useBias) {
 
                     for (u64 j = 0; j < bias.size; ++j) {
-                        bias.data[j] = T(floatWeights[wIdx + j] * (1LL << (2 * scale)));
+                        bias.data[j] = T(floatWeights[wIdx + j] * (float)(1LL << (2 * scale)));
+                        std::cout << u64(i64(floatWeights[wIdx + j] * (1LL << (2 * scale)))) << " : " << floatWeights[wIdx + j] << " : " << u64(floatWeights[wIdx + j] * (1LL << (2 * scale))) << std::endl;
                     }
 
                     wIdx += bias.size;
