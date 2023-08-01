@@ -188,7 +188,7 @@ public:
         {
             double d;
             std::cin >> d;
-            data[i] = (i64)(d * (1LL << scale));
+            data[i] = (T)(d * (1LL << scale));
         }
     }
 
@@ -283,7 +283,7 @@ public:
                     {
                         for (int m = 0; m < d5; m++)
                         {
-                            this->data[i * d2 * d3 * d4 * d5 + j * d3 * d4 * d5 + k * d4 * d5 + l * d5 + m] = (i64)(arr[i][j][k][l][m] * scale);
+                            this->data[i * d2 * d3 * d4 * d5 + j * d3 * d4 * d5 + k * d4 * d5 + l * d5 + m] = (T)(arr[i][j][k][l][m] * scale);
                         }
                     }
                 }
