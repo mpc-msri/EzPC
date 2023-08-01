@@ -16,7 +16,7 @@ int main()
         auto node0 = evalDCFET1(0, i, keys.first);
         auto node1 = evalDCFET1(1, i, keys.second);
         
-        std::cout << node0.s << " " << node1.s << std::endl;
+        // std::cout << node0.s << " " << node1.s << std::endl;
         always_assert(eq(node0.s, node1.s));
         always_assert(node0.t == node1.t);
         always_assert(((node0.v + node1.v) % 2) == 1);
@@ -26,7 +26,7 @@ int main()
         always_assert(v0 == (1 ^ v1));
     }
 
-    for (int i = 129; i < 256; ++i)
+    for (int i = 128; i < 256; ++i)
     {
         auto node0 = evalDCFET1(0, i, keys.first);
         auto node1 = evalDCFET1(1, i, keys.second);

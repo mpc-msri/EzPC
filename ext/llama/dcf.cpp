@@ -527,11 +527,11 @@ GroupElement evalDCFET1_finalize(int party, GroupElement idx, DCFNode &node, con
     GroupElement sign = 1 - 2 * party;
     if (node.t)
     {
-        V = V + sign * (isb(node.s, r) + isb(key.leaf, r));
+        V = V + sign * (isb(s, r) + isb(key.leaf, r));
     }
     else
     {
-        V = V + sign * (isb(node.s, r));
+        V = V + sign * (isb(s, r));
     }
     return V & 1;
 }
