@@ -41,6 +41,10 @@ def compile_model(backend):
         os.system(
             f"python3 {ezpc_dir}/OnnxBridge/main.py --path model.onnx --generate executable --backend {backend} --scale 15 --bitlength 40 "
         )
+    elif backend == "CLEARTEXT_fp":
+        os.system(
+            f"python3 {ezpc_dir}/OnnxBridge/main.py --path model.onnx --generate executable --backend {backend} "
+        )
     elif backend == "SECFLOAT" or backend == "SECFLOAT_CLEARTEXT":
         os.system(
             f"python3 {ezpc_dir}/OnnxBridge/main.py --path model.onnx --generate executable --backend {backend} "
@@ -61,6 +65,14 @@ def run_backend(backend, input):
 
         os.system(
             f"./model_CLEARTEXT_LLAMA_15 0 model_input_weights.dat < {input} > {raw_output}"
+        )
+    elif backend == "CLEARTEXT_fp":
+        # check if model compiled
+        assert os.path.exists("model_CLEARTEXT_fp_0")
+        assert os.path.exists("model_input_weights.dat")
+
+        os.system(
+            f"./model_CLEARTEXT_fp_0 0 model_input_weights.dat < {input} > {raw_output}"
         )
     elif backend == "LLAMA":
         # check if model compiled

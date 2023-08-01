@@ -142,6 +142,72 @@ jobs:
             pytest --backend CLEARTEXT_LLAMA -v -k 'hinet and batch' --batch_size 5
         shell: bash
 
+  Sytorch-ct-fp:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    container: 
+      image: drunkenlegend/onnxbridge:latest
+      options: --user root
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - name: Update Git
+        run: |
+            add-apt-repository ppa:git-core/ppa -y
+            apt-get update
+            apt-get install git -y 
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+            submodules: 'true'
+
+      - name: Install dependencies
+        run: |
+            apt-get update -y
+            
+      - name: Sytorch Cleartext Floating Point
+        if: always()
+        run: |
+            cd OnnxBridge/tests/
+            pytest --backend CLEARTEXT_fp -v -k 'lenet and not batch'
+            pytest --backend CLEARTEXT_fp -v -k 'hinet and not batch'
+            pytest --backend CLEARTEXT_fp -v -k 'chexpert and not batch'
+        shell: bash
+
+  Sytorch-ct-fp-batch:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    container: 
+      image: drunkenlegend/onnxbridge:latest
+      options: --user root
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - name: Update Git
+        run: |
+            add-apt-repository ppa:git-core/ppa -y
+            apt-get update
+            apt-get install git -y 
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+            submodules: 'true'
+
+      - name: Install dependencies
+        run: |
+            apt-get update -y
+            
+      - name: Sytorch Cleartext Floating Point Batch
+        if: always()
+        run: |
+            cd OnnxBridge/tests/
+            pytest --backend CLEARTEXT_fp -v -k 'lenet and batch' --batch_size 2
+            pytest --backend CLEARTEXT_fp -v -k 'hinet and batch' --batch_size 5
+        shell: bash
+      
+
   Secfloat:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
