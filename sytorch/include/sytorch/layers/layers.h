@@ -938,29 +938,98 @@ public:
 template <typename T>
 class Transpose: public Layer<T> {
 public:
-    Transpose() :  Layer<T>("Transpose") {}
+    std::vector<u64> perm;
+    Transpose(const std::vector<u64> &perm) : Layer<T>("Transpose"), perm(perm) {}
 
     void _resize(const std::vector<std::vector<u64>> &shapes) {
         always_assert(shapes.size() == 1);
         auto &shape = shapes[0];
-        always_assert(shape.size() == 2);
+        always_assert(shape.size() >= 2);
     }
 
     void _forward(Tensor<T> &a) {
-        always_assert(a.shape.size() == 2);
-        #pragma omp parallel for collapse(2)
-        for (u64 i = 0; i < a.shape[0]; ++i) {
-            for (u64 j = 0; j < a.shape[1]; ++j) {
-                this->activation.data[j * a.shape[0] + i] = a.data[i * a.shape[1] + j];
+        if (a.shape.size() == 2)
+        {
+#pragma omp parallel for collapse(2)
+            for (u64 i = 0; i < a.shape[0]; ++i)
+            {
+                for (u64 j = 0; j < a.shape[1]; ++j)
+                {
+                    this->activation.data[j * a.shape[perm[1]] + i] = a.data[i * a.shape[1] + j];
+                }
             }
+        }
+        else if (a.shape.size() == 4)
+        {
+            auto a_4d = a.as_4d();
+            auto out_4d = this->activation.as_4d();
+#pragma omp parallel for collapse(4)
+            for (int n = 0; n < a.shape[0]; ++n)
+            {
+                for (int h = 0; h < a.shape[1]; ++h)
+                {
+                    for (int w = 0; w < a.shape[2]; ++w)
+                    {
+                        for (int c = 0; c < a.shape[3]; ++c)
+                        {
+                            out_4d(perm[0] == 0 ? n : (perm[0] == 1 ? h : (perm[0] == 2 ? w : c)),
+                                   perm[1] == 0 ? n : (perm[1] == 1 ? h : (perm[1] == 2 ? w : c)),
+                                   perm[2] == 0 ? n : (perm[2] == 1 ? h : (perm[2] == 2 ? w : c)),
+                                   perm[3] == 0 ? n : (perm[3] == 1 ? h : (perm[3] == 2 ? w : c))) = a_4d(n, h, w, c);
+                        }
+                    }
+                }
+            }
+        }
+        else if (a.shape.size() == 5)
+        {
+            auto a_5d = a.as_5d();
+            auto out_5d = this->activation.as_5d();
+#pragma omp parallel for collapse(5)
+            for (int n = 0; n < a.shape[0]; ++n)
+            {
+                for (int h = 0; h < a.shape[1]; ++h)
+                {
+                    for (int w = 0; w < a.shape[2]; ++w)
+                    {
+                        for (int d = 0; d < a.shape[3]; ++d)
+                        {
+                            for (int c = 0; c < a.shape[4]; ++c)
+                            {
+                                out_5d(perm[0] == 0 ? n : (perm[0] == 1 ? h : (perm[0] == 2 ? w : (perm[0] == 3 ? d : c))),
+                                       perm[1] == 0 ? n : (perm[1] == 1 ? h : (perm[1] == 2 ? w : (perm[1] == 3 ? d : c))),
+                                       perm[2] == 0 ? n : (perm[2] == 1 ? h : (perm[2] == 2 ? w : (perm[2] == 3 ? d : c))),
+                                       perm[3] == 0 ? n : (perm[3] == 1 ? h : (perm[3] == 2 ? w : (perm[3] == 3 ? d : c))),
+                                       perm[4] == 0 ? n : (perm[4] == 1 ? h : (perm[4] == 2 ? w : (perm[4] == 3 ? d : c)))) = a_5d(n, h, w, d, c);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            throw std::runtime_error("supported only 2d, 4d, 5d tensors in transpose");
         }
     }
 
     std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {
         always_assert(inShapes.size() == 1);
         auto shape = inShapes[0];
-        always_assert(shape.size() == 2);
-        return {shape[1], shape[0]};
+        always_assert(perm.size() == shape.size());
+        for (auto &p : perm)
+        {
+            if (p == 1)
+                p = shape.size() - 1;
+            else if (p > 1)
+                p -= 1;
+        }
+        std::vector<u64> outShape;
+        for (auto &p : perm)
+        {
+            outShape.push_back(shape[p]);
+        }
+        return outShape;
     }
 };
 

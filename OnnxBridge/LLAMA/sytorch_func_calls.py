@@ -233,6 +233,13 @@ class Operator:
         # todo : check format
 
     @classmethod
+    def Transpose(cls, attributes, inputs, outputs, value_info, var_dict, mode, indent):
+        logger.debug("Inside Transpose function call.")
+        return str(
+            f"{'   ' * indent}new Transpose<T>( {'{'}{iterate_list(attributes['perm'])}{'}'});"
+        )
+
+    @classmethod
     def Gemm(cls, attributes, inputs, outputs, value_info, var_dict, mode, indent):
         logger.debug("Inside Gemm function call.")
         inn = value_info[inputs[0]][1][1]

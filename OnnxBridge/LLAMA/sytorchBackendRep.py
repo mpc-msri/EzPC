@@ -22,6 +22,7 @@ def func_call(node, value_info):
         "GlobalAveragePool": "GlobalAvgPool2D",
         "Add": "add",
         "ConvTranspose": "ConvTranspose3D",
+        "Transpose": "Transpose",
     }
     return func_map[node.op_type]
 
@@ -65,6 +66,7 @@ def inputs_to_take(node):
         "BatchNormalization": 1,
         "GlobalAveragePool": 1,
         "ConvTranspose": 1,
+        "Transpose": 1,
     }
     return tmp_dict[node]
 
