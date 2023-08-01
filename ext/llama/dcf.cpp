@@ -408,15 +408,10 @@ std::pair<DCFET1KeyPack, DCFET1KeyPack> keyGenDCFET1(int Bin, GroupElement idx, 
         auto ti1 = lsb(s[1]);
         GroupElement sign = (ti1 == 1) ? -1 : +1;
 
-        GroupElement vi_01_converted;
-        GroupElement vi_11_converted;
-        GroupElement vi_10_converted;
-        GroupElement vi_00_converted;
-
-        vi_00_converted = lsb(vi[0][keep]);
-        vi_10_converted = lsb(vi[1][keep]);
-        vi_01_converted = lsb(vi[0][keep ^ 1]);
-        vi_11_converted = lsb(vi[1][keep ^ 1]);
+        GroupElement vi_00_converted = lsb(vi[0][keep]);
+        GroupElement vi_10_converted = lsb(vi[1][keep]);
+        GroupElement vi_01_converted = lsb(vi[0][keep ^ 1]);
+        GroupElement vi_11_converted = lsb(vi[1][keep ^ 1]);
 
         GroupElement V_cw_i = sign * (- V_alpha - vi_01_converted + vi_11_converted);
         if (keep == 1)
@@ -432,7 +427,7 @@ std::pair<DCFET1KeyPack, DCFET1KeyPack> keyGenDCFET1(int Bin, GroupElement idx, 
         uint64_t tR_cw_i = lsb(si[0][1]) ^ lsb(si[1][1]) ^ keep;
 
         // take scw to be the bits [127, 2] as scw = s0_loss ^ s1_loss
-        auto scw = si[0][keep ^ 1] ^ si[1][keep ^ 1] & notOneBlock;
+        auto scw = (si[0][keep ^ 1] ^ si[1][keep ^ 1]) & notOneBlock;
 
         k0[i + 1] = k1[i + 1] = scw;
         V_cw = (V_cw << 1) | V_cw_i;
@@ -478,7 +473,6 @@ DCFNode evalDCFET1(int party, GroupElement idx, const DCFET1KeyPack &key)
     GroupElement V = 0;
     block s = key.k[0] & notOneBlock;
     uint8_t t = lsb(key.k[0]);
-    std::cout << "t: " << uint64_t(t) << std::endl;
     GroupElement sign = 1 - 2 * party;
 
     for (int i = 0; i < key.Bin - 7; ++i)
