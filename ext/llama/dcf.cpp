@@ -384,7 +384,6 @@ std::pair<DCFET1KeyPack, DCFET1KeyPack> keyGenDCFET1(int Bin, GroupElement idx, 
     k1[0] = s[1];
     block ct[4];
 
-    uint8_t t1last;
     for (int i = 0; i < Bin - 7; ++i)
     {
         const u8 keep = static_cast<uint8_t>(idx >> (Bin - 1 - i)) & 1;
@@ -407,20 +406,19 @@ std::pair<DCFET1KeyPack, DCFET1KeyPack> keyGenDCFET1(int Bin, GroupElement idx, 
 
         auto ti0 = lsb(s[0]);
         auto ti1 = lsb(s[1]);
-        GroupElement sign = (ti1 == 1) ? -1 : +1;
 
         GroupElement vi_00_converted = lsb(vi[0][keep]);
         GroupElement vi_10_converted = lsb(vi[1][keep]);
         GroupElement vi_01_converted = lsb(vi[0][keep ^ 1]);
         GroupElement vi_11_converted = lsb(vi[1][keep ^ 1]);
 
-        GroupElement V_cw_i = sign * (- V_alpha - vi_01_converted + vi_11_converted);
+        GroupElement V_cw_i = (- V_alpha - vi_01_converted + vi_11_converted);
         if (keep == 1)
         {
-            V_cw_i = V_cw_i + sign * payload;
+            V_cw_i = V_cw_i + payload;
         }
         V_cw_i = V_cw_i & 1;
-        V_alpha = V_alpha - vi_10_converted + vi_00_converted + sign * V_cw_i;
+        V_alpha = V_alpha - vi_10_converted + vi_00_converted + V_cw_i;
 
         std::array<block, 2> siXOR{si[0][0] ^ si[1][0], si[0][1] ^ si[1][1]};
 
@@ -443,7 +441,6 @@ std::pair<DCFET1KeyPack, DCFET1KeyPack> keyGenDCFET1(int Bin, GroupElement idx, 
         if (i == Bin - 8) {
             s[0] = si0Keep ^ (zeroAndAllOne[ti0] & scw);
             s[1] = si1Keep ^ (zeroAndAllOne[ti1] & scw);
-            t1last = (keep == 0 ? tL_cw_i : tR_cw_i) ^ ti1;
         }
         else {
             auto TKeep = toBlock(0, keep == 0 ? tL_cw_i : tR_cw_i);
@@ -455,13 +452,12 @@ std::pair<DCFET1KeyPack, DCFET1KeyPack> keyGenDCFET1(int Bin, GroupElement idx, 
     }
 
     // t1last = lsb(s[1]);
-    GroupElement sign = (t1last == 1) ? -1 : +1;
     block leaf = ZeroBlock;
     GroupElement r = idx % 128;
     for (int i = 0; i < 128; ++i)
     {
-        uint64_t leaf_i = sign * ( isb(s[1], i) - isb(s[0], i) - V_alpha);
-        if (i < r) leaf_i += sign * payload;
+        uint64_t leaf_i = isb(s[1], i) - isb(s[0], i) - V_alpha;
+        if (i < r) leaf_i += payload;
         leaf_i = leaf_i & 1;
         if (i < 64)
             leaf = leaf | toBlock(0, leaf_i << i);
@@ -482,7 +478,6 @@ DCFNode evalDCFET1(int party, GroupElement idx, const DCFET1KeyPack &key)
     GroupElement V = 0;
     block s = key.k[0] & notOneBlock;
     uint8_t t = lsb(key.k[0]);
-    GroupElement sign = 1 - 2 * party;
 
     for (int i = 0; i < key.Bin - 7; ++i)
     {
@@ -507,12 +502,12 @@ DCFNode evalDCFET1(int party, GroupElement idx, const DCFET1KeyPack &key)
         uint8_t ti = lsb(ct[0]);
         block vi = ct[1];
 
-        V = V + sign * lsb(vi);
+        V = V + lsb(vi);
         if (t == 1)
         {
             si = si ^ key.k[i + 1];
             ti = ti ^ t_cw;
-            V = V + sign * ((key.V_cw >> (key.Bin - 8 - i)) & 1);
+            V = V + ((key.V_cw >> (key.Bin - 8 - i)) & 1);
         }
 
         if (i != key.Bin - 8)
@@ -535,14 +530,13 @@ GroupElement evalDCFET1_finalize(int party, GroupElement idx, DCFNode &node, con
     // s = s ^ toBlock(0, node.t);
 
     GroupElement V = node.v;
-    GroupElement sign = 1 - 2 * party;
     if (node.t)
     {
-        V = V + sign * (isb(s, r) + isb(key.leaf, r));
+        V = V + (isb(s, r) + isb(key.leaf, r));
     }
     else
     {
-        V = V + sign * (isb(s, r));
+        V = V + (isb(s, r));
     }
     return V & 1;
 }

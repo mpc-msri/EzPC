@@ -108,7 +108,7 @@ void test1_2bit()
 
 void exhaustive_test_2bit(int bw)
 {
-    std::cout << "Random Test with bw = " << bw << std::endl;
+    std::cout << "Exhaustive Test with bw = " << bw << std::endl;
     GroupElement alpha = random_ge(bw);
     for (int j = 0; j < 10; ++j)
     {
