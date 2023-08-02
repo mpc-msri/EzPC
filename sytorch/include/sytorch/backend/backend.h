@@ -54,6 +54,9 @@ public:
     // relu API
     virtual void relu(const Tensor<T> &in, const Tensor<T> &out, const Tensor<T> &drelu, u64 scale, int mode) NOT_IMPLEMENTED;
 
+    // leakyrelu API
+    virtual void leakyRelu(const Tensor<T> &in, const Tensor<T> &out, const Tensor<T> &drelu, u64 scale, int mode, u64 alpha) NOT_IMPLEMENTED;
+
     // avgpool API
     virtual void div(Tensor<T> &in, T divisor, u64 scale) NOT_IMPLEMENTED;
     virtual void sumPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> &in, Tensor4D<T> &out) NOT_IMPLEMENTED;

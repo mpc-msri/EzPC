@@ -117,6 +117,20 @@ void ClearText<T>::relu(const Tensor<T> &in, const Tensor<T> &out, const Tensor<
 }
 
 template <typename T>
+void ClearText<T>::leakyRelu(const Tensor<T> &in, const Tensor<T> &out, const Tensor<T> &drelu, u64 scale, int mode, u64 alpha)
+{
+    assert(in.is_same_shape(out));
+    assert(in.is_same_shape(drelu));
+    fastfor(in.size(), [&](u64 i)
+            {
+                drelu.data[i] = (T)(in.data[i] > 0);
+                assert(drelu.data[i] == 1 || drelu.data[i] == 0);
+                // leakyrelu = relu(alpha*x - relu(x)) + relu(x)
+                out.data[i] = (drelu.data[i] == 1) ? in.data[i] : (T)(alpha * in.data[i]);
+                out.data[i] = (drelu.data[i] == 1) ? in.data[i] : (T)(out.data[i] / (1LL << scale)); });
+}
+
+template <typename T>
 void ClearText<T>::truncate(T *in, T *out, u64 shift, u64 size, u8 mode) {
     fastfor(size, [&] (u64 i) {
         if constexpr (std::is_floating_point<T>::value) {

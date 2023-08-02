@@ -12,6 +12,7 @@ def func_call(node, value_info):
     """
     func_map = {
         "Relu": "ReLU",
+        "LeakyRelu": "LeakyReLU",
         "Conv": f"{'Conv3D' if len(value_info[node.inputs[0]][1]) == 5 else 'Conv2D'}",
         "MaxPool": "MaxPool2D",
         "Flatten": "Flatten",
@@ -57,6 +58,7 @@ def inputs_to_take(node):
     tmp_dict = {
         "Conv": 1,
         "Relu": 1,
+        "LeakyRelu": 1,
         "MaxPool": 1,
         "Gemm": 1,
         "Flatten": 1,

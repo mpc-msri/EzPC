@@ -94,6 +94,15 @@ class Operator:
         return str(f"{'   ' * indent}new ReLU<T>();")
 
     @classmethod
+    def LeakyRelu(cls, attributes, inputs, outputs, value_info, var_dict, mode, indent):
+        logger.debug("Inside LeakyRelu function call.")
+        if "alpha" in attributes.keys():
+            alpha = attributes["alpha"]
+        else:
+            alpha = 0.01
+        return str(f"{'   ' * indent}new LeakyReLU<T>({alpha});")
+
+    @classmethod
     def BatchNormalization(
         cls, attributes, inputs, outputs, value_info, var_dict, mode, indent
     ):

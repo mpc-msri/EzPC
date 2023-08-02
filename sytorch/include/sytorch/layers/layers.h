@@ -511,6 +511,35 @@ public:
 };
 
 template <typename T>
+class LeakyReLU : public Layer<T>
+{
+public:
+    Tensor<T> drelu;
+    double alpha;
+    LeakyReLU(double alpha) : Layer<T>("LeakyReLU"), drelu({0}), alpha(alpha) {}
+
+    void _resize(const std::vector<std::vector<u64>> &shapes)
+    {
+        always_assert(shapes.size() == 1);
+        auto &shape = shapes[0];
+        this->drelu.resize(shape);
+    }
+
+    void _forward(Tensor<T> &a)
+    {
+        T alphaFix = alpha * (1LL << this->scale);
+        this->backend->leakyRelu(a, this->activation, this->drelu, this->scale, this->mode, alphaFix);
+    }
+
+    std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes)
+    {
+        always_assert(inShapes.size() == 1);
+        auto &inShape = inShapes[0];
+        return inShape;
+    }
+};
+
+template <typename T>
 class BatchNormInference : public Layer<T> {
 public:
     Tensor1D<T> A; // scale = s

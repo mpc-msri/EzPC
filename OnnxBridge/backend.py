@@ -122,6 +122,7 @@ class IR(Backend):
         not_supported = []
         implemented_sytorch = [
             "Relu",
+            "LeakyRelu",
             "Softmax",
             "Conv",
             "MaxPool",

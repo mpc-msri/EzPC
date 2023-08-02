@@ -173,8 +173,8 @@ class OnnxNode:
 
     @classmethod
     def LeakyRelu(cls, node):
-        if "alpha" not in node.attributes:
-            node.attributes["alpha"] = 0.01
+        if "alpha" not in node.attrs:
+            node.attrs["alpha"] = 0.01
 
     @classmethod
     def Tanh(cls, node):
