@@ -384,6 +384,7 @@ std::pair<DCFET1KeyPack, DCFET1KeyPack> keyGenDCFET1(int Bin, GroupElement idx, 
     k1[0] = s[1];
     block ct[4];
 
+    uint8_t t1last;
     for (int i = 0; i < Bin - 7; ++i)
     {
         const u8 keep = static_cast<uint8_t>(idx >> (Bin - 1 - i)) & 1;
@@ -427,7 +428,9 @@ std::pair<DCFET1KeyPack, DCFET1KeyPack> keyGenDCFET1(int Bin, GroupElement idx, 
         uint64_t tR_cw_i = lsb(si[0][1]) ^ lsb(si[1][1]) ^ keep;
 
         // take scw to be the bits [127, 2] as scw = s0_loss ^ s1_loss
-        auto scw = (si[0][keep ^ 1] ^ si[1][keep ^ 1]) & notOneBlock;
+        auto scw = (si[0][keep ^ 1] ^ si[1][keep ^ 1]);
+        if (i != Bin - 8)
+            scw = scw & notOneBlock;
 
         k0[i + 1] = k1[i + 1] = scw;
         V_cw = (V_cw << 1) | V_cw_i;
@@ -437,15 +440,21 @@ std::pair<DCFET1KeyPack, DCFET1KeyPack> keyGenDCFET1(int Bin, GroupElement idx, 
         auto si0Keep = si[0][keep];
         auto si1Keep = si[1][keep];
 
-        // extract the t^Keep_CW bit
-        auto TKeep = toBlock(0, keep == 0 ? tL_cw_i : tR_cw_i);
+        if (i == Bin - 8) {
+            s[0] = si0Keep ^ (zeroAndAllOne[ti0] & scw);
+            s[1] = si1Keep ^ (zeroAndAllOne[ti1] & scw);
+            t1last = (keep == 0 ? tL_cw_i : tR_cw_i) ^ ti1;
+        }
+        else {
+            auto TKeep = toBlock(0, keep == 0 ? tL_cw_i : tR_cw_i);
 
-        // set the next level of s,t
-        s[0] = si0Keep ^ (zeroAndAllOne[ti0] & (scw ^ TKeep));
-        s[1] = si1Keep ^ (zeroAndAllOne[ti1] & (scw ^ TKeep));
+            // set the next level of s,t
+            s[0] = si0Keep ^ (zeroAndAllOne[ti0] & (scw ^ TKeep));
+            s[1] = si1Keep ^ (zeroAndAllOne[ti1] & (scw ^ TKeep));
+        }
     }
 
-    uint8_t t1last = lsb(s[1]);
+    // t1last = lsb(s[1]);
     GroupElement sign = (t1last == 1) ? -1 : +1;
     block leaf = ZeroBlock;
     GroupElement r = idx % 128;
@@ -494,7 +503,7 @@ DCFNode evalDCFET1(int party, GroupElement idx, const DCFET1KeyPack &key)
             t_cw = (key.tR_cw >> (key.Bin - 8 - i)) & 1;
         }
 
-        block si = ct[0] & notOneBlock;
+        block si = ct[0];
         uint8_t ti = lsb(ct[0]);
         block vi = ct[1];
 
@@ -506,6 +515,8 @@ DCFNode evalDCFET1(int party, GroupElement idx, const DCFET1KeyPack &key)
             V = V + sign * ((key.V_cw >> (key.Bin - 8 - i)) & 1);
         }
 
+        if (i != key.Bin - 8)
+            si = si & notOneBlock;
         s = si;
         t = ti;
     }
@@ -521,7 +532,7 @@ GroupElement evalDCFET1_finalize(int party, GroupElement idx, DCFNode &node, con
 {
     GroupElement r = idx % 128;
     block s = node.s;
-    s = s ^ toBlock(0, node.t);
+    // s = s ^ toBlock(0, node.t);
 
     GroupElement V = node.v;
     GroupElement sign = 1 - 2 * party;
