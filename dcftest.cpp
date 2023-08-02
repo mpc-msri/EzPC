@@ -262,11 +262,45 @@ void random_test_2bit(int bw)
     }
 }
 
+void benchmark_1bit(int bw)
+{
+    GroupElement alpha = random_ge(bw);
+    auto keys = keyGenDCFET1(bw, alpha, 1);
+
+    auto t0 = std::chrono::high_resolution_clock::now();
+    for (GroupElement i = 0; i < 1000000; ++i)
+    {
+        GroupElement idx = random_ge(bw);
+        auto node0 = evalDCFET1(0, idx, keys.first);
+        auto v0 = evalDCFET1_finalize(0, idx, node0, keys.first);
+    }
+    auto t1 = std::chrono::high_resolution_clock::now();
+    std::cout << "1 bit time = " << std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count() << std::endl;
+}
+
+void benchmark_2bit(int bw)
+{
+    GroupElement alpha = random_ge(bw);
+    auto keys = keyGenDCFET2(bw, alpha, 1);
+
+    auto t0 = std::chrono::high_resolution_clock::now();
+    for (GroupElement i = 0; i < 1000000; ++i)
+    {
+        GroupElement idx = random_ge(bw);
+        auto node0 = evalDCFET2(0, idx, keys.first);
+        auto v0 = evalDCFET2_finalize(0, idx, node0, keys.first);
+    }
+    auto t1 = std::chrono::high_resolution_clock::now();
+    std::cout << "2 bit time = " << std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count() << std::endl;
+}
+
 int main()
 {
     uint64_t seedKey = 0xdeadbeefbadc0ffe;
+    auto t = time(NULL);
+    std::cout << "time seed = " << t << std::endl;
     for(int i = 0; i < 256; ++i) {
-        LlamaConfig::prngs[i].SetSeed(osuCrypto::toBlock(time(NULL), seedKey));
+        LlamaConfig::prngs[i].SetSeed(osuCrypto::toBlock(t + i, seedKey));
     }
 
     test1();
@@ -294,6 +328,9 @@ int main()
     random_test_2bit(63);
     random_test_2bit(62);
     random_test_2bit(61);
+
+    benchmark_1bit(64);
+    benchmark_2bit(64);
 
     return 0;
 }
