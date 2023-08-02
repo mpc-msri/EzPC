@@ -241,6 +241,27 @@ void random_test(int bw)
     }
 }
 
+void random_test_2bit(int bw)
+{
+    std::cout << "Random Test with bw = " << bw << std::endl;
+    GroupElement alpha = random_ge(bw);
+    auto keys = keyGenDCFET2(bw, alpha, 1);
+
+    for (GroupElement i = 0; i < 1000; ++i)
+    {
+        GroupElement idx = random_ge(bw);
+        auto node0 = evalDCFET2(0, idx, keys.first);
+        auto node1 = evalDCFET2(1, idx, keys.second);
+
+        auto v0 = evalDCFET2_finalize(0, idx, node0, keys.first);
+        auto v1 = evalDCFET2_finalize(1, idx, node1, keys.second);
+        if (idx < alpha)
+            always_assert(((v0 + v1) % 4) == 1);
+        else
+            always_assert(((v0 + v1) % 4) == 0);
+    }
+}
+
 int main()
 {
     uint64_t seedKey = 0xdeadbeefbadc0ffe;
@@ -268,6 +289,11 @@ int main()
     exhaustive_test_2bit(14);
     exhaustive_test_2bit(15);
     exhaustive_test_2bit(16);
+
+    random_test_2bit(64);
+    random_test_2bit(63);
+    random_test_2bit(62);
+    random_test_2bit(61);
 
     return 0;
 }

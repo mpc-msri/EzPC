@@ -541,6 +541,40 @@ GroupElement evalDCFET1_finalize(int party, GroupElement idx, DCFNode &node, con
     return V & 1;
 }
 
+void set2bit(block &b, int i, GroupElement v)
+{
+    v = v & 3;
+    int idx = 2 * i;
+    u64 up = _mm_cvtsi128_si64x(b);
+    u64 down = _mm_cvtsi128_si64x(_mm_srli_si128(b, 8));
+    if (idx < 32)
+    {
+        // down = down & (~(3ull << idx));
+        down = down | (v << idx);
+    }
+    else
+    {
+        // up = up & (~(3ull << (idx - 32)));
+        up = up | (v << (idx - 32));
+    }
+    b = toBlock(down, up);
+}
+
+GroupElement get2bit(const block &b, int i)
+{
+    int idx = 2 * i;
+    if (idx < 32)
+    {
+        u64 down = _mm_cvtsi128_si64x(_mm_srli_si128(b, 8));
+        return (down >> idx) & 3;
+    }
+    else
+    {
+        u64 up = _mm_cvtsi128_si64x(b);
+        return (up >> (idx - 32)) & 3;
+    }
+}
+
 std::pair<DCFET2KeyPack, DCFET2KeyPack> keyGenDCFET2(int Bin, GroupElement idx, GroupElement payload)
 {
 
@@ -559,7 +593,7 @@ std::pair<DCFET2KeyPack, DCFET2KeyPack> keyGenDCFET2(int Bin, GroupElement idx, 
 
     block *k0 = new block[Bin + 1 - 6];
     block *k1 = new block[Bin + 1 - 6];
-    uint64_t V_cw = 0;
+    block V_cw = ZeroBlock;
     uint64_t tL_cw = 0;
     uint64_t tR_cw = 0;
 
@@ -616,7 +650,8 @@ std::pair<DCFET2KeyPack, DCFET2KeyPack> keyGenDCFET2(int Bin, GroupElement idx, 
             scw = scw & notOneBlock;
 
         k0[i + 1] = k1[i + 1] = scw;
-        V_cw = (V_cw << 2) | V_cw_i; // V_cw is 64-bit, make it 128-bit
+        // V_cw = (V_cw << 2) | V_cw_i; // V_cw is 64-bit, make it 128-bit
+        set2bit(V_cw, i, V_cw_i);
         tL_cw = (tL_cw << 1) | tL_cw_i;
         tR_cw = (tR_cw << 1) | tR_cw_i;
 
@@ -692,7 +727,7 @@ DCFNode evalDCFET2(int party, GroupElement idx, const DCFET2KeyPack &key)
         {
             si = si ^ key.k[i + 1];
             ti = ti ^ t_cw;
-            V = V + sign * ((key.V_cw >> (2*(key.Bin - 7 - i))) & 3);
+            V = V + sign * get2bit(key.V_cw, i);
         }
 
         if (i != key.Bin - 7)
