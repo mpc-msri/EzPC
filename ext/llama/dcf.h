@@ -35,6 +35,21 @@ inline osuCrypto::u8 lsb(const osuCrypto::block &b)
     return _mm_cvtsi128_si64x(b) & 1;
 }
 
+inline osuCrypto::u8 lsb2(const osuCrypto::block &b)
+{
+    return _mm_cvtsi128_si64x(b) & 3;
+}
+
+inline osuCrypto::u8 isb2(const osuCrypto::block &b, int i)
+{
+    if (i < 32) {
+        return (_mm_cvtsi128_si64x(b) >> (2*i)) & 3;
+    }
+    else {
+        return (_mm_cvtsi128_si64x(_mm_srli_si128(b, 8)) >> (2*i - 64)) & 3;
+    }
+}
+
 inline osuCrypto::u8 isb(const osuCrypto::block &b, int i)
 {
     if (i < 64) {
@@ -79,3 +94,7 @@ struct DCFNode
 std::pair<DCFET1KeyPack, DCFET1KeyPack> keyGenDCFET1(int Bin, GroupElement idx, GroupElement payload);
 DCFNode evalDCFET1(int party, GroupElement idx, const DCFET1KeyPack &key);
 GroupElement evalDCFET1_finalize(int party, GroupElement idx, DCFNode &node, const DCFET1KeyPack &key);
+
+std::pair<DCFET2KeyPack, DCFET2KeyPack> keyGenDCFET2(int Bin, GroupElement idx, GroupElement payload);
+DCFNode evalDCFET2(int party, GroupElement idx, const DCFET2KeyPack &key);
+GroupElement evalDCFET2_finalize(int party, GroupElement idx, DCFNode &node, const DCFET2KeyPack &key);
