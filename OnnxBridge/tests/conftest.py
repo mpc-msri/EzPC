@@ -9,8 +9,14 @@ def pytest_addoption(parser):
     parser.addoption(
         "--backend",
         action="store",
-        choices=["CLEARTEXT_LLAMA", "LLAMA", "SECFLOAT", "SECFLOAT_CLEARTEXT"],
-        help="backend : CLEARTEXT_LLAMA | LLAMA | SECFLOAT | SECFLOAT_CLEARTEXT",
+        choices=[
+            "CLEARTEXT_LLAMA",
+            "LLAMA",
+            "SECFLOAT",
+            "SECFLOAT_CLEARTEXT",
+            "CLEARTEXT_fp",
+        ],
+        help="backend : CLEARTEXT_LLAMA | CLEARTEXT_fp | LLAMA | SECFLOAT | SECFLOAT_CLEARTEXT",
         required=True,
     )
     parser.addoption(

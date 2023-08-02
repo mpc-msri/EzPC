@@ -6,7 +6,13 @@ from backend import prepare
 
 
 def parse_args():
-    backend = ["CLEARTEXT_LLAMA", "LLAMA", "SECFLOAT", "SECFLOAT_CLEARTEXT"]
+    backend = [
+        "CLEARTEXT_LLAMA",
+        "LLAMA",
+        "SECFLOAT",
+        "SECFLOAT_CLEARTEXT",
+        "CLEARTEXT_fp",
+    ]
     parser = argparse.ArgumentParser()
     parser.add_argument("--path", required=True, type=str, help="Path to the Model.")
     parser.add_argument(
@@ -32,7 +38,7 @@ def parse_args():
     )
     parser.add_argument(
         "--generate",
-        required=any(b in argv for b in [backend[2], backend[3]]),
+        required=True,
         type=str,
         choices=["code", "executable"],
         default="code",
@@ -49,7 +55,7 @@ def main():
     mode = "u64" if args.backend == "LLAMA" else "i64"
 
     # Export the Model as Secfloat and writes to a cpp file
-    if args.backend in ["CLEARTEXT_LLAMA", "LLAMA"]:
+    if args.backend in ["CLEARTEXT_LLAMA", "LLAMA", "CLEARTEXT_fp"]:
         main_path = os.path.dirname(os.path.abspath(__file__))
         file_path = os.path.join(main_path, "LLAMA")
         backendrep.export_model(mode, args.scale, args.bitlength, args.backend)
@@ -65,7 +71,7 @@ def main():
             os.system(
                 f"{file_path}/compile_secfloat.sh {args.path[:-5]}_secfloat{ct}.cpp"
             )
-        elif args.backend in ["CLEARTEXT_LLAMA", "LLAMA"]:
+        elif args.backend in ["CLEARTEXT_LLAMA", "LLAMA", "CLEARTEXT_fp"]:
             os.system(
                 f"{file_path}/compile_llama.sh {args.path[:-5]}_{args.backend}_{args.scale}.cpp"
             )
