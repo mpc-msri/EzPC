@@ -285,7 +285,7 @@ struct FloatToFixKeyPack
 
 struct ReluExtendKeyPack
 {
-    DCFKeyPack dcfKey;
+    DCFET2KeyPack dcfKey;
     GroupElement rd, rw;
     GroupElement p[4];
     GroupElement q[2];

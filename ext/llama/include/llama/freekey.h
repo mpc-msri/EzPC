@@ -42,6 +42,12 @@ inline void freeDCFKeyPack(DCFET1KeyPack &key){
     }
 }
 
+inline void freeDCFKeyPack(DCFET2KeyPack &key){
+    if (!LlamaConfig::dealer->ramdisk) {
+        delete[] key.k;
+    }
+}
+
 inline void freeDCFKeyPackPair(std::pair<DCFKeyPack, DCFKeyPack> &keys){
     delete[] keys.first.k;
     delete[] keys.second.k;
@@ -266,8 +272,6 @@ inline void freeReluExtendKeyPackPair(std::pair<ReluExtendKeyPack, ReluExtendKey
 {
     delete[] keys.first.dcfKey.k;
     delete[] keys.second.dcfKey.k;
-    delete[] keys.first.dcfKey.g;
-    delete[] keys.first.dcfKey.v;
 }
 
 inline void freeSignExtend2KeyPack(SignExtend2KeyPack &key)

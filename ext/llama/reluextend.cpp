@@ -4,7 +4,7 @@
 std::pair<ReluExtendKeyPack, ReluExtendKeyPack> keyGenReluExtend(int bin, int bout, GroupElement rin, GroupElement routY, GroupElement routDrelu)
 {
     std::pair<ReluExtendKeyPack, ReluExtendKeyPack> keys;
-    auto dcfKeys = keyGenDCF(bin, 2, rin, 1);
+    auto dcfKeys = keyGenDCFET2(bin, rin, 1);
     keys.first.dcfKey = dcfKeys.first;
     keys.second.dcfKey = dcfKeys.second;
 

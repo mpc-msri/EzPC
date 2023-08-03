@@ -2346,8 +2346,8 @@ void relu_extend_eval_threads_helper(int thread_idx, int32_t size, int bin, int 
     for(int i = p.first; i < p.second; i += 1){
         GroupElement y = x[i] + (1ULL << (bin - 1));
         mod(y, bin);
-        evalDCF(party - 2, &wrap[i], x[i], keys[i].dcfKey);
-        evalDCF(party - 2, &drelu[i], y, keys[i].dcfKey);
+        wrap[i] = evalDCF(party - 2, x[i], keys[i].dcfKey);
+        drelu[i] = evalDCF(party - 2, y, keys[i].dcfKey);
         drelu[i] = drelu[i] - wrap[i];
         if (party == 2) {
             if (y >= (1ULL << (bin - 1))) {

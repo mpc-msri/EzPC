@@ -427,6 +427,17 @@ void Peer::send_dcfet1_keypack(const DCFET1KeyPack &kp) {
     send_ge(42, 64);
 }
 
+void Peer::send_dcfet2_keypack(const DCFET2KeyPack &kp) {
+    for (int i = 0; i < kp.Bin - 5; ++i) {
+        send_block(kp.k[i]);
+    }
+    send_block(kp.V_cw);
+    send_ge(kp.tL_cw, kp.Bin - 6);
+    send_ge(kp.tR_cw, kp.Bin - 6);
+    send_block(kp.leaf);
+    send_ge(42, 64);
+}
+
 void Peer::send_ddcf_keypack(const DualDCFKeyPack &kp) {
     send_dcf_keypack(kp.dcfKey);
     for (int i = 0; i < kp.groupSize; ++i) {
@@ -634,7 +645,7 @@ void Peer::send_float_to_fix_key(const FloatToFixKeyPack &kp, int bl)
 
 void Peer::send_relu_extend_key(const ReluExtendKeyPack &kp, int bin, int bout)
 {
-    send_dcf_keypack(kp.dcfKey);
+    send_dcfet2_keypack(kp.dcfKey);
     send_ge(kp.rd, 2);
     send_ge(kp.rw, 2);
     for(int i = 0; i < 4; ++i)
@@ -903,7 +914,7 @@ DCFET1KeyPack Dealer::recv_dcfet1_keypack(int Bin) {
         kp.k = (osuCrypto::block *)ramdiskBuffer;
         ramdiskBuffer += sizeof(osuCrypto::block) * (Bin - 6);
     } else {
-        kp.k = new osuCrypto::block[Bin + 1];
+        kp.k = new osuCrypto::block[Bin - 6];
         for (int i = 0; i < Bin - 6; ++i) {
             kp.k[i] = recv_block();
         }
@@ -912,6 +923,29 @@ DCFET1KeyPack Dealer::recv_dcfet1_keypack(int Bin) {
     kp.V_cw = recv_ge(kp.Bin - 7);
     kp.tL_cw = recv_ge(kp.Bin - 7);
     kp.tR_cw = recv_ge(kp.Bin - 7);
+    kp.leaf = recv_block();
+    GroupElement t = recv_ge(64);
+    always_assert(t == 42);
+    return kp;
+}
+
+DCFET2KeyPack Dealer::recv_dcfet2_keypack(int Bin) {
+    DCFET2KeyPack kp;
+    kp.Bin = Bin;
+
+    if (ramdisk) {
+        kp.k = (osuCrypto::block *)ramdiskBuffer;
+        ramdiskBuffer += sizeof(osuCrypto::block) * (Bin - 5);
+    } else {
+        kp.k = new osuCrypto::block[Bin - 5];
+        for (int i = 0; i < Bin - 5; ++i) {
+            kp.k[i] = recv_block();
+        }
+    }
+
+    kp.V_cw = recv_block();
+    kp.tL_cw = recv_ge(kp.Bin - 6);
+    kp.tR_cw = recv_ge(kp.Bin - 6);
     kp.leaf = recv_block();
     GroupElement t = recv_ge(64);
     always_assert(t == 42);
@@ -1391,7 +1425,7 @@ FloatToFixKeyPack Dealer::recv_float_to_fix_key(int bl)
 ReluExtendKeyPack Dealer::recv_relu_extend_key(int bin, int bout)
 {
     ReluExtendKeyPack kp;
-    kp.dcfKey = recv_dcf_keypack(bin, 2, 1);
+    kp.dcfKey = recv_dcfet2_keypack(bin);
     kp.rd = recv_ge(2);
     kp.rw = recv_ge(2);
     for(int i = 0; i < 4; ++i) {
