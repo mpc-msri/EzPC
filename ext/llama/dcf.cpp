@@ -357,9 +357,10 @@ void evalDualDCF(int party, GroupElement* res, GroupElement idx, const DualDCFKe
 }
 
 // Real Endpoints
-std::pair<DCFET1KeyPack, DCFET1KeyPack> keyGenDCFET1(int Bin, GroupElement idx, GroupElement payload)
+std::pair<DCFET1KeyPack, DCFET1KeyPack> keyGenDCFET1(int Bin, GroupElement idx, GroupElement payload, bool greaterThan)
 {
 
+    const u8 gt = greaterThan ? 1 : 0;
     static const block notOneBlock = toBlock(~0, ~1);
     static const block notThreeBlock = toBlock(~0, ~3);
     static const block TwoBlock = toBlock(0, 2);
@@ -413,7 +414,7 @@ std::pair<DCFET1KeyPack, DCFET1KeyPack> keyGenDCFET1(int Bin, GroupElement idx, 
         GroupElement vi_11_converted = lsb(vi[1][keep ^ 1]);
 
         GroupElement V_cw_i = (- V_alpha - vi_01_converted + vi_11_converted);
-        if (keep == 1)
+        if (keep ^ gt)
         {
             V_cw_i = V_cw_i + payload;
         }
@@ -457,7 +458,8 @@ std::pair<DCFET1KeyPack, DCFET1KeyPack> keyGenDCFET1(int Bin, GroupElement idx, 
     for (int i = 0; i < 128; ++i)
     {
         uint64_t leaf_i = isb(s[1], i) - isb(s[0], i) - V_alpha;
-        if (i < r) leaf_i += payload;
+        if ((i < r) && (!greaterThan)) leaf_i += payload;
+        if ((i > r) && greaterThan) leaf_i += payload;
         leaf_i = leaf_i & 1;
         if (i < 64)
             leaf = leaf | toBlock(0, leaf_i << i);

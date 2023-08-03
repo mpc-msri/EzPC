@@ -220,6 +220,62 @@ void exhaustive_test(int bw)
     }
 }
 
+void exhaustive_test_gt(int bw)
+{
+    std::cout << "Exhaustive Test with bw = " << bw << std::endl;
+    GroupElement alpha = random_ge(bw);
+    auto keys = keyGenDCFET1(bw, alpha, 1, true);
+
+    GroupElement t1 = (alpha / 128) * 128;
+    GroupElement t2 = t1 + 128;
+    GroupElement m = (1LL << bw);
+
+    for (GroupElement i = 0; i < t1; ++i)
+    {
+        auto node0 = evalDCFET1_node(0, i, keys.first);
+        auto node1 = evalDCFET1_node(1, i, keys.second);
+        
+        // std::cout << node0.s << " " << node1.s << std::endl;
+        always_assert(eq(node0.s, node1.s));
+        always_assert(node0.t == node1.t);
+        always_assert(((node0.v + node1.v) % 2) == 0);
+
+        auto v0 = evalDCFET1_finalize(0, i, node0, keys.first);
+        auto v1 = evalDCFET1_finalize(1, i, node1, keys.second);
+        always_assert(v0 == v1);
+    }
+
+    for (int i = t1; i < t2; ++i)
+    {
+        auto node0 = evalDCFET1_node(0, i, keys.first);
+        auto node1 = evalDCFET1_node(1, i, keys.second);
+        
+        always_assert(!eq(node0.s, node1.s)); // with high probability
+        always_assert(node0.t == (1 ^ node1.t));
+        auto v0 = evalDCFET1_finalize(0, i, node0, keys.first);
+        auto v1 = evalDCFET1_finalize(1, i, node1, keys.second);
+
+        if (i > alpha)
+            always_assert(v0 == (1 ^ v1));
+        else
+            always_assert(v0 == v1);
+    }
+
+    for (int i = t2; i < m; ++i)
+    {
+        auto node0 = evalDCFET1_node(0, i, keys.first);
+        auto node1 = evalDCFET1_node(1, i, keys.second);
+        
+        always_assert(eq(node0.s, node1.s));
+        always_assert(node0.t == node1.t);
+        always_assert(((node0.v + node1.v) % 2) == 1);
+
+        auto v0 = evalDCFET1_finalize(0, i, node0, keys.first);
+        auto v1 = evalDCFET1_finalize(1, i, node1, keys.second);
+        always_assert(v0 == (1 ^ v1));
+    }
+}
+
 void random_test(int bw)
 {
     std::cout << "Random Test with bw = " << bw << std::endl;
@@ -310,6 +366,7 @@ int main()
     exhaustive_test(14);
     exhaustive_test(15);
     exhaustive_test(16);
+    exhaustive_test_gt(16);
 
     random_test(64);
     random_test(63);
