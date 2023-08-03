@@ -293,7 +293,7 @@ struct ReluExtendKeyPack
 
 struct SignExtend2KeyPack
 {
-    DCFKeyPack dcfKey;
+    DCFET1KeyPack dcfKey;
     GroupElement rw;
     GroupElement p[2];
 };

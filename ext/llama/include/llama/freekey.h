@@ -283,6 +283,4 @@ inline void freeSignExtend2KeyPackPair(std::pair<SignExtend2KeyPack, SignExtend2
 {
     delete[] keys.first.dcfKey.k;
     delete[] keys.second.dcfKey.k;
-    delete[] keys.first.dcfKey.g;
-    delete[] keys.first.dcfKey.v;
 }

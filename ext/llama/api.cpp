@@ -2478,7 +2478,7 @@ void sign_extend2_eval_threads_helper(int thread_idx, int32_t size, int bin, int
     for(int i = p.first; i < p.second; i += 1){
         GroupElement y = x[i] + (1ULL << (bin - 1));
         mod(y, bin);
-        evalDCF(party - 2, &wrap[i], y, keys[i].dcfKey);
+        wrap[i] = evalDCF(party - 2, y, keys[i].dcfKey);
         wrap[i] = wrap[i] + keys[i].rw;
         mod(wrap[i], 1);
     }

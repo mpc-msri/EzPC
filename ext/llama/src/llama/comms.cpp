@@ -656,7 +656,7 @@ void Peer::send_relu_extend_key(const ReluExtendKeyPack &kp, int bin, int bout)
 
 void Peer::send_sign_extend2_key(const SignExtend2KeyPack &kp, int bin, int bout)
 {
-    send_dcf_keypack(kp.dcfKey);
+    send_dcfet1_keypack(kp.dcfKey);
     send_ge(kp.rw, 1);
     send_ge(kp.p[0], bout);
     send_ge(kp.p[1], bout);
@@ -1440,7 +1440,7 @@ ReluExtendKeyPack Dealer::recv_relu_extend_key(int bin, int bout)
 SignExtend2KeyPack Dealer::recv_sign_extend2_key(int Bin, int Bout)
 {
     SignExtend2KeyPack kp;
-    kp.dcfKey = recv_dcf_keypack(Bin, 1, 1);
+    kp.dcfKey = recv_dcfet1_keypack(Bin);
     kp.rw = recv_ge(1);
     kp.p[0] = recv_ge(Bout);
     kp.p[1] = recv_ge(Bout);

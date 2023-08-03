@@ -5,7 +5,7 @@ std::pair<SignExtend2KeyPack, SignExtend2KeyPack> keyGenSignExtend2(int bin, int
 {
     std::pair<SignExtend2KeyPack, SignExtend2KeyPack> keys;
     
-    auto dcfKeys = keyGenDCF(bin, 1, rin, 1);
+    auto dcfKeys = keyGenDCFET1(bin, rin, 1);
     keys.first.dcfKey = dcfKeys.first;
     keys.second.dcfKey = dcfKeys.second;
 
