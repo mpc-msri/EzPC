@@ -468,7 +468,7 @@ std::pair<DCFET1KeyPack, DCFET1KeyPack> keyGenDCFET1(int Bin, GroupElement idx, 
     return std::make_pair(DCFET1KeyPack(Bin, k0, V_cw, tL_cw, tR_cw, leaf), DCFET1KeyPack(Bin, k1, V_cw, tL_cw, tR_cw, leaf));
 }
 
-DCFNode evalDCFET1(int party, GroupElement idx, const DCFET1KeyPack &key)
+DCFNode evalDCFET1_node(int party, GroupElement idx, const DCFET1KeyPack &key)
 {
     static const block notOneBlock = toBlock(~0, ~1);
     static const block TwoBlock = toBlock(0, 2);
@@ -687,7 +687,7 @@ std::pair<DCFET2KeyPack, DCFET2KeyPack> keyGenDCFET2(int Bin, GroupElement idx, 
     return std::make_pair(DCFET2KeyPack(Bin, k0, V_cw, tL_cw, tR_cw, leaf), DCFET2KeyPack(Bin, k1, V_cw, tL_cw, tR_cw, leaf));
 }
 
-DCFNode evalDCFET2(int party, GroupElement idx, const DCFET2KeyPack &key)
+DCFNode evalDCFET2_node(int party, GroupElement idx, const DCFET2KeyPack &key)
 {
     static const block notOneBlock = toBlock(~0, ~1);
     static const block TwoBlock = toBlock(0, 2);

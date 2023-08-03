@@ -8,8 +8,8 @@ void test1()
 
     for (int i = 0; i < 128; ++i)
     {
-        auto node0 = evalDCFET1(0, i, keys.first);
-        auto node1 = evalDCFET1(1, i, keys.second);
+        auto node0 = evalDCFET1_node(0, i, keys.first);
+        auto node1 = evalDCFET1_node(1, i, keys.second);
         
         // std::cout << node0.s << " " << node1.s << std::endl;
         always_assert(eq(node0.s, node1.s));
@@ -23,8 +23,8 @@ void test1()
 
     for (int i = 128; i < 256; ++i)
     {
-        auto node0 = evalDCFET1(0, i, keys.first);
-        auto node1 = evalDCFET1(1, i, keys.second);
+        auto node0 = evalDCFET1_node(0, i, keys.first);
+        auto node1 = evalDCFET1_node(1, i, keys.second);
         
         always_assert(!eq(node0.s, node1.s)); // with high probability
         always_assert(node0.t == (1 ^ node1.t));
@@ -39,8 +39,8 @@ void test1()
 
     for (int i = 256; i < 1024; ++i)
     {
-        auto node0 = evalDCFET1(0, i, keys.first);
-        auto node1 = evalDCFET1(1, i, keys.second);
+        auto node0 = evalDCFET1_node(0, i, keys.first);
+        auto node1 = evalDCFET1_node(1, i, keys.second);
         
         always_assert(eq(node0.s, node1.s));
         always_assert(node0.t == node1.t);
@@ -61,8 +61,8 @@ void test1_2bit()
 
         for (int i = 0; i < 128; ++i)
         {
-            auto node0 = evalDCFET2(0, i, keys.first);
-            auto node1 = evalDCFET2(1, i, keys.second);
+            auto node0 = evalDCFET2_node(0, i, keys.first);
+            auto node1 = evalDCFET2_node(1, i, keys.second);
             
             // std::cout << node0.s << " " << node1.s << std::endl;
             always_assert(eq(node0.s, node1.s));
@@ -76,8 +76,8 @@ void test1_2bit()
 
         for (int i = 128; i < 192; ++i)
         {
-            auto node0 = evalDCFET2(0, i, keys.first);
-            auto node1 = evalDCFET2(1, i, keys.second);
+            auto node0 = evalDCFET2_node(0, i, keys.first);
+            auto node1 = evalDCFET2_node(1, i, keys.second);
             always_assert(!eq(node0.s, node1.s)); // with high probability
             always_assert(node0.t == (1 ^ node1.t));
 
@@ -92,8 +92,8 @@ void test1_2bit()
 
         for (int i = 192; i < 1024; ++i)
         {
-            auto node0 = evalDCFET2(0, i, keys.first);
-            auto node1 = evalDCFET2(1, i, keys.second);
+            auto node0 = evalDCFET2_node(0, i, keys.first);
+            auto node1 = evalDCFET2_node(1, i, keys.second);
             
             always_assert(eq(node0.s, node1.s));
             always_assert(node0.t == node1.t);
@@ -119,8 +119,8 @@ void exhaustive_test_2bit(int bw)
 
         for (int i = 0; i < t0; ++i)
         {
-            auto node0 = evalDCFET2(0, i, keys.first);
-            auto node1 = evalDCFET2(1, i, keys.second);
+            auto node0 = evalDCFET2_node(0, i, keys.first);
+            auto node1 = evalDCFET2_node(1, i, keys.second);
             
             // std::cout << node0.s << " " << node1.s << std::endl;
             always_assert(eq(node0.s, node1.s));
@@ -134,8 +134,8 @@ void exhaustive_test_2bit(int bw)
 
         for (int i = t0; i < t1; ++i)
         {
-            auto node0 = evalDCFET2(0, i, keys.first);
-            auto node1 = evalDCFET2(1, i, keys.second);
+            auto node0 = evalDCFET2_node(0, i, keys.first);
+            auto node1 = evalDCFET2_node(1, i, keys.second);
             always_assert(!eq(node0.s, node1.s)); // with high probability
             always_assert(node0.t == (1 ^ node1.t));
 
@@ -150,8 +150,8 @@ void exhaustive_test_2bit(int bw)
 
         for (int i = t1; i < m; ++i)
         {
-            auto node0 = evalDCFET2(0, i, keys.first);
-            auto node1 = evalDCFET2(1, i, keys.second);
+            auto node0 = evalDCFET2_node(0, i, keys.first);
+            auto node1 = evalDCFET2_node(1, i, keys.second);
             
             always_assert(eq(node0.s, node1.s));
             always_assert(node0.t == node1.t);
@@ -176,8 +176,8 @@ void exhaustive_test(int bw)
 
     for (GroupElement i = 0; i < t1; ++i)
     {
-        auto node0 = evalDCFET1(0, i, keys.first);
-        auto node1 = evalDCFET1(1, i, keys.second);
+        auto node0 = evalDCFET1_node(0, i, keys.first);
+        auto node1 = evalDCFET1_node(1, i, keys.second);
         
         // std::cout << node0.s << " " << node1.s << std::endl;
         always_assert(eq(node0.s, node1.s));
@@ -191,8 +191,8 @@ void exhaustive_test(int bw)
 
     for (int i = t1; i < t2; ++i)
     {
-        auto node0 = evalDCFET1(0, i, keys.first);
-        auto node1 = evalDCFET1(1, i, keys.second);
+        auto node0 = evalDCFET1_node(0, i, keys.first);
+        auto node1 = evalDCFET1_node(1, i, keys.second);
         
         always_assert(!eq(node0.s, node1.s)); // with high probability
         always_assert(node0.t == (1 ^ node1.t));
@@ -207,8 +207,8 @@ void exhaustive_test(int bw)
 
     for (int i = t2; i < m; ++i)
     {
-        auto node0 = evalDCFET1(0, i, keys.first);
-        auto node1 = evalDCFET1(1, i, keys.second);
+        auto node0 = evalDCFET1_node(0, i, keys.first);
+        auto node1 = evalDCFET1_node(1, i, keys.second);
         
         always_assert(eq(node0.s, node1.s));
         always_assert(node0.t == node1.t);
@@ -229,8 +229,8 @@ void random_test(int bw)
     for (GroupElement i = 0; i < 1000; ++i)
     {
         GroupElement idx = random_ge(bw);
-        auto node0 = evalDCFET1(0, idx, keys.first);
-        auto node1 = evalDCFET1(1, idx, keys.second);
+        auto node0 = evalDCFET1_node(0, idx, keys.first);
+        auto node1 = evalDCFET1_node(1, idx, keys.second);
 
         auto v0 = evalDCFET1_finalize(0, idx, node0, keys.first);
         auto v1 = evalDCFET1_finalize(1, idx, node1, keys.second);
@@ -250,8 +250,8 @@ void random_test_2bit(int bw)
     for (GroupElement i = 0; i < 1000; ++i)
     {
         GroupElement idx = random_ge(bw);
-        auto node0 = evalDCFET2(0, idx, keys.first);
-        auto node1 = evalDCFET2(1, idx, keys.second);
+        auto node0 = evalDCFET2_node(0, idx, keys.first);
+        auto node1 = evalDCFET2_node(1, idx, keys.second);
 
         auto v0 = evalDCFET2_finalize(0, idx, node0, keys.first);
         auto v1 = evalDCFET2_finalize(1, idx, node1, keys.second);
@@ -271,7 +271,7 @@ void benchmark_1bit(int bw)
     for (GroupElement i = 0; i < 1000000; ++i)
     {
         GroupElement idx = random_ge(bw);
-        auto node0 = evalDCFET1(0, idx, keys.first);
+        auto node0 = evalDCFET1_node(0, idx, keys.first);
         auto v0 = evalDCFET1_finalize(0, idx, node0, keys.first);
     }
     auto t1 = std::chrono::high_resolution_clock::now();
@@ -287,7 +287,7 @@ void benchmark_2bit(int bw)
     for (GroupElement i = 0; i < 1000000; ++i)
     {
         GroupElement idx = random_ge(bw);
-        auto node0 = evalDCFET2(0, idx, keys.first);
+        auto node0 = evalDCFET2_node(0, idx, keys.first);
         auto v0 = evalDCFET2_finalize(0, idx, node0, keys.first);
     }
     auto t1 = std::chrono::high_resolution_clock::now();
