@@ -523,7 +523,7 @@ DCFNode evalDCFET1_node(int party, GroupElement idx, const DCFET1KeyPack &key)
     return node;
 }
 
-GroupElement evalDCFET1_finalize(int party, GroupElement idx, DCFNode &node, const DCFET1KeyPack &key)
+GroupElement evalDCFET1_finalize(int party, GroupElement idx, const DCFNode &node, const DCFET1KeyPack &key)
 {
     GroupElement r = idx % 128;
     block s = node.s;
@@ -539,6 +539,12 @@ GroupElement evalDCFET1_finalize(int party, GroupElement idx, DCFNode &node, con
         V = V + (isb(s, r));
     }
     return V & 1;
+}
+
+GroupElement evalDCF(int party, GroupElement idx, const DCFET1KeyPack &key)
+{
+    DCFNode node = evalDCFET1_node(party, idx, key);
+    return evalDCFET1_finalize(party, idx, node, key);
 }
 
 void set2bit(block &b, int i, GroupElement v)
@@ -743,7 +749,7 @@ DCFNode evalDCFET2_node(int party, GroupElement idx, const DCFET2KeyPack &key)
     return node;
 }
 
-GroupElement evalDCFET2_finalize(int party, GroupElement idx, DCFNode &node, const DCFET2KeyPack &key)
+GroupElement evalDCFET2_finalize(int party, GroupElement idx, const DCFNode &node, const DCFET2KeyPack &key)
 {
     GroupElement r = idx % 64;
     block s = node.s;
@@ -760,4 +766,10 @@ GroupElement evalDCFET2_finalize(int party, GroupElement idx, DCFNode &node, con
         V = V + sign * (isb2(s, r));
     }
     return V & 3;
+}
+
+GroupElement evalDCF(int party, GroupElement idx, const DCFET2KeyPack &key)
+{
+    DCFNode node = evalDCFET2_node(party, idx, key);
+    return evalDCFET2_finalize(party, idx, node, key);
 }
