@@ -85,6 +85,8 @@ public:
 
     void send_dcf_keypack(const DCFKeyPack &kp);
 
+    void send_dcfet1_keypack(const DCFET1KeyPack &kp);
+
     void send_ddcf_keypack(const DualDCFKeyPack &kp);
 
     void send_relu_key(const ReluKeyPack &kp);
@@ -242,6 +244,8 @@ public:
     ReluExtendKeyPack recv_relu_extend_key(int Bin, int Bout);
 
     SignExtend2KeyPack recv_sign_extend2_key(int Bin, int Bout);
+
+    DCFET1KeyPack recv_dcfet1_keypack(int Bin);
 
 };
 

@@ -416,6 +416,17 @@ void Peer::send_dcf_keypack(const DCFKeyPack &kp) {
     send_ge(42, 64);
 }
 
+void Peer::send_dcfet1_keypack(const DCFET1KeyPack &kp) {
+    for (int i = 0; i < kp.Bin - 6; ++i) {
+        send_block(kp.k[i]);
+    }
+    send_ge(kp.V_cw, kp.Bin - 7);
+    send_ge(kp.tL_cw, kp.Bin - 7);
+    send_ge(kp.tR_cw, kp.Bin - 7);
+    send_block(kp.leaf);
+    send_ge(42, 64);
+}
+
 void Peer::send_ddcf_keypack(const DualDCFKeyPack &kp) {
     send_dcf_keypack(kp.dcfKey);
     for (int i = 0; i < kp.groupSize; ++i) {
@@ -536,7 +547,7 @@ void Peer::send_relu_truncate_key(const ReluTruncateKeyPack &kp) {
 
 void Peer::send_relu_2round_key(const Relu2RoundKeyPack &kp)
 {
-    send_dcf_keypack(kp.dcfKey);
+    send_dcfet1_keypack(kp.dcfKey);
     send_ge(kp.a, kp.Bin);
     send_ge(kp.b, kp.Bin);
     send_ge(kp.c, kp.Bin);
@@ -884,6 +895,29 @@ DCFKeyPack Dealer::recv_dcf_keypack(int Bin, int Bout, int groupSize) {
     return kp;
 }
 
+DCFET1KeyPack Dealer::recv_dcfet1_keypack(int Bin) {
+    DCFET1KeyPack kp;
+    kp.Bin = Bin;
+
+    if (ramdisk) {
+        kp.k = (osuCrypto::block *)ramdiskBuffer;
+        ramdiskBuffer += sizeof(osuCrypto::block) * (Bin - 6);
+    } else {
+        kp.k = new osuCrypto::block[Bin + 1];
+        for (int i = 0; i < Bin - 6; ++i) {
+            kp.k[i] = recv_block();
+        }
+    }
+
+    kp.V_cw = recv_ge(kp.Bin - 7);
+    kp.tL_cw = recv_ge(kp.Bin - 7);
+    kp.tR_cw = recv_ge(kp.Bin - 7);
+    kp.leaf = recv_block();
+    GroupElement t = recv_ge(64);
+    always_assert(t == 42);
+    return kp;
+}
+
 DualDCFKeyPack Dealer::recv_ddcf_keypack(int Bin, int Bout, int groupSize) {
     DualDCFKeyPack kp;
     kp.Bin = Bin;
@@ -1199,7 +1233,7 @@ Relu2RoundKeyPack Dealer::recv_relu_2round_key(int effectiveBin, int Bin)
     Relu2RoundKeyPack kp;
     kp.effectiveBin = effectiveBin;
     kp.Bin = Bin;
-    kp.dcfKey = recv_dcf_keypack(effectiveBin, 1, 1);
+    kp.dcfKey = recv_dcfet1_keypack(effectiveBin);
     kp.a = recv_ge(Bin);
     kp.b = recv_ge(Bin);
     kp.c = recv_ge(Bin);

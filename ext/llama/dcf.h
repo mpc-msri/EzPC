@@ -94,7 +94,7 @@ struct DCFNode
 std::pair<DCFET1KeyPack, DCFET1KeyPack> keyGenDCFET1(int Bin, GroupElement idx, GroupElement payload);
 DCFNode evalDCFET1_node(int party, GroupElement idx, const DCFET1KeyPack &key);
 GroupElement evalDCFET1_finalize(int party, GroupElement idx, const DCFNode &node, const DCFET1KeyPack &key);
-GroupElement evalDCF(int party, GroupElement idx, const DCFET2KeyPack &key);
+GroupElement evalDCF(int party, GroupElement idx, const DCFET1KeyPack &key);
 
 std::pair<DCFET2KeyPack, DCFET2KeyPack> keyGenDCFET2(int Bin, GroupElement idx, GroupElement payload);
 DCFNode evalDCFET2_node(int party, GroupElement idx, const DCFET2KeyPack &key);

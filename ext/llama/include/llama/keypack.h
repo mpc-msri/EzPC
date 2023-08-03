@@ -41,6 +41,45 @@ struct DCFKeyPack{
     }
 };
 
+
+struct DCFET1KeyPack{
+    int Bin;
+    osuCrypto::block *k;   // size Bin+1
+    uint64_t V_cw;   // bitsize Bout, size Bin
+    uint64_t tL_cw, tR_cw;
+    osuCrypto::block leaf;
+
+    DCFET1KeyPack(int Bin, osuCrypto::block *k, uint64_t V_cw, uint64_t tL_cw, uint64_t tR_cw, osuCrypto::block leaf) 
+        : Bin(Bin), k(k), V_cw(V_cw), tL_cw(tL_cw), tR_cw(tR_cw), leaf(leaf) {}
+    
+    DCFET1KeyPack() {
+        Bin = 0;
+        k = nullptr;
+        V_cw = 0;
+        tL_cw = 0;
+        tR_cw = 0;
+    }
+};
+
+struct DCFET2KeyPack{
+    int Bin;
+    osuCrypto::block *k;   // size Bin+1
+    osuCrypto::block V_cw;   // bitsize Bout, size Bin
+    uint64_t tL_cw, tR_cw;
+    osuCrypto::block leaf;
+
+    DCFET2KeyPack(int Bin, osuCrypto::block *k, osuCrypto::block V_cw, uint64_t tL_cw, uint64_t tR_cw, osuCrypto::block leaf) 
+        : Bin(Bin), k(k), V_cw(V_cw), tL_cw(tL_cw), tR_cw(tR_cw), leaf(leaf) {}
+    
+    DCFET2KeyPack() {
+        Bin = 0;
+        k = nullptr;
+        V_cw = osuCrypto::ZeroBlock;
+        tL_cw = 0;
+        tR_cw = 0;
+    }
+};
+
 struct DualDCFKeyPack{  
     int Bin, Bout, groupSize;
     DCFKeyPack dcfKey;
@@ -149,7 +188,7 @@ struct ReluTruncateKeyPack {
 
 struct Relu2RoundKeyPack {
     int effectiveBin, Bin;
-    DCFKeyPack dcfKey;
+    DCFET1KeyPack dcfKey;
     GroupElement a, b, c, d1, d2;
 };
 
@@ -257,42 +296,4 @@ struct SignExtend2KeyPack
     DCFKeyPack dcfKey;
     GroupElement rw;
     GroupElement p[2];
-};
-
-struct DCFET1KeyPack{
-    int Bin;
-    osuCrypto::block *k;   // size Bin+1
-    uint64_t V_cw;   // bitsize Bout, size Bin
-    uint64_t tL_cw, tR_cw;
-    osuCrypto::block leaf;
-
-    DCFET1KeyPack(int Bin, osuCrypto::block *k, uint64_t V_cw, uint64_t tL_cw, uint64_t tR_cw, osuCrypto::block leaf) 
-        : Bin(Bin), k(k), V_cw(V_cw), tL_cw(tL_cw), tR_cw(tR_cw), leaf(leaf) {}
-    
-    DCFET1KeyPack() {
-        Bin = 0;
-        k = nullptr;
-        V_cw = 0;
-        tL_cw = 0;
-        tR_cw = 0;
-    }
-};
-
-struct DCFET2KeyPack{
-    int Bin;
-    osuCrypto::block *k;   // size Bin+1
-    osuCrypto::block V_cw;   // bitsize Bout, size Bin
-    uint64_t tL_cw, tR_cw;
-    osuCrypto::block leaf;
-
-    DCFET2KeyPack(int Bin, osuCrypto::block *k, osuCrypto::block V_cw, uint64_t tL_cw, uint64_t tR_cw, osuCrypto::block leaf) 
-        : Bin(Bin), k(k), V_cw(V_cw), tL_cw(tL_cw), tR_cw(tR_cw), leaf(leaf) {}
-    
-    DCFET2KeyPack() {
-        Bin = 0;
-        k = nullptr;
-        V_cw = osuCrypto::ZeroBlock;
-        tL_cw = 0;
-        tR_cw = 0;
-    }
 };

@@ -36,6 +36,12 @@ inline void freeDCFKeyPack(DCFKeyPack &key){
     // }
 }
 
+inline void freeDCFKeyPack(DCFET1KeyPack &key){
+    if (!LlamaConfig::dealer->ramdisk) {
+        delete[] key.k;
+    }
+}
+
 inline void freeDCFKeyPackPair(std::pair<DCFKeyPack, DCFKeyPack> &keys){
     delete[] keys.first.k;
     delete[] keys.second.k;
@@ -162,8 +168,6 @@ inline void freeRelu2RoundKeyPackPair(const std::pair<Relu2RoundKeyPack, Relu2Ro
 {
     delete[] keys.first.dcfKey.k;
     delete[] keys.second.dcfKey.k;
-    delete[] keys.first.dcfKey.g;
-    delete[] keys.first.dcfKey.v;
 }
 
 inline void freeSplineKey(SplineKeyPack &key)
@@ -225,8 +229,6 @@ inline void freeMaxpoolDoubleKeyPackPair(std::pair<MaxpoolDoubleKeyPack,MaxpoolD
 {
     delete[] keys.first.reluKey.dcfKey.k;
     delete[] keys.second.reluKey.dcfKey.k;
-    delete[] keys.first.reluKey.dcfKey.g;
-    delete[] keys.first.reluKey.dcfKey.v;
 }
 
 inline void freeFixToFloatKeyPack(FixToFloatKeyPack &key)

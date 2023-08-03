@@ -155,7 +155,7 @@ std::pair<Relu2RoundKeyPack, Relu2RoundKeyPack> keyGenRelu2Round(int effectiveBw
     mod(rin, bin);
     GroupElement r1, r0;
     
-    auto dcfN = keyGenDCF(effectiveBw, 1, rin, 1);
+    auto dcfN = keyGenDCFET1(effectiveBw, rin, 1);
 
     GroupElement a;
     GroupElement b;
@@ -191,10 +191,10 @@ GroupElement evalRelu2_drelu(int party, GroupElement x, const Relu2RoundKeyPack 
     GroupElement xp = x + (1ULL<<(key.effectiveBin - 1));
     mod(xp, key.effectiveBin);
     mod(x, key.effectiveBin);
-    GroupElement t2 = 0;
-    GroupElement t1 = 0;
-    evalDCF(party, &t2, xp, key.dcfKey);
-    evalDCF(party, &t1, x, key.dcfKey);
+    GroupElement t2 = evalDCF(party, xp, key.dcfKey);
+    GroupElement t1 = evalDCF(party, x, key.dcfKey);
+    // evalDCF(party, &t2, xp, key.dcfKey);
+    // evalDCF(party, &t1, x, key.dcfKey);
     GroupElement res;
     res = t2 - t1 + key.a;
     mod(res, 1);
