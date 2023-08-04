@@ -31,6 +31,7 @@ public:
 
     void relu(const Tensor<T> &in, const Tensor<T> &out, const Tensor<T> &drelu, u64 scale, int mode);
     void leakyRelu(const Tensor<T> &in, const Tensor<T> &out, const Tensor<T> &drelu, u64 scale, int mode, T alpha);
+
     void truncate(T &in, u64 shift);
     void div(Tensor<T> &in, T divisor, u64 scale);
     void div(T &in, T divisor, u64 scale);
