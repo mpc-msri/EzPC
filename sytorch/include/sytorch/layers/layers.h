@@ -1,7 +1,7 @@
 #pragma once
 #include <sytorch/utils.h>
 #include <llama/assert.h>
-#include <sytorch/backend/cleartext.h>
+#include <sytorch/backend/default.h>
 #include <string>
 
 template <typename T>
@@ -26,7 +26,7 @@ public:
     LayerGraphNode<T> *node = nullptr;
 
     Layer(const std::string &name) : activation({0}), name(name) {
-        backend = new ClearText<T>();
+        backend = defaultBackend<T>();
     }
 
     virtual void _initScale(u64 scale) {};

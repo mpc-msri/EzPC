@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <map>
 #include <algorithm>
+#include <sytorch/backend/default.h>
 
 template <typename T>
 class SytorchModule {
@@ -164,15 +165,15 @@ public:
                 auto meanPtr = floatWeights + wIdx + 2 * channel;
                 auto varPtr = floatWeights + wIdx + 3 * channel;
                 for (int j = 0; j < channel; ++j) {
-                    bn->A(j) = i64((gammaPtr[j] / std::sqrt(varPtr[j])) * (1LL << scale));
-                    bn->B(j) = i64((betaPtr[j] - gammaPtr[j] * meanPtr[j] / std::sqrt(varPtr[j])) * (1LL << (2 * scale)));
+                    bn->A(j) = type_cast<T>((gammaPtr[j] / std::sqrt(varPtr[j])) * (1LL << scale));
+                    bn->B(j) = type_cast<T>((betaPtr[j] - gammaPtr[j] * meanPtr[j] / std::sqrt(varPtr[j])) * (1LL << (2 * scale)));
                 }
                 wIdx += 4 * channel;
             }
             else {
                 auto weights = layer->getweights();
                 for (u64 j = 0; j < weights.size; j++) {
-                    weights.data[j] = i64(floatWeights[wIdx + j] * (1LL << scale));
+                    weights.data[j] = type_cast<T>(floatWeights[wIdx + j] * (1LL << scale));
                 }
 
                 wIdx += weights.size;
@@ -181,7 +182,7 @@ public:
                 if (layer->useBias) {
 
                     for (u64 j = 0; j < bias.size; ++j) {
-                        bias.data[j] = i64(floatWeights[wIdx + j] * (1LL << (2*scale)));
+                        bias.data[j] = type_cast<T>(floatWeights[wIdx + j] * (float)(1LL << (2 * scale)));
                     }
 
                     wIdx += bias.size;
