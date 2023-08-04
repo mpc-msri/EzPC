@@ -70,7 +70,7 @@ public:
     void convTranspose3D(u64 fd, u64 fh, u64 fw, u64 pd, u64 ph, u64 pw, u64 sd, u64 sh, u64 sw, u64 ci, u64 co, const Tensor5D<T> &input, const Tensor2D<T> &filter, Tensor5D<T> &output);
 
     void relu(const Tensor<T> &in, const Tensor<T> &out, const Tensor<T> &drelu, u64 scale, int mode);
-    void leakyRelu(const Tensor<T> &in, const Tensor<T> &out, const Tensor<T> &drelu, u64 scale, int mode, u64 alpha);
+    void leakyRelu(const Tensor<T> &in, const Tensor<T> &out, const Tensor<T> &drelu, u64 scale, int mode, T alpha);
     // void truncate(const Tensor4D<T> &in, const Tensor4D<T> &out, u64 shift);
     // void truncate(const Tensor4D<T> &in, u64 shift);
     // void truncate(const Tensor2D<T> &in, u64 shift);

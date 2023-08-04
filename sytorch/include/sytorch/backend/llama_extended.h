@@ -15,14 +15,14 @@ public:
         Relu(sz, in.data, in.data, out.data, out.data, drelu.data);
     }
 
-    void leakyRelu(const Tensor<T> &in, const Tensor<T> &out, const Tensor<T> &drelu, u64 scale, int mode, u64 alpha)
+    void leakyRelu(const Tensor<T> &in, const Tensor<T> &out, const Tensor<T> &drelu, u64 scale, int mode, T alpha)
     {
         assert(in.is_same_shape(out));
         assert(in.is_same_shape(drelu));
         int sz = in.size();
         std::vector<u64> shape = in.shape;
 
-        T minus_one = (T)(-1 * (1LL << scale));
+        T minus_one = type_cast<T>(-1 * (1LL << scale));
         auto ct = new ClearText<T>;
         // leakyrelu = relu(x) - alpha * relu(-x)
 

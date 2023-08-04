@@ -124,6 +124,37 @@ void FloatClearText<T>::relu(const Tensor<T> &in, const Tensor<T> &out, const Te
 }
 
 template <typename T>
+void FloatClearText<T>::leakyRelu(const Tensor<T> &in, const Tensor<T> &out, const Tensor<T> &drelu, u64 scale, int mode, T alpha)
+{
+    assert(in.is_same_shape(out));
+    assert(in.is_same_shape(drelu));
+    std::vector<u64> shape = in.shape;
+
+    // leakyrelu = relu(x) - alpha * relu(-x)
+    Tensor<T> relu_x(shape);
+    // relu(x)
+    relu(in, relu_x, drelu, scale, mode);
+
+    // -x
+    Tensor<T> minus_x(shape);
+    fastfor(in.size(), [&](u64 i)
+            { minus_x.data[i] = -1.0 * in.data[i]; });
+
+    // relu(-x)
+    Tensor<T> relu_minus_x(shape);
+    relu(minus_x, relu_minus_x, drelu, scale, mode);
+
+    // alpha * relu(-x)
+    Tensor<T> alpha_relu_minus_x(shape);
+    fastfor(in.size(), [&](u64 i)
+            { alpha_relu_minus_x.data[i] = (T)(alpha * relu_minus_x.data[i]); });
+
+    // relu(x) - alpha * relu(-x)
+    fastfor(in.size(), [&](u64 i)
+            { out.data[i] = (relu_x.data[i] - alpha_relu_minus_x.data[i]); });
+}
+
+template <typename T>
 void FloatClearText<T>::truncate(T *in, T *out, u64 shift, u64 size, u8 mode)
 {
     always_assert(shift == 0);

@@ -15,6 +15,27 @@ typedef int64_t i64;
 typedef int32_t i32;
 
 template <typename T>
+inline T type_cast(float val);
+
+template <>
+inline float type_cast(float val)
+{
+    return val;
+}
+
+template <>
+inline i64 type_cast(float val)
+{
+    return (i64)val;
+}
+
+template <>
+inline u64 type_cast(float val)
+{
+    return (u64(i64(val)));
+}
+
+template <typename T>
 class TensorRef {
 public:
     T* data;
@@ -188,7 +209,7 @@ public:
         {
             double d;
             std::cin >> d;
-            data[i] = (T)(d * (1LL << scale));
+            data[i] = type_cast<T>(d * (1LL << scale));
         }
     }
 
@@ -209,9 +230,9 @@ public:
             u64 curr_rest = i % rest_size;
             u64 new_idx = curr_batch * (num_channel * rest_size) + curr_rest * num_channel + curr_channel;
 #ifdef Do_Masking
-            data[new_idx] = (T)d;
+            data[new_idx] = type_cast<T> d;
 #else
-            data[new_idx] = (T)(d * (1LL << scale));
+            data[new_idx] = type_cast<T>(d * (1LL << scale));
 #endif        
         }
     }
@@ -283,7 +304,7 @@ public:
                     {
                         for (int m = 0; m < d5; m++)
                         {
-                            this->data[i * d2 * d3 * d4 * d5 + j * d3 * d4 * d5 + k * d4 * d5 + l * d5 + m] = (T)(arr[i][j][k][l][m] * scale);
+                            this->data[i * d2 * d3 * d4 * d5 + j * d3 * d4 * d5 + k * d4 * d5 + l * d5 + m] = type_cast<T>(arr[i][j][k][l][m] * (1LL << scale));
                         }
                     }
                 }
@@ -301,7 +322,7 @@ public:
         file.close();
         for(u64 i = 0; i < size(); ++i)
         {
-            data[i] = (T)(floatInput[i] * (1LL << scale));
+            data[i] = type_cast<T>(floatInput[i] * (1LL << scale));
         }
         delete[] floatInput;
     }

@@ -528,7 +528,7 @@ public:
 
     void _forward(Tensor<T> &a)
     {
-        T alphaFix = (i64)(alpha * (1LL << this->scale));
+        T alphaFix = type_cast<T>(alpha * (1LL << this->scale));
         this->backend->leakyRelu(a, this->activation, this->drelu, this->scale, this->mode, alphaFix);
     }
 

@@ -117,7 +117,7 @@ void ClearText<T>::relu(const Tensor<T> &in, const Tensor<T> &out, const Tensor<
 }
 
 template <typename T>
-void ClearText<T>::leakyRelu(const Tensor<T> &in, const Tensor<T> &out, const Tensor<T> &drelu, u64 scale, int mode, u64 alpha)
+void ClearText<T>::leakyRelu(const Tensor<T> &in, const Tensor<T> &out, const Tensor<T> &drelu, u64 scale, int mode, T alpha)
 {
     assert(in.is_same_shape(out));
     assert(in.is_same_shape(drelu));
