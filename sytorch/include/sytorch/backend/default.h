@@ -15,3 +15,4 @@ Backend<T> *defaultBackend()
         return new ClearText<T>();
     }
 }
+

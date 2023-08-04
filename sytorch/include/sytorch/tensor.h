@@ -210,6 +210,7 @@ public:
             double d;
             std::cin >> d;
             data[i] = type_cast<T>(d * (1LL << scale));
+
         }
     }
 
