@@ -22,7 +22,7 @@ def func_call(node, value_info):
         "AveragePool": "AvgPool2D",
         "GlobalAveragePool": "GlobalAvgPool2D",
         "Add": "add",
-        "ConvTranspose": "ConvTranspose3D",
+        "ConvTranspose": f"{'ConvTranspose3D' if len(value_info[node.inputs[0]][1]) == 5 else 'ConvTranspose2D'}",
         "Transpose": "Transpose",
     }
     return func_map[node.op_type]

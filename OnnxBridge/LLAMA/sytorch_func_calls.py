@@ -183,10 +183,27 @@ class Operator:
         cls, attributes, inputs, outputs, value_info, var_dict, mode, indent
     ):
         logger.debug("Inside ConvTranspose function call.")
-        pads = get_padding_3d(attributes, inputs, outputs, value_info, var_dict)
         spatial_size = len(value_info[inputs[0]][1]) - 2
-        if spatial_size == 3:
+        if spatial_size == 2:
             assert len(inputs) == 2 or len(inputs) == 3
+            pads = get_padding(attributes, inputs, outputs, value_info, var_dict)
+            assert len(attributes["strides"]) == 2
+            assert value_info[inputs[1]][1][2:] == tuple(attributes["kernel_shape"])
+            CI = value_info[inputs[0]][1][1]
+            CO = value_info[outputs[0]][1][1]
+            filterShape = value_info[inputs[1]][1]
+            pad = pads[0]
+            strides = attributes["strides"]
+            dilations = get_dilation(attributes, inputs, outputs, value_info, var_dict)
+            isBias = ", true" if len(inputs) == 3 else ""
+            return str(
+                f"{'   ' * indent}new ConvTranspose2D<T>("
+                f"{CI}, {CO}, {'{'}{iterate_list(filterShape[2:])}{'}'}, {'{'}{iterate_list(pads)}{'}'}, {'{'}{iterate_list(strides)}{'}'},{'{'}{iterate_list(dilations)}{'}'}{isBias}"
+                f");"
+            )
+        elif spatial_size == 3:
+            assert len(inputs) == 2 or len(inputs) == 3
+            pads = get_padding_3d(attributes, inputs, outputs, value_info, var_dict)
             assert len(attributes["strides"]) == 3
             assert value_info[inputs[1]][1][2:] == tuple(attributes["kernel_shape"])
             CI = value_info[inputs[0]][1][1]

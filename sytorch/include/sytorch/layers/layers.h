@@ -703,6 +703,83 @@ public:
 };
 
 template <typename T>
+class ConvTranspose2D : public Layer<T>
+{
+public:
+    Tensor2D<T> filter;
+    Tensor1D<T> bias;
+    u64 ci, co;
+    u64 fh, fw;
+    u64 ph, pw;
+    u64 sh, sw;
+
+    ConvTranspose2D(u64 ci, u64 co, u64 f, u64 padding = 0, u64 stride = 1, bool useBias = false) : Layer<T>("ConvTranspose2D"), ci(ci), co(co), fh(f), fw(f),
+                                                                                                    ph(padding), pw(padding), sh(stride), sw(stride), filter(co, f * f * ci), bias(co)
+    {
+        this->doTruncationForward = true;
+        this->useBias = useBias;
+    }
+
+    ConvTranspose2D(u64 ci, u64 co, const std::array<u64, 2> f, u64 padding = 0, u64 stride = 1, bool useBias = false) : Layer<T>("ConvTranspose2D"), ci(ci), co(co), fh(f[0]), fw(f[1]),
+                                                                                                                         ph(padding), pw(padding), sh(stride), sw(stride), filter(co, f[0] * f[1] * ci), bias(co)
+    {
+        this->doTruncationForward = true;
+        this->useBias = useBias;
+    }
+
+    ConvTranspose2D(u64 ci, u64 co, const std::array<u64, 2> f, const std::array<u64, 4> padding = {0, 0, 0, 0}, const std::array<u64, 2> stride = {1, 1}, const std::array<u64, 2> dialation = {1, 1}, bool useBias = false) : Layer<T>("ConvTranspose2D"), ci(ci), co(co), fh(f[0]), fw(f[1]),
+                                                                                                                                                                                                                                ph(padding[0]), pw(padding[1]), sh(stride[0]), sw(stride[1]), filter(co, f[0] * f[1] * ci), bias(co)
+    {
+        always_assert(dialation[0] == 1);
+        always_assert(dialation[1] == 1);
+        always_assert(padding[2] == padding[0]);
+        always_assert(padding[3] == padding[1]);
+        this->doTruncationForward = true;
+        this->useBias = useBias;
+    }
+
+    void _initScale(u64 scale)
+    {
+        double xavier = 1.0 / sqrt(ci * fh * fw);
+        filter.randomize(xavier * (1ULL << scale));
+        if (this->useBias)
+            bias.randomize(xavier * (1ULL << (2 * scale)));
+    }
+
+    void _resize(const std::vector<std::vector<u64>> &shapes)
+    {
+        always_assert(shapes.size() == 1);
+        auto &shape = shapes[0];
+        always_assert(shape.size() == 4);
+        always_assert(shape[3] == ci);
+    }
+
+    void _forward(Tensor<T> &a)
+    {
+        always_assert(a.shape.size() == 4);
+        assert(a.shape[3] == ci);
+        auto act_4d = this->activation.as_4d();
+        this->backend->convTranspose2D(fh, fw, ph, pw, sh, sw, ci, co, a.as_4d(), filter, act_4d);
+        if (this->useBias)
+            this->backend->addbias(this->activation, bias);
+    }
+
+    TensorRef<T> getweights() { return filter.ref(); }
+    TensorRef<T> getbias() { return bias.ref(); }
+
+    std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes)
+    {
+        always_assert(inShapes.size() == 1);
+        auto &inShape = inShapes[0];
+        always_assert(inShape.size() == 4);
+        always_assert(inShape[3] == ci);
+        u64 newH = (((inShape[1] - 1) * sh + fh - 2 * ph));
+        u64 newW = (((inShape[2] - 1) * sw + fw - 2 * pw));
+        return {inShape[0], newH, newW, co};
+    }
+};
+
+template <typename T>
 class PlaceHolderLayer : public Layer<T> {
 public:
     PlaceHolderLayer(const std::string &s) : Layer<T>(s) {
