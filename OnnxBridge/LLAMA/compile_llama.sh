@@ -44,7 +44,7 @@ find_package(Threads REQUIRED)
 add_subdirectory($sytorch_dir/ext/cryptoTools $pd/cryptoTools)
 add_subdirectory($sytorch_dir/ext/llama $pd/llama)
 add_executable($BINARY_NAME 
-    ../$FSS_CPP_FILE $sytorch_dir/src/sytorch/random.cpp $sytorch_dir/src/sytorch/backend/cleartext.cpp
+    ../$FSS_CPP_FILE $sytorch_dir/src/sytorch/random.cpp $sytorch_dir/src/sytorch/backend/cleartext.cpp $sytorch_dir/src/sytorch/backend/float.cpp
 )
 target_include_directories($BINARY_NAME
 PUBLIC

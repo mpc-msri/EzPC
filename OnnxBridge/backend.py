@@ -89,7 +89,7 @@ class IR(Backend):
             logger.error("Model Not Supported")
             sys.exit()
 
-        if backend in ["CLEARTEXT_LLAMA", "LLAMA"]:
+        if backend in ["CLEARTEXT_LLAMA", "LLAMA", "CLEARTEXT_fp"]:
             weights_path = optimizations.dump_model_weights_as_dat(
                 model, model_abs_dir, model_name
             )
@@ -153,7 +153,7 @@ class IR(Backend):
         ]
         if backend in ["SECFLOAT", "SECFLOAT_CLEARTEXT"]:
             implemented = implemented_secfloat
-        elif backend in ["CLEARTEXT_LLAMA", "LLAMA"]:
+        elif backend in ["CLEARTEXT_LLAMA", "LLAMA", "CLEARTEXT_fp"]:
             implemented = implemented_sytorch
         for node in model.graph.node:
             if node.op_type not in implemented:
@@ -219,7 +219,7 @@ class IR(Backend):
             backend_rep = FzpcBackendRep(
                 program, value_info, var_dict, path, file_name[:-5], backend
             )
-        elif backend in ["CLEARTEXT_LLAMA", "LLAMA"]:
+        elif backend in ["CLEARTEXT_LLAMA", "LLAMA", "CLEARTEXT_fp"]:
             backend_rep = SytorchBackendRep(
                 program, value_info, var_dict, path, file_name[:-5]
             )
