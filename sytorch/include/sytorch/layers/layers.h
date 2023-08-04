@@ -523,11 +523,12 @@ public:
         always_assert(shapes.size() == 1);
         auto &shape = shapes[0];
         this->drelu.resize(shape);
+        always_assert(this->alpha >= 0.0);
     }
 
     void _forward(Tensor<T> &a)
     {
-        T alphaFix = alpha * (1LL << this->scale);
+        T alphaFix = (i64)(alpha * (1LL << this->scale));
         this->backend->leakyRelu(a, this->activation, this->drelu, this->scale, this->mode, alphaFix);
     }
 

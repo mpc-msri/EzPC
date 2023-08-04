@@ -121,13 +121,34 @@ void ClearText<T>::leakyRelu(const Tensor<T> &in, const Tensor<T> &out, const Te
 {
     assert(in.is_same_shape(out));
     assert(in.is_same_shape(drelu));
+    std::vector<u64> shape = in.shape;
+    T minus_one = (T)(-1 * (1LL << scale));
+    // leakyrelu = relu(x) - alpha * relu(-x)
+    Tensor<T> relu_x(shape);
+    // relu(x)
+    relu(in, relu_x, drelu, scale, mode);
+
+    // -x
+    Tensor<T> minus_x(shape);
     fastfor(in.size(), [&](u64 i)
-            {
-                drelu.data[i] = (T)(in.data[i] > 0);
-                assert(drelu.data[i] == 1 || drelu.data[i] == 0);
-                // leakyrelu = relu(alpha*x - relu(x)) + relu(x)
-                out.data[i] = (drelu.data[i] == 1) ? in.data[i] : (T)(alpha * in.data[i]);
-                out.data[i] = (drelu.data[i] == 1) ? in.data[i] : (T)(out.data[i] / (1LL << scale)); });
+            { minus_x.data[i] = minus_one * in.data[i]; 
+                modbw(minus_x.data[i]);
+                truncate(minus_x.data[i], scale); });
+
+    // relu(-x)
+    Tensor<T> relu_minus_x(shape);
+    relu(minus_x, relu_minus_x, drelu, scale, mode);
+
+    // alpha * relu(-x)
+    Tensor<T> alpha_relu_minus_x(shape);
+    fastfor(in.size(), [&](u64 i)
+            { alpha_relu_minus_x.data[i] = (T)(alpha * relu_minus_x.data[i]);
+                modbw(alpha_relu_minus_x.data[i]);
+                truncate(alpha_relu_minus_x.data[i], scale); });
+
+    // relu(x) - alpha * relu(-x)
+    fastfor(in.size(), [&](u64 i)
+            { out.data[i] = relu_x.data[i] - alpha_relu_minus_x.data[i]; });
 }
 
 template <typename T>
