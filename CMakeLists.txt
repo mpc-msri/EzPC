@@ -83,3 +83,8 @@ add_executable(dcftest
     dcftest.cpp
 )
 target_link_libraries (dcftest ${PROJECT_NAME})
+
+add_executable(strtest 
+    strtest.cpp
+)
+target_link_libraries (strtest ${PROJECT_NAME})

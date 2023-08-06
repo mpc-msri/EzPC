@@ -139,3 +139,51 @@ GroupElement evalARS(int party, GroupElement x, uint64_t shift, const ARSKeyPack
 
     return res; 
 }
+
+std::pair<OrcaSTRKeyPack, OrcaSTRKeyPack> keyGenOrcaSTR(int bin, int shift, GroupElement rin, GroupElement rout)
+{
+    mod(rin, bin);
+    OrcaSTRKeyPack k0, k1;
+    k0.bin = bin; k1.bin = bin;
+    k0.shift = shift; k1.shift = shift;
+    
+    GroupElement r0 = rin;
+    mod(r0, shift);
+
+    GroupElement s = random_ge(shift);
+    GroupElement shat = s + r0;
+    mod(shat, shift);
+
+    auto dcfKeys = keyGenDCFET1(shift, shat, 1, true);
+    k0.dcfKey = dcfKeys.first; k1.dcfKey = dcfKeys.second;
+
+    GroupElement rw = random_ge(1);
+
+    GroupElement r = rout - (rin >> shift);
+    if (shat < r0) {
+        r = r - 1;
+    }
+
+    auto rout_split = splitShare(r, bin - shift);
+    k0.rout = rout_split.first; k1.rout = rout_split.second;
+
+    auto rw_split = splitShare(rw, bin - shift);
+    k0.rw = rw_split.first; k1.rw = rw_split.second;
+
+    return std::make_pair(k0, k1);
+}
+
+GroupElement evalOrcaSTR_1(int party, GroupElement x, const OrcaSTRKeyPack &key)
+{
+    GroupElement x0 = x;
+    mod(x0, key.bin);
+
+    GroupElement w = evalDCF(party, x0, key.dcfKey) + key.rw;
+    return w;
+}
+
+GroupElement evalOrcaSTR_2(int party, GroupElement x, GroupElement w, const OrcaSTRKeyPack &key)
+{
+    mod(w, 1);
+    return party * (x >> key.shift) + key.rout + (1 - w) * key.rw + w * (party - key.rw);
+}

@@ -297,3 +297,10 @@ struct SignExtend2KeyPack
     GroupElement rw;
     GroupElement p[2];
 };
+
+struct OrcaSTRKeyPack {
+    int bin, shift;
+    DCFET1KeyPack dcfKey;
+    GroupElement rw;
+    GroupElement rout;
+};

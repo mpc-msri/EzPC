@@ -2582,3 +2582,89 @@ void SignExtend2(int size, int bin, int bout, GroupElement *x, GroupElement *y)
     }
     std::cerr << ">> SignExtend2 - End" << std::endl;
 }
+
+void OrcaSTR(int size, GroupElement *x, GroupElement *y, int scale)
+{
+    std::cerr << ">> OrcaSTR - Start" << std::endl;
+    always_assert(scale >= 7);
+
+    if (party == DEALER) {
+        pair<OrcaSTRKeyPack> *keys = new pair<OrcaSTRKeyPack>[size];
+        // #pragma omp parallel for
+        for(int i = 0; i < size; ++i) {
+            GroupElement rout = random_ge(bitlength - scale);
+            keys[i] = keyGenOrcaSTR(bitlength, scale, x[i], rout);
+            y[i] = rout;
+        }
+
+        for(int i = 0; i < size; ++i) {
+            server->send_orca_str_key(keys[i].first);
+            client->send_orca_str_key(keys[i].second);
+            freeOrcaSTRKeyPackPair(keys[i]);
+        }
+        delete[] keys;
+    }
+    else {
+        GroupElement *w = make_array<GroupElement>(size);
+        auto keyread_start = std::chrono::high_resolution_clock::now();
+        OrcaSTRKeyPack *keys = new OrcaSTRKeyPack[size];
+        for(int i = 0; i < size; ++i) {
+            keys[i] = dealer->recv_orca_str_key(bitlength, scale);
+        }
+        auto keyread_end = std::chrono::high_resolution_clock::now();
+        auto keyread_time_taken = std::chrono::duration_cast<std::chrono::milliseconds>(keyread_end -
+                                                            keyread_start).count();
+
+        peer->sync();
+        auto start = std::chrono::high_resolution_clock::now();
+        
+        #pragma omp parallel for
+        for (int i = 0; i < size; ++i)
+        {
+            w[i] = evalOrcaSTR_1(party - 2, x[i], keys[i]);
+        }
+        
+        auto t1 = std::chrono::high_resolution_clock::now();
+        uint64_t onlineComm0 = peer->bytesReceived + peer->bytesSent;
+        reconstruct(size, w, 1);
+        
+        auto t2 = std::chrono::high_resolution_clock::now();
+        
+        #pragma omp parallel for
+        for (int i = 0; i < size; ++i)
+        {
+            y[i] = evalOrcaSTR_2(party - 2, x[i], w[i], keys[i]);
+        }
+
+        auto t3 = std::chrono::high_resolution_clock::now();
+        reconstruct(size, y, bitlength - scale);
+        uint64_t onlineComm1 = peer->bytesReceived + peer->bytesSent;
+        
+        arsOnlineComm += (onlineComm1 - onlineComm0);
+        auto end = std::chrono::high_resolution_clock::now();
+        
+        uint64_t time_taken = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+        arsEvalMicroseconds += time_taken;
+        evalMicroseconds += time_taken;
+        
+        uint64_t time1 = std::chrono::duration_cast<std::chrono::microseconds>(t1 - start).count();
+        uint64_t time2 = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+        uint64_t time3 = std::chrono::duration_cast<std::chrono::microseconds>(t3 - t2).count();
+        uint64_t time4 = std::chrono::duration_cast<std::chrono::microseconds>(end - t3).count();
+
+        std::cerr << "   Key Read Time = " << keyread_time_taken << " milliseconds" << std::endl;
+        std::cerr << "   Compute Time = " << (time1 + time3) / 1000.0 << " milliseconds" << std::endl;
+        std::cerr << "   Reconstruct Time = " << (time2 + time4) / 1000.0 << " milliseconds" << std::endl;
+        std::cerr << "   Online Time = " << time_taken / 1000.0 << " milliseconds" << std::endl;
+        std::cerr << "   Online Comm = " << (onlineComm1 - onlineComm0) << " bytes\n";
+
+
+        for(int i = 0; i < size; ++i) {
+            freeOrcaSTRKeyPack(keys[i]);
+        }
+        delete[] keys;
+        delete[] w;
+    }
+
+    std::cerr << ">> OrcaSTR - End" << std::endl;
+}

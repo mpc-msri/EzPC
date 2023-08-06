@@ -109,5 +109,6 @@ void FloatToFix(int size, GroupElement *inp, GroupElement *out, int scale);
 
 void ReluExtend(int size, int bin, int bout, GroupElement *x, GroupElement *y, GroupElement *drelu);
 void SignExtend2(int size, int bin, int bout, GroupElement *x, GroupElement *y);
+void OrcaSTR(int size, GroupElement *x, GroupElement *y, int scale);
 
 void reconstruct(int32_t size, GroupElement *arr, int bw);

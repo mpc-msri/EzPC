@@ -662,6 +662,13 @@ void Peer::send_sign_extend2_key(const SignExtend2KeyPack &kp, int bin, int bout
     send_ge(kp.p[1], bout);
 }
 
+void Peer::send_orca_str_key(const OrcaSTRKeyPack &kp)
+{
+    send_dcfet1_keypack(kp.dcfKey);
+    send_ge(kp.rw, kp.bin - kp.shift);
+    send_ge(kp.rout, kp.bin - kp.shift);
+}
+
 GroupElement Peer::recv_input() {
     char buf[8];
     if (useFile) {
@@ -1444,5 +1451,16 @@ SignExtend2KeyPack Dealer::recv_sign_extend2_key(int Bin, int Bout)
     kp.rw = recv_ge(1);
     kp.p[0] = recv_ge(Bout);
     kp.p[1] = recv_ge(Bout);
+    return kp;
+}
+
+OrcaSTRKeyPack Dealer::recv_orca_str_key(int bin, int shift)
+{
+    OrcaSTRKeyPack kp;
+    kp.bin = bin;
+    kp.shift = shift;
+    kp.dcfKey = recv_dcfet1_keypack(shift);
+    kp.rw = recv_ge(bin - shift);
+    kp.rout = recv_ge(bin - shift);
     return kp;
 }

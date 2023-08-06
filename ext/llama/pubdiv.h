@@ -30,3 +30,7 @@ GroupElement evalSCMP(int party, ScmpKeyPack key, GroupElement x, GroupElement y
 std::pair<ARSKeyPack, ARSKeyPack> keyGenARS(int Bin, int Bout, uint64_t shift, GroupElement rin, GroupElement rout);
 
 GroupElement evalARS(int party, GroupElement x, uint64_t shift, const ARSKeyPack &k);
+
+std::pair<OrcaSTRKeyPack, OrcaSTRKeyPack> keyGenOrcaSTR(int bin, int shift, GroupElement rin, GroupElement rout);
+GroupElement evalOrcaSTR_1(int party, GroupElement x, const OrcaSTRKeyPack &key);
+GroupElement evalOrcaSTR_2(int party, GroupElement x, GroupElement w, const OrcaSTRKeyPack &key);

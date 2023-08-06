@@ -131,6 +131,8 @@ public:
 
     void send_sign_extend2_key(const SignExtend2KeyPack &kp, int bin, int bout);
 
+    void send_orca_str_key(const OrcaSTRKeyPack &kp);
+
     void send_uint8_array(const uint8_t *data, int size);
 
     void recv_uint8_array(uint8_t *data, int size);
@@ -250,6 +252,8 @@ public:
     DCFET1KeyPack recv_dcfet1_keypack(int Bin);
 
     DCFET2KeyPack recv_dcfet2_keypack(int Bin);
+
+    OrcaSTRKeyPack recv_orca_str_key(int bin, int scale);
 
 };
 

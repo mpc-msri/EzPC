@@ -284,3 +284,14 @@ inline void freeSignExtend2KeyPackPair(std::pair<SignExtend2KeyPack, SignExtend2
     delete[] keys.first.dcfKey.k;
     delete[] keys.second.dcfKey.k;
 }
+
+inline void freeOrcaSTRKeyPack(OrcaSTRKeyPack &key)
+{
+    freeDCFKeyPack(key.dcfKey);
+}
+
+inline void freeOrcaSTRKeyPackPair(std::pair<OrcaSTRKeyPack, OrcaSTRKeyPack> &keys)
+{
+    delete[] keys.first.dcfKey.k;
+    delete[] keys.second.dcfKey.k;
+}
