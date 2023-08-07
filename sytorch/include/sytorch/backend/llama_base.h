@@ -282,6 +282,22 @@ public:
             output.d2, output.d3, output.d4, input.data, filter.data, output.data);
     }
 
+    void convTranspose2D(u64 fh, u64 fw, u64 ph, u64 pw, u64 sh, u64 sw, u64 ci, u64 co, const Tensor4D<T> &input, const Tensor2D<T> &filter, Tensor4D<T> &output)
+    {
+        assert(input.d4 == ci);
+        assert(filter.d1 == co);
+        assert(filter.d2 == fh * fw * ci);
+        u64 newH = (((input.d2 - 1) * sh + fh - 2 * ph));
+        u64 newW = (((input.d3 - 1) * sw + fw - 2 * pw));
+        assert(output.d1 == input.d1);
+        assert(output.d2 == newH);
+        assert(output.d3 == newW);
+        assert(output.d4 == co);
+
+        ConvTranspose2DWrapper(input.d1, input.d2, input.d3, input.d4, fh, fw, co,
+                               ph, ph, pw, pw, sh, sw, output.d2, output.d3, input.data, filter.data, output.data);
+    }
+
     void sumPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> &in, Tensor4D<T> &out) {
         assert(in.d1 == out.d1);
         assert(in.d4 == out.d4);

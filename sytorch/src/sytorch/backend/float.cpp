@@ -113,6 +113,24 @@ void FloatClearText<T>::convTranspose3D(u64 fd, u64 fh, u64 fw, u64 pd, u64 ph, 
 }
 
 template <typename T>
+void FloatClearText<T>::convTranspose2D(u64 fh, u64 fw, u64 ph, u64 pw, u64 sh, u64 sw, u64 ci, u64 co, const Tensor4D<T> &input, const Tensor2D<T> &filter, Tensor4D<T> &output)
+{
+    assert(input.d4 == ci);
+    assert(filter.d1 == co);
+    assert(filter.d2 == fh * fw * ci);
+    u64 newH = (((input.d2 - 1) * sh + fh - 2 * ph));
+    u64 newW = (((input.d3 - 1) * sw + fw - 2 * pw));
+    assert(output.d1 == input.d1);
+    assert(output.d2 == newH);
+    assert(output.d3 == newW);
+    assert(output.d4 == co);
+
+    convTranspose2dLoop<T>(input.d1, input.d2, input.d3, input.d4, fh, fw, co,
+                           ph, ph, pw, pw, sh, sw,
+                           output.d2, output.d3, input.data, filter.data, output.data);
+}
+
+template <typename T>
 void FloatClearText<T>::relu(const Tensor<T> &in, const Tensor<T> &out, const Tensor<T> &drelu, u64 scale, int mode)
 {
     assert(in.is_same_shape(out));

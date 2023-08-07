@@ -448,3 +448,122 @@ void EvalConvTranspose3D(int party, const TripleKeyPack &key,
 
     delete[] temp;
 }
+
+std::pair<TripleKeyPack, TripleKeyPack> KeyGenConvTranspose2D(
+    int bw,
+    int64_t N,
+    int64_t H,
+    int64_t W,
+    int64_t CI,
+    int64_t FH,
+    int64_t FW,
+    int64_t CO,
+    int64_t zPadHLeft,
+    int64_t zPadHRight,
+    int64_t zPadWLeft,
+    int64_t zPadWRight,
+    int64_t strideH,
+    int64_t strideW,
+    int64_t outH,
+    int64_t outW,
+    GroupElement *inputArr,
+    GroupElement *filterArr,
+    GroupElement *outArr)
+{
+    TripleKeyPack k0;
+    TripleKeyPack k1;
+
+    k1.a = make_array<GroupElement>(N, H, W, CI);
+    k1.b = make_array<GroupElement>(FH, FW, CI, CO);
+    k1.c = make_array<GroupElement>(N, outH, outW, CO);
+
+    k1.bw = bw;
+    k1.na = N * H * W * CI;
+    k1.nb = FH * FW * CI * CO;
+    k1.nc = N * outH * outW * CO;
+
+    // Need temp array - matmul cant be done inplace and hence conv3d is not inplace
+    GroupElement *c = make_array<GroupElement>(N, outH, outW, CO);
+
+    ConvTranspose2DLoopInnerClear(N, H, W, CI, FH, FW, CO,
+                                  zPadHLeft, zPadHRight, zPadWLeft, zPadWRight,
+                                  strideH, strideW, outH, outW, inputArr, filterArr, c);
+
+    MatAdd4(N, outH, outW, CO, c, outArr, c);
+
+    for (int i = 0; i < N * H * W * CI; ++i)
+    {
+        auto rin1_split = splitShareCommonPRNG(inputArr[i], bw);
+        k1.a[i] = rin1_split.second;
+    }
+
+    for (int i = 0; i < FH * FW * CI * CO; ++i)
+    {
+        auto rin2_split = splitShareCommonPRNG(filterArr[i], bw);
+        k1.b[i] = rin2_split.second;
+    }
+
+    for (int i = 0; i < N * outH * outW * CO; ++i)
+    {
+        auto c_split = splitShareCommonPRNG(c[i], bw);
+        k1.c[i] = c_split.second;
+    }
+
+    delete[] c;
+
+    return std::make_pair(k0, k1);
+}
+
+void EvalConvTranspose2D(int party, const TripleKeyPack &key,
+                         int64_t N,
+                         int64_t H,
+                         int64_t W,
+                         int64_t CI,
+                         int64_t FH,
+                         int64_t FW,
+                         int64_t CO,
+                         int64_t zPadHLeft,
+                         int64_t zPadHRight,
+                         int64_t zPadWLeft,
+                         int64_t zPadWRight,
+                         int64_t strideH,
+                         int64_t strideW,
+                         int64_t outH,
+                         int64_t outW,
+                         GroupElement *inputArr,
+                         GroupElement *filterArr,
+                         GroupElement *outArr)
+{
+
+    MatCopy4(N, outH, outW, CO, key.c, outArr);
+    GroupElement *temp = make_array<GroupElement>(N, outH, outW, CO);
+
+    if (party == SERVER)
+    {
+        GroupElement *tempFilter = make_array<GroupElement>(FH, FW, CI, CO);
+
+        MatSub4(FH, FW, CI, CO, filterArr, key.b, tempFilter);
+        ConvTranspose2DLoopInnerClear(N, H, W, CI, FH, FW, CO,
+                                      zPadHLeft, zPadHRight, zPadWLeft, zPadWRight,
+                                      strideH, strideW, outH, outW,
+                                      inputArr, tempFilter, temp);
+        MatAdd4(N, outH, outW, CO, temp, outArr, outArr);
+        delete[] tempFilter;
+    }
+    else
+    {
+        ConvTranspose2DLoopInnerClear(N, H, W, CI, FH, FW, CO,
+                                      zPadHLeft, zPadHRight, zPadWLeft, zPadWRight,
+                                      strideH, strideW, outH, outW,
+                                      inputArr, key.b, temp);
+        MatSub4(N, outH, outW, CO, outArr, temp, outArr);
+    }
+
+    ConvTranspose2DLoopInnerClear(N, H, W, CI, FH, FW, CO,
+                                  zPadHLeft, zPadHRight, zPadWLeft, zPadWRight,
+                                  strideH, strideW, outH, outW,
+                                  key.a, filterArr, temp);
+    MatSub4(N, outH, outW, CO, outArr, temp, outArr);
+
+    delete[] temp;
+}
