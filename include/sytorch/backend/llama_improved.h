@@ -48,15 +48,11 @@ public:
     }
 
     void truncate(T *in, T *out, u64 shift, u64 size, u8 mode) {
-        for(u64 i = 0; i < size; i++) {
-            out[i] = ((u64)in[i]) >> shift;
-        }
+        OrcaSTR(size, in, out, shift);
         if (mode == 0) {
             SignExtend2(size, LlamaConfig::bitlength - shift, LlamaConfig::bitlength, out, out);
         }
         else if (mode == 1) {
-            // do nothing
-            std::cerr << ">> Local Truncation" << std::endl;
         }
         else {
             throw std::runtime_error("this should not have happened");
