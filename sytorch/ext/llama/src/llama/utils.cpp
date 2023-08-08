@@ -526,7 +526,7 @@ Conv3DCache allocateConv3DCache(int N, int D, int H, int W, int CI,
     cache.reshapedFilter = eigenMatrix(reshapedFilterRows, reshapedFilterCols);
 	cache.reshapedInput = eigenMatrix(reshapedIPRows, reshapedIPCols);
 	cache.matmulResult = eigenMatrix(reshapedFilterRows, reshapedIPCols);
-    cache.temp = make_array<GroupElement>(N, newH, newW, CO);
+    cache.temp = make_array<GroupElement>(N, newD, newH, newW, CO);
 
     return cache;
 }
