@@ -7,7 +7,7 @@
 int main(int __argc, char**__argv) {
     int party = atoi(__argv[1]);
     srand(time(NULL));
-    const u64 scale = 8;
+    const u64 scale = 7;
     LlamaConfig::party = party;
     LlamaConfig::bitlength = 64;
     // LlamaExtended<u64>::init("172.31.45.158");
@@ -41,13 +41,15 @@ int main(int __argc, char**__argv) {
     u64 c1 = 0;
     if (LlamaConfig::party != 1) {
         for(int i = 0; i < size; ++i) {
-            std::cout << (y.data[i] % (1LL << (LlamaConfig::bitlength - scale))) << std::endl;
-            if ((y.data[i] % 256) == zr)
+            y.data[i] = y.data[i] % (1LL << (LlamaConfig::bitlength - scale));
+            std::cout << y.data[i] << std::endl;
+            if (y.data[i] == zr)
             {
                 c0 += 1;
             }
             else
             {
+                always_assert(y.data[i] == zr + 1);
                 c1 += 1;
             }
         }

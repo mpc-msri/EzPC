@@ -301,6 +301,8 @@ struct SignExtend2KeyPack
 struct OrcaSTRKeyPack {
     int bin, shift;
     DCFET1KeyPack dcfKey;
+    osuCrypto::block dcfBlock;
+    GroupElement dcfGe;
     GroupElement rw;
     GroupElement rout;
 };

@@ -154,8 +154,41 @@ std::pair<OrcaSTRKeyPack, OrcaSTRKeyPack> keyGenOrcaSTR(int bin, int shift, Grou
     GroupElement shat = s + r0;
     mod(shat, shift);
 
-    auto dcfKeys = keyGenDCFET1(shift, shat, 1, true);
-    k0.dcfKey = dcfKeys.first; k1.dcfKey = dcfKeys.second;
+    if (shift > 7)
+    {
+        auto dcfKeys = keyGenDCFET1(shift, shat, 1, true);
+        k0.dcfKey = dcfKeys.first; k1.dcfKey = dcfKeys.second;
+    }
+    else if (shift == 7)
+    {
+        osuCrypto::block dcfBlock;
+        if (shat < 64)
+        {
+            GroupElement m = -1;
+            mod(m, shat + 1);
+            dcfBlock = osuCrypto::toBlock(-1ULL, ~m);
+        }
+        else
+        {
+            GroupElement m = -1;
+            mod(m, shat - 63);
+            dcfBlock = osuCrypto::toBlock(~m, 0);
+        }
+        int tid = omp_get_thread_num();
+        k0.dcfBlock = LlamaConfig::prngs[tid].get<osuCrypto::block>();
+        k1.dcfBlock = k0.dcfBlock ^ dcfBlock;
+    }
+    else
+    {
+        GroupElement dcfGe;
+        GroupElement m = -1ULL;
+        mod(m, shat + 1);
+        dcfGe = ~m;
+        // std::cout << "shat: " << shat << std::endl;
+        // std::cout << "bin : " << std::bitset<64>(dcfGe) << std::endl;
+        k0.dcfGe = random_ge(64);
+        k1.dcfGe = k0.dcfGe ^ dcfGe;
+    }
 
     GroupElement rw = random_ge(1);
 
@@ -176,10 +209,23 @@ std::pair<OrcaSTRKeyPack, OrcaSTRKeyPack> keyGenOrcaSTR(int bin, int shift, Grou
 GroupElement evalOrcaSTR_1(int party, GroupElement x, const OrcaSTRKeyPack &key)
 {
     GroupElement x0 = x;
-    mod(x0, key.bin);
+    mod(x0, key.shift);
 
-    GroupElement w = evalDCF(party, x0, key.dcfKey) + key.rw;
-    return w;
+    GroupElement w;
+    if (key.shift > 7)
+    {
+        w = evalDCF(party, x0, key.dcfKey);
+    }
+    else if (key.shift == 7)
+    {
+        w = isb(key.dcfBlock, x0);
+    }
+    else
+    {
+        // std::cout << key.dcfGe << std::endl;
+        w = (key.dcfGe >> x0) & 1;
+    }
+    return w + key.rw;
 }
 
 GroupElement evalOrcaSTR_2(int party, GroupElement x, GroupElement w, const OrcaSTRKeyPack &key)

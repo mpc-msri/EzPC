@@ -664,7 +664,12 @@ void Peer::send_sign_extend2_key(const SignExtend2KeyPack &kp, int bin, int bout
 
 void Peer::send_orca_str_key(const OrcaSTRKeyPack &kp)
 {
-    send_dcfet1_keypack(kp.dcfKey);
+    if (kp.shift > 7)
+        send_dcfet1_keypack(kp.dcfKey);
+    else if (kp.shift == 7)
+        send_block(kp.dcfBlock);
+    else
+        send_ge(kp.dcfGe, 1ULL << kp.shift);
     send_ge(kp.rw, kp.bin - kp.shift);
     send_ge(kp.rout, kp.bin - kp.shift);
 }
@@ -1459,7 +1464,12 @@ OrcaSTRKeyPack Dealer::recv_orca_str_key(int bin, int shift)
     OrcaSTRKeyPack kp;
     kp.bin = bin;
     kp.shift = shift;
-    kp.dcfKey = recv_dcfet1_keypack(shift);
+    if (shift > 7)
+        kp.dcfKey = recv_dcfet1_keypack(shift);
+    else if (shift == 7)
+        kp.dcfBlock = recv_block();
+    else
+        kp.dcfGe = recv_ge(1ULL << shift);
     kp.rw = recv_ge(bin - shift);
     kp.rout = recv_ge(bin - shift);
     return kp;

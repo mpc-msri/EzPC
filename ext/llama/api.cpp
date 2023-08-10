@@ -2586,7 +2586,7 @@ void SignExtend2(int size, int bin, int bout, GroupElement *x, GroupElement *y)
 void OrcaSTR(int size, GroupElement *x, GroupElement *y, int scale)
 {
     std::cerr << ">> OrcaSTR - Start" << std::endl;
-    always_assert(scale >= 7);
+    // always_assert(scale >= 7);
 
     if (party == DEALER) {
         pair<OrcaSTRKeyPack> *keys = new pair<OrcaSTRKeyPack>[size];
