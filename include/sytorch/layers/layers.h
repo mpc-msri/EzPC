@@ -113,6 +113,7 @@ public:
         this->scale = scale;
         double xavier = 1.0 / sqrt(ci * ks * ks);
         filter.randomize(xavier * (1ULL<<scale));
+        if (this->useBias)
         bias.randomize(xavier * (1ULL<<(2*scale)));
         Vw.fill(0);
         Vb.fill(0);

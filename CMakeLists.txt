@@ -88,3 +88,9 @@ add_executable(strtest
     strtest.cpp
 )
 target_link_libraries (strtest ${PROJECT_NAME})
+
+add_executable(orcav2_exp 
+    orcav2_exp.cpp
+)
+target_link_libraries (orcav2_exp ${PROJECT_NAME})
+
