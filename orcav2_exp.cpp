@@ -36,7 +36,7 @@ void cifar10_fill_images(Tensor4D<T>& trainImages, Tensor<u64> &trainLabels, int
 void ct_test_3layer() {
     srand(time(NULL));
     const u64 scale = 24;
-    const u64 bs = 5;
+    const u64 bs = 100;
 
     auto conv1 = new Conv2D<i64>(3, 64, 5, 1, 1, true);
     auto conv2 = new Conv2D<i64>(64, 64, 5, 1, 1, true);
@@ -105,7 +105,7 @@ void llama_test_3layer(int party) {
     if (party != 1) {
         secfloat_init(party - 1, ip);
     }
-    const u64 bs = 5;
+    const u64 bs = 100;
     
     auto conv1 = new Conv2D<u64>(3, 64, 5, 1, 1, true);
     auto conv2 = new Conv2D<u64>(64, 64, 5, 1, 1, true);
@@ -156,27 +156,27 @@ void llama_test_3layer(int party) {
     // if (party != 1) {
     //     blprint(op, LlamaConfig::bitlength - scale);
     // }
-    llama->output(conv1->filter);
-    llama->output(conv2->filter);
-    llama->output(conv3->filter);
-    llama->output(fc1->weight);
-    llama->output(conv1->bias);
-    llama->output(conv2->bias);
-    llama->output(conv3->bias);
-    llama->output(fc1->bias);
-    llama->output(model.activation);
-    llama->output(conv1->activation);
-    if (LlamaConfig::party != 1) {
-        conv1->filter.print<i64>();
-        conv2->filter.print<i64>();
-        conv3->filter.print<i64>();
-        fc1->weight.print<i64>();
-        conv1->bias.print<i64>();
-        conv2->bias.print<i64>();
-        conv3->bias.print<i64>();
-        fc1->bias.print<i64>();
-        // model.activation.print<i64>();
-    }
+    // llama->output(conv1->filter);
+    // llama->output(conv2->filter);
+    // llama->output(conv3->filter);
+    // llama->output(fc1->weight);
+    // llama->output(conv1->bias);
+    // llama->output(conv2->bias);
+    // llama->output(conv3->bias);
+    // llama->output(fc1->bias);
+    // llama->output(model.activation);
+    // llama->output(conv1->activation);
+    // if (LlamaConfig::party != 1) {
+    //     conv1->filter.print<i64>();
+    //     conv2->filter.print<i64>();
+    //     conv3->filter.print<i64>();
+    //     fc1->weight.print<i64>();
+    //     conv1->bias.print<i64>();
+    //     conv2->bias.print<i64>();
+    //     conv3->bias.print<i64>();
+    //     fc1->bias.print<i64>();
+    //     // model.activation.print<i64>();
+    // }
     llama->finalize();
 }
 
@@ -191,23 +191,23 @@ void llama_test_lenet_gupta(int party) {
     LlamaConfig::stochasticRT = true;
     LlamaConfig::num_threads = 4;
     std::string ip = "127.0.0.1";
-    llama->init(ip, true);
+    llama->init(ip, false);
     if (party != 1) {
         secfloat_init(party - 1, ip);
     }
     const u64 bs = 100;
 
     auto model = Sequential<u64>({
-        new Conv2D<u64>(1, 8, 5),
+        new Conv2D<u64>(1, 8, 5, 0, 1, true),
         new ReLU<u64>(),
         new MaxPool2D<u64>(2),
-        new Conv2D<u64>(8, 16, 5),
+        new Conv2D<u64>(8, 16, 5, 0, 1, true),
         new ReLU<u64>(),
         new MaxPool2D<u64>(2),
         new Flatten<u64>(),
-        new FC<u64>(256, 128),
+        new FC<u64>(256, 128, true),
         new ReLU<u64>(),
-        new FC<u64>(128, 10),
+        new FC<u64>(128, 10, true),
     });
 
     model.init(bs, 28, 28, 1, scale);
