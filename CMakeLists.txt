@@ -98,3 +98,8 @@ add_executable(microbenchmark_rt
     microbenchmark_rt.cpp
 )
 target_link_libraries (microbenchmark_rt ${PROJECT_NAME})
+
+add_executable(microbenchmark_rtm 
+    microbenchmark_rtm.cpp
+)
+target_link_libraries (microbenchmark_rtm ${PROJECT_NAME})
