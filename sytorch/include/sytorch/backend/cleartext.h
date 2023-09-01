@@ -16,7 +16,7 @@ public:
     template <typename Functor>
     void fastfor(u64 size, Functor f)
     {
-        #pragma omp parallel for
+        //#pragma omp parallel for
         for (u64 i = 0; i < size; i++) {
             f(i);
         }

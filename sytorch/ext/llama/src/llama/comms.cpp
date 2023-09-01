@@ -66,7 +66,7 @@ Peer::Peer(std::string ip, int port) {
         const int one = 1;
         setsockopt(sendsocket, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one));
     }
-    std::cerr << "connected" << std::endl;
+    std::cerr << "connected" << "\n";
 
 }
 
@@ -136,7 +136,7 @@ Peer* waitForPeer(int port) {
         close(mysocket);
     }
     
-    std::cerr << "connected" << std::endl;
+    std::cerr << "connected" << "\n";
     return new Peer(sendsocket, recvsocket);
 }
 
@@ -746,7 +746,7 @@ void Dealer::close() {
             file.close();
         }
         else {
-            // std::cout << (int)(ramdiskBuffer - ramdiskStart) << "bytes read" << std::endl;
+            // std::cout << (int)(ramdiskBuffer - ramdiskStart) << "bytes read" << "\n";
             // always_assert(ramdiskBuffer - ramdiskStart == ramdiskSize);
         }
     }
@@ -759,14 +759,17 @@ GroupElement Dealer::recv_mask() {
     char buf[8];
     if (useFile) {
         if (ramdisk) {
+            std::cout<<"ramdiskBuffer: "<<(uint64_t)ramdiskBuffer<<"\n";
             GroupElement g = *(uint64_t *)ramdiskBuffer;
             ramdiskBuffer += 8;
             bytesReceived += 8;
             return g;
         }
-        this->file.read(buf, 8);
+        //this->file.read(buf, 8);
+        std::cout << "dealer recv mask" << "\n";
     } else {
-        recv(consocket, buf, 8, MSG_WAITALL);
+       // recv(consocket, buf, 8, MSG_WAITALL);
+        std::cout << "dealer recv mask" << "\n";
     }
     GroupElement g = *(uint64_t *)buf;
     bytesReceived += 8;
@@ -777,14 +780,17 @@ MultKey Dealer::recv_mult_key() {
     char buf[sizeof(MultKey)];
     if (useFile) {
         if (ramdisk) {
-            MultKey k(*(MultKey *)ramdiskBuffer);
+             std::cout<<"ramdiskBuffer ,multikey: "<<(uint64_t)ramdiskBuffer<<"\n";
+            MultKey k=(*(MultKey *)ramdiskBuffer);
             ramdiskBuffer += sizeof(MultKey);
             bytesReceived += sizeof(MultKey);
             return k;
         }
-        this->file.read(buf, sizeof(MultKey));
+       // this->file.read(buf, sizeof(MultKey));
+        std::cout<< "dealer recv mult key" << "\n";
     } else {
-        recv(consocket, buf, sizeof(MultKey), MSG_WAITALL);
+        //recv(consocket, buf, sizeof(MultKey), MSG_WAITALL);
+        std::cout << "dealer recv mask" << "\n";
     }
     MultKey k(*(MultKey *)buf);
     bytesReceived += sizeof(MultKey);
@@ -795,16 +801,18 @@ osuCrypto::block Dealer::recv_block() {
     char buf[sizeof(osuCrypto::block)];
     if (useFile) {
         if (ramdisk) {
-            // std::cout << *(uint64_t *) ramdiskBuffer << std::endl;
+             std::cout << *(uint64_t *) ramdiskBuffer << "\n";
             // Kanav: This could break when the endianness of the machine changes
             osuCrypto::block b = osuCrypto::toBlock(*(uint64_t *) (ramdiskBuffer + 8), *(uint64_t *) ramdiskBuffer);
             ramdiskBuffer += sizeof(osuCrypto::block);
             bytesReceived += sizeof(osuCrypto::block);
             return b;
         }
-        this->file.read(buf, sizeof(osuCrypto::block));
+        //this->file.read(buf, sizeof(osuCrypto::block));
+        std::cout<< "dealer recv block" << "\n";
     } else {
-        recv(consocket, buf, sizeof(osuCrypto::block), MSG_WAITALL);
+       // recv(consocket, buf, sizeof(osuCrypto::block), MSG_WAITALL);
+        std::cout << "dealer recv mask" << "\n";
     }
     osuCrypto::block b = *(osuCrypto::block *)buf;
     bytesReceived += sizeof(osuCrypto::block);
@@ -822,9 +830,11 @@ GroupElement Dealer::recv_ge(int bl) {
                 mod(g, bl);
                 return g;
             }
-            this->file.read(buf, 8);
+            //this->file.read(buf, 8);
+            std::cerr << "dealer recv ge 32" << "\n";
         } else {
-            recv(consocket, buf, 8, MSG_WAITALL);
+           // recv(consocket, buf, 8, MSG_WAITALL);
+            std::cout << "dealer recv mask" << "\n";
         }
         GroupElement g(*(uint64_t *)buf);
         mod(g, bl);
@@ -841,9 +851,11 @@ GroupElement Dealer::recv_ge(int bl) {
                 mod(g, bl);
                 return g;
             }
-            this->file.read(buf, 4);
+           // this->file.read(buf, 4);
+            std::cout << "dealer recv ge 16" << "\n";
         } else {
-            recv(consocket, buf, 4, MSG_WAITALL);
+           // recv(consocket, buf, 4, MSG_WAITALL);
+            std::cout << "dealer recv mask" << "\n";
         }
         GroupElement g(*(uint32_t *)buf);
         mod(g, bl);
@@ -860,9 +872,11 @@ GroupElement Dealer::recv_ge(int bl) {
                 mod(g, bl);
                 return g;
             }
-            this->file.read(buf, 2);
+           // this->file.read(buf, 2);
+            std::cout<< "dealer recv ge 8" << "\n";
         } else {
-            recv(consocket, buf, 2, MSG_WAITALL);
+            //recv(consocket, buf, 2, MSG_WAITALL);
+            std::cout << "dealer recv mask" << "\n";
         }
         GroupElement g(*(uint16_t *)buf);
         mod(g, bl);
@@ -879,9 +893,11 @@ GroupElement Dealer::recv_ge(int bl) {
                 mod(g, bl);
                 return g;
             }
-            this->file.read(buf, 1);
+           // this->file.read(buf, 1);
+            std::cout << "dealer recv ge 1" << "\n";
         } else {
-            recv(consocket, buf, 1, MSG_WAITALL);
+           // recv(consocket, buf, 1, MSG_WAITALL);
+            std::cout << "dealer recv mask" << "\n";
         }
         GroupElement g(*(uint8_t *)buf);
         mod(g, bl);
@@ -900,9 +916,11 @@ void Dealer::recv_ge_array(const GroupElement *g, int size) {
             bytesReceived += 8*size;
             return;
         }
-        this->file.read(buf, 8*size);
+        //this->file.read(buf, 8*size);
+        std::cout << "dealer recv ge array" << "\n";
     } else {
-        recv(consocket, buf, 8*size, MSG_WAITALL);
+       // recv(consocket, buf, 8*size, MSG_WAITALL);
+        std::cout << "dealer recv mask" << "\n";
     }
     bytesReceived += 8 * size;
     

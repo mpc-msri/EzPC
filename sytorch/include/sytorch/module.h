@@ -3,7 +3,9 @@
 #include <filesystem>
 #include <map>
 #include <algorithm>
-#include <sytorch/backend/default.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 template <typename T>
 class SytorchModule {
@@ -54,7 +56,7 @@ public:
         }
         id = id + "|" + paramstring(args...);
         if (functionalLayerMap.find(id) == functionalLayerMap.end()) {
-            std::cerr << "Layer not found = \"" << id << "\"" << std::endl;
+            std::cerr << "Layer not found = \"" << id << "\"" << "\n";
             exit(1);
         }
         return functionalLayerMap[id];
@@ -148,14 +150,26 @@ public:
         always_assert(size_in_bytes % 4 == 0); // as it's float
         size_t numParameters = size_in_bytes / 4;
         float *floatWeights = new float[numParameters];
+        //float *buffer;
+        int buffersize = 0;
         
-        std::ifstream file(weightsFile, std::ios::binary);
-        file.read((char*) floatWeights, size_in_bytes);
-        file.close();
+        // std::ifstream file(weightsFile, std::ios::binary);
+        // file.read((char*) floatWeights, size_in_bytes);
+        // file.close();
+        int fd1 = open(weightsFile.c_str(), O_RDWR | O_CREAT, 0);
+        struct stat sb;
+        fstat(fd1, &sb);
+        buffersize = sb.st_size;
+        int advise=posix_fadvise(fd1, 0, sb.st_size, POSIX_FADV_WILLNEED);
+        floatWeights= (float*)mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd1, 0);
+        //floatWeights = buffer;
+        std::cerr << "Model Weights Size: " << sb.st_size << " bytes" << "\n";
+        ::close(fd1);
         u64 scale = this->scale;
         
         size_t wIdx = 0;
         for (auto &node: allNodesInExecutionOrder) {
+            
             auto layer = node->layer;
             if (layer->name == "BatchNormInference") {
                 auto bn = (BatchNormInference<T>*) layer;
@@ -165,24 +179,25 @@ public:
                 auto meanPtr = floatWeights + wIdx + 2 * channel;
                 auto varPtr = floatWeights + wIdx + 3 * channel;
                 for (int j = 0; j < channel; ++j) {
-                    bn->A(j) = type_cast<T>((gammaPtr[j] / std::sqrt(varPtr[j])) * (1LL << scale));
-                    bn->B(j) = type_cast<T>((betaPtr[j] - gammaPtr[j] * meanPtr[j] / std::sqrt(varPtr[j])) * (1LL << (2 * scale)));
+                    bn->A(j) = i64((gammaPtr[j] / std::sqrt(varPtr[j])) * (1LL << scale));
+                    bn->B(j) = i64((betaPtr[j] - gammaPtr[j] * meanPtr[j] / std::sqrt(varPtr[j])) * (1LL << (2 * scale)));
                 }
                 wIdx += 4 * channel;
             }
             else {
                 auto weights = layer->getweights();
                 for (u64 j = 0; j < weights.size; j++) {
-                    weights.data[j] = type_cast<T>(floatWeights[wIdx + j] * (1LL << scale));
+                    weights.data[j] = (i64)(floatWeights[wIdx + j] * (1LL << scale));
                 }
 
                 wIdx += weights.size;
+                
 
                 auto bias = layer->getbias();
                 if (layer->useBias) {
 
                     for (u64 j = 0; j < bias.size; ++j) {
-                        bias.data[j] = type_cast<T>(floatWeights[wIdx + j] * (float)(1LL << (2 * scale)));
+                        bias.data[j] = (i64)(floatWeights[wIdx + j] * (1LL << (2*scale)));
                     }
 
                     wIdx += bias.size;
@@ -192,9 +207,12 @@ public:
                 }
             }
         }
-
+        
         always_assert(wIdx == numParameters);
-        delete[] floatWeights;
+    
+        //delete floatWeights;
+        munmap(floatWeights, buffersize);
+       
     }
 
     void dumpi64(const std::string weightsFile)

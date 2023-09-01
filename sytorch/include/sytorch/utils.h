@@ -233,7 +233,7 @@ void convTranspose3dLoop(
     zPadWLeft = FW - 1 - zPadWLeft;
     zPadWRight = FW - 1 - zPadWRight;
 
-    #pragma omp parallel for collapse(5)
+    //#pragma omp parallel for collapse(5)
     for (int64_t n =  0; n < N; n++){
         for (int64_t d =  0; d < outD; d++){
             for (int64_t h =  0; h < outH; h++){
@@ -270,7 +270,7 @@ void convTranspose3dLoop(
                             }
                         }
                         Arr5DIdx(outArr, N, outD, outH, outW, CO, n, d, h, w, co) =  val;
-                        // std::cout << "setting element at (" << n << " " << d << " " << h << " " << w << " " << co << ")" << std::endl;
+                        // std::cout << "setting element at (" << n << " " << d << " " << h << " " << w << " " << co << ")" << "\n";
                     }
                 }
             }
@@ -363,7 +363,7 @@ void print(const Tensor<T> &p, u64 scale, u64 bw)
         }
         std::cout << (double) val / (1LL << scale);
         if ((i + 1) % d == 0) {
-            std::cout << std::endl;
+            std::cout << "\n";
         }
         else {
             std::cout << " ";
@@ -382,7 +382,7 @@ inline void printshape(const std::vector<u64> &shape) {
     for(int i = 0; i < shape.size(); i++) {
         std::cout << shape[i] << ", ";
     }
-    std::cout << ")" << std::endl;
+    std::cout << ")" << "\n";
 }
 
 inline void sytorch_init()

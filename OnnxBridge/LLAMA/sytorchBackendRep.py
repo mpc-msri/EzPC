@@ -108,7 +108,9 @@ def cleartext_post(code_list, program, scale, mode, indent):
         f"""
 
 int main(int argc, char**__argv){'{'}
-
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(NULL);
+    std::cout.tie(NULL);
     prngWeights.SetSeed(osuCrypto::toBlock(0, 0));
     prngStr.SetSeed(osuCrypto::toBlock(time(NULL)));
 
@@ -129,45 +131,6 @@ int main(int argc, char**__argv){'{'}
         print_dot_graph(net.root);
         net.forward(input);
         print(net.activation, scale, 64);
-        return 0;
-    {'}'}
-
-{'}'}
-        """
-    )
-
-
-def cleartext_fp_post(code_list, program, scale, mode, indent):
-    # Input
-    n = program[0].shape[0]
-    c = program[0].shape[1]
-    dims = program[0].shape[2:]
-    # n, c, h, w = program[0].shape
-    code_list.append(
-        f"""
-
-int main(int argc, char**__argv){'{'}
-
-    prngWeights.SetSeed(osuCrypto::toBlock(0, 0));
-    prngStr.SetSeed(osuCrypto::toBlock(time(NULL)));
-
-    int party = atoi(__argv[1]);
-    std::string ip = "127.0.0.1";
-
-    srand(time(NULL));
-    
-    const u64 scale = 0;
-
-    if (party == 0) {'{'}
-        Net<float> net;
-        net.init(scale);
-        std::string weights_file = __argv[2];
-        net.load(weights_file);
-        Tensor<float> input({'{'}{iterate_list([n]+ dims +[c])}{'}'});
-        input.input_nchw(scale);
-        print_dot_graph(net.root);
-        net.forward(input);
-        net.activation.print();
         return 0;
     {'}'}
 
@@ -304,7 +267,7 @@ def prepare_export(program, var_dict, value_info, mode, scale, bitlength, backen
 
     # Start CPP program
     number_of_nodes = 0
-    if backend == "CLEARTEXT_LLAMA" or backend == "CLEARTEXT_fp":
+    if backend == "CLEARTEXT_LLAMA":
         cleartext_pre(code_list, program, scale, mode, indent)
     elif backend == "LLAMA":
         llama_pre(code_list, program, scale, mode, bitlength, indent)
@@ -359,8 +322,6 @@ def prepare_export(program, var_dict, value_info, mode, scale, bitlength, backen
 
     if backend == "CLEARTEXT_LLAMA":
         cleartext_post(code_list, program, scale, mode, indent)
-    elif backend == "CLEARTEXT_fp":
-        cleartext_fp_post(code_list, program, scale, mode, indent)
     elif backend == "LLAMA":
         llama_post(code_list, program, scale, mode, bitlength, indent)
 
