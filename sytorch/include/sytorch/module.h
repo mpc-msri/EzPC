@@ -187,7 +187,7 @@ public:
             else {
                 auto weights = layer->getweights();
                 for (u64 j = 0; j < weights.size; j++) {
-                    weights.data[j] = (i64)(floatWeights[wIdx + j] * (1LL << scale));
+                    weights.data[j] = type_cast<T>(floatWeights[wIdx + j] * (1LL << scale));
                 }
 
                 wIdx += weights.size;
@@ -197,7 +197,7 @@ public:
                 if (layer->useBias) {
 
                     for (u64 j = 0; j < bias.size; ++j) {
-                        bias.data[j] = (i64)(floatWeights[wIdx + j] * (1LL << (2*scale)));
+                        bias.data[j] = type_cast<T>(floatWeights[wIdx + j] * (float)(1LL << (2*scale)));
                     }
 
                     wIdx += bias.size;

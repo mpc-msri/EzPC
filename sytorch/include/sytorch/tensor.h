@@ -191,7 +191,7 @@ public:
         {
             double d;
             std::cin >> d;
-            data[i] = (i64)(d * (1LL << scale));
+            data[i] = (T)(d * (1LL << scale));
         }
     }
 
@@ -212,9 +212,9 @@ public:
             u64 curr_rest = i % rest_size;
             u64 new_idx = curr_batch * (num_channel * rest_size) + curr_rest * num_channel + curr_channel;
 #ifdef Do_Masking
-            data[new_idx] = (i64)d;
+            data[new_idx] = (T)d;
 #else
-            data[new_idx] = (i64)(d * (1LL << scale));
+            data[new_idx] = (T)(d * (1LL << scale));
 #endif        
         }
     }
@@ -286,7 +286,7 @@ public:
                     {
                         for (int m = 0; m < d5; m++)
                         {
-                            this->data[i * d2 * d3 * d4 * d5 + j * d3 * d4 * d5 + k * d4 * d5 + l * d5 + m] = (i64)(arr[i][j][k][l][m] * scale);
+                            this->data[i * d2 * d3 * d4 * d5 + j * d3 * d4 * d5 + k * d4 * d5 + l * d5 + m] = (T)(arr[i][j][k][l][m] * scale);
                         }
                     }
                 }
@@ -311,7 +311,7 @@ public:
         floatInput= (float*)mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd2, 0);
         for(u64 i = 0; i < size(); ++i)
         {
-            data[i] = (i64)(floatInput[i] * (1LL << scale));
+            data[i] = (T)(floatInput[i] * (1LL << scale));
         }
         //delete[] floatInput;
         munmap(floatInput, buffersize);
