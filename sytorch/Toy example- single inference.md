@@ -117,7 +117,7 @@ command: ./ramdrive.sh 200g
 
 //change the server and client.sh scripts to use ramdisk 
  ./lenet_LLAMA_15 1  ->> ./lenet_LLAMA_15 1 4 true
-
+// sed command to be added.
 
 # Disable and unmount Ramdisk on client and server machines after inference
 ./unmount_ramdrive.sh
