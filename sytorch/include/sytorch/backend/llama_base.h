@@ -16,23 +16,46 @@ class LlamaBase : public Backend<T> {
 public:
     const bool useLocalTruncation = false;
 
-    void init(std::string ip, bool ramdisk = true)
+    void init(std::string ip, bool ramdisk = true,bool ramdisk_path=false)
     {
         u64 seedKey = 0xdeadbeefbadc0ffe;
         for(int i = 0; i < 256; ++i) {
             LlamaConfig::prngs[i].SetSeed(osuCrypto::toBlock(i, seedKey));
         }
         if (LlamaConfig::party == 1) {
+            std::cerr<<ramdisk<<ramdisk_path<<"\n";
+            if (ramdisk && ramdisk_path)
+            {
             LlamaConfig::server = new Peer("/tmp/ramdisk/server.dat");
             LlamaConfig::client = new Peer("/tmp/ramdisk/client.dat");
+            }
+            else
+            {
+            LlamaConfig::server = new Peer("server.dat");
+            LlamaConfig::client = new Peer("client.dat");
+            }
         }
         else if (LlamaConfig::party == 2) {
-            LlamaConfig::dealer = new Dealer("/tmp/ramdisk/server.dat", ramdisk);
+            if(ramdisk && ramdisk_path)
+            {
+            LlamaConfig::dealer = new Dealer("/tmp/ramdisk/server.dat", ramdisk,ramdisk_path);
+            }
+            else
+            {
+            LlamaConfig::dealer = new Dealer("server.dat", ramdisk,ramdisk_path);
+            }
             LlamaConfig::client = waitForPeer(42005);
             LlamaConfig::peer = LlamaConfig::client;
         }
         else if (LlamaConfig::party == 3) {
-            LlamaConfig::dealer = new Dealer("/tmp/ramdisk/client.dat", ramdisk);
+            if(ramdisk && ramdisk_path)
+            {
+            LlamaConfig::dealer = new Dealer("/tmp/ramdisk/client.dat", ramdisk,ramdisk_path);
+            }
+            else
+            {
+            LlamaConfig::dealer = new Dealer("client.dat", ramdisk,ramdisk_path);
+            }
             LlamaConfig::server = new Peer(ip, 42005);
             LlamaConfig::peer = LlamaConfig::server;
         }

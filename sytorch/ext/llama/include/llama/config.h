@@ -14,4 +14,5 @@ namespace LlamaConfig {
     extern int port;
     extern bool stochasticRT;
     extern bool stochasticT;
+    extern bool ramdisk_path;
 }

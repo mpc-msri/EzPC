@@ -157,13 +157,15 @@ public:
     char *ramdiskBuffer;
     char *ramdiskStart;
     int ramdiskSize;
+    bool ramdisk_path = false;
 
     Dealer(std::string ip, int port);
 
-    Dealer(std::string filename, bool ramdisk) {
+    Dealer(std::string filename, bool ramdisk,bool ramdisk_path) {
         this->useFile = true;
         this->ramdisk = ramdisk;
-        if (ramdisk) {
+        this->ramdisk_path = ramdisk_path;
+        if (ramdisk && ramdisk_path) {
             int fd = open(filename.c_str(), O_RDWR | O_CREAT, 0);
             struct stat sb;
             fstat(fd, &sb);
@@ -176,7 +178,7 @@ public:
             ::close(fd);
         }
         else {
-            //this->file.open(filename, std::ios::in | std::ios::binary);
+            this->file.open(filename, std::ios::in | std::ios::binary);
         }
     }
 

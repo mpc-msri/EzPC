@@ -84,12 +84,19 @@ python3 main.py --path "/path/to/onnx-file" --generate "code" --backend LLAMA --
 # compile secure code
 LLAMA/compile_llama.sh "/path/to/file.cpp"
 
+# Enable and mount Ramdisk on client and server machines
+./ramdrive.sh <ramdisk_size>
 # generate LLAMA keys on client and server machines
 ./<network> 1 <num_threads>
 
+
+
 # start inference on server and client machines
-./<network> 2 <model_weights_file> <num_threads>// Server
-./<network> 3 <server-ip> <num_threads> < <image_file> // Client
+./<network> 2 <model_weights_file> <num_threads> <ramdisk_path "true/false">// Server
+./<network> 3 <server-ip> <num_threads> < <image_file> <ramdisk_path "true/false">// Client
+
+# Disable and unmount Ramdisk on client and server machines
+./unmount_ramdrive.sh
 ```
 
 #### **LLAMA Cleartext**

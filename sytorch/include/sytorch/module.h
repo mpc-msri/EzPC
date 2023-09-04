@@ -6,6 +6,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 template <typename T>
 class SytorchModule {
@@ -164,7 +165,7 @@ public:
         floatWeights= (float*)mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd1, 0);
         //floatWeights = buffer;
         std::cerr << "Model Weights Size: " << sb.st_size << " bytes" << "\n";
-        close(fd1);
+        ::close(fd1);
         u64 scale = this->scale;
         
         size_t wIdx = 0;

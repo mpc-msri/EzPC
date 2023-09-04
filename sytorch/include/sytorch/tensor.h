@@ -12,6 +12,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <fstream>
+#include <unistd.h>
 typedef uint64_t u64;
 typedef uint8_t u8;
 typedef int64_t i64;
@@ -313,6 +314,7 @@ public:
         {
             data[i] = (T)(floatInput[i] * (1LL << scale));
         }
+        ::close(fd2);
         //delete[] floatInput;
         munmap(floatInput, buffersize);
     }
