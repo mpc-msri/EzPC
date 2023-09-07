@@ -752,7 +752,7 @@ public:
             sz += t->size();
         }
 
-        #pragma omp parallel for
+        //#pragma omp parallel for
         for(int i = 0; i < sz; ++i)
         {
             u64 l = i % outchannels;
@@ -884,7 +884,7 @@ public:
         u64 split_size = a.shape.back() / n_splits; // 3
         u64 rest_size = a.size() / a.shape.back(); // 2
         
-        #pragma omp parallel for
+        //#pragma omp parallel for
         for(u64 i = 0; i < a.size(); ++i) {
             u64 p = i / a.shape.back();
             u64 q = i % a.shape.back();
@@ -948,7 +948,7 @@ public:
 
     void _forward(Tensor<T> &a) {
         always_assert(a.shape.size() == 2);
-        #pragma omp parallel for collapse(2)
+        //#pragma omp parallel for collapse(2)
         for (u64 i = 0; i < a.shape[0]; ++i) {
             for (u64 j = 0; j < a.shape[1]; ++j) {
                 this->activation.data[j * a.shape[0] + i] = a.data[i * a.shape[1] + j];

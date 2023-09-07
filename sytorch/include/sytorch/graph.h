@@ -62,7 +62,7 @@ template <typename T>
 void print_dot_graph(LayerGraphNode<T> *root)
 {
     std::ofstream dotfile("graph.dot");
-    dotfile << "digraph G {" << std::endl;
+    dotfile << "digraph G {" << "\n";
 
     topologicalApply(root, [&dotfile](LayerGraphNode<T> *node, LayerGraphNode<T> *_root) {
         if (node->layer != nullptr) {
@@ -77,13 +77,13 @@ void print_dot_graph(LayerGraphNode<T> *root)
                 }
                 label += "(" + args + ")";
             }
-            dotfile << node->layer->name + std::to_string((uint64_t)(node->layer)) << " [label=\"" << label << "\"" + (node->mark ? std::string(" color=\"red\"") : std::string("")) + "];" << std::endl;
+            dotfile << node->layer->name + std::to_string((uint64_t)(node->layer)) << " [label=\"" << label << "\"" + (node->mark ? std::string(" color=\"red\"") : std::string("")) + "];" << "\n";
             for (auto &child : node->children) {
-                dotfile << node->layer->name + std::to_string((uint64_t)(node->layer)) << " -> " << child->layer->name + std::to_string((uint64_t)(child->layer)) << ";" << std::endl;
+                dotfile << node->layer->name + std::to_string((uint64_t)(node->layer)) << " -> " << child->layer->name + std::to_string((uint64_t)(child->layer)) << ";" << "\n";
             }
         }
     });
 
-    dotfile << "}" << std::endl;
+    dotfile << "}" << "\n";
     dotfile.close();
 }

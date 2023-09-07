@@ -168,7 +168,7 @@ public:
     {
         if (node->layer->doTruncationForward) {
             if (node->children.size() == 1) {
-                // std::cout << "yeah.." << std::endl;
+                // std::cout << "yeah.." << "\n";
                 LayerGraphNode<T> *child = node->children[0];
                 if (child->layer->doTruncationForward) {
                     // no optimization possible

@@ -51,6 +51,7 @@ public:
     std::fstream file;
     uint64_t bytesSent = 0;
     uint64_t bytesReceived = 0;
+    
 
     Peer(std::string ip, int port);
     Peer(int sendsocket, int recvsocket) {
@@ -148,29 +149,32 @@ Peer* waitForPeer(int port);
 class Dealer {
 public:
     int consocket;
-    bool useFile = false;
+    bool useFile = true;
     std::fstream file;
     uint64_t bytesSent = 0;
     uint64_t bytesReceived = 0;
-    bool ramdisk = false;
+    bool ramdisk =true;
     char *ramdiskBuffer;
     char *ramdiskStart;
     int ramdiskSize;
+    bool ramdisk_path = false;
 
     Dealer(std::string ip, int port);
 
-    Dealer(std::string filename, bool ramdisk) {
+    Dealer(std::string filename, bool ramdisk,bool ramdisk_path) {
         this->useFile = true;
         this->ramdisk = ramdisk;
-        if (ramdisk) {
+        this->ramdisk_path = ramdisk_path;
+        if (ramdisk && ramdisk_path) {
             int fd = open(filename.c_str(), O_RDWR | O_CREAT, 0);
             struct stat sb;
             fstat(fd, &sb);
-            std::cerr << "Key Size: " << sb.st_size << " bytes" << std::endl;
+            std::cerr << "Key Size: " << sb.st_size << " bytes" << "\n";
+            int advise=posix_fadvise(fd, 0, sb.st_size, POSIX_FADV_WILLNEED);
             ramdiskSize = sb.st_size;
-            ramdiskBuffer = (char*)mmap(NULL, sb.st_size, PROT_READ, MAP_SHARED, fd, 0);
+            ramdiskBuffer = (char*)mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
             ramdiskStart = ramdiskBuffer;
-            // std::cout << "RAMDISK: " << (int *)ramdiskBuffer << std::endl;
+            std::cout << "RAMDISK: " << (int *)ramdiskBuffer << "\n";
             ::close(fd);
         }
         else {
@@ -257,4 +261,3 @@ public:
     TripleKeyPack recv_triple_key(int bw, int64_t na, int64_t nb, int64_t nc);
 
 };
-

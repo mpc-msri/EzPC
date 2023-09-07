@@ -41,7 +41,7 @@ namespace osuCrypto
         std::lock_guard<std::mutex>l(log.mLock);
         for (u64 i = 0; i < log.mMessages.size(); ++i)
         {
-            o << "[" << i << ", " << log.mMessages[i].first / 1000.0 << "ms ]  " << log.mMessages[i].second << std::endl;
+            o << "[" << i << ", " << log.mMessages[i].first / 1000.0 << "ms ]  " << log.mMessages[i].second << "\n";
         }
 
         return o;

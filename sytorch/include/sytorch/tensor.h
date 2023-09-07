@@ -8,7 +8,11 @@
 #include <llama/assert.h>
 #include <cmath>
 #include <filesystem>
-
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <fstream>
+#include <unistd.h>
 typedef uint64_t u64;
 typedef uint8_t u8;
 typedef int64_t i64;
@@ -163,7 +167,7 @@ public:
     void copy(const Tensor<T> &other, bool copyGraph = true) {
         assert_same_shape(other);
         // memcpy(data, other.data, size() * sizeof(T));
-        #pragma omp parallel for
+        //#pragma omp parallel for
         for(u64 i = 0; i < size(); ++i)
         {
             data[i] = other.data[i];
@@ -223,12 +227,12 @@ public:
         {
             std::cout << this->shape[i] << ", ";
         }
-        std::cout << ")" << std::endl;
+        std::cout << ")" << "\n";
         for (u64 i = 0; i < size(); i++)
         {
             std::cout << data[i] << " ";
         }
-        std::cout << std::endl;
+        std::cout << "\n";
     }
 
     void printshape() {
@@ -236,7 +240,7 @@ public:
         for(int i = 0; i < this->shape.size(); i++) {
             std::cout << this->shape[i] << ", ";
         }
-        std::cout << ")" << std::endl;
+        std::cout << ")" << "\n";
     }
 
     T multidir_broadcast_value(const std::vector<u64> &broadcast_shape, const std::vector<u64> &idx) const
@@ -296,14 +300,23 @@ public:
         size_t size_in_bytes = std::filesystem::file_size(filename);
         always_assert(size_in_bytes == size() * 4);
         float *floatInput = new float[size()];
-        std::ifstream file(filename, std::ios::binary);
-        file.read((char*) floatInput, size_in_bytes);
-        file.close();
+        int buffersize;
+        // std::ifstream file(filename, std::ios::binary);
+        // file.read((char*) floatInput, size_in_bytes);
+        // file.close();
+        int fd2 = open(filename.c_str(), O_RDWR | O_CREAT, 0);
+        struct stat sb;
+        fstat(fd2, &sb);
+        buffersize = sb.st_size;
+        int advise=posix_fadvise(fd2, 0, sb.st_size, POSIX_FADV_WILLNEED);
+        floatInput= (float*)mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd2, 0);
         for(u64 i = 0; i < size(); ++i)
         {
             data[i] = (T)(floatInput[i] * (1LL << scale));
         }
-        delete[] floatInput;
+        ::close(fd2);
+        //delete[] floatInput;
+        munmap(floatInput, buffersize);
     }
 
     Tensor5D<T> as_5d()
@@ -590,4 +603,3 @@ public:
     }
 
 };
-

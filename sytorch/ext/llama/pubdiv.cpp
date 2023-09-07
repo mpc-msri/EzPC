@@ -75,7 +75,7 @@ std::pair<ARSKeyPack, ARSKeyPack> keyGenARS(int Bin, int Bout, uint64_t shift, G
     uint64_t ones = ((uint64_t)1 << shift) - 1;
     GroupElement alpha_s = y & ones;
 
-    // std::cout << "keygen alpha_n (dualdcf alpha) " << alpha_n << " alpha_s (dcf alpha)" << alpha_s << std::endl;
+    // std::cout << "keygen alpha_n (dualdcf alpha) " << alpha_n << " alpha_s (dcf alpha)" << alpha_s << "\n";
 
     if (!LlamaConfig::stochasticT) {
         auto dcfKeys = keyGenDCF(shift, Bout, alpha_s, 1);
@@ -113,7 +113,7 @@ GroupElement evalARS(int party, GroupElement x, uint64_t shift, const ARSKeyPack
     uint8_t x_msb = msb(x, k.Bin);
     // todo: bitsize of x_n should have been k.Bin - 1
     uint64_t x_n = x & (((uint64_t)1 << (k.Bin - 1)) - 1);
-    // std::cout << "x_n " << x_n << std::endl;
+    // std::cout << "x_n " << x_n << "\n";
 
     GroupElement dcfIdx = ((uint64_t)1 << shift) - x_s - 1;
     // GroupElement t_s = evalDCF(party, dcfIdx, k.dcfKey);

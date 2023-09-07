@@ -11,4 +11,5 @@ namespace LlamaConfig {
     int port = 42069;
     bool stochasticRT = false;
     bool stochasticT  = false;
+    bool ramdisk_path = false;
 }
