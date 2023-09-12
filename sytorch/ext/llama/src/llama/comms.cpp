@@ -758,7 +758,7 @@ void Dealer::close() {
 GroupElement Dealer::recv_mask() {
     char buf[8];
     if (useFile) {
-        if (ramdisk) {
+        if (ramdisk && ramdisk_path) {
             GroupElement g = *(uint64_t *)ramdiskBuffer;
             ramdiskBuffer += 8;
             bytesReceived += 8;
@@ -778,7 +778,7 @@ GroupElement Dealer::recv_mask() {
 MultKey Dealer::recv_mult_key() {
     char buf[sizeof(MultKey)];
     if (useFile) {
-        if (ramdisk) {
+        if (ramdisk && ramdisk_path) {
             MultKey k(*(MultKey *)ramdiskBuffer);
             ramdiskBuffer += sizeof(MultKey);
             bytesReceived += sizeof(MultKey);
@@ -798,7 +798,7 @@ MultKey Dealer::recv_mult_key() {
 osuCrypto::block Dealer::recv_block() {
     char buf[sizeof(osuCrypto::block)];
     if (useFile) {
-        if (ramdisk) {
+        if (ramdisk && ramdisk_path) {
             // std::cout << *(uint64_t *) ramdiskBuffer << std::endl;
             // Kanav: This could break when the endianness of the machine changes
             osuCrypto::block b = osuCrypto::toBlock(*(uint64_t *) (ramdiskBuffer + 8), *(uint64_t *) ramdiskBuffer);
