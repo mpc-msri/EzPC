@@ -779,7 +779,7 @@ MultKey Dealer::recv_mult_key() {
     char buf[sizeof(MultKey)];
     if (useFile) {
         if (ramdisk && ramdisk_path) {
-            MultKey k(*(MultKey *)ramdiskBuffer);
+            MultKey k=(*(MultKey *)ramdiskBuffer);
             ramdiskBuffer += sizeof(MultKey);
             bytesReceived += sizeof(MultKey);
             return k;
