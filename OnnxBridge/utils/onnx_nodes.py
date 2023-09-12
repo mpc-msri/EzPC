@@ -8,22 +8,22 @@ class OnnxNode:
     """
 
     @classmethod
-    def input(cls, node):
+    def input(cls, node, value_info):
         assert isinstance(node, Input)
         logger.debug("Input is OK!")
 
     @classmethod
-    def output(cls, node):
+    def output(cls, node, value_info):
         assert isinstance(node, Output)
         logger.debug("Output is OK!")
 
     @classmethod
-    def Cast(cls, node):
+    def Cast(cls, node, value_info):
         assert len(node.inputs) == 1
         logger.debug("Cast is OK!")
 
     @classmethod
-    def Pad(cls, node):
+    def Pad(cls, node, value_info):
         assert node.attrs["mode"] == "constant"
 
         if node.opset_version >= 11:
@@ -43,52 +43,52 @@ class OnnxNode:
         logger.debug("Pad is OK! (with possible modifications)")
 
     @classmethod
-    def Concat(cls, node):
+    def Concat(cls, node, value_info):
         # Nothing to assert yet
         logger.debug("Concat is OK! (No assertions)")
 
     @classmethod
-    def Sigmoid(cls, node):
+    def Sigmoid(cls, node, value_info):
         assert len(node.inputs) == 1
         logger.debug("Sigmoid is OK!")
 
     @classmethod
-    def HardSigmoid(cls, node):
+    def HardSigmoid(cls, node, value_info):
         assert len(node.inputs) == 1
         logger.debug("Hard Sigmoid is OK!")
 
     @classmethod
-    def Relu(cls, node):
+    def Relu(cls, node, value_info):
         assert len(node.inputs) == 1
         logger.debug("Relu is OK!")
 
     @classmethod
-    def Div(cls, node):
+    def Div(cls, node, value_info):
         # todo is div there or not? in athos it takes one input
         pass
 
     @classmethod
-    def Add(cls, node):
+    def Add(cls, node, value_info):
         assert len(node.inputs) == 2
         logger.debug("Add is OK!")
 
     @classmethod
-    def Sub(cls, node):
+    def Sub(cls, node, value_info):
         assert len(node.inputs) == 2
         logger.debug("Sub is OK!")
 
     @classmethod
-    def Mul(cls, node):
+    def Mul(cls, node, value_info):
         assert len(node.inputs) == 2
         logger.debug("Mul is OK!")
 
     @classmethod
-    def Gather(cls, node):
+    def Gather(cls, node, value_info):
         # Nothing to assert yet
         logger.debug("Concat is OK! (No assertions)")
 
     @classmethod
-    def Gemm(cls, node):
+    def Gemm(cls, node, value_info):
         # todo transpose done separately in gemm
         if "alpha" not in node.attrs:
             node.attrs["alpha"] = 1.0
@@ -100,22 +100,22 @@ class OnnxNode:
             node.attrs["transB"] = 0
 
     @classmethod
-    def Constant(cls, node):
+    def Constant(cls, node, value_info):
         # Nothing to assert yet
         logger.debug("Concat is OK! (No assertions)")
 
     @classmethod
-    def Transpose(cls, node):
+    def Transpose(cls, node, value_info):
         assert len(node.inputs) == 1
         logger.debug("Transpose is OK!")
 
     @classmethod
-    def Split(cls, node):
+    def Split(cls, node, value_info):
         node.inputs = node.inputs[:1]
         logger.debug("Split is OK! (with possible modifications)")
 
     @classmethod
-    def ReduceMean(cls, node):
+    def ReduceMean(cls, node, value_info):
         keepdims = node.attrs["keepdims"]
         axes = node.attrs["axes"]
 
@@ -128,56 +128,79 @@ class OnnxNode:
         logger.debug("ReduceMean is OK! (with possible modifications)")
 
     @classmethod
-    def MatMul(cls, node):
+    def MatMul(cls, node, value_info):
         # todo transpose and mul
         assert len(node.inputs) == 2
         logger.debug("MatMul is OK!")
 
     @classmethod
-    def BatchNormalization(cls, node):
+    def BatchNormalization(cls, node, value_info):
         assert len(node.inputs) == 5
         node.inputs = node.inputs[:3]
         logger.debug("Batch Normalization is OK! (with possible modifications)")
 
     @classmethod
-    def Unsqueeze(cls, node):
+    def Unsqueeze(cls, node, value_info):
         pass
 
     @classmethod
-    def Reshape(cls, node):
+    def Reshape(cls, node, value_info):
         pass
 
     @classmethod
-    def Flatten(cls, node):
+    def Flatten(cls, node, value_info):
         assert len(node.inputs) == 1
 
     @classmethod
-    def Conv(cls, node):
+    def Slice(cls, node, value_info):
+        # input: data, starts, ends, axes, steps
+        assert len(node.inputs) >= 3
+        starts = value_info[node.inputs[1]][1][0]
+        ends = value_info[node.inputs[2]][1][0]
+        assert starts == ends
+        axes = 0
+        steps = 0
+        if len(node.inputs) > 3:
+            axes = value_info[node.inputs[3]][1][0]
+            assert axes == starts
+        if len(node.inputs) > 4:
+            steps = value_info[node.inputs[4]][1][0]
+            assert steps == starts
+
+        node.attrs["starts"] = starts
+        node.attrs["ends"] = ends
+        node.attrs["axes"] = axes
+        node.attrs["steps"] = steps
+        print(node)
+        logger.debug("Slice is OK!")
+
+    @classmethod
+    def Conv(cls, node, value_info):
         pass
 
     @classmethod
-    def MaxPool(cls, node):
+    def MaxPool(cls, node, value_info):
         pass
 
     @classmethod
-    def AveragePool(cls, node):
+    def AveragePool(cls, node, value_info):
         pass
 
     @classmethod
-    def GlobalAveragePool(cls, node):
+    def GlobalAveragePool(cls, node, value_info):
         pass
 
     @classmethod
-    def ConvTranspose(cls, node):
+    def ConvTranspose(cls, node, value_info):
         pass
 
     @classmethod
-    def LeakyRelu(cls, node):
+    def LeakyRelu(cls, node, value_info):
         if "alpha" not in node.attributes:
             node.attributes["alpha"] = 0.01
 
     @classmethod
-    def Tanh(cls, node):
+    def Tanh(cls, node, value_info):
         assert len(node.inputs) == 1
         assert len(node.outputs) == 1
         # we can print the node at this step and get info on all node parameters

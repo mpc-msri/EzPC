@@ -109,6 +109,7 @@ public:
 
     virtual TensorRef<T> getweights() { return TensorRef<T>(nullptr, 0); };
     virtual TensorRef<T> getbias() { return TensorRef<T>(nullptr, 0); };
+    virtual std::vector<TensorRef<T>> get_params() { return {TensorRef<T>(nullptr, 0)}; };
     virtual std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) = 0;
 
     virtual void setBackend(Backend<T> *b) {
@@ -435,6 +436,335 @@ public:
             prod *= inShape[i];
         }
         return {inShape[0], prod};
+    }
+};
+
+template <typename T>
+class Slice : public Layer<T>
+{
+public:
+    Tensor1D<i64> starts, ends, axes, steps;
+    i64 params;
+
+    Slice(i64 start, i64 end, i64 axis, i64 step) : Layer<T>("Slice"), starts(start), ends(end), axes(axis), steps(step)
+    {
+        params = start;
+    }
+
+    void _resize(const std::vector<std::vector<u64>> &shapes)
+    {
+        always_assert(shapes.size() == 1);
+        auto &shape = shapes[0];
+        always_assert(shape.size() >= 2);
+    }
+
+    void _forward(Tensor<T> &a)
+    {
+        std::unordered_map<i64, i64> axis_map;
+        for (u64 i = 0; i < axes.size(); i++)
+        {
+            axis_map[axes.data[i] / (1 << this->scale)] = i;
+        }
+
+        if (a.shape.size() == 2)
+        {
+            auto a_2d = a.as_2d();
+            auto out_2d = this->activation.as_2d();
+            u64 d1 = a.shape[0];
+            u64 d2 = a.shape[1];
+            for (u64 i = 0, i_o = 0; i < d1;)
+            {
+                if (axis_map.find(0) != axis_map.end())
+                {
+                    i64 start = starts.data[axis_map[0]] / (1 << this->scale);
+                    i64 end = ends.data[axis_map[0]] / (1 << this->scale);
+                    i64 step = steps.data[axis_map[0]] / (1 << this->scale);
+                    if (i < start or i >= end or (i - start) % step != 0)
+                    {
+                        i++;
+                        continue;
+                    }
+                }
+
+                for (u64 j = 0, j_o = 0; j < d2;)
+                {
+                    if (axis_map.find(1) != axis_map.end())
+                    {
+                        i64 start = starts.data[axis_map[1]] / (1 << this->scale);
+                        i64 end = ends.data[axis_map[1]] / (1 << this->scale);
+                        i64 step = steps.data[axis_map[1]] / (1 << this->scale);
+                        if (j < start or j >= end or (j - start) % step != 0)
+                        {
+                            j++;
+                            continue;
+                        }
+                    }
+                    out_2d(i_o, j_o) = a_2d(i, j);
+                    j++;
+                    j_o++;
+                }
+                i++;
+                i_o++;
+            }
+        }
+        else if (a.shape.size() == 4)
+        {
+            auto a_4d = a.as_4d();
+            auto out_4d = this->activation.as_4d();
+            u64 d1 = a.shape[0];
+            u64 d2 = a.shape[1];
+            u64 d3 = a.shape[2];
+            u64 d4 = a.shape[3];
+
+            for (u64 i = 0, i_o = 0; i < d1;)
+            {
+                if (axis_map.find(0) != axis_map.end())
+                {
+                    i64 start = starts.data[axis_map[0]] / (1 << this->scale);
+                    i64 end = ends.data[axis_map[0]] / (1 << this->scale);
+                    i64 step = steps.data[axis_map[0]] / (1 << this->scale);
+                    if (i < start or i >= end or (i - start) % step != 0)
+                    {
+                        i++;
+                        continue;
+                    }
+                }
+                for (u64 j = 0, j_o = 0; j < d2;)
+                {
+                    if (axis_map.find(1) != axis_map.end())
+                    {
+                        i64 start = starts.data[axis_map[1]] / (1 << this->scale);
+                        i64 end = ends.data[axis_map[1]] / (1 << this->scale);
+                        i64 step = steps.data[axis_map[1]] / (1 << this->scale);
+                        if (j < start or j >= end or (j - start) % step != 0)
+                        {
+                            j++;
+                            continue;
+                        }
+                    }
+                    for (u64 k = 0, k_o = 0; k < d3;)
+                    {
+                        if (axis_map.find(2) != axis_map.end())
+                        {
+                            i64 start = starts.data[axis_map[2]] / (1 << this->scale);
+                            i64 end = ends.data[axis_map[2]] / (1 << this->scale);
+                            i64 step = steps.data[axis_map[2]] / (1 << this->scale);
+                            if (k < start or k >= end or (k - start) % step != 0)
+                            {
+                                k++;
+                                continue;
+                            }
+                        }
+                        for (u64 l = 0, l_o = 0; l < d4;)
+                        {
+                            if (axis_map.find(3) != axis_map.end())
+                            {
+                                i64 start = starts.data[axis_map[3]] / (1 << this->scale);
+                                i64 end = ends.data[axis_map[3]] / (1 << this->scale);
+                                i64 step = steps.data[axis_map[3]] / (1 << this->scale);
+                                if (l < start or l >= end or (l - start) % step != 0)
+                                {
+                                    l++;
+                                    continue;
+                                }
+                            }
+                            out_4d(i_o, j_o, k_o, l_o) = a_4d(i, j, k, l);
+                            l++;
+                            l_o++;
+                        }
+                        k++;
+                        k_o++;
+                    }
+                    j++;
+                    j_o++;
+                }
+                i++;
+                i_o++;
+            }
+        }
+        else if (a.shape.size() == 5)
+        {
+            auto a_5d = a.as_5d();
+            auto out_5d = this->activation.as_5d();
+            u64 d1 = a.shape[0];
+            u64 d2 = a.shape[1];
+            u64 d3 = a.shape[2];
+            u64 d4 = a.shape[3];
+            u64 d5 = a.shape[4];
+
+            for (u64 i = 0, i_o = 0; i < d1;)
+            {
+                if (axis_map.find(0) != axis_map.end())
+                {
+                    i64 start = starts.data[axis_map[0]] / (1 << this->scale);
+                    i64 end = ends.data[axis_map[0]] / (1 << this->scale);
+                    i64 step = steps.data[axis_map[0]] / (1 << this->scale);
+                    if (i < start or i >= end or (i - start) % step != 0)
+                    {
+                        i++;
+                        continue;
+                    }
+                }
+                for (u64 j = 0, j_o = 0; j < d2;)
+                {
+                    if (axis_map.find(1) != axis_map.end())
+                    {
+                        i64 start = starts.data[axis_map[1]] / (1 << this->scale);
+                        i64 end = ends.data[axis_map[1]] / (1 << this->scale);
+                        i64 step = steps.data[axis_map[1]] / (1 << this->scale);
+                        if (j < start or j >= end or (j - start) % step != 0)
+                        {
+                            j++;
+                            continue;
+                        }
+                    }
+                    for (u64 k = 0, k_o = 0; k < d3;)
+                    {
+                        if (axis_map.find(2) != axis_map.end())
+                        {
+                            i64 start = starts.data[axis_map[2]] / (1 << this->scale);
+                            i64 end = ends.data[axis_map[2]] / (1 << this->scale);
+                            i64 step = steps.data[axis_map[2]] / (1 << this->scale);
+                            if (k < start or k >= end or (k - start) % step != 0)
+                            {
+                                k++;
+                                continue;
+                            }
+                        }
+                        for (u64 l = 0, l_o = 0; l < d4;)
+                        {
+                            if (axis_map.find(3) != axis_map.end())
+                            {
+                                i64 start = starts.data[axis_map[3]] / (1 << this->scale);
+                                i64 end = ends.data[axis_map[3]] / (1 << this->scale);
+                                i64 step = steps.data[axis_map[3]] / (1 << this->scale);
+                                if (l < start or l >= end or (l - start) % step != 0)
+                                {
+                                    l++;
+                                    continue;
+                                }
+                            }
+                            for (u64 m = 0, m_o = 0; m < d5;)
+                            {
+                                if (axis_map.find(4) != axis_map.end())
+                                {
+                                    i64 start = starts.data[axis_map[4]] / (1 << this->scale);
+                                    i64 end = ends.data[axis_map[4]] / (1 << this->scale);
+                                    i64 step = steps.data[axis_map[4]] / (1 << this->scale);
+                                    if (m < start or m >= end or (m - start) % step != 0)
+                                    {
+                                        m++;
+                                        continue;
+                                    }
+                                }
+                                out_5d(i_o, j_o, k_o, l_o, m_o) = a_5d(i, j, k, l, m);
+                                m_o++;
+                                m++;
+                            }
+                            l_o++;
+                            l++;
+                        }
+                        k_o++;
+                        k++;
+                    }
+                    j_o++;
+                    j++;
+                }
+                i_o++;
+                i++;
+            }
+        }
+        else
+        {
+            throw std::runtime_error("Slice operator supported only for 2d, 4d and 5d tensors");
+        }
+    }
+
+    std::vector<TensorRef<i64>> get_params()
+    {
+        return {starts.ref(), ends.ref(), axes.ref(), steps.ref()};
+    }
+
+    std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes)
+    {
+        always_assert(inShapes.size() == 1);
+        auto &inShape = inShapes[0];
+        std::vector<u64> output_shape(inShape.size());
+        // make  copy of inShape
+        std::vector<u64> inShapeCopy(inShape.size());
+        std::copy(inShape.begin(), inShape.end(), inShapeCopy.begin());
+
+        for (u64 i = 0; i < params; i++)
+        {
+            i64 start = starts.data[i] / (1 << this->scale);
+            i64 end = ends.data[i] / (1 << this->scale);
+            if (axes.size() == 0)
+            {
+                axes.resize(params);
+                for (u64 j = 0; j < params; j++)
+                {
+                    axes.data[j] = j * (1 << this->scale);
+                }
+            }
+            if (steps.size() == 0)
+            {
+                steps.resize(params);
+                steps.fill(1 * (1 << this->scale));
+            }
+            i64 axis = axes.data[i] / (1 << this->scale);
+            i64 step = steps.data[i] / (1 << this->scale);
+            assert(step != 0);
+
+            // modifying axis as per nhwc format
+            if (axis >= 2)
+            {
+                axis = axis - 1;
+                axes.data[i] = axis * (1 << this->scale);
+            }
+            else if (axis == 1)
+            {
+                axis = inShapeCopy.size() - 1;
+                axes.data[i] = axis * (1 << this->scale);
+            }
+
+            // handling case where start/end/axes/step is -ve
+            if (axis < 0)
+            {
+                axis = inShapeCopy.size() + axis;
+                axes.data[i] = axis * (1 << this->scale);
+            }
+            if (start < 0)
+            {
+                start = inShapeCopy[axis] + start;
+                starts.data[i] = start * (1 << this->scale);
+            }
+            if (end < 0)
+            {
+                end = inShapeCopy[axis] + end;
+                ends.data[i] = end * (1 << this->scale);
+            }
+            if (step < 0)
+            {
+                u64 lost = (end - start - 1) % (-step);
+                start = start + lost;
+                starts.data[i] = start * (1 << this->scale);
+                step = -step;
+                steps.data[i] = step * (1 << this->scale);
+            }
+            for (int i = 0; i < inShapeCopy.size(); i++)
+            {
+                if (i == axis)
+                {
+                    output_shape[i] = ceil((end - start) / (double)step);
+                }
+                else
+                {
+                    output_shape[i] = inShapeCopy[i];
+                }
+            }
+            inShapeCopy = output_shape;
+        }
+        return output_shape;
     }
 };
 

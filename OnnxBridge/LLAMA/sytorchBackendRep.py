@@ -22,6 +22,7 @@ def func_call(node, value_info):
         "GlobalAveragePool": "GlobalAvgPool2D",
         "Add": "add",
         "ConvTranspose": "ConvTranspose3D",
+        "Slice": "Slice",
     }
     return func_map[node.op_type]
 
@@ -65,6 +66,7 @@ def inputs_to_take(node):
         "BatchNormalization": 1,
         "GlobalAveragePool": 1,
         "ConvTranspose": 1,
+        "Slice": 1,
     }
     return tmp_dict[node]
 
@@ -325,7 +327,7 @@ def prepare_export(program, var_dict, value_info, mode, scale, bitlength, backen
     # Check nodes for assertions and modifications
     for node in program:
         func = getattr(OnnxNode, node.op_type)
-        func(node)
+        func(node, value_info)
 
     # Start CPP program
     number_of_nodes = 0
