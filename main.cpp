@@ -543,7 +543,7 @@ void llama_fixtofloat_test(int party) {
     LlamaExtended<u64>* llama = new LlamaExtended<u64>();
     // LlamaExtended<u64>::init("172.31.45.158");
     // LlamaExtended<u64>::init("172.31.45.85", false);
-    llama->init("127.0.0.1", true);
+    llama->init("127.0.0.1", false);
     int numClasses = 10;
     int batchSize = 100;
     if (party != 1) {
@@ -1275,11 +1275,11 @@ int main(int argc, char** argv) {
         party = atoi(argv[1]);
     }
     // llama_test_3layer(party);
-    llama_test_lenet_gupta(party);
+    //llama_test_lenet_gupta(party);
     // gpu_main(argc, argv);
     // carvanha_compile();
     // llama_test_pvgg(party);
-    // llama_fixtofloat_test(party);
+     llama_fixtofloat_test(party);
     // if (party == 0) {
     //     ct_test_3layer();
     // }
