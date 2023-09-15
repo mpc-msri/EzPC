@@ -2286,9 +2286,9 @@ void FloatToFix(int size, GroupElement *inp, GroupElement *out, int scale)
         GroupElement *m = new GroupElement[2*size];
         GroupElement *e = m + size;
         GroupElement *w = new GroupElement[2*size];
-        GroupElement *t = new GroupElement[2*size];
+        GroupElement *t = new GroupElement[size];
         GroupElement *h = w + size;
-        GroupElement *d = t + size;
+        GroupElement *d = new GroupElement[size];
 
         peer->sync();
         auto eval_start = std::chrono::high_resolution_clock::now();
@@ -2302,15 +2302,21 @@ void FloatToFix(int size, GroupElement *inp, GroupElement *out, int scale)
         }
         // m and e are in a single array. m is the first half and e is the second half
         reconstruct(2*size, m, 24);
-
+        
+        
         for(int i = 0; i < size; ++i) {
             evalDCF(party - 2, &w[i], m[i], keys[i].dcfKey);
             w[i] = w[i] + keys[i].rw;
-            h[i] = keys[i].rh;
-            for(int j = 0; j < 1024; ++j) {
-                d[i] = d[i] + pow_helper(scale,j) * keys[i].p[(j-e[i])%1024];
-            }
-            h[i] = keys[i].rh + pow(2,24) * d[i];
+            
+        }
+        //confusionn in usage of size and 1024 ?
+        
+        for (int i=0;i< size;i++){
+            for (int j =0 ; j < 1024;j++)
+             {
+            d[i] = d[i] + pow_helper(scale,j) * keys[i].p[(j-e[i])%1024];
+             }
+            h[i] = keys[i].rh + pow((GroupElement)2,24) *d[i];
         }
         // w and h are in a single array w. w is the first half and h is the second half
         reconstruct(2*size, w, bitlength);

@@ -225,6 +225,9 @@ inline void softmax_secfloat(Tensor4D<u64> &in, Tensor4D<u64> &out, u64 scale, i
             }
         }
     }
-
+    //std::cout<<"outFloat"<<std::endl;
+    //outFloat.print();
+   // std::cout<<"<<<<<<<<<<<<<<<<<<<"<<std::endl;
     FloatToFix(in.d1 * in.d2, outFloat.data, out.data, scale);
+   // out.print();
 }
