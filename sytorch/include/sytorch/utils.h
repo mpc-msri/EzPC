@@ -441,6 +441,43 @@ void print(const Tensor<T> &p, u64 scale, u64 bw)
 }
 
 template <typename T>
+void print_nchw(const Tensor<T> &p, u64 scale, u64 bw)
+{
+    u64 batch_size = p.shape[0];
+    u64 num_channel = p.shape.back();
+    u64 rest_size = p.size() / (batch_size * num_channel);
+
+    for (u64 i = 0; i < p.size(); i++)
+    {
+        u64 curr_batch = i / (num_channel * rest_size);
+        u64 curr_channel = (i / rest_size) % num_channel;
+        u64 curr_rest = i % rest_size;
+        u64 new_idx = curr_batch * (num_channel * rest_size) + curr_rest * num_channel + curr_channel;
+
+        i64 val;
+        if (bw == sizeof(T) * 8)
+        {
+            val = p.data[new_idx];
+        }
+        else
+        {
+            val = (p.data[new_idx] + (1LL << (bw - 1))) % (1LL << bw);
+            val -= (1LL << (bw - 1));
+        }
+        std::cout << (double)val / (1LL << scale);
+        if ((i + 1) % num_channel == 0)
+        {
+            std::cout << std::endl;
+        }
+        else
+        {
+            std::cout << " ";
+        }
+    }
+    std::cout << std::endl;
+}
+
+template <typename T>
 void print(const Tensor<T> &p, u64 scale)
 {
     print(p, scale, sizeof(T) * 8);

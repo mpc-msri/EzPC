@@ -132,7 +132,8 @@ int main(int argc, char**__argv){'{'}
         input.input_nchw(scale);
         print_dot_graph(net.root);
         net.forward(input);
-        print(net.activation, scale, 64);
+        net.activation.printshape();
+        print_nchw(net.activation, scale, 64);
         return 0;
     {'}'}
 
@@ -279,7 +280,7 @@ int main(int __argc, char**__argv){'{'}
     auto &output = net.activation;
     llama->outputA(output);
     if (party == CLIENT) {'{'}
-        print(output, scale, LlamaConfig::bitlength);
+        print_nchw(output, scale, LlamaConfig::bitlength);
     {'}'}
     llama->finalize();
 {'}'}
