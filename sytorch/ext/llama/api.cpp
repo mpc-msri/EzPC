@@ -1,5 +1,5 @@
 /*
-Authors: Deepak Kumaraswamy, Kanav Gupta
+Authors: Deepak Kumaraswamy, Kanav Gupta, Tanmay Rajore
 Copyright:
 Copyright (c) 2022 Microsoft Research
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -102,8 +102,8 @@ void llama::end()
         std::cerr << "Select/Bit operations Time = " << selectEvalMicroseconds / 1000.0 << " milliseconds\n";
         std::cerr << "Truncate time = " << arsEvalMicroseconds / 1000.0 << " milliseconds\n";
         auto endTime = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        std::cerr << "Total Time (including Key Read) = " << (endTime - startTime) / 1000000.0 << " milliseconds\n";
-        std::cerr << std::endl;
+        std::cerr << "Total Time (including Key Read) = " << double((endTime - startTime)) / 1000000.0 << " milliseconds\n";
+        std::cerr << "\n";
         std::cerr << "Conv Online Communication = " << convOnlineComm << " bytes\n";
         std::cerr << "MatMul Online Communication = " << matmulOnlineComm << " bytes\n";
         std::cerr << "Select Online Communication = " << selectOnlineComm << " bytes\n";
@@ -146,7 +146,7 @@ void reconstructRT(int32_t size, GroupElement *arr, int bw)
 {
     uint64_t *tmp = new uint64_t[size];
     int bitarraySize = size % 8 == 0 ? size / 8 : size / 8 + 1;
-    // std::cerr << "bitarraySize = " << bitarraySize << std::endl;
+    // std::cerr << "bitarraySize = " << bitarraySize << "\n";
     uint8_t *tmp2 = new uint8_t[bitarraySize];
     uint8_t *tmp3 = new uint8_t[bitarraySize];
     // std::cerr << "bits = ";
@@ -154,9 +154,9 @@ void reconstructRT(int32_t size, GroupElement *arr, int bw)
     // {
     //     std::cerr << arr[i + size] << "  ";
     // }
-    // std::cerr << std::endl;
+    // std::cerr << "\n";
     packBitArray(arr + size, size, tmp2);
-    // std::cerr << "encoded = " << (int)tmp2[0] << std::endl;
+    // std::cerr << "encoded = " << (int)tmp2[0] << "\n";
     if (parallel_reconstruct)
     {
         std::thread send_thread(&Peer::send_batched_input, peer, arr, size, bw);
@@ -182,7 +182,7 @@ void reconstructRT(int32_t size, GroupElement *arr, int bw)
         // std::cerr << ((tmp3[i / 8] >> (i % 8)) & 1) << "  ";
         arr[i + size] = arr[i + size] + ((tmp3[i / 8] >> (i % 8)) & 1);
     }
-    // std::cerr << std::endl;
+    // std::cerr << "\n";
     delete[] tmp;
     numRounds += 1;
 }
@@ -208,7 +208,7 @@ void Conv2DWrapper(int32_t N, int32_t H, int32_t W,
                    int32_t strideW, MASK_PAIR(GroupElement *inputArr), MASK_PAIR(GroupElement *filterArr),
                    MASK_PAIR(GroupElement *outArr))
 {
-    std::cerr << ">> Conv2D - Start" << std::endl;
+    std::cerr << ">> Conv2D - Start" << "\n";
     int d0 = N;
     int d1 = ((H - FH + (zPadHLeft + zPadHRight)) / strideH) + 1;
     int d2 = ((W - FW + (zPadWLeft + zPadWRight)) / strideW) + 1;
@@ -275,7 +275,7 @@ void Conv2DWrapper(int32_t N, int32_t H, int32_t W,
         std::cerr << "   Online Comm = " << (onlineComm1 - onlineComm0) << " bytes\n";
     }
 
-    std::cerr << ">> Conv2D - End" << std::endl;
+    std::cerr << ">> Conv2D - End" << "\n";
 
 }
 
@@ -287,7 +287,7 @@ void Conv3DWrapper(int32_t N, int32_t D, int32_t H, int32_t W,
             int32_t strideW, GroupElement *inputArr, GroupElement *filterArr,
             GroupElement *outArr)
 {
-    std::cerr << ">> Conv3D - Start" << std::endl;
+    std::cerr << ">> Conv3D - Start" << "\n";
     int d0 = N;
     int d1 = ((D - FD + (zPadDLeft + zPadDRight)) / strideD) + 1;
     int d2 = ((H - FH + (zPadHLeft + zPadHRight)) / strideH) + 1;
@@ -350,7 +350,7 @@ void Conv3DWrapper(int32_t N, int32_t D, int32_t H, int32_t W,
         std::cerr << "   Online Comm = " << (onlineComm1 - onlineComm0) << " bytes\n";
     }
 
-    std::cerr << ">> Conv3D - End" << std::endl;
+    std::cerr << ">> Conv3D - End" << "\n";
 
 }
 
@@ -389,11 +389,14 @@ void ars_threads_helper(int thread_idx, int32_t size, GroupElement *inArr, Group
 {
     auto p = get_start_end(size, thread_idx);
     for(int i = p.first; i < p.second; i += 1){
+        
         outArr[i] = evalARS(party - 2, inArr[i], keys[i].shift, keys[i]);
+       
         freeARSKeyPack(keys[i]);
     }
 }
 
+//backup code
 /*
         auto keyread_start = std::chrono::high_resolution_clock::now();
         auto keyread_end = std::chrono::high_resolution_clock::now();
@@ -413,11 +416,11 @@ void ars_threads_helper(int thread_idx, int32_t size, GroupElement *inArr, Group
 */
 void ARS(int32_t size, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *outArr), int32_t shift)
 {
-    std::cerr << ">> Truncate" << (LlamaConfig::stochasticT ? " (stochastic)" : "") << " - Start" << std::endl;
+    std::cerr << ">> Truncate" << (LlamaConfig::stochasticT ? " (stochastic)" : "") << " - Start" << "\n";
     if (party == DEALER) {
         pair<ARSKeyPack> *keys = new pair<ARSKeyPack>[size];
         auto dealer_start = std::chrono::high_resolution_clock::now();
-        #pragma omp parallel for
+        //#pragma omp parallel for
         for (int i = 0; i < size; i++) {
             GroupElement rout = random_ge(bitlength);
             keys[i] = keyGenARS(bitlength, bitlength, shift, inArr_mask[i], rout);
@@ -447,7 +450,11 @@ void ARS(int32_t size, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *o
                                                             keyread_start).count();
 
         peer->sync();
+        
+        
         auto start = std::chrono::high_resolution_clock::now();
+
+        
         std::thread thread_pool[num_threads];
         for(int i = 0; i < num_threads; ++i) {
             thread_pool[i] = std::thread(ars_threads_helper, i, size, inArr, outArr, keys);
@@ -475,12 +482,12 @@ void ARS(int32_t size, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *o
         arsEvalMicroseconds += (reconstruct_time + compute_time);
         delete[] keys;
     }
-    std::cerr << ">> Truncate - End" << std::endl;
+    std::cerr << ">> Truncate - End" << "\n";
 }
 
 void ScaleDown(int32_t size, MASK_PAIR(GroupElement *inArr), int32_t sf)
 {
-    std::cerr << ">> ScaleDown - Start " << std::endl;
+    std::cerr << ">> ScaleDown - Start " << "\n";
 
     if (localTruncation) {
         uint64_t m = ((1L << sf) - 1) << (bitlength - sf);
@@ -511,7 +518,7 @@ void ScaleDown(int32_t size, MASK_PAIR(GroupElement *inArr), int32_t sf)
     else {
         ARS(size, inArr, inArr_mask, inArr, inArr_mask, sf);
     }
-    std::cerr << ">> ScaleDown - End " << std::endl;
+    std::cerr << ">> ScaleDown - End " << "\n";
 }
 
 inline void matmul2d_server_helper(int thread_idx, int s1, int s2, int s3, GroupElement *A, GroupElement *B, GroupElement *C, GroupElement *a, GroupElement *b, GroupElement *c)
@@ -549,7 +556,7 @@ inline void matmul2d_client_helper(int thread_idx, int s1, int s2, int s3, Group
 void MatMul2D(int32_t s1, int32_t s2, int32_t s3, MASK_PAIR(GroupElement *A),
             MASK_PAIR(GroupElement *B), MASK_PAIR(GroupElement *C), bool modelIsA)
 {
-    std::cerr << ">> MatMul2D - Start" << std::endl;
+    std::cerr << ">> MatMul2D - Start" << "\n";
     if (party == DEALER) {
 
         auto dealer_start = std::chrono::high_resolution_clock::now();
@@ -567,7 +574,7 @@ void MatMul2D(int32_t s1, int32_t s2, int32_t s3, MASK_PAIR(GroupElement *A),
         client->send_matmul_key(keys.second);
         freeMatMulKey(keys.second);
         dealerMicroseconds += std::chrono::duration_cast<std::chrono::microseconds>(dealer_end - dealer_start).count();
-        std::cerr << "   Dealer Time = " << std::chrono::duration_cast<std::chrono::milliseconds>(dealer_end - dealer_start).count() << " milliseconds" << std::endl;
+        std::cerr << "   Dealer Time = " << std::chrono::duration_cast<std::chrono::milliseconds>(dealer_end - dealer_start).count() << " milliseconds" << "\n";
     }
     else {
 
@@ -602,7 +609,7 @@ void MatMul2D(int32_t s1, int32_t s2, int32_t s3, MASK_PAIR(GroupElement *A),
         freeMatMulKey(key);
     }
 
-    std::cerr << ">> MatMul2D - End" << std::endl;
+    std::cerr << ">> MatMul2D - End" << "\n";
 }
 
 void ElemWiseActModelVectorMult(int32_t size, MASK_PAIR(GroupElement *inArr),
@@ -616,7 +623,7 @@ void ArgMax(int32_t rows, int32_t cols, MASK_PAIR(GroupElement *inp), MASK_PAIR(
     // inp is a vector of size rows*columns and max (resp. maxidx) is caclulated for every
     // column chunk of elements. Result maxidx is stored in out (size: rows)
 
-    std::cerr << ">> ArgMax - Start" << std::endl;
+    std::cerr << ">> ArgMax - Start" << "\n";
     always_assert(rows == 1);
     if (party == DEALER)
     { 
@@ -775,14 +782,14 @@ void ArgMax(int32_t rows, int32_t cols, MASK_PAIR(GroupElement *inp), MASK_PAIR(
         auto eval_time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
         argmaxEvalMicroseconds += eval_time;
         evalMicroseconds += eval_time;
-        std::cerr << "   Eval time: " << eval_time / 1000.0 << " milliseconds" << std::endl;
+        std::cerr << "   Eval time: " << eval_time / 1000.0 << " milliseconds" << "\n";
         delete[] tmpMax;
         delete[] tmpIdx;
         delete[] drelu;
         delete[] mult_res;
 
     }
-    std::cerr << ">> ArgMax - End" << std::endl;
+    std::cerr << ">> ArgMax - End" << "\n";
 }
 
 void AvgPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t ksizeH,
@@ -792,7 +799,7 @@ void AvgPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t ksizeH,
              int32_t C1, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *outArr)) 
 {
     // taken from the equivalent function in Porthos/src/EzPCFunctionalities.cpp
-    std::cerr << ">> AvgPool - Start" << std::endl;
+    std::cerr << ">> AvgPool - Start" << "\n";
     int rows = N*H*W*C;
 	std::vector<GroupElement> filterAvg(rows, 0);
     std::vector<GroupElement> filterAvg_mask(rows, 0);
@@ -846,12 +853,12 @@ void AvgPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t ksizeH,
     auto common_time = std::chrono::duration_cast<std::chrono::microseconds>(common_end - common_start).count();
     if (party == DEALER) {
         dealerMicroseconds += common_time;
-        std::cerr << "   Dealer Time (without PubDiv) = " << common_time / 1000.0 << " miliseconds" << std::endl;
+        std::cerr << "   Dealer Time (without PubDiv) = " << common_time / 1000.0 << " miliseconds" << "\n";
     }
     else {
         avgpoolEvalMicroseconds += common_time;
         evalMicroseconds += common_time;
-        std::cerr << "   Eval Time (without PubDiv) = " << common_time / 1000.0 << " miliseconds" << std::endl;
+        std::cerr << "   Eval Time (without PubDiv) = " << common_time / 1000.0 << " miliseconds" << "\n";
     }
     
 
@@ -879,7 +886,7 @@ void AvgPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t ksizeH,
         // todo: the divisor ksizeH * ksizeW is 32 bits long when passed as param, but ezpc cleartext explicitly converts to 64 bit value
         // will this be an issue in the future?
         // ElemWiseVectorPublicDiv(rows, filterAvg.data(), filterAvg_mask.data(), ksizeH * ksizeW, outp.data(), outp_mask.data());
-        std::cerr << "Error Error Error" << std::endl;
+        std::cerr << "Error Error Error" << "\n";
         exit(1);
     }
 
@@ -898,7 +905,7 @@ void AvgPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t ksizeH,
 			}
 		}
 	}
-    std::cerr << ">> AvgPool - End" << std::endl;
+    std::cerr << ">> AvgPool - End" << "\n";
 }
 
 
@@ -915,12 +922,12 @@ void mult_threads_helper(int thread_idx, int32_t size, GroupElement *inArr, Grou
 void ElemWiseSecretSharedVectorMult(int32_t size, MASK_PAIR(GroupElement *inArr),
                                     MASK_PAIR(GroupElement *multArrVec), MASK_PAIR(GroupElement *outputArr))
 {
-    std::cerr << ">> ElemWise Mult - start" << std::endl;
+    std::cerr << ">> ElemWise Mult - start" << "\n";
     if (party == DEALER) {
         uint64_t dealer_toal_time = 0;
         pair<MultKey> *keys = new pair<MultKey>[size];
 
-        #pragma omp parallel for
+        //#pragma omp parallel for
         for(int i = 0; i < size; ++i) {
             auto dealer_start = std::chrono::high_resolution_clock::now();
             auto rout = random_ge(bitlength);
@@ -971,7 +978,7 @@ void ElemWiseSecretSharedVectorMult(int32_t size, MASK_PAIR(GroupElement *inArr)
         delete[] keys;
 
     }
-    std::cerr << ">> ElemWise Mult - end" << std::endl;
+    std::cerr << ">> ElemWise Mult - end" << "\n";
 }
 
 void maxpool_threads_helper(int thread_idx, int fh, int fw, int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
@@ -1017,7 +1024,7 @@ void MaxPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
              int32_t strideW, int32_t N1, int32_t imgH, int32_t imgW,
              int32_t C1, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *outArr), GroupElement *oneHot) 
 {
-    std::cerr << ">> MaxPool - Start" << std::endl;
+    std::cerr << ">> MaxPool - Start" << "\n";
     int d1 = ((imgH - FH + (zPadHLeft + zPadHRight)) / strideH) + 1;
     int d2 = ((imgW - FW + (zPadWLeft + zPadWRight)) / strideW) + 1;
     always_assert(d1 == H);
@@ -1083,7 +1090,7 @@ void MaxPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
         auto dealer_end = std::chrono::high_resolution_clock::now();
         auto dealer_time = std::chrono::duration_cast<std::chrono::microseconds>(dealer_end - dealer_start).count() - dealer_file_read_time;
         dealerMicroseconds += dealer_time;
-        std::cerr << "   Dealer time: " << dealer_time / 1000.0 << " milliseconds" << std::endl;
+        std::cerr << "   Dealer time: " << dealer_time / 1000.0 << " milliseconds" << "\n";
     }
     else {
         MaxpoolKeyPack *keys = new MaxpoolKeyPack[(FH * FW - 1) * N * C * H * W];
@@ -1175,14 +1182,14 @@ void MaxPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH,
         evalMicroseconds += eval_time;
         maxpoolEvalMicroseconds += eval_time;
         delete[] keys;
-        std::cerr << "   Key Read Time = " << keyread_time / 1000.0 << " milliseconds" << std::endl;
-        std::cerr << "   Key Size = " << keysize / (1024.0 * 1024.0) << " MB" << std::endl;
-        std::cerr << "   Compute Time = " << timeCompute / 1000.0 << " milliseconds" << std::endl;
-        std::cerr << "   Reconstruct Time = " << timeReconstruct / 1000.0 << " milliseconds" << std::endl;
-        std::cerr << "   Online Time = " << eval_time / 1000.0 << " miliseconds" << std::endl;
+        std::cerr << "   Key Read Time = " << keyread_time / 1000.0 << " milliseconds" << "\n";
+        std::cerr << "   Key Size = " << keysize / (1024.0 * 1024.0) << " MB" << "\n";
+        std::cerr << "   Compute Time = " << timeCompute / 1000.0 << " milliseconds" << "\n";
+        std::cerr << "   Reconstruct Time = " << timeReconstruct / 1000.0 << " milliseconds" << "\n";
+        std::cerr << "   Online Time = " << eval_time / 1000.0 << " miliseconds" << "\n";
     }
 
-    std::cerr << ">> MaxPool - End" << std::endl;
+    std::cerr << ">> MaxPool - End" << "\n";
 }
 
 
@@ -1210,13 +1217,13 @@ void relu_dealer_threads_helper(int thread_idx, int32_t size, GroupElement *inAr
 
 void Relu(int32_t size, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *outArr), GroupElement *drelu)
 {
-    std::cerr << ">> Relu (Spline) - Start" << std::endl;
+    std::cerr << ">> Relu (Spline) - Start" << "\n";
     // todo: handle doTruncation param
     if (party == DEALER) {
         uint64_t dealer_total_time = 0;
         std::pair<ReluKeyPack, ReluKeyPack> *keys = new std::pair<ReluKeyPack, ReluKeyPack>[size];
         auto start = std::chrono::high_resolution_clock::now();
-        #pragma omp parallel for
+        //#pragma omp parallel for
         for(int i = 0; i < size; i += 1){
             auto rout = random_ge(bitlength); // prng inside multithreads, need some locking
             drelu[i] = random_ge(1);
@@ -1233,7 +1240,7 @@ void Relu(int32_t size, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *
         }
         delete[] keys;
         dealerMicroseconds += dealer_total_time;
-        std::cerr << "   Dealer time = " << dealer_total_time / 1000.0 << " milliseconds" << std::endl;
+        std::cerr << "   Dealer time = " << dealer_total_time / 1000.0 << " milliseconds" << "\n";
     }
     else {
         // Step 1: Preprocessing Keys from Dealer
@@ -1283,7 +1290,7 @@ void Relu(int32_t size, MASK_PAIR(GroupElement *inArr), MASK_PAIR(GroupElement *
         reluEvalMicroseconds += (reconstruct_time + compute_time);
         delete[] keys;
     }
-    std::cerr << ">> Relu (Spline) - End " << std::endl;
+    std::cerr << ">> Relu (Spline) - End " << "\n";
 }
 
 #define BIG_LOOPY(e) for(int n = 0; n < N; ++n) {\
@@ -1326,7 +1333,7 @@ void maxpool_onehot_threads_helper(int thread_idx, int f, int32_t N, int32_t H, 
 // This is compatible with both MaxPool and MaxPoolDouble
 void MaxPoolOneHot(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH, int32_t FW, GroupElement *maxBits, GroupElement *oneHot)
 {
-    std::cerr << ">> MaxPoolOneHot - Start" << std::endl;
+    std::cerr << ">> MaxPoolOneHot - Start" << "\n";
     GroupElement *curr = make_array<GroupElement>(N * H * W * C);
     if (party == DEALER) {
         BIG_LOOPY(
@@ -1383,7 +1390,7 @@ void MaxPoolOneHot(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH, int32
                 Arr5DIdx(oneHot, FH * FW, N, H, W, C, f, n, h, w, c) = evalAnd(party - 2, max, 1 ^ c1, key);
                 mod(Arr5DIdx(oneHot, FH * FW, N, H, W, C, f, n, h, w, c), 1);
             )
-
+            /* testing to be done
             // std::thread thread_pool[num_threads];
             // for(int i = 0; i < num_threads; ++i) {
             //     thread_pool[i] = std::thread(maxpool_onehot_threads_helper, i, f, N, H, W, C, FH, FW, maxBits, curr, oneHot, keys);
@@ -1392,7 +1399,7 @@ void MaxPoolOneHot(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH, int32
             // for(int i = 0; i < num_threads; ++i) {
             //     thread_pool[i].join();
             // }
-
+            */
             reconstruct(N * H * W * C, oneHot + f * N * H * W * C, 1);
             
             BIG_LOOPY(
@@ -1407,12 +1414,12 @@ void MaxPoolOneHot(int32_t N, int32_t H, int32_t W, int32_t C, int32_t FH, int32
         auto eval_time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
         evalMicroseconds += eval_time;
         selectEvalMicroseconds += eval_time;
-        std::cerr << "   Key Read Time = " << keyread_time / 1000.0 << " miliseconds" << std::endl;
-        std::cerr << "   Online Time = " << eval_time / 1000.0 << " miliseconds" << std::endl;
+        std::cerr << "   Key Read Time = " << keyread_time / 1000.0 << " miliseconds" << "\n";
+        std::cerr << "   Online Time = " << eval_time / 1000.0 << " miliseconds" << "\n";
         delete[] keys;
     }
     delete[] curr;
-    std::cerr << ">> MaxPoolOneHot - End" << std::endl;
+    std::cerr << ">> MaxPoolOneHot - End" << "\n";
 }
 
 void ConvTranspose3DWrapper(int64_t N, 
@@ -1440,7 +1447,7 @@ void ConvTranspose3DWrapper(int64_t N,
     GroupElement* filterArr, 
     GroupElement* outArr)
 {
-    std::cerr << ">> ConvTranspose3D - Start" << std::endl;
+    std::cerr << ">> ConvTranspose3D - Start" << "\n";
     always_assert(outD == (D - 1) * strideD - zPadDLeft - zPadDRight + FD);
     always_assert(outH == (H - 1) * strideH - zPadHLeft - zPadHRight + FH);
     always_assert(outW == (W - 1) * strideW - zPadWLeft - zPadWRight + FW);
@@ -1501,7 +1508,7 @@ void ConvTranspose3DWrapper(int64_t N,
         std::cerr << "   Online Comm = " << (onlineComm1 - onlineComm0) << " bytes\n";
     }
 
-    std::cerr << ">> ConvTranspose3D - End" << std::endl;
+    std::cerr << ">> ConvTranspose3D - End" << "\n";
 
 }
 
@@ -1589,3 +1596,4 @@ void ConvTranspose2DWrapper(int64_t N,
 
     std::cerr << ">> ConvTranspose2D - End" << std::endl;
 }
+

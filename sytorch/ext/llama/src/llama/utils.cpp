@@ -137,7 +137,7 @@ void Conv2DReshapeInput(size_t N, size_t H, size_t W, size_t CI, size_t FH, size
 						size_t curPosW = leftTopCornerW + fw;
 						for (size_t ci = 0; ci < CI; ci++){
                             size_t rowidx = (fh*FW*CI) + (fw*CI) + ci;
-                            // std::cout << rowidx << std::endl;
+                            // std::cout << rowidx << "\n";
 							if ((((curPosH < 0) || (curPosH >= H)) || ((curPosW < 0) || (curPosW >= W)))){
 								Arr2DIdx(outputArr, RRows, RCols, rowidx, linIdxFilterMult) = 0L;
 							}
@@ -385,7 +385,7 @@ void Conv3DReshapeInput(size_t N, size_t D, size_t H, size_t W, size_t CI, size_
                                 size_t curPosW = leftTopCornerW + fw;
                                 for (size_t ci = 0; ci < CI; ci++){
                                     size_t rowidx = (fd*FH*FW*CI) + (fh*FW*CI) + (fw*CI) + ci;
-                                    // std::cout << rowidx << std::endl;
+                                    // std::cout << rowidx << "\n";
                                     if ((((curPosD < 0) || (curPosD >= D)) || ((curPosH < 0) || (curPosH >= H)) || ((curPosW < 0) || (curPosW >= W)))){
                                         Arr2DIdx(outputArr, RRows, RCols, rowidx, linIdxFilterMult) = 0L;
                                     }
@@ -596,7 +596,7 @@ void ConvTranspose3DLoopInnerClear(
     zPadWLeft = FW - 1 - zPadWLeft;
     zPadWRight = FW - 1 - zPadWRight;
 
-    #pragma omp parallel for collapse(5)
+    //#pragma omp parallel for collapse(5)
     for (int64_t n =  0; n < N; n++){
         for (int64_t d =  0; d < outD; d++){
             for (int64_t h =  0; h < outH; h++){
@@ -633,7 +633,7 @@ void ConvTranspose3DLoopInnerClear(
                             }
                         }
                         Arr5DIdx(outArr, N, outD, outH, outW, CO, n, d, h, w, co) =  val;
-                        // std::cout << "setting element at (" << n << " " << d << " " << h << " " << w << " " << co << ")" << std::endl;
+                        // std::cout << "setting element at (" << n << " " << d << " " << h << " " << w << " " << co << ")" << "\n";
                     }
                 }
             }
@@ -708,3 +708,4 @@ void ConvTranspose2DLoopInnerClear(
         }
     }
 }
+

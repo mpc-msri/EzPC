@@ -112,7 +112,9 @@ def cleartext_post(code_list, program, scale, mode, indent):
         f"""
 
 int main(int argc, char**__argv){'{'}
-
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(NULL);
+    std::cout.tie(NULL);
     prngWeights.SetSeed(osuCrypto::toBlock(0, 0));
     prngStr.SetSeed(osuCrypto::toBlock(time(NULL)));
 
@@ -152,6 +154,9 @@ def cleartext_fp_post(code_list, program, scale, mode, indent):
         f"""
 
 int main(int argc, char**__argv){'{'}
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(NULL);
+    std::cout.tie(NULL);
 
     prngWeights.SetSeed(osuCrypto::toBlock(0, 0));
     prngStr.SetSeed(osuCrypto::toBlock(time(NULL)));
@@ -198,11 +203,14 @@ def llama_post(code_list, program, scale, mode, bitlength, indent):
         f"""
     
 int main(int __argc, char**__argv){'{'}
-    
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(NULL);
+    std::cout.tie(NULL);
     prngWeights.SetSeed(osuCrypto::toBlock(0, 0));
     prngStr.SetSeed(osuCrypto::toBlock(time(NULL)));
 
     int party = atoi(__argv[1]);
+    bool ramdisk_path = false;
     std::string ip = "127.0.0.1";
     int nt=4;
     std::string weights_file = "";
@@ -211,20 +219,32 @@ int main(int __argc, char**__argv){'{'}
         weights_file = __argv[2];
     {'}'}
     else if(party == DEALER){'{'}
-        if(__argc > 2){'{'}
+        if(__argc == 3){'{'}
             nt = atoi(__argv[2]);
+        {'}'}
+        if(__argc > 3){'{'}
+            nt = atoi(__argv[2]);
+            ramdisk_path = __argv[3];
         {'}'}
     {'}'}
     else if(party == SERVER){'{'}
         weights_file = __argv[2];
-        if(__argc > 3){'{'}
+        if(__argc == 4){'{'}
             nt = atoi(__argv[3]);
+        {'}'}
+        if(__argc > 4){'{'}
+            nt = atoi(__argv[3]);
+            ramdisk_path = __argv[4];
         {'}'}
     {'}'}
     else if(party == CLIENT){'{'}
         ip = __argv[2];
-        if(__argc > 3){'{'}
+        if(__argc == 4){'{'}
             nt = atoi(__argv[3]);
+        {'}'}
+        if(__argc > 4){'{'}
+            nt = atoi(__argv[3]);
+            ramdisk_path = __argv[4];
         {'}'}
     {'}'}
 
@@ -252,8 +272,13 @@ int main(int __argc, char**__argv){'{'}
     LlamaConfig::stochasticT = true;
     LlamaConfig::stochasticRT = true;
     LlamaConfig::num_threads = nt;
+    LlamaConfig::ramdisk_path = ramdisk_path;
 
-    llama->init(ip, true);
+    if(ramdisk_path){'{'}
+    llama->init(ip, true,true);
+    {'}'}else{'{'}
+    llama->init(ip,true,false);
+    {'}'}   
 
     Net<u64> net;
     net.init(scale);
