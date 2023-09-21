@@ -86,24 +86,43 @@ void ClearText<T>::conv3D(u64 fd, u64 fh, u64 fw, u64 pd, u64 ph, u64 pw, u64 sd
 
 template <typename T>
 void ClearText<T>::convTranspose3D(u64 fd, u64 fh, u64 fw, u64 pd, u64 ph, u64 pw, u64 sd, u64 sh, u64 sw, u64 ci, u64 co, const Tensor5D<T> &input, const Tensor2D<T> &filter, Tensor5D<T> &output)
-    {
-        assert(input.d5 == ci);
-        assert(filter.d1 == co);
-        assert(filter.d2 == fd * fh * fw * ci);
-        u64 newD = (((input.d2 - 1)*sd + fd - 2*pd));
-        u64 newH = (((input.d3 - 1)*sh + fh - 2*ph));
-        u64 newW = (((input.d4 - 1)*sw + fw - 2*pw));
-        assert(output.d1 == input.d1);
-        assert(output.d2 == newD);
-        assert(output.d3 == newH);
-        assert(output.d4 == newW);
-        assert(output.d5 == co);
+{
+    assert(input.d5 == ci);
+    assert(filter.d1 == co);
+    assert(filter.d2 == fd * fh * fw * ci);
+    u64 newD = (((input.d2 - 1) * sd + fd - 2 * pd));
+    u64 newH = (((input.d3 - 1) * sh + fh - 2 * ph));
+    u64 newW = (((input.d4 - 1) * sw + fw - 2 * pw));
+    assert(output.d1 == input.d1);
+    assert(output.d2 == newD);
+    assert(output.d3 == newH);
+    assert(output.d4 == newW);
+    assert(output.d5 == co);
 
-        convTranspose3dLoop<T>(input.d1, input.d2, input.d3, input.d4, input.d5, fd, fh, fw, co, 
-            pd, pd, ph, ph, pw, pw, sd, sh, sw,
-            output.d2, output.d3, output.d4, input.data, filter.data, output.data);
-        modbw(output);
-    }
+    convTranspose3dLoop<T>(input.d1, input.d2, input.d3, input.d4, input.d5, fd, fh, fw, co,
+                           pd, pd, ph, ph, pw, pw, sd, sh, sw,
+                           output.d2, output.d3, output.d4, input.data, filter.data, output.data);
+    modbw(output);
+}
+
+template <typename T>
+void ClearText<T>::convTranspose2D(u64 fh, u64 fw, u64 ph, u64 pw, u64 sh, u64 sw, u64 ci, u64 co, const Tensor4D<T> &input, const Tensor2D<T> &filter, Tensor4D<T> &output)
+{
+    assert(input.d4 == ci);
+    assert(filter.d1 == co);
+    assert(filter.d2 == fh * fw * ci);
+    u64 newH = (((input.d2 - 1) * sh + fh - 2 * ph));
+    u64 newW = (((input.d3 - 1) * sw + fw - 2 * pw));
+    assert(output.d1 == input.d1);
+    assert(output.d2 == newH);
+    assert(output.d3 == newW);
+    assert(output.d4 == co);
+
+    convTranspose2dLoop<T>(input.d1, input.d2, input.d3, input.d4, fh, fw, co,
+                           ph, ph, pw, pw, sh, sw,
+                           output.d2, output.d3, input.data, filter.data, output.data);
+    modbw(output);
+}
 
 template <typename T>
 void ClearText<T>::relu(const Tensor<T> &in, const Tensor<T> &out, const Tensor<T> &drelu, u64 scale, int mode) {
@@ -114,6 +133,41 @@ void ClearText<T>::relu(const Tensor<T> &in, const Tensor<T> &out, const Tensor<
         assert(drelu.data[i] == 1 || drelu.data[i] == 0);
         out.data[i] = (drelu.data[i] == 1) ? in.data[i] : 0;
     });
+}
+
+template <typename T>
+void ClearText<T>::leakyRelu(const Tensor<T> &in, const Tensor<T> &out, const Tensor<T> &drelu, u64 scale, int mode, T alpha)
+{
+    assert(in.is_same_shape(out));
+    assert(in.is_same_shape(drelu));
+    std::vector<u64> shape = in.shape;
+    T minus_one = (T)(-1 * (1LL << scale));
+    // leakyrelu = relu(x) - alpha * relu(-x)
+    Tensor<T> relu_x(shape);
+    // relu(x)
+    relu(in, relu_x, drelu, scale, mode);
+
+    // -x
+    Tensor<T> minus_x(shape);
+    fastfor(in.size(), [&](u64 i)
+            { minus_x.data[i] = minus_one * in.data[i]; 
+                modbw(minus_x.data[i]);
+                truncate(minus_x.data[i], scale); });
+
+    // relu(-x)
+    Tensor<T> relu_minus_x(shape);
+    relu(minus_x, relu_minus_x, drelu, scale, mode);
+
+    // alpha * relu(-x)
+    Tensor<T> alpha_relu_minus_x(shape);
+    fastfor(in.size(), [&](u64 i)
+            { alpha_relu_minus_x.data[i] = (T)(alpha * relu_minus_x.data[i]);
+                modbw(alpha_relu_minus_x.data[i]);
+                truncate(alpha_relu_minus_x.data[i], scale); });
+
+    // relu(x) - alpha * relu(-x)
+    fastfor(in.size(), [&](u64 i)
+            { out.data[i] = relu_x.data[i] - alpha_relu_minus_x.data[i]; });
 }
 
 template <typename T>

@@ -511,6 +511,36 @@ public:
 };
 
 template <typename T>
+class LeakyReLU : public Layer<T>
+{
+public:
+    Tensor<T> drelu;
+    double alpha;
+    LeakyReLU(double alpha) : Layer<T>("LeakyReLU"), drelu({0}), alpha(alpha) {}
+
+    void _resize(const std::vector<std::vector<u64>> &shapes)
+    {
+        always_assert(shapes.size() == 1);
+        auto &shape = shapes[0];
+        this->drelu.resize(shape);
+        always_assert(this->alpha >= 0.0);
+    }
+
+    void _forward(Tensor<T> &a)
+    {
+        T alphaFix = type_cast<T>(alpha * (1LL << this->scale));
+        this->backend->leakyRelu(a, this->activation, this->drelu, this->scale, this->mode, alphaFix);
+    }
+
+    std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes)
+    {
+        always_assert(inShapes.size() == 1);
+        auto &inShape = inShapes[0];
+        return inShape;
+    }
+};
+
+template <typename T>
 class BatchNormInference : public Layer<T> {
 public:
     Tensor1D<T> A; // scale = s
@@ -669,6 +699,83 @@ public:
         u64 newH = (((inShape[2] - 1)*sh + fh - 2*ph));
         u64 newW = (((inShape[3] - 1)*sw + fw - 2*pw));
         return {inShape[0], newD, newH, newW, co};
+    }
+};
+
+template <typename T>
+class ConvTranspose2D : public Layer<T>
+{
+public:
+    Tensor2D<T> filter;
+    Tensor1D<T> bias;
+    u64 ci, co;
+    u64 fh, fw;
+    u64 ph, pw;
+    u64 sh, sw;
+
+    ConvTranspose2D(u64 ci, u64 co, u64 f, u64 padding = 0, u64 stride = 1, bool useBias = false) : Layer<T>("ConvTranspose2D"), ci(ci), co(co), fh(f), fw(f),
+                                                                                                    ph(padding), pw(padding), sh(stride), sw(stride), filter(co, f * f * ci), bias(co)
+    {
+        this->doTruncationForward = true;
+        this->useBias = useBias;
+    }
+
+    ConvTranspose2D(u64 ci, u64 co, const std::array<u64, 2> f, u64 padding = 0, u64 stride = 1, bool useBias = false) : Layer<T>("ConvTranspose2D"), ci(ci), co(co), fh(f[0]), fw(f[1]),
+                                                                                                                         ph(padding), pw(padding), sh(stride), sw(stride), filter(co, f[0] * f[1] * ci), bias(co)
+    {
+        this->doTruncationForward = true;
+        this->useBias = useBias;
+    }
+
+    ConvTranspose2D(u64 ci, u64 co, const std::array<u64, 2> f, const std::array<u64, 4> padding = {0, 0, 0, 0}, const std::array<u64, 2> stride = {1, 1}, const std::array<u64, 2> dialation = {1, 1}, bool useBias = false) : Layer<T>("ConvTranspose2D"), ci(ci), co(co), fh(f[0]), fw(f[1]),
+                                                                                                                                                                                                                                ph(padding[0]), pw(padding[1]), sh(stride[0]), sw(stride[1]), filter(co, f[0] * f[1] * ci), bias(co)
+    {
+        always_assert(dialation[0] == 1);
+        always_assert(dialation[1] == 1);
+        always_assert(padding[2] == padding[0]);
+        always_assert(padding[3] == padding[1]);
+        this->doTruncationForward = true;
+        this->useBias = useBias;
+    }
+
+    void _initScale(u64 scale)
+    {
+        double xavier = 1.0 / sqrt(ci * fh * fw);
+        filter.randomize(xavier * (1ULL << scale));
+        if (this->useBias)
+            bias.randomize(xavier * (1ULL << (2 * scale)));
+    }
+
+    void _resize(const std::vector<std::vector<u64>> &shapes)
+    {
+        always_assert(shapes.size() == 1);
+        auto &shape = shapes[0];
+        always_assert(shape.size() == 4);
+        always_assert(shape[3] == ci);
+    }
+
+    void _forward(Tensor<T> &a)
+    {
+        always_assert(a.shape.size() == 4);
+        assert(a.shape[3] == ci);
+        auto act_4d = this->activation.as_4d();
+        this->backend->convTranspose2D(fh, fw, ph, pw, sh, sw, ci, co, a.as_4d(), filter, act_4d);
+        if (this->useBias)
+            this->backend->addbias(this->activation, bias);
+    }
+
+    TensorRef<T> getweights() { return filter.ref(); }
+    TensorRef<T> getbias() { return bias.ref(); }
+
+    std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes)
+    {
+        always_assert(inShapes.size() == 1);
+        auto &inShape = inShapes[0];
+        always_assert(inShape.size() == 4);
+        always_assert(inShape[3] == ci);
+        u64 newH = (((inShape[1] - 1) * sh + fh - 2 * ph));
+        u64 newW = (((inShape[2] - 1) * sw + fw - 2 * pw));
+        return {inShape[0], newH, newW, co};
     }
 };
 
@@ -938,29 +1045,98 @@ public:
 template <typename T>
 class Transpose: public Layer<T> {
 public:
-    Transpose() :  Layer<T>("Transpose") {}
+    std::vector<u64> perm;
+    Transpose(const std::vector<u64> &perm) : Layer<T>("Transpose"), perm(perm) {}
 
     void _resize(const std::vector<std::vector<u64>> &shapes) {
         always_assert(shapes.size() == 1);
         auto &shape = shapes[0];
-        always_assert(shape.size() == 2);
+        always_assert(shape.size() >= 2);
     }
 
     void _forward(Tensor<T> &a) {
-        always_assert(a.shape.size() == 2);
-        //#pragma omp parallel for collapse(2)
-        for (u64 i = 0; i < a.shape[0]; ++i) {
-            for (u64 j = 0; j < a.shape[1]; ++j) {
-                this->activation.data[j * a.shape[0] + i] = a.data[i * a.shape[1] + j];
+        if (a.shape.size() == 2)
+        {
+#pragma omp parallel for collapse(2)
+            for (u64 i = 0; i < a.shape[0]; ++i)
+            {
+                for (u64 j = 0; j < a.shape[1]; ++j)
+                {
+                    this->activation.data[j * a.shape[perm[1]] + i] = a.data[i * a.shape[1] + j];
+                }
             }
+        }
+        else if (a.shape.size() == 4)
+        {
+            auto a_4d = a.as_4d();
+            auto out_4d = this->activation.as_4d();
+#pragma omp parallel for collapse(4)
+            for (int n = 0; n < a.shape[0]; ++n)
+            {
+                for (int h = 0; h < a.shape[1]; ++h)
+                {
+                    for (int w = 0; w < a.shape[2]; ++w)
+                    {
+                        for (int c = 0; c < a.shape[3]; ++c)
+                        {
+                            out_4d(perm[0] == 0 ? n : (perm[0] == 1 ? h : (perm[0] == 2 ? w : c)),
+                                   perm[1] == 0 ? n : (perm[1] == 1 ? h : (perm[1] == 2 ? w : c)),
+                                   perm[2] == 0 ? n : (perm[2] == 1 ? h : (perm[2] == 2 ? w : c)),
+                                   perm[3] == 0 ? n : (perm[3] == 1 ? h : (perm[3] == 2 ? w : c))) = a_4d(n, h, w, c);
+                        }
+                    }
+                }
+            }
+        }
+        else if (a.shape.size() == 5)
+        {
+            auto a_5d = a.as_5d();
+            auto out_5d = this->activation.as_5d();
+#pragma omp parallel for collapse(5)
+            for (int n = 0; n < a.shape[0]; ++n)
+            {
+                for (int h = 0; h < a.shape[1]; ++h)
+                {
+                    for (int w = 0; w < a.shape[2]; ++w)
+                    {
+                        for (int d = 0; d < a.shape[3]; ++d)
+                        {
+                            for (int c = 0; c < a.shape[4]; ++c)
+                            {
+                                out_5d(perm[0] == 0 ? n : (perm[0] == 1 ? h : (perm[0] == 2 ? w : (perm[0] == 3 ? d : c))),
+                                       perm[1] == 0 ? n : (perm[1] == 1 ? h : (perm[1] == 2 ? w : (perm[1] == 3 ? d : c))),
+                                       perm[2] == 0 ? n : (perm[2] == 1 ? h : (perm[2] == 2 ? w : (perm[2] == 3 ? d : c))),
+                                       perm[3] == 0 ? n : (perm[3] == 1 ? h : (perm[3] == 2 ? w : (perm[3] == 3 ? d : c))),
+                                       perm[4] == 0 ? n : (perm[4] == 1 ? h : (perm[4] == 2 ? w : (perm[4] == 3 ? d : c)))) = a_5d(n, h, w, d, c);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            throw std::runtime_error("supported only 2d, 4d, 5d tensors in transpose");
         }
     }
 
     std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes) {
         always_assert(inShapes.size() == 1);
         auto shape = inShapes[0];
-        always_assert(shape.size() == 2);
-        return {shape[1], shape[0]};
+        always_assert(perm.size() == shape.size());
+        for (auto &p : perm)
+        {
+            if (p == 1)
+                p = shape.size() - 1;
+            else if (p > 1)
+                p -= 1;
+        }
+        std::vector<u64> outShape;
+        for (auto &p : perm)
+        {
+            outShape.push_back(shape[p]);
+        }
+        return outShape;
     }
 };
 

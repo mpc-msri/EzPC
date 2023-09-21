@@ -16,23 +16,3 @@ Backend<T> *defaultBackend()
     }
 }
 
-template <typename T>
-inline T type_cast(float val);
-
-template <>
-float type_cast(float val)
-{
-    return val;
-}
-
-template <>
-i64 type_cast(float val)
-{
-    return (i64)val;
-}
-
-template <>
-u64 type_cast(float val)
-{
-    return (u64(i64(val)));
-}

@@ -26,11 +26,35 @@ def pytest_addoption(parser):
         help="batch size",
         required=False,
     )
+    parser.addoption(
+        "--model",
+        action="store",
+        help="absolute mdel path",
+        required=False,
+    )
+    parser.addoption(
+        "--input_name",
+        action="store",
+        help="absolute input_name path",
+        required=False,
+    )
 
 
 @pytest.fixture(scope="session")
 def backend(request):
     opt = request.config.getoption("--backend")
+    return opt
+
+
+@pytest.fixture(scope="session")
+def model(request):
+    opt = request.config.getoption("--model")
+    return opt
+
+
+@pytest.fixture(scope="session")
+def input_name(request):
+    opt = request.config.getoption("--input_name")
     return opt
 
 
@@ -79,8 +103,12 @@ def pytest_runtest_makereport(item, call):
 @pytest.fixture
 def test_dir(request, test_env):
     print("\nRequest node: ", request.node.name)
-    test_name_list = request.node.name.split("[")
-    parameter_name = test_name_list[1].split("]")[0]
+    if "[" in request.node.name:
+        test_name_list = request.node.name.split("[")
+        parameter_name = test_name_list[1].split("]")[0]
+    else:
+        test_name_list = request.node.name.split("_")
+        parameter_name = "custom"
     full_test_name = test_name_list[0] + "_" + parameter_name
     test_name = full_test_name[len("test_") :]
     main_test_dir = test_env["test_dir"]

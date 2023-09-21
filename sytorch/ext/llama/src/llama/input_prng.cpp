@@ -140,9 +140,12 @@ void input_layer(GroupElement *x, GroupElement *x_mask, int size, int owner)
     else {
         uint64_t *tmp = new uint64_t[size];
         peer->recv_batched_input(tmp, 1, bitlength);
-        TIME_THIS_BLOCK_FOR_INPUT_IF(
-        peer->recv_batched_input(tmp+1, size-1, bitlength);
-        , true, (owner == SERVER ? accumulatedInputTimeOffline : accumulatedInputTimeOnline))
+        if (size > 1)
+        {
+            TIME_THIS_BLOCK_FOR_INPUT_IF(
+                peer->recv_batched_input(tmp + 1, size - 1, bitlength);
+                , true, (owner == SERVER ? accumulatedInputTimeOffline : accumulatedInputTimeOnline))
+        }
         // todo: parallelize this maybe?
         for(int i = 0; i < size; ++i) {
             x[i] = tmp[i];

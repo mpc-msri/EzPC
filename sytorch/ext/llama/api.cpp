@@ -1511,3 +1511,89 @@ void ConvTranspose3DWrapper(int64_t N,
     std::cerr << ">> ConvTranspose3D - End" << "\n";
 
 }
+
+void ConvTranspose2DWrapper(int64_t N,
+                            int64_t H,
+                            int64_t W,
+                            int64_t CI,
+                            int64_t FH,
+                            int64_t FW,
+                            int64_t CO,
+                            int64_t zPadHLeft,
+                            int64_t zPadHRight,
+                            int64_t zPadWLeft,
+                            int64_t zPadWRight,
+                            int64_t strideH,
+                            int64_t strideW,
+                            int64_t outH,
+                            int64_t outW,
+                            GroupElement *inputArr,
+                            GroupElement *filterArr,
+                            GroupElement *outArr)
+{
+    std::cerr << ">> ConvTranspose2D - Start" << std::endl;
+    always_assert(outH == (H - 1) * strideH - zPadHLeft - zPadHRight + FH);
+    always_assert(outW == (W - 1) * strideW - zPadWLeft - zPadWRight + FW);
+
+    if (party == DEALER)
+    {
+        auto local_start = std::chrono::high_resolution_clock::now();
+
+        // not good for in place operations
+        for (int i = 0; i < N * outH * outW * CO; ++i)
+        {
+            outArr[i] = random_ge(bitlength);
+        }
+
+        auto keys = KeyGenConvTranspose2D(bitlength, N, H, W, CI, FH, FW, CO, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideH, strideW, outH, outW, inputArr, filterArr, outArr);
+
+        auto local_end = std::chrono::high_resolution_clock::now();
+
+        client->send_triple_key(keys.second);
+        freeTripleKey(keys.second);
+        auto local_time_taken = std::chrono::duration_cast<std::chrono::microseconds>(local_end -
+                                                                                      local_start)
+                                    .count();
+        dealerMicroseconds += local_time_taken;
+        std::cerr << "   Dealer Time = " << local_time_taken / 1000.0 << " milliseconds\n";
+    }
+    else
+    {
+
+        auto keyread_start = std::chrono::high_resolution_clock::now();
+        auto key = dealer->recv_triple_key(bitlength, N * H * W * CI, CI * FH * FW * CO, N * outH * outW * CO);
+        auto keyread_end = std::chrono::high_resolution_clock::now();
+        auto keyread_time_taken = std::chrono::duration_cast<std::chrono::milliseconds>(keyread_end - keyread_start).count();
+
+        peer->sync();
+
+        auto local_start = std::chrono::high_resolution_clock::now();
+
+        EvalConvTranspose2D(party, key, N, H, W, CI, FH, FW, CO,
+                            zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideH, strideW, outH, outW, inputArr, filterArr, outArr);
+
+        auto t1 = std::chrono::high_resolution_clock::now();
+        uint64_t onlineComm0 = peer->bytesReceived + peer->bytesSent;
+
+        reconstruct(N * outH * outW * CO, outArr, bitlength);
+
+        uint64_t onlineComm1 = peer->bytesReceived + peer->bytesSent;
+        convOnlineComm += (onlineComm1 - onlineComm0);
+        auto local_end = std::chrono::high_resolution_clock::now();
+
+        freeTripleKey(key);
+        auto compute_time = std::chrono::duration_cast<std::chrono::microseconds>(t1 - local_start).count();
+        auto reconstruct_time = std::chrono::duration_cast<std::chrono::microseconds>(local_end - t1).count();
+
+        convEvalMicroseconds += (reconstruct_time + compute_time);
+        evalMicroseconds += (reconstruct_time + compute_time);
+        std::cerr << "   Key Read Time = " << keyread_time_taken << " milliseconds\n";
+        std::cerr << "   Compute Time = " << compute_time / 1000.0 << " milliseconds\n";
+        std::cerr << "   Reconstruct Time = " << reconstruct_time / 1000.0 << " milliseconds\n";
+        std::cerr << "   Online Time = " << (reconstruct_time + compute_time) / 1000.0 << " milliseconds\n";
+        std::cerr << "   Online Comm = " << (onlineComm1 - onlineComm0) << " bytes\n";
+    }
+
+    std::cerr << ">> ConvTranspose2D - End" << std::endl;
+}
+

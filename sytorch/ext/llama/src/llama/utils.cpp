@@ -526,7 +526,7 @@ Conv3DCache allocateConv3DCache(int N, int D, int H, int W, int CI,
     cache.reshapedFilter = eigenMatrix(reshapedFilterRows, reshapedFilterCols);
 	cache.reshapedInput = eigenMatrix(reshapedIPRows, reshapedIPCols);
 	cache.matmulResult = eigenMatrix(reshapedFilterRows, reshapedIPCols);
-    cache.temp = make_array<GroupElement>(N, newH, newW, CO);
+    cache.temp = make_array<GroupElement>(N, newD, newH, newW, CO);
 
     return cache;
 }
@@ -640,3 +640,72 @@ void ConvTranspose3DLoopInnerClear(
         }
     }
 }
+
+void ConvTranspose2DLoopInnerClear(
+    int64_t N,
+    int64_t H,
+    int64_t W,
+    int64_t CI,
+    int64_t FH,
+    int64_t FW,
+    int64_t CO,
+    int64_t zPadHLeft,
+    int64_t zPadHRight,
+    int64_t zPadWLeft,
+    int64_t zPadWRight,
+    int64_t strideH,
+    int64_t strideW,
+    int64_t outH,
+    int64_t outW,
+    GroupElement *inputArr,
+    GroupElement *filterArr,
+    GroupElement *outArr)
+{
+    zPadHLeft = FH - 1 - zPadHLeft;
+    zPadHRight = FH - 1 - zPadHRight;
+    zPadWLeft = FW - 1 - zPadWLeft;
+    zPadWRight = FW - 1 - zPadWRight;
+
+#pragma omp parallel for collapse(4)
+    for (int64_t n = 0; n < N; n++)
+    {
+        for (int64_t h = 0; h < outH; h++)
+        {
+            for (int64_t w = 0; w < outW; w++)
+            {
+                for (int64_t co = 0; co < CO; co++)
+                {
+
+                    GroupElement val = 0;
+                    for (int64_t ci = 0; ci < CI; ci++)
+                    {
+                        for (int64_t fh = h; fh < (h + FH); fh++)
+                        {
+                            for (int64_t fw = w; fw < (w + FW); fw++)
+                            {
+
+                                int64_t curPosH = ((fh - zPadHLeft) / strideH);
+                                int64_t curPosW = ((fw - zPadWLeft) / strideW);
+
+                                if ((curPosH >= 0) &&
+                                    (curPosW >= 0) &&
+                                    (curPosH < H) &&
+                                    (curPosW < W) &&
+                                    (((fh - zPadHLeft) % strideH) == 0) &&
+                                    (((fw - zPadWLeft) % strideW) == 0))
+                                {
+                                    int32_t curFilterPosH = FH + h - fh - 1;
+                                    int32_t curFilterPosW = FW + w - fw - 1;
+                                    val += (Arr4DIdx(inputArr, N, H, W, CI, n, curPosH, curPosW, ci) * Arr4DIdx(filterArr, CO, FH, FW, CI, co, curFilterPosH, curFilterPosW, ci));
+                                }
+                            }
+                        }
+                    }
+                    Arr4DIdx(outArr, N, outH, outW, CO, n, h, w, co) = val;
+                    // std::cout << "setting element at (" << n << " " << h << " " << w << " " << co << ")" << std::endl;
+                }
+            }
+        }
+    }
+}
+

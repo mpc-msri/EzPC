@@ -122,6 +122,7 @@ class IR(Backend):
         not_supported = []
         implemented_sytorch = [
             "Relu",
+            "LeakyRelu",
             "Softmax",
             "Conv",
             "MaxPool",
@@ -133,6 +134,7 @@ class IR(Backend):
             "GlobalAveragePool",
             "Add",
             "ConvTranspose",
+            "Transpose",
         ]
         implemented_secfloat = [
             "Relu",
