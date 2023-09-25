@@ -168,7 +168,7 @@ pair<FloatToFixKeyPack> keyGenFloatToFix(int bin, int scale, GroupElement rout)
     keys.first.selectKey = selectKeys.first;
     keys.second.selectKey = selectKeys.second;
 
-    auto arskeys = keyGenARS(bin, bin, scale, rt, rout); // check the shift and bin value
+    auto arskeys = keyGenARS(bin, bin, 23, rt, rout); // check the shift and bin value
     //shares of ARS keys based on random r(t) and rout
     keys.first.arsKey = arskeys.first;
     keys.second.arsKey = arskeys.second;

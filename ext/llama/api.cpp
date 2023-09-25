@@ -2252,6 +2252,57 @@ void FixToFloat(int size, GroupElement *inp, GroupElement *out, int scale)
     }
     std::cerr << ">> FixToFloat - End" << std::endl;
 }
+void FloatToFixCt(int size, GroupElement *inp, GroupElement *out, int scale)
+{
+    if (party == DEALER)
+    {
+        memset(out, 0, size * sizeof(GroupElement));
+    }
+    else
+    {
+        GroupElement *m = new GroupElement[2 * size];
+        GroupElement *e = m + size;
+
+        for (int i = 0; i < size; ++i)
+        {
+            m[i] = inp[4 * i + 0];
+            e[i] = inp[4 * i + 1];
+            // if (party == 2)
+            // {
+            //     e[i] += scale;
+            //     e[i] -= 127; // fp32 bias
+            // }
+        }
+        // now have m and e in the clear
+        reconstruct(2 * size, m, 64);
+        for (int i = 0; i < size; ++i)
+        {
+            mod(m[i], 24);
+            mod(e[i], 10);
+            assert(e[i] < 256);
+
+            // int eAsInt = e[i] < 512 ? e[i] : -1 * (1024 - e[i]);
+            // assert(eAsInt <= 126 && eAsInt >= -127);
+            if(i < 10) printf("%d=%ld, %ld\n", i, m[i], e[i]);
+            int ePrime = e[i] - 127 + scale;
+            if(i < 10) printf("%d=%ld, %ld, %d\n", i, m[i], e[i], ePrime);
+            GroupElement x = 0;
+            if (ePrime >= 0 && ePrime <= scale)
+            {
+                x = m[i] * (1ULL << ePrime);
+                assert(x < (1ULL << 63));
+                x >>= 23;
+                // auto xf = x;
+                // mod(xf, scale);
+                // auto s = random_ge(scale);
+                // if(s < xf) x += 1; 
+                if(i < 10) printf("%d=%ld, %ld, %ld\n", i, m[i], ePrime, x);
+            }
+            out[i] = x;
+        }
+        delete[] m;
+    }
+}
 
 void FloatToFix(int size, GroupElement *inp, GroupElement *out, int scale)
 {
@@ -2292,34 +2343,79 @@ void FloatToFix(int size, GroupElement *inp, GroupElement *out, int scale)
 
         peer->sync();
         auto eval_start = std::chrono::high_resolution_clock::now();
+        for(int i=0;i<size;i++){
+            std::cerr<<"m"<<inp[4*i+0]<<" "<<keys[i].rm<<std::endl;
+            std::cerr<<"e"<<inp[4*i+1]<<" "<<keys[i].re<<std::endl;
+        }
         for(int i = 0; i < size; ++i) {
             m[i] = inp[4*i + 0] + keys[i].rm;
             e[i] = inp[4*i + 1] + keys[i].re;
             if (party == 2) {
                 e[i] += (scale);
                 e[i] -= 127; // fp32 bias
+                //e[i] = e[i]%1024;
             }
         }
+        for(int i=0;i<size;i++){
+            std::cerr<<"m"<<m[i]<<std::endl;
+            std::cerr<<"e"<<e[i]<<std::endl;
+        }
+        
+
+        
         // m and e are in a single array. m is the first half and e is the second half
         reconstruct(2*size, m, 24);
+
+        for(int i=0;i<size;i++){
+            e[i]=e[i]%1024;
+            m[i]=m[i]%pow(GroupElement(2),24);
+        }
         
-        
+        for(int i=0;i<size;i++){
+            std::cerr<<"m"<<m[i]<<std::endl;
+            std::cerr<<"e"<<e[i]<<std::endl;
+        }
+        //w[0]=0;
         for(int i = 0; i < size; ++i) {
             evalDCF(party - 2, &w[i], m[i], keys[i].dcfKey);
             w[i] = w[i] + keys[i].rw;
             
         }
-        //confusionn in usage of size and 1024 ?
-        
+        for(int i=0;i<size;i++){
+            std::cerr<<"w"<<w[i]<<std::endl;
+            std::cerr<<"keyw"<<keys[i].rw<<std::endl;
+        }
+
+       
         for (int i=0;i< size;i++){
             for (int j =0 ; j < 1024;j++)
              {
-            d[i] = d[i] + pow_helper(scale,j) * keys[i].p[(j-e[i])%1024];
+            d[i] = d[i] + (pow_helper(scale,j) * keys[i].p[(j-e[i])%1024]);
              }
             h[i] = keys[i].rh + pow((GroupElement)2,24) *d[i];
         }
+
+        // for(int i=0;i<size;i++)
+        // {
+        //     for(int j=0;j<1024;j++){
+        //     std::cerr<<keys[i].p[(j-e[i])%1024];
+        //     }
+        // }
+        //reconstruct(size, d, bitlength);
+        for(int i=0;i<size;i++){
+            std::cerr<<"d"<<d[i]<<std::endl;
+            std::cerr<<"h"<<h[i]<<std::endl;
+            std::cerr<<"w"<<w[i]<<std::endl;
+        }
         // w and h are in a single array w. w is the first half and h is the second half
         reconstruct(2*size, w, bitlength);
+
+
+        for(int i=0;i<size;i++){
+            w[i]=w[i]%2;
+            std::cerr<<"w"<<w[i]<<std::endl;
+            std::cerr<<"h"<<h[i]<<std::endl;
+        }
 
         for(int i = 0; i < size; ++i) {
             t[i] = evalSelect(party - 2, w[i], h[i], keys[i].selectKey);
@@ -2327,19 +2423,36 @@ void FloatToFix(int size, GroupElement *inp, GroupElement *out, int scale)
             t[i] = t[i] + m[i]*d[i];   
         }
 
+        for(int i=0;i<size;i++){
+            std::cerr<<"t"<<t[i]<<std::endl;
+            std::cerr<<"e"<<e[i]<<std::endl;
+        }
+
         reconstruct(size, t, bitlength);
 
+
+        for(int i=0;i<size;i++){
+            std::cerr<<"t"<<t[i]<<std::endl;
+            std::cerr<<"e"<<e[i]<<std::endl;
+        }
         for(int i = 0; i < size; ++i) {
             out[i] = 0;
             // for(int j = 0; j < 1024; ++j) {
             //     out[i] += adjust(m[i], j) * keys[i].p[(j-e[i])%1024];
             // }
             // out[i] += keys[i].q[e[i]%1024];
-            out[i] = evalARS(party - 2, t[i],scale, keys[i].arsKey);
+            out[i] = evalARS(party - 2, t[i],23, keys[i].arsKey);
         }
-
+        for(int i=0;i<size;i++){
+            std::cerr<<"out"<<out[i]<<std::endl;
+            std::cerr<<"e"<<e[i]<<std::endl;
+        }
         reconstruct(size, out, bitlength);
 
+        for(int i=0;i<size;i++){
+            std::cerr<<"out after"<<out[i]<<std::endl;
+            std::cerr<<"e"<<e[i]<<std::endl;
+        }
         auto eval_end = std::chrono::high_resolution_clock::now();
         auto eval_time_taken = std::chrono::duration_cast<std::chrono::microseconds>(eval_end -
                                                             eval_start).count();
