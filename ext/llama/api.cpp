@@ -2274,7 +2274,7 @@ void FloatToFixCt(int size, GroupElement *inp, GroupElement *out, int scale)
             // }
         }
         // now have m and e in the clear
-        reconstruct(2 * size, m, 64);
+        //reconstruct(2 * size, m, 64);
         for (int i = 0; i < size; ++i)
         {
             mod(m[i], 24);
