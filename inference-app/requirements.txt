@@ -1,5 +1,5 @@
 gradio
 torch
 torchvision
-urllib3==1.26.6
+urllib3==1.26.17
 python-dotenv
