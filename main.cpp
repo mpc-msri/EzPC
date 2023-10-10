@@ -578,8 +578,8 @@ void llama_floattofix_test(int party)
     FloatRep rep;
     rep.f = input;
 
-    inp_com[0] = (rep.i & 0x7FFFFF | 0x800000); //mantissa 0x800000
-    inp_com[1] = (rep.i >> 23) & 0xFF; //exponent
+    inp_com[0] = 25367151;//(rep.i & 0x7FFFFF | 0x800000); //mantissa 0x800000
+    inp_com[1] = 1141;//(rep.i >> 23) & 0xFF; //exponent
     inp_com[2] = (rep.i >> 31) & 0x1; //sign
     inp_com[3] = 0; //zero
 
@@ -591,7 +591,7 @@ void llama_floattofix_test(int party)
     
     llama->inputA(e);
     auto inp1=splitShare(inp_com[0],24);
-    auto inp2=splitShare(inp_com[1],8);
+    auto inp2=splitShare(inp_com[1],10);
 
     inp_com1[0]=inp1.first;
     inp_com2[0]=inp1.second;
@@ -654,11 +654,26 @@ void llama_fixtofloat_test(int party) {
     Tensor4D<u64> y(batchSize, numClasses, 1, 1);
     Tensor4D<i64> y_ct(batchSize, numClasses, 1, 1);
     
+
+    //initialize here the e and e_ct
+
+
+
+
     for(int i = 0; i < numClasses; ++i) {
-        e(0, i, 0, 0) = i * (1ULL << scale);
-        e(1, i, 0, 0) = 5 * (1ULL << scale);
-        e_ct(0, i, 0, 0) = i * (1LL << scale);
-        e_ct(1, i, 0, 0) = 5 * (1LL << scale);
+        e(0,i,0,0)= i* (1ULL << scale);
+        e(i, i, 0, 0) = i * (1ULL << scale);
+       // e(1, i, 0, 0) = 5 * (1ULL << scale);
+       e_ct(0,i,0,0)= i* (1LL << scale);
+        e_ct(i, i, 0, 0) = i * (1LL << scale);
+       // e_ct(1, i, 0, 0) = 5 * (1LL << scale);
+    }
+    for(int j=0;j<batchSize;j++)
+    {
+        e(j,0,0,0)=j* (1ULL << scale);
+        e_ct(j,0,0,0)=j * (1ULL << scale);
+        
+
     }
     
     llama->inputA(e);
@@ -1390,7 +1405,7 @@ int main(int argc, char** argv) {
     // test_maxpool(party);
     // test_reluextend(party);
     // test_signextend(party);
-    // test_ars(party);
+     //test_ars(party);
     // test_rt(party);
     // test_r2(party);
     // test_mul(party);

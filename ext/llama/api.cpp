@@ -2314,6 +2314,7 @@ void FloatToFix(int size, GroupElement *inp, GroupElement *out, int scale)
         for(int i = 0; i < size; ++i) {
             auto rout = random_ge(bitlength);
             keys[i] = keyGenFloatToFix(bitlength, scale, rout);
+            
             out[i] = rout;
         }
 
@@ -2343,10 +2344,10 @@ void FloatToFix(int size, GroupElement *inp, GroupElement *out, int scale)
 
         peer->sync();
         auto eval_start = std::chrono::high_resolution_clock::now();
-        for(int i=0;i<size;i++){
-            std::cerr<<"m"<<inp[4*i+0]<<" "<<keys[i].rm<<std::endl;
-            std::cerr<<"e"<<inp[4*i+1]<<" "<<keys[i].re<<std::endl;
-        }
+        //for(int i=0;i<size;i++){
+            std::cerr<<"m"<<inp[4*0+0]<<" "<<keys[0].rm<<std::endl;
+            std::cerr<<"e"<<inp[4*0+1]<<" "<<keys[0].re<<std::endl;
+        //}
         for(int i = 0; i < size; ++i) {
             m[i] = inp[4*i + 0] + keys[i].rm;
             e[i] = inp[4*i + 1] + keys[i].re;
@@ -2356,10 +2357,10 @@ void FloatToFix(int size, GroupElement *inp, GroupElement *out, int scale)
                 //e[i] = e[i]%1024;
             }
         }
-        for(int i=0;i<size;i++){
-            std::cerr<<"m"<<m[i]<<std::endl;
-            std::cerr<<"e"<<e[i]<<std::endl;
-        }
+       // for(int i=0;i<size;i++){
+            std::cerr<<"m"<<m[0]<<std::endl;
+            std::cerr<<"e"<<e[0]<<std::endl;
+        //}
         
 
         
@@ -2367,24 +2368,24 @@ void FloatToFix(int size, GroupElement *inp, GroupElement *out, int scale)
         reconstruct(2*size, m, 24);
 
         for(int i=0;i<size;i++){
-            e[i]=e[i]%1024;
-            m[i]=m[i]%pow(GroupElement(2),24);
+           mod(m[i],24);
+           mod(e[i],10);
         }
         
-        for(int i=0;i<size;i++){
-            std::cerr<<"m"<<m[i]<<std::endl;
-            std::cerr<<"e"<<e[i]<<std::endl;
-        }
+        //for(int i=0;i<size;i++){
+            std::cerr<<"m"<<m[0]<<std::endl;
+            std::cerr<<"e"<<e[0]<<std::endl;
+        //}
         //w[0]=0;
         for(int i = 0; i < size; ++i) {
             evalDCF(party - 2, &w[i], m[i], keys[i].dcfKey);
             w[i] = w[i] + keys[i].rw;
             
         }
-        for(int i=0;i<size;i++){
-            std::cerr<<"w"<<w[i]<<std::endl;
-            std::cerr<<"keyw"<<keys[i].rw<<std::endl;
-        }
+        //for(int i=0;i<size;i++){
+            std::cerr<<"w"<<w[0]<<std::endl;
+            std::cerr<<"keyw"<<keys[0].rw<<std::endl;
+        //}
 
        
         for (int i=0;i< size;i++){
@@ -2392,7 +2393,7 @@ void FloatToFix(int size, GroupElement *inp, GroupElement *out, int scale)
              {
             d[i] = d[i] + (pow_helper(scale,j) * keys[i].p[(j-e[i])%1024]);
              }
-            h[i] = keys[i].rh + pow((GroupElement)2,24) *d[i];
+            h[i] = keys[i].rh + (pow((GroupElement)2,24) *d[i]);
         }
 
         // for(int i=0;i<size;i++)
@@ -2402,39 +2403,39 @@ void FloatToFix(int size, GroupElement *inp, GroupElement *out, int scale)
         //     }
         // }
         //reconstruct(size, d, bitlength);
-        for(int i=0;i<size;i++){
-            std::cerr<<"d"<<d[i]<<std::endl;
-            std::cerr<<"h"<<h[i]<<std::endl;
-            std::cerr<<"w"<<w[i]<<std::endl;
-        }
+        //for(int i=0;i<size;i++){
+            std::cerr<<"d"<<d[0]<<std::endl;
+            std::cerr<<"h"<<h[0]<<std::endl;
+            std::cerr<<"w"<<w[0]<<std::endl;
+        //}
         // w and h are in a single array w. w is the first half and h is the second half
         reconstruct(2*size, w, bitlength);
 
-
-        for(int i=0;i<size;i++){
-            w[i]=w[i]%2;
-            std::cerr<<"w"<<w[i]<<std::endl;
-            std::cerr<<"h"<<h[i]<<std::endl;
+            std::cerr<<"w"<<w[0]<<std::endl;
+            std::cerr<<"h"<<h[0]<<std::endl;
+      
+       for(int i=0;i<size;i++){
+            mod(w[i],2);
         }
 
         for(int i = 0; i < size; ++i) {
             t[i] = evalSelect(party - 2, w[i], h[i], keys[i].selectKey);
             t[i] = t[i] + keys[i].q[e[i]%1024];
-            t[i] = t[i] + m[i]*d[i];   
+            t[i] = t[i] + (m[i]*d[i]);   
         }
 
-        for(int i=0;i<size;i++){
-            std::cerr<<"t"<<t[i]<<std::endl;
-            std::cerr<<"e"<<e[i]<<std::endl;
-        }
+        //for(int i=0;i<size;i++){
+            std::cerr<<"t"<<t[0]<<std::endl;
+            std::cerr<<"e"<<e[0]<<std::endl;
+       // }
 
         reconstruct(size, t, bitlength);
 
 
-        for(int i=0;i<size;i++){
-            std::cerr<<"t"<<t[i]<<std::endl;
-            std::cerr<<"e"<<e[i]<<std::endl;
-        }
+        //for(int i=0;i<size;i++){
+            std::cerr<<"t"<<t[0]<<std::endl;
+            std::cerr<<"e"<<e[0]<<std::endl;
+       // }
         for(int i = 0; i < size; ++i) {
             out[i] = 0;
             // for(int j = 0; j < 1024; ++j) {
@@ -2443,16 +2444,16 @@ void FloatToFix(int size, GroupElement *inp, GroupElement *out, int scale)
             // out[i] += keys[i].q[e[i]%1024];
             out[i] = evalARS(party - 2, t[i],23, keys[i].arsKey);
         }
-        for(int i=0;i<size;i++){
-            std::cerr<<"out"<<out[i]<<std::endl;
-            std::cerr<<"e"<<e[i]<<std::endl;
-        }
+       // for(int i=0;i<size;i++){
+            std::cerr<<"out"<<out[0]<<std::endl;
+            std::cerr<<"e"<<e[0]<<std::endl;
+       // }
         reconstruct(size, out, bitlength);
 
-        for(int i=0;i<size;i++){
-            std::cerr<<"out after"<<out[i]<<std::endl;
-            std::cerr<<"e"<<e[i]<<std::endl;
-        }
+        //for(int i=0;i<size;i++){
+            std::cerr<<"out after"<<out[0]<<std::endl;
+            std::cerr<<"e"<<e[0]<<std::endl;
+       // }
         auto eval_end = std::chrono::high_resolution_clock::now();
         auto eval_time_taken = std::chrono::duration_cast<std::chrono::microseconds>(eval_end -
                                                             eval_start).count();

@@ -1,6 +1,6 @@
 #include "float.h"
 #include "pubdiv.h"
-
+static int counter =0;
 void fill_pq(GroupElement *p, GroupElement *q, int n)
 {
     for(int i = 2*n; i >= 1; --i)
@@ -159,6 +159,8 @@ pair<FloatToFixKeyPack> keyGenFloatToFix(int bin, int scale, GroupElement rout)
 
     GroupElement rt = random_ge(bin); 
     auto rt_split = splitShare(rt, bin);
+    //std::cerr<<counter<<" "<<rt<<"rt "<<std::endl;
+    counter++;
     //shares of r(t) //no need to split rt as it is not used in any other function in online mode
     //keys.first.rt = rt_split.first;
     //keys.second.rt = rt_split.second;
@@ -177,15 +179,18 @@ pair<FloatToFixKeyPack> keyGenFloatToFix(int bin, int scale, GroupElement rout)
     GroupElement q;
     for(int i = 0; i < 1024; ++i) {
         if (i == ((1024 - re) % 1024)) {
-            p = 1;
+            p = 1ULL;
         }
         else {
-            p = 0;
+            p = 0ULL;
         }
         auto p_split = splitShare(p, bin);
         keys.first.p[i] = p_split.first;
         keys.second.p[i] = p_split.second;
         //q = rout - adjust(rm, i);
+        // __uint128_t midexp=(__uint128_t)rm * (__uint128_t)pow_helper(scale,(i-re));
+        // midexp = midexp & ((__uint128_t(1) << 64) - 1); 
+        // q = rt - (GroupElement)midexp;
         q = rt - (rm * pow_helper(scale,i-re));
         auto q_split = splitShare(q, bin);
         keys.first.q[i] = q_split.first;
