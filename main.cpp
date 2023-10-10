@@ -656,7 +656,15 @@ void llama_fixtofloat_test(int party) {
     
 
     //initialize here the e and e_ct
-
+    
+    // for(int i=0;i<batchSize;++i)
+    // {
+    //     for(int j=0;j<numClasses;++j)
+    //     {
+    //         e(i,j,0,0)=i*(1ULL<<4);
+    //         e_ct(i,j,0,0)=i*(1LL<<4);
+    //     }
+    // }
 
 
 
@@ -675,7 +683,10 @@ void llama_fixtofloat_test(int party) {
         
 
     }
-    
+    //print the e and e_ct
+    e.print();
+    std::cerr<<"-----------------"<<std::endl;
+    e_ct.print();
     llama->inputA(e);
 
     if (LlamaConfig::party == 1) {
