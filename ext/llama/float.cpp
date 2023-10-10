@@ -1,6 +1,6 @@
 #include "float.h"
 #include "pubdiv.h"
-static int counter =0;
+static int counter =0; //for debugging
 void fill_pq(GroupElement *p, GroupElement *q, int n)
 {
     for(int i = 2*n; i >= 1; --i)
@@ -163,7 +163,6 @@ pair<FloatToFixKeyPack> keyGenFloatToFix(int bin, int scale, GroupElement rout)
 
     GroupElement rt = random_ge(bin); 
     auto rt_split = splitShare(rt, bin);
-    std::cerr<<counter<<" "<<rt<<"rt "<<std::endl;
     
     //shares of r(t) //no need to split rt as it is not used in any other function in online mode
     //keys.first.rt = rt_split.first;
@@ -191,22 +190,11 @@ pair<FloatToFixKeyPack> keyGenFloatToFix(int bin, int scale, GroupElement rout)
         auto p_split = splitShare(p, bin);
         keys.first.p[i] = p_split.first;
         keys.second.p[i] = p_split.second;
-        //q = rout - adjust(rm, i);
-        // __uint128_t midexp=(__uint128_t)rm * (__uint128_t)pow_helper(scale,(i-re));
-        // midexp = midexp & ((__uint128_t(1) << 64) - 1); 
-        // q = rt - (GroupElement)midexp;
         q = rt - (rm * pow_helper(scale,(i-re)%1024));
-        if(i==12 && counter==77)
-        {   
-            std::cerr<<rt<<"rt "<<std::endl;
-            std::cerr<<re<<"re "<<std::endl;
-            std::cerr<<i<<"i "<<std::endl;
-            std::cerr<<(rm * pow_helper(scale,(i-re)%1024))<<"rm and sull "<<std::endl;
-        }
         auto q_split = splitShare(q, bin);
         keys.first.q[i] = q_split.first;
         keys.second.q[i] = q_split.second;
     }
-    counter++;
+    //counter++; for debugging
     return keys;
 }
