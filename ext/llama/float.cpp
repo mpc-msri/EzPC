@@ -1,6 +1,6 @@
 #include "float.h"
 #include "pubdiv.h"
-static int counter =0; //for debugging
+//static int counter =0; //for debugging
 void fill_pq(GroupElement *p, GroupElement *q, int n)
 {
     for(int i = 2*n; i >= 1; --i)
@@ -117,7 +117,7 @@ GroupElement pow_helper(int scale,GroupElement y)
 {
     if (0<=y<=scale)
     {
-        return pow(2,y);        
+        return (1ULL<<y);        
     }
     else{
         return 0;
@@ -140,10 +140,6 @@ pair<FloatToFixKeyPack> keyGenFloatToFix(int bin, int scale, GroupElement rout)
     keys.second.re = re_split.second;
 
     auto dcfKeys = keyGenDCF(24, 1, rm, 1);
-    if(counter==77)
-    {
-        std::cerr<<rm<<"rm "<<std::endl;
-    }
     //shares of dcfKey using rm
     keys.first.dcfKey = dcfKeys.first;
     keys.second.dcfKey = dcfKeys.second;
