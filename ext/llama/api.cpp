@@ -2372,6 +2372,7 @@ void FloatToFix(int size, GroupElement *inp, GroupElement *out, int scale)
 
        
         for (int i=0;i< size;i++){
+		d[i]=0;
             for (int j =0 ; j < 1024;j++)
              {
             d[i] = d[i] + (pow_helper(scale,j) * keys[i].p[(j-e[i])%1024]);
