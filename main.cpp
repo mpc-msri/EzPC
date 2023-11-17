@@ -535,6 +535,102 @@ void fptraining_init() {
     std::cerr << "> Eigen will use " << Eigen::nbThreads() << " threads" << std::endl;
 }
 
+void llama_floattofix_test(int party)
+{
+    srand(time(NULL));
+    const u64 scale = 24;
+    LlamaConfig::party = party;
+    LlamaConfig::bitlength = 64;
+    LlamaExtended<u64>* llama = new LlamaExtended<u64>();
+    llama->init("127.0.0.1",false);
+    int numClasses = 1;
+    int batchSize = 1;
+    if (party != 1) {
+        secfloat_init(party - 1, "127.0.0.1");
+    }
+
+    Tensor4D<u64> e(batchSize, numClasses, 1, 1);
+
+    Tensor4D<u64> e_ct(batchSize, numClasses, 4, 1);
+    e.fill(0);
+    e_ct.fill(0);
+    Tensor4D<u64> y(batchSize, numClasses, 1, 1);
+    Tensor4D<u64> y_ct(batchSize, numClasses, 4, 1);
+    y.fill(0);
+
+    for(int i=0;i<numClasses;++i)
+    {
+        e(0,i,0,0) =1;
+        e(1,i,0,0) = 0;
+        e_ct(0,i,0,0) = 1;
+        e_ct(1,i,0,0) = 0;
+    }
+    float input = 0.5f;
+    uint64_t inp_com[4];
+    uint64_t inp_com1[4];
+    uint64_t inp_com2[4];
+
+    union FloatRep{
+        float f;
+        uint32_t i;
+    };
+
+    FloatRep rep;
+    rep.f = input;
+
+    inp_com[0] = 25367151;//(rep.i & 0x7FFFFF | 0x800000); //mantissa 0x800000
+    inp_com[1] = 1141;//(rep.i >> 23) & 0xFF; //exponent
+    inp_com[2] = (rep.i >> 31) & 0x1; //sign
+    inp_com[3] = 0; //zero
+
+    std::cout<<"input: "<<input<<"\n"; 
+    std::cout<<"zero comp"<<inp_com[3]<<"\n";
+    std::cout<<"exp comp"<<inp_com[1]<<"\n";
+    std::cout<<"sign comp"<<inp_com[2]<<"\n";
+    std::cout<<"mant comp"<<inp_com[0]<<"\n";
+    
+    llama->inputA(e);
+    auto inp1=splitShare(inp_com[0],24);
+    auto inp2=splitShare(inp_com[1],10);
+
+    inp_com1[0]=inp1.first;
+    inp_com2[0]=inp1.second;
+    inp_com1[1]=inp2.first;
+    inp_com2[1]=inp2.second;
+    inp_com2[2]=inp_com[2];
+    inp_com1[2]=inp_com[2];
+    inp_com1[3]=inp_com[3];
+    inp_com2[3]=inp_com[3];
+
+    std::cout<<"secure output: \n";
+    llama::start();
+
+    if(LlamaConfig::party==2)
+    {
+        FloatToFix(1,inp_com1,y.data,scale);
+    }
+    else if(LlamaConfig::party==3)
+    {
+        FloatToFix(1,inp_com2,y.data,scale);
+    }
+    else
+    {
+        FloatToFix(1,inp_com,y.data,scale);
+    }
+    //std::cout<<"cleartext output: \n";
+    //FloatToFixCt(numClasses*batchSize,e_ct.data,y_ct.data,scale);
+    //y_ct.print();
+    
+    //FloatToFix(1,inp_com,y.data,scale);
+    llama::end();
+    llama->output(y);
+    llama->finalize();
+    if(LlamaConfig::party != 1)
+    {
+        y.print();
+    }
+
+}
 void llama_fixtofloat_test(int party) {
     srand(time(NULL));
     const u64 scale = 24;
@@ -543,7 +639,7 @@ void llama_fixtofloat_test(int party) {
     LlamaExtended<u64>* llama = new LlamaExtended<u64>();
     // LlamaExtended<u64>::init("172.31.45.158");
     // LlamaExtended<u64>::init("172.31.45.85", false);
-    llama->init("127.0.0.1", true);
+    llama->init("127.0.0.1", false);
     int numClasses = 10;
     int batchSize = 100;
     if (party != 1) {
@@ -558,13 +654,39 @@ void llama_fixtofloat_test(int party) {
     Tensor4D<u64> y(batchSize, numClasses, 1, 1);
     Tensor4D<i64> y_ct(batchSize, numClasses, 1, 1);
     
-    for(int i = 0; i < numClasses; ++i) {
-        e(0, i, 0, 0) = i * (1ULL << scale);
-        e(1, i, 0, 0) = 5 * (1ULL << scale);
-        e_ct(0, i, 0, 0) = i * (1LL << scale);
-        e_ct(1, i, 0, 0) = 5 * (1LL << scale);
-    }
+
+    //initialize here the e and e_ct
     
+    // for(int i=0;i<batchSize;++i)
+    // {
+    //     for(int j=0;j<numClasses;++j)
+    //     {
+    //         e(i,j,0,0)=i*(1ULL<<4);
+    //         e_ct(i,j,0,0)=i*(1LL<<4);
+    //     }
+    // }
+
+
+
+    for(int i = 0; i < numClasses; ++i) {
+        e(0,i,0,0)= i* (1ULL << scale);
+        e(i, i, 0, 0) = i * (1ULL << scale);
+       // e(1, i, 0, 0) = 5 * (1ULL << scale);
+       e_ct(0,i,0,0)= i* (1LL << scale);
+        e_ct(i, i, 0, 0) = i * (1LL << scale);
+       // e_ct(1, i, 0, 0) = 5 * (1LL << scale);
+    }
+    for(int j=0;j<batchSize;j++)
+    {
+        e(j,0,0,0)=j* (1ULL << scale);
+        e_ct(j,0,0,0)=j * (1ULL << scale);
+        
+
+    }
+    //print the e and e_ct
+    e.print();
+    std::cerr<<"-----------------"<<std::endl;
+    e_ct.print();
     llama->inputA(e);
 
     if (LlamaConfig::party == 1) {
@@ -1275,11 +1397,12 @@ int main(int argc, char** argv) {
         party = atoi(argv[1]);
     }
     // llama_test_3layer(party);
-    llama_test_lenet_gupta(party);
+    //llama_test_lenet_gupta(party);
     // gpu_main(argc, argv);
     // carvanha_compile();
     // llama_test_pvgg(party);
-    // llama_fixtofloat_test(party);
+    //llama_floattofix_test(party);
+    llama_fixtofloat_test(party);
     // if (party == 0) {
     //     ct_test_3layer();
     // }
@@ -1293,7 +1416,7 @@ int main(int argc, char** argv) {
     // test_maxpool(party);
     // test_reluextend(party);
     // test_signextend(party);
-    // test_ars(party);
+     //test_ars(party);
     // test_rt(party);
     // test_r2(party);
     // test_mul(party);

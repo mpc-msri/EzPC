@@ -208,6 +208,10 @@ public:
         else {
             for (int i = 0; i < sz; i++){
                 auto mask = LlamaConfig::dealer->recv_mask();
+                if(i==33)
+                {
+                    std::cerr<<"mask: "<<mask<<std::endl;
+                }
                 a.data[i] = a.data[i] - mask;
             }
         }

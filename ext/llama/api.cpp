@@ -39,6 +39,7 @@ SOFTWARE.
 #include "reluextend.h"
 #include "signextend.h"
 
+
 #include <cassert>
 #include <iostream>
 #include <assert.h>
@@ -2189,6 +2190,7 @@ void FixToFloat(int size, GroupElement *inp, GroupElement *out, int scale)
     else {
         auto keyread_start = std::chrono::high_resolution_clock::now();
         FixToFloatKeyPack *keys = new FixToFloatKeyPack[size];
+        
         for(int i = 0; i < size; ++i) {
             keys[i] = dealer->recv_fix_to_float_key(bitlength);
         }
@@ -2250,6 +2252,57 @@ void FixToFloat(int size, GroupElement *inp, GroupElement *out, int scale)
     }
     std::cerr << ">> FixToFloat - End" << std::endl;
 }
+void FloatToFixCt(int size, GroupElement *inp, GroupElement *out, int scale)
+{
+    if (party == DEALER)
+    {
+        memset(out, 0, size * sizeof(GroupElement));
+    }
+    else
+    {
+        GroupElement *m = new GroupElement[2 * size];
+        GroupElement *e = m + size;
+
+        for (int i = 0; i < size; ++i)
+        {
+            m[i] = inp[4 * i + 0];
+            e[i] = inp[4 * i + 1];
+            // if (party == 2)
+            // {
+            //     e[i] += scale;
+            //     e[i] -= 127; // fp32 bias
+            // }
+        }
+        // now have m and e in the clear
+        //reconstruct(2 * size, m, 64);
+        for (int i = 0; i < size; ++i)
+        {
+            mod(m[i], 24);
+            mod(e[i], 10);
+            assert(e[i] < 256);
+
+            // int eAsInt = e[i] < 512 ? e[i] : -1 * (1024 - e[i]);
+            // assert(eAsInt <= 126 && eAsInt >= -127);
+            //if(i < 10) printf("%d=%ld, %ld\n", i, m[i], e[i]);
+            int ePrime = e[i] - 127 + scale;
+            //if(i < 10) printf("%d=%ld, %ld, %d\n", i, m[i], e[i], ePrime);
+            GroupElement x = 0;
+            if (ePrime >= 0 && ePrime <= scale)
+            {
+                x = m[i] * (1ULL << ePrime);
+                assert(x < (1ULL << 63));
+                x >>= 23;
+                // auto xf = x;
+                // mod(xf, scale);
+                // auto s = random_ge(scale);
+                // if(s < xf) x += 1; 
+                //if(i < 10) printf("%d=%ld, %ld, %ld\n", i, m[i], ePrime, x);
+            }
+            out[i] = x;
+        }
+        delete[] m;
+    }
+}
 
 void FloatToFix(int size, GroupElement *inp, GroupElement *out, int scale)
 {
@@ -2257,10 +2310,11 @@ void FloatToFix(int size, GroupElement *inp, GroupElement *out, int scale)
 
     if (party == DEALER) {
         pair<FloatToFixKeyPack> *keys = new pair<FloatToFixKeyPack>[size];
-        #pragma omp parallel for
+        //#pragma omp parallel for
         for(int i = 0; i < size; ++i) {
             auto rout = random_ge(bitlength);
             keys[i] = keyGenFloatToFix(bitlength, scale, rout);
+            
             out[i] = rout;
         }
 
@@ -2275,7 +2329,7 @@ void FloatToFix(int size, GroupElement *inp, GroupElement *out, int scale)
         auto keyread_start = std::chrono::high_resolution_clock::now();
         FloatToFixKeyPack *keys = new FloatToFixKeyPack[size];
         for(int i = 0; i < size; ++i) {
-            keys[i] = dealer->recv_float_to_fix_key(bitlength);
+            keys[i] = dealer->recv_float_to_fix_key(bitlength,scale);
         }
         auto keyread_end = std::chrono::high_resolution_clock::now();
         auto keyread_time_taken = std::chrono::duration_cast<std::chrono::milliseconds>(keyread_end -
@@ -2284,44 +2338,74 @@ void FloatToFix(int size, GroupElement *inp, GroupElement *out, int scale)
         GroupElement *m = new GroupElement[2*size];
         GroupElement *e = m + size;
         GroupElement *w = new GroupElement[2*size];
-        GroupElement *t = w + size;
+        GroupElement *t = new GroupElement[size];
+        GroupElement *h = w + size;
+        GroupElement *d = new GroupElement[size];
 
         peer->sync();
         auto eval_start = std::chrono::high_resolution_clock::now();
+        
         for(int i = 0; i < size; ++i) {
             m[i] = inp[4*i + 0] + keys[i].rm;
             e[i] = inp[4*i + 1] + keys[i].re;
             if (party == 2) {
-                e[i] += (scale - 23);
+                e[i] += (scale);
                 e[i] -= 127; // fp32 bias
             }
         }
-
+    
+        // m and e are in a single array. m is the first half and e is the second half
         reconstruct(2*size, m, 24);
 
+        for(int i=0;i<size;i++){
+           mod(m[i],24);
+           mod(e[i],10);
+        }
+        
+        
         for(int i = 0; i < size; ++i) {
             evalDCF(party - 2, &w[i], m[i], keys[i].dcfKey);
             w[i] = w[i] + keys[i].rw;
-            t[i] = keys[i].rt;
-            for(int j = 1001; j < 1024; ++j) {
-                t[i] = t[i] + (1ULL<<(j-1000)) * keys[i].p[(j-e[i])%1024];
-            }
-            t[i] = t[i] + (1ULL<<24) * keys[i].p[(1024-e[i])%1024];
+            
+        }
+        
+
+       
+        for (int i=0;i< size;i++){
+		d[i]=0;
+            for (int j =0 ; j < 1024;j++)
+             {
+            d[i] = d[i] + (pow_helper(scale,j) * keys[i].p[(j-e[i])%1024]);
+             }
+            h[i] = keys[i].rh + (pow((GroupElement)2,24) *d[i]);
+        }
+        
+        // w and h are in a single array w. w is the first half and h is the second half
+        reconstruct(2*size, w, bitlength);
+
+      
+       for(int i=0;i<size;i++){
+            mod(w[i],2);
         }
 
-        reconstruct(2*size, w, bitlength);
+
+        for(int i = 0; i < size; ++i) {
+            t[i] = evalSelect(party - 2, w[i], h[i], keys[i].selectKey);
+            t[i] = t[i] + keys[i].q[e[i]%1024];
+            t[i] = t[i] + (m[i]*d[i]);   
+        }
+
+
+        reconstruct(size, t, bitlength);
 
         for(int i = 0; i < size; ++i) {
             out[i] = 0;
-            for(int j = 0; j < 1024; ++j) {
-                out[i] += adjust(m[i], j) * keys[i].p[(j-e[i])%1024];
-            }
-            out[i] += keys[i].q[e[i]%1024];
-            out[i] += evalSelect(party - 2, w[i], t[i], keys[i].selectKey);
+            out[i] = evalARS(party - 2, t[i],23, keys[i].arsKey);
         }
-
+      
         reconstruct(size, out, bitlength);
 
+    
         auto eval_end = std::chrono::high_resolution_clock::now();
         auto eval_time_taken = std::chrono::duration_cast<std::chrono::microseconds>(eval_end -
                                                             eval_start).count();
@@ -2330,6 +2414,7 @@ void FloatToFix(int size, GroupElement *inp, GroupElement *out, int scale)
         evalMicroseconds += eval_time_taken;
         delete[] m;
         delete[] w;
+        delete[] t;
         for(int i = 0; i < size; ++i) {
             freeFloatToFixKeyPack(keys[i]);
         }

@@ -43,6 +43,7 @@ inline GroupElement random_ge(int bw)
     int tid = omp_get_thread_num();
     a = LlamaConfig::prngs[tid].get<uint64_t>();
     mod(a, bw);
+    //a=0ULL;
     return a;
 }
 

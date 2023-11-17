@@ -1,5 +1,6 @@
 #include "float.h"
-
+#include "pubdiv.h"
+//static int counter =0; //for debugging
 void fill_pq(GroupElement *p, GroupElement *q, int n)
 {
     for(int i = 2*n; i >= 1; --i)
@@ -112,54 +113,84 @@ GroupElement adjust(GroupElement m, GroupElement e)
         return 0;
     }
 }
-
+GroupElement pow_helper(int scale,GroupElement y)
+{
+    if (0<=y<=scale)
+    {
+        return (1ULL<<y);        
+    }
+    else{
+        return 0;
+    }
+    
+}
 pair<FloatToFixKeyPack> keyGenFloatToFix(int bin, int scale, GroupElement rout)
 {
     pair<FloatToFixKeyPack> keys;
     GroupElement rm = random_ge(24);
     auto rm_split = splitShare(rm, 24);
+    //shares of r(m)
     keys.first.rm = rm_split.first;
     keys.second.rm = rm_split.second;
 
     GroupElement re = random_ge(10);
     auto re_split = splitShare(re, 10);
+    //shares of r(e) 
     keys.first.re = re_split.first;
     keys.second.re = re_split.second;
 
     auto dcfKeys = keyGenDCF(24, 1, rm, 1);
+    //shares of dcfKey using rm
     keys.first.dcfKey = dcfKeys.first;
     keys.second.dcfKey = dcfKeys.second;
 
-    GroupElement rw = random_ge(1);
+    GroupElement rw = random_ge(1); //
     auto rw_split = splitShare(rw, 1);
+    //shares of r(w)
     keys.first.rw = rw_split.first;
     keys.second.rw = rw_split.second;
 
+
+    GroupElement rh = random_ge(bin); 
+    auto rh_split = splitShare(rh, bin);
+    //shares of r(h)
+    keys.first.rh = rh_split.first;
+    keys.second.rh = rh_split.second;
+
     GroupElement rt = random_ge(bin); 
     auto rt_split = splitShare(rt, bin);
-    keys.first.rt = rt_split.first;
-    keys.second.rt = rt_split.second;
+    
+    //shares of r(t) //no need to split rt as it is not used in any other function in online mode
+    //keys.first.rt = rt_split.first;
+    //keys.second.rt = rt_split.second;
 
-    auto selectKeys = keyGenSelect(bin, rw, rt, 0);
+    auto selectKeys = keyGenSelect(bin, rw, rh, 0);
+    //shares of select keys based on random r(h) and r(w)
     keys.first.selectKey = selectKeys.first;
     keys.second.selectKey = selectKeys.second;
+
+    auto arskeys = keyGenARS(bin, bin, 23, rt, rout); // check the shift and bin value
+    //shares of ARS keys based on random r(t) and rout
+    keys.first.arsKey = arskeys.first;
+    keys.second.arsKey = arskeys.second;
 
     GroupElement p;
     GroupElement q;
     for(int i = 0; i < 1024; ++i) {
         if (i == ((1024 - re) % 1024)) {
-            p = 1;
+            p = 1ULL;
         }
         else {
-            p = 0;
+            p = 0ULL;
         }
         auto p_split = splitShare(p, bin);
         keys.first.p[i] = p_split.first;
         keys.second.p[i] = p_split.second;
-        q = rout - adjust(rm, i);
+        q = rt - (rm * pow_helper(scale,(i-re)%1024));
         auto q_split = splitShare(q, bin);
-        keys.first.q[(i+re)%1024] = q_split.first;
-        keys.second.q[(i+re)%1024] = q_split.second;
+        keys.first.q[i] = q_split.first;
+        keys.second.q[i] = q_split.second;
     }
+    //counter++; for debugging
     return keys;
 }

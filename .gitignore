@@ -19,3 +19,12 @@ graph.dot
 graph.png
 venv/
 thread_outputs/
+CMakeFiles/
+Makefile
+*.cmake
+main
+CMakeCache.txt
+lib
+libsytorch.a
+libcryptoTools.a
+libLLAMA.a

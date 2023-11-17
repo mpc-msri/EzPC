@@ -243,7 +243,7 @@ public:
 
     FixToFloatKeyPack recv_fix_to_float_key(int bl);
 
-    FloatToFixKeyPack recv_float_to_fix_key(int bl);
+    FloatToFixKeyPack recv_float_to_fix_key(int bl, int scale);
 
     ReluExtendKeyPack recv_relu_extend_key(int Bin, int Bout);
 

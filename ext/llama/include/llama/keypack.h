@@ -276,9 +276,10 @@ struct FixToFloatKeyPack
 
 struct FloatToFixKeyPack
 {
-    GroupElement rm, re, rw, rt;
+    GroupElement rm, re, rw, rt,rh;
     DCFKeyPack dcfKey;
     SelectKeyPack selectKey;
+    ARSKeyPack arsKey;
     GroupElement p[1024];
     GroupElement q[1024];
 };

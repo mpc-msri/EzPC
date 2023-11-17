@@ -629,18 +629,20 @@ void Peer::send_fix_to_float_key(const FixToFloatKeyPack &kp, int bl)
 
 void Peer::send_float_to_fix_key(const FloatToFixKeyPack &kp, int bl)
 {
+    send_dcf_keypack(kp.dcfKey);
+    send_select_key(kp.selectKey);
     send_ge(kp.rm, 24);
     send_ge(kp.re, 10);
-    send_dcf_keypack(kp.dcfKey);
     send_ge(kp.rw, 1);
-    send_ge(kp.rt, bl);
-    send_select_key(kp.selectKey);
+    //send_ge(kp.rt, bl);
+    send_ge(kp.rh,bl);
     for(int i = 0; i < 1024; ++i) {
         send_ge(kp.p[i], bl);
     }
     for(int i = 0; i < 1024; ++i) {
         send_ge(kp.q[i], bl);
     }
+    send_ars_key(kp.arsKey);
 }
 
 void Peer::send_relu_extend_key(const ReluExtendKeyPack &kp, int bin, int bout)
@@ -907,6 +909,7 @@ DCFKeyPack Dealer::recv_dcf_keypack(int Bin, int Bout, int groupSize) {
     if (false) {
         kp.v = (GroupElement *)ramdiskBuffer;
         ramdiskBuffer += sizeof(GroupElement) * (Bin * groupSize);
+        
     } else {
         kp.v = new GroupElement[Bin * groupSize];
         for (int i = 0; i < Bin * groupSize; ++i) {
@@ -1416,21 +1419,24 @@ FixToFloatKeyPack Dealer::recv_fix_to_float_key(int bl)
     return kp;
 }
 
-FloatToFixKeyPack Dealer::recv_float_to_fix_key(int bl)
+FloatToFixKeyPack Dealer::recv_float_to_fix_key(int bl, int scale)
 {
     FloatToFixKeyPack kp;
+    kp.dcfKey = recv_dcf_keypack(24, 1, 1);
+    kp.selectKey = recv_select_key(bl);
     kp.rm = recv_ge(24);
     kp.re = recv_ge(10);
-    kp.dcfKey = recv_dcf_keypack(24, 1, 1);
     kp.rw = recv_ge(1);
-    kp.rt = recv_ge(bl);
-    kp.selectKey = recv_select_key(bl);
+    //kp.rt = recv_ge(bl);
+    kp.rh = recv_ge(bl);
     for(int i = 0; i < 1024; ++i) {
         kp.p[i] = recv_ge(bl);
     }
     for(int i = 0; i < 1024; ++i) {
         kp.q[i] = recv_ge(bl);
     }
+    kp.arsKey = recv_ars_key(bl,bl, 23);
+    
     return kp;
 }
 
