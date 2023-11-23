@@ -1,3 +1,6 @@
+
+![OnnxBridge](image.png)
+
 # OnnxBridge 
 An end-to-end compiler for converting Onnx Models to Secure Cryptographic backends : **Secfloat**(Floating Point) and **LLAMA**(FSS based).
 - [Setup](#setup)
