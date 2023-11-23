@@ -255,4 +255,8 @@ This completes the node implementation in backend.
 ## Demo
 Follow [Demo](Secfloat/demo/Readme.md) for OnnxBridge demo with Secfloat.
 
+## Helper Scripts 
+These [scripts](/OnnxBridge/helper/README.md) are useful during development and testing.
+
+
 
