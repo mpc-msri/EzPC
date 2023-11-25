@@ -63,7 +63,7 @@ Run the following command to start server side computation and wait for client c
 
 ### Download Image
 ```bash
-./fetch_image.sh 
+sudo ./fetch_image.sh 
 ```
 
 Client needs to preprocess the image before computation starts:
@@ -103,5 +103,5 @@ python ../../helper/compare_np_arrs.py -i onnx_output/expected.npy output.npy
 ```
 You should get output similar to:
 ```bash
-Arrays matched upto 6 decimal points
+Arrays matched upto 2 decimal points
 ```
