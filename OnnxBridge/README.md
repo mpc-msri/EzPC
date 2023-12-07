@@ -1,3 +1,6 @@
+
+![OnnxBridge](image.png)
+
 # OnnxBridge 
 An end-to-end compiler for converting Onnx Models to Secure Cryptographic backends : **Secfloat**(Floating Point) and **LLAMA**(FSS based).
 - [Setup](#setup)
@@ -253,6 +256,16 @@ This completes the node implementation in backend.
 ```
 
 ## Demo
-Follow [Demo](Secfloat/demo/Readme.md) for OnnxBridge demo with Secfloat.
+Below are the available demos:
+- OnnxBridge with Secfloat. [link](/OnnxBridge/Secfloat/demo/Readme.md)
+- OnnxBridge with LLAMA. [link](/OnnxBridge/Demo/hinet_cifar10-llama/README.md)
+- Toy Example - Single Inference. [link](/sytorch/Toy%20example-%20single%20inference.md)
+- Toy Example - Multiple Inference. [link](/sytorch/Toy%20example-%20multiple%20inference.md)
+- Inference App - Chexpert. [link](/inference-app/README.md)
+- Inference App - fMRI-MLP. [link](/OnnxBridge/Demo/mlp/README.md)
+
+## Helper Scripts 
+These [scripts](/OnnxBridge/helper/README.md) are useful during development and testing.
+
 
 
