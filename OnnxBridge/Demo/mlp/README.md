@@ -127,3 +127,53 @@ chmod +x client-offline.sh client-online.sh
     _FILE_NAME = "masks.dat"
     _CLIENT_IP = "X.X.X.X"
 
+----
+#### Download the preprocessing file for image (specific to model) inside /inference-app directory:
+```bash
+# This file takes in image as <class 'PIL.Image.Image'>
+# preprocess it and returns it as a numpy array of size required by Model.
+wget "https://raw.githubusercontent.com/drunkenlegend/ezpc-warehouse/main/MLP_fMRI/preprocess.py" -O preprocess.py
+```
+
+#### 
+```bash
+# Next we download example image for the app.
+cd Assets 
+mkdir examples && cd examples 
+wget "https://raw.githubusercontent.com/drunkenlegend/ezpc-warehouse/main/MLP_fMRI/1.png" -O 1.jpg
+cd ../..
+```
+----
+#### Replace the USER_INPUTS in constants.py file with below:
+
+    # Description
+    desc = "In this example app, we demonstrate how infer any fMRI Image with a MLP model trained by JHU in a secure manner using EzPC."
+
+    # preprocess is a function that takes in an image and returns a numpy array
+    preprocess = get_arr_from_image
+
+    # The input shape of the model, batch size should be 1
+    Input_Shape = (1, 1, 45, 54, 45)
+    assert Input_Shape[0] == 1, "Batch size should be 1"
+    dims = {
+        "c": 1,
+        "h": 45,
+        "w": 54,
+        "d": 45,
+    }
+
+    scale = 15
+
+    # Labels till 54
+    labels_map = {i: i for i in range(56)}
+
+```bash
+# while inside inference-app directory
+python app_3d.py
+```
+
+Open the url received after running the last command on inference-app and play along:
+1. Upload fMRI image.
+2. Get Encryption Keys
+3. Encrypt Image
+4. Start Inference
