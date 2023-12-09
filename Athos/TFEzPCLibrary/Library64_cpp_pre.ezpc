@@ -35964,6 +35964,22 @@ inp[33658] = 1073741760;
 inp[33659] = 0;
 }
 
+def void Clip(int32_pl s1, int32_pl alpha, int32_pl beta, int64_al[s1] inArr, int64_al[s1] outArr, int32_pl sf, bool_pl doTruncation)
+{
+    for i1=[0:s1]{
+        outArr[i1] = ((inArr[i1] > 0L) ? inArr[i1] : inArr[i1]);
+        outArr[i1] = ((inArr[i1] < 0L) ? inArr[i1] : inArr[i1]);
+    };
+    (* Truncation not implemented.*)
+}
+
+def void Max(int32_pl s1, int32_64[s1] inArr, int32_64[1] out){
+    out[0] = inArr[0];
+    for i=[0:s1]{
+        out[0] = ((inArr[i] > out[0]) ? inArr[i] : out[0]);
+    }
+}
+
 (* <><><><><><> Auto-generated code end <><><><><><> *)
 
 (* <><><><><><><><>< *)

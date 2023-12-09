@@ -8663,7 +8663,7 @@ def void Tanh2(int32_pl s1, int32_pl s2, int64_al[s1][s2] inp, int64_al[s1][s2] 
   int64_al[size] outCopy;
   for i=[0:s1] {
     for j=[0:s2] {
-      inpCopy[i*s1 + j] = inp[i][j];
+      inpCopy[i*s2 + j] = inp[i][j];
     };
   };
 
@@ -8807,7 +8807,7 @@ def void Sqrt2(int32_pl s1, int32_pl s2, int64_al[s1][s2] inp, int64_al[s1][s2] 
   int64_al[size] outCopy;
   for i=[0:s1] {
     for j=[0:s2] {
-      inpCopy[i*s1 + j] = inp[i][j];
+      inpCopy[i*s2 + j] = inp[i][j];
     };
   };
 
