@@ -502,7 +502,8 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
          aux (App_codegen ("add_to_output_queue", [Base_e (Var { name = "out_q"; index = 0 } |> mk_dsyntax "");
                                                    Output_g (r, sl, elmt_of_e);
                                                    Base_e e_role;
-                                                   Base_e (Var { name = "cout"; index = 0 } |> mk_dsyntax "")]))
+                                                   Base_e (Var { name = "cout"; index = 0 } |> mk_dsyntax "");
+                                                   Base_e (Var { name = "\""^ (bt_to_string bt)^ "\""; index = 0 } |> mk_dsyntax "") ]))
        in
 
        o_codegen_stmt g (Seq_codegen (print_output_msg, output_gate_loops))
@@ -574,7 +575,8 @@ and read_or_write_interim (g:gamma) (write:bool) (e_var:expr) (t:typ) (f:string)
                                        Base_e (Var {name = "role"; index = 0 } |> mk_dsyntax "");
                                        Base_e (Var {name = fstream_add_name; index = 0 } |> mk_dsyntax "");
                                        Base_e (Var {name = fstream_rand_name; index = 0 } |> mk_dsyntax "");
-                                       Base_e (Var { name = "out_q"; index = 0 } |> mk_dsyntax "")])
+                                       Base_e (Var { name = "out_q"; index = 0 } |> mk_dsyntax "");
+                                       Base_e (Var { name = "\""^ (bt_to_string bt)^ "\""; index = 0 } |> mk_dsyntax "")])
         else
           let fname =
             if Config.get_bitlen () = 32 then "read_share<uint32_t>"

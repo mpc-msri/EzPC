@@ -116,6 +116,7 @@ struct output_queue_elmt {
   enum {PrintMsg, PrintValue } kind;
   string msg;
   share *ptr;
+  bool type;	// To know the Signedness of the data(0:unsigned 1 :signed)
 };
 
 typedef  vector<output_queue_elmt> output_queue;
@@ -125,15 +126,22 @@ typedef  vector<output_queue_elmt> output_queue;
 void add_to_output_queue(output_queue &q,
 			 share *ptr,
 			 e_role role,
-			 ostream &os)
+			 ostream &os,
+			 string type)
 {
-  struct output_queue_elmt elmt { os, role, output_queue_elmt::PrintValue, "", ptr };
-  q.push_back(elmt);
+  if(type=="uint32_t"){
+  	struct output_queue_elmt elmt{ os, role, output_queue_elmt::PrintValue, "", ptr ,0};
+	q.push_back(elmt);
+  }
+  else{
+	 struct output_queue_elmt elmt { os, role, output_queue_elmt::PrintValue, "", ptr ,1};
+	 q.push_back(elmt);
+  }
 }
 
 void add_print_msg_to_output_queue (output_queue &q, string msg, e_role role, ostream &os)
 {
-  struct output_queue_elmt elmt { os, role, output_queue_elmt::PrintMsg, msg, NULL };
+  struct output_queue_elmt elmt { os, role, output_queue_elmt::PrintMsg, msg, NULL ,0};
   q.push_back(elmt); 
 }
 
@@ -148,9 +156,21 @@ void flush_output_queue(output_queue &q, e_role role, uint32_t bitlen)
     if (it->kind == output_queue_elmt::PrintValue) {
       if(it->role == ALL || it->role == role) {  //if the queue element role is same as mine
         if(bitlen == 32) {  //output to the stream
-          it->os << it->ptr->get_clear_value<uint32_t>() << endl;
+		
+         	 if(it->type==0){
+          	it->os << it->ptr->get_clear_value<uint32_t>() << endl;}
+		  else{
+			it->os << it->ptr->get_clear_value<int32_t>() << endl;}
+		
+		
         } else {
-          it->os << it->ptr->get_clear_value<uint64_t>() << endl;
+          	
+		 if(it->type==0){
+          	it->os << it->ptr->get_clear_value<uint64_t>() << endl;}
+		  else{
+			it->os << it->ptr->get_clear_value<int64_t>() << endl;}
+		
+		
         }
       }
     } else {
@@ -170,15 +190,16 @@ void flush_output_queue(output_queue &q, e_role role, uint32_t bitlen)
 void write_share(share *ptr, Circuit *circ, uint32_t bitlen, e_role role,
 		 ofstream &of_add,
 		 ofstream &of_rand,
-		 output_queue &q)
+		 output_queue &q,
+		 string type )
 {
   /* input shares of a random value, SERVER handles rand, CLIENT handles added shares */
   share *rand_sh = role == SERVER ? circ->PutINGate((uint32_t)rand(), bitlen, SERVER) : circ->PutDummyINGate(bitlen);
   /* add the input share with the random share */
   share *add_sh = circ->PutADDGate(ptr, rand_sh);
   /* add to the output q, so that it gets written out */
-  add_to_output_queue(q, circ->PutOUTGate(rand_sh, SERVER), SERVER, of_rand);
-  add_to_output_queue(q, circ->PutOUTGate(add_sh, CLIENT), CLIENT, of_add);
+  add_to_output_queue(q, circ->PutOUTGate(rand_sh, SERVER), SERVER, of_rand,type);
+  add_to_output_queue(q, circ->PutOUTGate(add_sh, CLIENT), CLIENT, of_add,type);
   /* TODO: can we optimize OUTPUT gates for the random value, since we already have its clear value in hand? */
   return;
 }
