@@ -2283,9 +2283,9 @@ void FloatToFixCt(int size, GroupElement *inp, GroupElement *out, int scale)
 
             // int eAsInt = e[i] < 512 ? e[i] : -1 * (1024 - e[i]);
             // assert(eAsInt <= 126 && eAsInt >= -127);
-            if(i < 10) printf("%d=%ld, %ld\n", i, m[i], e[i]);
+            //if(i < 10) printf("%d=%ld, %ld\n", i, m[i], e[i]);
             int ePrime = e[i] - 127 + scale;
-            if(i < 10) printf("%d=%ld, %ld, %d\n", i, m[i], e[i], ePrime);
+            //if(i < 10) printf("%d=%ld, %ld, %d\n", i, m[i], e[i], ePrime);
             GroupElement x = 0;
             if (ePrime >= 0 && ePrime <= scale)
             {
@@ -2296,7 +2296,7 @@ void FloatToFixCt(int size, GroupElement *inp, GroupElement *out, int scale)
                 // mod(xf, scale);
                 // auto s = random_ge(scale);
                 // if(s < xf) x += 1; 
-                if(i < 10) printf("%d=%ld, %ld, %ld\n", i, m[i], ePrime, x);
+                //if(i < 10) printf("%d=%ld, %ld, %ld\n", i, m[i], ePrime, x);
             }
             out[i] = x;
         }
@@ -2372,6 +2372,7 @@ void FloatToFix(int size, GroupElement *inp, GroupElement *out, int scale)
 
        
         for (int i=0;i< size;i++){
+		d[i]=0;
             for (int j =0 ; j < 1024;j++)
              {
             d[i] = d[i] + (pow_helper(scale,j) * keys[i].p[(j-e[i])%1024]);
