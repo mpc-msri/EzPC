@@ -83,25 +83,10 @@ public:
     virtual void batchNorm2dInference(const Tensor<T> &A, const Tensor<T> &B, const Tensor4D<T> &x, Tensor4D<T> &y, u64 scale) NOT_IMPLEMENTED;
     virtual void signext(Tensor4D<T> &x, u64 scale) NOT_IMPLEMENTED;
 
-    //add API
-    virtual void add(const std::vector<Tensor4D<T> *> &in, Tensor4D<T> &out) NOT_IMPLEMENTED;
-
-    virtual void gelu(const Tensor4D<T> &in, Tensor4D<T> &out, u64 scale, u64 mode=0) NOT_IMPLEMENTED;
-    virtual void silu(const Tensor4D<T> &in, Tensor4D<T> &out, u64 scale, u64 mode=0) NOT_IMPLEMENTED;
-    virtual void tanh(const Tensor4D<T> &in, Tensor4D<T> &out, u64 scale) NOT_IMPLEMENTED;
-    virtual void softmax(const Tensor4D<T> &in, Tensor4D<T> &out, u64 scale, u64 mode=0s) NOT_IMPLEMENTED;
-    virtual void mul(const Tensor4D<T> &a, Tensor4D<T> &b, Tensor4D<T> &out) NOT_IMPLEMENTED;
-    virtual void scalarmul(Tensor4D<T> &a, T b, Tensor4D<T> &out) NOT_IMPLEMENTED;  
-    
 
 
 
     virtual void optimize(LayerGraphNode<T> *root)
-    {
-        
-    }
-
-    virtual void output(Tensor4D<T> &a)
     {
         
     }

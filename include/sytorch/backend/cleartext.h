@@ -42,43 +42,7 @@ public:
         }
     }
 
-    void modbw(T* x, u64 size)
-    {
-        if constexpr (std::is_floating_point<T>::value) {
-            return;
-        }
-        else if constexpr (bw == sizeof(T) * 8) {
-            return;
-        }
-        else {
-            i64 mask = (1LL << (bw - 1));
-            fastfor(size, [&](u64 i) {
-                i64 val = (x[i] + mask) % (1LL << bw);
-                val -= mask;
-                x[i] = val;
-            });
-        }
-    }
-    
-    void modbw(T &x)
-    {
-        if constexpr (std::is_floating_point<T>::value) {
-            return;
-        }
-        else if constexpr (bw == sizeof(T) * 8) {
-            return;
-        }
-        else {
-            i64 val = (x + (1LL << (bw - 1))) % (1LL << bw);
-            val -= (1LL << (bw - 1));
-            x = val;
-        }
-    }
-    void modbw(Tensor<T> &x) { modbw(x.data, x.size()); }
-    void modbw(Tensor1D<T> &x) { modbw(x.data, x.size()); }
-    void modbw(Tensor2D<T> &x) { modbw(x.data, x.size()); }
-    void modbw(Tensor4D<T> &x) { modbw(x.data, x.size()); }
-    void modbw(Tensor5D<T> &x) { modbw(x.data, x.size()); }
+
 
     void matmul(const Tensor2D<T> &a, const Tensor2D<T> &b, Tensor2D<T> &c);
     void matmul(const Tensor4D<T> &a, const Tensor2D<T> &b, Tensor4D<T> &c);
@@ -120,13 +84,6 @@ public:
 
     void batchNorm2dInference(const Tensor<T> &A, const Tensor<T> &B, const Tensor4D<T> &x, Tensor4D<T> &y, u64 scale);
 
-    //add API
-    void add(const std::vector<Tensor4D<T> *> &in, Tensor4D<T> &out);
-    void gelu(const Tensor4D<T> &in, Tensor4D<T> &out, u64 scale, u64 mode=0);
-    void tanh(const Tensor4D<T> &in, Tensor4D<T> &out, u64 scale);
-    void softmax(const Tensor4D<T> &in, Tensor4D<T> &out, u64 scale, u64 mode=0);
-    void mul(const Tensor4D<T> &a, Tensor4D<T> &b, Tensor4D<T> &out);
-    void scalarmul(Tensor4D<T> &a, T b, Tensor4D<T> &out);
     
 
 };
