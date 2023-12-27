@@ -4,3 +4,6 @@
 [submodule "CrypTFlow2/extern/eigen"]
 	path = SCI/extern/eigen
 	url = https://gitlab.com/libeigen/eigen
+[submodule "ext/sci/extern/SEAL"]
+	path = ext/sci/extern/SEAL
+	url = https://github.com/Microsoft/SEAL

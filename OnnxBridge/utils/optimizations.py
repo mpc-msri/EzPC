@@ -29,7 +29,6 @@ from onnx import numpy_helper
 from onnx import shape_inference
 from onnx.helper import make_tensor_value_info
 from onnxsim import simplify
-
 from utils import logger
 from utils.onnx2IR_helper import proto_val_to_dimension_tuple
 

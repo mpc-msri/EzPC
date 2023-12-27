@@ -25,7 +25,7 @@ import sys, os
 
 if __name__ == "__main__":
     input_np_arr = np.load(sys.argv[2], allow_pickle=True)
-    sess = rt.InferenceSession(sys.argv[1])
+    sess = rt.InferenceSession(sys.argv[1]) #"../onnx_new_files/lenet.onnx"
     input_name = sess.get_inputs()[0].name
     pred_onx = sess.run(None, {input_name: input_np_arr})[0]
     # print("Output:\n", pred_onx.flatten())
