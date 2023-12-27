@@ -15,6 +15,42 @@ public:
         Relu(sz, in.data, in.data, out.data, out.data, drelu.data);
     }
 
+    void leakyRelu(const Tensor<T> &in, const Tensor<T> &out, const Tensor<T> &drelu, u64 scale, int mode, T alpha)
+    {
+        assert(in.is_same_shape(out));
+        assert(in.is_same_shape(drelu));
+        int sz = in.size();
+        std::vector<u64> shape = in.shape;
+
+        T minus_one = type_cast<T>(-1 * (1LL << scale));
+        auto ct = new ClearText<T>;
+        // leakyrelu = relu(x) - alpha * relu(-x)
+
+        // relu(x)
+        Tensor<T> relu_x(shape);
+        Relu(sz, in.data, in.data, relu_x.data, relu_x.data, drelu.data);
+
+        // -x
+        Tensor<T> minus_x(shape);
+        ct->fastfor(sz, [&](u64 i)
+                    { minus_x.data[i] = minus_one * in.data[i]; });
+        Backend<T>::truncate(minus_x, scale);
+
+        // relu(-x)
+        Tensor<T> relu_minus_x(shape);
+        Relu(sz, minus_x.data, minus_x.data, relu_minus_x.data, relu_minus_x.data, drelu.data);
+
+        // alpha * relu(-x)
+        Tensor<T> alpha_relu_minus_x(shape);
+        ct->fastfor(sz, [&](u64 i)
+                    { alpha_relu_minus_x.data[i] = alpha * relu_minus_x.data[i]; });
+        Backend<T>::truncate(alpha_relu_minus_x, scale);
+
+        // relu(x) - alpha * relu(-x)
+        ct->fastfor(sz, [&](u64 i)
+                    { out.data[i] = relu_x.data[i] - alpha_relu_minus_x.data[i]; });
+    }
+
     void truncate(T *in, T *out, u64 shift, u64 size, u8 mode) {
         if (this->useLocalTruncation) {
             for(u64 i = 0; i < size; i++) {

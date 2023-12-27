@@ -122,6 +122,9 @@ def compare_output():
     arr1 = np.load("output.npy", allow_pickle=True).flatten()
     arr2 = np.load("onnx_output/expected.npy", allow_pickle=True).flatten()
 
+    print("Secure Output Shape: " + str(arr1.shape))
+    print("Expected Output Shape: " + str(arr2.shape))
+
     matching_prec = -1
     for prec in range(1, 10):
         try:

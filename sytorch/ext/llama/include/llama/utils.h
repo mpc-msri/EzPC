@@ -147,3 +147,23 @@ void ConvTranspose3DLoopInnerClear(
     GroupElement* inputArr, 
     GroupElement* filterArr, 
     GroupElement* outArr);
+
+void ConvTranspose2DLoopInnerClear(
+    int64_t N,
+    int64_t H,
+    int64_t W,
+    int64_t CI,
+    int64_t FH,
+    int64_t FW,
+    int64_t CO,
+    int64_t zPadHLeft,
+    int64_t zPadHRight,
+    int64_t zPadWLeft,
+    int64_t zPadWRight,
+    int64_t strideH,
+    int64_t strideW,
+    int64_t outH,
+    int64_t outW,
+    GroupElement *inputArr,
+    GroupElement *filterArr,
+    GroupElement *outArr);

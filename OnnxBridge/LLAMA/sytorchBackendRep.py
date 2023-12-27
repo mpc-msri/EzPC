@@ -12,6 +12,7 @@ def func_call(node, value_info):
     """
     func_map = {
         "Relu": "ReLU",
+        "LeakyRelu": "LeakyReLU",
         "Conv": f"{'Conv3D' if len(value_info[node.inputs[0]][1]) == 5 else 'Conv2D'}",
         "MaxPool": "MaxPool2D",
         "Flatten": "Flatten",
@@ -21,7 +22,8 @@ def func_call(node, value_info):
         "AveragePool": "AvgPool2D",
         "GlobalAveragePool": "GlobalAvgPool2D",
         "Add": "add",
-        "ConvTranspose": "ConvTranspose3D",
+        "ConvTranspose": f"{'ConvTranspose3D' if len(value_info[node.inputs[0]][1]) == 5 else 'ConvTranspose2D'}",
+        "Transpose": "Transpose",
     }
     return func_map[node.op_type]
 
@@ -56,6 +58,7 @@ def inputs_to_take(node):
     tmp_dict = {
         "Conv": 1,
         "Relu": 1,
+        "LeakyRelu": 1,
         "MaxPool": 1,
         "Gemm": 1,
         "Flatten": 1,
@@ -65,6 +68,7 @@ def inputs_to_take(node):
         "BatchNormalization": 1,
         "GlobalAveragePool": 1,
         "ConvTranspose": 1,
+        "Transpose": 1,
     }
     return tmp_dict[node]
 
@@ -130,7 +134,8 @@ int main(int argc, char**__argv){'{'}
         input.input_nchw(scale);
         print_dot_graph(net.root);
         net.forward(input);
-        print(net.activation, scale, 64);
+        net.activation.printshape();
+        print_nchw(net.activation, scale, 64);
         return 0;
     {'}'}
 
@@ -300,7 +305,7 @@ int main(int __argc, char**__argv){'{'}
     auto &output = net.activation;
     llama->outputA(output);
     if (party == CLIENT) {'{'}
-        print(output, scale, LlamaConfig::bitlength);
+        print_nchw(output, scale, LlamaConfig::bitlength);
     {'}'}
     llama->finalize();
 {'}'}

@@ -278,6 +278,75 @@ void convTranspose3dLoop(
     }
 }
 
+template <typename T>
+void convTranspose2dLoop(
+    int64_t N,
+    int64_t H,
+    int64_t W,
+    int64_t CI,
+    int64_t FH,
+    int64_t FW,
+    int64_t CO,
+    int64_t zPadHLeft,
+    int64_t zPadHRight,
+    int64_t zPadWLeft,
+    int64_t zPadWRight,
+    int64_t strideH,
+    int64_t strideW,
+    int64_t outH,
+    int64_t outW,
+    T *inputArr,
+    T *filterArr,
+    T *outArr)
+{
+    zPadHLeft = FH - 1 - zPadHLeft;
+    zPadHRight = FH - 1 - zPadHRight;
+    zPadWLeft = FW - 1 - zPadWLeft;
+    zPadWRight = FW - 1 - zPadWRight;
+
+#pragma omp parallel for collapse(4)
+    for (int64_t n = 0; n < N; n++)
+    {
+        for (int64_t h = 0; h < outH; h++)
+        {
+            for (int64_t w = 0; w < outW; w++)
+            {
+                for (int64_t co = 0; co < CO; co++)
+                {
+
+                    T val = 0;
+                    for (int64_t ci = 0; ci < CI; ci++)
+                    {
+                        for (int64_t fh = h; fh < (h + FH); fh++)
+                        {
+                            for (int64_t fw = w; fw < (w + FW); fw++)
+                            {
+
+                                int64_t curPosH = ((fh - zPadHLeft) / strideH);
+                                int64_t curPosW = ((fw - zPadWLeft) / strideW);
+
+                                if ((curPosH >= 0) &&
+                                    (curPosW >= 0) &&
+                                    (curPosH < H) &&
+                                    (curPosW < W) &&
+                                    (((fh - zPadHLeft) % strideH) == 0) &&
+                                    (((fw - zPadWLeft) % strideW) == 0))
+                                {
+                                    int32_t curFilterPosH = FH + h - fh - 1;
+                                    int32_t curFilterPosW = FW + w - fw - 1;
+                                    val += (Arr4DIdx(inputArr, N, H, W, CI, n, curPosH, curPosW, ci) * Arr4DIdx(filterArr, CO, FH, FW, CI, co, curFilterPosH, curFilterPosW, ci));
+                                }
+                            }
+                        }
+                    }
+                    Arr4DIdx(outArr, N, outH, outW, CO, n, h, w, co) = val;
+                    // std::cout << "setting element at (" << n << " " << d << " " << h << " " << w << " " << co << ")" << std::endl;
+                }
+            }
+        }
+    }
+}
+
 template <typename T, typename... Args>
 std::vector<T *> collect(T &first, Args & ... args)
 {
@@ -369,6 +438,43 @@ void print(const Tensor<T> &p, u64 scale, u64 bw)
             std::cout << " ";
         }
     }
+}
+
+template <typename T>
+void print_nchw(const Tensor<T> &p, u64 scale, u64 bw)
+{
+    u64 batch_size = p.shape[0];
+    u64 num_channel = p.shape.back();
+    u64 rest_size = p.size() / (batch_size * num_channel);
+
+    for (u64 i = 0; i < p.size(); i++)
+    {
+        u64 curr_batch = i / (num_channel * rest_size);
+        u64 curr_channel = (i / rest_size) % num_channel;
+        u64 curr_rest = i % rest_size;
+        u64 new_idx = curr_batch * (num_channel * rest_size) + curr_rest * num_channel + curr_channel;
+
+        i64 val;
+        if (bw == sizeof(T) * 8)
+        {
+            val = p.data[new_idx];
+        }
+        else
+        {
+            val = (p.data[new_idx] + (1LL << (bw - 1))) % (1LL << bw);
+            val -= (1LL << (bw - 1));
+        }
+        std::cout << (double)val / (1LL << scale);
+        if ((i + 1) % num_channel == 0)
+        {
+            std::cout << std::endl;
+        }
+        else
+        {
+            std::cout << " ";
+        }
+    }
+    std::cout << std::endl;
 }
 
 template <typename T>
