@@ -115,7 +115,7 @@ GroupElement adjust(GroupElement m, GroupElement e)
 }
 GroupElement pow_helper(int scale,GroupElement y)
 {
-    if (0<=y<=scale)
+    if (y >= 0 && y<= scale)
     {
         return (1ULL<<y);        
     }
