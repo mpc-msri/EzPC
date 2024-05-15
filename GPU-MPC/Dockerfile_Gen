@@ -1,0 +1,15 @@
+FROM nvidia/cuda:11.8.0-devel-ubuntu22.04
+
+WORKDIR /home
+RUN ln -sf /bin/bash /bin/sh
+
+RUN apt update && apt upgrade -y &&  apt install -y git apt-utils; \
+    apt install -y sudo ; \
+    sudo apt install -y gcc-9 g++-9; \
+    sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 60 --slave /usr/bin/g++ g++ /usr/bin/g++-9;\
+    sudo update-alternatives --config gcc;\
+    sudo apt install libssl-dev cmake python3-pip libgmp-dev libmpfr-dev -y;\
+    sudo apt install cmake make libeigen3-dev -y ;
+
+RUN git config --global --add safe.directory *
+#RUN git submodule update --init --recursive
