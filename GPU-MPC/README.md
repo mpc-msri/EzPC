@@ -15,26 +15,20 @@ The code uses CUTLASS version 2.11 by default, so if you change the CUDA version
 
 The last line of `setup.sh` tries to install `matplotlib', which is needed for generating Figures 5a and 5b. In our experience, the installation fails if the versions of Python and `pip' do not match. In case the installation fails, please install matplotlib manually before running `run_experiment.py'.
 
-1. Clone the git repository
-```
-git clone https://github.com/neha-jawalkar/Orca.git
-cd Orca
-```
-
-2. Export environment variables
+1. Export environment variables
 
 ```
 export CUDA_VERSION=11.7
 export GPU_ARCH=86
 ```
 
-3. Set up the environment
+2. Set up the environment
 
 ```
 sh setup.sh
 ```
 
-4. Make Orca
+3. Make Orca
 
 ```
 make orca
