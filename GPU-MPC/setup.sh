@@ -69,8 +69,8 @@ mkdir experiments/orca/output/P1/inference;
 
 # Sigma
 mkdir experiments/sigma/output;
-mkdir experiments/orca/output/P0;
-mkdir experiments/orca/output/P1;
+mkdir experiments/sigma/output/P0;
+mkdir experiments/sigma/output/P1;
 
 # install matplotlib
 pip3 install matplotlib
