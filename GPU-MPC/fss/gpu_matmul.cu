@@ -1,4 +1,4 @@
-// 
+// Author: Neha Jawalkar
 // Copyright:
 // 
 // Copyright (c) 2024 Microsoft Research
@@ -30,6 +30,7 @@
 
 #include "utils/gpu_data_types.h"
 #include "utils/helper_string.h" // helper for shared functions common to CUDA Samples
+
 // CUDA and CUBLAS functions
 #include "utils/helper_functions.h"
 #include "utils/helper_cuda.h"
@@ -44,15 +45,6 @@
 
 const int block_sz = 256;
 
-#define CUTLASS_CHECK(status)                                                                          \
-    {                                                                                                  \
-        cutlass::Status error = status;                                                                \
-        if (error != cutlass::Status::kSuccess)                                                        \
-        {                                                                                              \
-            std::cerr << "Got cutlass error: " << cutlassGetStatusString(error) << " at: " << __LINE__ \
-                      << std::endl;                                                                    \
-        }                                                                                              \
-    }
 
 using RowMajor = cutlass::layout::RowMajor;
 using ColumnMajor = cutlass::layout::ColumnMajor;
