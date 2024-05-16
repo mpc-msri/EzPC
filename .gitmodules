@@ -10,3 +10,9 @@
 [submodule "GPU-MPC/ext/sytorch/ext/sci/extern/SEAL"]
 	path = GPU-MPC/ext/sytorch/ext/sci/extern/SEAL
 	url = https://github.com/microsoft/SEAL.git
+[submodule "GPU-MPC/experiments/orca/weights"]
+	path = GPU-MPC/experiments/orca/weights
+	url = https://github.com/neha-jawalkar/weights.git
+[submodule "GPU-MPC/experiments/orca/datasets/mnist"]
+	path = GPU-MPC/experiments/orca/datasets/mnist
+	url = https://github.com/neha-jawalkar/mnist.git
