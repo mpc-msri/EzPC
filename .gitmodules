@@ -13,3 +13,6 @@
 [submodule "GPU-MPC/ext/cutlass"]
 	path = GPU-MPC/ext/cutlass
 	url = https://github.com/NVIDIA/cutlass.git
+[submodule "GPU-MPC/ext/sytorch/ext/sci/extern/SEAL"]
+	path = GPU-MPC/ext/sytorch/ext/sci/extern/SEAL
+	url = https://github.com/microsoft/SEAL.git
