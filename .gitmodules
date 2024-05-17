@@ -4,3 +4,6 @@
 [submodule "CrypTFlow2/extern/eigen"]
 	path = SCI/extern/eigen
 	url = https://gitlab.com/libeigen/eigen
+[submodule "GPU-MPC/experiments/orca/weights"]
+	path = GPU-MPC/experiments/orca/weights
+	url = https://github.com/neha-jawalkar/weights.git
