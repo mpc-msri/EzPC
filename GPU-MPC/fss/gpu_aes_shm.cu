@@ -38,12 +38,7 @@ inline __device__ u32 readSBoxByte(u32 byteIn, u8 (*Sbox)[32][4])
 	return (u32)Sbox[i][wTid][byteIn & 3];
 }
 
-inline __device__ u32 readSBoxByteAndShift(u32 byteIn, u8 (*Sbox)[32][4], int leftShift)
-{
-	return __byte_perm(readSBoxByte(byteIn, Sbox), 0, leftShift);
-}
-
-__device__ void aesKeySchedule(u32 *key, u32 *roundKey, u8 (*Sbox)[32][4])
+__device__ void aesKeySchedule(u32 *key, u32 *roundKey, u32 *t4_0S, u32 *t4_1S, u32 *t4_2S, u32 *t4_3S)
 {
 	u32 roundKey0, roundKey1, roundKey2, roundKey3;
 
@@ -59,11 +54,7 @@ __device__ void aesKeySchedule(u32 *key, u32 *roundKey, u8 (*Sbox)[32][4])
 
 	for (u8 r = 0; r < AES_128_ROUNDS; r++)
 	{
-		auto byte0 = readSBoxByteAndShift(__byte_perm(roundKey3, 0, 0x4442), Sbox, 0x0444);
-		auto byte1 = readSBoxByteAndShift(__byte_perm(roundKey3, 0, 0x4441), Sbox, 0x4044);
-		auto byte2 = readSBoxByteAndShift(roundKey3, Sbox, 0x4404);
-		auto byte3 = readSBoxByteAndShift(__byte_perm(roundKey3, 0, 0x4443), Sbox, 0x4440);
-		roundKey0 = roundKey0 ^ byte0 ^ byte1 ^ byte2 ^ byte3 ^ RCON32C[r];
+		roundKey0 = roundKey0 ^ t4_3S[(roundKey3 >> 16) & 0xff] ^ t4_2S[(roundKey3 >> 8) & 0xff] ^ t4_1S[roundKey3 & 0xff] ^ t4_0S[(roundKey3 >> 24)] ^ RCON32C[r];
 		roundKey1 = roundKey1 ^ roundKey0;
 		roundKey2 = roundKey2 ^ roundKey1;
 		roundKey3 = roundKey3 ^ roundKey2;
@@ -142,23 +133,35 @@ __device__ void loadSbox(AESGlobalContext *g, AESSharedContext *s)
 {
 	__shared__ u32 t0_s[AES_128_TABLE_SIZE][NUM_SHARED_MEM_BANKS];
 	__shared__ u8 Sbox[64][32][4];
+	__shared__ u32 t4_0S[AES_128_TABLE_SIZE];
+	__shared__ u32 t4_1S[AES_128_TABLE_SIZE];
+	__shared__ u32 t4_2S[AES_128_TABLE_SIZE];
+	__shared__ u32 t4_3S[AES_128_TABLE_SIZE];
 	// tb size might be small but it will be non-zero
 	for (int i = 0; i < max(AES_128_TABLE_SIZE / blockDim.x, u32(1)); i++)
 	{
 		// stride
-		int idx = threadIdx.x + i * blockDim.x;
-		if (idx < AES_128_TABLE_SIZE)
+		int tid = threadIdx.x + i * blockDim.x;
+		if (tid < AES_128_TABLE_SIZE)
 		{
+			t4_0S[tid] = g->t4_0G[tid];
+			t4_1S[tid] = g->t4_1G[tid];
+			t4_2S[tid] = g->t4_2G[tid];
+			t4_3S[tid] = g->t4_3G[tid];
 			for (u8 bank = 0; bank < NUM_SHARED_MEM_BANKS; bank++)
 			{
-				t0_s[idx][bank] = g->t0_g[idx];
-				Sbox[idx / 4][bank][idx % 4] = g->Sbox_g[idx];
+				t0_s[tid][bank] = g->t0_g[tid];
+				Sbox[tid / 4][bank][tid % 4] = g->Sbox_g[tid];
 			}
 		}
 	}
 	__syncthreads();
 	s->t0_s = t0_s;
 	s->Sbox = Sbox;
+	s->t4_0S = t4_0S;
+	s->t4_1S = t4_1S;
+	s->t4_2S = t4_2S;
+	s->t4_3S = t4_3S;
 }
 
 __device__ void reverseBytes(u32 *x)
@@ -173,7 +176,7 @@ __device__ void applyAESPRG(AESSharedContext *s, u32 *key, uint8_t pt, u32 *ct1)
 {
 	reverseBytes(key);
 	u32 roundKey[44];
-	aesKeySchedule(key, roundKey, s->Sbox);
+	aesKeySchedule(key, roundKey, s->t4_0S, s->t4_1S, s->t4_2S, s->t4_3S);
 	memset(ct1, 0, 4 * sizeof(u32));
 	((uint8_t *)ct1)[3] = pt;
 	aesEncrypt(ct1, roundKey, s->t0_s, s->Sbox);
@@ -184,7 +187,7 @@ __device__ void applyAESPRGTwoTimes(AESSharedContext *s, u32 *key, uint8_t pt, u
 {
 	reverseBytes(key);
 	u32 roundKey[44];
-	aesKeySchedule(key, roundKey, s->Sbox);
+	aesKeySchedule(key, roundKey, s->t4_0S, s->t4_1S, s->t4_2S, s->t4_3S);
 	memset(ct1, 0, 4 * sizeof(u32));
 	memset(ct2, 0, 4 * sizeof(u32));
 	((uint8_t *)ct1)[3] = pt;
@@ -199,7 +202,7 @@ __device__ void applyAESPRGFourTimes(AESSharedContext *s, u32 *key, u32 *ct1, u3
 {
 	reverseBytes(key);
 	u32 roundKey[44];
-	aesKeySchedule(key, roundKey, s->Sbox);
+	aesKeySchedule(key, roundKey, s->t4_0S, s->t4_1S, s->t4_2S, s->t4_3S);
 	memset(ct1, 0, 4 * sizeof(u32));
 	memset(ct2, 0, 4 * sizeof(u32));
 	memset(ct3, 0, 4 * sizeof(u32));
@@ -221,10 +224,18 @@ void initAESContext(AESGlobalContext *g)
 {
 	g->t0_g = (u32 *)moveToGPU((u8 *)T0, AES_128_TABLE_SIZE * sizeof(u32), NULL);
 	g->Sbox_g = (u8 *)moveToGPU((u8 *)Sbox_g, 256 * sizeof(u8), NULL);
+	g->t4_0G = (u32 *)moveToGPU((u8 *)T4_0, AES_128_TABLE_SIZE * sizeof(u32), NULL);
+	g->t4_1G = (u32 *)moveToGPU((u8 *)T4_1, AES_128_TABLE_SIZE * sizeof(u32), NULL);
+	g->t4_2G = (u32 *)moveToGPU((u8 *)T4_2, AES_128_TABLE_SIZE * sizeof(u32), NULL);
+	g->t4_3G = (u32 *)moveToGPU((u8 *)T4_3, AES_128_TABLE_SIZE * sizeof(u32), NULL);
 }
 
 void freeAESGlobalContext(AESGlobalContext *g)
 {
 	gpuFree(g->t0_g);
 	gpuFree(g->Sbox_g);
+	gpuFree(g->t4_0G);
+	gpuFree(g->t4_1G);
+	gpuFree(g->t4_2G);
+	gpuFree(g->t4_3G);
 }

@@ -74,7 +74,7 @@ T *gpuKeygenSoftmax(u8 **key_as_bytes, int party, MaxpoolParams p, T *d_mask_X, 
     p.bin = p.bin + 1;
     // get the max in 39 bits (implicit reduce)
     // in this case the input bw and the output bw are the same
-    auto d_maxMask = gpuKeygenMaxpool(key_as_bytes, party, p, d_mask_X, gaes, true);
+    auto d_maxMask = gpuKeygenMaxpool(key_as_bytes, party, p, d_mask_X, gaes, (inSz & (inSz - 1)) == 0);
     assert(p.strideH == p.FH && p.strideW == p.FW);
     auto d_X1Mask = windowFunc<T, xPlusM<u64(-1), u64(1)>>(party, p, d_mask_X, d_maxMask);
     gpuFree(d_maxMask);
