@@ -62,7 +62,7 @@ const int block_size = 256;
 // cudnnHandle_t cudnn;
 
 template <typename T>
-using Conv2dFpropKernel = typename cutlass::conv::kernel::DefaultConv2dFprop<
+using Conv2DKernel = typename cutlass::conv::kernel::DefaultConv2dFprop<
     T, cutlass::layout::TensorNHWC,
     T, cutlass::layout::TensorNHWC,
     T, cutlass::layout::TensorNHWC,
@@ -83,18 +83,18 @@ using Conv2dFpropKernel = typename cutlass::conv::kernel::DefaultConv2dFprop<
     cutlass::conv::IteratorAlgorithm::kAnalytic>::Kernel;
 
 template <typename T>
-using FpropImplicitGemm = cutlass::conv::device::ImplicitGemmConvolution<Conv2dFpropKernel<T>>;
+using Conv2DImplicitGemm = cutlass::conv::device::ImplicitGemmConvolution<Conv2DKernel<T>>;
 
 template <typename T>
 T *cutlass_conv2d(GPUConv2DKey<T> k, T *d_I, T *d_F, T *d_C /*, GPUContext* c*/, bool cIsBias)
 {
     // auto start = std::chrono::high_resolution_clock::now();
-    auto A = toTensorRef(d_I, k.p.N, k.p.H, k.p.W, k.p.CI);
-    auto B = toTensorRef(d_F, k.p.CO, k.p.FH, k.p.FW, k.p.CI);
-    auto C = toTensorRef(d_C, k.p.N, k.p.OH, k.p.OW, k.p.CO);
+    auto A = getTensorRef(d_I, k.p.N, k.p.H, k.p.W, k.p.CI);
+    auto B = getTensorRef(d_F, k.p.CO, k.p.FH, k.p.FW, k.p.CI);
+    auto C = getTensorRef(d_C, k.p.N, k.p.OH, k.p.OW, k.p.CO);
     if (cIsBias)
-        C = toTensorRefBias(d_C);
-    auto D = toTensorRef((T *)gpuMalloc(k.mem_size_O), k.p.N, k.p.OH, k.p.OW, k.p.CO);
+        C = getTensorRefBias(d_C);
+    auto D = getTensorRef((T *)gpuMalloc(k.mem_size_O), k.p.N, k.p.OH, k.p.OW, k.p.CO);
     cutlass::conv::Mode mode = cutlass::conv::Mode::kCrossCorrelation;
 
     cutlass::Tensor4DCoord input_size(k.p.N, k.p.H, k.p.W, k.p.CI);
@@ -116,7 +116,7 @@ T *cutlass_conv2d(GPUConv2DKey<T> k, T *d_I, T *d_F, T *d_C /*, GPUContext* c*/,
         1 // split_k_slices
     );
 
-    typename FpropImplicitGemm<T>::Arguments arguments{
+    typename Conv2DImplicitGemm<T>::Arguments arguments{
         problem_size,
         A,
         B,
@@ -125,7 +125,7 @@ T *cutlass_conv2d(GPUConv2DKey<T> k, T *d_I, T *d_F, T *d_C /*, GPUContext* c*/,
         {T(1), d_C ? T(1) : T(0)},
     };
 
-    FpropImplicitGemm<T> implicit_gemm_op;
+    Conv2DImplicitGemm<T> implicit_gemm_op;
 
     size_t workspace_size = implicit_gemm_op.get_workspace_size(arguments);
     // printf("Allocating gpu workspace\n");
@@ -153,7 +153,7 @@ T *cutlass_conv2d(GPUConv2DKey<T> k, T *d_I, T *d_F, T *d_C /*, GPUContext* c*/,
 }
 
 template <typename T>
-using Conv2dDgradKernel = typename cutlass::conv::kernel::DefaultConv2dDgrad<
+using ConvDGradKernel = typename cutlass::conv::kernel::DefaultConv2dDgrad<
     T, cutlass::layout::TensorNHWC,
     T, cutlass::layout::TensorNHWC,
     T, cutlass::layout::TensorNHWC,
@@ -176,16 +176,16 @@ using Conv2dDgradKernel = typename cutlass::conv::kernel::DefaultConv2dDgrad<
     cutlass::conv::StrideSupport::kUnity>::Kernel;
 
 template <typename T>
-using DgradImplicitGemm = cutlass::conv::device::ImplicitGemmConvolution<Conv2dDgradKernel<T>>;
+using ConvDGradImplicitGemm = cutlass::conv::device::ImplicitGemmConvolution<ConvDGradKernel<T>>;
 
 template <typename T>
 T *cutlass_conv_dgrad(GPUConv2DKey<T> k, T *d_incomingGrad, T *d_F, T *d_I)
 {
 
-    auto A = toTensorRef(d_incomingGrad, k.p.N, k.p.OH, k.p.OW, k.p.CO);
-    auto B = toTensorRef(d_F, k.p.CO, k.p.FH, k.p.FW, k.p.CI);
-    auto C = toTensorRef(d_I, k.p.N, k.p.H, k.p.W, k.p.CI);
-    auto D = toTensorRef((T *)gpuMalloc(k.mem_size_O), k.p.N, k.p.H, k.p.W, k.p.CI);
+    auto A = getTensorRef(d_incomingGrad, k.p.N, k.p.OH, k.p.OW, k.p.CO);
+    auto B = getTensorRef(d_F, k.p.CO, k.p.FH, k.p.FW, k.p.CI);
+    auto C = getTensorRef(d_I, k.p.N, k.p.H, k.p.W, k.p.CI);
+    auto D = getTensorRef((T *)gpuMalloc(k.mem_size_O), k.p.N, k.p.H, k.p.W, k.p.CI);
 
     assert(k.mem_size_I == k.p.N * k.p.OH * k.p.OW * k.p.CO * sizeof(T));
     assert(k.mem_size_F == k.p.CO * k.p.FH * k.p.FW * k.p.CI * sizeof(T));
@@ -212,14 +212,14 @@ T *cutlass_conv_dgrad(GPUConv2DKey<T> k, T *d_incomingGrad, T *d_F, T *d_I)
         1 // split_k_slices
     );
     // if(k.strideH == 1 && k.strideW == 1) {
-    typename DgradImplicitGemm<T>::Arguments arguments{
+    typename ConvDGradImplicitGemm<T>::Arguments arguments{
         problem_size,
         A,
         B,
         d_I ? C : D,
         D,
         {T(1), d_I ? T(1) : T(0)}};
-    DgradImplicitGemm<T> implicit_gemm_op;
+    ConvDGradImplicitGemm<T> implicit_gemm_op;
     size_t workspace_size = implicit_gemm_op.get_workspace_size(arguments);
 
     uint8_t *workspace = gpuMalloc(workspace_size);
@@ -235,7 +235,7 @@ T *cutlass_conv_dgrad(GPUConv2DKey<T> k, T *d_incomingGrad, T *d_F, T *d_I)
 }
 
 template <typename T>
-using Conv2dWgradKernel = typename cutlass::conv::kernel::DefaultConv2dWgrad<
+using ConvWGradKernel = typename cutlass::conv::kernel::DefaultConv2dWgrad<
     T, cutlass::layout::TensorNHWC,
     T, cutlass::layout::TensorNHWC,
     T, cutlass::layout::TensorNHWC,
@@ -256,15 +256,15 @@ using Conv2dWgradKernel = typename cutlass::conv::kernel::DefaultConv2dWgrad<
     cutlass::conv::IteratorAlgorithm::kAnalytic>::Kernel;
 
 template <typename T>
-using WgradImplicitGemm = cutlass::conv::device::ImplicitGemmConvolution<Conv2dWgradKernel<T>>;
+using ConvWGradImplicitGemm = cutlass::conv::device::ImplicitGemmConvolution<ConvWGradKernel<T>>;
 
 template <typename T>
 T *cutlass_conv_fgrad(GPUConv2DKey<T> k, T *d_grad, T *d_I, T *d_F)
 {
-    auto A = toTensorRef(d_grad, k.p.N, k.p.OH, k.p.OW, k.p.CO);
-    auto B = toTensorRef(d_I, k.p.N, k.p.H, k.p.W, k.p.CI);
-    auto C = toTensorRef(d_F, k.p.CO, k.p.FH, k.p.FW, k.p.CI);
-    auto D = toTensorRef((T *)gpuMalloc(k.mem_size_O), k.p.CO, k.p.FH, k.p.FW, k.p.CI);
+    auto A = getTensorRef(d_grad, k.p.N, k.p.OH, k.p.OW, k.p.CO);
+    auto B = getTensorRef(d_I, k.p.N, k.p.H, k.p.W, k.p.CI);
+    auto C = getTensorRef(d_F, k.p.CO, k.p.FH, k.p.FW, k.p.CI);
+    auto D = getTensorRef((T *)gpuMalloc(k.mem_size_O), k.p.CO, k.p.FH, k.p.FW, k.p.CI);
 
     assert(k.mem_size_I == k.p.N * k.p.OH * k.p.OW * k.p.CO * sizeof(T));
     assert(k.mem_size_F == k.p.N * k.p.H * k.p.W * k.p.CI * sizeof(T));
@@ -291,7 +291,7 @@ T *cutlass_conv_fgrad(GPUConv2DKey<T> k, T *d_grad, T *d_I, T *d_F)
         1 // split_k_slices
     );
 
-    typename WgradImplicitGemm<T>::Arguments arguments{
+    typename ConvWGradImplicitGemm<T>::Arguments arguments{
         problem_size,
         A,
         B,
@@ -299,7 +299,7 @@ T *cutlass_conv_fgrad(GPUConv2DKey<T> k, T *d_grad, T *d_I, T *d_F)
         D,
         {T(1), d_F ? T(1) : T(0) /*options.alpha, options.beta*/}};
 
-    WgradImplicitGemm<T> implicit_gemm_op;
+    ConvWGradImplicitGemm<T> implicit_gemm_op;
 
     size_t workspace_size = implicit_gemm_op.get_workspace_size(arguments);
     uint8_t *workspace = gpuMalloc(workspace_size);

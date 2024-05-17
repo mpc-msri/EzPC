@@ -39,17 +39,16 @@
 
 
 template <typename T>
-inline cutlass::TensorRef<T, cutlass::layout::TensorNHWC> toTensorRef(
+inline cutlass::TensorRef<T, cutlass::layout::TensorNHWC> getTensorRef(
     T *ptr, int n, int h, int w, int c)
 {
-
     return cutlass::TensorRef<T, cutlass::layout::TensorNHWC>(
         ptr,
         cutlass::layout::TensorNHWC::packed({n, h, w, c}));
 }
 
 template <typename T>
-inline cutlass::TensorRef<T, cutlass::layout::TensorNHWC> toTensorRefBias(
+inline cutlass::TensorRef<T, cutlass::layout::TensorNHWC> getTensorRefBias(
     T *ptr)
 {
 
@@ -111,8 +110,8 @@ T *getBiasGrad(int N, int M, int bw, T *d_A)
         T                            // ElementCompute
         >;
 
-    auto t_A = toTensorRef(d_A, 1, 1, N, M);
-    auto t_b = toTensorRef(d_b, 1, 1, 1, M);
+    auto t_A = getTensorRef(d_A, 1, 1, N, M);
+    auto t_b = getTensorRef(d_b, 1, 1, 1, M);
 
     TensorReduction reduction(/*t_A.extent()*/ {1, 1, N, M}, 2);
 

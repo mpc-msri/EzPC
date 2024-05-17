@@ -1,4 +1,4 @@
-// Author: Neha Jawalkar, https://github.com/cihangirtezcan/CUDA_AES.git
+// Author: Neha Jawalkar
 // Copyright:
 //
 // Copyright (c) 2024 Microsoft Research
