@@ -43,7 +43,7 @@ typedef unsigned __int128 AESBlock;
 #define PACKING_SIZE 32
 #define PACK_TYPE uint32_t
 
-#define SHARED_MEM_BANK_SIZE 32
+#define NUM_SHARED_MEM_BANKS 32
 
 using orcaTemplateClass = u64;
 

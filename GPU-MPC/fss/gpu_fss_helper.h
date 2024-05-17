@@ -22,6 +22,8 @@
 #pragma once
 
 #include "utils/gpu_data_types.h"
+#include "utils/misc_utils.h"
+
 
 __host__ __device__ void printAESBlock(AESBlock *b)
 {

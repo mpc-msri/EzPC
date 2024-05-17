@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
     printf("Bin=%d, Bout=%d, N=%d\n", bin, bout, N);
 
     u8 *ptr1, *ptr2;
-    getKeyBuf(&ptr1, &ptr2, 100 * OneGB);
+    getKeyBuf(&ptr1, &ptr2, 10 * OneGB);
     auto keyBuf1 = ptr1;
     auto keyBuf2 = ptr2;
     // auto d_x = (T*) gpuMalloc(N * sizeof(T));
@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
 
     printf("Time taken for P0=%lu micros, transfer time=%lu\n", std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count(), s.transfer_time);
 
-    auto h_O1 = (u64 *)moveToCPU((u8 *)d_O1, k1.memSzOut, (Stats *)NULL);
+    auto h_O1 = (u32 *)moveToCPU((u8 *)d_O1, k1.memSzOut, (Stats *)NULL);
     gpuFree(d_O1);
     destroyGPURandomness();
 
@@ -87,30 +87,30 @@ int main(int argc, char *argv[])
 
     printf("Time taken for P1=%lu micros\n", std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count());
 
-    auto h_O2 = (u64 *)moveToCPU((u8 *)d_O2, k2.memSzOut, NULL);
+    auto h_O2 = (u32 *)moveToCPU((u8 *)d_O2, k2.memSzOut, NULL);
     gpuFree(d_O2);
     destroyGPURandomness();
 
     for (int i = 0; i < N; i++)
     {
-        auto o1 = h_O1[i];
-        auto o2 = h_O2[i];
-        auto o = (o1 + o2);
-        cpuMod(o, bout);
-        if (i < 10 || (o != (h_X[i] < h_rin[i])))
-            printf("%d: %lu, %lu, %lu, %lu, %lu\n", i, o1, o2, o, h_X[i], h_rin[i]);
-        // assert((h_O1[i] ^ h_O2[i]) == u32(0));
-        // assert(o == (h_X[i] < h_rin[i]));
-        assert(o == (h_X[i] < h_rin[i]));
-
-        // auto o1 = (h_O1[i / 32] >> (i & 31)) & T(1);
-        // auto o2 = (h_O2[i / 32] >> (i & 31)) & T(1);
-        // auto o = (o1 + o2) & u32(1);
+        // auto o1 = h_O1[i];
+        // auto o2 = h_O2[i];
+        // auto o = (o1 + o2);
+        // cpuMod(o, bout);
         // if (i < 10 || (o != (h_X[i] < h_rin[i])))
-        //     printf("%d: %u, %u, %u, %lu, %lu, %u\n", i, o1, o2, o, h_X[i], h_rin[i], i / 32);
+        //     printf("%d: %lu, %lu, %lu, %lu, %lu\n", i, o1, o2, o, h_X[i], h_rin[i]);
         // // assert((h_O1[i] ^ h_O2[i]) == u32(0));
         // // assert(o == (h_X[i] < h_rin[i]));
         // assert(o == (h_X[i] < h_rin[i]));
+
+        auto o1 = (h_O1[i / 32] >> (i & 31)) & T(1);
+        auto o2 = (h_O2[i / 32] >> (i & 31)) & T(1);
+        auto o = (o1 + o2) & u32(1);
+        if (i < 10 || (o != (h_X[i] < h_rin[i])))
+            printf("%d: %u, %u, %u, %lu, %lu, %u\n", i, o1, o2, o, h_X[i], h_rin[i], i / 32);
+        // assert((h_O1[i] ^ h_O2[i]) == u32(0));
+        // assert(o == (h_X[i] < h_rin[i]));
+        assert(o == (h_X[i] < h_rin[i]));
     }
     return 0;
 }

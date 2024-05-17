@@ -71,6 +71,9 @@ orca_evaluator: experiments/orca/orca_evaluator.cu experiments/orca/datasets/mni
 dcf: tests/fss/dcf/dcf.cu
 	$(CXX) $(FLAGS) $(INCLUDES) $^ $(UTIL_FILES) $(LIBS) -o tests/fss/dcf/dcf
 
+aes: tests/fss/dcf/aes.cu
+	$(CXX) $(FLAGS) $(INCLUDES) $^ $(UTIL_FILES) $(LIBS) -o tests/fss/dcf/aes
+
 dcf_relu_extend: tests/fss/dcf/relu_extend.cu
 	$(CXX) $(FLAGS) $(INCLUDES) $^ $(UTIL_FILES) $(LIBS) -o tests/fss/dcf/relu_extend
 

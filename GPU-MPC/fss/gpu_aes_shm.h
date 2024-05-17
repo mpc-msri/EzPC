@@ -1,8 +1,8 @@
 // Author: Neha Jawalkar, https://github.com/cihangirtezcan/CUDA_AES.git
 // Copyright:
-// 
+//
 // Copyright (c) 2024 Microsoft Research
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -21,19 +21,27 @@
 
 #pragma once
 
-struct AESGlobalContext {
-    uint32_t *t0G, *t4G, *t4_0G, *t4_1G, *t4_2G, *t4_3G;
-    uint8_t* SAES;
+#include "gpu_aes_table.h"
+
+#define NUM_SHARED_MEM_BANKS 32
+
+#define AES_128_ROUNDS 10
+#define AES_128_ROUNDS_MIN_1 9
+
+#define CYCLIC_ROT_RIGHT_1 0x4321
+#define CYCLIC_ROT_RIGHT_2 0x5432
+#define CYCLIC_ROT_RIGHT_3 0x6543
+
+struct AESGlobalContext
+{
+	uint32_t *t0_g;
+	uint8_t *Sbox_g;
 };
 
-
-struct AESSharedContext {
-    uint32_t (*t0S)[SHARED_MEM_BANK_SIZE];
+struct AESSharedContext
+{
+	uint32_t (*t0_s)[NUM_SHARED_MEM_BANKS];
 	uint8_t (*Sbox)[32][4];
-	uint32_t *t4_0S;
-	uint32_t *t4_1S;
-	uint32_t *t4_2S;
-	uint32_t *t4_3S;
 };
 
 #include "gpu_aes_shm.cu"
