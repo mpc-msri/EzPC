@@ -2,7 +2,7 @@
     "P0": {
         "dealer": {
             "gpu": 0,
-            "key_dir": "/mnt/nvme/neha/"
+            "key_dir": "/tmp/"
         },
         "evaluator": {
             "gpu": 1,
@@ -12,7 +12,7 @@
     "P1": {
         "dealer": {
             "gpu": 2,
-            "key_dir": "/mnt/nvme/neha/"
+            "key_dir": "/tmp/"
         },
         "evaluator": {
             "gpu": 3,
