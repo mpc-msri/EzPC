@@ -1719,34 +1719,7 @@ public:
 
     void _forward(Tensor<T> &a)
     {
-        u64 n_seq = a.shape[0];
-        u64 dim = a.shape[1];
-        auto x_2d = a.as_2d();
-        auto y_2d = this->activation.as_2d();
-        
-
-        for (u64 i = 0; i < n_seq; ++i)
-        {
-            for (u64 j = 0; j < dim; j++)
-            {
-                double scalar = 1.0 / (std::pow(base, (double)((2 * j) % dim) / dim));
-                T scalarInt = (i * this->scalar) * std::pow(2, this->scale);
-                T sinx = std::sin(scalarInt / (float) std::pow(2, this->scale)) * std::pow(2, this->scale - 3);
-                T cosx = std::cos(scalarInt / (float) std::pow(2, this->scale)) * std::pow(2, this->scale - 3);
-                // T sinx = std::sin(i * scalar) * std::pow(2, this->scale - 3);
-                // T cosx = std::cos(i * scalar) * std::pow(2, this->scale - 3);
-
-                if (sinx == (1ULL << (this->scale - 3)))
-                    sinx -= 1;
-                if (cosx == (1ULL << (this->scale - 3)))
-                    cosx -= 1;
-                u64 k = (j + dim / 2) % dim;
-                T mul = 2 * (j >= dim / 2) - 1;
-                T z = cosx * x_2d(i, j) + sinx * mul * x_2d(i, k);
-                y_2d(i, j) = z;
-            }
-        }
-        this->backend->truncate(this->activation, this->scale - 3);
+        this->backend->rotary_embedding(a, this->activation, this->scale);
     }
 
     std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes)

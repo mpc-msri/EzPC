@@ -244,8 +244,6 @@ void ct_main()
     int argmax = 0;
     for (int i = 0; i < n_vocab; i++)
     {
-        if (i == 0)
-            printf("res=%ld\n", res.data[i]);
         if (res.data[i] > max)
         {
             max = res.data[i];

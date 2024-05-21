@@ -74,8 +74,8 @@ __global__ void trCorrKernel(int party, int bin, int shift, int bout, int N, TIn
         u32 z = (z_g[i / 32] >> (threadIdx.x & 0x1f)) & 1;
         auto y_l = (TOut)tf(party, bin, shift, i, x[i], bytes) + corr[2 * i + z];
         gpuMod(y_l, bout);
-        // if (i == 0)
-        //     printf("corr=%lu, %lu, %lu, %u, %lu\n", corr[0], corr[1], y_l, z, x[i]);
+        if (i == 0)
+            printf("corr=%lu, %lu, %lu, %u, %lu\n", corr[0], corr[1], y_l, z, x[i]);
         y[i] = y_l;
     }
 }
@@ -110,7 +110,7 @@ __device__ void keygenTrWithSlack(int party, int bin, int shift, int bout, int N
 {
     keygenTrReduce(party, bin, shift, bout, N, i, x, y, z, trKey, bytes);
     trKey[2 * N + i] = TOut(gpuMsb(x, bin) * (1ULL << (bin - shift)));
-    // if(i == 0) printf("trSlack key=%lu\n", ((TOut *)bytes)[N + i]);
+    if(i == 0) printf("trSlack key=%lu\n", trKey[2 * N + i]);
 }
 
 template <typename TIn, typename TOut, keygenTrFunc<TIn, TOut> tf>
@@ -119,6 +119,7 @@ __global__ void keygenTrFuncKernel(int party, int bin, int shift, int bout, int 
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i < N)
     {
+        if(i == 0) printf("x=%lu, y=%lu, z=%lu\n", x[i], y[i], z[i]);
         tf(party, bin, shift, bout, N, i, x[i], y[i], z[i], trKey, bytes);
     }
 }

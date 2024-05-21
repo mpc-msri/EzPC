@@ -56,6 +56,9 @@ truncate: tests/fss/truncate.cu
 mha: tests/fss/mha.cu
 	$(CXX) $(FLAGS) $(INCLUDES) $^ $(UTIL_FILES) $(LIBS) -o tests/fss/mha
 
+rotary_embedding: tests/fss/rotary_embedding.cu
+	$(CXX) $(FLAGS) $(INCLUDES) $^ $(UTIL_FILES) $(LIBS) -o tests/fss/rotary_embedding
+
 secfloat_softmax: tests/fss/secfloat_softmax.cu
 	$(CXX) $(FLAGS) $(INCLUDES) $^ $(UTIL_FILES) $(LIBS) $(SECFLOAT_LIBS) -o tests/fss/secfloat_softmax
 

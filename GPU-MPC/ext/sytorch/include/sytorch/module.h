@@ -1,8 +1,8 @@
 // Authors: Kanav Gupta, Neha Jawalkar
 // Copyright:
-// 
+//
 // Copyright (c) 2024 Microsoft Research
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -316,11 +316,18 @@ public:
                     mha->wProj.data[j] = T(floatWeights[wIdx + j] * (1LL << scale));
                 }
                 wIdx += mha->wProj.size();
-                for (u64 j = 0; j < mha->bProj.size(); ++j)
+                if (mha->qkvLayout == "qkvsep")
                 {
-                    mha->bProj.data[j] = T(floatWeights[wIdx + j] * (1LL << (2 * scale)));
+                    mha->bProj.as_nd().zero();
                 }
-                wIdx += mha->bProj.size();
+                else
+                {
+                    for (u64 j = 0; j < mha->bProj.size(); ++j)
+                    {
+                        mha->bProj.data[j] = T(floatWeights[wIdx + j] * (1LL << (2 * scale)));
+                    }
+                    wIdx += mha->bProj.size();
+                }
             }
             else if (layer->name == "BatchNormInference")
             {
