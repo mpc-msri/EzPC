@@ -46,6 +46,7 @@ make orca
 ```
 
 FSS keys tend to be quite large so please make sure that the key directory has at least 500GB of free space. Please also ensure that it is writeable.
+The runtime of Orca can be sensitive to the disk latency. Hence we recommend placing this directory in a fast nvme drive. Using SATA can slow down Orca on some tasks. 
 
 Similarly, the configuration also needs to define the GPU on which the evaluator will run, and the IP address of its peer, i.e., the address of the remote party the evaluator will communicate with for secure training or inference. This is done in `config.json` as:
 
