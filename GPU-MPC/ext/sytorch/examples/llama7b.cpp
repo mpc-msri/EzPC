@@ -186,7 +186,8 @@ public:
             auto &x_out = block->forward(*x);
             x = &x_out;
         }
-        return ln_f->forward(*x);
+        return *x;
+        // return ln_f->forward(*x);
     }
 };
 
@@ -209,8 +210,9 @@ public:
     Tensor<T> &_forward(Tensor<T> &input)
     {
         auto &fc_in = llama_model->forward(input);
-        auto &fc_out = fc->forward(fc_in);
-        return view(fc_out, -1);
+        return fc_in;
+        // auto &fc_out = fc->forward(fc_in);
+        // return view(fc_out, -1);
     }
 };
 
@@ -225,20 +227,37 @@ void ct_main()
 {
     sytorch_init();
 
+    // const u64 n_vocab = 32000;
+    // const u64 n_embd = 4096;
+    // const u64 n_head = 32;
+    // const u64 n_layer = 32;
+    // const u64 intermediate_size = 11008;
+    // const u64 scale = 12;
+
     const u64 n_vocab = 32000;
-    const u64 n_embd = 4096;
-    const u64 n_head = 32;
-    const u64 n_layer = 32;
-    const u64 intermediate_size = 11008;
+    const u64 n_ctx = 4096;
+    const u64 n_embd = 5120;
+    const u64 n_head = 40;
+    const u64 n_layer = 1;//40;
+    const u64 intermediate_size = 13824;
     const u64 scale = 12;
 
     LlamaNextWordLogits<i64> llama_model(n_layer, n_head, n_embd, n_vocab, intermediate_size);
-    llama_model.init(scale);
-    llama_model.load("/home/t-nejawalkar/ananta/meta_llama2_7b.dat");
-    std::string fname = std::string("/home/t-nejawalkar/ananta/lambada-meta-llama2-7b/") + /*std::to_string(i)*/ +"993.dat";
-    u64 n_seq = get_n_seq(fname, n_embd);
+    u64 n_seq = 128;//get_n_seq(fname, n_embd);
     Tensor<i64> input({n_seq, n_embd});
+    llama_model.init(scale, input);
+
+    auto ct = new ClearText<i64>();
+    ct->bw = 48;
+    llama_model.setBackend(ct);
+
+    // llama_model.load("/home/t-nejawalkar/ananta/meta_llama2_7b.dat");
+    llama_model.load("/home/t-nejawalkar/ananta/meta_llama2_13b.dat");
+
+    // std::string fname = std::string("/home/t-nejawalkar/ananta/lambada-meta-llama2-7b/") + /*std::to_string(i)*/ +"999.dat";
+    std::string fname = std::string("/home/t-nejawalkar/ananta/lambada-meta-llama2-13b/") + /*std::to_string(i)*/ +"999.dat";
     input.load(fname, scale);
+
     auto &res = llama_model.forward(input);
     i64 max = INT_MIN;
     int argmax = 0;
@@ -250,8 +269,10 @@ void ct_main()
             argmax = i;
         }
     }
+    std::cout << "Output:" << std::endl;
     std::cout << argmax << std::endl;
     std::cout << max << std::endl;
+    std::cout << res.data[0] << std::endl;
 }
 
 int main()

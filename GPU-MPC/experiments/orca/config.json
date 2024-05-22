@@ -12,11 +12,11 @@
     "P1": {
         "dealer": {
             "gpu": 2,
-            "key_dir": "/tmp/"
+            "key_dir": "/mnt/nvme/neha/"
         },
         "evaluator": {
             "gpu": 3,
-            "peer": "0.0.0.0"
+            "peer": "172.31.42.201"
         }
     }
 }

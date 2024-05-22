@@ -29,7 +29,6 @@ GPUMulKey<T> readGPUWindowMulKey(MaxpoolParams p, TruncateType t, u8 **key_as_by
     GPUMulKey<T> k;
     u64 inSz = getInSz(p);
     u64 mSz = getMSz(p);
-    printf("%d, %d\n", inSz, mSz);
     k = readGPUMulKey<T>(key_as_bytes, inSz, mSz, inSz, t);
     return k;
 }

@@ -72,7 +72,6 @@ __global__ void rotEmbKernel(MHAParams pMHA, int bw, int scale, u64 N, T *X, T *
 template <typename T>
 T *gpuKeygenRotEmb(u8 **key_as_bytes, int party, int bw, int scale, MHAParams pMHA, T *d_mask_X, AESGlobalContext *g)
 {
-    printf("*********** Generating rotary embedding key! ***************\n");
     size_t size_X = pMHA.n_heads * (u64)pMHA.n_seq * pMHA.dim_W;
     auto d_mask_X1 = (T *)gpuMalloc(size_X * sizeof(T));
     rotEmbKernel<<<(size_X - 1) / 128 + 1, 128>>>(pMHA, bw, scale, size_X, d_mask_X, d_mask_X1);
@@ -97,7 +96,6 @@ T *gpuRotEmb(SigmaPeer *peer, int party, int bw, int scale, MHAParams pMHA, GPUT
 
     u64 b1 = peer->bytesSent() + peer->bytesReceived();
     s->linear_comm_bytes += (b1 - b0);
-    printf("Comm in rotary embedding=%lu, N=%d\n", b1 - b0, size_X);
     return d_truncated_X;
 }
 
@@ -108,7 +106,6 @@ T *gpuKeygenMHA(u8 **key_as_bytes, int party, int bw, int scale, MHAParams pMHA,
     auto d_mask_QKV = gpuKeygenMatmul(key_as_bytes, party, pMHAMul.pQKV, d_mask_X, WQKV, YQKV, TruncateType::TrFloor, g);
     // this->activation.d_data = d_mask_QKV;
 
-    // printf("Size of Q=%d\n", pQKV.size_C / 3);
     int QKSz = pMHAMul.pQKV.size_C / 3;
     auto d_mask_Q = d_mask_QKV;
     auto d_mask_K = d_mask_QKV + QKSz;
@@ -131,7 +128,6 @@ T *gpuKeygenMHA(u8 **key_as_bytes, int party, int bw, int scale, MHAParams pMHA,
     if (pMHA.doNormQKt && int(log2(pMHA.dim_W)) % 2 == 1)
     {
         T invSqrtDimW = T((1.0f / sqrt(double(pMHA.dim_W))) * (1LL << scale));
-        printf("####### Doing a scalar multiplication\n");
         d_mask_normQKt = gpuKeygenScalarMul(key_as_bytes, party, bw, pMHAMul.pQKt.size_C, invSqrtDimW, d_mask_QKt, TruncateType::TrFloor, scale, g);
         gpuFree(d_mask_QKt);
     }
@@ -183,7 +179,6 @@ T *gpuMHA(SigmaPeer *peer, int party, int bw, int scale, MHAParams pMHA, MHAMulP
     if (pMHA.doNormQKt && int(log2(pMHA.dim_W)) % 2 == 1)
     {
         T invSqrtDimW = T((1.0f / sqrt(double(pMHA.dim_W))) * (1LL << scale));
-        printf("####### Doing a scalar multiplication\n");
         d_normQKt = gpuScalarMul(peer, party, bw, pMHAMul.pQKt.size_C, k.normQKtTrKey, invSqrtDimW, d_QKt, TruncateType::TrFloor, scale, g, s);
         gpuFree(d_QKt);
     }
@@ -203,6 +198,5 @@ T *gpuMHA(SigmaPeer *peer, int party, int bw, int scale, MHAParams pMHA, MHAMulP
     auto d_proj = gpuMatmul(peer, party, pMHAMul.pProj, k.mmKeyProj, d_smQKtV, WProj, YProj, TruncateType::TrFloor, g, s);
     gpuFree(d_smQKtV);
     auto b1 = peer->bytesSent() + peer->bytesReceived();
-    printf("MHA Comm=%ld\n", b1 - b0);
     return d_proj;
 }

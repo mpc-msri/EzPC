@@ -1,8 +1,8 @@
 // Author: Neha Jawalkar
 // Copyright:
-// 
+//
 // Copyright (c) 2024 Microsoft Research
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -30,7 +30,6 @@ T *gpuKeygenScalarMul(u8 **key_as_bytes, int party, int bw, int N, T a, T *d_mas
 {
     auto d_mask_Z = (T *)gpuMalloc(N * sizeof(T));
     gpuLinearComb(bw, N, d_mask_Z, a, d_mask_X);
-    printf("Truncate type=%d\n", t);
     auto d_mask_truncated_Z = genGPUTruncateKey<T, T>(key_as_bytes, party, t, bw, bw, shift, N, d_mask_X, gaes);
     if (d_mask_truncated_Z != d_mask_Z)
         gpuFree(d_mask_Z);
@@ -43,9 +42,9 @@ T *gpuScalarMul(SigmaPeer *peer, int party, int bw, int N, GPUTruncateKey<T> k, 
     u64 b0 = peer->bytesSent() + peer->bytesReceived();
     auto d_Z = (T *)gpuMalloc(N * sizeof(T));
     gpuLinearComb(bw, N, d_Z, a, d_X);
-    printf("Truncate type=%d\n", t);
-    auto d_truncated_Z = gpuTruncate<T, T>(bw, bw, t, k, shift, peer, party, N, d_Z, gaes, s); //, true);
-    gpuFree(d_Z);
+    auto d_truncated_Z = gpuTruncate<T, T>(bw, bw, t, k, shift, peer, party, N, d_Z, gaes, s);
+    if (d_truncated_Z != d_Z)
+        gpuFree(d_Z);
     u64 b1 = peer->bytesSent() + peer->bytesReceived();
     s->linear_comm_bytes += (b1 - b0);
     return d_truncated_Z;

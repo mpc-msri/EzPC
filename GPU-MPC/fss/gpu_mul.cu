@@ -1,8 +1,8 @@
 // Author: Neha Jawalkar
 // Copyright:
-// 
+//
 // Copyright (c) 2024 Microsoft Research
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -40,7 +40,6 @@ __global__ void doBeaverMul(int party, int bw, int N, T *X, T *Y, T *a, T *b, T 
     {
         Z[i] = (party == SERVER1) * (X[i] * Y[i]) - X[i] * b[i] - a[i] * Y[i] + c[i];
         gpuMod(Z[i], bw);
-        // printf("%ld, %ld, %ld\n", X[i], Y[i], Z[i]);
     }
 }
 
@@ -55,9 +54,9 @@ T *gpuKeygenMul(u8 **key_as_bytes, int party, int bw, int scale, int N, T *d_mas
     writeShares<T, T>(key_as_bytes, party, N, d_mask_B, bw);
     writeShares<T, T>(key_as_bytes, party, N, d_mask_C1, bw);
     gpuFree(d_mask_C1);
-    printf("##Num truncations: %d\n", N);
-    auto d_mask_truncated_C = genGPUTruncateKey<T, T>(key_as_bytes, party, /*TruncateType::TrWithSlack*/t, bw, bw, scale, N, d_mask_C, gaes);
-    gpuFree(d_mask_C);
+    auto d_mask_truncated_C = genGPUTruncateKey<T, T>(key_as_bytes, party, /*TruncateType::TrWithSlack*/ t, bw, bw, scale, N, d_mask_C, gaes);
+    if (d_mask_truncated_C != d_mask_C)
+        gpuFree(d_mask_C);
     return d_mask_truncated_C;
 }
 
@@ -72,11 +71,11 @@ T *gpuMul(SigmaPeer *peer, int party, int bw, int scale, int N, GPUMulKey<T> k, 
     doBeaverMul<<<(N - 1) / 128 + 1, 128>>>(party, bw, N, d_X, d_Y, d_a, d_b, d_c, d_Z);
     gpuFree(d_a);
     peer->reconstructInPlace(d_Z, bw, N, s);
-    auto d_truncated_Z = gpuTruncate<T, T>(bw, bw, /*TruncateType::TrWithSlack*/t, k.trKey, scale, peer, party, N, d_Z, gaes, s); //, true);
-    gpuFree(d_Z);
+    auto d_truncated_Z = gpuTruncate<T, T>(bw, bw, t, k.trKey, scale, peer, party, N, d_Z, gaes, s); //, true);
+    if (d_truncated_Z != d_Z)
+        gpuFree(d_Z);
     u64 b1 = peer->bytesSent() + peer->bytesReceived();
     if (s)
         s->linear_comm_bytes += (b1 - b0);
-    printf("Comm inside Mul=%ld\n", b1 - b0);
     return d_truncated_Z;
 }

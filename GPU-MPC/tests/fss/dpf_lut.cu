@@ -80,7 +80,6 @@ int main(int argc, char *argv[])
     gpuFree(d_O);
     destroyGPURandomness();
 
-    printf("Bin=%d, N=%d\n", bin, N);
     for (int i = 0; i < N; i++)
     {
         auto unmasked_O = (h_O[i] - h_mask_O[i]);

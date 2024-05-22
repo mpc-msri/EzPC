@@ -42,8 +42,6 @@ int main(int argc, char *argv[])
     int bin = atoi(argv[1]);
     int N = atoi(argv[2]);
 
-    printf("Bin=%d, N=%d\n", bin, N);
-
     u8 *ptr1, *ptr2;
     getKeyBuf(&ptr1, &ptr2, 50 * OneGB);
     auto keyBuf1 = ptr1;

@@ -90,9 +90,7 @@ namespace dcf
         {
             auto x2 = (x + (1ULL << (bin - 1)));
             gpuMod(x2, bin);
-            // printf("x=%lu, x2=%lu, %lu\n", x, x2, (1ULL << (bin - 1)));
             o += (x2 >= (1ULL << (bin - 1)));
-            // printf("o=%ld, %d, %d, %d\n", o, (x2 >= (1ULL << (bin - 1))), bin, bout);
         }
         gpuMod(o, bout);
         writePackedOp(out_g, o, bout, N);

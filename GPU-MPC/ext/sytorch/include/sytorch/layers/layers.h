@@ -489,11 +489,8 @@ public:
 
     void _forward(Tensor<T> &a)
     {
-        printf("############### Flatten=%d\n", transpose);
         if (transpose && (a.shape.size() == 4 || a.shape.size() == 5))
         {
-            printf("@@@@@@@@@@@@@@@@@@@@@@@ In here!!!!!!!!!!!\n");
-            // printf("Flatten: %d\n", a.shape.size());
             if (a.shape.size() == 4)
             {
                 auto a_4d = a.as_4d();
@@ -512,9 +509,7 @@ public:
                         {
                             for (u64 l = 0; l < d4; l++)
                             {
-                                // this->activation(i, j * d3 * d4 + k * d4 + l, 0, 0) = a(i, j, k, l);
                                 act_2d(i, l * d2 * d3 + j * d3 + k) = a_4d(i, j, k, l);
-                                // printf("Flatten: %ld, %ld\n", act_2d(i, l * d2 * d3 + j * d3 + k), a_4d(i, j, k, l));
                             }
                         }
                     }
@@ -551,7 +546,6 @@ public:
         }
         else
         {
-            printf("################# In here!!!!!!!!!!!\n");
             u64 sz = a.size();
 #pragma omp parallel for
             for (u64 i = 0; i < sz; i++)

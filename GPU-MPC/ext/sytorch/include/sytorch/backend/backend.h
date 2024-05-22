@@ -194,18 +194,10 @@ public:
         {
             for (u64 j = 0; j < dim; j++)
             {
-                // before
                 double scalar = 1.0 / (std::pow(base, (double)((2 * j) % dim) / dim));
                 T scalarInt = (i * scalar) * std::pow(2, scale);
-                // y_2d(i, ind) = i * scalar;
                 T sinx = std::sin(scalarInt / (float)std::pow(2, scale)) * std::pow(2, scale - 3);
                 T cosx = std::cos(scalarInt / (float)std::pow(2, scale)) * std::pow(2, scale - 3);
-
-                // now
-                // double scalar = 1.0 / (std::pow(base, (double)((2 * j) % dim) / dim));
-                // int tempScale = scale - 3;
-                // T sinx = (T) std::sin(i * scalar) * std::pow(2, tempScale);
-                // T cosx = (T) std::cos(i * scalar) * std::pow(2, tempScale);
 
                 if (sinx == (1ULL << (scale - 3)))
                     sinx -= 1;
@@ -214,8 +206,6 @@ public:
                 u64 k = (j + dim / 2) % dim;
                 T mul = 2 * (j >= dim / 2) - 1;
                 T z = cosx * x_2d(i, j) + sinx * mul * x_2d(i, k);
-                // if ((i == 8 && j == 81) /*|| (i == n_seq - 1 && j == dim - 2)*/)
-                //     printf("x=%ld, sin=%ld, cos=%ld, y=%ld, mul=%ld, out=%ld, %f, %f, %f, %lf, %lf, %f, %ld\n", x_2d(i, j), sinx, cosx, x_2d(i, k), mul, z, std::sin(scalarInt / (float)std::pow(2, scale)), std::cos(scalarInt / (float)std::pow(2, scale)), scalarInt / (float)std::pow(2, scale), (std::pow(base, (double)((2 * j) % dim) / dim)), 1.0 / (std::pow(base, (double)((2 * j) % dim) / dim)), scalarInt / (float)std::pow(2, scale), scalarInt);
                 y_2d(i, j) = z;
             }
         }

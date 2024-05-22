@@ -89,8 +89,6 @@ GPUDPFKey readGPUDPFKey(u8 **key_as_bytes)
         memcpy(&k, *key_as_bytes, 3 * sizeof(int));
         *key_as_bytes += (3 * sizeof(int));
 
-        printf("M=%d, B=%d\n", k.M, k.B);
-
         k.dpfTreeKey = new GPUDPFTreeKey[k.B];
         k.memSzOut = 0;
         for (int b = 0; b < k.B; b++)

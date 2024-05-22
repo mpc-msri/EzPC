@@ -1,8 +1,8 @@
 // Author: Neha Jawalkar
 // Copyright:
-// 
+//
 // Copyright (c) 2024 Microsoft Research
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -25,8 +25,9 @@
 #include "llama2.h"
 #include "backend/sigma.h"
 
-inline std::string toGB(u64 bytes) {
-    return std::to_string(bytes) + " B (" + std::to_string((float) bytes / (1024.0f * 1024.0f * 1024.0f)) + " GB)";
+inline std::string toGB(u64 bytes)
+{
+    return std::to_string(bytes) + " B (" + std::to_string((float)bytes / (1024.0f * 1024.0f * 1024.0f)) + " GB)";
 }
 
 int main(int __argc, char **__argv)
@@ -50,6 +51,7 @@ int main(int __argc, char **__argv)
     auto keyFile = keyDir + model + "_inference_key";
     u64 keyBufSz = 0;
     SytorchModule<u64> *net;
+    Tensor<u64> input({n_seq, n_embd});
 
     if (model == "gpt2")
     {
@@ -60,6 +62,10 @@ int main(int __argc, char **__argv)
         bw = 50;
         keyBufSz = 20 * OneGB;
         net = new GPUGPT2<u64>(n_layer, n_head, n_embd, attnMask, qkvFormat);
+        input.resize({n_seq, n_embd});
+        input.zero();
+        net->init(scale, input);
+        net->zero();
     }
     else if (model == "bert-tiny")
     {
@@ -69,6 +75,10 @@ int main(int __argc, char **__argv)
         bw = 37;
         keyBufSz = OneGB;
         net = new GPUBERT<u64>(n_layer, n_head, n_embd, attnMask, qkvFormat);
+        input.resize({n_seq, n_embd});
+        input.zero();
+        net->init(scale, input);
+        net->zero();
     }
     else if (model == "bert-base")
     {
@@ -78,6 +88,10 @@ int main(int __argc, char **__argv)
         bw = 50;
         keyBufSz = 20 * OneGB;
         net = new GPUBERT<u64>(n_layer, n_head, n_embd, attnMask, qkvFormat);
+        input.resize({n_seq, n_embd});
+        input.zero();
+        net->init(scale, input);
+        net->zero();
     }
     else if (model == "bert-large")
     {
@@ -87,6 +101,10 @@ int main(int __argc, char **__argv)
         bw = 50;
         keyBufSz = 50 * OneGB;
         net = new GPUBERT<u64>(n_layer, n_head, n_embd, attnMask, qkvFormat);
+        input.resize({n_seq, n_embd});
+        input.zero();
+        net->init(scale, input);
+        net->zero();
     }
     else if (model == "gpt-neo")
     {
@@ -98,6 +116,10 @@ int main(int __argc, char **__argv)
         bw = 51;
         keyBufSz = 80 * OneGB;
         net = new GPUGPT2<u64>(n_layer, n_head, n_embd, attnMask, qkvFormat, false);
+        input.resize({n_seq, n_embd});
+        input.zero();
+        net->init(scale, input);
+        net->zero();
     }
     else if (model == "gpt-neo-large")
     {
@@ -109,6 +131,10 @@ int main(int __argc, char **__argv)
         bw = 51; // 52;
         keyBufSz = 200 * OneGB;
         net = new GPUGPT2<u64>(n_layer, n_head, n_embd, attnMask, qkvFormat, false);
+        input.resize({n_seq, n_embd});
+        input.zero();
+        net->init(scale, input);
+        net->zero();
     }
     else if (model == "llama7b")
     {
@@ -121,24 +147,28 @@ int main(int __argc, char **__argv)
         u64 intermediate_size = 11008;
         keyBufSz = 300 * OneGB;
         net = new GPULlama<u64>(n_layer, n_head, n_embd, intermediate_size);
+        input.resize({n_seq, n_embd});
+        input.zero();
+        net->init(scale, input);
+        net->zero();
     }
     else if (model == "llama13b")
     {
-        n_layer = 40;
+        n_layer = 1;//40;
         n_head = 40;
         n_embd = 5120;
         attnMask = "self";
         qkvFormat = "qkvsep";
         bw = 48;
         u64 intermediate_size = 13824;
-        keyBufSz = 450 * OneGB;
+        keyBufSz = /*450*/ 40 * OneGB;
         net = new GPULlama<u64>(n_layer, n_head, n_embd, intermediate_size);
+        input.resize({n_seq, n_embd});
+        input.zero();
+        net->init(scale, input);
+        net->zero();
     }
-
-    Tensor<u64> input({n_seq, n_embd});
-    net->init(scale, input);
     srand(time(NULL));
-
     if (role == 0)
     {
         auto sigma = new SIGMAKeygen<u64>(party, bw, scale, keyFile, keyBufSz);
@@ -163,6 +193,9 @@ int main(int __argc, char **__argv)
         auto end = std::chrono::high_resolution_clock::now();
         auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
         sigma->close();
+        auto signedAct = Tensor<i64>((i64*) activation.data, activation.shape).as_2d();
+        auto maxIdx = signedAct.argmax(0);
+        printf("%d, %ld\n", maxIdx, activation.data[maxIdx]);
 
         std::stringstream ss;
 

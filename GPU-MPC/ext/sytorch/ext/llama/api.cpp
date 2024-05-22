@@ -2648,12 +2648,12 @@ void Rsqrt(int size, GroupElement *x, GroupElement *y, GroupElement extradiv, in
         (*lut)[i] = GroupElement(double(1LL<<(2*scale)) / sqrt(val / extradiv));
     } });
     }
-    if (party != DEALER)
-    {
-        // Llama::stat_t stat = { "Rsqrt::LutGen", 0, t, 0, 0, 0 };
-        // stat.print();
-        // Llama::push_stats(stat);
-    }
+    // if (party != DEALER)
+    // {
+    //     // Llama::stat_t stat = { "Rsqrt::LutGen", 0, t, 0, 0, 0 };
+    //     // stat.print();
+    //     // Llama::push_stats(stat);
+    // }
 
     LUT_dpf(size, 13, bitlength, *lut, y, y, prefix + "Rsqrt::");
     // printf("Op=%lu\n", y[0]);
