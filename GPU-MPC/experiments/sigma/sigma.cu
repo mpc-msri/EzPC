@@ -154,14 +154,14 @@ int main(int __argc, char **__argv)
     }
     else if (model == "llama13b")
     {
-        n_layer = 1;//40;
+        n_layer = 40;
         n_head = 40;
         n_embd = 5120;
         attnMask = "self";
         qkvFormat = "qkvsep";
         bw = 48;
         u64 intermediate_size = 13824;
-        keyBufSz = /*450*/ 40 * OneGB;
+        keyBufSz = 450 * OneGB;
         net = new GPULlama<u64>(n_layer, n_head, n_embd, intermediate_size);
         input.resize({n_seq, n_embd});
         input.zero();
