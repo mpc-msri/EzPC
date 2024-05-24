@@ -3,11 +3,11 @@
 **Reference Papers:**  
 
 [SIGMA: Secure GPT Inference with Function Secret Sharing](https://eprint.iacr.org/2023/1269)  
-Kanav Gupta, Neha Jawalkar,  Ananta Mukherjee, Nishanth Chandran, Divya Gupta, Ashish Panwar, Rahul Sharma
+Kanav Gupta, Neha Jawalkar,  Ananta Mukherjee, Nishanth Chandran, Divya Gupta, Ashish Panwar, Rahul Sharma  
 *PoPETS 2024*
 
 [Orca: FSS-based Secure Training with GPUs](https://eprint.iacr.org/2023/206)  
-Neha Jawalkar, Kanav Gupta, Arkaprava Basu, Nishanth Chandran, Divya Gupta, Rahul Sharma
+Neha Jawalkar, Kanav Gupta, Arkaprava Basu, Nishanth Chandran, Divya Gupta, Rahul Sharma  
 *IEEE S&P 2024*
 
 [Secure Floating-Point Training](https://eprint.iacr.org/2023/467)  
