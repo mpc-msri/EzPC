@@ -1,3 +1,4 @@
+
 /*
 Authors: Deevashwer Rathee
 Copyright:
@@ -450,13 +451,11 @@ BoolArray FPOp::LT(const FPArray &x, const FPArray &y, bool equal_sign) {
   FixArray y_m, y_e;
   tie(y_s, y_z, y_m, y_e) = get_components(y);
 
-  BoolArray all_1 = bool_op->input(ALICE, x.size, 1);
-
-  FixArray x_em = fix->extend(x_m, x_m.ell + x_e.ell - 1, all_1.data);
+  FixArray x_em = fix->extend(x_m, x_m.ell + x_e.ell - 1, bool_op->NOT(x_z).data);
   x_e.signed_ = false;
   x_em = fix->add(x_em, fix->scale_up(x_e, x_m.ell + x_e.ell - 1, x.m_bits));
 
-  FixArray y_em = fix->extend(y_m, y_m.ell + y_e.ell - 1, all_1.data);
+  FixArray y_em = fix->extend(y_m, y_m.ell + y_e.ell - 1, bool_op->NOT(y_z).data);
   y_e.signed_ = false;
   y_em = fix->add(y_em, fix->scale_up(y_e, y_m.ell + y_e.ell - 1, y.m_bits));
 
