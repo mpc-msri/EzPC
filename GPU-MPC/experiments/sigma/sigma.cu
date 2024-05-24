@@ -20,6 +20,7 @@
 // SOFTWARE.
 
 #include <sytorch/module.h>
+#include <sytorch/utils.h>
 #include "gpt2.h"
 #include "bert.h"
 #include "llama2.h"
@@ -194,6 +195,7 @@ int main(int __argc, char **__argv)
         auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
         sigma->close();
         auto signedAct = Tensor<i64>((i64*) activation.data, activation.shape).as_2d();
+        // print(signedAct.as_nd(), scale, (u64) bw);
         auto maxIdx = signedAct.argmax(0);
         printf("%d, %ld\n", maxIdx, activation.data[maxIdx]);
 

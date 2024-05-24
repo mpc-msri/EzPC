@@ -1,8 +1,8 @@
 // Author: Neha Jawalkar
 // Copyright:
-// 
+//
 // Copyright (c) 2024 Microsoft Research
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -20,6 +20,10 @@
 // SOFTWARE.
 
 #pragma once
+
+#ifndef CORRECTNESS
+#define CORRECTNESS 0
+#endif
 
 #include <sytorch/module.h>
 
@@ -70,8 +74,10 @@ public:
     using SytorchModule<T>::add;
     using SytorchModule<T>::unsqueeze;
     std::vector<GPUBertTransformerBlock<T> *> blocks;
+#if CORRECTNESS
     LayerNorm<T> *ln_f;
     FC<T> *pool;
+#endif
     u64 n_layer, n_heads, n_embd;
     std::string attnMask, qkvFormat;
 
@@ -82,20 +88,22 @@ public:
         {
             blocks.push_back(new GPUBertTransformerBlock<T>(n_heads, n_embd, attnMask, qkvFormat));
         }
+#if CORRECTNESS
         ln_f = new LayerNorm<T>(n_embd);
         pool = new FC<T>(n_embd, n_embd, true);
+#endif
     }
 
     Tensor<T> &_forward(Tensor<T> &input)
     {
-        // auto &y = ln_f->forward(input);
-        // Tensor<T> *x = &y;
-
         Tensor<T> *x = &input;
+#if CORRECTNESS
+        auto &ln_out = ln_f->forward(input);
+        x = &ln_out;
+#endif
         for (u64 i = 0; i < n_layer; ++i)
         {
-            auto &block = blocks[i];
-            auto &x_out = block->forward(*x);
+            auto &x_out = blocks[i]->forward(*x);
             x = &x_out;
         }
         return *x;
