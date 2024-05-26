@@ -175,10 +175,23 @@ int main(int __argc, char **__argv)
         auto sigma = new SIGMAKeygen<u64>(party, bw, scale, keyFile, keyBufSz);
         net->setBackend(sigma);
         net->optimize();
+        auto start = std::chrono::high_resolution_clock::now();
         input.d_data = (u64 *)moveToGPU((u8 *)input.data, input.size() * sizeof(u64), (Stats *)NULL);
         auto &activation = net->forward(input);
         sigma->output(activation);
+        auto end = std::chrono::high_resolution_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
         sigma->close();
+        std::stringstream ss;
+        ss << "Total time=" + std::to_string(elapsed.count()) + " us";
+        ss << std::endl;
+        ss << "Key size=" + toGB(sigma->keySize);
+        ss << std::endl;
+        auto inferenceDir = "output/P" + std::to_string(party) + "/" + model + "-" + std::to_string(n_seq) + "/";
+        makeDir(inferenceDir);
+        std::ofstream statsFile(inferenceDir + "dealer.txt");
+        statsFile << ss.rdbuf();
+        statsFile.close();
     }
     else
     {
@@ -194,31 +207,30 @@ int main(int __argc, char **__argv)
         auto end = std::chrono::high_resolution_clock::now();
         auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
         sigma->close();
-        auto signedAct = Tensor<i64>((i64*) activation.data, activation.shape).as_2d();
+        auto signedAct = Tensor<i64>((i64 *)activation.data, activation.shape).as_2d();
         // print(signedAct.as_nd(), scale, (u64) bw);
         auto maxIdx = signedAct.argmax(0);
         printf("%d, %ld\n", maxIdx, activation.data[maxIdx]);
 
         std::stringstream ss;
 
-        ss << "Time in ms" << std::endl;
-        ss << "Total time=" + std::to_string(elapsed.count());
+        ss << "Total time=" + std::to_string(elapsed.count()) + " us";
         ss << std::endl;
-        ss << "Comm time=" + std::to_string(sigma->s.comm_time);
+        ss << "Comm time=" + std::to_string(sigma->s.comm_time) + " us";
         ss << std::endl;
-        ss << "Transfer time=" + std::to_string(sigma->s.transfer_time);
+        ss << "Transfer time=" + std::to_string(sigma->s.transfer_time) + " us";
         ss << std::endl;
-        ss << "MHA time=" + std::to_string(sigma->s.mha_time);
+        ss << "MHA time=" + std::to_string(sigma->s.mha_time) + " us";
         ss << std::endl;
-        ss << "Matmul time=" + std::to_string(sigma->s.matmul_time);
+        ss << "Matmul time=" + std::to_string(sigma->s.matmul_time) + " us";
         ss << std::endl;
-        ss << "Truncate time=" + std::to_string(sigma->s.truncate_time);
+        ss << "Truncate time=" + std::to_string(sigma->s.truncate_time) + " us";
         ss << std::endl;
-        ss << "Gelu time=" + std::to_string(sigma->s.gelu_time);
+        ss << "Gelu time=" + std::to_string(sigma->s.gelu_time) + " us";
         ss << std::endl;
-        ss << "Softmax time=" + std::to_string(sigma->s.softmax_time);
+        ss << "Softmax time=" + std::to_string(sigma->s.softmax_time) + " us";
         ss << std::endl;
-        ss << "Layernorm time=" + std::to_string(sigma->s.layernorm_time);
+        ss << "Layernorm time=" + std::to_string(sigma->s.layernorm_time) + " us";
         ss << std::endl;
         ss << std::endl;
         ss << "Total Comm=" + toGB(sigma->peer->bytesSent() + sigma->peer->bytesReceived());
@@ -230,8 +242,9 @@ int main(int __argc, char **__argv)
         ss << "Layernorm Comm=" + toGB(sigma->s.layernorm_comm_bytes);
         ss << std::endl;
 
-        auto inferenceDir = "output/P" + std::to_string(party) + "/";
-        std::ofstream statsFile(inferenceDir + model + ".txt");
+        auto inferenceDir = "output/P" + std::to_string(party) + "/" + model + "-" + std::to_string(n_seq) + "/";
+        makeDir(inferenceDir);
+        std::ofstream statsFile(inferenceDir + "evaluator.txt");
         statsFile << ss.rdbuf();
         statsFile.close();
     }
