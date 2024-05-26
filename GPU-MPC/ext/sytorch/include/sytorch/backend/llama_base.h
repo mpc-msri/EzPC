@@ -1,8 +1,8 @@
 // Authors: Kanav Gupta, Neha Jawalkar
 // Copyright:
-// 
+//
 // Copyright (c) 2024 Microsoft Research
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -285,6 +285,8 @@ public:
             {
                 auto mask = LlamaConfig::dealer->recv_mask();
                 a[i] = a[i] - mask;
+                mod(a[i], LlamaConfig::bitlength);
+                a[i] -= ((a[i] >> (LlamaConfig::bitlength - 1) << LlamaConfig::bitlength));
             }
         }
     }
@@ -305,7 +307,6 @@ public:
             for (int i = 0; i < sz; i++)
             {
                 auto mask = LlamaConfig::dealer->recv_mask();
-                if(i == 0) printf("Mask=%lu\n", mask);
                 a[i] = a[i] - mask;
             }
         }
@@ -533,26 +534,26 @@ public:
         }
     }
 
-    //     void add(const std::vector<Tensor<T> *> &in, Tensor<T> &out)
-    //     {
-    //         always_assert(in.size() > 0);
-    //         always_assert(out.size() == in[0]->size());
-    //         for (int i = 0; i < in.size(); i++)
-    //         {
-    //             always_assert(out.size() == in[i]->size());
-    //         }
+    void add(const std::vector<Tensor<T> *> &in, Tensor<T> &out)
+    {
+        always_assert(in.size() > 0);
+        always_assert(out.size() == in[0]->size());
+        for (int i = 0; i < in.size(); i++)
+        {
+            always_assert(out.size() == in[i]->size());
+        }
 
-    // #pragma omp parallel for
-    //         for (u64 i = 0; i < out.size(); ++i)
-    //         {
-    //             T sum = 0;
-    //             for (int j = 0; j < in.size(); j++)
-    //             {
-    //                 sum += in[j]->data[i];
-    //             }
-    //             out.data[i] = sum;
-    //         }
-    //     }
+#pragma omp parallel for
+        for (u64 i = 0; i < out.size(); ++i)
+        {
+            T sum = 0;
+            for (int j = 0; j < in.size(); j++)
+            {
+                sum += in[j]->data[i];
+            }
+            out.data[i] = sum;
+        }
+    }
 
     void addbias(Tensor<T> &x, const Tensor1D<T> &bias)
     {

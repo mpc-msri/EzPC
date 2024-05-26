@@ -209,7 +209,7 @@ public:
                 y_2d(i, j) = z;
             }
         }
-        this->truncate(y_2d, scale - 3);
+        this->truncate(y_2d, scale - 3, 1);
     }
 
     virtual void optimize(LayerGraphNode<T> *root)

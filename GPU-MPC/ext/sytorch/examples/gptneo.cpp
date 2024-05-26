@@ -257,7 +257,8 @@ public:
             auto &x_out = block->forward(*x);
             x = &x_out;
         }
-        return ln_f->forward(*x);
+        return *x;
+        // return ln_f->forward(*x);
     }
 };
 
@@ -281,9 +282,10 @@ public:
     Tensor<T> &_forward(Tensor<T> &input)
     {
         auto &fc_in = gpt2->forward(input);
+        return fc_in;
         // printshape(fc_in.shape);
-        auto &fc_out = fc->forward(fc_in);
-        return view(fc_out, -1);
+        // auto &fc_out = fc->forward(fc_in);
+        // return view(fc_out, -1);
     }
 };
 
@@ -304,14 +306,19 @@ void ct_main(std::string fname) {
     const u64 n_layer = 24;
     const u64 scale = 12;
     const u64 window_size = 256;
+    const u64 bw = 51;
 
     GPT2NextWordLogits <i64> net(n_layer, n_head, n_embd, n_vocab, window_size);
-    net.init(scale);
-    hasInit = true;
-    net.load("gpt-neo-1pt3B-weights.dat");
-
-    u64 n_seq = get_n_seq(fname, n_embd);
+    u64 n_seq = 128;//get_n_seq(fname, n_embd);
     Tensor<i64> input({n_seq, n_embd});
+    net.init(scale, input);
+
+    auto ct = new ClearText<i64>();
+    ct->bw = bw;
+    net.setBackend(ct);
+
+    hasInit = true;
+    net.load("gpt-neo-weights.dat");
     input.load(fname, scale);
 
     auto t1 = std::chrono::high_resolution_clock::now();
@@ -319,7 +326,8 @@ void ct_main(std::string fname) {
     auto t2 = std::chrono::high_resolution_clock::now();
     auto compute_time = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
     std::cout << "Total time = " << compute_time / (1000.0)  << " ms" << std::endl;
-    printfe(net.activation, 5);
+    // printfe(net.activation, 5);
+    print(net.activation, scale, bw);
 }
 
 int lt_main(std::string fname, int __argc, char**__argv){

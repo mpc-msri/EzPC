@@ -1,8 +1,8 @@
 // Authors: Kanav Gupta, Neha Jawalkar
 // Copyright:
-// 
+//
 // Copyright (c) 2024 Microsoft Research
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -167,7 +167,6 @@ public:
         if (doTruncationForward)
         {
             this->backend->truncateForward(activation, scale, forwardTruncationMode);
-            // printf("After truncate=%ld\n", activation.data[0]);
         }
         if (doPostSignExtension)
         {
@@ -1702,7 +1701,7 @@ template <typename T>
 class RotaryEmbedding : public Layer<T>
 {
 public:
-    u64 base=10000;
+    u64 base = 10000;
 
     RotaryEmbedding() : Layer<T>("RotaryEmbedding") {}
 
