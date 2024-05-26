@@ -269,6 +269,7 @@ public:
     size_t keyBufSize = 0;
     int party = -1;
     std::string keyFile;
+    size_t keySize = 0;
     int scale;
     int bw;
     AESGlobalContext g;
@@ -300,7 +301,7 @@ public:
 
     void close()
     {
-        size_t keySize = keyBuf - startPtr;
+        /*size_t*/ keySize = keyBuf - startPtr;
         size_t padding = 4096 - (keySize % 4096);
         char *zeros = new char[padding];
         memset(zeros, 0, padding);
