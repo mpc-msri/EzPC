@@ -51,7 +51,7 @@ FSS keys tend to be quite large so please make sure that the key directory has a
 Similarly, the configuration also needs to define the GPU on which the evaluator will run, and the IP address of its peer, i.e., the address of the remote party the evaluator will communicate with for secure training or inference. This is done in `config.json` as:
 
 ```javascript
-"dealer" :
+"evaluator" :
     { "gpu": <The ID of the GPU to use>,
       "peer": <The address of the remote peer>
     }
