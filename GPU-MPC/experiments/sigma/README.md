@@ -47,11 +47,11 @@ make sigma
 
 ### Run standalone
 
-1. Make produces the `sigma` executable which is in `experiments/sigma`.
+Make produces the `sigma` executable which is in `experiments/sigma`.
 
-2. Each party (the server and the client) needs to run two processes in sequence: the dealer and the evaluator.
+Each party (the server and the client) needs to run two processes in sequence: the dealer and the evaluator.
 
-In addition to other arguments, the dealer requires the user to specify the directory in which it will store keys (see Prerequisites and caveats).
+In addition to other arguments, the dealer requires the user to specify the directory in which it will store keys (see prerequisites and caveats).
 
 The evaluator requires the user to specify the directory to read keys from, the IP address of its peer, and the number of CPU threads to use for computation.
 
@@ -72,39 +72,32 @@ Results are stored in the `output/P<party number>/models/<model name>-<sequence 
 Before the artifact can be run, we need to specify the dealer and evaluator configurations in `config.json`. These files are essentially used to populate the arguments specified in the previous section.
 
 For the server(=P0), `config.json` looks like:
-`{
+```javascript
+{
     "P0": {
         "dealer": {
-            "gpu": <>,
-            "key_dir": <>
+            "gpu": <The ID of the GPU to use>,
+            "key_dir": <The directory in which the dealer will store keys>
         },
         "evaluator": {
-            "gpu": <>,
-            "peer": <>,
-            "cpu_threads": <>
+            "gpu": <The ID of the GPU to use>,
+            "peer": <The IP address of the remote peer>,
+            "cpu_threads": <The number of CPU threads to use for computation>
         }
     }
-}`
+}
+```
 
-For the client(=P1), `config.json` looks like:
+For the client(=P1), `config.json` looks exactly the same, only the arguments are specified under the key "P1".
 
-`"P1": {
-        "dealer": {
-            "gpu": 2,
-            "key_dir": "/mnt/nvme/neha/"
-        },
-        "evaluator": {
-            "gpu": 3,
-            "peer": "0.0.0.0",
-            "cpu_threads": 64
-        }
-    }
-`
-
+A sample `config.json` file can be found in the `experiments/sigma` folder.
 
 Once `config.json` has been filled, the script `run_experiment.py` can be used to reproduce the tables and figures in the paper.
+
 To reproduce Tables 4, 5, 9, and Figure 11, run `python run_experiment.py --perf true`
+
 To reproduce Table 8, run `run_experiment.py --n_seq true`.
+
 Table 7 can be reproduced by throttling the network bandwidth (with `tc`, for example) and re-running `python run_experiment.py --perf true`. 
 
 
