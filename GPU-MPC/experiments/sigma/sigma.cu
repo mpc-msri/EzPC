@@ -76,7 +76,7 @@ int main(int __argc, char **__argv)
         n_head = 12;
         n_embd = 768;
         bw = 50;
-        keyBufSz = 20 * OneGB;
+        keyBufSz = 70 * OneGB;
         net = new GPUBERT<u64>(n_layer, n_head, n_embd, attnMask, qkvFormat);
     }
     else if (model == "bert-large")
@@ -119,7 +119,7 @@ int main(int __argc, char **__argv)
         qkvFormat = "qkvsep";
         bw = 48;
         u64 intermediate_size = 11008;
-        keyBufSz = 300 * OneGB;
+        keyBufSz = 500 * OneGB;
         net = new GPULlama<u64>(n_layer, n_head, n_embd, intermediate_size);
     }
     else if (model == "llama13b")
@@ -133,6 +133,23 @@ int main(int __argc, char **__argv)
         u64 intermediate_size = 13824;
         keyBufSz = 450 * OneGB;
         net = new GPULlama<u64>(n_layer, n_head, n_embd, intermediate_size);
+    }
+    else if (model == "airavata")
+    {
+        n_layer = 32;
+        n_head = 32;
+        n_embd = 4096;
+        attnMask = "self";
+        qkvFormat = "qkvsep";
+        bw = 48;
+        u64 intermediate_size = 11008;
+        keyBufSz = 500 * OneGB;
+        net = new GPULlama<u64>(n_layer, n_head, n_embd, intermediate_size,false);
+    }
+    else
+    {
+        printf("Invalid model\n");
+        return 1;
     }
 
     Tensor<u64> input({n_seq, n_embd});
