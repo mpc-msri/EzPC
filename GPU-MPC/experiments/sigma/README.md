@@ -40,29 +40,31 @@ make sigma
 
 1. Since FSS generates large keys, please ensure that you have a writeable disk with at least 500GB of free space. This is only required by our largest model (Llama2-13B). Other models require less space, and an idea of how much free space is needed per model can be estimated from the key size reported in Table 9 of the paper.
 
-2. Once the key has been stored on disk, SIGMA loads the key from the disk into CPU memory. Thus, the CPU must have (free) memory that is at least as large as the key that will be read from the disk.
+2. In the online phase, SIGMA loads the entire key from the disk into CPU memory. Thus, the CPU must have (free) memory that is at least as large as the key that will be read from the disk.
 
 3. Currently, we only support sequence lengths that are powers-of-2.
 
 
 ### Run standalone
 
-Make produces the `sigma` executable which is in `experiments/sigma`.
+1. Make produces the `sigma` executable which is in `experiments/sigma`.
 
-Each party (the server and the client) needs to run two processes in sequence: the dealer and the evaluator.
+2. Each party (the server and the client) needs to run two processes in sequence: the dealer and the evaluator.
 
-In addition to other arguments, the dealer requires the user to specify the directory in which it will store keys (see prerequisites and caveats).
+3. In addition to other arguments, the dealer requires the user to specify the directory in which it will store keys (see prerequisites and caveats).
 
-The evaluator requires the user to specify the directory to read keys from, the IP address of its peer, and the number of CPU threads to use for computation.
+4. The evaluator requires the user to specify the directory to read keys from, the IP address of its peer, and the number of CPU threads to use for computation.
 
-The syntax for running the dealer is `./sigma <model name> <sequence length> <role=0 for dealer> <party=0/1 (server/client)> <key directory>`. We currently support the following models: `bert-tiny, bert-base, bert-large, gpt2, llama-7b, llama-13b`.
+5. The syntax for running the dealer is `./sigma <model name> <sequence length> <role=0 for dealer> <party=0/1 (server/client)> <key directory>`. We currently support the following models: `bert-tiny, bert-base, bert-large, gpt2, llama-7b, llama-13b`.
 
-The syntax for running the evaluator is `./sigma <model name> <sequence length> <role=1 for evaluator> <party=0/1 (server/client)> <key directory> <peer IP> <CPU threads>`.
+6. The syntax for running the evaluator is `./sigma <model name> <sequence length> <role=1 for evaluator> <party=0/1 (server/client)> <key directory> <peer IP> <CPU threads>`.
 
-For example, to run GPT2, the server will run (in sequence):
+7. For example, to run GPT2, the server will run (in sequence):
+
 `./sigma gpt2 128 0 0 /tmp/` and `./sigma gpt2 128 1 0 /tmp/ <client IP> 64`.
 
-The client will run (*** on a different machine ***)
+The client will run (_on a different machine_):
+
 `./sigma gpt2 128 0 1 /tmp/` and `./sigma gpt2 128 1 1 /tmp/ <server IP> 64`.
 
 Results are stored in the `output/P<party number>/models/<model name>-<sequence length>/` folder.
@@ -100,39 +102,7 @@ To reproduce Table 8, run `run_experiment.py --n_seq true`.
 
 Table 7 can be reproduced by throttling the network bandwidth (with `tc`, for example) and re-running `python run_experiment.py --perf true`. 
 
-
-## Docker Build
-
-You can also build the docker image using the provided Dockerfile_Gen for building the Environment. 
-
-### Install Nvidia Container Toolkit
-- Configure the repository:
-```
-curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey |sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
-&& curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list \
-&& sudo apt-get update
-```
-
-- Install the NVIDIA Container Toolkit packages:
-```
-sudo apt-get install -y nvidia-container-toolkit
-sudo nvidia-ctk runtime configure --runtime=docker
-sudo systemctl restart docker
-```
-### Build the Docker Image / pull the image from Docker Hub
-```
-# Local Build
-docker build -t gpu_mpc -f Dockerfile_Gen .
-
-# Pull from Docker Hub (Cuda 11.8)
-docker pull trajore/gpu_mpc
-```
-### Run the Docker Container
-```
-sudo docker run --gpus all --network host -v /home/$USER/path_to_GPU-MPC/:/home -it container_name /bin/bash
-
-```
-Then Run setup.sh to configure according to GPU_arch and make orca as mentioned above.
+The output of the scripts can be found in `output/P<party number>/Table<table number>.json` and `output/P<party number>/Fig<figure number>.json`. Log files (which might help with debugging) can be found in the `output/P<party number>/models/<model name>-<sequence length>/logs/` folder.
 
 ## Citation
 
