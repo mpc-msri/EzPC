@@ -78,7 +78,7 @@ public:
         if (mode == 0)
             Softmax(in.shape[0], in.shape[1], LlamaConfig::bitlength, in.data, out.data, scale);
         else if (mode == 1)
-            Softmax(in.shape[0], in.shape[1], LlamaConfig::bitlength - scale, in.data, out.data, scale);
+            Softmax(in.shape[0], in.shape[1], LlamaConfig::bitlength - scale + 1, in.data, out.data, scale);
     }
 
     void layernorm(const Tensor1D<T> &A, const Tensor1D<T> &B, const Tensor<T> &x, Tensor<T> &y, u64 scale)
