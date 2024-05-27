@@ -1,7 +1,7 @@
 
 # Orca: FSS-based Secure Training and Inference with GPUs
 
-Implementation of protocols from the paper [Orca](https://eprint.iacr.org/2023/206).
+Implementation of protocols from the paper [Orca](https://eprint.iacr.org/2023/206) and [SIGMA]().
 
 **Warning**: This is an academic proof-of-concept prototype and has not received careful code review. This implementation is NOT ready for production use.
 
@@ -33,8 +33,13 @@ sh setup.sh
 ```
 make orca
 ```
+4. Make sigma (this does not require making Orca)
 
-## Run
+```
+make sigma
+```
+
+## Run Orca
 
 1. Each party runs two processes: a dealer and an evaluator. The configuration needs to define the GPU on which the dealer will run, and the directory in which it will store FSS keys. This is done in `config.json` as:
 
@@ -74,6 +79,34 @@ optional arguments:
 Results are stored in the `output/P<party-number>/Table<table-number>` or `output/P<party-number>/Fig<figure-number>` folders. 
 
 Log files (which might help with debugging) are stored in the corresponding experiment folders, i.e., in `output/P<party-number>/Table<table-number>/logs` and `output/P<party-number>/Fig<figure-number>/logs`.
+
+
+## Run SIGMA
+
+#Prerequisites and caveats
+
+1. Since FSS generates large keys, please ensure that you have a writeable disk with at least 500GB of free space. This is only required by our largest model (Llama-13B). Other models require less space, and an idea of how much free space is needed per model can be estimated from the key size reported in Table xx of the paper.
+
+2. Once the key has been stored on disk, SIGMA loads the key from the disk into CPU memory. Thus, the CPU must have (free) memory that is at least as large as the key that will be read from the disk.
+
+3. Currently, we only support sequence lengths that are powers-of-2.
+
+4. We currently support the following models: `bert-tiny, bert-base, bert-large, gpt2, llama-7b, llama-13b`.
+
+#How to run
+
+1. The `sigma` executable is in `experiments/sigma`.
+
+2. Each party (the server and the client) needs to run two processes in sequence: the dealer and the evaluator. In general, the syntax for running the dealer is `./sigma <model name> <sequence length> <role=0 for dealer> <party=0/1 (server/client)> <key directory>`. The syntax for running the evaluator is `./sigma <model name> <sequence length> <role=1 for evaluator> <party=0/1 (server/client)> <key directory> <peer IP> <CPU threads>`.
+
+For example, to run GPT2, the server will run (in sequence):
+`./sigma gpt2 128 0 0 /tmp/` and `./sigma gpt2 128 0 0 /tmp/ 0.0.0.0 64`.
+
+Results are stored in `output/P<party-number>/<model-name>.txt`.
+
+3. Alternately, to reproduce Tables 4, 5, 9, and Figures 10 and 11, run `run_experiment.py --perf true`
+To reproduce Table 8, run `run_experiment.py --table 8`.
+Table 7 can be reproduced by throttling the network bandwidth (with `tc`, for example and re-running `run_experiment.py --perf true`.) 
 
 ## Docker Build
 
