@@ -72,7 +72,8 @@ def run_perf(party, dealer_gpu, eval_gpu, dealer_key_dir, peer_ip, cpu_threads):
     
     with open('output/P{}/Table3.json'.format(party), 'w') as outfile:
         table3 = dict()
-        for pretty_name, model in [('BERT-tiny', 'bert-tiny'), ('BERT-base', 'bert-base'), ('BERT-large, ''bert-large'), ('GPT2', 'gpt2'), ('GPT-Neo', 'gpt-neo'), ('Llama2-7B', 'llama7b'), ('Llama2-13B', 'llama13b')]:
+        for tup in [('BERT-tiny', 'bert-tiny'), ('BERT-base', 'bert-base'), ('BERT-large', 'bert-large'), ('GPT2', 'gpt2'), ('GPT-Neo', 'gpt-neo'), ('Llama2-7B', 'llama7b'), ('Llama2-13B', 'llama13b')]:
+            pretty_name, model = tup
             table3[pretty_name] = {
                 'Activation': 
                 {
@@ -93,7 +94,8 @@ def run_perf(party, dealer_gpu, eval_gpu, dealer_key_dir, peer_ip, cpu_threads):
     
     with open('output/P{}/Table5.json'.format(party), 'w') as outfile:
         table5 = dict()
-        for pretty_name, model in [('BERT-tiny', 'bert-tiny'), ('BERT-base', 'bert-base'), ('BERT-large, ''bert-large'), ('GPT2', 'gpt2'), ('GPT-Neo', 'gpt-neo'), ('Llama2-7B', 'llama7b'), ('Llama2-13B', 'llama13b')]:
+        for tup in [('BERT-tiny', 'bert-tiny'), ('BERT-base', 'bert-base'), ('BERT-large', 'bert-large'), ('GPT2', 'gpt2'), ('GPT-Neo', 'gpt-neo'), ('Llama2-7B', 'llama7b'), ('Llama2-13B', 'llama13b')]:
+            pretty_name, model = tup
             table5[pretty_name] = {
                 'Time (s)': stats['evaluator'][model]['total']['time'],
                 'Comm (GB)': stats['evaluator'][model]['total']['comm']
@@ -103,7 +105,8 @@ def run_perf(party, dealer_gpu, eval_gpu, dealer_key_dir, peer_ip, cpu_threads):
     
     with open('output/P{}/Table9.json'.format(party), 'w') as outfile:
         table9 = dict()
-        for pretty_name, model in [('BERT-tiny', 'bert-tiny'), ('BERT-base', 'bert-base'), ('BERT-large, ''bert-large'), ('GPT2', 'gpt2'), ('GPT-Neo', 'gpt-neo'), ('Llama2-7B', 'llama7b'), ('Llama2-13B', 'llama13b')]:
+        for tup in [('BERT-tiny', 'bert-tiny'), ('BERT-base', 'bert-base'), ('BERT-large', 'bert-large'), ('GPT2', 'gpt2'), ('GPT-Neo', 'gpt-neo'), ('Llama2-7B', 'llama7b'), ('Llama2-13B', 'llama13b')]:
+            pretty_name, model = tup
             table9[pretty_name] = {
                 'Key size (GB)': stats['dealer'][model]['key_size'],
                 'Generation time (s)': stats['dealer'][model]['time'],

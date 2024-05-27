@@ -61,7 +61,7 @@ int main(int __argc, char **__argv)
         n_embd = 768;
         attnMask = "self";
         bw = 50;
-        keyBufSz = 20 * OneGB;
+        keyBufSz = 20 * ((n_seq - 1) / 128 + 1) * OneGB;
         net = new GPUGPT2<u64>(n_layer, n_head, n_embd, attnMask, qkvFormat);
         input.resize({n_seq, n_embd});
         input.zero();
