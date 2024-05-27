@@ -55,12 +55,13 @@ The syntax for running the dealer is
 ```javascript
 ./sigma <model name> <sequence length> <role=0 for dealer> <party=0/1 (server/client)> <key directory>
 ```
-We currently support the following models: `bert-tiny, bert-base, bert-large, gpt2, llama-7b, llama-13b`.
 
 The syntax for running the evaluator is 
 ```javascript
 ./sigma <model name> <sequence length> <role=1 for evaluator> <party=0/1 (server/client)> <key directory> <peer IP> <CPU threads>`
 ```
+
+We currently support the following models: `bert-tiny, bert-base, bert-large, gpt2, llama-7b, llama-13b`.
 
 For example, to run GPT2, the server will run (in sequence):
 ```javascript
@@ -114,7 +115,7 @@ optional arguments:
 
 Table 7 can be reproduced by throttling the network bandwidth (with `tc`, for example) and re-running `python run_experiment.py --perf true` to generate Table 5. 
 
-Results are stored in `output/P<party-number>/Table<table-number>.son` or `output/P<party-number>/Fig<figure-number>.json`. 
+Results are stored in `output/P<party-number>/Table<table-number>.json` or `output/P<party-number>/Fig<figure-number>.json`. 
 
 Log files (which might help with debugging) can be found in the `output/P<party number>/models/<model name>-<sequence length>/logs/` folder.
 
