@@ -61,7 +61,8 @@ int main(int __argc, char **__argv)
         n_embd = 768;
         attnMask = "self";
         bw = 50;
-        keyBufSz = 20 * ((n_seq - 1) / 128 + 1) * OneGB;
+        u64 mul = (u64) std::pow(2.3, std::log2(n_seq / 64));
+        keyBufSz = 10 * mul * OneGB;
         net = new GPUGPT2<u64>(n_layer, n_head, n_embd, attnMask, qkvFormat);
         input.resize({n_seq, n_embd});
         input.zero();
@@ -170,6 +171,10 @@ int main(int __argc, char **__argv)
         net->zero();
     }
     srand(time(NULL));
+    std::string outDir = "output/P" + std::to_string(party) + "/models/";
+    makeDir(outDir);
+    auto inferenceDir = outDir + model + "-" + std::to_string(n_seq) + "/";
+    makeDir(inferenceDir);
     if (role == 0)
     {
         auto sigma = new SIGMAKeygen<u64>(party, bw, scale, keyFile, keyBufSz);
@@ -187,8 +192,6 @@ int main(int __argc, char **__argv)
         ss << std::endl;
         ss << "Key size=" + toGB(sigma->keySize);
         ss << std::endl;
-        auto inferenceDir = "output/P" + std::to_string(party) + "/" + model + "-" + std::to_string(n_seq) + "/";
-        makeDir(inferenceDir);
         std::ofstream statsFile(inferenceDir + "dealer.txt");
         statsFile << ss.rdbuf();
         statsFile.close();
@@ -242,8 +245,6 @@ int main(int __argc, char **__argv)
         ss << "Layernorm Comm=" + toGB(sigma->s.layernorm_comm_bytes);
         ss << std::endl;
 
-        auto inferenceDir = "output/P" + std::to_string(party) + "/" + model + "-" + std::to_string(n_seq) + "/";
-        makeDir(inferenceDir);
         std::ofstream statsFile(inferenceDir + "evaluator.txt");
         statsFile << ss.rdbuf();
         statsFile.close();

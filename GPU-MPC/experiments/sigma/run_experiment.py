@@ -42,7 +42,7 @@ def run_perf(party, dealer_gpu, eval_gpu, dealer_key_dir, peer_ip, cpu_threads):
     for model in ['bert-tiny', 'bert-base', 'bert-large', 'gpt2', 'gpt-neo', 'gpt-neo-large', 'llama7b', 'llama13b']:
         dealer_cmd = "CUDA_VISIBLE_DEVICES={} ./sigma {} 128 0 {} {}".format(dealer_gpu, model, party, dealer_key_dir)
         eval_cmd = "CUDA_VISIBLE_DEVICES={} ./sigma {} 128 1 {} {} {} {}".format(eval_gpu, model, party, dealer_key_dir, peer_ip, cpu_threads)
-        log_dir = "output/P{}/{}-128/logs/".format(party, model)
+        log_dir = "output/P{}/models/{}-128/logs/".format(party, model)
         run_seq(dealer_cmd, eval_cmd, log_dir)
         key_file = '{}_inference_key_{}.dat'.format(model, party)
         remove_key(dealer_key_dir, key_file)
@@ -52,11 +52,11 @@ def run_perf(party, dealer_gpu, eval_gpu, dealer_key_dir, peer_ip, cpu_threads):
         stats['dealer'][model] = dict()
         stats['evaluator'][model] = dict()
         
-        dealer_lines = open('output/P{}/{}-128/dealer.txt'.format(party, model)).readlines()
+        dealer_lines = open('output/P{}/models/{}-128/dealer.txt'.format(party, model)).readlines()
         stats['dealer'][model]['time'] = get_time(dealer_lines[0])
         stats['dealer'][model]['key_size'] = get_comm(dealer_lines[1])
 
-        eval_lines = open('output/P{}/{}-128/evaluator.txt'.format(party, model)).readlines()
+        eval_lines = open('output/P{}/models/{}-128/evaluator.txt'.format(party, model)).readlines()
         stats['evaluator'][model]['gelu'] = dict()
         stats['evaluator'][model]['gelu']['time'] = get_time(eval_lines[6])
         stats['evaluator'][model]['gelu']['comm'] = get_comm(eval_lines[11])
@@ -134,7 +134,7 @@ def run_table8(party, dealer_gpu, eval_gpu, dealer_key_dir, peer_ip, cpu_threads
     for n_seq in [64, 128, 256, 512, 1024]:
         dealer_cmd = "CUDA_VISIBLE_DEVICES={} ./sigma gpt2 {} 0 {} {}".format(dealer_gpu, n_seq, party, dealer_key_dir)
         eval_cmd = "CUDA_VISIBLE_DEVICES={} ./sigma gpt2 {} 1 {} {} {} {}".format(eval_gpu, n_seq, party, dealer_key_dir, peer_ip, cpu_threads)
-        log_dir = 'output/P{}/gpt2-{}/logs/'.format(party, n_seq)
+        log_dir = 'output/P{}/models/gpt2-{}/logs/'.format(party, n_seq)
         run_seq(dealer_cmd, eval_cmd, log_dir)
         key_file = 'gpt2_inference_key_{}.dat'.format(party)
         remove_key(dealer_key_dir, key_file)
@@ -142,7 +142,7 @@ def run_table8(party, dealer_gpu, eval_gpu, dealer_key_dir, peer_ip, cpu_threads
     with open('output/P{}/Table8.json'.format(party), 'w') as outfile:
         table8 = dict()
         for n_seq in [64, 128, 256, 512, 1024]:
-            eval_lines = open('output/P{}/gpt2-{}/evaluator.txt'.format(party, n_seq)).readlines()
+            eval_lines = open('output/P{}/models/gpt2-{}/evaluator.txt'.format(party, n_seq)).readlines()
             table8[n_seq] = {
                 'Time (s)': get_time(eval_lines[0]),
                 'Comm (GB)': get_comm(eval_lines[10])
