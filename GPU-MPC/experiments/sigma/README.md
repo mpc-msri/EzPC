@@ -47,31 +47,38 @@ make sigma
 
 ### Run standalone
 
-1. Make produces the `sigma` executable which is in `experiments/sigma`.
+Make produces the `sigma` executable which is in `experiments/sigma`.
 
-2. Each party (the server and the client) needs to run two processes in sequence: the dealer and the evaluator.
+Each party (the server and the client) needs to run two processes in sequence: the dealer and the evaluator. In addition to other arguments, the dealer requires the user to specify the directory in which it will store keys (see prerequisites and caveats). The evaluator requires the user to specify the directory to read keys from, the IP address of its peer, and the number of CPU threads to use for computation.
 
-3. In addition to other arguments, the dealer requires the user to specify the directory in which it will store keys (see prerequisites and caveats).
+The syntax for running the dealer is 
+```javascript
+./sigma <model name> <sequence length> <role=0 for dealer> <party=0/1 (server/client)> <key directory>
+```
+We currently support the following models: `bert-tiny, bert-base, bert-large, gpt2, llama-7b, llama-13b`.
 
-4. The evaluator requires the user to specify the directory to read keys from, the IP address of its peer, and the number of CPU threads to use for computation.
+The syntax for running the evaluator is 
+```javascript
+./sigma <model name> <sequence length> <role=1 for evaluator> <party=0/1 (server/client)> <key directory> <peer IP> <CPU threads>`
+```
 
-5. The syntax for running the dealer is `./sigma <model name> <sequence length> <role=0 for dealer> <party=0/1 (server/client)> <key directory>`. We currently support the following models: `bert-tiny, bert-base, bert-large, gpt2, llama-7b, llama-13b`.
-
-6. The syntax for running the evaluator is `./sigma <model name> <sequence length> <role=1 for evaluator> <party=0/1 (server/client)> <key directory> <peer IP> <CPU threads>`.
-
-7. For example, to run GPT2, the server will run (in sequence):
-
-`./sigma gpt2 128 0 0 /tmp/` and `./sigma gpt2 128 1 0 /tmp/ <client IP> 64`.
+For example, to run GPT2, the server will run (in sequence):
+```javascript
+./sigma gpt2 128 0 0 /tmp/
+./sigma gpt2 128 1 0 /tmp/ <client IP> 64
+```
 
 The client will run (_on a different machine_):
-
-`./sigma gpt2 128 0 1 /tmp/` and `./sigma gpt2 128 1 1 /tmp/ <server IP> 64`.
+```javascript
+./sigma gpt2 128 0 1 /tmp/
+./sigma gpt2 128 1 1 /tmp/ <server IP> 64
+```
 
 Results are stored in the `output/P<party number>/models/<model name>-<sequence length>/` folder.
 
 ### Running the artifact
 
-Before the artifact can be run, we need to specify the dealer and evaluator configurations in `config.json`. These files are essentially used to populate the arguments specified in the previous section.
+Before the artifact can be run, we need to specify the dealer and evaluator configurations in `config.json`. 
 
 For the server(=P0), `config.json` looks like:
 ```javascript
@@ -94,15 +101,23 @@ For the client(=P1), `config.json` looks exactly the same, only the arguments ar
 
 A sample `config.json` file can be found in the `experiments/sigma` folder.
 
-Once `config.json` has been filled, the script `run_experiment.py` can be used to reproduce the tables and figures in the paper.
+Once `config.json` has been filled, the script `run_experiment.py` can be used to reproduce the tables and figures in the paper. Here are the relevant options:
 
-To reproduce Tables 4, 5, 9, and Figure 11, run `python run_experiment.py --perf true`
+```
+usage: python run_experiment.py [-h] [--perf true] [--n_seq true] [--all true] --party 0/1
 
-To reproduce Table 8, run `run_experiment.py --n_seq true`.
+optional arguments:
+  --perf true      Generate Tables 3, 5, 9, and Figure 11.
+  --n_seq true     Generate Table 8.
+  --all true       Run all the experiments.
+```
 
-Table 7 can be reproduced by throttling the network bandwidth (with `tc`, for example) and re-running `python run_experiment.py --perf true`. 
+Table 7 can be reproduced by throttling the network bandwidth (with `tc`, for example) and re-running `python run_experiment.py --perf true` to generate Table 5. 
 
-The output of the scripts can be found in `output/P<party number>/Table<table number>.json` and `output/P<party number>/Fig<figure number>.json`. Log files (which might help with debugging) can be found in the `output/P<party number>/models/<model name>-<sequence length>/logs/` folder.
+Results are stored in `output/P<party-number>/Table<table-number>.son` or `output/P<party-number>/Fig<figure-number>.json`. 
+
+Log files (which might help with debugging) can be found in the `output/P<party number>/models/<model name>-<sequence length>/logs/` folder.
+
 
 ## Citation
 
