@@ -78,7 +78,7 @@ docker pull trajore/gpu_mpc
 sudo docker run --gpus all --network host -v /home/$USER/path_to_GPU-MPC/:/home -it container_name /bin/bash
 
 ```
-Then Run setup.sh to configure according to GPU_arch and make orca as mentioned above.
+Then Run setup.sh to configure according to GPU_arch and make Orca/SIGMA as mentioned above.
 
 ## Citation
 
