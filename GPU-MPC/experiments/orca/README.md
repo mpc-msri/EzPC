@@ -76,40 +76,6 @@ Results are stored in the `output/P<party-number>/Table<table-number>` or `outpu
 
 Log files (which might help with debugging) are stored in the corresponding experiment folders, i.e., in `output/P<party-number>/Table<table-number>/logs` and `output/P<party-number>/Fig<figure-number>/logs`.
 
-
-## Docker Build
-
-You can also build the docker image using the provided Dockerfile_Gen for building the Environment. 
-
-### Install Nvidia Container Toolkit
-- Configure the repository:
-```
-curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey |sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
-&& curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list \
-&& sudo apt-get update
-```
-
-- Install the NVIDIA Container Toolkit packages:
-```
-sudo apt-get install -y nvidia-container-toolkit
-sudo nvidia-ctk runtime configure --runtime=docker
-sudo systemctl restart docker
-```
-### Build the Docker Image / pull the image from Docker Hub
-```
-# Local Build
-docker build -t gpu_mpc -f Dockerfile_Gen .
-
-# Pull from Docker Hub (Cuda 11.8)
-docker pull trajore/gpu_mpc
-```
-### Run the Docker Container
-```
-sudo docker run --gpus all --network host -v /home/$USER/path_to_GPU-MPC/:/home -it container_name /bin/bash
-
-```
-Then Run setup.sh to configure according to GPU_arch and make orca as mentioned above.
-
 ## Citation
 
 You can cite the paper using the following BibTeX entry:
