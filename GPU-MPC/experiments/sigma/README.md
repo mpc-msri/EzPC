@@ -63,7 +63,7 @@ The syntax for running the evaluator is
 
 We currently support the following models: `bert-tiny, bert-base, bert-large, gpt2, llama-7b, llama-13b`.
 
-For example, to run GPT2, the server will run (in sequence):
+**Example:** To run GPT2, the server will run (in sequence):
 ```javascript
 ./sigma gpt2 128 0 0 /tmp/
 ./sigma gpt2 128 1 0 /tmp/ <client IP> 64
