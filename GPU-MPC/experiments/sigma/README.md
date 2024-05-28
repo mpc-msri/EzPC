@@ -13,7 +13,7 @@ Please note that Sytorch requires CMake version >= 3.17 and the build will fail 
 
 The code uses CUTLASS version 2.11 by default, so if you change the CUDA version, please make sure that the CUTLASS version being built is compatible with the new CUDA version. To change the version of CUTLASS being built, add `git checkout <branch>;` after line 31 (`cd ext/cutlass;`) of setup.sh.
 
-The last line of `setup.sh` tries to install `matplotlib`, which is needed for generating Figure 11. In our experience, the installation fails if the versions of Python and `pip` do not match. In case the installation fails, please install `matplotlib` manually before running `run_experiment.py`.
+The last line of `setup.sh` tries to install `matplotlib`, which is needed for generating Figure 10. In our experience, the installation fails if the versions of Python and `pip` do not match. In case the installation fails, please install `matplotlib` manually before running `run_experiment.py`.
 
 1. Export environment variables
 
@@ -108,7 +108,7 @@ Once `config.json` has been filled, the script `run_experiment.py` can be used t
 usage: python run_experiment.py [-h] [--perf true] [--n_seq true] [--all true] --party 0/1
 
 optional arguments:
-  --perf true      Generate Tables 3, 5, 9, and Figure 11.
+  --perf true      Generate Tables 3, 5, 9, and Figure 10.
   --n_seq true     Generate Table 8.
   --all true       Run all the experiments.
 ```
