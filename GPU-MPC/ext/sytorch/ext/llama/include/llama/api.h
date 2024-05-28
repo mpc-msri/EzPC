@@ -182,6 +182,7 @@ void SlothMaxpool(int s1, int s2, int bin, GroupElement *x, GroupElement *y, std
 void SlothMaxpoolTriangular(int s1, int s2, int bin, GroupElement *x, GroupElement *y, std::string prefix = "");
 void SumOfSquare(int s1, int s2, GroupElement *x, GroupElement *y, std::string prefix = "");
 void SlothLayerNorm(int s1, int s2, GroupElement *x, GroupElement *A, GroupElement *B, GroupElement *y, int scale);
+void SlothRMSNorm(int s1, int s2, GroupElement *x, GroupElement *A, GroupElement *B, GroupElement *y, int scale);
 void SlothGemm(int s1, int s2, int s3, GroupElement *x, GroupElement *A, GroupElement *y, int scale);
 void SoftmaxTriangular(int32_t s1, int32_t s2, int bin, GroupElement *x, GroupElement *y, int32_t scale);
 void MatMul2DTriangular(int32_t s1, int32_t s2, int32_t s3, MASK_PAIR(GroupElement *A),
@@ -191,6 +192,7 @@ void SlothLRS(int size, GroupElement *x, GroupElement *y, int scale, std::string
 void SlothARS(int size, GroupElement *x, GroupElement *y, int scale, std::string prefix = "");
 void SlothTR(int size, int bin, GroupElement *x, GroupElement *y, int scale, std::string prefix = "");
 void SlothGelu(int size, int bin, GroupElement *x, GroupElement *out, int scale);
+void SlothSilu(int size, int bin, GroupElement *x, GroupElement *out, int scale);
 void SlothFaithfulARS(int size, int bin, GroupElement *x, GroupElement *y, int scale, std::string prefix = "");
 
 void reconstruct(int32_t size, GroupElement *arr, int bw);

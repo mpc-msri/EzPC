@@ -1,8 +1,8 @@
 // Author: Neha Jawalkar
 // Copyright:
-// 
+//
 // Copyright (c) 2024 Microsoft Research
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -87,11 +87,8 @@ __global__ void windowFuncKernel(int party, MaxpoolParams p, T *d_X, T *d_max, T
             j = n * p.H * p.W * p.C + (h / p.strideH) * p.W * p.C + (w / p.strideW) * p.C + c;
         }
         WindowArgs wa{party, i, j, N, M};
-        // printf("i=%d, j=%d, max[%d]=%ld\n", i, j, j, d_max[j]);
         auto o = T(f(wa, u64(d_X[i]), u64(d_max[j]), bytes));
         gpuMod(o, p.bw);
-        // if (i <= 4)
-        // printf("o[%d]=%ld, %ld, %ld, %d\n", i, u64(d_X[i]), u64(d_max[j]), o, j);
         d_out[i] = o;
     }
 }
@@ -104,7 +101,7 @@ T *windowFunc(int party, MaxpoolParams p, T *d_X, T *d_M, u8 *d_bytes = NULL, bo
     T *d_out = d_X;
     if (!inPlace)
         d_out = (T *)gpuMalloc(inSz * sizeof(T));
-    printf("%d, %d, %d, %d\n", p.strideH, p.FH, p.strideW, p.FW);
+    // printf("%d, %d, %d, %d\n", p.strideH, p.FH, p.strideW, p.FW);
     assert(p.strideH == p.FH && p.strideW == p.FW);
     assert(p.zPadHLeft == 0 && p.zPadHRight == 0 && p.zPadWLeft == 0 && p.zPadWRight == 0);
     windowFuncKernel<T, f><<<(inSz - 1) / 128 + 1, 128>>>(party, p, d_X, d_M, d_out, inSz, mSz, d_bytes);
@@ -120,7 +117,6 @@ T *keygenWindowMul(u8 **key_as_bytes, int party, MaxpoolParams p, T *d_mask_X, T
     auto d_mulMask = randomGEOnGpu<T>(inSz, p.bw);
     // checkCudaErrors(cudaMemset(d_mulMask, 0, inSz * sizeof(T)));
     auto d_mulMask1 = windowFunc<T, keygenMul<T>>(party, p, d_mask_X, d_mask_M, (u8 *)d_mulMask);
-    // printf("Writing mul key, N=%lx\n", *key_as_bytes);
     writeShares<T, T>(key_as_bytes, party, inSz, d_mask_X, p.bw);
     writeShares<T, T>(key_as_bytes, party, mSz, d_mask_M, p.bw);
     writeShares<T, T>(key_as_bytes, party, inSz, d_mulMask1, p.bw);
@@ -131,19 +127,18 @@ T *keygenWindowMul(u8 **key_as_bytes, int party, MaxpoolParams p, T *d_mask_X, T
         assert(d_tempMask == d_mulMask);
     }
     // truncate X*M + B as is correct
-    auto d_truncateMask = genGPUTruncateKey<T, T>(key_as_bytes, party, /*TruncateType::TrWithSlack*/t, p.bw, p.bw, p.scale, inSz, d_mulMask, gaes);
-    gpuFree(d_mulMask);
+    auto d_truncateMask = genGPUTruncateKey<T, T>(key_as_bytes, party, t, p.bw, p.bw, p.scale, inSz, d_mulMask, gaes);
+    if (d_truncateMask != d_mulMask)
+        gpuFree(d_mulMask);
     return d_truncateMask;
 }
 
 template <typename T>
 T *windowMul(SigmaPeer *peer, int party, MaxpoolParams p, GPUMulKey<T> &k, T *d_X, T *d_M, TruncateType t, AESGlobalContext *gaes, Stats *s, T *d_B = NULL)
 {
-    // printf("Start################\n");
     auto inSz = getInSz(p);
     auto mSz = getMSz(p);
     auto d_mulKey = (u8 *)moveToGPU((u8 *)k.a, (2 * inSz + mSz) * sizeof(T), s);
-    // printf("%ld, %ld, %ld\n", k.mulKey.a[0], k.mulKey.b[0], k.mulKey.c[0]);
     auto d_mulOut = windowFunc<T, beaverMul<T>>(party, p, d_X, d_M, (u8 *)d_mulKey);
     gpuFree(d_mulKey);
     peer->reconstructInPlace(d_mulOut, p.bw, inSz, s);
@@ -152,8 +147,8 @@ T *windowMul(SigmaPeer *peer, int party, MaxpoolParams p, GPUMulKey<T> &k, T *d_
         auto d_temp = windowFunc<T, xPlusM<u64(1), u64(1)>>(party, p, d_mulOut, d_B, NULL, true);
         assert(d_mulOut == d_temp);
     }
-    auto d_truncated_O = gpuTruncate<T, T>(p.bw, p.bw, /*TruncateType::TrWithSlack*/t, k.trKey, p.scale, peer, party, inSz, d_mulOut, gaes, s);
-    gpuFree(d_mulOut);
-    // printf("End################\n");
+    auto d_truncated_O = gpuTruncate<T, T>(p.bw, p.bw, t, k.trKey, p.scale, peer, party, inSz, d_mulOut, gaes, s);
+    if (d_truncated_O != d_mulOut)
+        gpuFree(d_mulOut);
     return d_truncated_O;
 }

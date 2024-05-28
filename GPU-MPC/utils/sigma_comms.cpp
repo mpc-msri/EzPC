@@ -63,7 +63,6 @@ void SigmaPeer::wait()
 
 void SigmaPeer::initCommBufs(bool pinMem)
 {
-    // printf("################## Increase the size of comm bufs! #####################\n");
     printf("Allocating %lu bytes of memory for comm bufs\n", commBufSize);
     h_bufA0 = cpuMalloc(commBufSize, pinMem);
     h_bufA1 = cpuMalloc(commBufSize, pinMem);

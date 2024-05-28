@@ -337,10 +337,13 @@ int lt_main(int __argc, char**__argv){
     const u64 n_layer = 12;
     const u64 scale = 12;
     u64 bitlength = 50;
-    GPT2<u64> net(n_layer, n_head, n_embd);
-    net.init(scale);
-    net.load("gpt2lmr.dat");
-    Tensor<u64> input({128, n_embd});
+    GPT2<i64> net(n_layer, n_head, n_embd);
+    Tensor<i64> input({128, n_embd});
+    net.init(scale, input);
+    auto ct = new ClearText<i64>();
+    ct->bw = 50;
+    net.setBackend(ct);
+    net.load("gpt2-weights.dat");
     input.load("15469.dat", scale);
     printf("Starting\n");
     net.forward(input);

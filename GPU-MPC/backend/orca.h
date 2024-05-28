@@ -96,8 +96,6 @@ public:
         {
             assert(0);
         }
-        // auto h_data = (T*) moveToCPU((u8*) in.d_data, in.size() * sizeof(T), NULL);
-        // printf("Truncate output=%lu, %lu, %lu\n", h_data[0], h_data[1], h_data[in.size() - 1]);
 
         auto end = std::chrono::high_resolution_clock::now();
         auto elapsed = end - start;

@@ -1,8 +1,8 @@
 // Authors: Kanav Gupta, Neha Jawalkar
 // Copyright:
-// 
+//
 // Copyright (c) 2024 Microsoft Research
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -227,7 +227,7 @@ public:
         for (auto &node : allNodesInExecutionOrder)
         {
             auto layer = node->layer;
-            printf("Loading weights layer %s\n", layer->name.data());
+            // printf("Loading weights layer %s\n", layer->name.data());
             if (layer->name == "_MHADummy")
             {
                 auto mha = (_MHADummy<T> *)layer;
@@ -253,7 +253,6 @@ public:
                     Tensor2D<T> wQ(mha->wQKV.d1, mha->wQKV.d2 / 3);
                     if (mha->qkvLayout == "kvqsep")
                     {
-                        printf("#################### %d, %d, %d\n", wK.d1, wK.d2, mha->wQKV.d1);
                         for (u64 j = 0; j < wK.size(); j++)
                         {
                             wK.data[j] = T(floatWeights[wIdx + j] * (1LL << scale));
@@ -296,8 +295,6 @@ public:
                     {
                         assert(0);
                     }
-
-                    printf("Loading model weights=%ld, %ld, %ld\n", wK.data[0], wV.data[0], wQ.data[0]);
                     for (u64 j = 0; j < mha->wQKV.d1; j++)
                     {
                         for (u64 k = 0; k < mha->wQKV.d2 / 3; k++)
@@ -307,8 +304,6 @@ public:
                             mha->wQKV(j, 2 * mha->wQKV.d2 / 3 + k) = wV(j, k);
                         }
                     }
-                    printf("Loaded model weights=%d, %d, %ld, %ld, %ld\n", mha->wQKV.d1, mha->wQKV.d2, mha->wQKV(mha->wQKV.d1 - 1, 0), mha->wQKV(mha->wQKV.d1 - 1, mha->wQKV.d2 / 3), mha->wQKV(mha->wQKV.d1 - 1, 2 * mha->wQKV.d2 / 3));
-                    // memcpy(mha->wQKV.data, wQKV.data, mha->wQKV.size());
                     mha->bQKV.as_nd().zero();
                 }
                 for (u64 j = 0; j < mha->wProj.size(); j++)
@@ -316,11 +311,18 @@ public:
                     mha->wProj.data[j] = T(floatWeights[wIdx + j] * (1LL << scale));
                 }
                 wIdx += mha->wProj.size();
-                for (u64 j = 0; j < mha->bProj.size(); ++j)
+                if (mha->qkvLayout == "qkvsep")
                 {
-                    mha->bProj.data[j] = T(floatWeights[wIdx + j] * (1LL << (2 * scale)));
+                    mha->bProj.as_nd().zero();
                 }
-                wIdx += mha->bProj.size();
+                else
+                {
+                    for (u64 j = 0; j < mha->bProj.size(); ++j)
+                    {
+                        mha->bProj.data[j] = T(floatWeights[wIdx + j] * (1LL << (2 * scale)));
+                    }
+                    wIdx += mha->bProj.size();
+                }
             }
             else if (layer->name == "BatchNormInference")
             {

@@ -33,7 +33,6 @@ T *gpuKeygenNExp(u8 **key_as_bytes, int party, int bw, int bin, int scale, int N
     // flip(relu(x - p)) + p
     // this is wrong, can't arbitrarily do bin + 1 whenever you please
     // the input is a 39 bit input
-    printf("Input to nExp=%d\n", N);
     auto d_clipMask = gpuGenReluKey<T, u16, p, p, true>(key_as_bytes, party, bin, 16, N, d_mask_X, gaes);
     // generate the output in the full bw and scale
     auto d_lsbLutMask = gpuKeyGenLUT<u16, T>(key_as_bytes, party, 8, bw, N, d_clipMask, gaes);
@@ -42,7 +41,6 @@ T *gpuKeygenNExp(u8 **key_as_bytes, int party, int bw, int bin, int scale, int N
     auto d_msbLutMask = gpuKeyGenLUT<u8, T>(key_as_bytes, party, 8, bw, N, d_msbMask, gaes);
     gpuFree(d_msbMask);
     // clipMask is lsb mask
-    printf("Calling mul with bw=%d, scale=%d, N=%d\n", bw, scale, N);
     auto d_nExpMask = gpuKeygenMul(key_as_bytes, party, bw, scale, N, d_msbLutMask, d_lsbLutMask, TruncateType::TrWithSlack, gaes);
     gpuFree(d_msbLutMask);
     gpuFree(d_lsbLutMask);

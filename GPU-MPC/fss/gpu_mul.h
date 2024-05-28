@@ -39,16 +39,12 @@ GPUMulKey<T> readGPUMulKey(u8** key_as_bytes, u64 szA, u64 szB, u64 szC, Truncat
     k.szB = szB;
     k.szC = szC;
     k.a = (T*) *key_as_bytes;
-    // printf("a=%ld\n", *k.a);
     *key_as_bytes += (szA * sizeof(T));
     k.b = (T*) *key_as_bytes;
-    // printf("b=%ld\n", *k.b);
     *key_as_bytes += (szB * sizeof(T));
     k.c = (T*) *key_as_bytes;
-    // printf("c=%ld\n", *k.c);
     *key_as_bytes += (szC * sizeof(T));
-    printf("Reading truncate key######\n");
-    k.trKey = readGPUTruncateKey<T>(/*TruncateType::TrWithSlack*/t, key_as_bytes);
+    k.trKey = readGPUTruncateKey<T>(t, key_as_bytes);
     return k;
 }
 

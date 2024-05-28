@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
     auto d_masked_A = getMaskedInputOnGpu(p.imgW, p.bw, d_mask_A, &h_A, true, 15);
     auto d_masked_B = getMaskedInputOnGpu(p.imgW, p.bw, d_mask_B, &h_B, true, 15);
 
-    printf("A=%ld, B=%ld, I=%ld, %ld, %ld, %ld\n", h_A[0], h_B[0], h_I[0], h_I[1], h_I[2], h_I[3]);
+    // printf("A=%ld, B=%ld, I=%ld, %ld, %ld, %ld\n", h_A[0], h_B[0], h_I[0], h_I[1], h_I[2], h_I[3]);
     u8 *startPtr, *curPtr;
     getKeyBuf(&startPtr, &curPtr, 8 * OneGB);
     llama::start();

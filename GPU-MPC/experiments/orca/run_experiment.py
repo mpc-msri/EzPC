@@ -53,7 +53,7 @@ def run_fig_helper(party, dealer_gpu, eval_gpu, dealer_key_dir, peer_ip, exp_nam
     plt.xlabel("Iterations")
     plt.ylabel("Cross-entropy loss")
     plt.savefig("output/P{}/{}/{}.png".format(party, fig_name, fig_name), dpi=300, bbox_inches='tight')
-    
+    plt.clf()
     with open('output/P{}/{}/loss.csv'.format(party, fig_name),'w') as out_file:
         writer = csv.writer(out_file)
         writer.writerow(['Iteration','Cross-Entropy Loss'])

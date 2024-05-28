@@ -1,8 +1,8 @@
 // Authors: Kanav Gupta, Neha Jawalkar
 // Copyright:
-// 
+//
 // Copyright (c) 2024 Microsoft Research
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -32,16 +32,17 @@
 template <typename T>
 class FFN : public SytorchModule<T>
 {
-    public:
+public:
     using SytorchModule<T>::gelu;
 
     u64 in;
     u64 hidden;
+
 public:
     FC<T> *up;
     FC<T> *down;
 
-    FFN(u64 in, u64 hidden) : in(in), hidden(hidden) 
+    FFN(u64 in, u64 hidden) : in(in), hidden(hidden)
     {
         up = new FC<T>(in, hidden, true);
         down = new FC<T>(hidden, in, true);
@@ -56,7 +57,7 @@ public:
 template <typename T>
 class MultiHeadAttention : public SytorchModule<T>
 {
-    public:
+public:
     using SytorchModule<T>::split;
     using SytorchModule<T>::view;
     using SytorchModule<T>::add;
@@ -75,10 +76,10 @@ public:
     u64 n_heads;
     u64 n_embd;
 
-    MultiHeadAttention(u64 n_heads, u64 n_embd): n_heads(n_heads), n_embd(n_embd)
+    MultiHeadAttention(u64 n_heads, u64 n_embd) : n_heads(n_heads), n_embd(n_embd)
     {
         always_assert(n_embd % n_heads == 0);
-        c_attn = new FC<T>(n_embd, 3*n_embd, true);
+        c_attn = new FC<T>(n_embd, 3 * n_embd, true);
         c_proj = new FC<T>(n_embd, n_embd, true);
     }
 
@@ -95,8 +96,8 @@ public:
 
         double divisor = 1 / sqrt(double(n_embd) / double(n_heads));
 
-        std::vector<Tensor<T>*> qks_sm_vs;
-        for(u64 i = 0; i < n_heads; ++i)
+        std::vector<Tensor<T> *> qks_sm_vs;
+        for (u64 i = 0; i < n_heads; ++i)
         {
             auto &q = view(qs, i);
             auto &k = view(ks, i);
@@ -120,21 +121,21 @@ public:
 template <typename T>
 class TransformerBlock : public SytorchModule<T>
 {
-    public:
+public:
     using SytorchModule<T>::add;
 
     MultiHeadAttention<T> *attn;
     FFN<T> *ffn;
     LayerNorm<T> *ln0;
     LayerNorm<T> *ln1;
-    
-    u64 n_heads, n_embd;
-public:
 
-    TransformerBlock(u64 n_heads, u64 n_embd): n_heads(n_heads), n_embd(n_embd)
+    u64 n_heads, n_embd;
+
+public:
+    TransformerBlock(u64 n_heads, u64 n_embd) : n_heads(n_heads), n_embd(n_embd)
     {
         attn = new MultiHeadAttention<T>(n_heads, n_embd);
-        ffn = new FFN<T>(n_embd, 4*n_embd);
+        ffn = new FFN<T>(n_embd, 4 * n_embd);
         ln0 = new LayerNorm<T>(n_embd);
         ln1 = new LayerNorm<T>(n_embd);
     }
@@ -155,7 +156,7 @@ public:
 template <typename T>
 class BERT : public SytorchModule<T>
 {
-    public:
+public:
     using SytorchModule<T>::tanh;
     using SytorchModule<T>::view;
     using SytorchModule<T>::add;
@@ -166,10 +167,9 @@ class BERT : public SytorchModule<T>
     u64 n_layer, n_heads, n_embd;
 
 public:
-    
-    BERT(u64 n_layer, u64 n_heads, u64 n_embd): n_layer(n_layer), n_heads(n_heads), n_embd(n_embd)
+    BERT(u64 n_layer, u64 n_heads, u64 n_embd) : n_layer(n_layer), n_heads(n_heads), n_embd(n_embd)
     {
-        for(u64 i = 0; i < n_layer; ++i)
+        for (u64 i = 0; i < n_layer; ++i)
         {
             blocks.push_back(new TransformerBlock<T>(n_heads, n_embd));
         }
@@ -179,11 +179,11 @@ public:
 
     Tensor<T> &_forward(Tensor<T> &input)
     {
-        // auto &y = ln_f->forward(input);
-        // Tensor<T> *x = &y;
-        Tensor<T> *x = &input;
-        
-        for(u64 i = 0; i < n_layer; ++i)
+        auto &y = ln_f->forward(input);
+        Tensor<T> *x = &y;
+        // Tensor<T> *x = &input;
+
+        for (u64 i = 0; i < n_layer; ++i)
         {
             auto &block = blocks[i];
             auto &x_out = block->forward(*x);
@@ -194,18 +194,18 @@ public:
     }
 };
 
-int main(int __argc, char**__argv)
+int main(int __argc, char **__argv)
 {
     sytorch_init();
 
     // bert tiny
-    // const u64 n_embd = 128;
-    // const u64 n_head = n_embd / 64;
-    // const u64 n_layer = 2;
-    // const u64 scale = 12;
-    // const u64 bw = 38;
-    // const u64 n_seq = 128;
-    
+    const u64 n_embd = 128;
+    const u64 n_head = n_embd / 64;
+    const u64 n_layer = 2;
+    const u64 scale = 12;
+    const u64 bw = 37;
+    const u64 n_seq = 128;
+
     // bert base
     // const u64 n_embd = 768;
     // const u64 n_head = 12;
@@ -215,12 +215,12 @@ int main(int __argc, char**__argv)
     // const u64 n_seq = 128;
 
     // bert large
-    const u64 n_embd = 1024;
-    const u64 n_head = n_embd / 64;
-    const u64 n_layer = 24;
-    const u64 scale = 12;
-    const u64 bw = 51;
-    const u64 n_seq = 128;
+    // const u64 n_embd = 1024;
+    // const u64 n_head = n_embd / 64;
+    // const u64 n_layer = 24;
+    // const u64 scale = 12;
+    // const u64 bw = 51;
+    // const u64 n_seq = 128;
 
     int party = atoi(__argv[1]);
     std::string ip = "127.0.0.1";
@@ -237,15 +237,17 @@ int main(int __argc, char**__argv)
     llama->init(ip, true);
 
     BERT<u64> net(n_layer, n_head, n_embd);
-    net.init(scale);
+    Tensor<u64> input({n_seq, n_embd});
+    net.init(scale, input);
     net.setBackend(llama);
     net.optimize();
-    llama->initializeInferencePartyA(net.root);
-
-    Tensor<u64> input({n_seq, n_embd});
-    if(party == CLIENT){
-        input.fill(1LL << (scale-2));
+    if (party != DEALER)
+    {
+        net.load("bert-tiny-weights.dat");
+        input.load("15469.dat", scale);
     }
+
+    llama->initializeInferencePartyA(net.root);
     llama->initializeInferencePartyB(input);
 
     llama::start();
@@ -256,5 +258,10 @@ int main(int __argc, char**__argv)
     llama->outputA(output);
     llama->finalize();
 
+    if (party == CLIENT)
+    {
+        auto signedAct = Tensor<i64>((i64*) net.activation.data, net.activation.shape);
+        print(signedAct, scale, bw);
+    }
     return 0;
 }

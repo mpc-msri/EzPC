@@ -1,0 +1,24 @@
+{
+    "P0": {
+        "dealer": {
+            "gpu": 0,
+            "key_dir": "/tmp/"
+        },
+        "evaluator": {
+            "gpu": 1,
+            "peer": "0.0.0.0",
+            "cpu_threads": 64
+        }
+    },
+    "P1": {
+        "dealer": {
+            "gpu": 2,
+            "key_dir": "/tmp/"
+        },
+        "evaluator": {
+            "gpu": 3,
+            "peer": "0.0.0.0",
+            "cpu_threads": 64
+        }
+    }
+}

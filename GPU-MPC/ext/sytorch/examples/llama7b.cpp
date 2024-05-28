@@ -1,8 +1,8 @@
 // Authors: Kanav Gupta, Neha Jawalkar
 // Copyright:
-// 
+//
 // Copyright (c) 2024 Microsoft Research
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -186,7 +186,8 @@ public:
             auto &x_out = block->forward(*x);
             x = &x_out;
         }
-        return ln_f->forward(*x);
+        return *x;
+        // return ln_f->forward(*x);
     }
 };
 
@@ -209,8 +210,9 @@ public:
     Tensor<T> &_forward(Tensor<T> &input)
     {
         auto &fc_in = llama_model->forward(input);
-        auto &fc_out = fc->forward(fc_in);
-        return view(fc_out, -1);
+        return fc_in;
+        // auto &fc_out = fc->forward(fc_in);
+        // return view(fc_out, -1);
     }
 };
 
@@ -221,43 +223,122 @@ u64 get_n_seq(std::string filename, u64 n_embd)
     return n_elements / (4 * n_embd);
 }
 
-void ct_main()
+void ct_main(std::string inpName)
 {
     sytorch_init();
 
+    // const u64 n_vocab = 32000;
+    // const u64 n_embd = 4096;
+    // const u64 n_head = 32;
+    // const u64 n_layer = 32;
+    // const u64 intermediate_size = 11008;
+    // const u64 scale = 12;
+
     const u64 n_vocab = 32000;
-    const u64 n_embd = 4096;
-    const u64 n_head = 32;
-    const u64 n_layer = 32;
-    const u64 intermediate_size = 11008;
+    const u64 n_ctx = 4096;
+    const u64 n_embd = 5120;
+    const u64 n_head = 40;  // 40;
+    const u64 n_layer = 1; // 40;
+    const u64 intermediate_size = 13824;
     const u64 scale = 12;
 
     LlamaNextWordLogits<i64> llama_model(n_layer, n_head, n_embd, n_vocab, intermediate_size);
-    llama_model.init(scale);
-    llama_model.load("/home/t-nejawalkar/ananta/meta_llama2_7b.dat");
-    std::string fname = std::string("/home/t-nejawalkar/ananta/lambada-meta-llama2-7b/") + /*std::to_string(i)*/ +"993.dat";
-    u64 n_seq = get_n_seq(fname, n_embd);
+    u64 n_seq = 128; // get_n_seq(fname, n_embd);
     Tensor<i64> input({n_seq, n_embd});
+    llama_model.init(scale, input);
+
+    auto ct = new ClearText<i64>();
+    ct->bw = 48;
+    llama_model.setBackend(ct);
+
+    // llama_model.load("/home/t-nejawalkar/ananta/meta_llama2_7b.dat");
+    llama_model.load("/home/t-nejawalkar/ananta/meta_llama2_13b.dat");
+
+    // std::string fname = std::string("/home/t-nejawalkar/ananta/lambada-meta-llama2-7b/") + /*std::to_string(i)*/ +"999.dat";
+    std::string fname = std::string("/home/t-nejawalkar/ananta/lambada-meta-llama2-13b/") + /*std::to_string(i)*/ inpName;
     input.load(fname, scale);
     auto &res = llama_model.forward(input);
-    i64 max = INT_MIN;
-    int argmax = 0;
-    for (int i = 0; i < n_vocab; i++)
-    {
-        if (i == 0)
-            printf("res=%ld\n", res.data[i]);
-        if (res.data[i] > max)
-        {
-            max = res.data[i];
-            argmax = i;
-        }
-    }
-    std::cout << argmax << std::endl;
-    std::cout << max << std::endl;
+    auto signedAct = Tensor<i64>((i64 *)res.data, res.shape);
+    print(signedAct, scale, ct->bw);
+    auto maxIdx = signedAct.as_2d().argmax(0);
+    std::cout << "Output:" << std::endl;
+    std::cout << maxIdx << std::endl;
+    std::cout << res.data[maxIdx] << std::endl;
+    printf("%ld\n", signedAct.data[res.size() - 1]);
 }
 
-int main()
+void lt_main(std::string inpName, int party)
 {
-    ct_main();
+    sytorch_init();
+
+    // const u64 n_vocab = 32000;
+    // const u64 n_embd = 4096;
+    // const u64 n_head = 32;
+    // const u64 n_layer = 32;//32;
+    // const u64 intermediate_size = 11008;
+    // const u64 scale = 12;
+
+    const u64 n_vocab = 32000;
+    const u64 n_ctx = 4096;
+    const u64 n_embd = 5120;
+    const u64 n_head = 40;  // 40;
+    const u64 n_layer = 1; // 40;
+    const u64 intermediate_size = 13824;
+    const u64 scale = 12;
+
+    using LlamaVersion = LlamaTransformer<u64>;
+    LlamaVersion *llama = new LlamaVersion();
+    LlamaConfig::bitlength = 48;
+    LlamaConfig::party = party;
+    llama->init("0.0.0.0", true);
+
+    LlamaNextWordLogits<u64> llama_model(n_layer, n_head, n_embd, n_vocab, intermediate_size);
+    u64 n_seq = 128; // get_n_seq(fname, n_embd);
+    Tensor<u64> input({n_seq, n_embd});
+    input.zero();
+    llama_model.init(scale, input);
+    llama_model.setBackend(llama);
+    llama_model.optimize();
+    llama_model.zero();
+
+    if (party != DEALER)
+    {
+        // llama_model.load("/home/t-nejawalkar/ananta/meta_llama2_7b.dat");
+        llama_model.load("/home/t-nejawalkar/ananta/meta_llama2_13b.dat");
+        std::string fname = std::string("/home/t-nejawalkar/ananta/lambada-meta-llama2-13b/") + /*std::to_string(i)*/ inpName;
+        input.load(fname, scale);
+    }
+
+    // std::string fname = std::string("/home/t-nejawalkar/ananta/lambada-meta-llama2-7b/") + /*std::to_string(i)*/ +"999.dat";
+    llama->initializeInferencePartyA(llama_model.root);
+    llama->initializeInferencePartyB(input);
+
+    llama::start();
+    auto &res = llama_model.forward(input);
+    llama::end();
+
+    auto &output = llama_model.activation;
+    llama->outputA(output);
+    llama->finalize();
+
+    if (party == CLIENT)
+    {
+        auto signedAct = Tensor<i64>((i64 *)llama_model.activation.data, llama_model.activation.shape);
+        print(signedAct, scale, LlamaConfig::bitlength);
+        auto maxIdx = signedAct.as_2d().argmax(0);
+        std::cout << "Output:" << std::endl;
+        std::cout << maxIdx << std::endl;
+        std::cout << output.data[maxIdx] << std::endl;
+        printf("%ld\n", signedAct.data[output.size() - 1]);
+    }
+}
+
+int main(int __argc, char **__argv)
+{
+    int party = atoi(__argv[1]);
+    if (party == 0)
+        ct_main("999.dat");
+    else
+        lt_main("999.dat", party);
     return 0;
 }

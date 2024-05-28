@@ -1,8 +1,8 @@
 // Authors: Kanav Gupta, Neha Jawalkar
 // Copyright:
-// 
+//
 // Copyright (c) 2024 Microsoft Research
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -180,6 +180,36 @@ public:
     virtual void mha(int n_heads, int n_embed, int dim_W, bool selfAttn, bool doNormQKt, bool doRotEmb, const Tensor2D<T> &wQKV, const Tensor1D<T> &bQKV, const Tensor2D<T> &wProj, const Tensor1D<T> &bProj, const Tensor2D<T> &X, Tensor2D<T> &Y)
     {
         assert(0 && "not implemented");
+    }
+
+    virtual void rotary_embedding(Tensor<T> &x, Tensor<T> &y, u64 scale, u64 max_position_embeddings = 2048, u64 base = 10000)
+    {
+        u64 n_seq = x.shape[0];
+        u64 dim = x.shape[1];
+        // printf("dims=%d, %lu, %ld, %ld\n", x.shape.size(), x.size(), x.data[0], y.data[0]);
+        auto y_2d = y.as_2d();
+        auto x_2d = x.as_2d();
+
+        for (u64 i = 0; i < n_seq; ++i)
+        {
+            for (u64 j = 0; j < dim; j++)
+            {
+                double scalar = 1.0 / (std::pow(base, (double)((2 * j) % dim) / dim));
+                T scalarInt = (i * scalar) * std::pow(2, scale);
+                T sinx = std::sin(scalarInt / (float)std::pow(2, scale)) * std::pow(2, scale - 3);
+                T cosx = std::cos(scalarInt / (float)std::pow(2, scale)) * std::pow(2, scale - 3);
+
+                if (sinx == (1ULL << (scale - 3)))
+                    sinx -= 1;
+                if (cosx == (1ULL << (scale - 3)))
+                    cosx -= 1;
+                u64 k = (j + dim / 2) % dim;
+                T mul = 2 * (j >= dim / 2) - 1;
+                T z = cosx * x_2d(i, j) + sinx * mul * x_2d(i, k);
+                y_2d(i, j) = z;
+            }
+        }
+        this->truncate(y_2d, scale - 3, 1);
     }
 
     virtual void optimize(LayerGraphNode<T> *root)
