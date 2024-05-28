@@ -77,7 +77,7 @@ for b in benchmarks:
     print("[+] --- norm comm = " + str(norm_comm/1024.0) + " GB")
     print("[+] --- online time = " + str(total_time/1000.0) + " s")
     print("[+] --- online comm = " + str(total_comm/1024.0) + " GB")
-    outcsv.write(f"{b},{act_time},{act_comm},{softmax_time},{softmax_comm},{norm_time},{norm_comm},{total_time},{total_comm}\n")
+    outcsv.write(f"{b},{act_time/1000.0},{act_comm/1024.0},{softmax_time/1000.0},{softmax_comm/1024.0},{norm_time/1000.0},{norm_comm/1024.0},{total_time/1000.0},{total_comm/1024.0}\n")
     outcsv.flush()
 
 logfile1.close()

@@ -119,6 +119,33 @@ Results are stored in `output/P<party-number>/Table<table-number>.json` or `outp
 
 Log files (which might help with debugging) can be found in the `output/P<party number>/models/<model name>-<sequence length>/logs/` folder.
 
+### Generating CPU numbers
+
+To generate CPU performance numbers in table 3 and figures 9,10, follow these steps:
+
+1. On both machines, run `setup.sh` script, as described in previous sections.
+
+2. On the first machine, change to the build directory and run the python script with it's IP address
+
+```
+cd ext/sytorch/build/
+python ../scripts/all-cpu-benchmarks-remote.py <ip> 0
+```
+
+3. On the second machine, use the IP address of the first machine.
+
+```
+cd ext/sytorch/build/
+python ../scripts/all-cpu-benchmarks-remote.py <ip> 1
+```
+
+If you'd like to run on a single machine machine, use the local script without any arguments. Note that since it runs 2 processes in parallel, it requires double the hardware.
+
+```
+python ../scripts/all-cpu-benchmarks-local.py
+```
+
+At the end of this script, which could take several hours, you get a `results.csv` file containing all the required time and communication numbers required to generate table 3 and figure 9,10.
 
 ## Citation
 
