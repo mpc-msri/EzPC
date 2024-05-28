@@ -251,11 +251,11 @@ void ct_main(std::string inpName)
     ct->bw = 48;
     llama_model.setBackend(ct);
 
-    // llama_model.load("/home/t-nejawalkar/ananta/meta_llama2_7b.dat");
-    llama_model.load("/home/t-nejawalkar/ananta/meta_llama2_13b.dat");
+    // llama_model.load("meta_llama2_7b.dat");
+    llama_model.load("meta_llama2_13b.dat");
 
-    // std::string fname = std::string("/home/t-nejawalkar/ananta/lambada-meta-llama2-7b/") + /*std::to_string(i)*/ +"999.dat";
-    std::string fname = std::string("/home/t-nejawalkar/ananta/lambada-meta-llama2-13b/") + /*std::to_string(i)*/ inpName;
+    // std::string fname = std::string("lambada-meta-llama2-7b/") + /*std::to_string(i)*/ +"999.dat";
+    std::string fname = std::string("lambada-meta-llama2-13b/") + /*std::to_string(i)*/ inpName;
     input.load(fname, scale);
     auto &res = llama_model.forward(input);
     auto signedAct = Tensor<i64>((i64 *)res.data, res.shape);
@@ -282,7 +282,7 @@ void lt_main(std::string inpName, int party)
     const u64 n_ctx = 4096;
     const u64 n_embd = 5120;
     const u64 n_head = 40;  // 40;
-    const u64 n_layer = 1; // 40;
+    const u64 n_layer = 40; // 40;
     const u64 intermediate_size = 13824;
     const u64 scale = 12;
 
@@ -303,13 +303,13 @@ void lt_main(std::string inpName, int party)
 
     if (party != DEALER)
     {
-        // llama_model.load("/home/t-nejawalkar/ananta/meta_llama2_7b.dat");
-        llama_model.load("/home/t-nejawalkar/ananta/meta_llama2_13b.dat");
-        std::string fname = std::string("/home/t-nejawalkar/ananta/lambada-meta-llama2-13b/") + /*std::to_string(i)*/ inpName;
+        // llama_model.load("meta_llama2_7b.dat");
+        llama_model.load("meta_llama2_13b.dat");
+        std::string fname = std::string("lambada-meta-llama2-13b/") + /*std::to_string(i)*/ inpName;
         input.load(fname, scale);
     }
 
-    // std::string fname = std::string("/home/t-nejawalkar/ananta/lambada-meta-llama2-7b/") + /*std::to_string(i)*/ +"999.dat";
+    // std::string fname = std::string("lambada-meta-llama2-7b/") + /*std::to_string(i)*/ +"999.dat";
     llama->initializeInferencePartyA(llama_model.root);
     llama->initializeInferencePartyB(input);
 

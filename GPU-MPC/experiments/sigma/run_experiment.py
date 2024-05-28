@@ -117,7 +117,8 @@ def run_perf(party, dealer_gpu, eval_gpu, dealer_key_dir, peer_ip, cpu_threads):
     with open('output/P{}/Fig11_data.csv'.format(party),'w') as out_file:
         online_time = list(map(lambda model: stats['evaluator'][model]['total']['time'], ['gpt-neo', 'gpt-neo-large', 'llama7b', 'llama13b']))
         X = ('1.3', '2.7', '7', '13')
-        plt.plot(X, online_time, marker='s')
+        plt.plot(X, online_time, marker='s', label='SIGMA-GPU')
+        plt.legend(loc='upper left')
         plt.xlabel('Number of parameters (in billions)')
         plt.ylabel('Time (s)')
         plt.savefig("output/P{}/Fig11.png".format(party), dpi=300, bbox_inches='tight')
