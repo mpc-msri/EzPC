@@ -1,7 +1,7 @@
 
 # GPU-MPC
 
-Implementation of protocols from the paper [Orca](https://eprint.iacr.org/2023/206) and [SIGMA]().
+Implementation of protocols from the papers [Orca](https://eprint.iacr.org/2023/206) and [SIGMA]().
 
 **Warning**: This is an academic proof-of-concept prototype and has not received careful code review. This implementation is NOT ready for production use.
 
