@@ -370,3 +370,52 @@ add_executable(
 )
 
 target_link_libraries(gptneobenchmark ${PROJECT_NAME})
+
+add_executable(
+    benchmark-bert-tiny
+    benchmarks/bert-tiny.cpp
+)
+
+target_link_libraries(benchmark-bert-tiny ${PROJECT_NAME})
+
+add_executable(
+    benchmark-bert-base
+    benchmarks/bert-base.cpp
+)
+
+target_link_libraries(benchmark-bert-base ${PROJECT_NAME})
+
+add_executable(
+    benchmark-bert-large
+    benchmarks/bert-large.cpp
+)
+
+target_link_libraries(benchmark-bert-large ${PROJECT_NAME})
+
+add_executable(
+    benchmark-gpt2
+    benchmarks/gpt2.cpp
+)
+
+target_link_libraries(benchmark-gpt2 ${PROJECT_NAME})
+
+add_executable(
+    benchmark-gptneo
+    benchmarks/gptneo.cpp
+)
+
+target_link_libraries(benchmark-gptneo ${PROJECT_NAME})
+
+add_executable(
+    benchmark-llama-7b
+    benchmarks/llama-7b.cpp
+)
+
+target_link_libraries(benchmark-llama-7b ${PROJECT_NAME})
+
+add_executable(
+    benchmark-llama-13b
+    benchmarks/llama-13b.cpp
+)
+
+target_link_libraries(benchmark-llama-13b ${PROJECT_NAME})
