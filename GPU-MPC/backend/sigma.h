@@ -1,8 +1,8 @@
 // Author: Neha Jawalkar
 // Copyright:
-// 
+//
 // Copyright (c) 2024 Microsoft Research
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -87,15 +87,17 @@ public:
             double val = double(m + 128) * std::pow(2.0, k - 7);
             (*invSqrtTab)[i] = GroupElement(double(1LL << (2 * scale)) / sqrt(val / n_embed));
         }
-
-        auto filename = keyFile + "_" + std::to_string(party) + ".dat";
-        keySize = std::filesystem::file_size(filename);
-        int fd = openForReading(filename);
-        printf("%s, %d\n", filename.data(), fd);
-        getAlignedBuf(&keyBuf, keySize);
-        readKey(fd, keySize, keyBuf, NULL);
-
-        startPtr = keyBuf;
+        if (keyFile.compare("") != 0)
+        {
+            auto filename = keyFile + "_" + std::to_string(party) + ".dat";
+            keySize = std::filesystem::file_size(filename);
+            int fd = openForReading(filename);
+            printf("%s, %d\n", filename.data(), fd);
+            getAlignedBuf(&keyBuf, keySize);
+            readKey(fd, keySize, keyBuf, NULL);
+            startPtr = keyBuf;
+            closeFile(fd);
+        }
 
         LlamaConfig::bitlength = bw;
         LlamaConfig::party = party + 2;
@@ -309,10 +311,13 @@ public:
         keyBuf += padding;
         keySize += padding;
         assert(keySize < keyBufSize);
-        std::ofstream f(keyFile + "_" + std::to_string(party) + ".dat");
-        f.write((char *)startPtr, keySize);
-        f.close();
-        cpuFree(startPtr);
+        if (keyFile.compare("") != 0)
+        {
+            std::ofstream f(keyFile + "_" + std::to_string(party) + ".dat");
+            f.write((char *)startPtr, keySize);
+            f.close();
+            cpuFree(startPtr);
+        }
     }
 
     void matmul(const Tensor2D<T> &a, const Tensor2D<T> &b, Tensor2D<T> &c)
@@ -334,7 +339,6 @@ public:
     void silu(const Tensor<T> &in, Tensor<T> &out, u64 scale, u64 mode = 0)
     {
         out.d_data = gpuKeyGenGelu<T, u16, 10>(&keyBuf, party, bw, bw - scale, (int)scale, in.size(), in.d_data, &g);
-
     }
 
     void SIGMALayernormKeygen(const Tensor1D<T> &A, const Tensor1D<T> &B, const Tensor<T> &x, Tensor<T> &y, u64 scale, bool computeMu)

@@ -30,7 +30,7 @@ import matplotlib.pyplot as plt
 
 import sys
 sys.path.insert(0, '../..')
-from experiments.utils import run_seq, remove_key
+from experiments.utils import run_one
 
 def get_time(line):
     return round(float(line.split('=')[-1].split(' ')[0]) / 10**6, 3)
@@ -38,14 +38,11 @@ def get_time(line):
 def get_comm(line):
     return round(float(line.split('(')[-1].split(' ')[0]), 3)
 
-def run_perf(party, dealer_gpu, eval_gpu, dealer_key_dir, peer_ip, cpu_threads):
+def run_perf(party, gpu, peer_ip, cpu_threads):
     for model in ['bert-tiny', 'bert-base', 'bert-large', 'gpt2', 'gpt-neo', 'gpt-neo-large', 'llama7b', 'llama13b']:
-        dealer_cmd = "CUDA_VISIBLE_DEVICES={} ./sigma {} 128 0 {} {}".format(dealer_gpu, model, party, dealer_key_dir)
-        eval_cmd = "CUDA_VISIBLE_DEVICES={} ./sigma {} 128 1 {} {} {} {}".format(eval_gpu, model, party, dealer_key_dir, peer_ip, cpu_threads)
-        log_dir = "output/P{}/models/{}-128/logs/".format(party, model)
-        run_seq(dealer_cmd, eval_cmd, log_dir)
-        key_file = '{}_inference_key_{}.dat'.format(model, party)
-        remove_key(dealer_key_dir, key_file)
+        cmd = "CUDA_VISIBLE_DEVICES={} ./sigma {} 128 {} {} {}".format(gpu, model, party, peer_ip, cpu_threads)
+        log_dir = "output/P{}/models/{}-128/".format(party, model)
+        run_one(cmd, log_dir, "logs.txt")
 
     stats = dict({'dealer': dict(), 'evaluator': dict()})
     for model in ['bert-tiny', 'bert-base', 'bert-large', 'gpt2', 'gpt-neo', 'gpt-neo-large', 'llama7b', 'llama13b']:
@@ -130,15 +127,11 @@ def run_perf(party, dealer_gpu, eval_gpu, dealer_key_dir, peer_ip, cpu_threads):
             writer.writerow((X[i], online_time[i]))
 
 
-def run_table8(party, dealer_gpu, eval_gpu, dealer_key_dir, peer_ip, cpu_threads):
-
+def run_table8(party, gpu, peer_ip, cpu_threads):
     for n_seq in [64, 128, 256, 512, 1024]:
-        dealer_cmd = "CUDA_VISIBLE_DEVICES={} ./sigma gpt2 {} 0 {} {}".format(dealer_gpu, n_seq, party, dealer_key_dir)
-        eval_cmd = "CUDA_VISIBLE_DEVICES={} ./sigma gpt2 {} 1 {} {} {} {}".format(eval_gpu, n_seq, party, dealer_key_dir, peer_ip, cpu_threads)
-        log_dir = 'output/P{}/models/gpt2-{}/logs/'.format(party, n_seq)
-        run_seq(dealer_cmd, eval_cmd, log_dir)
-        key_file = 'gpt2_inference_key_{}.dat'.format(party)
-        remove_key(dealer_key_dir, key_file)
+        cmd = "CUDA_VISIBLE_DEVICES={} ./sigma gpt2 {} {} {} {}".format(gpu, n_seq, party, peer_ip, cpu_threads)
+        log_dir = 'output/P{}/models/gpt2-{}/'.format(party, n_seq)
+        run_one(cmd, log_dir, "logs.txt")
 
     with open('output/P{}/Table8.json'.format(party), 'w') as outfile:
         table8 = dict()
@@ -169,15 +162,13 @@ def main():
         config = global_config['P0']
     else:
         config = global_config['P1']
-    dealer_config = config['dealer']
-    eval_config = config['evaluator']
     if args.all:
-        run_perf(args.party, dealer_config['gpu'], eval_config['gpu'], dealer_config['key_dir'], eval_config['peer'], eval_config['cpu_threads'])
-        run_table8(args.party, dealer_config['gpu'], eval_config['gpu'], dealer_config['key_dir'], eval_config['peer'], eval_config['cpu_threads'])
+        run_perf(args.party, config['gpu'], config['peer'], config['cpu_threads'])
+        run_table8(args.party, config['gpu'], config['peer'], config['cpu_threads'])
     elif args.perf:
-        run_perf(args.party, dealer_config['gpu'], eval_config['gpu'], dealer_config['key_dir'], eval_config['peer'], eval_config['cpu_threads'])
+        run_perf(args.party, config['gpu'], config['peer'], config['cpu_threads'])
     elif args.n_seq:
-        run_table8(args.party, dealer_config['gpu'], eval_config['gpu'], dealer_config['key_dir'], eval_config['peer'], eval_config['cpu_threads'])
+        run_table8(args.party, config['gpu'], config['peer'], config['cpu_threads'])
 
 if __name__ == '__main__':
     main();

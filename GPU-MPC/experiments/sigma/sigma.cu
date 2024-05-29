@@ -47,8 +47,6 @@ int main(int __argc, char **__argv)
 
     std::string model(__argv[1]);
     printf("Model=%s\n", model.data());
-    std::string keyDir(__argv[4]);
-    auto keyFile = keyDir + model + "_inference_key";
     u64 keyBufSz = 0;
     SytorchModule<u64> *net;
     Tensor<u64> input({n_seq, n_embd});
@@ -175,7 +173,7 @@ int main(int __argc, char **__argv)
     auto inferenceDir = outDir + model + "-" + std::to_string(n_seq) + "/";
     makeDir(inferenceDir);
 
-    auto sigmaKeygen = new SIGMAKeygen<u64>(party, bw, scale, keyFile, keyBufSz);
+    auto sigmaKeygen = new SIGMAKeygen<u64>(party, bw, scale, "", keyBufSz);
     net->setBackend(sigmaKeygen);
     net->optimize();
     auto start = std::chrono::high_resolution_clock::now();
@@ -194,8 +192,11 @@ int main(int __argc, char **__argv)
     statsFile << ss.rdbuf();
     statsFile.close();
 
-    std::string ip(__argv[5]);
-    auto sigma = new SIGMA<u64>(party, ip, keyFile, bw, scale, n_seq, n_embd, atoi(__argv[6]));
+    std::string ip(__argv[4]);
+    auto sigma = new SIGMA<u64>(party, ip, "", bw, scale, n_seq, n_embd, atoi(__argv[5]));
+    sigma->keyBuf = sigmaKeygen->startPtr;
+    sigma->startPtr = sigma->keyBuf;
+    sigma->keySize = sigmaKeygen->keySize;
     net->setBackend(sigma);
     sigma->peer->sync();
     start = std::chrono::high_resolution_clock::now();
