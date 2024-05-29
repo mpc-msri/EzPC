@@ -84,5 +84,4 @@ for b in benchmarks:
     outcsv.flush()
 
 logfile1.close()
-logfile2.close()
 outcsv.close()
