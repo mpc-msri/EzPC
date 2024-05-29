@@ -143,11 +143,11 @@ You can cite the paper using the following BibTeX entry:
 
 ```
 
-@article{article,
+@inproceedings{sigma,
 author = {Kanav Gupta and Neha Jawalkar and Ananta Mukherjee and Nishanth Chandran and Divya Gupta and Ashish Panwar and Rahul Sharma},
 year = {2024},
 title = {SIGMA: Secure GPT Inference with Function Secret Sharing},
-volume = {2024}
+booktitle = {Proc. Priv. Enhancing Technol.}
 }
 
 ```
