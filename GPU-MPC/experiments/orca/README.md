@@ -12,7 +12,7 @@ This project requires NVIDIA GPUs, and assumes that GPU drivers and the [NVIDIA 
 
 Please note that Sytorch requires CMake version >= 3.17 and the build will fail if this depency is not met. 
 
-The code uses CUTLASS version 2.11 by default, so if you change the CUDA version, please make sure that the CUTLASS version being built is compatible with the new CUDA version. To change the version of CUTLASS being built, add `git checkout <branch>;` after line 31 (`cd ext/cutlass;`) of setup.sh.
+The code uses CUTLASS version 2.11 by default, so if you change the CUDA version, please make sure that the CUTLASS version being built is compatible with the new CUDA version.
 
 The last line of `setup.sh` tries to install `matplotlib`, which is needed for generating Figures 5a and 5b. In our experience, the installation fails if the versions of Python and `pip` do not match. In case the installation fails, please install `matplotlib` manually before running `run_experiment.py`.
 
@@ -27,6 +27,17 @@ export GPU_ARCH=86
 
 ```
 sh setup.sh
+```
+
+To change the version of CUTLASS being built, optionally include the CUTLASS branch that should be built as
+
+```
+sh setup.sh <CUTLASS branch>
+```
+For example, to build the main branch, run
+
+```
+sh setup.sh main
 ```
 
 3. Make Orca
