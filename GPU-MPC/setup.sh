@@ -1,12 +1,4 @@
-read -p "Enter CUDA version (default: 11.7): " CUDA_VERSION
-CUDA_VERSION=${CUDA_VERSION:-11.7}
-
-read -p "Enter GPU architecture (default: 86): " GPU_ARCH
-GPU_ARCH=${GPU_ARCH:-86}
-
 # Set environment variables
-export CUDA_VERSION="$CUDA_VERSION"
-export GPU_ARCH="$GPU_ARCH"
 export NVCC_PATH="/usr/local/cuda-$CUDA_VERSION/bin/nvcc"
 
 echo "Updating submodules"
@@ -29,6 +21,10 @@ sudo apt install cmake make libeigen3-dev;
 echo "Building CUTLASS"
 # Build CUTLASS
 cd ext/cutlass;
+if [ -n "$1" ]
+then 
+git checkout $1;
+fi
 mkdir build && cd build;
 cmake .. -DCUTLASS_NVCC_ARCHS=$GPU_ARCH -DCMAKE_CUDA_COMPILER_WORKS=1 -DCMAKE_CUDA_COMPILER=$NVCC_PATH;
 make -j;

@@ -131,13 +131,13 @@ Log files (which might help with debugging) can be found in the `output/P<party 
 You can cite the paper using the following BibTeX entry:
 
 ```
-@misc{cryptoeprint:2023/1269,
-      author = {Kanav Gupta and Neha Jawalkar and Ananta Mukherjee and Nishanth Chandran and Divya Gupta and Ashish Panwar and Rahul Sharma},
-      title = {SIGMA: Secure GPT Inference with Function Secret Sharing},
-      howpublished = {Cryptology ePrint Archive, Paper 2023/1269},
-      year = {2023},
-      note = {\url{https://eprint.iacr.org/2023/1269}},
-      url = {https://eprint.iacr.org/2023/1269}
+
+@article{article,
+author = {Kanav Gupta and Neha Jawalkar and Ananta Mukherjee and Nishanth Chandran and Divya Gupta and Ashish Panwar and Rahul Sharma},
+year = {2024},
+title = {SIGMA: Secure GPT Inference with Function Secret Sharing},
+volume = {2024}
 }
+
 ```
 

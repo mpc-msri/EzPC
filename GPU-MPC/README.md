@@ -1,7 +1,7 @@
 
 # GPU-MPC
 
-Implementation of protocols from the papers [Orca](https://eprint.iacr.org/2023/206) and [SIGMA]().
+Implementation of protocols from the papers [Orca](https://eprint.iacr.org/2023/206) and [SIGMA](https://eprint.iacr.org/2023/1269).
 
 **Warning**: This is an academic proof-of-concept prototype and has not received careful code review. This implementation is NOT ready for production use.
 
@@ -79,17 +79,4 @@ sudo docker run --gpus all --network host -v /home/$USER/path_to_GPU-MPC/:/home 
 
 ```
 Then Run setup.sh to configure according to GPU_arch and make Orca/SIGMA as mentioned above.
-
-## Citation
-
-You can cite the paper using the following BibTeX entry:
-
-```
-@INPROCEEDINGS {,
-author = {N. Jawalkar and K. Gupta and A. Basu and N. Chandran and D. Gupta and R. Sharma},
-booktitle = {2024 IEEE Symposium on Security and Privacy (SP)},
-title = {Orca: FSS-based Secure Training and Inference with GPUs},
-year = {2024}
-}
-```
 
