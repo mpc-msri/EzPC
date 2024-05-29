@@ -358,7 +358,6 @@ T *maxpoolLogHelper(SigmaPeer *peer, int party, MaxpoolParams p, int i, GPUReluK
 template <typename T>
 T *gpuMaxpoolLog(SigmaPeer *peer, int party, MaxpoolParams p, GPUMaxpoolKey<T> k, T *d_I, AESGlobalContext *gaes, Stats *s)
 {
-    // printf("##################### Using fixed maxpool ##########################\n");
     assert(/*p.N == 1 &&*/ p.C == 1 && p.strideH == 1 && p.strideW == p.FW && p.strideH == p.FH);
     // T *d_I = d_in;
     T *d_O;
@@ -400,7 +399,6 @@ template <typename T>
 T *gpuMaxpool(SigmaPeer *peer, int party, MaxpoolParams p, GPUMaxpoolKey<T> k, T *d_I, AESGlobalContext *gaes, Stats *s)
 {
     T *d_O;
-    printf("Gpu maxpool rounds=%d, %d, %d\n", k.rounds, p.FH, p.FW);
     if (k.rounds < p.FH * p.FW - 1)
     {
         assert(p.zPadHLeft == 0 && p.zPadHRight == 0 && p.zPadWLeft == 0 && p.zPadWRight == 0);

@@ -92,13 +92,8 @@ inline MatmulParams initPQKt(MHAParams pMHA, int bw, int scale)
     if (pMHA.doNormQKt && int(log2(pMHA.dim_W)) % 2 == 0)
     {
         // assert(int(log2(dim_W)) % 2 == 0);
-        printf("Shift=%d\n", int(log2(pMHA.dim_W) / 2));
+        // printf("Shift=%d\n", int(log2(pMHA.dim_W) / 2));
         pQKt.shift += int(log2(pMHA.dim_W) / 2);
-    }
-    else
-    {
-        printf("Not merging the two truncations, shift=%d\n", pQKt.shift);
-        // assert(0);
     }
     // K is stored in column-major form
     pQKt.rowMaj_B = false;
@@ -147,7 +142,6 @@ inline MaxpoolParams initPMaxpool(MHAParams pMHA, int bw, int scale)
     pMPool.zPadWRight = 0;
     pMPool.bw = bw;
     pMPool.bin = bw - scale;
-    printf("Bin=%d\n", pMPool.bin);
     pMPool.scale = scale;
     pMPool.scaleDiv = 0;
     initPoolParams(pMPool);
@@ -181,7 +175,6 @@ GPUMHAKey<T> readGPUMHAKey(MHAParams pMHA, MHAMulParams pMHAMul, u8 **key_as_byt
     if (pMHA.doNormQKt && int(log2(pMHA.dim_W)) % 2 == 1)
         k.normQKtTrKey = readGPUTruncateKey<T>(TruncateType::TrFloor, key_as_bytes);
     k.softmaxKey = readGPUSoftMaxKey<T>(pMHAMul.pMPool, key_as_bytes);
-    printf("Maxpool rounds=%d", k.softmaxKey.maxPoolKey.rounds);
     k.mmKeySmQKtV = readGPUMatmulKey<T>(pMHAMul.pSmQKtV, TruncateType::TrFloor, key_as_bytes);
     k.mmKeyProj = readGPUMatmulKey<T>(pMHAMul.pProj, TruncateType::TrFloor, key_as_bytes);
     return k;

@@ -171,7 +171,7 @@ GroupElement evalLUTSS_2(int party, GroupElement res, GroupElement corr, const L
 
 std::pair<LUTDPFETKeyPack, LUTDPFETKeyPack> keyGenLUTDPFET(int bin, int bout, GroupElement rin, GroupElement routRes, GroupElement routCorr)
 {
-    assert(bin == 8);
+    assert(bin >= 8);
     LUTDPFETKeyPack key0, key1;
     key0.bin = bin;
     key1.bin = bin;
@@ -196,7 +196,7 @@ std::pair<LUTDPFETKeyPack, LUTDPFETKeyPack> keyGenLUTDPFET(int bin, int bout, Gr
 std::pair<GroupElement, GroupElement> evalLUTDPFET_1(int party, GroupElement x, const std::vector<GroupElement> &tab, LUTDPFETKeyPack &kp)
 {
     int bin = kp.bin;
-    assert(bin == 8);
+    assert(bin >= 8);
     mod(x, bin);
 
     GroupElement res = 0, corr = 0;

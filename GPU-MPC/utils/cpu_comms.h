@@ -74,13 +74,11 @@ private:
 
     void cpuXor(u64 N, u32 *x, u32 *y)
     {
-        // printf("x=%u, y=%u\n", x[0], y[0]);
 #pragma omp parallel for
         for (u64 i = 0; i < N; i++)
         {
             x[i] ^= y[i];
         }
-        // printf("%u\n", x[0]);
     }
 
     template <typename T>

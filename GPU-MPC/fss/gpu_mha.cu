@@ -1,8 +1,8 @@
 // Author: Neha Jawalkar
 // Copyright:
-// 
+//
 // Copyright (c) 2024 Microsoft Research
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -34,9 +34,8 @@
 #include "fss/gpu_scalarmul.h"
 #include "fss/gpu_truncate.h"
 
-
 template <typename T>
-__global__ void rotEmbKernel(MHAParams pMHA, int scale, u64 N, T *X, T *Y)
+__global__ void rotEmbKernel(MHAParams pMHA, int bw, int scale, u64 N, T *X, T *Y)
 {
     // the vectors are N x dim_W
     assert(pMHA.dim_W % 2 == 0);
@@ -51,12 +50,13 @@ __global__ void rotEmbKernel(MHAParams pMHA, int scale, u64 N, T *X, T *Y)
         temp = temp % (pMHA.n_seq * pMHA.dim_W);
         int i = temp / pMHA.dim_W;
         int j = temp % pMHA.dim_W;
-        float sinx, cosx;
         auto k = j - (j >= dim_W_half) * dim_W_half;
-        __sincosf(i / __powf(10000, (2 * k / (float)pMHA.dim_W)), &sinx, &cosx);
+
+        double scalar = 1.0 / std::pow(10000.0, (2 * k / (double)pMHA.dim_W));
+        float scalarInt = T((i * scalar) * (1ULL << scale)) / (float) (1ULL << scale); 
         const auto uLim = T(1ULL << (scale - 3));
-        T sinxi = T(sinx * uLim);
-        T cosxi = T(cosx * uLim);
+        T sinxi = (T)(i64)(std::sin(scalarInt) * uLim);
+        T cosxi = (T)(i64)(std::cos(scalarInt) * uLim);
         if (sinxi == uLim)
             sinxi -= 1;
         if (cosxi == uLim)
@@ -65,16 +65,16 @@ __global__ void rotEmbKernel(MHAParams pMHA, int scale, u64 N, T *X, T *Y)
         auto l = (j + dim_W_half) % pMHA.dim_W;
         T m1 = 2 * (j >= dim_W_half) - 1;
         Y[tid] = cosxi * X[tid] + m1 * sinxi * X[head * pMHA.n_seq * pMHA.dim_W + i * pMHA.dim_W + l];
+        gpuMod(Y[tid], bw);
     }
 }
 
 template <typename T>
 T *gpuKeygenRotEmb(u8 **key_as_bytes, int party, int bw, int scale, MHAParams pMHA, T *d_mask_X, AESGlobalContext *g)
 {
-    printf("*********** Generating rotary embedding key! ***************\n");
     size_t size_X = pMHA.n_heads * (u64)pMHA.n_seq * pMHA.dim_W;
     auto d_mask_X1 = (T *)gpuMalloc(size_X * sizeof(T));
-    rotEmbKernel<<<(size_X - 1) / 128 + 1, 128>>>(pMHA, scale, size_X, d_mask_X, d_mask_X1);
+    rotEmbKernel<<<(size_X - 1) / 128 + 1, 128>>>(pMHA, bw, scale, size_X, d_mask_X, d_mask_X1);
     // gpuFree(d_mask_X);
     auto d_mask_truncated_X = genGPUTruncateKey<T, T>(key_as_bytes, party, TruncateType::TrWithSlack, bw, bw, scale - 3, size_X, d_mask_X1, g);
     gpuFree(d_mask_X1);
@@ -88,7 +88,7 @@ T *gpuRotEmb(SigmaPeer *peer, int party, int bw, int scale, MHAParams pMHA, GPUT
 
     size_t size_X = pMHA.n_heads * (u64)pMHA.n_seq * pMHA.dim_W;
     auto d_X1 = (T *)gpuMalloc(size_X * sizeof(T));
-    rotEmbKernel<<<(size_X - 1) / 128 + 1, 128>>>(pMHA, scale, size_X, d_X, d_X1);
+    rotEmbKernel<<<(size_X - 1) / 128 + 1, 128>>>(pMHA, bw, scale, size_X, d_X, d_X1);
     // don't free this because QKV is one long array
     // gpuFree(d_X);
     auto d_truncated_X = gpuTruncate<T, T>(bw, bw, TruncateType::TrWithSlack, trKey, scale - 3, peer, party, size_X, d_X1, g, s); //, true);
@@ -96,7 +96,6 @@ T *gpuRotEmb(SigmaPeer *peer, int party, int bw, int scale, MHAParams pMHA, GPUT
 
     u64 b1 = peer->bytesSent() + peer->bytesReceived();
     s->linear_comm_bytes += (b1 - b0);
-    printf("Comm in rotary embedding=%lu, N=%d\n", b1 - b0, size_X);
     return d_truncated_X;
 }
 
@@ -107,7 +106,6 @@ T *gpuKeygenMHA(u8 **key_as_bytes, int party, int bw, int scale, MHAParams pMHA,
     auto d_mask_QKV = gpuKeygenMatmul(key_as_bytes, party, pMHAMul.pQKV, d_mask_X, WQKV, YQKV, TruncateType::TrFloor, g);
     // this->activation.d_data = d_mask_QKV;
 
-    // printf("Size of Q=%d\n", pQKV.size_C / 3);
     int QKSz = pMHAMul.pQKV.size_C / 3;
     auto d_mask_Q = d_mask_QKV;
     auto d_mask_K = d_mask_QKV + QKSz;
@@ -130,7 +128,6 @@ T *gpuKeygenMHA(u8 **key_as_bytes, int party, int bw, int scale, MHAParams pMHA,
     if (pMHA.doNormQKt && int(log2(pMHA.dim_W)) % 2 == 1)
     {
         T invSqrtDimW = T((1.0f / sqrt(double(pMHA.dim_W))) * (1LL << scale));
-        printf("####### Doing a scalar multiplication\n");
         d_mask_normQKt = gpuKeygenScalarMul(key_as_bytes, party, bw, pMHAMul.pQKt.size_C, invSqrtDimW, d_mask_QKt, TruncateType::TrFloor, scale, g);
         gpuFree(d_mask_QKt);
     }
@@ -182,7 +179,6 @@ T *gpuMHA(SigmaPeer *peer, int party, int bw, int scale, MHAParams pMHA, MHAMulP
     if (pMHA.doNormQKt && int(log2(pMHA.dim_W)) % 2 == 1)
     {
         T invSqrtDimW = T((1.0f / sqrt(double(pMHA.dim_W))) * (1LL << scale));
-        printf("####### Doing a scalar multiplication\n");
         d_normQKt = gpuScalarMul(peer, party, bw, pMHAMul.pQKt.size_C, k.normQKtTrKey, invSqrtDimW, d_QKt, TruncateType::TrFloor, scale, g, s);
         gpuFree(d_QKt);
     }
@@ -202,6 +198,5 @@ T *gpuMHA(SigmaPeer *peer, int party, int bw, int scale, MHAParams pMHA, MHAMulP
     auto d_proj = gpuMatmul(peer, party, pMHAMul.pProj, k.mmKeyProj, d_smQKtV, WProj, YProj, TruncateType::TrFloor, g, s);
     gpuFree(d_smQKtV);
     auto b1 = peer->bytesSent() + peer->bytesReceived();
-    printf("MHA Comm=%ld\n", b1 - b0);
     return d_proj;
 }

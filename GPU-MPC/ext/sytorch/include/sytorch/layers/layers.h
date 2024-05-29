@@ -1,8 +1,8 @@
 // Authors: Kanav Gupta, Neha Jawalkar
 // Copyright:
-// 
+//
 // Copyright (c) 2024 Microsoft Research
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -167,7 +167,6 @@ public:
         if (doTruncationForward)
         {
             this->backend->truncateForward(activation, scale, forwardTruncationMode);
-            // printf("After truncate=%ld\n", activation.data[0]);
         }
         if (doPostSignExtension)
         {
@@ -489,11 +488,8 @@ public:
 
     void _forward(Tensor<T> &a)
     {
-        printf("############### Flatten=%d\n", transpose);
         if (transpose && (a.shape.size() == 4 || a.shape.size() == 5))
         {
-            printf("@@@@@@@@@@@@@@@@@@@@@@@ In here!!!!!!!!!!!\n");
-            // printf("Flatten: %d\n", a.shape.size());
             if (a.shape.size() == 4)
             {
                 auto a_4d = a.as_4d();
@@ -512,9 +508,7 @@ public:
                         {
                             for (u64 l = 0; l < d4; l++)
                             {
-                                // this->activation(i, j * d3 * d4 + k * d4 + l, 0, 0) = a(i, j, k, l);
                                 act_2d(i, l * d2 * d3 + j * d3 + k) = a_4d(i, j, k, l);
-                                // printf("Flatten: %ld, %ld\n", act_2d(i, l * d2 * d3 + j * d3 + k), a_4d(i, j, k, l));
                             }
                         }
                     }
@@ -551,7 +545,6 @@ public:
         }
         else
         {
-            printf("################# In here!!!!!!!!!!!\n");
             u64 sz = a.size();
 #pragma omp parallel for
             for (u64 i = 0; i < sz; i++)
@@ -1708,7 +1701,7 @@ template <typename T>
 class RotaryEmbedding : public Layer<T>
 {
 public:
-    u64 base=10000;
+    u64 base = 10000;
 
     RotaryEmbedding() : Layer<T>("RotaryEmbedding") {}
 
@@ -1719,34 +1712,7 @@ public:
 
     void _forward(Tensor<T> &a)
     {
-        u64 n_seq = a.shape[0];
-        u64 dim = a.shape[1];
-        auto x_2d = a.as_2d();
-        auto y_2d = this->activation.as_2d();
-        
-
-        for (u64 i = 0; i < n_seq; ++i)
-        {
-            for (u64 j = 0; j < dim; j++)
-            {
-                double scalar = 1.0 / (std::pow(base, (double)((2 * j) % dim) / dim));
-                T scalarInt = (i * this->scalar) * std::pow(2, this->scale);
-                T sinx = std::sin(scalarInt / (float) std::pow(2, this->scale)) * std::pow(2, this->scale - 3);
-                T cosx = std::cos(scalarInt / (float) std::pow(2, this->scale)) * std::pow(2, this->scale - 3);
-                // T sinx = std::sin(i * scalar) * std::pow(2, this->scale - 3);
-                // T cosx = std::cos(i * scalar) * std::pow(2, this->scale - 3);
-
-                if (sinx == (1ULL << (this->scale - 3)))
-                    sinx -= 1;
-                if (cosx == (1ULL << (this->scale - 3)))
-                    cosx -= 1;
-                u64 k = (j + dim / 2) % dim;
-                T mul = 2 * (j >= dim / 2) - 1;
-                T z = cosx * x_2d(i, j) + sinx * mul * x_2d(i, k);
-                y_2d(i, j) = z;
-            }
-        }
-        this->backend->truncate(this->activation, this->scale - 3);
+        this->backend->rotary_embedding(a, this->activation, this->scale);
     }
 
     std::vector<u64> get_output_dims(const std::vector<std::vector<u64>> &inShapes)

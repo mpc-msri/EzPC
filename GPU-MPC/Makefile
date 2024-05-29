@@ -56,6 +56,9 @@ truncate: tests/fss/truncate.cu
 mha: tests/fss/mha.cu
 	$(CXX) $(FLAGS) $(INCLUDES) $^ $(UTIL_FILES) $(LIBS) -o tests/fss/mha
 
+rotary_embedding: tests/fss/rotary_embedding.cu
+	$(CXX) $(FLAGS) $(INCLUDES) $^ $(UTIL_FILES) $(LIBS) -o tests/fss/rotary_embedding
+
 secfloat_softmax: tests/fss/secfloat_softmax.cu
 	$(CXX) $(FLAGS) $(INCLUDES) $^ $(UTIL_FILES) $(LIBS) $(SECFLOAT_LIBS) -o tests/fss/secfloat_softmax
 
@@ -106,6 +109,9 @@ orca_inference_u32: experiments/orca/orca_inference.cu
 
 sigma: experiments/sigma/sigma.cu 
 	$(CXX) $(FLAGS) $(INCLUDES) $^ $(UTIL_FILES) $(LIBS) -o experiments/sigma/sigma
+
+sigma_correctness: experiments/sigma/sigma.cu 
+	$(CXX) $(FLAGS) -DCORRECTNESS=1 $(INCLUDES) $^ $(UTIL_FILES) $(LIBS) -o experiments/sigma/sigma
 
 piranha: experiments/orca/piranha.cu 
 	$(CXX) $(FLAGS) $(INCLUDES) $^ $(UTIL_FILES) $(LIBS) -o experiments/orca/piranha

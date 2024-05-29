@@ -1,8 +1,8 @@
 // Author: Neha Jawalkar
 // Copyright:
-// 
+//
 // Copyright (c) 2024 Microsoft Research
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -20,13 +20,15 @@
 // SOFTWARE.
 
 #include <sytorch/module.h>
+#include <sytorch/utils.h>
 #include "gpt2.h"
 #include "bert.h"
 #include "llama2.h"
 #include "backend/sigma.h"
 
-inline std::string toGB(u64 bytes) {
-    return std::to_string(bytes) + " B (" + std::to_string((float) bytes / (1024.0f * 1024.0f * 1024.0f)) + " GB)";
+inline std::string toGB(u64 bytes)
+{
+    return std::to_string(bytes) + " B (" + std::to_string((float)bytes / (1024.0f * 1024.0f * 1024.0f)) + " GB)";
 }
 
 int main(int __argc, char **__argv)
@@ -41,15 +43,13 @@ int main(int __argc, char **__argv)
     int bw = 0;
     u64 scale = 12;
     u64 n_seq = atoi(__argv[2]);
-    int role = atoi(__argv[3]);
-    int party = atoi(__argv[4]);
+    int party = atoi(__argv[3]);
 
     std::string model(__argv[1]);
     printf("Model=%s\n", model.data());
-    std::string keyDir(__argv[5]);
-    auto keyFile = keyDir + model + "_inference_key";
     u64 keyBufSz = 0;
     SytorchModule<u64> *net;
+    Tensor<u64> input({n_seq, n_embd});
 
     if (model == "gpt2")
     {
@@ -58,8 +58,13 @@ int main(int __argc, char **__argv)
         n_embd = 768;
         attnMask = "self";
         bw = 50;
-        keyBufSz = 20 * OneGB;
+        u64 mul = (u64)std::pow(2.3, std::log2(n_seq / 64));
+        keyBufSz = 10 * mul * OneGB;
         net = new GPUGPT2<u64>(n_layer, n_head, n_embd, attnMask, qkvFormat);
+        input.resize({n_seq, n_embd});
+        input.zero();
+        net->init(scale, input);
+        net->zero();
     }
     else if (model == "bert-tiny")
     {
@@ -69,6 +74,10 @@ int main(int __argc, char **__argv)
         bw = 37;
         keyBufSz = OneGB;
         net = new GPUBERT<u64>(n_layer, n_head, n_embd, attnMask, qkvFormat);
+        input.resize({n_seq, n_embd});
+        input.zero();
+        net->init(scale, input);
+        net->zero();
     }
     else if (model == "bert-base")
     {
@@ -78,6 +87,10 @@ int main(int __argc, char **__argv)
         bw = 50;
         keyBufSz = 20 * OneGB;
         net = new GPUBERT<u64>(n_layer, n_head, n_embd, attnMask, qkvFormat);
+        input.resize({n_seq, n_embd});
+        input.zero();
+        net->init(scale, input);
+        net->zero();
     }
     else if (model == "bert-large")
     {
@@ -87,6 +100,10 @@ int main(int __argc, char **__argv)
         bw = 50;
         keyBufSz = 50 * OneGB;
         net = new GPUBERT<u64>(n_layer, n_head, n_embd, attnMask, qkvFormat);
+        input.resize({n_seq, n_embd});
+        input.zero();
+        net->init(scale, input);
+        net->zero();
     }
     else if (model == "gpt-neo")
     {
@@ -98,6 +115,10 @@ int main(int __argc, char **__argv)
         bw = 51;
         keyBufSz = 80 * OneGB;
         net = new GPUGPT2<u64>(n_layer, n_head, n_embd, attnMask, qkvFormat, false);
+        input.resize({n_seq, n_embd});
+        input.zero();
+        net->init(scale, input);
+        net->zero();
     }
     else if (model == "gpt-neo-large")
     {
@@ -109,6 +130,10 @@ int main(int __argc, char **__argv)
         bw = 51; // 52;
         keyBufSz = 200 * OneGB;
         net = new GPUGPT2<u64>(n_layer, n_head, n_embd, attnMask, qkvFormat, false);
+        input.resize({n_seq, n_embd});
+        input.zero();
+        net->init(scale, input);
+        net->zero();
     }
     else if (model == "llama7b")
     {
@@ -121,6 +146,10 @@ int main(int __argc, char **__argv)
         u64 intermediate_size = 11008;
         keyBufSz = 300 * OneGB;
         net = new GPULlama<u64>(n_layer, n_head, n_embd, intermediate_size);
+        input.resize({n_seq, n_embd});
+        input.zero();
+        net->init(scale, input);
+        net->zero();
     }
     else if (model == "llama13b")
     {
@@ -133,72 +162,87 @@ int main(int __argc, char **__argv)
         u64 intermediate_size = 13824;
         keyBufSz = 450 * OneGB;
         net = new GPULlama<u64>(n_layer, n_head, n_embd, intermediate_size);
+        input.resize({n_seq, n_embd});
+        input.zero();
+        net->init(scale, input);
+        net->zero();
     }
-
-    Tensor<u64> input({n_seq, n_embd});
-    net->init(scale, input);
     srand(time(NULL));
+    std::string outDir = "output/P" + std::to_string(party) + "/models/";
+    makeDir(outDir);
+    auto inferenceDir = outDir + model + "-" + std::to_string(n_seq) + "/";
+    makeDir(inferenceDir);
 
-    if (role == 0)
-    {
-        auto sigma = new SIGMAKeygen<u64>(party, bw, scale, keyFile, keyBufSz);
-        net->setBackend(sigma);
-        net->optimize();
-        input.d_data = (u64 *)moveToGPU((u8 *)input.data, input.size() * sizeof(u64), (Stats *)NULL);
-        auto &activation = net->forward(input);
-        sigma->output(activation);
-        sigma->close();
-    }
-    else
-    {
-        std::string ip(__argv[6]);
-        auto sigma = new SIGMA<u64>(party, ip, keyFile, bw, scale, n_seq, n_embd, atoi(__argv[7]));
-        net->setBackend(sigma);
-        net->optimize();
-        sigma->peer->sync();
-        auto start = std::chrono::high_resolution_clock::now();
-        input.d_data = (u64 *)moveToGPU((u8 *)input.data, input.size() * sizeof(u64), (Stats *)NULL);
-        auto &activation = net->forward(input);
-        sigma->output(activation);
-        auto end = std::chrono::high_resolution_clock::now();
-        auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-        sigma->close();
+    auto sigmaKeygen = new SIGMAKeygen<u64>(party, bw, scale, "", keyBufSz);
+    net->setBackend(sigmaKeygen);
+    net->optimize();
+    auto start = std::chrono::high_resolution_clock::now();
+    input.d_data = (u64 *)moveToGPU((u8 *)input.data, input.size() * sizeof(u64), (Stats *)NULL);
+    auto &activation = net->forward(input);
+    sigmaKeygen->output(activation);
+    auto end = std::chrono::high_resolution_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    sigmaKeygen->close();
+    std::stringstream ss;
+    ss << "Total time=" + std::to_string(elapsed.count()) + " us";
+    ss << std::endl;
+    ss << "Key size=" + toGB(sigmaKeygen->keySize);
+    ss << std::endl;
+    std::ofstream statsFile(inferenceDir + "dealer.txt");
+    statsFile << ss.rdbuf();
+    statsFile.close();
 
-        std::stringstream ss;
+    std::string ip(__argv[4]);
+    auto sigma = new SIGMA<u64>(party, ip, "", bw, scale, n_seq, n_embd, atoi(__argv[5]), false);
+    sigma->keyBuf = sigmaKeygen->startPtr;
+    sigma->startPtr = sigma->keyBuf;
+    sigma->keySize = sigmaKeygen->keySize;
+    net->setBackend(sigma);
+    sigma->peer->sync();
+    start = std::chrono::high_resolution_clock::now();
+    input.d_data = (u64 *)moveToGPU((u8 *)input.data, input.size() * sizeof(u64), (Stats *)NULL);
+    activation = net->forward(input);
+    sigma->output(activation);
+    end = std::chrono::high_resolution_clock::now();
+    elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    sigma->close();
+    auto signedAct = Tensor<i64>((i64 *)activation.data, activation.shape).as_2d();
+    // print(signedAct.as_nd(), scale, (u64) bw);
+    auto maxIdx = signedAct.argmax(0);
+    printf("%d, %ld\n", maxIdx, activation.data[maxIdx]);
 
-        ss << "Time in ms" << std::endl;
-        ss << "Total time=" + std::to_string(elapsed.count());
-        ss << std::endl;
-        ss << "Comm time=" + std::to_string(sigma->s.comm_time);
-        ss << std::endl;
-        ss << "Transfer time=" + std::to_string(sigma->s.transfer_time);
-        ss << std::endl;
-        ss << "MHA time=" + std::to_string(sigma->s.mha_time);
-        ss << std::endl;
-        ss << "Matmul time=" + std::to_string(sigma->s.matmul_time);
-        ss << std::endl;
-        ss << "Truncate time=" + std::to_string(sigma->s.truncate_time);
-        ss << std::endl;
-        ss << "Gelu time=" + std::to_string(sigma->s.gelu_time);
-        ss << std::endl;
-        ss << "Softmax time=" + std::to_string(sigma->s.softmax_time);
-        ss << std::endl;
-        ss << "Layernorm time=" + std::to_string(sigma->s.layernorm_time);
-        ss << std::endl;
-        ss << std::endl;
-        ss << "Total Comm=" + toGB(sigma->peer->bytesSent() + sigma->peer->bytesReceived());
-        ss << std::endl;
-        ss << "Gelu Comm=" + toGB(sigma->s.gelu_comm_bytes);
-        ss << std::endl;
-        ss << "Softmax Comm=" + toGB(sigma->s.softmax_comm_bytes);
-        ss << std::endl;
-        ss << "Layernorm Comm=" + toGB(sigma->s.layernorm_comm_bytes);
-        ss << std::endl;
+    ss.clear();
 
-        auto inferenceDir = "output/P" + std::to_string(party) + "/";
-        std::ofstream statsFile(inferenceDir + model + ".txt");
-        statsFile << ss.rdbuf();
-        statsFile.close();
-    }
+    ss << "Total time=" + std::to_string(elapsed.count()) + " us";
+    ss << std::endl;
+    ss << "Comm time=" + std::to_string(sigma->s.comm_time) + " us";
+    ss << std::endl;
+    ss << "Transfer time=" + std::to_string(sigma->s.transfer_time) + " us";
+    ss << std::endl;
+    ss << "MHA time=" + std::to_string(sigma->s.mha_time) + " us";
+    ss << std::endl;
+    ss << "Matmul time=" + std::to_string(sigma->s.matmul_time) + " us";
+    ss << std::endl;
+    ss << "Truncate time=" + std::to_string(sigma->s.truncate_time) + " us";
+    ss << std::endl;
+    ss << "Gelu time=" + std::to_string(sigma->s.gelu_time) + " us";
+    ss << std::endl;
+    ss << "Softmax time=" + std::to_string(sigma->s.softmax_time) + " us";
+    ss << std::endl;
+    ss << "Layernorm time=" + std::to_string(sigma->s.layernorm_time) + " us";
+    ss << std::endl;
+    ss << std::endl;
+    ss << "Total Comm=" + toGB(sigma->peer->bytesSent() + sigma->peer->bytesReceived());
+    ss << std::endl;
+    ss << "Gelu Comm=" + toGB(sigma->s.gelu_comm_bytes);
+    ss << std::endl;
+    ss << "Softmax Comm=" + toGB(sigma->s.softmax_comm_bytes);
+    ss << std::endl;
+    ss << "Layernorm Comm=" + toGB(sigma->s.layernorm_comm_bytes);
+    ss << std::endl;
+
+    statsFile.open(inferenceDir + "evaluator.txt");
+    statsFile << ss.rdbuf();
+    statsFile.close();
     return 0;
 }

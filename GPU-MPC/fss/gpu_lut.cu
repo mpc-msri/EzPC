@@ -65,12 +65,6 @@ __global__ void dpfLUT(int party, int bin, int N, TIn *X, TOut *tab, AESBlock *s
     if (threadId < N)
     {
         storeAESBlock(stack_g, 0, scw_g[threadId], N, threadId);
-        // stack[threadIdx.x / 32][0][threadIdx.x & 31] = scw[threadId];
-        // for (int i = 0; i < bin - LOG_AES_BLOCK_LEN; i++)
-        // storeAESBlock(scw, 0, scw_g[(i + 1) * N + threadId], N, threadId);
-        // scw[threadIdx.x / 32][i][threadIdx.x & 31] = scw_g[(i+1) * N + threadId];
-        // store these in registers for now and see what happens
-        // hopefully there is no spill
         auto x = (u64)X[threadId];
         gpuMod(x, bin);
         auto l0_cw = l0_g[threadId];
@@ -81,22 +75,10 @@ __global__ void dpfLUT(int party, int bin, int N, TIn *X, TOut *tab, AESBlock *s
         TOut u = 0, v = 0;
         while (depth > 0)
         {
-            // if(threadId == 2) printf("Stack: %u, Depth: %d\n", pathStack, depth);
-            // peek at the top of the stack
             auto seed = loadAESBlock(stack_g, depth - 1, N, threadId);
-            // if (threadId == 2) {
-            // printAESBlock(&seed);
-            // }
-            // auto seed = stack[threadIdx.x / 32][depth - 1][threadIdx.x & 31];
-            // extract the stack bit
             auto bit = pathStack & 1ULL;
-            // should this be +1?
             if (depth == bin - LOG_AES_BLOCK_LEN)
             {
-                // if(stack == 0) {
-                //     l0[threadIdx.x / 32][depth - 1][threadIdx.x & 31] = l0_g[threadId];
-                //     l1[threadIdx.x / 32][depth - 1][threadIdx.x & 31] = l1_g[threadId];
-                // }
                 auto lastBlock = expandDPFTreeNode(bin, party,
                                                    seed,
                                                    0,
@@ -115,11 +97,9 @@ __global__ void dpfLUT(int party, int bin, int N, TIn *X, TOut *tab, AESBlock *s
                     u += w;
                     auto lookup = x - (lb ^ i);
                     gpuMod(lookup, bin);
-                    // printf("current: %ld, %ld, %ld, %ld\n", x, lb ^ i, lookup, tab[lookup]);
-                    v += /*reluSubGelu(lookup, 6, 12)*/ tab[lookup] * w;
+                    v += tab[lookup] * w;
                     lastBlock >>= 1;
                 }
-                // sum &= 1;
                 // pop all the 1s from the stack
                 while (pathStack & 1ULL /*&& depth > 0*/)
                 {
@@ -130,11 +110,7 @@ __global__ void dpfLUT(int party, int bin, int N, TIn *X, TOut *tab, AESBlock *s
                 pathStack ^= 1;
             }
             else
-            { // load the scws into shared memory along the all 0 path
-                // if (stack == 0)
-                // {
-                //     scw[][][] = scw_g[];
-                // }
+            { 
                 // manipulate the seed depending on the bit
                 // aren't storing the first cw because it sees no reuse
                 auto tR_l = (tR >> (depth - 1)) & 1;
@@ -168,9 +144,7 @@ __global__ void dpfLUT(int party, int bin, int N, TIn *X, TOut *tab, AESBlock *s
         gpuMod(u, 1);
         auto maskU = getVCW(1, U, N, 0);
         writeVCW(1, U, u64(u ^ maskU), 0, N);
-        // U[threadId] += u;
         V[threadId] += v;
-        // printf("%d: %ld, %ld\n", threadId, u, v);
     }
 }
 
@@ -179,7 +153,6 @@ TOut *gpuDpfLUT(GPULUTKey<TOut> k0, SigmaPeer *peer, int party, TIn *d_X, TOut *
 {
     auto k = *(k0.k.dpfTreeKey);
     assert(k0.k.bin >= 8 && k0.k.B == 1);
-    printf("############### %d, %d, %d\n", k.bin, k.evalAll, k.N, k0.k.B);
     // Neha: need to change the key reading and writing code
     //  do not change tb size it is needed to load the sbox
     const int tbSz = 256;
@@ -197,15 +170,8 @@ TOut *gpuDpfLUT(GPULUTKey<TOut> k0, SigmaPeer *peer, int party, TIn *d_X, TOut *
     d_tR = (u32 *)moveToGPU((uint8_t *)k.tR, k.memSzT, s);
     auto d_U = (u32 *)moveToGPU((u8 *)k0.maskU, k.memSzOut, s); // a lot of bits packed together
     auto d_V = (TOut *)moveToGPU((u8 *)k0.s.b, k.N * sizeof(TOut), s);
-    // d_out = (uint32_t *)gpuMalloc(k.memSzOut);
-    // int shmSize = 32768;
-    // checkCudaErrors(cudaFuncSetAttribute(dpfEvalAll, cudaFuncAttributeMaxDynamicSharedMemorySize, shmSize));
-    // auto start = std::chrono::high_resolution_clock::now();
     dpfLUT<TIn, TOut><<<tb, tbSz /*, shmSize*/>>>(party, k.bin, k.N, d_X, d_tab, d_scw, d_stack, d_l0, d_l1, d_tR, d_U, d_V, *g);
     checkCudaErrors(cudaDeviceSynchronize());
-    // auto end = std::chrono::high_resolution_clock::now();
-    // auto elapsed = end - start;
-    // printf("Time taken by dpfLUT kernel=%lu micros\n", std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count());
 
     gpuFree(d_scw);
     gpuFree(d_stack);

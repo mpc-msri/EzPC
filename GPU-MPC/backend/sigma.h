@@ -1,8 +1,8 @@
 // Author: Neha Jawalkar
 // Copyright:
-// 
+//
 // Copyright (c) 2024 Microsoft Research
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -66,10 +66,11 @@ public:
     std::vector<GroupElement> *invSqrtTab;
     LlamaTransformer<T> *llama;
 
-    SIGMA(int party, std::string ip, std::string keyFile, int bw, int scale, int n_seq, int n_embed, int numThreads) : party(party), bw(bw), scale(scale), n_seq(n_seq)
+    SIGMA(int party, std::string ip, std::string keyFile, int bw, int scale, int n_seq, int n_embed, int numThreads, bool gpuMemPool = true) : party(party), bw(bw), scale(scale), n_seq(n_seq)
     {
         initAESContext(&g);
-        initGPUMemPool();
+        if (gpuMemPool)
+            initGPUMemPool();
         // initCommBufs(true);
 
         d_geluTab = genLUT<T, reluSubGelu<T>>(8, 6, scale);
@@ -87,15 +88,17 @@ public:
             double val = double(m + 128) * std::pow(2.0, k - 7);
             (*invSqrtTab)[i] = GroupElement(double(1LL << (2 * scale)) / sqrt(val / n_embed));
         }
-
-        auto filename = keyFile + "_" + std::to_string(party) + ".dat";
-        keySize = std::filesystem::file_size(filename);
-        int fd = openForReading(filename);
-        printf("%s, %d\n", filename.data(), fd);
-        getAlignedBuf(&keyBuf, keySize);
-        readKey(fd, keySize, keyBuf, NULL);
-
-        startPtr = keyBuf;
+        if (keyFile.compare("") != 0)
+        {
+            auto filename = keyFile + "_" + std::to_string(party) + ".dat";
+            keySize = std::filesystem::file_size(filename);
+            int fd = openForReading(filename);
+            printf("%s, %d\n", filename.data(), fd);
+            getAlignedBuf(&keyBuf, keySize);
+            readKey(fd, keySize, keyBuf, NULL);
+            startPtr = keyBuf;
+            closeFile(fd);
+        }
 
         LlamaConfig::bitlength = bw;
         LlamaConfig::party = party + 2;
@@ -128,12 +131,9 @@ public:
         p.N = b.d2;
         p.batchSz = 1;
         stdInit(p, bw, 0);
+
         auto k = readGPUMatmulKey<T>(p, TruncateType::None, &keyBuf);
         c.d_data = gpuMatmul(peer, party, p, k, a.d_data, b.data, useBias ? d.data : (T *)NULL, TruncateType::None, &g, &s, false);
-        // printf("Matmul weights=%ld, %ld, %ld\n", b.data[0], b.data[1], b.data[b.size() - 1]);
-
-        // auto h_out = (T*) moveToCPU((u8*) c.d_data, p.size_C * sizeof(T), NULL);
-        // printf("Matmul output=%ld, %ld\n", h_out[0], h_out[1]);
 
         auto end = std::chrono::high_resolution_clock::now();
         auto elapsed = end - start;
@@ -218,15 +218,11 @@ public:
 
     void truncateForward(Tensor<T> &in, u64 shift, u8 mode = 0)
     {
-        // printf("Truncate=%lu, %lu, %lu\n", mode, shift, size);
         auto start = std::chrono::high_resolution_clock::now();
 
         TruncateType t = TruncateType::TrFloor;
         auto k = readGPUTruncateKey<T>(t, &keyBuf);
         in.d_data = gpuTruncate<T, T>(k.bin, k.bout, t, k, k.shift, peer, party, k.N, in.d_data, &g, &s);
-
-        // auto h_data = (T*) moveToCPU((u8*) in.d_data, in.size() * sizeof(T), NULL);
-        // printf("Truncate output=%lu, %lu, %lu\n", h_data[0], h_data[1], h_data[in.size() - 1]);
 
         auto end = std::chrono::high_resolution_clock::now();
         auto elapsed = end - start;
@@ -242,25 +238,20 @@ public:
 
     void output(Tensor<T> &a)
     {
-        // printf("Inside output=%lx\n", a.d_data);
-        // int tmpBw = bw - scale;
         int N = a.size();
-        // printf("keyBuf=%lx, %lu\n", keyBuf, keyBuf - startPtr);
         unmaskValues(bw, N, a.d_data, (T *)keyBuf, &s);
-        // printf("boo\n");
         moveIntoCPUMem((u8 *)a.data, (u8 *)a.d_data, N * sizeof(T), &s);
     }
 
     void add(const std::vector<Tensor<T> *> &in, Tensor<T> &out)
     {
-        int tmpBw = bw - scale;
         int N = in[0]->size();
         std::vector<T *> gpuInp;
         for (int i = 0; i < in.size(); i++)
         {
             gpuInp.push_back(in[i]->d_data);
         }
-        out.d_data = gpuAdd(tmpBw, N, gpuInp);
+        out.d_data = gpuAdd(bw, N, gpuInp);
     }
 
     void optimize(LayerGraphNode<T> *root)
@@ -281,6 +272,7 @@ public:
     size_t keyBufSize = 0;
     int party = -1;
     std::string keyFile;
+    size_t keySize = 0;
     int scale;
     int bw;
     AESGlobalContext g;
@@ -312,7 +304,7 @@ public:
 
     void close()
     {
-        size_t keySize = keyBuf - startPtr;
+        /*size_t*/ keySize = keyBuf - startPtr;
         size_t padding = 4096 - (keySize % 4096);
         char *zeros = new char[padding];
         memset(zeros, 0, padding);
@@ -320,10 +312,13 @@ public:
         keyBuf += padding;
         keySize += padding;
         assert(keySize < keyBufSize);
-        std::ofstream f(keyFile + "_" + std::to_string(party) + ".dat");
-        f.write((char *)startPtr, keySize);
-        f.close();
-        cpuFree(startPtr);
+        if (keyFile.compare("") != 0)
+        {
+            std::ofstream f(keyFile + "_" + std::to_string(party) + ".dat");
+            f.write((char *)startPtr, keySize);
+            f.close();
+            cpuFree(startPtr);
+        }
     }
 
     void matmul(const Tensor2D<T> &a, const Tensor2D<T> &b, Tensor2D<T> &c)
@@ -376,7 +371,6 @@ public:
     {
         MHAParams pMHA = {X.d1, n_embed, n_heads, dim_W, selfAttn, doNormQKt, doRotEmb};
         MHAMulParams pMHAMul = initMHAMulParams(pMHA, bw, scale);
-        printf("scale=%d\n", pMHAMul.pQKV.shift);
         Y.d_data = gpuKeygenMHA(&keyBuf, party, bw, scale, pMHA, pMHAMul, wQKV.data, bQKV.data, wProj.data, bProj.data, X.d_data, &g);
     }
 
@@ -393,16 +387,13 @@ public:
 
     void add(const std::vector<Tensor<T> *> &in, Tensor<T> &out)
     {
-        int tmpBw = bw - scale;
         int N = in[0]->size();
-        // printf("Add input=%d, %lx, %lx\n", N, in[0]->d_data, in[1]->d_data);
         std::vector<T *> gpuInp;
         for (int i = 0; i < in.size(); i++)
         {
             gpuInp.push_back(in[i]->d_data);
-            // printf("Add inp=%lx\n", in[i]->d_data);
         }
-        out.d_data = gpuAdd(tmpBw, N, gpuInp);
+        out.d_data = gpuAdd(bw, N, gpuInp);
     }
 
     void addbias(Tensor<T> &x, const Tensor1D<T> &bias)

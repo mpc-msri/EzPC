@@ -357,7 +357,6 @@ T *gpuMatmul(SigmaPeer *peer, int party, MatmulParams p, GPUMatmulKey<T> &k, T *
 
     u64 b1 = peer->bytesSent() + peer->bytesReceived();
     s->linear_comm_bytes += (b1 - b0);
-    printf("Matmul Comm=%ld\n", b1 - b0);
     return d_truncatedZ;
 }
 

@@ -96,11 +96,11 @@ def run_seq(dealer_cmd, eval_cmd, log_dir):
         if evaluator.returncode:
             raise Exception("Evaluator did not run properly. Check logs for errors.")
 
-def run_one(dealer_cmd, log_dir):
+def run_one(dealer_cmd, log_dir, log_file="dealer.log"):
     dealer = None
     Path(log_dir).mkdir(parents=True, exist_ok=True)
 
-    dealer_log = log_dir + "dealer.log"
+    dealer_log = log_dir + log_file
     print('Running command={}'.format(dealer_cmd))
     with open(dealer_log, 'a') as dealer_file:
         dealer = subprocess.run(dealer_cmd, shell=True, stdout=dealer_file, stderr=dealer_file, check=True)

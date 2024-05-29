@@ -134,7 +134,6 @@ T *gpuGelu(SigmaPeer *peer, int party, GPUGeluKey<T, TClip> &k, int bw, int bin,
     assert(8 * sizeof(TClip) >= clipBw);
     assert(bin > scale - 6);
     int bwXt = bin - scale + 6 + 1;
-    printf("BwXt=%d, Bout=%d, N=%d\n", bwXt, bw, N);
     // do a truncate reduce
     auto d_Xt = gpuTruncate(bw, bwXt, TruncateType::TrWithSlack, k.trKey, scale - 6, peer, party, N, d_X, gaes, s);
     // the -1 doesn't matter because anything larger is anyway set to (1 << clipBw) - 1
@@ -149,11 +148,8 @@ T *gpuGelu(SigmaPeer *peer, int party, GPUGeluKey<T, TClip> &k, int bw, int bin,
     auto d_clippedX = geluMux<T, TClip>(peer, party, k.muxKey, bwXt, clipBw, N, d_dRelu, d_ic, d_Xt, s);
     gpuFree(d_Xt);
     auto d_reluSubGelu = gpuDpfLUT<TClip, T>(k.lutKey, peer, party, d_clippedX, d_geluSubRelu, gaes, s, false);
-    // printf("Finished LUT\n");
     gpuFree(d_clippedX);
-    // printf("Starting relu\n");
     T *d_relu = gpuSelect<T, T, 0, 0>(peer, party, bw, k.reluSelectKey, d_dRelu, d_X, s, false);
-    // printf("Finished relu\n");
     gpuFree(d_res);
     gpuLinearComb(bw, N, d_relu, T(1), d_relu, -T(1), d_reluSubGelu);
     gpuFree(d_reluSubGelu);

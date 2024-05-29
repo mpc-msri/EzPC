@@ -199,13 +199,14 @@ public:
             auto &x_out = block->forward(*x);
             x = &x_out;
         }
+        return *x;
 
-        auto &x0 = view(*x, 0);
-        auto &x0_unsqueeze = unsqueeze(x0);
-        auto &pool_out = pool->forward(x0_unsqueeze);
-        auto &tanh_out = tanh(pool_out);
-        // return view(tanh_out, 0);
-        return tanh_out;
+        // auto &x0 = view(*x, 0);
+        // auto &x0_unsqueeze = unsqueeze(x0);
+        // auto &pool_out = pool->forward(x0_unsqueeze);
+        // auto &tanh_out = tanh(pool_out);
+        // // return view(tanh_out, 0);
+        // return tanh_out;
     }
 };
 
@@ -229,8 +230,9 @@ public:
     Tensor<T> &_forward(Tensor<T> &input)
     {
         auto &fc_in = gpt2->forward(input);
-        auto &fc_out = fc->forward(fc_in);
-        return view(fc_out, 0);
+        return fc_in;
+        // auto &fc_out = fc->forward(fc_in);
+        // return view(fc_out, 0);
     }
 };
 
@@ -381,22 +383,40 @@ int fixed_mrpc_validation(int __argc, char**__argv) {
 
 int ct_main(int __argc, char**__argv) {
     sytorch_init();
+     // Bert base
+    // const u64 n_embd = 768;
+    // const u64 n_head = 12;
+    // const u64 n_layer = 12;
+    // const u64 bw = 50;
+    // const u64 scale = 12;
 
-    const u64 n_vocab = 50257;
-    const u64 n_ctx = 1024;
-    const u64 n_embd = 768;
-    const u64 n_head = 12;
-    const u64 n_layer = 12;
+    // Bert tiny
+    // const u64 n_embd = 128;
+    // const u64 n_head = 2;
+    // const u64 n_layer = 2;
+    // const u64 bw = 37;
+    // const u64 scale = 12;
+
+    // // Bert large
+    const u64 n_embd = 1024;
+    const u64 n_head = 16;
+    const u64 n_layer = 24;
+    const u64 bw = 50;
     const u64 scale = 12;
 
+    
     BERTSequenceClassification<i64> bert(n_layer, n_head, n_embd, 2);
-    bert.init(scale);
-    hasInit = true;
-    bert.load("bertclass.dat");
-
-    std::string fname = __argv[1];
-    u64 n_seq = get_n_seq(fname, n_embd);
+    u64 n_seq = 128;//get_n_seq(fname, n_embd);
     Tensor<i64> input({n_seq, n_embd});
+    bert.init(scale, input);
+    hasInit = true;
+
+    auto ct = new ClearText<i64>();
+    ct->bw = bw;
+    bert.setBackend(ct);
+
+    bert.load("bert-large-weights.dat");
+    std::string fname = __argv[1];
     input.load(fname, scale);
 
     auto t1 = std::chrono::high_resolution_clock::now();
@@ -404,7 +424,7 @@ int ct_main(int __argc, char**__argv) {
     auto t2 = std::chrono::high_resolution_clock::now();
     auto compute_time = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
     std::cout << "Total time = " << compute_time / (1000.0)  << " ms" << std::endl;
-    print(bert.activation, scale);
+    print(bert.activation, scale, bw);
 
     return 0;
 }
@@ -545,8 +565,9 @@ int float_sst2_single(int __argc, char**__argv) {
 int main(int __argc, char**__argv)
 {
     // float_sst2_validation(__argc, __argv);
-    fixed_sst2_validation(__argc, __argv);
+    // fixed_sst2_validation(__argc, __argv);
     // lt_main(__argc, __argv);
+    ct_main(__argc, __argv);
     // float_mrpc_validation(__argc, __argv);
     // fixed_mrpc_validation(__argc, __argv);
     // float_sst2_single(__argc, __argv);
