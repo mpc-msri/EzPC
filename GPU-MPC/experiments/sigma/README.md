@@ -34,6 +34,12 @@ sh setup.sh
 make sigma
 ```
 
+4. Switch to the experiments directory
+
+```
+cd experiments/sigma
+```
+
 ## Run SIGMA
 
 ### Prerequisites and caveats
