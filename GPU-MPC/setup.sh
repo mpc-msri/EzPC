@@ -38,7 +38,7 @@ cd ../../..;
 echo "Building Sytorch"
 cd ext/sytorch;
 mkdir build && cd build;
-cmake -DCMAKE_INSTALL_PREFIX=./install -DCMAKE_BUILD_TYPE=Release ../;
+cmake -DCMAKE_INSTALL_PREFIX=./install -DCMAKE_BUILD_TYPE=Release ../ -DCUDAToolkit_ROOT="/usr/local/cuda-$CUDA_VERSION/bin/";
 make sytorch -j;
 cd ../../..;
 
