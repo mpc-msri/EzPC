@@ -66,10 +66,11 @@ public:
     std::vector<GroupElement> *invSqrtTab;
     LlamaTransformer<T> *llama;
 
-    SIGMA(int party, std::string ip, std::string keyFile, int bw, int scale, int n_seq, int n_embed, int numThreads) : party(party), bw(bw), scale(scale), n_seq(n_seq)
+    SIGMA(int party, std::string ip, std::string keyFile, int bw, int scale, int n_seq, int n_embed, int numThreads, bool initGPUMemPool = true) : party(party), bw(bw), scale(scale), n_seq(n_seq)
     {
         initAESContext(&g);
-        initGPUMemPool();
+        if (initGPUMemPool)
+            initGPUMemPool();
         // initCommBufs(true);
 
         d_geluTab = genLUT<T, reluSubGelu<T>>(8, 6, scale);

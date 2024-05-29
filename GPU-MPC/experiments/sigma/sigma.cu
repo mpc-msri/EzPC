@@ -193,7 +193,7 @@ int main(int __argc, char **__argv)
     statsFile.close();
 
     std::string ip(__argv[4]);
-    auto sigma = new SIGMA<u64>(party, ip, "", bw, scale, n_seq, n_embd, atoi(__argv[5]));
+    auto sigma = new SIGMA<u64>(party, ip, "", bw, scale, n_seq, n_embd, atoi(__argv[5]), false);
     sigma->keyBuf = sigmaKeygen->startPtr;
     sigma->startPtr = sigma->keyBuf;
     sigma->keySize = sigmaKeygen->keySize;
