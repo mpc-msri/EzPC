@@ -62,11 +62,11 @@ cd experiments/sigma
 
 ### Run standalone
 
-Make produces the `sigma` executable which is in `experiments/sigma`. Each party (the server and the client) needs to run the `sigma` executable. The executable requires the user to specify the model, sequence length, party number (0 for the server/1 for the client), the IP address of the other party, and the number of CPU threads to use for computation.
+Make produces the `sigma` executable which is in `experiments/sigma`. Each party (the server and the client) needs to run this executable. The executable requires the user to specify the model, sequence length, party number (0 for the server/1 for the client), the IP address of the other party, and the number of CPU threads to use for computation.
 
 The syntax is 
 ```javascript
-./sigma <model name> <sequence length> <party=0/1 (server/client)> <key directory> <peer IP> <CPU threads>
+./sigma <model name> <sequence length> <party=0/1 (server/client)> <peer IP> <CPU threads>
 ```
 
 We currently support the following models: `bert-tiny, bert-base, bert-large, gpt2, llama-7b, llama-13b`.
@@ -85,7 +85,7 @@ Results are stored in the `output/P<party number>/models/<model name>-<sequence 
 
 ### Running the artifact
 
-Before the artifact can be run, we need to specify the configuration in `config.json`. 
+Before the artifact can be run, we need to configure it via `config.json`. 
 
 For the server(=P0), `config.json` looks like:
 ```javascript
