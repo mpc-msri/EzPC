@@ -55,62 +55,45 @@ cd experiments/sigma
 
 ### Prerequisites and caveats
 
-1. Since FSS generates large keys, please ensure that you have a writeable disk with at least 500GB of free space. This is only required by our largest model (Llama2-13B). Other models require less space, and an idea of how much free space is needed per model can be estimated from the key size reported in Table 9 of the paper.
-
-2. In the online phase, SIGMA loads the entire key from the disk into CPU memory. Thus, the CPU must have (free) memory that is at least as large as the key that will be read from the disk.
+1. Since FSS generates large keys, writing keys to disk and reading keys from disk can take a long time. To ensure that the artifact runs in a reasonable amount of time, we avoid going to disk and instead have the dealer generate keys in CPU memory. These keys are then used by the evaluator. Please make sure that the CPU memory is large enough to support the key size of the model being run. Key sizes can be estimated from Table 9 of the paper.
 
 3. Currently, we only support sequence lengths that are powers-of-2.
 
 
 ### Run standalone
 
-Make produces the `sigma` executable which is in `experiments/sigma`.
+Make produces the `sigma` executable which is in `experiments/sigma`. Each party (the server and the client) needs to run the `sigma` executable. The executable requires the user to specify the model, sequence length, party number (0 for the server/1 for the client), the IP address of the other party, and the number of CPU threads to use for computation.
 
-Each party (the server and the client) needs to run two processes in sequence: the dealer and the evaluator. In addition to other arguments, the dealer requires the user to specify the directory in which it will store keys (see prerequisites and caveats). The evaluator requires the user to specify the directory to read keys from, the IP address of its peer, and the number of CPU threads to use for computation.
-
-The syntax for running the dealer is 
+The syntax is 
 ```javascript
-./sigma <model name> <sequence length> <role=0 for dealer> <party=0/1 (server/client)> <key directory>
-```
-
-The syntax for running the evaluator is 
-```javascript
-./sigma <model name> <sequence length> <role=1 for evaluator> <party=0/1 (server/client)> <key directory> <peer IP> <CPU threads>`
+./sigma <model name> <sequence length> <party=0/1 (server/client)> <key directory> <peer IP> <CPU threads>
 ```
 
 We currently support the following models: `bert-tiny, bert-base, bert-large, gpt2, llama-7b, llama-13b`.
 
-**Example:** To run GPT2, the server will run (in sequence):
+**Example:** To run GPT2, the server will run:
 ```javascript
-./sigma gpt2 128 0 0 /tmp/
-./sigma gpt2 128 1 0 /tmp/ <client IP> 64
+./sigma gpt2 128 0 <client IP> 64
 ```
 
 The client will run (_on a different machine_):
 ```javascript
-./sigma gpt2 128 0 1 /tmp/
-./sigma gpt2 128 1 1 /tmp/ <server IP> 64
+./sigma gpt2 128 1 <server IP> 64
 ```
 
 Results are stored in the `output/P<party number>/models/<model name>-<sequence length>/` folder.
 
 ### Running the artifact
 
-Before the artifact can be run, we need to specify the dealer and evaluator configurations in `config.json`. 
+Before the artifact can be run, we need to specify the configuration in `config.json`. 
 
 For the server(=P0), `config.json` looks like:
 ```javascript
 {
     "P0": {
-        "dealer": {
-            "gpu": <The ID of the GPU to use>,
-            "key_dir": <The directory in which the dealer will store keys>
-        },
-        "evaluator": {
             "gpu": <The ID of the GPU to use>,
             "peer": <The IP address of the remote peer>,
             "cpu_threads": <The number of CPU threads to use for computation>
-        }
     }
 }
 ```
@@ -132,9 +115,9 @@ optional arguments:
 
 Table 7 can be reproduced by throttling the network bandwidth (with `tc`, for example) and re-running `python run_experiment.py --perf true` to generate Table 5. 
 
-Results are stored in `output/P<party-number>/Table<table-number>.json` or `output/P<party-number>/Fig<figure-number>.json`. 
+Results are stored in `output/P<party-number>/Table<table-number>.json` or `output/P<party-number>/Fig<figure-number>.png`. 
 
-Log files (which might help with debugging) can be found in the `output/P<party number>/models/<model name>-<sequence length>/logs/` folder.
+Log files (which might help with debugging) can be found in the `output/P<party number>/models/<model name>-<sequence length>/logs.txt` file.
 
 
 ## Citation
@@ -142,13 +125,12 @@ Log files (which might help with debugging) can be found in the `output/P<party 
 You can cite the paper using the following BibTeX entry:
 
 ```
-
 @article{article,
 author = {Kanav Gupta and Neha Jawalkar and Ananta Mukherjee and Nishanth Chandran and Divya Gupta and Ashish Panwar and Rahul Sharma},
 year = {2024},
 title = {SIGMA: Secure GPT Inference with Function Secret Sharing},
-volume = {2024}
+volume = {2024},
+journal = {Proceedings on Privacy Enhancing Technologies}
 }
-
 ```
 
