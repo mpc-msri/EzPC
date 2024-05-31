@@ -17,3 +17,4 @@ SEAL
 *.dot
 *.csv
 *.out
+GPU-MPC/experiments/sigma/sigma_offline_online
