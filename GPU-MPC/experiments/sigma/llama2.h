@@ -1,4 +1,4 @@
-// Author: Neha Jawalkar
+// Author: Neha Jawalkar,Tanmay Rajore
 // Copyright:
 // 
 // Copyright (c) 2024 Microsoft Research
@@ -63,13 +63,14 @@ class GPULlamaTransformerBlock : public SytorchModule<T>
     RMSNorm<T> *ln0;
     RMSNorm<T> *ln1;
     u64 n_heads, n_embd, intermediate_size;
+    bool rotatory;
 
 public:
 
-    GPULlamaTransformerBlock(u64 n_heads, u64 n_embd, u64 intermediate_size): n_heads(n_heads), n_embd(n_embd), intermediate_size(intermediate_size)
+    GPULlamaTransformerBlock(u64 n_heads, u64 n_embd, u64 intermediate_size,bool rotatory=true): n_heads(n_heads), n_embd(n_embd), intermediate_size(intermediate_size),rotatory(rotatory)
     {
         auto dim_W = n_embd / n_heads;
-        attn = new _MHADummy<T>(n_heads, n_embd, (int)dim_W, "self", "qkvsep", true, true);
+        attn = new _MHADummy<T>(n_heads, n_embd, (int)dim_W, "self", "qkvsep", true, rotatory);
         ffn = new LlamaFFN<T>(n_embd, intermediate_size);
         ln0 = new RMSNorm<T>(n_embd, false);
         ln1 = new RMSNorm<T>(n_embd, false);
@@ -93,14 +94,15 @@ class GPULlama : public SytorchModule<T>
     std::vector<GPULlamaTransformerBlock<T> *> blocks;
     // RMSNorm<T> *ln_f;
     u64 n_layer, n_heads, n_embd, intermediate_size;
+    bool rotatory;
 
 public:
     
-    GPULlama(u64 n_layer, u64 n_heads, u64 n_embd, u64 intermediate_size): n_layer(n_layer), n_heads(n_heads), n_embd(n_embd), intermediate_size(intermediate_size)
+    GPULlama(u64 n_layer, u64 n_heads, u64 n_embd, u64 intermediate_size,bool rotatory=true): n_layer(n_layer), n_heads(n_heads), n_embd(n_embd), intermediate_size(intermediate_size),rotatory(rotatory)
     {
         for(u64 i = 0; i < n_layer; ++i)
         {
-            blocks.push_back(new GPULlamaTransformerBlock<T>(n_heads, n_embd, intermediate_size));
+            blocks.push_back(new GPULlamaTransformerBlock<T>(n_heads, n_embd, intermediate_size,rotatory));
         }
         // ln_f = new RMSNorm<T>(n_embd);
     }
