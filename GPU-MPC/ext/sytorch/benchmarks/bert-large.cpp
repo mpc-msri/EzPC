@@ -203,7 +203,7 @@ int main(int __argc, char **__argv)
     const u64 n_head = n_embd / 64;
     const u64 n_layer = 24;
     const u64 scale = 12;
-    const u64 bw = 51;
+    const u64 bw = 50;
     const u64 n_seq = 128;
 
     int party = atoi(__argv[1]);

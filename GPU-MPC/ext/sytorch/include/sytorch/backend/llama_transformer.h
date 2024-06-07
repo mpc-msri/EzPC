@@ -160,7 +160,7 @@ public:
             if (node->children.size() == 1)
             {
                 LayerGraphNode<T> *child = node->children[0];
-                if (child->layer->name == "GeLU")
+                if (child->layer->name == "GeLU" || child->layer->name == "SiLU")
                 {
                     child->layer->mode = 1;
                 }

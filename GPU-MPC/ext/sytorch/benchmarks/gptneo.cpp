@@ -259,7 +259,7 @@ int lt_main(int __argc, char**__argv){
     
     const u64 scale = 12;
 
-    LlamaConfig::bitlength = 52;
+    LlamaConfig::bitlength = 51;
     LlamaConfig::party = party;
     LlamaConfig::stochasticT = false;
     LlamaConfig::stochasticRT = false;

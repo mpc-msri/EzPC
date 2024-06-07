@@ -183,7 +183,7 @@ int main(int __argc, char**__argv)
     const u64 n_embd = 768;
     const u64 n_head = 12;
     const u64 n_layer = 12;
-    const u64 bw = 51;
+    const u64 bw = 50;
 
     const u64 scale = 12;
     const u64 n_seq = 128;
