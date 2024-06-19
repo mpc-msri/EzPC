@@ -7,13 +7,15 @@ Implementation of protocols from the paper [SIGMA](https://eprint.iacr.org/2023/
 
 ## Build
 
-This project requires NVIDIA GPUs, and assumes that GPU drivers and the [NVIDIA CUDA Toolkit](https://docs.nvidia.com/cuda/) are already installed. The following has been tested on Ubuntu 20.04 with CUDA 11.7, CMake 3.27.2 and g++-9. 
+This project requires NVIDIA GPUs and assumes that GPU drivers and the [NVIDIA CUDA Toolkit](https://docs.nvidia.com/cuda/) are already installed. The following has been tested on Ubuntu 20.04 with CUDA 11.7, CMake 3.27.2 and g++-9. 
 
-Please note that Sytorch requires CMake version >= 3.17 and the build will fail if this depency is not met. 
+Please note that Sytorch requires CMake version >= 3.17 and the build will fail if this dependency is not met. 
 
 The code uses CUTLASS version 2.11 by default, so if you change the CUDA version, please make sure that the CUTLASS version being built is compatible with the new CUDA version. To change the version of CUTLASS being built, add `git checkout <branch>;` after line 31 (`cd ext/cutlass;`) of setup.sh.
 
 The last line of `setup.sh` tries to install `matplotlib`, which is needed for generating Figure 10. In our experience, the installation fails if the versions of Python and `pip` do not match. In case the installation fails, please install `matplotlib` manually before running `run_experiment.py`.
+
+This artifact requires a large amount of resources to run. To produce the numbers reported in the paper, we used two machines connected via LAN with 9.4 Gbps bandwidth and 0.05 ms ping time. Each machine has 1 TB RAM, an A6000 GPU with 46GB GPU memory, and an AMD Epyc 7742 processor.
 
 1. Export environment variables
 
@@ -27,6 +29,7 @@ export GPU_ARCH=86
 ```
 sh setup.sh
 ```
+_Note:_ The above script compiles CUTLASS with the maximum possible number of threads. As this step requires a large amount of memory, you can change line 34 from `make -j` to `make -j<n>` to compile on `n` threads and avoid out-of-memory errors. 
 
 3. Make SIGMA
 
@@ -127,11 +130,11 @@ Log files (which might help with debugging) can be found in the `output/P<party 
 
 ### Generating CPU numbers
 
-To generate CPU performance numbers in table 3 and figures 9,10, follow these steps:
+To generate CPU performance numbers in Table 3 and Figures 9,10, follow these steps:
 
 1. On both machines, run `setup.sh` script, as described in previous sections.
 
-2. On the first machine, change to the build directory and run the python script with it's IP address
+2. On the first machine, change to the build directory and run the Python script with its IP address
 
 ```
 cd ext/sytorch/build/
@@ -145,13 +148,13 @@ cd ext/sytorch/build/
 python ../scripts/all-cpu-benchmarks-remote.py <ip> 1
 ```
 
-If you'd like to run on a single machine machine, use the local script without any arguments. Note that since it runs 2 processes in parallel, it requires double the hardware.
+If you'd like to run on a single machine, use the local script without any arguments. Note that since it runs 2 processes in parallel, it requires double the hardware.
 
 ```
 python ../scripts/all-cpu-benchmarks-local.py
 ```
 
-At the end of this script, which could take several hours, you get a `results.csv` file containing all the required time and communication numbers required to generate table 3 and figure 9,10.
+At the end of this script, which could take several hours, you get a `results.csv` file containing all the required time and communication numbers required to generate Table 3 and Figure 9,10.
 
 ## Citation
 

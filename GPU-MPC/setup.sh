@@ -29,7 +29,7 @@ sudo apt install cmake make libeigen3-dev;
 echo "Building CUTLASS"
 # Build CUTLASS
 cd ext/cutlass;
-mkdir build && cd build;
+mkdir -p build && cd build;
 cmake .. -DCUTLASS_NVCC_ARCHS=$GPU_ARCH -DCMAKE_CUDA_COMPILER_WORKS=1 -DCMAKE_CUDA_COMPILER=$NVCC_PATH;
 make -j;
 cd ../../..;
@@ -37,7 +37,7 @@ cd ../../..;
 # Build sytorch
 echo "Building Sytorch"
 cd ext/sytorch;
-mkdir build && cd build;
+mkdir -p build && cd build;
 cmake -DCMAKE_INSTALL_PREFIX=./install -DCMAKE_BUILD_TYPE=Release ../ -DCUDAToolkit_ROOT="/usr/local/cuda-$CUDA_VERSION/bin/";
 make sytorch -j;
 cd ../../..;
@@ -59,18 +59,18 @@ cd ../..;
 
 # Make output directories
 # Orca
-mkdir experiments/orca/output;
-mkdir experiments/orca/output/P0;
-mkdir experiments/orca/output/P1;
-mkdir experiments/orca/output/P0/training;
-mkdir experiments/orca/output/P1/training;
-mkdir experiments/orca/output/P0/inference;
-mkdir experiments/orca/output/P1/inference;
+mkdir -p experiments/orca/output;
+mkdir -p experiments/orca/output/P0;
+mkdir -p experiments/orca/output/P1;
+mkdir -p experiments/orca/output/P0/training;
+mkdir -p experiments/orca/output/P1/training;
+mkdir -p experiments/orca/output/P0/inference;
+mkdir -p experiments/orca/output/P1/inference;
 
 # Sigma
-mkdir experiments/sigma/output;
-mkdir experiments/sigma/output/P0;
-mkdir experiments/sigma/output/P1;
+mkdir -p experiments/sigma/output;
+mkdir -p experiments/sigma/output/P0;
+mkdir -p experiments/sigma/output/P1;
 
 # install matplotlib
 pip3 install matplotlib
