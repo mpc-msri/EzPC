@@ -126,8 +126,6 @@ python3 -m pip install onnx_graphsurgeon --index-url https://pypi.ngc.nvidia.com
 build_boost () {
   sudo apt-get -y install python3.7-dev autotools-dev libicu-dev libbz2-dev
   echo "Building and installing boost from source"
-  # jfrog no longer provides boost archive, use boost.io instead
-  # wget https://boostorg.jfrog.io/artifactory/main/release/1.67.0/source/boost_1_67_0.tar.gz
   wget https://archives.boost.io/release/1.67.0/source/boost_1_67_0.tar.gz
   tar -zxvf boost_1_67_0.tar.gz
   cd boost_1_67_0
