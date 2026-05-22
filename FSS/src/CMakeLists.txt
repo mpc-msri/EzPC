@@ -52,7 +52,12 @@ target_include_directories(fss
 
 target_include_directories(fss PRIVATE deps/cryptoTools)
 
-target_compile_options(fss PRIVATE -std=c++17 -march=native -Wno-parentheses-equality -Wno-ignored-attributes -maes -msse2 -msse4.1 -mpclmul -fPIC -no-pie)
+target_compile_features(fss PRIVATE cxx_std_17)
+target_compile_options(fss PRIVATE -Wno-parentheses-equality -Wno-ignored-attributes -fPIC)
+
+if (CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64|i[3-6]86")
+    target_compile_options(fss PRIVATE -march=native -maes -msse2 -msse4.1 -mpclmul)
+endif()
 
 install(
     TARGETS fss
@@ -91,5 +96,3 @@ install(FILES
 install(DIRECTORY
     "deps/cryptoTools/cryptoTools"
     DESTINATION include)
-        
-        

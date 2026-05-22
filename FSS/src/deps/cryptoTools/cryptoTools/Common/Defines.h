@@ -5,8 +5,36 @@
 #include <iostream>
 #include <memory>
 
+#if defined(__aarch64__) || defined(_M_ARM64)
+#include <cryptoTools/Common/sse2neon.h>
+
+#if defined(__ARM_FEATURE_CRYPTO) && !defined(EZPC_ARM_AES_DECRYPT_INTRINSICS)
+#define EZPC_ARM_AES_DECRYPT_INTRINSICS
+static inline __m128i _mm_aesimc_si128(__m128i a)
+{
+    return vreinterpretq_m128i_u8(vaesimcq_u8(vreinterpretq_u8_m128i(a)));
+}
+
+static inline __m128i _mm_aesdec_si128(__m128i a, __m128i roundKey)
+{
+    uint8x16_t zero = vdupq_n_u8(0);
+    return vreinterpretq_m128i_u8(
+        vaesimcq_u8(vaesdq_u8(vreinterpretq_u8_m128i(a), zero)) ^
+        vreinterpretq_u8_m128i(roundKey));
+}
+
+static inline __m128i _mm_aesdeclast_si128(__m128i a, __m128i roundKey)
+{
+    uint8x16_t zero = vdupq_n_u8(0);
+    return _mm_xor_si128(
+        vreinterpretq_m128i_u8(vaesdq_u8(vreinterpretq_u8_m128i(a), zero)),
+        roundKey);
+}
+#endif
+#else
 #include <emmintrin.h>
 #include <smmintrin.h>
+#endif
 
 #include <cryptoTools/Common/config.h>
 
@@ -37,7 +65,7 @@
 #endif
 
 // add instrinsics names that intel knows but clang doesn't…
-#ifdef __clang__
+#if defined(__clang__) && !defined(_mm_cvtsi128_si64x)
 #define _mm_cvtsi128_si64x _mm_cvtsi128_si64
 #endif
 
