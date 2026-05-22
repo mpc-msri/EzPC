@@ -36,6 +36,9 @@ Reference code: https://github.com/Shay-Gueron/AES-GCM-SIV
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include "utils/block.h"
+
+#if !(defined(__aarch64__) || defined(_M_ARM64))
 #include <wmmintrin.h>
 
 #if defined(__INTEL_COMPILER)
@@ -44,9 +47,9 @@ Reference code: https://github.com/Shay-Gueron/AES-GCM-SIV
 #include <emmintrin.h>
 #include <smmintrin.h>
 #endif
+#endif
 
 #include "utils/aes-ni.h"
-#include "utils/block.h"
 #include "utils/ubuntu_terminal_colors.h"
 
 #if !defined(ALIGN16)

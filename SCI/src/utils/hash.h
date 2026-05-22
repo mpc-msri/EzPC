@@ -74,7 +74,7 @@ public:
   static void hash_once(void *digest, const void *data, int nbyte) {
     (void)SHA256((const unsigned char *)data, nbyte, (unsigned char *)digest);
   }
-  __attribute__((target("sse2"))) static block128
+  SCI_TARGET("sse2") static block128
   hash_for_block128(const void *data, int nbyte) {
     // even though stack is aligned to 16 byte, we don't know the order of
     // locals.
@@ -83,7 +83,7 @@ public:
     return _mm_load_si128((__m128i *)&digest[0]);
   }
 
-  __attribute__((target("avx"))) static block256
+  SCI_TARGET("avx") static block256
   hash_for_block256(const void *data, int nbyte) {
     alignas(32) char digest[DIGEST_SIZE];
     hash_once(digest, data, nbyte);
