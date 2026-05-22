@@ -60,6 +60,14 @@ public:
   FPArray ln(const FPArray &x);
   FPArray erf(const FPArray &x);
   vector<FPArray> softmax(const vector<FPArray>& x);
+
+  FPArray sigmoid_bf16(const FPArray &x);
+  FPArray sigmoid_fp32(const FPArray &x);
+  FPArray tanh_bf16(const FPArray &x);
+  FPArray tanh_fp32(const FPArray &x);
+
+  vector<FPArray> softmax_beacon(const vector<FPArray>& x);
+  vector<FPArray> softmax_secfloat(const vector<FPArray>& x);
 };
 
 #endif // FLOATING_POINT_MATH_H__

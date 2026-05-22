@@ -1,0 +1,21 @@
+(*
+Name:        Truncate-Reduce Test
+Author:      Kanav Gupta
+Description: Calculates Truncate-Reduce of 10 signed integers with shift = 13 and compares with the expected result. The input test cases contain both positive and negative numbers.
+*)
+
+extern void internalTruncateAndFix(int32_pl size, int32_pl shift, int32_pl bin, int32_pl bout, int64_al[size] inArr, int64_al[size] outArr);
+
+extern void initialize();
+extern void finalize();
+
+def void main()
+{
+    int32_pl size = 10;
+    input(SERVER, A, int64_al[size]);
+    int64_al[size] B;
+    initialize();
+    internalTruncateAndFix(size, 13, 21, 8, A, B);
+    finalize();
+    output(CLIENT, B);
+}

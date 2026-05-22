@@ -27,6 +27,7 @@ precompiledCodeDir="./test_suite/precompiled_output_emp"
 compiledCodeExtn="cpp"
 
 declare genDir
+rm -rf gen_emp
 mkdir gen_emp
 declare checks 
 checks="Allgood"
@@ -137,3 +138,4 @@ if [[ "${checks}" == "Failed" ]]
 then
     exit 1
 fi
+exit 0

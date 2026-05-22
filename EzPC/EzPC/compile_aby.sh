@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/bin/bash
 ABY_CPP_FILE=$1
 EZPC_SRC_PATH=$(dirname $0)
 

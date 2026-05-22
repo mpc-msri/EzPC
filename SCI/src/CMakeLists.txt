@@ -47,22 +47,25 @@ target_include_directories(SCI-common
 add_library(SCI-OT library_fixed_uniform.cpp library_fixed.cpp
     globals.cpp cleartext_library_fixed.cpp)
 add_library(SCI-HE library_fixed_uniform.cpp globals.cpp)
-add_library(SCI-FloatML library_float.cpp globals_float.cpp cleartext_library_float.cpp)
+add_library(SCI-SecfloatML library_float_common.cpp library_float_secfloat.cpp globals_float.cpp cleartext_library_float.cpp)
+add_library(SCI-Beacon library_float_common.cpp library_float_beacon.cpp globals_float.cpp cleartext_library_float.cpp)
 
 target_link_libraries(SCI-OT PUBLIC SCI-common SCI-LinearOT SCI-GC
-	SCI-Math SCI-BuildingBlocks Eigen3::Eigen)
+    SCI-Math SCI-BuildingBlocks SCI-FloatingPoint Eigen3::Eigen)
 target_link_libraries(SCI-HE PUBLIC SCI-common SCI-LinearHE)
-target_link_libraries(SCI-FloatML PUBLIC SCI-FloatingPoint) 
+target_link_libraries(SCI-SecfloatML PUBLIC SCI-FloatingPoint) 
+target_link_libraries(SCI-Beacon PUBLIC SCI-FloatingPoint) 
 
 target_compile_definitions(SCI-OT PUBLIC SCI_OT=1)
 target_compile_definitions(SCI-HE PUBLIC SCI_HE=1)
 
 install(TARGETS
-        SCI-FloatML
         SCI-OT
         SCI-HE
         SCI-common
         SCI-FloatingPoint
+	    SCI-SecfloatML
+	    SCI-Beacon
         SCI-BuildingBlocks
         SCI-LinearOT
         SCI-LinearHE

@@ -122,6 +122,7 @@ let o_subsumption (src:label) (tgt:secret_label) (e:expr) (t:typ) (arg:comp) :co
     | Public -> o_app (o_str "funcSSCons") [arg]
     | Secret Arithmetic
     | Secret Boolean -> failwith ("Codegen: Subsumption from secrets is not allowed for this backend. Expr: " ^ expr_to_string e ^ " line:" ^ (Global.Metadata.sprint_metadata "" e.metadata))
+    | Secret Baba -> failwith ("SCI does not support fl : float base type. Expr: " ^ expr_to_string e ^ " line:" ^ (Global.Metadata.sprint_metadata "" e.metadata))
 
 let o_basetyp (t:base_type) :comp =
   let uint32_basetype_str :string = if Config.get_sci_backend () = OT then "uint32_t" else "uint64_t" in
@@ -132,6 +133,7 @@ let o_basetyp (t:base_type) :comp =
   | Int32  -> o_str int32_basetype_str
   | Int64  -> o_str "int64_t"
   | Bool   -> o_str uint32_basetype_str
+  | _ -> failwith ("SCI does not support fl : float base type. ")
 
 let rec o_secret_binop (g:gamma) (op:binop) (sl:secret_label) (e1:expr) (e2:expr) :comp =
   (*
@@ -221,6 +223,8 @@ and o_codegen_expr (g:gamma) (e:codegen_expr) :comp =
   let o_expr = o_expr g in
   let o_codegen_expr = o_codegen_expr g in
   match e with
+  | Codegen_String s -> o_str s
+
   | Base_e e -> o_expr e
               
   | Input_g (r, sl, s, bt) -> o_str s.name
@@ -267,6 +271,7 @@ let o_basetyp_func_decl (t:base_type) :comp =
   | Int32  -> o_str "int32_t"
   | Int64  -> o_str "int64_t"
   | Bool   -> o_str "uint32_t"
+  | Float   -> failwith ("SCI does not support fl : float base type. ")
 
 let rec o_typ_rec_func_decl (t:typ) :comp =
   let uint32_basetype_str :string = "uint32_t" in
@@ -364,7 +369,7 @@ let rec o_stmt (g:gamma) (s:stmt) :comp * gamma =
      let is_arr = is_array_typ t in
      
      (* bt is the base type and l label *)
-     let bt, l = get_bt_and_label t |> (fun (bt, l) -> get_unsigned bt, l) in
+     let bt, l = get_bt_and_label t |> (fun (bt, l) -> get_inp_type bt, l) in
      let l = get_opt l in
 
      (* list of dimensions, if an array else empty *)

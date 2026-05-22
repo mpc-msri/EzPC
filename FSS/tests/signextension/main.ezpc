@@ -1,0 +1,22 @@
+(*
+Name:        Signed-Extension Test
+Author:      Kanav Gupta
+Description: Extends 8-bit numbers to 21-bit numbers and tests if the value remains the same after extension.
+*)
+
+extern void internalTruncateAndFix(int32_pl size, int32_pl shift, int32_pl bin, int32_pl bout, int64_al[size] inArr, int64_al[size] outArr);
+
+extern void initialize();
+extern void finalize();
+
+def void main()
+{
+    int32_pl size = 10;
+    input(SERVER, A, int64_al[size]);
+    int64_al[size] B;
+    initialize();
+    (* truncate-fix with shift = 0 is equivalent to sign extension *)
+    internalTruncateAndFix(size, 0, 8, 21, A, B);
+	finalize();
+    output(CLIENT, B);
+}

@@ -22,6 +22,9 @@
 
 mode=$1
 
+# If 2nd argument is provided, then SCI build will be modified. See SCI readme.
+NO_REVEAL_OUTPUT=$2
+
 sudo add-apt-repository ppa:deadsnakes/ppa -y
 sudo add-apt-repository ppa:avsm/ppa -y
 sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
@@ -113,8 +116,9 @@ sudo apt install -y python3.7-venv
 python3.7 -m venv mpc_venv
 source mpc_venv/bin/activate
 pip install -U pip
-pip install tensorflow==1.15.0 keras==2.3.0 scipy==1.1.0 matplotlib scikit-learn==0.24.2
+pip install tensorflow==1.15.0 keras==2.3.0 scipy==1.1.0 matplotlib scikit-learn==0.24.2 torchvision
 pip install onnx onnx-simplifier onnxruntime black
+pip install torchvision==0.13.1 idx2numpy==1.2.3
 pip install pytest pytest-cov 
 python3 -m pip install onnx_graphsurgeon --index-url https://pypi.ngc.nvidia.com
 
@@ -185,7 +189,13 @@ make -j
 cd $ROOT/SCI
 mkdir -p build
 cd build
-cmake -DCMAKE_INSTALL_PREFIX=./install ../
+
+if [[ "$NO_REVEAL_OUTPUT" == "NO_REVEAL_OUTPUT" ]]; then
+	cmake -DCMAKE_INSTALL_PREFIX=./install ../ -DNO_REVEAL_OUTPUT=ON
+else
+  cmake -DCMAKE_INSTALL_PREFIX=./install ../
+fi
+
 cmake --build . --target install --parallel
 
 #Install pre-commit hook for formatting

@@ -1,0 +1,293 @@
+name: OnnxBridge CI Testing
+
+# Controls when the workflow will run
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+
+  Sytorch-LLAMA:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    container: 
+      image: drunkenlegend/onnxbridge:latest
+      options: --user root
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - name: Update Git
+        run: |
+            add-apt-repository ppa:git-core/ppa -y
+            apt-get update
+            apt-get install git -y 
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+            submodules: 'true'
+
+      - name: Install dependencies
+        run: |
+            apt-get update -y
+            
+      - name: Sytorch LLAMA
+        if: always()
+        run: |
+            cd OnnxBridge/tests/
+            pytest --backend LLAMA -v -k 'lenet and not batch'
+            pytest --backend LLAMA -v -k 'hinet and not batch'
+        shell: bash
+
+  Sytorch-LLAMA-batch:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    container: 
+      image: drunkenlegend/onnxbridge:latest
+      options: --user root
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - name: Update Git
+        run: |
+            add-apt-repository ppa:git-core/ppa -y
+            apt-get update
+            apt-get install git -y 
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+            submodules: 'true'
+
+      - name: Install dependencies
+        run: |
+            apt-get update -y
+            
+      - name: Sytorch LLAMA Batch
+        if: always()
+        run: |
+            cd OnnxBridge/tests/
+            pytest --backend LLAMA -v -k 'lenet and batch' --batch_size 2
+            pytest --backend LLAMA -v -k 'hinet and batch' --batch_size 5
+        shell: bash
+
+  Sytorch-LLAMA-ct:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    container: 
+      image: drunkenlegend/onnxbridge:latest
+      options: --user root
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - name: Update Git
+        run: |
+            add-apt-repository ppa:git-core/ppa -y
+            apt-get update
+            apt-get install git -y 
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+            submodules: 'true'
+
+      - name: Install dependencies
+        run: |
+            apt-get update -y
+            
+      - name: Sytorch LLAMA Cleartext 
+        if: always()
+        run: |
+            cd OnnxBridge/tests/
+            pytest --backend CLEARTEXT_LLAMA -v -k 'lenet and not batch'
+            pytest --backend CLEARTEXT_LLAMA -v -k 'hinet and not batch'
+            pytest --backend CLEARTEXT_LLAMA -v -k 'chexpert and not batch'
+        shell: bash
+
+  Sytorch-LLAMA-ct-batch:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    container: 
+      image: drunkenlegend/onnxbridge:latest
+      options: --user root
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - name: Update Git
+        run: |
+            add-apt-repository ppa:git-core/ppa -y
+            apt-get update
+            apt-get install git -y 
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+            submodules: 'true'
+
+      - name: Install dependencies
+        run: |
+            apt-get update -y
+            
+      - name: Sytorch LLAMA Cleartext Batch
+        if: always()
+        run: |
+            cd OnnxBridge/tests/
+            pytest --backend CLEARTEXT_LLAMA -v -k 'lenet and batch' --batch_size 2
+            pytest --backend CLEARTEXT_LLAMA -v -k 'hinet and batch' --batch_size 5
+        shell: bash
+
+  Sytorch-ct-fp:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    container: 
+      image: drunkenlegend/onnxbridge:latest
+      options: --user root
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - name: Update Git
+        run: |
+            add-apt-repository ppa:git-core/ppa -y
+            apt-get update
+            apt-get install git -y 
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+            submodules: 'true'
+
+      - name: Install dependencies
+        run: |
+            apt-get update -y
+            
+      - name: Sytorch Cleartext Floating Point
+        if: always()
+        run: |
+            cd OnnxBridge/tests/
+            pytest --backend CLEARTEXT_fp -v -k 'lenet and not batch'
+            pytest --backend CLEARTEXT_fp -v -k 'hinet and not batch'
+            pytest --backend CLEARTEXT_fp -v -k 'chexpert and not batch'
+        shell: bash
+
+  Sytorch-ct-fp-batch:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    container: 
+      image: drunkenlegend/onnxbridge:latest
+      options: --user root
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - name: Update Git
+        run: |
+            add-apt-repository ppa:git-core/ppa -y
+            apt-get update
+            apt-get install git -y 
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+            submodules: 'true'
+
+      - name: Install dependencies
+        run: |
+            apt-get update -y
+            
+      - name: Sytorch Cleartext Floating Point Batch
+        if: always()
+        run: |
+            cd OnnxBridge/tests/
+            pytest --backend CLEARTEXT_fp -v -k 'lenet and batch' --batch_size 2
+            pytest --backend CLEARTEXT_fp -v -k 'hinet and batch' --batch_size 5
+        shell: bash
+      
+
+  Secfloat:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    container: 
+      image: drunkenlegend/onnxbridge:latest
+      options: --user root
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - name: Update Git
+        run: |
+            add-apt-repository ppa:git-core/ppa -y
+            apt-get update
+            apt-get install git -y 
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+            submodules: 'true'
+
+      - name: Install dependencies
+        run: |
+            apt-get update -y
+            apt install libgmp-dev libmpfr-dev -y
+
+      - name: Build Secfloat
+        run: |
+            cd SCI
+            mkdir build && cd build
+            cmake -DCMAKE_INSTALL_PREFIX=./install ..
+            cmake --build . --target install --parallel
+            cd ../..
+        shell: bash
+            
+      - name: Secfloat
+        if: always()
+        run: |
+            cd OnnxBridge/tests/
+            pytest --backend SECFLOAT -v -k "lenet and not batch"
+        shell: bash
+
+  Secfloat-ct:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    container: 
+      image: drunkenlegend/onnxbridge:latest
+      options: --user root
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - name: Update Git
+        run: |
+            add-apt-repository ppa:git-core/ppa -y
+            apt-get update
+            apt-get install git -y 
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+            submodules: 'true'
+
+      - name: Install dependencies
+        run: |
+            apt-get update -y
+            apt install libgmp-dev libmpfr-dev -y
+
+      - name: Build Secfloat
+        run: |
+            cd SCI
+            mkdir build && cd build
+            cmake -DCMAKE_INSTALL_PREFIX=./install ..
+            cmake --build . --target install --parallel
+            cd ../..
+        shell: bash
+            
+      - name: Secfloat Cleartext
+        if: always()
+        run: |
+            cd OnnxBridge/tests/
+            pytest --backend SECFLOAT_CLEARTEXT -v -k "lenet and not batch"
+            pytest --backend SECFLOAT_CLEARTEXT -v -k "hinet and not batch"
+        shell: bash
+

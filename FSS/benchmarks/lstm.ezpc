@@ -1,0 +1,14 @@
+extern void Sigmoid(int32_pl I, int32_pl J, int32_pl shrA, int32_pl shrB, int32_pl bwA, int32_pl bwB, int64_al[I*J] A, int64_al[I*J] B);
+extern void TanH(int32_pl I, int32_pl J, int32_pl shrA, int32_pl shrB, int32_pl bwA, int32_pl bwB, int64_al[I*J] A, int64_al[I*J] B);
+extern void initialize();
+extern void finalize();
+
+def void main()
+{
+    initialize();
+    int64_al[600] tmp5;
+    int64_al[600] tmp8;
+    Sigmoid(600, 1, 4096, 4096, 37, 37, tmp5, tmp8);
+    TanH(400, 1, 4096, 4096, 37, 37, tmp5, tmp8);
+    finalize();
+}

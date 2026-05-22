@@ -35,6 +35,7 @@ open Ast
  *)
 
 type codegen_expr =
+  | Codegen_String      of string
   | Base_e              of expr
   | Input_g             of role * secret_label * var * base_type  (* base_type is used by the oblivc backend to output the correct format string specifier in the oblivc input function *)
   | Output_g            of role * secret_label * codegen_expr     (* only used by the ABY backend, in oblivc output is a statement, see Output_s below *)
@@ -48,6 +49,7 @@ type codegen_stmt =
   | App_codegen    of string * codegen_expr list
   | Cin            of string * codegen_expr * base_type  (* base_type is used in the oblivc backend for scanf format string *)
   | Cout           of string * codegen_expr * base_type  (* base_type is used in the oblivc backend for printf format string *)
+  | Line           of string
   | Dump_interim   of expr * typ * string
   | Read_interim   of expr * typ * string
   | Open_file      of bool * string * string             (* true if write, false for read; var name for stream; file *)
@@ -59,3 +61,8 @@ type codegen_stmt =
   | Output_s       of role * codegen_expr * codegen_expr * base_type (* only used by oblivc backend, first expression is add_to_output_queue return value -- this is where the clear output will be put, second expression is the secret expression, base_type is the base type of the secret expression *)
 
 type codegen_program = global list * codegen_stmt list
+
+let get_base_e (e:codegen_expr) : expr =
+  match e with
+  | Base_e e1 -> e1
+  | _ -> failwith "codegenast.ml : This was supposed to be a Base_e expression"

@@ -1,0 +1,121 @@
+#!/bin/bash
+
+# Authors: Kanav Gupta.
+
+# Copyright:
+# Copyright (c) 2022 Microsoft Research
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+# this file is derived from ezpc.sh
+
+set -e
+POSITIONAL=()
+allArgs="--codegen FSS"
+LIB="N"
+BITLEN="40"
+DEBUG="N"
+while [[ $# -gt 0 ]]
+do
+	key="$1"
+
+	case $key in
+		--help)
+		HELP=Y
+		shift # past one arg
+		;;
+		--l)
+		LIB="Y"
+		allArgs="${allArgs} $1"
+		shift
+		;;
+		--format)
+		FORMAT=Y
+		shift
+		;;
+		--sf)
+		allArgs="${allArgs} $1 $2"
+		shift
+		shift
+		;;
+		--bitlen)
+		BITLEN="$2"
+		shift
+		shift
+		;;
+		--debug)
+		DEBUG="Y"
+		shift
+		;;
+		--disable-tac| --disable-cse| --dummy_inputs| --debug_partitions)
+		allArgs="${allArgs} $1"
+		shift # past one arg
+		;;
+		*)    # unknown option
+		# allArgs="${allArgs} $1"
+		POSITIONAL+=("$1") # save it in an array for later
+		shift # past argument
+		;;
+	esac
+done
+set -- "${POSITIONAL[@]}" # restore positional parameters
+
+if [ -z ${HELP} ]; then
+	FILENAME="$1"
+	if [ -z ${FILENAME} ]; then
+		echo "fssc: fatal error: no input files"
+		exit 1
+	fi
+
+	# finds location of fssc dir
+	SOURCE="${BASH_SOURCE[0]}"
+	while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+		DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
+		SOURCE="$(readlink "$SOURCE")"
+		[[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+	done
+	currentDirPath="$( cd -- "$( dirname -- "$SOURCE" )" &> /dev/null && pwd )"
+	
+	###		Next find the filename, extension and thus the new file names
+	fullFilePath=$(dirname "$FILENAME")
+	baseFileName=$(basename -- "$FILENAME")
+	extension="${baseFileName##*.}"
+	actualFileName="${baseFileName%.*}"
+	newFileNamePrefix="${fullFilePath}/${actualFileName}"
+	newFileName2="${newFileNamePrefix}.${extension}"
+	outfile="${newFileNamePrefix}.cpp"
+	
+    eval `opam config env`
+    "$currentDirPath/ezpc" $allArgs "--bitlen" "$BITLEN" "${newFileName2}"
+	if [ -z ${FORMAT} ]; then
+		FORMAT="hehe"
+	else
+		clang-format -i "$newFileNamePrefix.cpp"  -style="{BasedOnStyle: llvm, IndentWidth: 4}"
+	 	if [ "$LIB" = "Y" ]; then
+			clang-format -i "$newFileNamePrefix.h"  -style="{BasedOnStyle: llvm, IndentWidth: 4}"
+		fi
+	fi
+	
+	if [ "$LIB" = "N" ]; then
+		if [ "$DEBUG" = "N" ]; then
+			g++ -O3 -pthread -std=c++17 "-I${currentDirPath}/../../FSS/build/install/include" "${newFileNamePrefix}.cpp" "${currentDirPath}/../../FSS/build/install/lib/libfss.a" -o "${newFileNamePrefix}.out"
+		else
+			g++ -g -O3 -pthread -std=c++17 "-I${currentDirPath}/../../FSS/build/install/include" "${newFileNamePrefix}.cpp" "${currentDirPath}/../../FSS/build/install/lib/libfss.a" -o "${newFileNamePrefix}.out" 
+		fi
+	fi 
+else
+	"$currentDirPath/ezpc" --help
+fi

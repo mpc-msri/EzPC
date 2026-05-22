@@ -1,0 +1,7 @@
+*.ezpc
+!funcs.ezpc
+
+*.cpp
+*.inp
+__pycache__/
+build/

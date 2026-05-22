@@ -1,7 +1,7 @@
 # Secure and Correct Inference (SCI) Library
 
 ## Introduction
-This directory contains the code for the Secure and Correct Inference (SCI) library from ["CrypTFlow2: Practical 2-Party Secure Inference"](https://eprint.iacr.org/2020/1002), ["SIRNN: A Math Library for Secure RNN Inference"](https://eprint.iacr.org/2021/459), and ["SecFloat: Accurate Floating-Point meets Secure 2-Party Computation"](https://eprint.iacr.org/2022/).
+This directory contains the code for the Secure and Correct Inference (SCI) library from ["CrypTFlow2: Practical 2-Party Secure Inference"](https://eprint.iacr.org/2020/1002), ["SIRNN: A Math Library for Secure RNN Inference"](https://eprint.iacr.org/2021/459), and the secure floating-point library from ["SecFloat: Accurate Floating-Point meets Secure 2-Party Computation"](https://eprint.iacr.org/2022/) and ["Secure Floating-Point Training"](about:blank).
 
 ## Required Packages
  - g++ (version >= 8)
@@ -21,7 +21,15 @@ To compile the library:
 
 ```
 mkdir build && cd build
-cmake -DCMAKE_INSTALL_PREFIX=./install .. [-DBUILD_TESTS=ON] [-DBUILD_NETWORKS=ON]
+cmake -DCMAKE_INSTALL_PREFIX=./install .. [-DBUILD_TESTS=ON] [-DBUILD_NETWORKS=ON] [-DNO_REVEAL_OUTPUT=ON]
+cmake --build . --target install --parallel
+```
+
+To compile for secure AI validation so that outputs are not revealed at the end of 2PC, compile with `-DNO_REVEAL_OUTPUT=ON` flag:
+
+```
+mkdir build && cd build
+cmake -DCMAKE_INSTALL_PREFIX=./install .. -DNO_REVEAL_OUTPUT=ON
 cmake --build . --target install --parallel
 ```
 

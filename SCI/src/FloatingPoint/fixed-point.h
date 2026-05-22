@@ -121,7 +121,7 @@ public:
   // FixArray[i, j)
   FixArray subset(int i, int j);
 
-  uint64_t ell_mask() const { return (1ULL << (this->ell)) - 1; }
+  uint64_t ell_mask() const { return ((ell == 64) ? -1 : (1ULL << (this->ell)) - 1); }
 };
 
 std::ostream &operator<<(std::ostream &os, FixArray &other);
@@ -364,6 +364,7 @@ public:
   // At least one of x and y must be a secret-shared FixArray
   // x, y must have same size, signedness, bitlength and scale
   std::tuple<BoolArray,BoolArray> LT_and_EQ(const FixArray &x, const FixArray &y);
+  std::tuple<BoolArray,BoolArray> LT_and_EQ(const FixArray &x, uint64_t y);
 
   // Lookup Table (LUT): returns spec_vec[x[i] mod 2^{l_in}] mod 2^{l_out}
   // Output has bitlength l_out, scale s_out, and is signed if signed_ = true

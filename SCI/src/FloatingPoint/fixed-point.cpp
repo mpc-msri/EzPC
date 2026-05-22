@@ -272,6 +272,7 @@ FixArray FixOp::mul(const FixArray &x, const FixArray &y, int ell,
   assert(x.size == y.size);
   assert(x.signed_ || (x.signed_ == y.signed_));
   assert(ell >= x.ell && ell >= y.ell && ell <= x.ell + y.ell);
+  assert(ell < 64);
   FixArray ret(this->party, x.size, x.signed_, ell, x.s + y.s);
   if (x.party == PUBLIC || y.party == PUBLIC) {
     FixArray x_ext = this->extend(x, ell, msb_x);
@@ -639,6 +640,12 @@ tuple<BoolArray,BoolArray> FixOp::LT_and_EQ(const FixArray &x, const FixArray &y
   return MSB_and_zero_test(diff);
 }
 
+tuple<BoolArray,BoolArray> FixOp::LT_and_EQ(const FixArray &x, uint64_t y) {
+  assert(x.party != PUBLIC);
+  FixArray diff = this->sub(x, y);
+  return MSB_and_zero_test(diff);
+}
+
 FixArray FixOp::LUT(const vector<uint64_t> &spec_vec, const FixArray &x,
         bool signed_, int l_out, int s_out, int l_in) {
   assert(x.party != PUBLIC);
@@ -717,41 +724,6 @@ FixArray FixOp::LUT(const vector<uint64_t> &spec_vec, const FixArray &x,
     delete[] v;
     delete[] LUT_out;
     return ret;
-    /*
-    FixArray ret_send(x.party, x.size, signed_, l_out, s_out);
-    FixArray ret_recv(x.party, x.size, signed_, l_out, s_out);
-    FixArray x_hi = this->reduce(this->truncate_reduce(x, 8), l_rem);
-    uint64_t x_mask = x_hi.ell_mask();
-    uint64_t ret_mask = ret_send.ell_mask();
-    uint64_t **spec;
-    spec = new uint64_t *[x.size];
-    PRG128 prg;
-    prg.random_data(ret_send.data, x.size * sizeof(uint64_t));
-    for (int i = 0; i < x.size; i++) {
-      spec[i] = new uint64_t[1 << l_rem];
-      ret_send.data[i] &= ret_mask;
-      for (int j = 0; j < (1 << l_rem); j++) {
-        int idx = (x_hi.data[i] + j) & x_mask;
-        spec[i][j] = (lout[idx].data[i] - ret_send.data[i]) & ret_mask;
-      }
-    }
-    if (party == sci::ALICE) {
-      aux->lookup_table<uint64_t>(spec, nullptr, nullptr, x.size, l_rem, l_out);
-      aux->party = sci::BOB;
-      aux->lookup_table<uint64_t>(nullptr, x_hi.data, ret_recv.data, x.size, l_rem, l_out);
-      aux->party = sci::ALICE;
-    } else { // party == sci::BOB
-      aux->lookup_table<uint64_t>(nullptr, x_hi.data, ret_recv.data, x.size, l_rem, l_out);
-      aux->party = sci::ALICE;
-      aux->lookup_table<uint64_t>(spec, nullptr, nullptr, x.size, l_rem, l_out);
-      aux->party = sci::BOB;
-    }
-    for (int i = 0; i < x.size; i++)
-      delete[] spec[i];
-    delete[] spec;
-
-    return fix->add(ret_send, ret_recv);
-    */
   }
   assert(l_in <= 8);
   FixArray ret(x.party, x.size, signed_, l_out, s_out);
@@ -933,7 +905,6 @@ FixArray FixOp::div(const FixArray& nm, const FixArray& dn, int l_out, int s_out
   assert(s_out <= dn.s);
   BoolArray all_0 = bool_op->input(ALICE, dn.size, uint8_t(0));
   BoolArray all_1 = bool_op->input(ALICE, dn.size, uint8_t(1));
-  print_fix(dn);
 
   FixArray nrmlzd_dn;
   FixArray adjust = fix->input(PUBLIC, dn.size, uint64_t(0), false, dn.ell + 1, 0);
@@ -975,13 +946,8 @@ FixArray FixOp::div(const FixArray& nm, const FixArray& dn, int l_out, int s_out
   FixArray c0 = fix->LUT(spec_c0, idx, true, m + 4, m + 3);
   FixArray c1 = fix->LUT(spec_c1, idx, true, 2*m + 3, 2*m + 2);
   FixArray w = fix->mul(c0, eps, nrmlzd_dn.s + 4, all_0.data, msb_eps.data);
-  print_fix(eps);
-  print_fix(w);
   w = fix->sub(fix->scale_up(c1, nrmlzd_dn.s + m + 4, nrmlzd_dn.s + m + 3),
                fix->extend(w, nrmlzd_dn.s + m + 4, all_0.data));
-  print_fix(c0);
-  print_fix(c1);
-  print_fix(w);
   w = fix->truncate_reduce(w, w.s - s_out);
 
   BoolArray msb_nm;
@@ -997,7 +963,6 @@ FixArray FixOp::div(const FixArray& nm, const FixArray& dn, int l_out, int s_out
   } else {
     a = fix->extend(a, l_out, msb_nm_data);
   }
-  print_fix(a);
 
   if (!normalized_dn) {
     a = fix->mul(a, adjust, l_out + adjust.s, msb_nm_data, all_0.data);

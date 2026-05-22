@@ -104,6 +104,17 @@ void funcReconstruct2PCCons(signedIntType *y, const intType *x, int len) {
 }
 
 signedIntType funcReconstruct2PCCons(intType x, int revealParty) {
+  #ifdef NO_REVEAL_OUTPUT
+    // Modified code for secure AI validation ("mlcomp")
+    #warning ("At the end of 2PC, output will not be revealed and secret shares  will be APPENDED to file secret_shares.txt")
+    std::ofstream ofile;
+    ofile.open("secret_shares.txt", std::ios::app);
+    ofile<<x<<std::endl;
+    ofile.close();
+    return x;
+  #else
+  // Original code for reveal
+  #warning ("At the end of 2PC, output will revealed as usual.")
   assert(revealParty == 2 && "Reveal to only client is supported right now.");
   intType temp = 0;
   signedIntType ans = 0;
@@ -123,6 +134,7 @@ signedIntType funcReconstruct2PCCons(intType x, int revealParty) {
     }
   }
   return ans;
+  #endif
 }
 
 signedIntType div_floor(signedIntType a, signedIntType b) {

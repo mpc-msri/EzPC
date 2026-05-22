@@ -1,0 +1,14 @@
+extern void internalTruncateAndFix(int32_pl size, int32_pl shift, int32_pl bin, int32_pl bout, int64_al[size] inArr, int64_al[size] outArr);
+
+extern void initialize();
+extern void finalize();
+
+def void main()
+{
+    int32_pl size = 100;
+    int64_al[size] A;
+    int64_al[size] B;
+    initialize();
+    internalTruncateAndFix(size, 13, 21, 8, A, B);
+	finalize();
+}

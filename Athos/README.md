@@ -59,6 +59,42 @@ For model input you can create a random input using `CompilerScripts/create_tf_i
 ## Compiling an ONNX model
 Similar to how we compile tensorflow graphs, we have a `CompileONNXGraph.py` script that can compile onnx models. The usage is exactly the same as the `CompileTFGraph.py` script.
 
+### Supported nodes
+
+Some of the supported nodes in ONNX models are:
+
+```Cast
+Pad
+Concat
+HardSigmoid ( Only in SCI )
+Relu
+Div
+Add
+Sub
+Mul
+Clip ( Only in SCI )
+Gather
+ArgMax
+Gemm
+Constant
+Transpose
+Split
+ReduceMean
+MatMul
+BatchNormalization
+Unsqueeze
+Reshape
+Flatten
+Conv
+MaxPool
+AvgPool
+AveragePool
+GlobalAveragePool
+ConvTranspose
+```
+
+There are some also additional limitations in some of the nodes. The compiler will exit with information about the limitation when the model with an unsupported node is compiled.
+
 ## Compiling and Running Models in Networks Directory Automatically
 The `CompileSampleNetworks.py` script can compile and optionally run models in the Networks directory like ResNet-50, DenseNet, SqueezeNet, etc..
 To compile and run ResNet with the Porthos semi-honest 3PC protocol we do:

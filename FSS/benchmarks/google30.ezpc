@@ -1,0 +1,163 @@
+extern void ScalarMul(int32_pl I, int32_pl J, int32_pl shrA, int32_pl shrB, int32_pl demote, int32_pl bwA, int32_pl bwB, int32_pl bwTemp, int32_pl bwC, int64_al A, int64_al[I*J] B, int64_al[I*J] C);
+
+extern void MatAdd(int32_pl I, int32_pl J, int32_pl shrA, int32_pl shrB, int32_pl shrC, int32_pl demote, int32_pl bwA, int32_pl bwB, int32_pl bwTemp, int32_pl bwC, int64_al[I*J] A, int64_al[I*J] B, int64_al[I*J] C);
+
+extern void MulCir(int32_pl I, int32_pl J, int32_pl shrA, int32_pl shrB, int32_pl demote, int32_pl bwA, int32_pl bwB, int32_pl bwTemp, int32_pl bwC, int64_al[I*J] A, int64_al[I*J] B, int64_al[I*J] C);
+
+extern void MatMul(int32_pl I, int32_pl K, int32_pl J, int32_pl shrA, int32_pl shrB, int32_pl H1, int32_pl H2, int32_pl demote, int32_pl bwA, int32_pl bwB, int32_pl bwTemp, int32_pl bwC, int64_al[I*K] A, int64_al[K*J] B, int64_al[I*J] C, int64_al[K] tmp);
+
+extern void MatAddBroadCastA(int32_pl I, int32_pl J, int32_pl shrA, int32_pl shrB, int32_pl shrC, int32_pl demote, int32_pl bwA, int32_pl bwB, int32_pl bwTemp, int32_pl bwC, int64_al A, int64_al[I*J] B, int64_al[I*J] C);
+
+extern void MatSubBroadCastA(int32_pl I, int32_pl J, int32_pl shrA, int32_pl shrB, int32_pl shrC, int32_pl demote, int32_pl bwA, int32_pl bwB, int32_pl bwTemp, int32_pl bwC, int64_al A, int64_al[I*J] B, int64_al[I*J] C);
+
+extern void MatAddBroadCastB(int32_pl I, int32_pl J, int32_pl shrA, int32_pl shrB, int32_pl shrC, int32_pl demote, int32_pl bwA, int32_pl bwB, int32_pl bwTemp, int32_pl bwC, int64_al[I*J] A, int64_al B, int64_al[I*J] C);
+
+extern void MatSubBroadCastB(int32_pl I, int32_pl J, int32_pl shrA, int32_pl shrB, int32_pl shrC, int32_pl demote, int32_pl bwA, int32_pl bwB, int32_pl bwTemp, int32_pl bwC, int64_al[I*J] A, int64_al B, int64_al[I*J] C);
+
+extern void ArgMax(int32_pl I, int32_pl J, int32_pl bwA, int32_pl bwB, int64_al[I*J] A, int64_al[1] index);
+
+extern void Sigmoid(int32_pl I, int32_pl J, int32_pl shrA, int32_pl shrB, int32_pl bwA, int32_pl bwB, int64_al[I*J] A, int64_al[I*J] B);
+
+extern void TanH(int32_pl I, int32_pl J, int32_pl shrA, int32_pl shrB, int32_pl bwA, int32_pl bwB, int64_al[I*J] A, int64_al[I*J] B);
+
+extern void AdjustScaleShl(int32_pl I, int32_pl J, int32_pl shr, int64_al[I*J] A);
+
+extern void initialize();
+extern void finalize();
+
+def void main()
+{
+	input(SERVER, W1, int64_al[32*16]);
+	input(SERVER, W2, int64_al[16*100]);
+	input(SERVER, U1, int64_al[100*35]);
+	input(SERVER, U2, int64_al[35*100]);
+	input(SERVER, Bg, int64_al[1*100]);
+	input(SERVER, Bh, int64_al[1*100]);
+	input(SERVER, FC, int64_al[100*30]);
+	input(SERVER, FCbias, int64_al[1*30]);
+	input(CLIENT, X, int64_al[3168*1]);
+	initialize();
+
+	int64_al  tmp9bw16;
+	int64_al  tmp10bw16;
+	int64_al [1*100] tmp11bw16;
+	int64_al [32*1] tmp12bw8;
+	int64_pl  tmp13;
+	int64_pl  tmp14;
+	int64_al [1*32] tmp15bw8;
+	int64_pl  tmp16;
+	int64_pl  tmp17;
+	int64_al [1*16] tmp19bw8;
+	int64_al [32] tmp18bw16;
+	int64_al [1*100] tmp21bw16;
+	int64_al [16] tmp20bw16;
+	int64_al [1*35] tmp23bw8;
+	int64_al [100] tmp22bw32;
+	int64_al [1*100] tmp25bw8;
+	int64_al [35] tmp24bw16;
+	int64_al [1*100] tmp26bw16;
+	int64_al [1*100] tmp27bw16;
+	int64_al [1*100] tmp28bw16;
+	int64_al [1*100] tmp29bw16;
+	int64_al [1*100] tmp30bw16;
+	int64_al [1*100] tmp31bw16;
+	int64_al  tmp32;
+	int64_al [1*100] tmp33bw16;
+	int64_al [1*100] tmp34bw16;
+	int64_al [1*100] tmp35bw16;
+	int64_al [1*100] tmp36bw16;
+	int64_al [1*100] tmp37bw16;
+	int64_al [1*30] tmp39bw8;
+	int64_al [100] tmp38bw32;
+	int64_al [1*30] tmp40bw8;
+	int64_al [1] tmp41;
+
+	tmp9bw16 = 30498L;
+	tmp10bw16 = 22714L;
+	tmp32 = 16384L;
+
+	(* init([1, 100], 0.000000) *)
+	for msetVartmp11=[0:100] {
+		tmp11bw16[msetVartmp11] = 0L;
+	};
+
+
+	(* loop(i = [0, 99], H) *)
+	for i=[0:99] {
+
+		(* tmp12[i0][i1] = X[tmp13][tmp14] *)
+		for i0=[0:32] {
+			for i1=[0:1] {
+				tmp13 = ((i0 + (32L * i)));
+				tmp14 = ((i1 + 0L));
+				tmp12bw8[(i0*1)+(i1)] = (X[(tmp13*1)+(tmp14)]);
+			};
+		};
+
+		(* reshape(tmp12, (1, 32), (1, 2) *)
+		for mcpyVartmp12bw8tmp15bw8=[0:32] {
+			tmp15bw8[(0*32) + (0) + mcpyVartmp12bw8tmp15bw8] = tmp12bw8[(0*1) + (0) + mcpyVartmp12bw8tmp15bw8];
+		};
+
+
+		(* XX * W1 *)
+		MatMul(1, 32, 16, 1, 1, 0, 5, 64, 8, 8, 16, 8, tmp15bw8, W1, tmp19bw8, tmp18bw16);
+
+		(* tmp19 * W2 *)
+		MatMul(1, 16, 100, 1, 1, 0, 4, 1, 8, 8, 16, 16, tmp19bw8, W2, tmp21bw16, tmp20bw16);
+
+		(* H * U1 *)
+		MatMul(1, 100, 35, 1, 1, 7, 0, 256, 16, 8, 32, 8, tmp11bw16, U1, tmp23bw8, tmp22bw32);
+
+		(* tmp23 * U2 *)
+		MatMul(1, 35, 100, 1, 1, 0, 6, 64, 8, 8, 16, 8, tmp23bw8, U2, tmp25bw8, tmp24bw16);
+
+		(* a + b *)
+		MatAdd(1, 100, 32, 1, 1, 1, 16, 8, 16, 16, tmp21bw16, tmp25bw8, tmp26bw16);
+		AdjustScaleShl(1, 100, 64, tmp26bw16);
+
+		(* c + Bg *)
+		MatAdd(1, 100, 64, 1, 1, 1, 16, 8, 16, 16, tmp26bw16, Bg, tmp27bw16);
+		AdjustScaleShl(1, 100, 64, tmp27bw16);
+
+		(* Sigmoid(tmp27) *)
+		Sigmoid(1, 100, 512, 16384, 16, 16, tmp27bw16, tmp28bw16);
+
+		(* c + Bh *)
+		MatAdd(1, 100, 64, 1, 1, 1, 16, 8, 16, 16, tmp26bw16, Bh, tmp29bw16);
+		AdjustScaleShl(1, 100, 64, tmp29bw16);
+
+		(* tanh(tmp29) *)
+		TanH(1, 100, 512, 512, 16, 16, tmp29bw16, tmp30bw16);
+
+		(* g <*> H *)
+		MulCir(1, 100, 128, 128, 1, 16, 16, 32, 16, tmp28bw16, tmp11bw16, tmp31bw16);
+
+		(* tmp32 - g *)
+		MatSubBroadCastA(1, 100, 1, 1, 1, 1, 16, 16, 16, 16, tmp32, tmp28bw16, tmp33bw16);
+
+		(* zeta * tmp33 *)
+		ScalarMul(1, 100, 128, 128, 1, 16, 16, 32, 16, tmp9bw16, tmp33bw16, tmp34bw16);
+
+		(* tmp34 + nu *)
+		MatAddBroadCastB(1, 100, 1, 64, 1, 1, 16, 16, 16, 16, tmp34bw16, tmp10bw16, tmp35bw16);
+
+		(* tmp35 <*> h *)
+		MulCir(1, 100, 16, 32, 1, 16, 16, 32, 16, tmp35bw16, tmp30bw16, tmp36bw16);
+
+		(* tmp31 + tmp36 *)
+		MatAdd(1, 100, 1, 2, 1, 1, 16, 16, 16, 16, tmp31bw16, tmp36bw16, tmp11bw16);
+	};
+
+	(* res * FC *)
+	MatMul(1, 100, 30, 2, 2, 7, 0, 256, 16, 8, 32, 8, tmp11bw16, FC, tmp39bw8, tmp38bw32);
+
+	(* tmp39 + FCbias *)
+	MatAdd(1, 30, 1, 8, 1, 1, 8, 8, 8, 8, tmp39bw8, FCbias, tmp40bw8);
+
+	(* argmax(score) *)
+	ArgMax(1, 30, 8, 8, tmp40bw8, tmp41);
+
+	finalize();
+	output(CLIENT, tmp40bw8);
+}

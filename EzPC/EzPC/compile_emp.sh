@@ -23,7 +23,7 @@
 EMP_CPP_FILE=$1
 EZPC_SRC_PATH=$(dirname $0)
 
-if [ -z ${EMP_CPP_FILE} ]; then
+if [ ! -e ${EMP_CPP_FILE} ]; then
   echo "Please specify file name of the generated .cpp file using ./ezpc.sh";
   exit;
 fi

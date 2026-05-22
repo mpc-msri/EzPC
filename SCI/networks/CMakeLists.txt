@@ -12,12 +12,6 @@ macro (add_network_HE _name)
     target_compile_options(${_name}-HE PUBLIC "-Wno-parentheses-equality")
 endmacro()
 
-macro (add_network_float _name)
-	add_executable(${_name}-float "main_${_name}.cpp")
-    target_link_libraries(${_name}-float SCI-FloatML) 
-    target_compile_options(${_name}-float PUBLIC "-Wno-parentheses-equality")
-endmacro()
-
 # Networks
 add_network_HE(sqnet)
 add_network_OT(sqnet)
@@ -29,4 +23,26 @@ add_network_HE(minionn)
 add_network_OT(minionn)
 add_network_HE(resnet32_cifar)
 add_network_OT(resnet32_cifar)
-add_network_float(relevance)
+
+# Beacon benchmarks
+
+macro(add_network_secfloat name)
+	add_executable(${name}_secfloat "main_${name}.cpp")
+	target_link_libraries(${name}_secfloat SCI-SecfloatML)
+endmacro()
+
+macro(add_network_beacon name)
+	add_executable(${name}_beacon "main_${name}.cpp")
+	target_link_libraries(${name}_beacon SCI-Beacon)
+endmacro()
+
+macro(add_network name)
+	add_network_secfloat(${name})
+	add_network_beacon(${name})
+endmacro()
+
+add_network(logistic128)
+add_network(ffnn128)
+add_network(relevance32)
+add_network(lenet128)
+add_network(hinet4)

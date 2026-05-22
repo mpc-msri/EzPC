@@ -37,11 +37,11 @@ Integer summ = Integer(bitlen,  (int32_t)0, PUBLIC);
 
 int32_t N =  (int32_t)100;
 
-auto arr = make_vector<Integer>( (int32_t)100);
-for (uint32_t i =  (int32_t)0; i <  (int32_t)100; i++){
+auto arr = make_vector<Integer>(N);
+for (uint32_t i =  (int32_t)0; i < N; i++){
 arr[i] = Integer(bitlen, i, PUBLIC);
 }
-for (uint32_t i =  (int32_t)0; i <  (int32_t)100; i++){
+for (uint32_t i =  (int32_t)0; i < N; i++){
 /* Temporary variable for sub-expression on source location: (42,16-42,22) */
 Integer __tac_var1 = arr[i];
 summ = summ.operator+(__tac_var1);

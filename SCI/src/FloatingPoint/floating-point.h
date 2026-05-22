@@ -28,6 +28,12 @@ SOFTWARE.
 
 #define FP32_M_BITS 23
 #define FP32_E_BITS 8
+#define BFLOAT16_M_BITS 7
+#define BFLOAT16_E_BITS 8
+#define FP16_M_BITS 10
+#define FP16_E_BITS 5
+#define FP19_M_BITS 10
+#define FP19_E_BITS 8
 
 #define print_fp(vec)                                                          \
   {                                                                            \
@@ -247,6 +253,7 @@ public:
 };
 
 std::ostream &operator<<(std::ostream &os, FPMatrix &other);
+
 class FPOp {
 public:
   int party;
@@ -317,7 +324,7 @@ public:
 
   // if x overflows/underflows the representation, set it as inf/0
   // x must be a secret-shared array (otherwise, simply call x.check_bounds())
-  FPArray check_bounds(const FPArray &x);
+  FPArray check_bounds(const FPArray &x, bool only_underflow = false);
 
   // Multiplexers: return x[i] if cond[i] = 1; else return y[i]
   // cond must be a secret-shared BoolArray
@@ -383,7 +390,7 @@ public:
   // Round and Check: modifies {m[i] -> m[i] >>_R s} and {e[i] -> e[i]} if m[i] < (2^{m.ell}-2^{s-1}) (no overflow from rounding), and modifies {m[i] -> 2^{m.ell-s-1}} and {e[i] -> e[i]+1} otherwise (rounding leads to overflow)
   // m and e must be secret-shared and of equal size
   // m must be normalized (\in [1, 2)) with scale m.ell-1
-  void round_and_check(FixArray &m, FixArray &e, int s);
+  void round_and_check(FixArray &m, FixArray &e, int s, bool ties_to_even = false);
 
   // Returns -x
   FPArray flip_sign(const FPArray& x);
@@ -448,15 +455,50 @@ public:
   FPArray int_to_float(const FixArray &x, int m_bits = FP32_M_BITS,
                        int e_bits = FP32_E_BITS);
 
+  FPArray max(const FPArray &x, const FPArray &y) ;
+
+  FPArray min(const FPArray &x, const FPArray &y) ;
+
   // Finds max element m_i in x[i], forall i
   // Returns a FPArray of length x.size() with m_i in i-th index
   FPArray max(const std::vector<FPArray>& x);
+
+  // Finds max element m_i in x[i], forall i, along with a mask vector mask_i which is 1 at the index of the max element and 0 otherwise
+  // Returns a FPArray of length x.size() with m_i in i-th index and a vector of BoolArrays `mask` of the same size as input.
+  // mask[i][j] is 1 if j is the index of the max element in x[i] and 0 otherwise
+  std::pair<FPArray, vector<BoolArray>> max_with_mask(const std::vector<FPArray> &x) ;
+
+  FPArray general_vector_sum_core(const vector<FPArray> &x, int b_, int sc, int m_bits, int e_bits);
+  FPArray vector_sum_core(const vector<FPArray> &x) {
+    int m_bits = x[0].m_bits;
+    int e_bits = x[0].e_bits;
+    return general_vector_sum_core(x, m_bits, m_bits, m_bits, e_bits);
+  }
+
+  FPArray general_vector_sum(vector<FPArray> &x, int b_, int sc, int m_bits, int e_bits);
+  FPArray vector_sum(vector<FPArray> &x) {
+    int m_bits = x[0].m_bits;
+    int e_bits = x[0].e_bits;
+    return general_vector_sum(x, m_bits, m_bits, m_bits, e_bits);
+  }
 
   // Finds sum s_i of elements in x[i], forall i
   // Returns a FPArray of length x.size() with s_i in i-th index
   FPArray treesum(const vector<FPArray> &x) ;
 
-  FPMatrix matrix_multiplication(const FPMatrix &x, const FPMatrix &y) ;
+  FPArray dot_product(const vector<FPArray> &x, const vector<FPArray> &y);
+
+  FPMatrix matrix_multiplication_beacon(const FPMatrix &x, const FPMatrix &y, int chunk_exp=26) ;
+
+  FPMatrix matrix_multiplication_secfloat(const FPMatrix &x, const FPMatrix &y, int chunk_exp=15) ;
+
+  vector<FPMatrix> matrix_multiplication_beacon(const vector<FPMatrix> &x, const vector<FPMatrix> &y, int chunk_exp=26) ;
+
+  vector<FPMatrix> matrix_multiplication_secfloat(const vector<FPMatrix> &x, const vector<FPMatrix> &y, int chunk_exp=15) ;
+
+  FPArray bfloat16_to_FP32(const FPArray &x);
+  
+  FPArray FP32_to_bfloat16(const FPArray &x);
 };
 
 #endif // FLOATING_POINT_H__

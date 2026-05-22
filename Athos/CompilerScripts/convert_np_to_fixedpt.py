@@ -24,6 +24,7 @@ SOFTWARE.
 
 import argparse
 from argparse import RawTextHelpFormatter
+import sys
 
 import parse_config
 import os
@@ -42,6 +43,12 @@ def parse_args():
     parser.add_argument(
         "--config", required=True, type=str, help="Path to the config json file"
     )
+    parser.add_argument(
+        "--output",
+        required=False,
+        type=str,
+        help="Path where the output fixedpoint numbers will be stored.",
+    )
     args = parser.parse_args()
     return args
 
@@ -50,19 +57,21 @@ def convert_np_to_fixedpt(path_to_numpy_arr, scaling_factor):
     if not os.path.exists(path_to_numpy_arr):
         sys.exit("Numpy arr {} specified does not exist".format(path_to_numpy_arr))
     input_name = os.path.splitext(path_to_numpy_arr)[0]
-    output_path = input_name + "_fixedpt_scale_" + str(scaling_factor) + ".inp"
-
+    output_path = (
+        (input_name + "_fixedpt_scale_" + str(scaling_factor) + ".inp")
+        if args.output is None
+        else args.output
+    )
     np_inp = np.load(path_to_numpy_arr, allow_pickle=True)
     with open(output_path, "w") as ff:
         for xx in np.nditer(np_inp, order="C"):
             ff.write(str(int(xx * (1 << scaling_factor))) + " ")
         ff.write("\n")
-    return output_path
+    return args.output
 
 
 if __name__ == "__main__":
     args = parse_args()
-
     if not os.path.isfile(args.config):
         sys.exit("Config file (" + args.config + ") specified does not exist")
 

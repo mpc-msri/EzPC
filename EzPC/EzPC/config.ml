@@ -30,7 +30,10 @@ type codegen =
   | OBLIVC
   | PORTHOS
   | SCI
+  | FSS
   | CPPRING
+  | CPPFLOAT
+  | SECFLOAT 
   | EMP
 
 type bool_sharing_mode =
@@ -54,13 +57,14 @@ type configuration = {
     modulo: uint64;
     sci_backend: sci_backend_type; 
     sf: int;
+    libmode: bool;
   }
 
 let c_private :configuration ref = ref {
                                        bitlen = 32;
                                        out_mode = ABY;
                                        tac = true;
-                                       cse = true;
+                                       cse = false;
                                        dummy_inputs = false;
                                        bool_sharing = Yao;
                                        shares_dir = "";
@@ -69,6 +73,7 @@ let c_private :configuration ref = ref {
                                        modulo = Uint64.of_int 0;
                                        sci_backend = OT;
                                        sf = 0;
+                                       libmode = false;
                                        }
 
 let set_bitlen (bitlen:int) :unit = 
@@ -120,3 +125,11 @@ let get_shares_dir () :string = !c_private.shares_dir
 let set_debug_partitions () :unit = c_private := { !c_private with debug_partitions = true }
 
 let get_debug_partitions () :bool = !c_private.debug_partitions
+
+let is_codegen_float () :bool =
+  match get_codegen () with
+  | SECFLOAT | CPPFLOAT -> true
+  | _ -> false
+let set_libmode () :unit = c_private := { !c_private with libmode = true }
+
+let get_libmode () :bool = !c_private.libmode

@@ -68,11 +68,11 @@ share* __tac_var2 = put_cons32_gate(ycirc, __tac_var1);
 
 share* signBitX = ycirc->PutANDGate(x, __tac_var2);
 /* Temporary variable for sub-expression on source location: (26,28-26,33) */
-int32_t __tac_var3 = __tac_var1;
+int32_t __tac_var3 = ( (int32_t)1 <<  (int32_t)31);
 /* Temporary variable for sub-expression on source location: (26,28-26,33) */
-share* __tac_var4 = __tac_var2;
+share* __tac_var4 = put_cons32_gate(ycirc, __tac_var3);
 
-share* signBitY = ycirc->PutANDGate(y, __tac_var2);
+share* signBitY = ycirc->PutANDGate(y, __tac_var4);
 /* Temporary variable for sub-expression on source location: (27,10-27,29) */
 share* __tac_var5 = ycirc->PutXORGate(signBitX, signBitY);
 /* Temporary variable for sub-expression on source location: (27,33-27,35) */
@@ -80,9 +80,9 @@ share* __tac_var6 = put_cons32_gate(ycirc,  (uint32_t)0);
 /* Temporary variable for sub-expression on source location: (27,9-27,35) */
 share* __tac_var7 = ycirc->PutGTGate(__tac_var5, __tac_var6);
 /* Temporary variable for sub-expression on source location: (27,52-27,54) */
-share* __tac_var8 = __tac_var6;
+share* __tac_var8 = put_cons32_gate(ycirc,  (uint32_t)0);
 /* Temporary variable for sub-expression on source location: (27,41-27,54) */
-share* __tac_var9 = ycirc->PutGTGate(signBitX, __tac_var6);
+share* __tac_var9 = ycirc->PutGTGate(signBitX, __tac_var8);
 /* Temporary variable for sub-expression on source location: (27,58-27,63) */
 share* __tac_var10 = put_cons1_gate(ycirc, 0);
 /* Temporary variable for sub-expression on source location: (27,66-27,70) */
@@ -110,15 +110,15 @@ share* __tac_var17 = put_cons32_gate(ycirc,  (uint32_t)0);
 /* Temporary variable for sub-expression on source location: (36,10-36,23) */
 share* __tac_var18 = ycirc->PutGTGate(signBitX, __tac_var17);
 /* Temporary variable for sub-expression on source location: (36,28-36,30) */
-share* __tac_var19 = __tac_var17;
+share* __tac_var19 = put_cons32_gate(ycirc,  (uint32_t)0);
 /* Temporary variable for sub-expression on source location: (36,35-36,37) */
-share* __tac_var20 = __tac_var17;
+share* __tac_var20 = put_cons32_gate(ycirc,  (uint32_t)0);
 /* Temporary variable for sub-expression on source location: (36,35-36,42) */
-share* __tac_var21 = ycirc->PutSUBGate(__tac_var17, ux);
+share* __tac_var21 = ycirc->PutSUBGate(__tac_var20, ux);
 /* Temporary variable for sub-expression on source location: (36,34-36,48) */
 share* __tac_var22 = arithmetic_right_shift(ycirc, __tac_var21, y);
 /* Temporary variable for sub-expression on source location: (36,28-36,49) */
-share* __tac_var23 = ycirc->PutSUBGate(__tac_var17, __tac_var22);
+share* __tac_var23 = ycirc->PutSUBGate(__tac_var19, __tac_var22);
 /* Temporary variable for sub-expression on source location: (36,54-36,61) */
 share* __tac_var24 = arithmetic_right_shift(ycirc, ux, y);
 /* Temporary variable for sub-expression on source location: (36,9-36,62) */
@@ -202,7 +202,7 @@ share* longDivision(share* x, share* y, uint32_t getQuotient){
 
 share* q = put_cons32_gate(ycirc,  (uint32_t)0);
 
-share* divisor = q;
+share* divisor = put_cons32_gate(ycirc,  (uint32_t)0);
 
 share* cond = put_cons1_gate(ycirc, 0);
 for (uint32_t iter =  (int32_t)0; iter <  (int32_t)32; iter++){
@@ -256,19 +256,19 @@ share* __tac_var56 = put_cons32_gate(ycirc,  (int32_t)0);
 
 share* isXNeg = signedltbl(x, __tac_var56);
 /* Temporary variable for sub-expression on source location: (100,23-100,24) */
-share* __tac_var57 = __tac_var56;
+share* __tac_var57 = put_cons32_gate(ycirc,  (int32_t)0);
 
-share* isYNeg = signedltbl(y, __tac_var56);
+share* isYNeg = signedltbl(y, __tac_var57);
 /* Temporary variable for sub-expression on source location: (101,26-101,27) */
-share* __tac_var58 = __tac_var56;
+share* __tac_var58 = put_cons32_gate(ycirc,  (int32_t)0);
 /* Temporary variable for sub-expression on source location: (101,26-101,31) */
-share* __tac_var59 = ycirc->PutSUBGate(__tac_var56, x);
+share* __tac_var59 = ycirc->PutSUBGate(__tac_var58, x);
 
 share* ux = ycirc->PutMUXGate(__tac_var59, x, isXNeg);
 /* Temporary variable for sub-expression on source location: (102,26-102,27) */
-share* __tac_var60 = __tac_var56;
+share* __tac_var60 = put_cons32_gate(ycirc,  (int32_t)0);
 /* Temporary variable for sub-expression on source location: (102,26-102,31) */
-share* __tac_var61 = ycirc->PutSUBGate(__tac_var56, y);
+share* __tac_var61 = ycirc->PutSUBGate(__tac_var60, y);
 
 share* uy = ycirc->PutMUXGate(__tac_var61, y, isYNeg);
 
@@ -316,19 +316,19 @@ share* __tac_var68 = put_cons32_gate(ycirc,  (int32_t)0);
 
 share* isXNeg = signedltbl(x, __tac_var68);
 /* Temporary variable for sub-expression on source location: (127,23-127,24) */
-share* __tac_var69 = __tac_var68;
+share* __tac_var69 = put_cons32_gate(ycirc,  (int32_t)0);
 
-share* isYNeg = signedltbl(y, __tac_var68);
+share* isYNeg = signedltbl(y, __tac_var69);
 /* Temporary variable for sub-expression on source location: (128,26-128,27) */
-share* __tac_var70 = __tac_var68;
+share* __tac_var70 = put_cons32_gate(ycirc,  (int32_t)0);
 /* Temporary variable for sub-expression on source location: (128,26-128,31) */
-share* __tac_var71 = ycirc->PutSUBGate(__tac_var68, x);
+share* __tac_var71 = ycirc->PutSUBGate(__tac_var70, x);
 
 share* ux = ycirc->PutMUXGate(__tac_var71, x, isXNeg);
 /* Temporary variable for sub-expression on source location: (129,26-129,27) */
-share* __tac_var72 = __tac_var68;
+share* __tac_var72 = put_cons32_gate(ycirc,  (int32_t)0);
 /* Temporary variable for sub-expression on source location: (129,26-129,31) */
-share* __tac_var73 = ycirc->PutSUBGate(__tac_var68, y);
+share* __tac_var73 = ycirc->PutSUBGate(__tac_var72, y);
 
 share* uy = ycirc->PutMUXGate(__tac_var73, y, isYNeg);
 
@@ -374,7 +374,7 @@ int32_t x4 =  (int32_t)2;
 
 share* x5 = put_cons32_gate(ycirc,  (int32_t)2);
 
-share* x6 = x5;
+share* x6 = put_cons32_gate(ycirc,  (int32_t)2);
 
 share* x7 = put_cons1_gate(ycirc, 0);
 party->ExecCircuit();

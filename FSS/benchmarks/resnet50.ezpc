@@ -1,0 +1,3584 @@
+(*
+
+Authors: Kanav Gupta.
+
+Copyright:
+Copyright (c) 2020 Microsoft Research
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*)
+
+
+(* Helper functions defined in C++ Code *)
+extern void ClearMemSecret1(int32_pl s1, int64_al[s1] arr);
+extern void ClearMemSecret2(int32_pl s1, int32_pl s2, int64_al[s1][s2] arr);
+extern void ClearMemSecret3(int32_pl s1, int32_pl s2, int32_pl s3, int64_al[s1][s2][s3] arr);
+extern void ClearMemSecret4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int64_al[s1][s2][s3][s4] arr);
+extern void ClearMemSecret5(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int64_al[s1][s2][s3][s4][s5] arr);
+extern void ClearMemPublic(int32_pl x);
+extern void ClearMemPublic1(int32_pl s, int32_pl[s] x);
+extern void ClearMemPublic2(int32_pl s1, int32_pl s2, int32_pl[s1][s2] arr);
+extern void ClearMemPublic3(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl[s1][s2][s3] arr);
+extern void ClearMemPublic4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl[s1][s2][s3][s4] arr);
+extern void ClearMemPublic5(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int32_pl[s1][s2][s3][s4][s5] arr);
+
+extern void MatMul2D(int32_pl i, int32_pl j, int32_pl k, int64_al[i][j] A, int64_al[j][k] B, int64_al[i][k] C, bool_pl modelIsA);
+
+extern void ArgMax(int32_pl s1, int32_pl s2, int64_al[s1][s2] inArr, int64_al[s1] outArr);
+
+extern void Relu(int32_pl s1, int64_al[s1] inArr, int64_al[s1] outArr, int32_pl sf, bool_pl doTruncation);
+
+extern void Floor(int32_pl s1, int64_al[s1] inArr, int64_al[s1] outArr, int32_pl sf);
+
+extern void MaxPool(int32_pl N, int32_pl H, int32_pl W, int32_pl C,
+				  int32_pl ksizeH, int32_pl ksizeW,
+				  int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight,
+				  int32_pl strideH, int32_pl strideW,
+				  int32_pl N1, int32_pl imgH, int32_pl imgW, int32_pl C1,
+  				  int64_al[N1][imgH][imgW][C1] inArr, 
+				  int64_al[N][H][W][C] outArr);
+
+extern void AvgPool(int32_pl N, int32_pl H, int32_pl W, int32_pl C,
+				  int32_pl ksizeH, int32_pl ksizeW,
+				  int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight,
+				  int32_pl strideH, int32_pl strideW,
+				  int32_pl N1, int32_pl imgH, int32_pl imgW, int32_pl C1,
+  				  int64_al[N1][imgH][imgW][C1] inArr, 
+				  int64_al[N][H][W][C] outArr);
+
+extern void ElemWiseSecretSharedVectorMult(int32_pl s1, int64_al[s1] arr1, int64_al[s1] arr2, int64_al[s1] outArr);
+extern void ElemWiseActModelVectorMult(int32_pl s1, int64_al[s1] arr1, int64_al[s1] arr2, int64_al[s1] outArr);
+extern void ElemWiseVectorPublicDiv(int32_pl s1, int64_al[s1] arr1, int32_pl divisor, int64_al[s1] outArr);
+
+extern void ScaleUp(int32_pl s1, int64_al[s1] arr, int32_pl sf);
+extern void ScaleDown(int32_pl s1, int64_al[s1] arr, int32_pl sf);
+
+extern void Conv2DWrapper(int32_pl N, int32_pl H, int32_pl W, int32_pl CI, 
+				   int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
+				   int32_pl strideH, int32_pl strideW, 
+				   int64_al[N][H][W][CI] inputArr, 
+				   int64_al[FH][FW][CI][CO] filterArr, 
+				   int64_al[N][((H-FH+(zPadHLeft+zPadHRight))/strideH)+1][((W-FW+(zPadWLeft+zPadWRight))/strideW)+1][CO] outArr);
+
+extern void Conv3DWrapper(int32_pl N, int32_pl D, int32_pl H, int32_pl W, int32_pl CI, 
+				   int32_pl FD, int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl zPadDLeft, int32_pl zPadDRight, int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
+				   int32_pl strideD, int32_pl strideH, int32_pl strideW, 
+				   int64_al[N][D][H][W][CI] inputArr, 
+				   int64_al[FD][FH][FW][CI][CO] filterArr,
+				   int64_al[N][((D-FD+(zPadDLeft+zPadDRight))/strideD)+1][((H-FH+(zPadHLeft+zPadHRight))/strideH)+1][((W-FW+(zPadWLeft+zPadWRight))/strideW)+1][CO] outArr);
+
+extern void Conv2DGroupWrapper(int32_pl N, int32_pl H, int32_pl W, int32_pl CI, 
+				   int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
+				   int32_pl strideH, int32_pl strideW, int32_pl G,
+				   int64_al[N][H][W][CI] inputArr, 
+				   int64_al[FH][FW][CI/G][CO] filterArr, 
+				   int64_al[N][((H-FH+(zPadHLeft+zPadHRight))/strideH)+1][((W-FW+(zPadWLeft+zPadWRight))/strideW)+1][CO] outArr);
+
+extern void ConvTranspose2DWrapper(int32_pl N, int32_pl HPrime, int32_pl WPrime, int32_pl CI, 
+				   int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl H, int32_pl W,
+				   int32_pl zPadTrHLeft, int32_pl zPadTrHRight, int32_pl zPadTrWLeft, int32_pl zPadTrWRight, 
+				   int32_pl strideH, int32_pl strideW,
+				   int64_al[N][HPrime][WPrime][CI] inputArr, 
+				   int64_al[FH][FW][CO][CI] filterArr, 
+				   int64_al[N][H][W][CO] outArr);
+
+extern void ConvTranspose3DWrapper(int32_pl N, int32_pl DPrime, int32_pl HPrime, int32_pl WPrime, int32_pl CI, 
+				   int32_pl FD, int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl D, int32_pl H, int32_pl W,
+				   int32_pl zPadTrDLeft, int32_pl zPadTrDRight, int32_pl zPadTrHLeft, int32_pl zPadTrHRight, int32_pl zPadTrWLeft, int32_pl zPadTrWRight, 
+				   int32_pl strideD, int32_pl strideH, int32_pl strideW,
+				   int64_al[N][DPrime][HPrime][WPrime][CI] inputArr, 
+				   int64_al[FD][FH][FW][CO][CI] filterArr, 
+				   int64_al[N][D][H][W][CO] outArr);
+
+extern void TanH(int32_pl one, int32_pl size, int32_pl scaleIn, int32_pl scaleOut, int32_pl bwA, int32_pl bwB, int64_al[size] A, int64_al[size] B);
+extern void Sigmoid(int32_pl one, int32_pl size, int32_pl scaleIn, int32_pl scaleOut, int32_pl bwA, int32_pl bwB, int64_al[size] A, int64_al[size] B);
+extern void Sqrt(int32_pl one, int32_pl size, int32_pl scaleIn, int32_pl scaleOut, int32_pl bwA, int32_pl bwB, bool_pl inverse, int64_al[size] A, int64_al[size] B);
+
+(**************************)
+(*  FSS Standard Library  *)
+(**************************)
+
+extern void ScaleUp1(int32_pl s1, int64_al[s1] arr, int32_pl sf);
+
+extern void ScaleUp2(int32_pl s1, int32_pl s2, int64_al[s1][s2] arr, int32_pl sf);
+
+extern void ScaleUp3(int32_pl s1, int32_pl s2, int32_pl s3, int64_al[s1][s2][s3] arr, int32_pl sf);
+
+extern void ScaleUp4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int64_al[s1][s2][s3][s4] arr, int32_pl sf);
+
+extern void ScaleUp5(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int64_al[s1][s2][s3][s4][s5] arr, int32_pl sf);
+
+extern void ScaleDown1(int32_pl s1, int64_al[s1] arr, int32_pl sf);
+
+extern void ScaleDown2(int32_pl s1, int32_pl s2, int64_al[s1][s2] arr, int32_pl sf);
+
+extern void ScaleDown3(int32_pl s1, int32_pl s2, int32_pl s3, int64_al[s1][s2][s3] arr, int32_pl sf);
+
+extern void ScaleDown4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int64_al[s1][s2][s3][s4] arr, int32_pl sf);
+
+extern void ScaleDown5(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int64_al[s1][s2][s3][s4][s5] arr, int32_pl sf);
+
+extern void StartComputation();
+
+extern void EndComputation();
+
+extern void MatAddBroadCast2(int32_pl a1, int32_pl a2, int32_pl b1, int32_pl s1, int32_pl s2, int64_al[s1][s2] A, int64_al[s2] B, int64_al[s1][s2] outArr);
+
+extern void MatAdd2(int32_pl a1, int32_pl a2, int32_pl b1, int32_pl b2, int32_pl s1, int32_pl s2, int64_al[a1][a2] A, int64_al[b1][b2] B, int64_al[s1][s2] outArr);
+
+extern void MatAddBroadCast4(int32_pl a1, int32_pl a2, int32_pl a3, int32_pl a4, int32_pl b1, int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int64_al[s1][s2][s3][s4] A, int64_al[s4] B, int64_al[s1][s2][s3][s4] outArr);
+
+extern void MatAddBroadCast5(int32_pl a1, int32_pl a2, int32_pl a3, int32_pl a4, int32_pl a5, int32_pl b1, int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int64_al[s1][s2][s3][s4][s5] A, int64_al[s5] B, int64_al[s1][s2][s3][s4][s5] outArr);
+
+extern void MatAdd4(int32_pl a1, int32_pl a2, int32_pl a3, int32_pl a4, int32_pl b1, int32_pl b2, int32_pl b3, int32_pl b4, int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int64_al[a1][a2][a3][a4] A, int64_al[b1][b2][b3][b4] B, int64_al[s1][s2][s3][s4] outArr);
+
+extern void MatAdd5(int32_pl a1, int32_pl a2, int32_pl a3, int32_pl a4, int32_pl a5, int32_pl b1, int32_pl b2, int32_pl b3, int32_pl b4, int32_pl b5, int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int64_al[a1][a2][a3][a4][a5] A, int64_al[b1][b2][b3][b4][b5] B, int64_al[s1][s2][s3][s4][s5] outArr);
+
+(**************************)
+extern void CreateTensor1(int32_pl s1, int64_pl val, int64_pl[s1] arr);
+
+extern void CreateTensor2(int32_pl s1, int32_pl s2, int64_pl val, int64_pl[s1][s2] arr);
+
+extern void CreateTensor3(int32_pl s1, int32_pl s2, int32_pl s3, int64_pl val, int64_pl[s1][s2][s3] arr);
+
+extern void CreateTensor4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int64_pl val, int64_pl[s1][s2][s3][s4] arr);
+
+extern void CreateTensor5(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int64_pl val, int64_pl[s1][s2][s3][s4][s5] arr);
+
+(**************************)
+extern void CopyTensor1(int32_pl s1, int64_al[s1] targetArr, int64_al[s1] fromArr, int64_al[s1] ignore);
+
+extern void CopyTensor2(int32_pl s1, int32_pl s2, int64_al[s1][s2] targetArr, int64_al[s1][s2] fromArr, int64_al[s1][s2] ignore);
+
+extern void CopyTensor3(int32_pl s1, int32_pl s2, int32_pl s3, int64_al[s1][s2][s3] targetArr, int64_al[s1][s2][s3] fromArr, int64_al[s1][s2][s3] ignore);
+
+extern void CopyTensor4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int64_al[s1][s2][s3][s4] targetArr, int64_al[s1][s2][s3][s4] fromArr, int64_al[s1][s2][s3][s4] ignore);
+
+(**************************)
+extern void CreateIdentity11(int32_pl s1, int64_al[s1] fromArr, int64_al[s1] newArr);
+
+extern void CreateIdentity22(int32_pl s1, int32_pl s2, int64_al[s1][s2] fromArr, int64_al[s1][s2] newArr);
+
+extern void CreateIdentity33(int32_pl s1, int32_pl s2, int32_pl s3, int64_al[s1][s2][s3] fromArr, int64_al[s1][s2][s3] newArr);
+
+extern void CreateIdentity44(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int64_al[s1][s2][s3][s4] fromArr, int64_al[s1][s2][s3][s4] newArr);
+
+(**************************)
+extern void CreateCopy2211(int32_pl s1, int32_pl s2, int32_pl inps1, int32_pl inps2, int64_al[inps1][inps2] inArr, int32_pl perDimSize, int32_pl[perDimSize] beginIdx, int32_pl[perDimSize] sizeIdx, int64_al[s1][s2] outArr);
+
+extern void CreateCopy5511(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int32_pl inps1, int32_pl inps2, int32_pl inps3, int32_pl inps4, int32_pl inps5, int64_al[inps1][inps2][inps3][inps4][inps5] inArr, int32_pl perDimSize, int32_pl[perDimSize] beginIdx, int32_pl[perDimSize] sizeIdx, int64_al[s1][s2][s3][s4][s5] outArr);
+
+(**************************)
+
+extern void Concat1T44(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat2T222(int32_pl s1, int32_pl s2, int32_pl inp1s1, int32_pl inp1s2, int64_al[inp1s1][inp1s2] inp1, int32_pl inp2s1, int32_pl inp2s2, int64_al[inp2s1][inp2s2] inp2, int32_pl axis, int64_al[s1][s2] outp);
+
+extern void Concat2T444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat3T4444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat4T44444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl inp4s1, int32_pl inp4s2, int32_pl inp4s3, int32_pl inp4s4, int64_al[inp4s1][inp4s2][inp4s3][inp4s4] inp4, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat5T444444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl inp4s1, int32_pl inp4s2, int32_pl inp4s3, int32_pl inp4s4, int64_al[inp4s1][inp4s2][inp4s3][inp4s4] inp4, int32_pl inp5s1, int32_pl inp5s2, int32_pl inp5s3, int32_pl inp5s4, int64_al[inp5s1][inp5s2][inp5s3][inp5s4] inp5, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat6T4444444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl inp4s1, int32_pl inp4s2, int32_pl inp4s3, int32_pl inp4s4, int64_al[inp4s1][inp4s2][inp4s3][inp4s4] inp4, int32_pl inp5s1, int32_pl inp5s2, int32_pl inp5s3, int32_pl inp5s4, int64_al[inp5s1][inp5s2][inp5s3][inp5s4] inp5, int32_pl inp6s1, int32_pl inp6s2, int32_pl inp6s3, int32_pl inp6s4, int64_al[inp6s1][inp6s2][inp6s3][inp6s4] inp6, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat7T44444444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl inp4s1, int32_pl inp4s2, int32_pl inp4s3, int32_pl inp4s4, int64_al[inp4s1][inp4s2][inp4s3][inp4s4] inp4, int32_pl inp5s1, int32_pl inp5s2, int32_pl inp5s3, int32_pl inp5s4, int64_al[inp5s1][inp5s2][inp5s3][inp5s4] inp5, int32_pl inp6s1, int32_pl inp6s2, int32_pl inp6s3, int32_pl inp6s4, int64_al[inp6s1][inp6s2][inp6s3][inp6s4] inp6, int32_pl inp7s1, int32_pl inp7s2, int32_pl inp7s3, int32_pl inp7s4, int64_al[inp7s1][inp7s2][inp7s3][inp7s4] inp7, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat8T444444444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl inp4s1, int32_pl inp4s2, int32_pl inp4s3, int32_pl inp4s4, int64_al[inp4s1][inp4s2][inp4s3][inp4s4] inp4, int32_pl inp5s1, int32_pl inp5s2, int32_pl inp5s3, int32_pl inp5s4, int64_al[inp5s1][inp5s2][inp5s3][inp5s4] inp5, int32_pl inp6s1, int32_pl inp6s2, int32_pl inp6s3, int32_pl inp6s4, int64_al[inp6s1][inp6s2][inp6s3][inp6s4] inp6, int32_pl inp7s1, int32_pl inp7s2, int32_pl inp7s3, int32_pl inp7s4, int64_al[inp7s1][inp7s2][inp7s3][inp7s4] inp7, int32_pl inp8s1, int32_pl inp8s2, int32_pl inp8s3, int32_pl inp8s4, int64_al[inp8s1][inp8s2][inp8s3][inp8s4] inp8, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat9T4444444444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl inp4s1, int32_pl inp4s2, int32_pl inp4s3, int32_pl inp4s4, int64_al[inp4s1][inp4s2][inp4s3][inp4s4] inp4, int32_pl inp5s1, int32_pl inp5s2, int32_pl inp5s3, int32_pl inp5s4, int64_al[inp5s1][inp5s2][inp5s3][inp5s4] inp5, int32_pl inp6s1, int32_pl inp6s2, int32_pl inp6s3, int32_pl inp6s4, int64_al[inp6s1][inp6s2][inp6s3][inp6s4] inp6, int32_pl inp7s1, int32_pl inp7s2, int32_pl inp7s3, int32_pl inp7s4, int64_al[inp7s1][inp7s2][inp7s3][inp7s4] inp7, int32_pl inp8s1, int32_pl inp8s2, int32_pl inp8s3, int32_pl inp8s4, int64_al[inp8s1][inp8s2][inp8s3][inp8s4] inp8, int32_pl inp9s1, int32_pl inp9s2, int32_pl inp9s3, int32_pl inp9s4, int64_al[inp9s1][inp9s2][inp9s3][inp9s4] inp9, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat10T44444444444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl inp4s1, int32_pl inp4s2, int32_pl inp4s3, int32_pl inp4s4, int64_al[inp4s1][inp4s2][inp4s3][inp4s4] inp4, int32_pl inp5s1, int32_pl inp5s2, int32_pl inp5s3, int32_pl inp5s4, int64_al[inp5s1][inp5s2][inp5s3][inp5s4] inp5, int32_pl inp6s1, int32_pl inp6s2, int32_pl inp6s3, int32_pl inp6s4, int64_al[inp6s1][inp6s2][inp6s3][inp6s4] inp6, int32_pl inp7s1, int32_pl inp7s2, int32_pl inp7s3, int32_pl inp7s4, int64_al[inp7s1][inp7s2][inp7s3][inp7s4] inp7, int32_pl inp8s1, int32_pl inp8s2, int32_pl inp8s3, int32_pl inp8s4, int64_al[inp8s1][inp8s2][inp8s3][inp8s4] inp8, int32_pl inp9s1, int32_pl inp9s2, int32_pl inp9s3, int32_pl inp9s4, int64_al[inp9s1][inp9s2][inp9s3][inp9s4] inp9, int32_pl inp10s1, int32_pl inp10s2, int32_pl inp10s3, int32_pl inp10s4, int64_al[inp10s1][inp10s2][inp10s3][inp10s4] inp10, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat11T444444444444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl inp4s1, int32_pl inp4s2, int32_pl inp4s3, int32_pl inp4s4, int64_al[inp4s1][inp4s2][inp4s3][inp4s4] inp4, int32_pl inp5s1, int32_pl inp5s2, int32_pl inp5s3, int32_pl inp5s4, int64_al[inp5s1][inp5s2][inp5s3][inp5s4] inp5, int32_pl inp6s1, int32_pl inp6s2, int32_pl inp6s3, int32_pl inp6s4, int64_al[inp6s1][inp6s2][inp6s3][inp6s4] inp6, int32_pl inp7s1, int32_pl inp7s2, int32_pl inp7s3, int32_pl inp7s4, int64_al[inp7s1][inp7s2][inp7s3][inp7s4] inp7, int32_pl inp8s1, int32_pl inp8s2, int32_pl inp8s3, int32_pl inp8s4, int64_al[inp8s1][inp8s2][inp8s3][inp8s4] inp8, int32_pl inp9s1, int32_pl inp9s2, int32_pl inp9s3, int32_pl inp9s4, int64_al[inp9s1][inp9s2][inp9s3][inp9s4] inp9, int32_pl inp10s1, int32_pl inp10s2, int32_pl inp10s3, int32_pl inp10s4, int64_al[inp10s1][inp10s2][inp10s3][inp10s4] inp10, int32_pl inp11s1, int32_pl inp11s2, int32_pl inp11s3, int32_pl inp11s4, int64_al[inp11s1][inp11s2][inp11s3][inp11s4] inp11, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat12T4444444444444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl inp4s1, int32_pl inp4s2, int32_pl inp4s3, int32_pl inp4s4, int64_al[inp4s1][inp4s2][inp4s3][inp4s4] inp4, int32_pl inp5s1, int32_pl inp5s2, int32_pl inp5s3, int32_pl inp5s4, int64_al[inp5s1][inp5s2][inp5s3][inp5s4] inp5, int32_pl inp6s1, int32_pl inp6s2, int32_pl inp6s3, int32_pl inp6s4, int64_al[inp6s1][inp6s2][inp6s3][inp6s4] inp6, int32_pl inp7s1, int32_pl inp7s2, int32_pl inp7s3, int32_pl inp7s4, int64_al[inp7s1][inp7s2][inp7s3][inp7s4] inp7, int32_pl inp8s1, int32_pl inp8s2, int32_pl inp8s3, int32_pl inp8s4, int64_al[inp8s1][inp8s2][inp8s3][inp8s4] inp8, int32_pl inp9s1, int32_pl inp9s2, int32_pl inp9s3, int32_pl inp9s4, int64_al[inp9s1][inp9s2][inp9s3][inp9s4] inp9, int32_pl inp10s1, int32_pl inp10s2, int32_pl inp10s3, int32_pl inp10s4, int64_al[inp10s1][inp10s2][inp10s3][inp10s4] inp10, int32_pl inp11s1, int32_pl inp11s2, int32_pl inp11s3, int32_pl inp11s4, int64_al[inp11s1][inp11s2][inp11s3][inp11s4] inp11, int32_pl inp12s1, int32_pl inp12s2, int32_pl inp12s3, int32_pl inp12s4, int64_al[inp12s1][inp12s2][inp12s3][inp12s4] inp12, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat13T44444444444444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl inp4s1, int32_pl inp4s2, int32_pl inp4s3, int32_pl inp4s4, int64_al[inp4s1][inp4s2][inp4s3][inp4s4] inp4, int32_pl inp5s1, int32_pl inp5s2, int32_pl inp5s3, int32_pl inp5s4, int64_al[inp5s1][inp5s2][inp5s3][inp5s4] inp5, int32_pl inp6s1, int32_pl inp6s2, int32_pl inp6s3, int32_pl inp6s4, int64_al[inp6s1][inp6s2][inp6s3][inp6s4] inp6, int32_pl inp7s1, int32_pl inp7s2, int32_pl inp7s3, int32_pl inp7s4, int64_al[inp7s1][inp7s2][inp7s3][inp7s4] inp7, int32_pl inp8s1, int32_pl inp8s2, int32_pl inp8s3, int32_pl inp8s4, int64_al[inp8s1][inp8s2][inp8s3][inp8s4] inp8, int32_pl inp9s1, int32_pl inp9s2, int32_pl inp9s3, int32_pl inp9s4, int64_al[inp9s1][inp9s2][inp9s3][inp9s4] inp9, int32_pl inp10s1, int32_pl inp10s2, int32_pl inp10s3, int32_pl inp10s4, int64_al[inp10s1][inp10s2][inp10s3][inp10s4] inp10, int32_pl inp11s1, int32_pl inp11s2, int32_pl inp11s3, int32_pl inp11s4, int64_al[inp11s1][inp11s2][inp11s3][inp11s4] inp11, int32_pl inp12s1, int32_pl inp12s2, int32_pl inp12s3, int32_pl inp12s4, int64_al[inp12s1][inp12s2][inp12s3][inp12s4] inp12, int32_pl inp13s1, int32_pl inp13s2, int32_pl inp13s3, int32_pl inp13s4, int64_al[inp13s1][inp13s2][inp13s3][inp13s4] inp13, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat14T444444444444444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl inp4s1, int32_pl inp4s2, int32_pl inp4s3, int32_pl inp4s4, int64_al[inp4s1][inp4s2][inp4s3][inp4s4] inp4, int32_pl inp5s1, int32_pl inp5s2, int32_pl inp5s3, int32_pl inp5s4, int64_al[inp5s1][inp5s2][inp5s3][inp5s4] inp5, int32_pl inp6s1, int32_pl inp6s2, int32_pl inp6s3, int32_pl inp6s4, int64_al[inp6s1][inp6s2][inp6s3][inp6s4] inp6, int32_pl inp7s1, int32_pl inp7s2, int32_pl inp7s3, int32_pl inp7s4, int64_al[inp7s1][inp7s2][inp7s3][inp7s4] inp7, int32_pl inp8s1, int32_pl inp8s2, int32_pl inp8s3, int32_pl inp8s4, int64_al[inp8s1][inp8s2][inp8s3][inp8s4] inp8, int32_pl inp9s1, int32_pl inp9s2, int32_pl inp9s3, int32_pl inp9s4, int64_al[inp9s1][inp9s2][inp9s3][inp9s4] inp9, int32_pl inp10s1, int32_pl inp10s2, int32_pl inp10s3, int32_pl inp10s4, int64_al[inp10s1][inp10s2][inp10s3][inp10s4] inp10, int32_pl inp11s1, int32_pl inp11s2, int32_pl inp11s3, int32_pl inp11s4, int64_al[inp11s1][inp11s2][inp11s3][inp11s4] inp11, int32_pl inp12s1, int32_pl inp12s2, int32_pl inp12s3, int32_pl inp12s4, int64_al[inp12s1][inp12s2][inp12s3][inp12s4] inp12, int32_pl inp13s1, int32_pl inp13s2, int32_pl inp13s3, int32_pl inp13s4, int64_al[inp13s1][inp13s2][inp13s3][inp13s4] inp13, int32_pl inp14s1, int32_pl inp14s2, int32_pl inp14s3, int32_pl inp14s4, int64_al[inp14s1][inp14s2][inp14s3][inp14s4] inp14, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat15T4444444444444444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl inp4s1, int32_pl inp4s2, int32_pl inp4s3, int32_pl inp4s4, int64_al[inp4s1][inp4s2][inp4s3][inp4s4] inp4, int32_pl inp5s1, int32_pl inp5s2, int32_pl inp5s3, int32_pl inp5s4, int64_al[inp5s1][inp5s2][inp5s3][inp5s4] inp5, int32_pl inp6s1, int32_pl inp6s2, int32_pl inp6s3, int32_pl inp6s4, int64_al[inp6s1][inp6s2][inp6s3][inp6s4] inp6, int32_pl inp7s1, int32_pl inp7s2, int32_pl inp7s3, int32_pl inp7s4, int64_al[inp7s1][inp7s2][inp7s3][inp7s4] inp7, int32_pl inp8s1, int32_pl inp8s2, int32_pl inp8s3, int32_pl inp8s4, int64_al[inp8s1][inp8s2][inp8s3][inp8s4] inp8, int32_pl inp9s1, int32_pl inp9s2, int32_pl inp9s3, int32_pl inp9s4, int64_al[inp9s1][inp9s2][inp9s3][inp9s4] inp9, int32_pl inp10s1, int32_pl inp10s2, int32_pl inp10s3, int32_pl inp10s4, int64_al[inp10s1][inp10s2][inp10s3][inp10s4] inp10, int32_pl inp11s1, int32_pl inp11s2, int32_pl inp11s3, int32_pl inp11s4, int64_al[inp11s1][inp11s2][inp11s3][inp11s4] inp11, int32_pl inp12s1, int32_pl inp12s2, int32_pl inp12s3, int32_pl inp12s4, int64_al[inp12s1][inp12s2][inp12s3][inp12s4] inp12, int32_pl inp13s1, int32_pl inp13s2, int32_pl inp13s3, int32_pl inp13s4, int64_al[inp13s1][inp13s2][inp13s3][inp13s4] inp13, int32_pl inp14s1, int32_pl inp14s2, int32_pl inp14s3, int32_pl inp14s4, int64_al[inp14s1][inp14s2][inp14s3][inp14s4] inp14, int32_pl inp15s1, int32_pl inp15s2, int32_pl inp15s3, int32_pl inp15s4, int64_al[inp15s1][inp15s2][inp15s3][inp15s4] inp15, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat16T44444444444444444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl inp4s1, int32_pl inp4s2, int32_pl inp4s3, int32_pl inp4s4, int64_al[inp4s1][inp4s2][inp4s3][inp4s4] inp4, int32_pl inp5s1, int32_pl inp5s2, int32_pl inp5s3, int32_pl inp5s4, int64_al[inp5s1][inp5s2][inp5s3][inp5s4] inp5, int32_pl inp6s1, int32_pl inp6s2, int32_pl inp6s3, int32_pl inp6s4, int64_al[inp6s1][inp6s2][inp6s3][inp6s4] inp6, int32_pl inp7s1, int32_pl inp7s2, int32_pl inp7s3, int32_pl inp7s4, int64_al[inp7s1][inp7s2][inp7s3][inp7s4] inp7, int32_pl inp8s1, int32_pl inp8s2, int32_pl inp8s3, int32_pl inp8s4, int64_al[inp8s1][inp8s2][inp8s3][inp8s4] inp8, int32_pl inp9s1, int32_pl inp9s2, int32_pl inp9s3, int32_pl inp9s4, int64_al[inp9s1][inp9s2][inp9s3][inp9s4] inp9, int32_pl inp10s1, int32_pl inp10s2, int32_pl inp10s3, int32_pl inp10s4, int64_al[inp10s1][inp10s2][inp10s3][inp10s4] inp10, int32_pl inp11s1, int32_pl inp11s2, int32_pl inp11s3, int32_pl inp11s4, int64_al[inp11s1][inp11s2][inp11s3][inp11s4] inp11, int32_pl inp12s1, int32_pl inp12s2, int32_pl inp12s3, int32_pl inp12s4, int64_al[inp12s1][inp12s2][inp12s3][inp12s4] inp12, int32_pl inp13s1, int32_pl inp13s2, int32_pl inp13s3, int32_pl inp13s4, int64_al[inp13s1][inp13s2][inp13s3][inp13s4] inp13, int32_pl inp14s1, int32_pl inp14s2, int32_pl inp14s3, int32_pl inp14s4, int64_al[inp14s1][inp14s2][inp14s3][inp14s4] inp14, int32_pl inp15s1, int32_pl inp15s2, int32_pl inp15s3, int32_pl inp15s4, int64_al[inp15s1][inp15s2][inp15s3][inp15s4] inp15, int32_pl inp16s1, int32_pl inp16s2, int32_pl inp16s3, int32_pl inp16s4, int64_al[inp16s1][inp16s2][inp16s3][inp16s4] inp16, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat17T444444444444444444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl inp4s1, int32_pl inp4s2, int32_pl inp4s3, int32_pl inp4s4, int64_al[inp4s1][inp4s2][inp4s3][inp4s4] inp4, int32_pl inp5s1, int32_pl inp5s2, int32_pl inp5s3, int32_pl inp5s4, int64_al[inp5s1][inp5s2][inp5s3][inp5s4] inp5, int32_pl inp6s1, int32_pl inp6s2, int32_pl inp6s3, int32_pl inp6s4, int64_al[inp6s1][inp6s2][inp6s3][inp6s4] inp6, int32_pl inp7s1, int32_pl inp7s2, int32_pl inp7s3, int32_pl inp7s4, int64_al[inp7s1][inp7s2][inp7s3][inp7s4] inp7, int32_pl inp8s1, int32_pl inp8s2, int32_pl inp8s3, int32_pl inp8s4, int64_al[inp8s1][inp8s2][inp8s3][inp8s4] inp8, int32_pl inp9s1, int32_pl inp9s2, int32_pl inp9s3, int32_pl inp9s4, int64_al[inp9s1][inp9s2][inp9s3][inp9s4] inp9, int32_pl inp10s1, int32_pl inp10s2, int32_pl inp10s3, int32_pl inp10s4, int64_al[inp10s1][inp10s2][inp10s3][inp10s4] inp10, int32_pl inp11s1, int32_pl inp11s2, int32_pl inp11s3, int32_pl inp11s4, int64_al[inp11s1][inp11s2][inp11s3][inp11s4] inp11, int32_pl inp12s1, int32_pl inp12s2, int32_pl inp12s3, int32_pl inp12s4, int64_al[inp12s1][inp12s2][inp12s3][inp12s4] inp12, int32_pl inp13s1, int32_pl inp13s2, int32_pl inp13s3, int32_pl inp13s4, int64_al[inp13s1][inp13s2][inp13s3][inp13s4] inp13, int32_pl inp14s1, int32_pl inp14s2, int32_pl inp14s3, int32_pl inp14s4, int64_al[inp14s1][inp14s2][inp14s3][inp14s4] inp14, int32_pl inp15s1, int32_pl inp15s2, int32_pl inp15s3, int32_pl inp15s4, int64_al[inp15s1][inp15s2][inp15s3][inp15s4] inp15, int32_pl inp16s1, int32_pl inp16s2, int32_pl inp16s3, int32_pl inp16s4, int64_al[inp16s1][inp16s2][inp16s3][inp16s4] inp16, int32_pl inp17s1, int32_pl inp17s2, int32_pl inp17s3, int32_pl inp17s4, int64_al[inp17s1][inp17s2][inp17s3][inp17s4] inp17, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat18T4444444444444444444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl inp4s1, int32_pl inp4s2, int32_pl inp4s3, int32_pl inp4s4, int64_al[inp4s1][inp4s2][inp4s3][inp4s4] inp4, int32_pl inp5s1, int32_pl inp5s2, int32_pl inp5s3, int32_pl inp5s4, int64_al[inp5s1][inp5s2][inp5s3][inp5s4] inp5, int32_pl inp6s1, int32_pl inp6s2, int32_pl inp6s3, int32_pl inp6s4, int64_al[inp6s1][inp6s2][inp6s3][inp6s4] inp6, int32_pl inp7s1, int32_pl inp7s2, int32_pl inp7s3, int32_pl inp7s4, int64_al[inp7s1][inp7s2][inp7s3][inp7s4] inp7, int32_pl inp8s1, int32_pl inp8s2, int32_pl inp8s3, int32_pl inp8s4, int64_al[inp8s1][inp8s2][inp8s3][inp8s4] inp8, int32_pl inp9s1, int32_pl inp9s2, int32_pl inp9s3, int32_pl inp9s4, int64_al[inp9s1][inp9s2][inp9s3][inp9s4] inp9, int32_pl inp10s1, int32_pl inp10s2, int32_pl inp10s3, int32_pl inp10s4, int64_al[inp10s1][inp10s2][inp10s3][inp10s4] inp10, int32_pl inp11s1, int32_pl inp11s2, int32_pl inp11s3, int32_pl inp11s4, int64_al[inp11s1][inp11s2][inp11s3][inp11s4] inp11, int32_pl inp12s1, int32_pl inp12s2, int32_pl inp12s3, int32_pl inp12s4, int64_al[inp12s1][inp12s2][inp12s3][inp12s4] inp12, int32_pl inp13s1, int32_pl inp13s2, int32_pl inp13s3, int32_pl inp13s4, int64_al[inp13s1][inp13s2][inp13s3][inp13s4] inp13, int32_pl inp14s1, int32_pl inp14s2, int32_pl inp14s3, int32_pl inp14s4, int64_al[inp14s1][inp14s2][inp14s3][inp14s4] inp14, int32_pl inp15s1, int32_pl inp15s2, int32_pl inp15s3, int32_pl inp15s4, int64_al[inp15s1][inp15s2][inp15s3][inp15s4] inp15, int32_pl inp16s1, int32_pl inp16s2, int32_pl inp16s3, int32_pl inp16s4, int64_al[inp16s1][inp16s2][inp16s3][inp16s4] inp16, int32_pl inp17s1, int32_pl inp17s2, int32_pl inp17s3, int32_pl inp17s4, int64_al[inp17s1][inp17s2][inp17s3][inp17s4] inp17, int32_pl inp18s1, int32_pl inp18s2, int32_pl inp18s3, int32_pl inp18s4, int64_al[inp18s1][inp18s2][inp18s3][inp18s4] inp18, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat19T44444444444444444444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl inp4s1, int32_pl inp4s2, int32_pl inp4s3, int32_pl inp4s4, int64_al[inp4s1][inp4s2][inp4s3][inp4s4] inp4, int32_pl inp5s1, int32_pl inp5s2, int32_pl inp5s3, int32_pl inp5s4, int64_al[inp5s1][inp5s2][inp5s3][inp5s4] inp5, int32_pl inp6s1, int32_pl inp6s2, int32_pl inp6s3, int32_pl inp6s4, int64_al[inp6s1][inp6s2][inp6s3][inp6s4] inp6, int32_pl inp7s1, int32_pl inp7s2, int32_pl inp7s3, int32_pl inp7s4, int64_al[inp7s1][inp7s2][inp7s3][inp7s4] inp7, int32_pl inp8s1, int32_pl inp8s2, int32_pl inp8s3, int32_pl inp8s4, int64_al[inp8s1][inp8s2][inp8s3][inp8s4] inp8, int32_pl inp9s1, int32_pl inp9s2, int32_pl inp9s3, int32_pl inp9s4, int64_al[inp9s1][inp9s2][inp9s3][inp9s4] inp9, int32_pl inp10s1, int32_pl inp10s2, int32_pl inp10s3, int32_pl inp10s4, int64_al[inp10s1][inp10s2][inp10s3][inp10s4] inp10, int32_pl inp11s1, int32_pl inp11s2, int32_pl inp11s3, int32_pl inp11s4, int64_al[inp11s1][inp11s2][inp11s3][inp11s4] inp11, int32_pl inp12s1, int32_pl inp12s2, int32_pl inp12s3, int32_pl inp12s4, int64_al[inp12s1][inp12s2][inp12s3][inp12s4] inp12, int32_pl inp13s1, int32_pl inp13s2, int32_pl inp13s3, int32_pl inp13s4, int64_al[inp13s1][inp13s2][inp13s3][inp13s4] inp13, int32_pl inp14s1, int32_pl inp14s2, int32_pl inp14s3, int32_pl inp14s4, int64_al[inp14s1][inp14s2][inp14s3][inp14s4] inp14, int32_pl inp15s1, int32_pl inp15s2, int32_pl inp15s3, int32_pl inp15s4, int64_al[inp15s1][inp15s2][inp15s3][inp15s4] inp15, int32_pl inp16s1, int32_pl inp16s2, int32_pl inp16s3, int32_pl inp16s4, int64_al[inp16s1][inp16s2][inp16s3][inp16s4] inp16, int32_pl inp17s1, int32_pl inp17s2, int32_pl inp17s3, int32_pl inp17s4, int64_al[inp17s1][inp17s2][inp17s3][inp17s4] inp17, int32_pl inp18s1, int32_pl inp18s2, int32_pl inp18s3, int32_pl inp18s4, int64_al[inp18s1][inp18s2][inp18s3][inp18s4] inp18, int32_pl inp19s1, int32_pl inp19s2, int32_pl inp19s3, int32_pl inp19s4, int64_al[inp19s1][inp19s2][inp19s3][inp19s4] inp19, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat20T444444444444444444444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl inp4s1, int32_pl inp4s2, int32_pl inp4s3, int32_pl inp4s4, int64_al[inp4s1][inp4s2][inp4s3][inp4s4] inp4, int32_pl inp5s1, int32_pl inp5s2, int32_pl inp5s3, int32_pl inp5s4, int64_al[inp5s1][inp5s2][inp5s3][inp5s4] inp5, int32_pl inp6s1, int32_pl inp6s2, int32_pl inp6s3, int32_pl inp6s4, int64_al[inp6s1][inp6s2][inp6s3][inp6s4] inp6, int32_pl inp7s1, int32_pl inp7s2, int32_pl inp7s3, int32_pl inp7s4, int64_al[inp7s1][inp7s2][inp7s3][inp7s4] inp7, int32_pl inp8s1, int32_pl inp8s2, int32_pl inp8s3, int32_pl inp8s4, int64_al[inp8s1][inp8s2][inp8s3][inp8s4] inp8, int32_pl inp9s1, int32_pl inp9s2, int32_pl inp9s3, int32_pl inp9s4, int64_al[inp9s1][inp9s2][inp9s3][inp9s4] inp9, int32_pl inp10s1, int32_pl inp10s2, int32_pl inp10s3, int32_pl inp10s4, int64_al[inp10s1][inp10s2][inp10s3][inp10s4] inp10, int32_pl inp11s1, int32_pl inp11s2, int32_pl inp11s3, int32_pl inp11s4, int64_al[inp11s1][inp11s2][inp11s3][inp11s4] inp11, int32_pl inp12s1, int32_pl inp12s2, int32_pl inp12s3, int32_pl inp12s4, int64_al[inp12s1][inp12s2][inp12s3][inp12s4] inp12, int32_pl inp13s1, int32_pl inp13s2, int32_pl inp13s3, int32_pl inp13s4, int64_al[inp13s1][inp13s2][inp13s3][inp13s4] inp13, int32_pl inp14s1, int32_pl inp14s2, int32_pl inp14s3, int32_pl inp14s4, int64_al[inp14s1][inp14s2][inp14s3][inp14s4] inp14, int32_pl inp15s1, int32_pl inp15s2, int32_pl inp15s3, int32_pl inp15s4, int64_al[inp15s1][inp15s2][inp15s3][inp15s4] inp15, int32_pl inp16s1, int32_pl inp16s2, int32_pl inp16s3, int32_pl inp16s4, int64_al[inp16s1][inp16s2][inp16s3][inp16s4] inp16, int32_pl inp17s1, int32_pl inp17s2, int32_pl inp17s3, int32_pl inp17s4, int64_al[inp17s1][inp17s2][inp17s3][inp17s4] inp17, int32_pl inp18s1, int32_pl inp18s2, int32_pl inp18s3, int32_pl inp18s4, int64_al[inp18s1][inp18s2][inp18s3][inp18s4] inp18, int32_pl inp19s1, int32_pl inp19s2, int32_pl inp19s3, int32_pl inp19s4, int64_al[inp19s1][inp19s2][inp19s3][inp19s4] inp19, int32_pl inp20s1, int32_pl inp20s2, int32_pl inp20s3, int32_pl inp20s4, int64_al[inp20s1][inp20s2][inp20s3][inp20s4] inp20, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat21T4444444444444444444444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl inp4s1, int32_pl inp4s2, int32_pl inp4s3, int32_pl inp4s4, int64_al[inp4s1][inp4s2][inp4s3][inp4s4] inp4, int32_pl inp5s1, int32_pl inp5s2, int32_pl inp5s3, int32_pl inp5s4, int64_al[inp5s1][inp5s2][inp5s3][inp5s4] inp5, int32_pl inp6s1, int32_pl inp6s2, int32_pl inp6s3, int32_pl inp6s4, int64_al[inp6s1][inp6s2][inp6s3][inp6s4] inp6, int32_pl inp7s1, int32_pl inp7s2, int32_pl inp7s3, int32_pl inp7s4, int64_al[inp7s1][inp7s2][inp7s3][inp7s4] inp7, int32_pl inp8s1, int32_pl inp8s2, int32_pl inp8s3, int32_pl inp8s4, int64_al[inp8s1][inp8s2][inp8s3][inp8s4] inp8, int32_pl inp9s1, int32_pl inp9s2, int32_pl inp9s3, int32_pl inp9s4, int64_al[inp9s1][inp9s2][inp9s3][inp9s4] inp9, int32_pl inp10s1, int32_pl inp10s2, int32_pl inp10s3, int32_pl inp10s4, int64_al[inp10s1][inp10s2][inp10s3][inp10s4] inp10, int32_pl inp11s1, int32_pl inp11s2, int32_pl inp11s3, int32_pl inp11s4, int64_al[inp11s1][inp11s2][inp11s3][inp11s4] inp11, int32_pl inp12s1, int32_pl inp12s2, int32_pl inp12s3, int32_pl inp12s4, int64_al[inp12s1][inp12s2][inp12s3][inp12s4] inp12, int32_pl inp13s1, int32_pl inp13s2, int32_pl inp13s3, int32_pl inp13s4, int64_al[inp13s1][inp13s2][inp13s3][inp13s4] inp13, int32_pl inp14s1, int32_pl inp14s2, int32_pl inp14s3, int32_pl inp14s4, int64_al[inp14s1][inp14s2][inp14s3][inp14s4] inp14, int32_pl inp15s1, int32_pl inp15s2, int32_pl inp15s3, int32_pl inp15s4, int64_al[inp15s1][inp15s2][inp15s3][inp15s4] inp15, int32_pl inp16s1, int32_pl inp16s2, int32_pl inp16s3, int32_pl inp16s4, int64_al[inp16s1][inp16s2][inp16s3][inp16s4] inp16, int32_pl inp17s1, int32_pl inp17s2, int32_pl inp17s3, int32_pl inp17s4, int64_al[inp17s1][inp17s2][inp17s3][inp17s4] inp17, int32_pl inp18s1, int32_pl inp18s2, int32_pl inp18s3, int32_pl inp18s4, int64_al[inp18s1][inp18s2][inp18s3][inp18s4] inp18, int32_pl inp19s1, int32_pl inp19s2, int32_pl inp19s3, int32_pl inp19s4, int64_al[inp19s1][inp19s2][inp19s3][inp19s4] inp19, int32_pl inp20s1, int32_pl inp20s2, int32_pl inp20s3, int32_pl inp20s4, int64_al[inp20s1][inp20s2][inp20s3][inp20s4] inp20, int32_pl inp21s1, int32_pl inp21s2, int32_pl inp21s3, int32_pl inp21s4, int64_al[inp21s1][inp21s2][inp21s3][inp21s4] inp21, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat22T44444444444444444444444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl inp4s1, int32_pl inp4s2, int32_pl inp4s3, int32_pl inp4s4, int64_al[inp4s1][inp4s2][inp4s3][inp4s4] inp4, int32_pl inp5s1, int32_pl inp5s2, int32_pl inp5s3, int32_pl inp5s4, int64_al[inp5s1][inp5s2][inp5s3][inp5s4] inp5, int32_pl inp6s1, int32_pl inp6s2, int32_pl inp6s3, int32_pl inp6s4, int64_al[inp6s1][inp6s2][inp6s3][inp6s4] inp6, int32_pl inp7s1, int32_pl inp7s2, int32_pl inp7s3, int32_pl inp7s4, int64_al[inp7s1][inp7s2][inp7s3][inp7s4] inp7, int32_pl inp8s1, int32_pl inp8s2, int32_pl inp8s3, int32_pl inp8s4, int64_al[inp8s1][inp8s2][inp8s3][inp8s4] inp8, int32_pl inp9s1, int32_pl inp9s2, int32_pl inp9s3, int32_pl inp9s4, int64_al[inp9s1][inp9s2][inp9s3][inp9s4] inp9, int32_pl inp10s1, int32_pl inp10s2, int32_pl inp10s3, int32_pl inp10s4, int64_al[inp10s1][inp10s2][inp10s3][inp10s4] inp10, int32_pl inp11s1, int32_pl inp11s2, int32_pl inp11s3, int32_pl inp11s4, int64_al[inp11s1][inp11s2][inp11s3][inp11s4] inp11, int32_pl inp12s1, int32_pl inp12s2, int32_pl inp12s3, int32_pl inp12s4, int64_al[inp12s1][inp12s2][inp12s3][inp12s4] inp12, int32_pl inp13s1, int32_pl inp13s2, int32_pl inp13s3, int32_pl inp13s4, int64_al[inp13s1][inp13s2][inp13s3][inp13s4] inp13, int32_pl inp14s1, int32_pl inp14s2, int32_pl inp14s3, int32_pl inp14s4, int64_al[inp14s1][inp14s2][inp14s3][inp14s4] inp14, int32_pl inp15s1, int32_pl inp15s2, int32_pl inp15s3, int32_pl inp15s4, int64_al[inp15s1][inp15s2][inp15s3][inp15s4] inp15, int32_pl inp16s1, int32_pl inp16s2, int32_pl inp16s3, int32_pl inp16s4, int64_al[inp16s1][inp16s2][inp16s3][inp16s4] inp16, int32_pl inp17s1, int32_pl inp17s2, int32_pl inp17s3, int32_pl inp17s4, int64_al[inp17s1][inp17s2][inp17s3][inp17s4] inp17, int32_pl inp18s1, int32_pl inp18s2, int32_pl inp18s3, int32_pl inp18s4, int64_al[inp18s1][inp18s2][inp18s3][inp18s4] inp18, int32_pl inp19s1, int32_pl inp19s2, int32_pl inp19s3, int32_pl inp19s4, int64_al[inp19s1][inp19s2][inp19s3][inp19s4] inp19, int32_pl inp20s1, int32_pl inp20s2, int32_pl inp20s3, int32_pl inp20s4, int64_al[inp20s1][inp20s2][inp20s3][inp20s4] inp20, int32_pl inp21s1, int32_pl inp21s2, int32_pl inp21s3, int32_pl inp21s4, int64_al[inp21s1][inp21s2][inp21s3][inp21s4] inp21, int32_pl inp22s1, int32_pl inp22s2, int32_pl inp22s3, int32_pl inp22s4, int64_al[inp22s1][inp22s2][inp22s3][inp22s4] inp22, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat23T444444444444444444444444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl inp4s1, int32_pl inp4s2, int32_pl inp4s3, int32_pl inp4s4, int64_al[inp4s1][inp4s2][inp4s3][inp4s4] inp4, int32_pl inp5s1, int32_pl inp5s2, int32_pl inp5s3, int32_pl inp5s4, int64_al[inp5s1][inp5s2][inp5s3][inp5s4] inp5, int32_pl inp6s1, int32_pl inp6s2, int32_pl inp6s3, int32_pl inp6s4, int64_al[inp6s1][inp6s2][inp6s3][inp6s4] inp6, int32_pl inp7s1, int32_pl inp7s2, int32_pl inp7s3, int32_pl inp7s4, int64_al[inp7s1][inp7s2][inp7s3][inp7s4] inp7, int32_pl inp8s1, int32_pl inp8s2, int32_pl inp8s3, int32_pl inp8s4, int64_al[inp8s1][inp8s2][inp8s3][inp8s4] inp8, int32_pl inp9s1, int32_pl inp9s2, int32_pl inp9s3, int32_pl inp9s4, int64_al[inp9s1][inp9s2][inp9s3][inp9s4] inp9, int32_pl inp10s1, int32_pl inp10s2, int32_pl inp10s3, int32_pl inp10s4, int64_al[inp10s1][inp10s2][inp10s3][inp10s4] inp10, int32_pl inp11s1, int32_pl inp11s2, int32_pl inp11s3, int32_pl inp11s4, int64_al[inp11s1][inp11s2][inp11s3][inp11s4] inp11, int32_pl inp12s1, int32_pl inp12s2, int32_pl inp12s3, int32_pl inp12s4, int64_al[inp12s1][inp12s2][inp12s3][inp12s4] inp12, int32_pl inp13s1, int32_pl inp13s2, int32_pl inp13s3, int32_pl inp13s4, int64_al[inp13s1][inp13s2][inp13s3][inp13s4] inp13, int32_pl inp14s1, int32_pl inp14s2, int32_pl inp14s3, int32_pl inp14s4, int64_al[inp14s1][inp14s2][inp14s3][inp14s4] inp14, int32_pl inp15s1, int32_pl inp15s2, int32_pl inp15s3, int32_pl inp15s4, int64_al[inp15s1][inp15s2][inp15s3][inp15s4] inp15, int32_pl inp16s1, int32_pl inp16s2, int32_pl inp16s3, int32_pl inp16s4, int64_al[inp16s1][inp16s2][inp16s3][inp16s4] inp16, int32_pl inp17s1, int32_pl inp17s2, int32_pl inp17s3, int32_pl inp17s4, int64_al[inp17s1][inp17s2][inp17s3][inp17s4] inp17, int32_pl inp18s1, int32_pl inp18s2, int32_pl inp18s3, int32_pl inp18s4, int64_al[inp18s1][inp18s2][inp18s3][inp18s4] inp18, int32_pl inp19s1, int32_pl inp19s2, int32_pl inp19s3, int32_pl inp19s4, int64_al[inp19s1][inp19s2][inp19s3][inp19s4] inp19, int32_pl inp20s1, int32_pl inp20s2, int32_pl inp20s3, int32_pl inp20s4, int64_al[inp20s1][inp20s2][inp20s3][inp20s4] inp20, int32_pl inp21s1, int32_pl inp21s2, int32_pl inp21s3, int32_pl inp21s4, int64_al[inp21s1][inp21s2][inp21s3][inp21s4] inp21, int32_pl inp22s1, int32_pl inp22s2, int32_pl inp22s3, int32_pl inp22s4, int64_al[inp22s1][inp22s2][inp22s3][inp22s4] inp22, int32_pl inp23s1, int32_pl inp23s2, int32_pl inp23s3, int32_pl inp23s4, int64_al[inp23s1][inp23s2][inp23s3][inp23s4] inp23, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat24T4444444444444444444444444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl inp4s1, int32_pl inp4s2, int32_pl inp4s3, int32_pl inp4s4, int64_al[inp4s1][inp4s2][inp4s3][inp4s4] inp4, int32_pl inp5s1, int32_pl inp5s2, int32_pl inp5s3, int32_pl inp5s4, int64_al[inp5s1][inp5s2][inp5s3][inp5s4] inp5, int32_pl inp6s1, int32_pl inp6s2, int32_pl inp6s3, int32_pl inp6s4, int64_al[inp6s1][inp6s2][inp6s3][inp6s4] inp6, int32_pl inp7s1, int32_pl inp7s2, int32_pl inp7s3, int32_pl inp7s4, int64_al[inp7s1][inp7s2][inp7s3][inp7s4] inp7, int32_pl inp8s1, int32_pl inp8s2, int32_pl inp8s3, int32_pl inp8s4, int64_al[inp8s1][inp8s2][inp8s3][inp8s4] inp8, int32_pl inp9s1, int32_pl inp9s2, int32_pl inp9s3, int32_pl inp9s4, int64_al[inp9s1][inp9s2][inp9s3][inp9s4] inp9, int32_pl inp10s1, int32_pl inp10s2, int32_pl inp10s3, int32_pl inp10s4, int64_al[inp10s1][inp10s2][inp10s3][inp10s4] inp10, int32_pl inp11s1, int32_pl inp11s2, int32_pl inp11s3, int32_pl inp11s4, int64_al[inp11s1][inp11s2][inp11s3][inp11s4] inp11, int32_pl inp12s1, int32_pl inp12s2, int32_pl inp12s3, int32_pl inp12s4, int64_al[inp12s1][inp12s2][inp12s3][inp12s4] inp12, int32_pl inp13s1, int32_pl inp13s2, int32_pl inp13s3, int32_pl inp13s4, int64_al[inp13s1][inp13s2][inp13s3][inp13s4] inp13, int32_pl inp14s1, int32_pl inp14s2, int32_pl inp14s3, int32_pl inp14s4, int64_al[inp14s1][inp14s2][inp14s3][inp14s4] inp14, int32_pl inp15s1, int32_pl inp15s2, int32_pl inp15s3, int32_pl inp15s4, int64_al[inp15s1][inp15s2][inp15s3][inp15s4] inp15, int32_pl inp16s1, int32_pl inp16s2, int32_pl inp16s3, int32_pl inp16s4, int64_al[inp16s1][inp16s2][inp16s3][inp16s4] inp16, int32_pl inp17s1, int32_pl inp17s2, int32_pl inp17s3, int32_pl inp17s4, int64_al[inp17s1][inp17s2][inp17s3][inp17s4] inp17, int32_pl inp18s1, int32_pl inp18s2, int32_pl inp18s3, int32_pl inp18s4, int64_al[inp18s1][inp18s2][inp18s3][inp18s4] inp18, int32_pl inp19s1, int32_pl inp19s2, int32_pl inp19s3, int32_pl inp19s4, int64_al[inp19s1][inp19s2][inp19s3][inp19s4] inp19, int32_pl inp20s1, int32_pl inp20s2, int32_pl inp20s3, int32_pl inp20s4, int64_al[inp20s1][inp20s2][inp20s3][inp20s4] inp20, int32_pl inp21s1, int32_pl inp21s2, int32_pl inp21s3, int32_pl inp21s4, int64_al[inp21s1][inp21s2][inp21s3][inp21s4] inp21, int32_pl inp22s1, int32_pl inp22s2, int32_pl inp22s3, int32_pl inp22s4, int64_al[inp22s1][inp22s2][inp22s3][inp22s4] inp22, int32_pl inp23s1, int32_pl inp23s2, int32_pl inp23s3, int32_pl inp23s4, int64_al[inp23s1][inp23s2][inp23s3][inp23s4] inp23, int32_pl inp24s1, int32_pl inp24s2, int32_pl inp24s3, int32_pl inp24s4, int64_al[inp24s1][inp24s2][inp24s3][inp24s4] inp24, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+extern void Concat25T44444444444444444444444444(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inp1s1, int32_pl inp1s2, int32_pl inp1s3, int32_pl inp1s4, int64_al[inp1s1][inp1s2][inp1s3][inp1s4] inp1, int32_pl inp2s1, int32_pl inp2s2, int32_pl inp2s3, int32_pl inp2s4, int64_al[inp2s1][inp2s2][inp2s3][inp2s4] inp2, int32_pl inp3s1, int32_pl inp3s2, int32_pl inp3s3, int32_pl inp3s4, int64_al[inp3s1][inp3s2][inp3s3][inp3s4] inp3, int32_pl inp4s1, int32_pl inp4s2, int32_pl inp4s3, int32_pl inp4s4, int64_al[inp4s1][inp4s2][inp4s3][inp4s4] inp4, int32_pl inp5s1, int32_pl inp5s2, int32_pl inp5s3, int32_pl inp5s4, int64_al[inp5s1][inp5s2][inp5s3][inp5s4] inp5, int32_pl inp6s1, int32_pl inp6s2, int32_pl inp6s3, int32_pl inp6s4, int64_al[inp6s1][inp6s2][inp6s3][inp6s4] inp6, int32_pl inp7s1, int32_pl inp7s2, int32_pl inp7s3, int32_pl inp7s4, int64_al[inp7s1][inp7s2][inp7s3][inp7s4] inp7, int32_pl inp8s1, int32_pl inp8s2, int32_pl inp8s3, int32_pl inp8s4, int64_al[inp8s1][inp8s2][inp8s3][inp8s4] inp8, int32_pl inp9s1, int32_pl inp9s2, int32_pl inp9s3, int32_pl inp9s4, int64_al[inp9s1][inp9s2][inp9s3][inp9s4] inp9, int32_pl inp10s1, int32_pl inp10s2, int32_pl inp10s3, int32_pl inp10s4, int64_al[inp10s1][inp10s2][inp10s3][inp10s4] inp10, int32_pl inp11s1, int32_pl inp11s2, int32_pl inp11s3, int32_pl inp11s4, int64_al[inp11s1][inp11s2][inp11s3][inp11s4] inp11, int32_pl inp12s1, int32_pl inp12s2, int32_pl inp12s3, int32_pl inp12s4, int64_al[inp12s1][inp12s2][inp12s3][inp12s4] inp12, int32_pl inp13s1, int32_pl inp13s2, int32_pl inp13s3, int32_pl inp13s4, int64_al[inp13s1][inp13s2][inp13s3][inp13s4] inp13, int32_pl inp14s1, int32_pl inp14s2, int32_pl inp14s3, int32_pl inp14s4, int64_al[inp14s1][inp14s2][inp14s3][inp14s4] inp14, int32_pl inp15s1, int32_pl inp15s2, int32_pl inp15s3, int32_pl inp15s4, int64_al[inp15s1][inp15s2][inp15s3][inp15s4] inp15, int32_pl inp16s1, int32_pl inp16s2, int32_pl inp16s3, int32_pl inp16s4, int64_al[inp16s1][inp16s2][inp16s3][inp16s4] inp16, int32_pl inp17s1, int32_pl inp17s2, int32_pl inp17s3, int32_pl inp17s4, int64_al[inp17s1][inp17s2][inp17s3][inp17s4] inp17, int32_pl inp18s1, int32_pl inp18s2, int32_pl inp18s3, int32_pl inp18s4, int64_al[inp18s1][inp18s2][inp18s3][inp18s4] inp18, int32_pl inp19s1, int32_pl inp19s2, int32_pl inp19s3, int32_pl inp19s4, int64_al[inp19s1][inp19s2][inp19s3][inp19s4] inp19, int32_pl inp20s1, int32_pl inp20s2, int32_pl inp20s3, int32_pl inp20s4, int64_al[inp20s1][inp20s2][inp20s3][inp20s4] inp20, int32_pl inp21s1, int32_pl inp21s2, int32_pl inp21s3, int32_pl inp21s4, int64_al[inp21s1][inp21s2][inp21s3][inp21s4] inp21, int32_pl inp22s1, int32_pl inp22s2, int32_pl inp22s3, int32_pl inp22s4, int64_al[inp22s1][inp22s2][inp22s3][inp22s4] inp22, int32_pl inp23s1, int32_pl inp23s2, int32_pl inp23s3, int32_pl inp23s4, int64_al[inp23s1][inp23s2][inp23s3][inp23s4] inp23, int32_pl inp24s1, int32_pl inp24s2, int32_pl inp24s3, int32_pl inp24s4, int64_al[inp24s1][inp24s2][inp24s3][inp24s4] inp24, int32_pl inp25s1, int32_pl inp25s2, int32_pl inp25s3, int32_pl inp25s4, int64_al[inp25s1][inp25s2][inp25s3][inp25s4] inp25, int32_pl axis, int64_al[s1][s2][s3][s4] outp);
+
+(**************************)
+extern void Split44(int32_pl O1, int32_pl O2, int32_pl O3, int32_pl O4, int32_pl I1, int32_pl I2, int32_pl I3, int32_pl I4, int64_al[I1][I2][I3][I4] inp, int32_pl axis, int32_pl curCount, int32_pl total, int64_al[O1][O2][O3][O4] out);
+
+(**************************)
+(* Generic implementation of Conv2D *)
+
+extern void Conv2DReshapeFilter(int32_pl FH, int32_pl FW, int32_pl CI, int32_pl CO, int64_al[FH][FW][CI][CO] inputArr, int64_al[CO][FH*FW*CI] outputArr);
+
+extern void Conv2DReshapeMatMulOP(int32_pl N, int32_pl finalH, int32_pl finalW, int32_pl CO, int64_al[CO][N*finalH*finalW] inputArr, int64_al[N][finalH][finalW][CO] outputArr);
+
+extern void Conv2DReshapeInput(int32_pl N, int32_pl H, int32_pl W, int32_pl CI, int32_pl FH, int32_pl FW, int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, int32_pl strideH, int32_pl strideW, int32_pl RRows, int32_pl RCols, int64_al[N][H][W][CI] inputArr, int64_al[RRows][RCols] outputArr);
+
+extern void Conv2D(int32_pl N, int32_pl H, int32_pl W, int32_pl CI, 
+				   int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
+				   int32_pl strideH, int32_pl strideW, 
+				   int64_al[N][H][W][CI] inputArr, 
+				   int64_al[FH][FW][CI][CO] filterArr, 
+				   int64_al[N][((H-FH+(zPadHLeft+zPadHRight))/strideH)+1][((W-FW+(zPadWLeft+zPadWRight))/strideW)+1][CO] outArr);
+
+(**************************)
+(* Loop-based implementation of Conv2D *)
+(* These loop implementations of convolution run faster with multithreading *)
+
+extern void Conv2DLoopInner(int32_pl N, int32_pl H, int32_pl W, int32_pl CI, 
+				   int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
+				   int32_pl strideH, int32_pl strideW,
+				   int32_pl outH, int32_pl outW, int32_pl G,
+				   int64_al[N][H][W][CI] inputArr, 
+				   int64_al[FH][FW][CI/G][CO] filterArr,
+				   int64_al[N][outH][outW][CO] outArr);
+
+(* int64_al[N][H][W][CI] inputArr, 
+   int64_al[FH][FW][CI][CO] filterArr, 
+   int64_al[N][((H-FH+zPadHLeft+zPadHRight)/strideH)+1][((W-FW+zPadWLeft+zPadWRight)/strideW)+1][CO] outArr 
+*)
+extern void Conv2DLoop(int32_pl N, int32_pl H, int32_pl W, int32_pl CI, 
+				   int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
+				   int32_pl strideH, int32_pl strideW, int32_pl G, 
+				   int64_al[N][H][W][CI] inputArr, 
+				   int64_al[FH][FW][CI][CO] filterArr, 
+				   int64_al[N][((H-FH+(zPadHLeft+zPadHRight))/strideH)+1][((W-FW+(zPadWLeft+zPadWRight))/strideW)+1][CO] outArr);
+
+(**************************)
+(* Generic implementation of Conv2D with Groups *)
+
+extern void Conv2DReshapeFilterGroup(int32_pl FH, int32_pl FW, int32_pl CI, int32_pl CO, int32_pl g, int32_pl G, int64_al[FH][FW][CI/G][CO] inputArr, int64_al[CO/G][FH*FW*(CI/G)] outputArr);
+
+
+extern void Conv2DReshapeMatMulOPGroup(int32_pl N, int32_pl finalH, int32_pl finalW, int32_pl CO, int32_pl g, int32_pl G, int64_al[CO/G][N*finalH*finalW] inputArr, int64_al[N][finalH][finalW][CO] outputArr);
+
+extern void Conv2DReshapeInputGroup(int32_pl N, int32_pl H, int32_pl W, int32_pl CI, int32_pl FH, int32_pl FW, int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, int32_pl strideH, int32_pl strideW, int32_pl g, int32_pl G, int32_pl RRows, int32_pl RCols, int64_al[N][H][W][CI] inputArr, int64_al[RRows][RCols] outputArr);
+
+(* int64_al[N][H][W][CI] inputArr, 
+   int64_al[FH][FW][CI][CO] filterArr, 
+   int64_al[N][((H-FH+zPadHLeft+zPadHRight)/strideH)+1][((W-FW+zPadWLeft+zPadWRight)/strideW)+1][CO] outArr 
+*)
+extern void Conv2DGroup(int32_pl N, int32_pl H, int32_pl W, int32_pl CI, 
+				   int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
+				   int32_pl strideH, int32_pl strideW, int32_pl G,
+				   int64_al[N][H][W][CI] inputArr, 
+				   int64_al[FH][FW][CI/G][CO] filterArr, 
+				   int64_al[N][((H-FH+(zPadHLeft+zPadHRight))/strideH)+1][((W-FW+(zPadWLeft+zPadWRight))/strideW)+1][CO] outArr);
+
+(**************************)
+(* Generic implementation of Conv3D *)
+
+extern void Conv3DReshapeFilter(int32_pl FD, int32_pl FH, int32_pl FW, int32_pl CI, int32_pl CO, int64_al[FD][FH][FW][CI][CO] inputArr, int64_al[CO][FD*FH*FW*CI] outputArr);
+
+extern void Conv3DReshapeMatMulOP(int32_pl N, int32_pl finalD, int32_pl finalH, int32_pl finalW, int32_pl CO, int64_al[CO][N*finalD*finalH*finalW] inputArr, int64_al[N][finalD][finalH][finalW][CO] outputArr);
+
+extern void Conv3DReshapeInput(int32_pl N, int32_pl D, int32_pl H, int32_pl W, int32_pl CI, int32_pl FD, int32_pl FH, int32_pl FW, int32_pl zPadDLeft, int32_pl zPadDRight, int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, int32_pl strideD, int32_pl strideH, int32_pl strideW, int32_pl RRows, int32_pl RCols, int64_al[N][D][H][W][CI] inputArr, int64_al[RRows][RCols] outputArr);
+
+(* int64_al[N][D][H][W][CI] inputArr, 
+   int64_al[FD][FH][FW][CI][CO] filterArr, 
+   int64_al[N][((D-FD+zPadDLeft+zPadDRight)/strideD)+1][((H-FH+zPadHLeft+zPadHRight)/strideH)+1][((W-FW+zPadWLeft+zPadWRight)/strideW)+1][CO] outArr 
+*)
+extern void Conv3D(int32_pl N, int32_pl D, int32_pl H, int32_pl W, int32_pl CI, 
+				   int32_pl FD, int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl zPadDLeft, int32_pl zPadDRight, int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
+				   int32_pl strideD, int32_pl strideH, int32_pl strideW, 
+				   int64_al[N][D][H][W][CI] inputArr, 
+				   int64_al[FD][FH][FW][CI][CO] filterArr,
+				   int64_al[N][((D-FD+(zPadDLeft+zPadDRight))/strideD)+1][((H-FH+(zPadHLeft+zPadHRight))/strideH)+1][((W-FW+(zPadWLeft+zPadWRight))/strideW)+1][CO] outArr);
+
+(**************************)
+(* Loop-based implementation of Conv3D *)
+(* Loop implementation of convolution run faster with multithreading *)
+
+extern void Conv3DLoopInner(int32_pl N, int32_pl D, int32_pl H, int32_pl W, int32_pl CI, 
+				   int32_pl FD, int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl zPadDLeft, int32_pl zPadDRight,int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
+				   int32_pl strideD, int32_pl strideH, int32_pl strideW,
+				   int32_pl outD, int32_pl outH, int32_pl outW, 
+				   int64_al[N][D][H][W][CI] inputArr, 
+				   int64_al[FD][FH][FW][CI][CO] filterArr, 
+				   int64_al[N][outD][outH][outW][CO] outArr);
+
+(* int64_al[N][D][H][W][CI] inputArr, 
+   int64_al[FD][FH][FW][CI][CO] filterArr, 
+   int64_al[N][((D-FD+zPadDLeft+zPadDRight)/strideD)+1][((H-FH+zPadHLeft+zPadHRight)/strideH)+1][((W-FW+zPadWLeft+zPadWRight)/strideW)+1][CO] outArr 
+*)
+extern void Conv3DLoop(int32_pl N, int32_pl D, int32_pl H, int32_pl W, int32_pl CI, 
+				   int32_pl FD, int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl zPadDLeft, int32_pl zPadDRight, int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
+				   int32_pl strideD, int32_pl strideH, int32_pl strideW, 
+				   int64_al[N][D][H][W][CI] inputArr, 
+				   int64_al[FD][FH][FW][CI][CO] filterArr, 
+				   int64_al[N][((D-FD+(zPadDLeft+zPadDRight))/strideD)+1][((H-FH+(zPadHLeft+zPadHRight))/strideH)+1][((W-FW+(zPadWLeft+zPadWRight))/strideW)+1][CO] outArr);
+
+(**************************)
+(* Generic implementation of ConvTranpose2D *)
+
+extern void ConvTranspose2DReshapeMatMulOP(int32_pl N, int32_pl finalH, int32_pl finalW, int32_pl CO, int64_al[CO][N*finalH*finalW] inputArr, int64_al[N][finalH][finalW][CO] outputArr);
+
+
+extern void ConvTranspose2DReshapeFilter(int32_pl FH, int32_pl FW, int32_pl CO, int32_pl CI, int64_al[FH][FW][CO][CI] inputArr, int64_al[CO][FH*FW*CI] outputArr);
+
+extern void ConvTranspose2DReshapeInput(int32_pl N, int32_pl HPrime, int32_pl WPrime, int32_pl CI, int32_pl FH, int32_pl FW, int32_pl zPadTrHLeft, int32_pl zPadTrHRight, int32_pl zPadTrWLeft, int32_pl zPadTrWRight, int32_pl strideH, int32_pl strideW, int32_pl RRows, int32_pl RCols, int64_al[N][HPrime][WPrime][CI] inputArr, int64_al[RRows][RCols] outputArr);
+
+(* int64_al[N][HPrime][WPrime][CI] inputArr,
+   int64_al[FH][FW][CO][CI] filter,
+   int64_al[N][H][W][CO] outputArr
+*)
+extern void ConvTranspose2D(int32_pl N, int32_pl HPrime, int32_pl WPrime, int32_pl CI, 
+				   int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl H, int32_pl W,
+				   int32_pl zPadTrHLeft, int32_pl zPadTrHRight, int32_pl zPadTrWLeft, int32_pl zPadTrWRight, 
+				   int32_pl strideH, int32_pl strideW,
+				   int64_al[N][HPrime][WPrime][CI] inputArr, 
+				   int64_al[FH][FW][CO][CI] filterArr, 
+				   int64_al[N][H][W][CO] outArr);
+
+(**************************)
+(* Generic implementation of ConvTranpose3D *)
+
+extern void ConvTranspose3DReshapeFilter(int32_pl FD, int32_pl FH, int32_pl FW, int32_pl CO, int32_pl CI, int64_al[FD][FH][FW][CO][CI] inputArr, int64_al[CO][FD*FH*FW*CI] outputArr);
+
+extern void ConvTranspose3DReshapeInput(int32_pl N, int32_pl DPrime, int32_pl HPrime, int32_pl WPrime, int32_pl CI, int32_pl FD, int32_pl FH, int32_pl FW, int32_pl zPadTrDLeft, int32_pl zPadTrDRight, int32_pl zPadTrHLeft, int32_pl zPadTrHRight, int32_pl zPadTrWLeft, int32_pl zPadTrWRight, int32_pl strideD, int32_pl strideH, int32_pl strideW, int32_pl RRows, int32_pl RCols, int64_al[N][DPrime][HPrime][WPrime][CI] inputArr, int64_al[RRows][RCols] outputArr);
+
+(* int64_al[N][DPrime][HPrime][WPrime][CI] inputArr,
+   int64_al[FD][FH][FW][CO][CI] filter,
+   int64_al[N][D][H][W][CO] outputArr
+*)
+extern void ConvTranspose3D(int32_pl N, int32_pl DPrime, int32_pl HPrime, int32_pl WPrime, int32_pl CI, 
+				   int32_pl FD, int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl D, int32_pl H, int32_pl W,
+				   int32_pl zPadTrDLeft, int32_pl zPadTrDRight, int32_pl zPadTrHLeft, int32_pl zPadTrHRight, int32_pl zPadTrWLeft, int32_pl zPadTrWRight, 
+				   int32_pl strideD, int32_pl strideH, int32_pl strideW,
+				   int64_al[N][DPrime][HPrime][WPrime][CI] inputArr, 
+				   int64_al[FD][FH][FW][CO][CI] filterArr, 
+				   int64_al[N][D][H][W][CO] outArr);
+
+(**************************)
+(* Loop-based implementation of ConvTranspose3D *)
+
+extern void ConvTranspose3DLoopInner(int32_pl N, int32_pl D, int32_pl H, int32_pl W, int32_pl CI, 
+				   int32_pl FD, int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl zPadDLeft, int32_pl zPadDRight,int32_pl zPadHLeft, int32_pl zPadHRight, int32_pl zPadWLeft, int32_pl zPadWRight, 
+				   int32_pl strideD, int32_pl strideH, int32_pl strideW,
+				   int32_pl outD, int32_pl outH, int32_pl outW, 
+				   int64_al[N][D][H][W][CI] inputArr, 
+				   int64_al[FD][FH][FW][CO][CI] filterArr, 
+				   int64_al[N][outD][outH][outW][CO] outArr);
+
+
+(* int64_al[N][DPrime][HPrime][WPrime][CI] inputArr,
+   int64_al[FD][FH][FW][CO][CI] filter,
+   int64_al[N][D][H][W][CO] outputArr
+*)
+extern void ConvTranspose3DLoop(int32_pl N, int32_pl DPrime, int32_pl HPrime, int32_pl WPrime, int32_pl CI, 
+				   int32_pl FD, int32_pl FH, int32_pl FW, int32_pl CO, 
+				   int32_pl D, int32_pl H, int32_pl W,
+				   int32_pl zPadTrDLeft, int32_pl zPadTrDRight, int32_pl zPadTrHLeft, int32_pl zPadTrHRight, int32_pl zPadTrWLeft, int32_pl zPadTrWRight, 
+				   int32_pl strideD, int32_pl strideH, int32_pl strideW,
+				   int64_al[N][DPrime][HPrime][WPrime][CI] inputArr, 
+				   int64_al[FD][FH][FW][CO][CI] filterArr, 
+				   int64_al[N][D][H][W][CO] outArr);
+
+(**************************)
+extern void Transpose2(int32_pl s1, int32_pl s2, int64_al[s2][s1] inArr, int64_al[s1][s2] outArr);
+
+(**************************)
+extern void Pad442(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl inps1, int32_pl inps2, int32_pl inps3, int32_pl inps4, int64_al[inps1][inps2][inps3][inps4] inpArr, int32_pl pads1, int32_pl pads2, int32_pl[pads1][pads2] paddings, int64_al[s1][s2][s3][s4] outArr);
+
+extern void Pad552(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int32_pl inps1, int32_pl inps2, int32_pl inps3, int32_pl inps4, int32_pl inps5, int64_al[inps1][inps2][inps3][inps4][inps5] inpArr, int32_pl pads1, int32_pl pads2, int32_pl[pads1][pads2] paddings, int64_al[s1][s2][s3][s4][s5] outArr);
+
+extern void PadONNX441(int32_pl o1, int32_pl o2, int32_pl o3, int32_pl o4, int32_pl i1, int32_pl i2, int32_pl i3, int32_pl i4, int64_al[i1][i2][i3][i4] inpArr, int32_pl pads, int32_pl[pads] paddings, int64_al[o1][o2][o3][o4] outArr);
+
+(**************************)
+(* Squeeze where the input is a 4D tensor, output is a 2D tensor and hence 2 dims are getting squeezed. *)
+(* Ignoring dimensions in squeeze *)
+
+extern void Squeeze24(int32_pl s1, int32_pl s2, int32_pl dim1, int32_pl dim2, int32_pl ins1, int32_pl ins2, int32_pl ins3, int32_pl ins4, int64_al[ins1][ins2][ins3][ins4] inArr, int64_al[s1][s2] outArr);
+
+extern void Squeeze34(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl dim, int32_pl ins1, int32_pl ins2, int32_pl ins3, int32_pl ins4, int64_al[ins1][ins2][ins3][ins4] inArr, int64_al[s1][s2][s3] outArr);
+
+extern void Squeeze23(int32_pl s1, int32_pl s2, int32_pl dim, int32_pl ins1, int32_pl ins2, int32_pl ins3, int64_al[ins1][ins2][ins3] inArr, int64_al[s1][s2] outArr);
+
+(**************************)
+extern void FusedBatchNorm4411(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int64_al[s1][s2][s3][s4] inArr, int64_al[s4] multArr, int64_al[s4] biasArr, int32_pl multExprScaleDownSf, int32_pl biasExprScaleUpSf, int64_al[s1][s2][s3][s4] outputArr);
+
+extern void FusedBatchNorm5511(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int64_al[s1][s2][s3][s4][s5] inArr, int64_al[s5] multArr, int64_al[s5] biasArr, int32_pl multExprScaleDownSf, int32_pl biasExprScaleUpSf, int64_al[s1][s2][s3][s4][s5] outputArr);
+(**************************)
+extern void ElemWiseMul2(int32_pl s1, int32_pl s2, int64_al[s1][s2] arr1, int64_al[s1][s2] arr2, int64_al[s1][s2] outArr);
+extern void ElemWiseMul4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int64_al[s1][s2][s3][s4] arr1, int64_al[s1][s2][s3][s4] arr2, int64_al[s1][s2][s3][s4] outArr);
+extern void ElemWiseMul5(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int64_al[s1][s2][s3][s4][s5] arr1, int64_al[s1][s2][s3][s4][s5] arr2, int64_al[s1][s2][s3][s4][s5] outArr);
+
+(**************************)
+extern void ReduceMean24(int32_pl outS1, int32_pl outS2, 
+					  int32_pl inS1, int32_pl inS2, int32_pl inS3, int32_pl inS4, 
+					  int64_al[inS1][inS2][inS3][inS4] inputArr,
+					  int32_pl[2] axes,
+					  int64_al[outS1][outS2] outputArr
+					  );
+
+extern void ReduceMeanONNX24(int32_pl outS1, int32_pl outS2, 
+					  int32_pl inS1, int32_pl inS2, int32_pl inS3, int32_pl inS4, 
+					  int64_al[inS1][inS2][inS3][inS4] inputArr,
+					  int32_pl axis1, int32_pl axis2,
+					  int64_al[outS1][outS2] outputArr
+					  );
+
+(**************************)
+extern void ArgMax1(int32_pl outArrS1, int32_pl inArrS1, int32_pl inArrS2, int64_al[inArrS1][inArrS2] inArr, int32_pl dim, int64_al[outArrS1] outArr);
+
+extern void ArgMax3(int32_pl outs1, int32_pl outs2, int32_pl outs3, 
+			   int32_pl ins1, int32_pl ins2, int32_pl ins3, int32_pl ins4,
+			   int64_al[ins1][ins2][ins3][ins4] inArr, int32_pl dim, int64_al[outs1][outs2][outs3] outArr);
+(**************************)
+extern void Relu1(int32_pl s1, int64_al[s1] inArr, int64_al[s1] outArr, int32_pl sf, bool_pl doTruncation);
+extern void Relu2(int32_pl s1, int32_pl s2, int64_al[s1][s2] inArr, int64_al[s1][s2] outArr, int32_pl sf, bool_pl doTruncation);
+
+extern void Relu4(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int64_al[s1][s2][s3][s4] inArr, int64_al[s1][s2][s3][s4] outArr, int32_pl sf, bool_pl doTruncation);
+
+extern void Relu5(int32_pl s1, int32_pl s2, int32_pl s3, int32_pl s4, int32_pl s5, int64_al[s1][s2][s3][s4][s5] inArr, int64_al[s1][s2][s3][s4][s5] outArr, int32_pl sf, bool_pl doTruncation);
+
+(**************************)
+extern void Floor2(int32_pl s1, int32_pl s2, int64_al[s1][s2] inArr, int64_al[s1][s2] outArr, int32_pl sf);
+
+
+def void main(){
+
+	(* {'TFOpName': 'Placeholder', 'TFNodeName': 'input_x'} *)
+	input(CLIENT, tmp0, int64_al[1][224][224][3]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d/kernel'} *)
+	input(SERVER, tmp1, int64_al[7][7][3][64]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization/gamma'} *)
+	input(SERVER, tmp2, int64_al[64]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization/beta'} *)
+	input(SERVER, tmp3, int64_al[64]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization/moving_mean'} *)
+	input(SERVER, tmp4, int64_al[64]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization/moving_variance'} *)
+	input(SERVER, tmp5, int64_al[64]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_1/kernel'} *)
+	input(SERVER, tmp6, int64_al[1][1][64][256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_2/kernel'} *)
+	input(SERVER, tmp7, int64_al[1][1][64][64]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_1/gamma'} *)
+	input(SERVER, tmp8, int64_al[64]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_1/beta'} *)
+	input(SERVER, tmp9, int64_al[64]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_1/moving_mean'} *)
+	input(SERVER, tmp10, int64_al[64]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_1/moving_variance'} *)
+	input(SERVER, tmp11, int64_al[64]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_3/kernel'} *)
+	input(SERVER, tmp12, int64_al[3][3][64][64]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_2/gamma'} *)
+	input(SERVER, tmp13, int64_al[64]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_2/beta'} *)
+	input(SERVER, tmp14, int64_al[64]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_2/moving_mean'} *)
+	input(SERVER, tmp15, int64_al[64]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_2/moving_variance'} *)
+	input(SERVER, tmp16, int64_al[64]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_4/kernel'} *)
+	input(SERVER, tmp17, int64_al[1][1][64][256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_3/gamma'} *)
+	input(SERVER, tmp18, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_3/beta'} *)
+	input(SERVER, tmp19, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_3/moving_mean'} *)
+	input(SERVER, tmp20, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_3/moving_variance'} *)
+	input(SERVER, tmp21, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_5/kernel'} *)
+	input(SERVER, tmp22, int64_al[1][1][256][64]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_4/gamma'} *)
+	input(SERVER, tmp23, int64_al[64]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_4/beta'} *)
+	input(SERVER, tmp24, int64_al[64]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_4/moving_mean'} *)
+	input(SERVER, tmp25, int64_al[64]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_4/moving_variance'} *)
+	input(SERVER, tmp26, int64_al[64]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_6/kernel'} *)
+	input(SERVER, tmp27, int64_al[3][3][64][64]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_5/gamma'} *)
+	input(SERVER, tmp28, int64_al[64]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_5/beta'} *)
+	input(SERVER, tmp29, int64_al[64]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_5/moving_mean'} *)
+	input(SERVER, tmp30, int64_al[64]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_5/moving_variance'} *)
+	input(SERVER, tmp31, int64_al[64]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_7/kernel'} *)
+	input(SERVER, tmp32, int64_al[1][1][64][256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_6/gamma'} *)
+	input(SERVER, tmp33, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_6/beta'} *)
+	input(SERVER, tmp34, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_6/moving_mean'} *)
+	input(SERVER, tmp35, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_6/moving_variance'} *)
+	input(SERVER, tmp36, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_8/kernel'} *)
+	input(SERVER, tmp37, int64_al[1][1][256][64]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_7/gamma'} *)
+	input(SERVER, tmp38, int64_al[64]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_7/beta'} *)
+	input(SERVER, tmp39, int64_al[64]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_7/moving_mean'} *)
+	input(SERVER, tmp40, int64_al[64]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_7/moving_variance'} *)
+	input(SERVER, tmp41, int64_al[64]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_9/kernel'} *)
+	input(SERVER, tmp42, int64_al[3][3][64][64]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_8/gamma'} *)
+	input(SERVER, tmp43, int64_al[64]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_8/beta'} *)
+	input(SERVER, tmp44, int64_al[64]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_8/moving_mean'} *)
+	input(SERVER, tmp45, int64_al[64]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_8/moving_variance'} *)
+	input(SERVER, tmp46, int64_al[64]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_10/kernel'} *)
+	input(SERVER, tmp47, int64_al[1][1][64][256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_9/gamma'} *)
+	input(SERVER, tmp48, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_9/beta'} *)
+	input(SERVER, tmp49, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_9/moving_mean'} *)
+	input(SERVER, tmp50, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_9/moving_variance'} *)
+	input(SERVER, tmp51, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_11/kernel'} *)
+	input(SERVER, tmp52, int64_al[1][1][256][512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_12/kernel'} *)
+	input(SERVER, tmp53, int64_al[1][1][256][128]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_10/gamma'} *)
+	input(SERVER, tmp54, int64_al[128]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_10/beta'} *)
+	input(SERVER, tmp55, int64_al[128]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_10/moving_mean'} *)
+	input(SERVER, tmp56, int64_al[128]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_10/moving_variance'} *)
+	input(SERVER, tmp57, int64_al[128]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_13/kernel'} *)
+	input(SERVER, tmp58, int64_al[3][3][128][128]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_11/gamma'} *)
+	input(SERVER, tmp59, int64_al[128]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_11/beta'} *)
+	input(SERVER, tmp60, int64_al[128]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_11/moving_mean'} *)
+	input(SERVER, tmp61, int64_al[128]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_11/moving_variance'} *)
+	input(SERVER, tmp62, int64_al[128]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_14/kernel'} *)
+	input(SERVER, tmp63, int64_al[1][1][128][512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_12/gamma'} *)
+	input(SERVER, tmp64, int64_al[512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_12/beta'} *)
+	input(SERVER, tmp65, int64_al[512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_12/moving_mean'} *)
+	input(SERVER, tmp66, int64_al[512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_12/moving_variance'} *)
+	input(SERVER, tmp67, int64_al[512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_15/kernel'} *)
+	input(SERVER, tmp68, int64_al[1][1][512][128]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_13/gamma'} *)
+	input(SERVER, tmp69, int64_al[128]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_13/beta'} *)
+	input(SERVER, tmp70, int64_al[128]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_13/moving_mean'} *)
+	input(SERVER, tmp71, int64_al[128]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_13/moving_variance'} *)
+	input(SERVER, tmp72, int64_al[128]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_16/kernel'} *)
+	input(SERVER, tmp73, int64_al[3][3][128][128]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_14/gamma'} *)
+	input(SERVER, tmp74, int64_al[128]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_14/beta'} *)
+	input(SERVER, tmp75, int64_al[128]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_14/moving_mean'} *)
+	input(SERVER, tmp76, int64_al[128]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_14/moving_variance'} *)
+	input(SERVER, tmp77, int64_al[128]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_17/kernel'} *)
+	input(SERVER, tmp78, int64_al[1][1][128][512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_15/gamma'} *)
+	input(SERVER, tmp79, int64_al[512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_15/beta'} *)
+	input(SERVER, tmp80, int64_al[512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_15/moving_mean'} *)
+	input(SERVER, tmp81, int64_al[512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_15/moving_variance'} *)
+	input(SERVER, tmp82, int64_al[512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_18/kernel'} *)
+	input(SERVER, tmp83, int64_al[1][1][512][128]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_16/gamma'} *)
+	input(SERVER, tmp84, int64_al[128]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_16/beta'} *)
+	input(SERVER, tmp85, int64_al[128]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_16/moving_mean'} *)
+	input(SERVER, tmp86, int64_al[128]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_16/moving_variance'} *)
+	input(SERVER, tmp87, int64_al[128]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_19/kernel'} *)
+	input(SERVER, tmp88, int64_al[3][3][128][128]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_17/gamma'} *)
+	input(SERVER, tmp89, int64_al[128]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_17/beta'} *)
+	input(SERVER, tmp90, int64_al[128]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_17/moving_mean'} *)
+	input(SERVER, tmp91, int64_al[128]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_17/moving_variance'} *)
+	input(SERVER, tmp92, int64_al[128]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_20/kernel'} *)
+	input(SERVER, tmp93, int64_al[1][1][128][512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_18/gamma'} *)
+	input(SERVER, tmp94, int64_al[512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_18/beta'} *)
+	input(SERVER, tmp95, int64_al[512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_18/moving_mean'} *)
+	input(SERVER, tmp96, int64_al[512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_18/moving_variance'} *)
+	input(SERVER, tmp97, int64_al[512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_21/kernel'} *)
+	input(SERVER, tmp98, int64_al[1][1][512][128]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_19/gamma'} *)
+	input(SERVER, tmp99, int64_al[128]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_19/beta'} *)
+	input(SERVER, tmp100, int64_al[128]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_19/moving_mean'} *)
+	input(SERVER, tmp101, int64_al[128]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_19/moving_variance'} *)
+	input(SERVER, tmp102, int64_al[128]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_22/kernel'} *)
+	input(SERVER, tmp103, int64_al[3][3][128][128]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_20/gamma'} *)
+	input(SERVER, tmp104, int64_al[128]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_20/beta'} *)
+	input(SERVER, tmp105, int64_al[128]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_20/moving_mean'} *)
+	input(SERVER, tmp106, int64_al[128]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_20/moving_variance'} *)
+	input(SERVER, tmp107, int64_al[128]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_23/kernel'} *)
+	input(SERVER, tmp108, int64_al[1][1][128][512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_21/gamma'} *)
+	input(SERVER, tmp109, int64_al[512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_21/beta'} *)
+	input(SERVER, tmp110, int64_al[512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_21/moving_mean'} *)
+	input(SERVER, tmp111, int64_al[512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_21/moving_variance'} *)
+	input(SERVER, tmp112, int64_al[512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_24/kernel'} *)
+	input(SERVER, tmp113, int64_al[1][1][512][1024]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_25/kernel'} *)
+	input(SERVER, tmp114, int64_al[1][1][512][256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_22/gamma'} *)
+	input(SERVER, tmp115, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_22/beta'} *)
+	input(SERVER, tmp116, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_22/moving_mean'} *)
+	input(SERVER, tmp117, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_22/moving_variance'} *)
+	input(SERVER, tmp118, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_26/kernel'} *)
+	input(SERVER, tmp119, int64_al[3][3][256][256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_23/gamma'} *)
+	input(SERVER, tmp120, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_23/beta'} *)
+	input(SERVER, tmp121, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_23/moving_mean'} *)
+	input(SERVER, tmp122, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_23/moving_variance'} *)
+	input(SERVER, tmp123, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_27/kernel'} *)
+	input(SERVER, tmp124, int64_al[1][1][256][1024]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_24/gamma'} *)
+	input(SERVER, tmp125, int64_al[1024]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_24/beta'} *)
+	input(SERVER, tmp126, int64_al[1024]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_24/moving_mean'} *)
+	input(SERVER, tmp127, int64_al[1024]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_24/moving_variance'} *)
+	input(SERVER, tmp128, int64_al[1024]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_28/kernel'} *)
+	input(SERVER, tmp129, int64_al[1][1][1024][256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_25/gamma'} *)
+	input(SERVER, tmp130, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_25/beta'} *)
+	input(SERVER, tmp131, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_25/moving_mean'} *)
+	input(SERVER, tmp132, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_25/moving_variance'} *)
+	input(SERVER, tmp133, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_29/kernel'} *)
+	input(SERVER, tmp134, int64_al[3][3][256][256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_26/gamma'} *)
+	input(SERVER, tmp135, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_26/beta'} *)
+	input(SERVER, tmp136, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_26/moving_mean'} *)
+	input(SERVER, tmp137, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_26/moving_variance'} *)
+	input(SERVER, tmp138, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_30/kernel'} *)
+	input(SERVER, tmp139, int64_al[1][1][256][1024]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_27/gamma'} *)
+	input(SERVER, tmp140, int64_al[1024]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_27/beta'} *)
+	input(SERVER, tmp141, int64_al[1024]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_27/moving_mean'} *)
+	input(SERVER, tmp142, int64_al[1024]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_27/moving_variance'} *)
+	input(SERVER, tmp143, int64_al[1024]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_31/kernel'} *)
+	input(SERVER, tmp144, int64_al[1][1][1024][256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_28/gamma'} *)
+	input(SERVER, tmp145, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_28/beta'} *)
+	input(SERVER, tmp146, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_28/moving_mean'} *)
+	input(SERVER, tmp147, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_28/moving_variance'} *)
+	input(SERVER, tmp148, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_32/kernel'} *)
+	input(SERVER, tmp149, int64_al[3][3][256][256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_29/gamma'} *)
+	input(SERVER, tmp150, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_29/beta'} *)
+	input(SERVER, tmp151, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_29/moving_mean'} *)
+	input(SERVER, tmp152, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_29/moving_variance'} *)
+	input(SERVER, tmp153, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_33/kernel'} *)
+	input(SERVER, tmp154, int64_al[1][1][256][1024]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_30/gamma'} *)
+	input(SERVER, tmp155, int64_al[1024]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_30/beta'} *)
+	input(SERVER, tmp156, int64_al[1024]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_30/moving_mean'} *)
+	input(SERVER, tmp157, int64_al[1024]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_30/moving_variance'} *)
+	input(SERVER, tmp158, int64_al[1024]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_34/kernel'} *)
+	input(SERVER, tmp159, int64_al[1][1][1024][256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_31/gamma'} *)
+	input(SERVER, tmp160, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_31/beta'} *)
+	input(SERVER, tmp161, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_31/moving_mean'} *)
+	input(SERVER, tmp162, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_31/moving_variance'} *)
+	input(SERVER, tmp163, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_35/kernel'} *)
+	input(SERVER, tmp164, int64_al[3][3][256][256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_32/gamma'} *)
+	input(SERVER, tmp165, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_32/beta'} *)
+	input(SERVER, tmp166, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_32/moving_mean'} *)
+	input(SERVER, tmp167, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_32/moving_variance'} *)
+	input(SERVER, tmp168, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_36/kernel'} *)
+	input(SERVER, tmp169, int64_al[1][1][256][1024]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_33/gamma'} *)
+	input(SERVER, tmp170, int64_al[1024]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_33/beta'} *)
+	input(SERVER, tmp171, int64_al[1024]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_33/moving_mean'} *)
+	input(SERVER, tmp172, int64_al[1024]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_33/moving_variance'} *)
+	input(SERVER, tmp173, int64_al[1024]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_37/kernel'} *)
+	input(SERVER, tmp174, int64_al[1][1][1024][256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_34/gamma'} *)
+	input(SERVER, tmp175, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_34/beta'} *)
+	input(SERVER, tmp176, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_34/moving_mean'} *)
+	input(SERVER, tmp177, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_34/moving_variance'} *)
+	input(SERVER, tmp178, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_38/kernel'} *)
+	input(SERVER, tmp179, int64_al[3][3][256][256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_35/gamma'} *)
+	input(SERVER, tmp180, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_35/beta'} *)
+	input(SERVER, tmp181, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_35/moving_mean'} *)
+	input(SERVER, tmp182, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_35/moving_variance'} *)
+	input(SERVER, tmp183, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_39/kernel'} *)
+	input(SERVER, tmp184, int64_al[1][1][256][1024]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_36/gamma'} *)
+	input(SERVER, tmp185, int64_al[1024]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_36/beta'} *)
+	input(SERVER, tmp186, int64_al[1024]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_36/moving_mean'} *)
+	input(SERVER, tmp187, int64_al[1024]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_36/moving_variance'} *)
+	input(SERVER, tmp188, int64_al[1024]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_40/kernel'} *)
+	input(SERVER, tmp189, int64_al[1][1][1024][256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_37/gamma'} *)
+	input(SERVER, tmp190, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_37/beta'} *)
+	input(SERVER, tmp191, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_37/moving_mean'} *)
+	input(SERVER, tmp192, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_37/moving_variance'} *)
+	input(SERVER, tmp193, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_41/kernel'} *)
+	input(SERVER, tmp194, int64_al[3][3][256][256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_38/gamma'} *)
+	input(SERVER, tmp195, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_38/beta'} *)
+	input(SERVER, tmp196, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_38/moving_mean'} *)
+	input(SERVER, tmp197, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_38/moving_variance'} *)
+	input(SERVER, tmp198, int64_al[256]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_42/kernel'} *)
+	input(SERVER, tmp199, int64_al[1][1][256][1024]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_39/gamma'} *)
+	input(SERVER, tmp200, int64_al[1024]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_39/beta'} *)
+	input(SERVER, tmp201, int64_al[1024]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_39/moving_mean'} *)
+	input(SERVER, tmp202, int64_al[1024]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_39/moving_variance'} *)
+	input(SERVER, tmp203, int64_al[1024]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_43/kernel'} *)
+	input(SERVER, tmp204, int64_al[1][1][1024][2048]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_44/kernel'} *)
+	input(SERVER, tmp205, int64_al[1][1][1024][512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_40/gamma'} *)
+	input(SERVER, tmp206, int64_al[512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_40/beta'} *)
+	input(SERVER, tmp207, int64_al[512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_40/moving_mean'} *)
+	input(SERVER, tmp208, int64_al[512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_40/moving_variance'} *)
+	input(SERVER, tmp209, int64_al[512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_45/kernel'} *)
+	input(SERVER, tmp210, int64_al[3][3][512][512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_41/gamma'} *)
+	input(SERVER, tmp211, int64_al[512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_41/beta'} *)
+	input(SERVER, tmp212, int64_al[512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_41/moving_mean'} *)
+	input(SERVER, tmp213, int64_al[512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_41/moving_variance'} *)
+	input(SERVER, tmp214, int64_al[512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_46/kernel'} *)
+	input(SERVER, tmp215, int64_al[1][1][512][2048]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_42/gamma'} *)
+	input(SERVER, tmp216, int64_al[2048]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_42/beta'} *)
+	input(SERVER, tmp217, int64_al[2048]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_42/moving_mean'} *)
+	input(SERVER, tmp218, int64_al[2048]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_42/moving_variance'} *)
+	input(SERVER, tmp219, int64_al[2048]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_47/kernel'} *)
+	input(SERVER, tmp220, int64_al[1][1][2048][512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_43/gamma'} *)
+	input(SERVER, tmp221, int64_al[512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_43/beta'} *)
+	input(SERVER, tmp222, int64_al[512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_43/moving_mean'} *)
+	input(SERVER, tmp223, int64_al[512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_43/moving_variance'} *)
+	input(SERVER, tmp224, int64_al[512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_48/kernel'} *)
+	input(SERVER, tmp225, int64_al[3][3][512][512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_44/gamma'} *)
+	input(SERVER, tmp226, int64_al[512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_44/beta'} *)
+	input(SERVER, tmp227, int64_al[512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_44/moving_mean'} *)
+	input(SERVER, tmp228, int64_al[512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_44/moving_variance'} *)
+	input(SERVER, tmp229, int64_al[512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_49/kernel'} *)
+	input(SERVER, tmp230, int64_al[1][1][512][2048]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_45/gamma'} *)
+	input(SERVER, tmp231, int64_al[2048]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_45/beta'} *)
+	input(SERVER, tmp232, int64_al[2048]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_45/moving_mean'} *)
+	input(SERVER, tmp233, int64_al[2048]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_45/moving_variance'} *)
+	input(SERVER, tmp234, int64_al[2048]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_50/kernel'} *)
+	input(SERVER, tmp235, int64_al[1][1][2048][512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_46/gamma'} *)
+	input(SERVER, tmp236, int64_al[512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_46/beta'} *)
+	input(SERVER, tmp237, int64_al[512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_46/moving_mean'} *)
+	input(SERVER, tmp238, int64_al[512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_46/moving_variance'} *)
+	input(SERVER, tmp239, int64_al[512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_51/kernel'} *)
+	input(SERVER, tmp240, int64_al[3][3][512][512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_47/gamma'} *)
+	input(SERVER, tmp241, int64_al[512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_47/beta'} *)
+	input(SERVER, tmp242, int64_al[512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_47/moving_mean'} *)
+	input(SERVER, tmp243, int64_al[512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_47/moving_variance'} *)
+	input(SERVER, tmp244, int64_al[512]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/conv2d_52/kernel'} *)
+	input(SERVER, tmp245, int64_al[1][1][512][2048]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_48/gamma'} *)
+	input(SERVER, tmp246, int64_al[2048]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_48/beta'} *)
+	input(SERVER, tmp247, int64_al[2048]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_48/moving_mean'} *)
+	input(SERVER, tmp248, int64_al[2048]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/batch_normalization_48/moving_variance'} *)
+	input(SERVER, tmp249, int64_al[2048]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/dense/kernel'} *)
+	input(SERVER, tmp250, int64_al[2048][1001]);
+
+	(* {'TFOpName': 'VariableV2', 'TFNodeName': 'resnet_model/dense/bias'} *)
+	input(SERVER, tmp251, int64_al[1001]);
+
+	StartComputation();
+
+	int32_pl[4][2] tmp252;
+
+	(* {'TFOpName': 'Const', 'TFNodeName': 'resnet_model/Pad/paddings'} *)
+	(* Element assignments for tmp252 *)
+	tmp252[0L][0L] = 0;
+	tmp252[0L][1L] = 0;
+	tmp252[1L][0L] = 3;
+	tmp252[1L][1L] = 3;
+	tmp252[2L][0L] = 3;
+	tmp252[2L][1L] = 3;
+	tmp252[3L][0L] = 0;
+	tmp252[3L][1L] = 0;
+	int64_al[1][230][230][3] tmp253;
+
+	(* {'TFOpName': 'Pad', 'TFNodeName': 'resnet_model/Pad'} *)
+	Pad442(1, 230, 230, 3, 1, 224, 224, 3, tmp0, 4, 2, tmp252, tmp253);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemPublic2(4, 2, tmp252);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 224, 224, 3, tmp0);
+
+	int64_al[1][112][112][64] tmp256;
+
+	(* J253 # J1, convDim = 2 *)
+	Conv2DWrapper(1, 230, 230, 3, 7, 7, 64, 0, 0, 0, 0, 2, 2, tmp253, tmp1, tmp256);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(7, 7, 3, 64, tmp1);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 230, 230, 3, tmp253);
+
+	int64_al[1][56][56][64] tmp259;
+
+	(* {'TFOpName': 'MaxPool', 'TFNodeName': 'resnet_model/max_pooling2d/MaxPool'} *)
+	MaxPool(1, 56, 56, 64, 3, 3, 0, 1, 0, 1, 2, 2, 1, 112, 112, 64, tmp256, tmp259);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 112, 112, 64, tmp256);
+
+	int64_al[1][56][56][64] tmp261;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 56, 56, 64, tmp259, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 56, 56, 64, tmp259, tmp2, tmp3, 0, 12, tmp261);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(64, tmp2);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(64, tmp3);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 56, 56, 64, tmp259);
+
+	int64_al[1][56][56][64] tmp265;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu'} *)
+	Relu4(1, 56, 56, 64, tmp261, tmp265, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 56, 56, 64, tmp261);
+
+	int64_al[1][56][56][256] tmp267;
+
+	(* J257 # J6, convDim = 2 *)
+	Conv2DWrapper(1, 56, 56, 64, 1, 1, 256, 0, 0, 0, 0, 1, 1, tmp265, tmp6, tmp267);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 1, 64, 256, tmp6);
+
+	int64_al[1][56][56][64] tmp269;
+
+	(* J257 # J7, convDim = 2 *)
+	Conv2DWrapper(1, 56, 56, 64, 1, 1, 64, 0, 0, 0, 0, 1, 1, tmp265, tmp7, tmp269);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 56, 56, 64, tmp265);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 1, 64, 64, tmp7);
+
+	int64_al[1][56][56][64] tmp272;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 56, 56, 64, tmp269, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_1/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 56, 56, 64, tmp269, tmp8, tmp9, 0, 12, tmp272);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 56, 56, 64, tmp269);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(64, tmp9);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(64, tmp8);
+
+	int64_al[1][56][56][64] tmp276;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_1'} *)
+	Relu4(1, 56, 56, 64, tmp272, tmp276, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 56, 56, 64, tmp272);
+
+	int64_al[1][56][56][64] tmp278;
+
+	(* J261 # J12, convDim = 2 *)
+	Conv2DWrapper(1, 56, 56, 64, 3, 3, 64, 1, 1, 1, 1, 1, 1, tmp276, tmp12, tmp278);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(3, 3, 64, 64, tmp12);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 56, 56, 64, tmp276);
+
+	int64_al[1][56][56][64] tmp281;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 56, 56, 64, tmp278, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_2/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 56, 56, 64, tmp278, tmp13, tmp14, 0, 12, tmp281);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(64, tmp14);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 56, 56, 64, tmp278);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(64, tmp13);
+
+	int64_al[1][56][56][64] tmp285;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_2'} *)
+	Relu4(1, 56, 56, 64, tmp281, tmp285, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 56, 56, 64, tmp281);
+
+	int64_al[1][56][56][256] tmp287;
+
+	(* J264 # J17, convDim = 2 *)
+	Conv2DWrapper(1, 56, 56, 64, 1, 1, 256, 0, 0, 0, 0, 1, 1, tmp285, tmp17, tmp287);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 56, 56, 64, tmp285);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 1, 64, 256, tmp17);
+
+	(* {'TFOpName': 'AddV2', 'TFNodeName': 'resnet_model/add'} *)
+	(* J265 + J258 *)
+	int64_al[1][56][56][256] tmp290;
+
+	for i0 = [0: 1]{
+ 		for i1 = [0: 56]{
+ 			for i2 = [0: 56]{
+ 				for i3 = [0: 256]{
+ 					tmp290[i0][i1][i2][i3] = (tmp287[i0][i1][i2][i3] + tmp267[i0][i1][i2][i3]);
+				};
+			};
+		};
+	};
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 56, 56, 256, tmp287);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 56, 56, 256, tmp267);
+
+	int64_al[1][56][56][256] tmp293;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 56, 56, 256, tmp290, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_3/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 56, 56, 256, tmp290, tmp18, tmp19, 0, 12, tmp293);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(256, tmp19);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(256, tmp18);
+
+	int64_al[1][56][56][256] tmp296;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_3'} *)
+	Relu4(1, 56, 56, 256, tmp293, tmp296, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 56, 56, 256, tmp293);
+
+	int64_al[1][56][56][64] tmp298;
+
+	(* J268 # J22, convDim = 2 *)
+	Conv2DWrapper(1, 56, 56, 256, 1, 1, 64, 0, 0, 0, 0, 1, 1, tmp296, tmp22, tmp298);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 1, 256, 64, tmp22);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 56, 56, 256, tmp296);
+
+	int64_al[1][56][56][64] tmp301;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 56, 56, 64, tmp298, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_4/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 56, 56, 64, tmp298, tmp23, tmp24, 0, 12, tmp301);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(64, tmp23);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(64, tmp24);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 56, 56, 64, tmp298);
+
+	int64_al[1][56][56][64] tmp305;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_4'} *)
+	Relu4(1, 56, 56, 64, tmp301, tmp305, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 56, 56, 64, tmp301);
+
+	int64_al[1][56][56][64] tmp307;
+
+	(* J271 # J27, convDim = 2 *)
+	Conv2DWrapper(1, 56, 56, 64, 3, 3, 64, 1, 1, 1, 1, 1, 1, tmp305, tmp27, tmp307);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(3, 3, 64, 64, tmp27);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 56, 56, 64, tmp305);
+
+	int64_al[1][56][56][64] tmp310;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 56, 56, 64, tmp307, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_5/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 56, 56, 64, tmp307, tmp28, tmp29, 0, 12, tmp310);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 56, 56, 64, tmp307);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(64, tmp28);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(64, tmp29);
+
+	int64_al[1][56][56][64] tmp314;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_5'} *)
+	Relu4(1, 56, 56, 64, tmp310, tmp314, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 56, 56, 64, tmp310);
+
+	int64_al[1][56][56][256] tmp316;
+
+	(* J274 # J32, convDim = 2 *)
+	Conv2DWrapper(1, 56, 56, 64, 1, 1, 256, 0, 0, 0, 0, 1, 1, tmp314, tmp32, tmp316);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 56, 56, 64, tmp314);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 1, 64, 256, tmp32);
+
+	(* Scale up of args needed was found while doing OptimizeTruncations. *)
+	ScaleUp4(1, 56, 56, 256, tmp290, 12);
+
+	(* {'TFOpName': 'AddV2', 'TFNodeName': 'resnet_model/add_1'} *)
+	(* J275 + J266 *)
+	int64_al[1][56][56][256] tmp319;
+
+	for i0 = [0: 1]{
+ 		for i1 = [0: 56]{
+ 			for i2 = [0: 56]{
+ 				for i3 = [0: 256]{
+ 					tmp319[i0][i1][i2][i3] = (tmp316[i0][i1][i2][i3] + tmp290[i0][i1][i2][i3]);
+				};
+			};
+		};
+	};
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 56, 56, 256, tmp290);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 56, 56, 256, tmp316);
+
+	int64_al[1][56][56][256] tmp322;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 56, 56, 256, tmp319, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_6/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 56, 56, 256, tmp319, tmp33, tmp34, 0, 12, tmp322);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(256, tmp34);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(256, tmp33);
+
+	int64_al[1][56][56][256] tmp325;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_6'} *)
+	Relu4(1, 56, 56, 256, tmp322, tmp325, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 56, 56, 256, tmp322);
+
+	int64_al[1][56][56][64] tmp327;
+
+	(* J278 # J37, convDim = 2 *)
+	Conv2DWrapper(1, 56, 56, 256, 1, 1, 64, 0, 0, 0, 0, 1, 1, tmp325, tmp37, tmp327);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 56, 56, 256, tmp325);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 1, 256, 64, tmp37);
+
+	int64_al[1][56][56][64] tmp330;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 56, 56, 64, tmp327, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_7/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 56, 56, 64, tmp327, tmp38, tmp39, 0, 12, tmp330);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(64, tmp39);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(64, tmp38);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 56, 56, 64, tmp327);
+
+	int64_al[1][56][56][64] tmp334;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_7'} *)
+	Relu4(1, 56, 56, 64, tmp330, tmp334, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 56, 56, 64, tmp330);
+
+	int64_al[1][56][56][64] tmp336;
+
+	(* J281 # J42, convDim = 2 *)
+	Conv2DWrapper(1, 56, 56, 64, 3, 3, 64, 1, 1, 1, 1, 1, 1, tmp334, tmp42, tmp336);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(3, 3, 64, 64, tmp42);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 56, 56, 64, tmp334);
+
+	int64_al[1][56][56][64] tmp339;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 56, 56, 64, tmp336, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_8/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 56, 56, 64, tmp336, tmp43, tmp44, 0, 12, tmp339);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 56, 56, 64, tmp336);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(64, tmp43);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(64, tmp44);
+
+	int64_al[1][56][56][64] tmp343;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_8'} *)
+	Relu4(1, 56, 56, 64, tmp339, tmp343, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 56, 56, 64, tmp339);
+
+	int64_al[1][56][56][256] tmp345;
+
+	(* J284 # J47, convDim = 2 *)
+	Conv2DWrapper(1, 56, 56, 64, 1, 1, 256, 0, 0, 0, 0, 1, 1, tmp343, tmp47, tmp345);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 56, 56, 64, tmp343);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 1, 64, 256, tmp47);
+
+	(* Scale up of args needed was found while doing OptimizeTruncations. *)
+	ScaleUp4(1, 56, 56, 256, tmp319, 12);
+
+	(* {'TFOpName': 'AddV2', 'TFNodeName': 'resnet_model/add_2'} *)
+	(* J285 + J276 *)
+	int64_al[1][56][56][256] tmp348;
+
+	for i0 = [0: 1]{
+ 		for i1 = [0: 56]{
+ 			for i2 = [0: 56]{
+ 				for i3 = [0: 256]{
+ 					tmp348[i0][i1][i2][i3] = (tmp345[i0][i1][i2][i3] + tmp319[i0][i1][i2][i3]);
+				};
+			};
+		};
+	};
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 56, 56, 256, tmp345);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 56, 56, 256, tmp319);
+
+	int64_al[1][56][56][256] tmp351;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 56, 56, 256, tmp348, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_9/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 56, 56, 256, tmp348, tmp48, tmp49, 0, 12, tmp351);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 56, 56, 256, tmp348);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(256, tmp49);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(256, tmp48);
+
+	int64_al[1][56][56][256] tmp355;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_9'} *)
+	Relu4(1, 56, 56, 256, tmp351, tmp355, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 56, 56, 256, tmp351);
+
+	int32_pl[4][2] tmp357;
+
+	(* {'TFOpName': 'Const', 'TFNodeName': 'resnet_model/Pad_1/paddings'} *)
+	(* Element assignments for tmp357 *)
+	tmp357[0L][0L] = 0;
+	tmp357[0L][1L] = 0;
+	tmp357[1L][0L] = 0;
+	tmp357[1L][1L] = 0;
+	tmp357[2L][0L] = 0;
+	tmp357[2L][1L] = 0;
+	tmp357[3L][0L] = 0;
+	tmp357[3L][1L] = 0;
+	int64_al[1][56][56][256] tmp358;
+
+	(* {'TFOpName': 'Pad', 'TFNodeName': 'resnet_model/Pad_1'} *)
+	Pad442(1, 56, 56, 256, 1, 56, 56, 256, tmp355, 4, 2, tmp357, tmp358);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemPublic2(4, 2, tmp357);
+
+	int64_al[1][28][28][512] tmp360;
+
+	(* J290 # J52, convDim = 2 *)
+	Conv2DWrapper(1, 56, 56, 256, 1, 1, 512, 0, 0, 0, 0, 2, 2, tmp358, tmp52, tmp360);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 56, 56, 256, tmp358);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 1, 256, 512, tmp52);
+
+	int64_al[1][56][56][128] tmp363;
+
+	(* J288 # J53, convDim = 2 *)
+	Conv2DWrapper(1, 56, 56, 256, 1, 1, 128, 0, 0, 0, 0, 1, 1, tmp355, tmp53, tmp363);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 1, 256, 128, tmp53);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 56, 56, 256, tmp355);
+
+	int64_al[1][56][56][128] tmp366;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 56, 56, 128, tmp363, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_10/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 56, 56, 128, tmp363, tmp54, tmp55, 0, 12, tmp366);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(128, tmp55);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(128, tmp54);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 56, 56, 128, tmp363);
+
+	int64_al[1][56][56][128] tmp370;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_10'} *)
+	Relu4(1, 56, 56, 128, tmp366, tmp370, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 56, 56, 128, tmp366);
+
+	int32_pl[4][2] tmp372;
+
+	(* {'TFOpName': 'Const', 'TFNodeName': 'resnet_model/Pad_2/paddings'} *)
+	(* Element assignments for tmp372 *)
+	tmp372[0L][0L] = 0;
+	tmp372[0L][1L] = 0;
+	tmp372[1L][0L] = 1;
+	tmp372[1L][1L] = 1;
+	tmp372[2L][0L] = 1;
+	tmp372[2L][1L] = 1;
+	tmp372[3L][0L] = 0;
+	tmp372[3L][1L] = 0;
+	int64_al[1][58][58][128] tmp373;
+
+	(* {'TFOpName': 'Pad', 'TFNodeName': 'resnet_model/Pad_2'} *)
+	Pad442(1, 58, 58, 128, 1, 56, 56, 128, tmp370, 4, 2, tmp372, tmp373);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 56, 56, 128, tmp370);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemPublic2(4, 2, tmp372);
+
+	int64_al[1][28][28][128] tmp376;
+
+	(* J296 # J58, convDim = 2 *)
+	Conv2DWrapper(1, 58, 58, 128, 3, 3, 128, 0, 0, 0, 0, 2, 2, tmp373, tmp58, tmp376);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 58, 58, 128, tmp373);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(3, 3, 128, 128, tmp58);
+
+	int64_al[1][28][28][128] tmp379;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 28, 28, 128, tmp376, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_11/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 28, 28, 128, tmp376, tmp59, tmp60, 0, 12, tmp379);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 28, 28, 128, tmp376);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(128, tmp60);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(128, tmp59);
+
+	int64_al[1][28][28][128] tmp383;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_11'} *)
+	Relu4(1, 28, 28, 128, tmp379, tmp383, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 28, 28, 128, tmp379);
+
+	int64_al[1][28][28][512] tmp385;
+
+	(* J299 # J63, convDim = 2 *)
+	Conv2DWrapper(1, 28, 28, 128, 1, 1, 512, 0, 0, 0, 0, 1, 1, tmp383, tmp63, tmp385);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 1, 128, 512, tmp63);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 28, 28, 128, tmp383);
+
+	(* {'TFOpName': 'AddV2', 'TFNodeName': 'resnet_model/add_3'} *)
+	(* J300 + J291 *)
+	int64_al[1][28][28][512] tmp388;
+
+	for i0 = [0: 1]{
+ 		for i1 = [0: 28]{
+ 			for i2 = [0: 28]{
+ 				for i3 = [0: 512]{
+ 					tmp388[i0][i1][i2][i3] = (tmp385[i0][i1][i2][i3] + tmp360[i0][i1][i2][i3]);
+				};
+			};
+		};
+	};
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 28, 28, 512, tmp360);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 28, 28, 512, tmp385);
+
+	int64_al[1][28][28][512] tmp391;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 28, 28, 512, tmp388, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_12/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 28, 28, 512, tmp388, tmp64, tmp65, 0, 12, tmp391);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(512, tmp64);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(512, tmp65);
+
+	int64_al[1][28][28][512] tmp394;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_12'} *)
+	Relu4(1, 28, 28, 512, tmp391, tmp394, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 28, 28, 512, tmp391);
+
+	int64_al[1][28][28][128] tmp396;
+
+	(* J303 # J68, convDim = 2 *)
+	Conv2DWrapper(1, 28, 28, 512, 1, 1, 128, 0, 0, 0, 0, 1, 1, tmp394, tmp68, tmp396);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 28, 28, 512, tmp394);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 1, 512, 128, tmp68);
+
+	int64_al[1][28][28][128] tmp399;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 28, 28, 128, tmp396, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_13/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 28, 28, 128, tmp396, tmp69, tmp70, 0, 12, tmp399);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(128, tmp70);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(128, tmp69);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 28, 28, 128, tmp396);
+
+	int64_al[1][28][28][128] tmp403;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_13'} *)
+	Relu4(1, 28, 28, 128, tmp399, tmp403, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 28, 28, 128, tmp399);
+
+	int64_al[1][28][28][128] tmp405;
+
+	(* J306 # J73, convDim = 2 *)
+	Conv2DWrapper(1, 28, 28, 128, 3, 3, 128, 1, 1, 1, 1, 1, 1, tmp403, tmp73, tmp405);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(3, 3, 128, 128, tmp73);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 28, 28, 128, tmp403);
+
+	int64_al[1][28][28][128] tmp408;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 28, 28, 128, tmp405, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_14/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 28, 28, 128, tmp405, tmp74, tmp75, 0, 12, tmp408);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 28, 28, 128, tmp405);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(128, tmp75);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(128, tmp74);
+
+	int64_al[1][28][28][128] tmp412;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_14'} *)
+	Relu4(1, 28, 28, 128, tmp408, tmp412, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 28, 28, 128, tmp408);
+
+	int64_al[1][28][28][512] tmp414;
+
+	(* J309 # J78, convDim = 2 *)
+	Conv2DWrapper(1, 28, 28, 128, 1, 1, 512, 0, 0, 0, 0, 1, 1, tmp412, tmp78, tmp414);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 1, 128, 512, tmp78);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 28, 28, 128, tmp412);
+
+	(* Scale up of args needed was found while doing OptimizeTruncations. *)
+	ScaleUp4(1, 28, 28, 512, tmp388, 12);
+
+	(* {'TFOpName': 'AddV2', 'TFNodeName': 'resnet_model/add_4'} *)
+	(* J310 + J301 *)
+	int64_al[1][28][28][512] tmp417;
+
+	for i0 = [0: 1]{
+ 		for i1 = [0: 28]{
+ 			for i2 = [0: 28]{
+ 				for i3 = [0: 512]{
+ 					tmp417[i0][i1][i2][i3] = (tmp414[i0][i1][i2][i3] + tmp388[i0][i1][i2][i3]);
+				};
+			};
+		};
+	};
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 28, 28, 512, tmp388);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 28, 28, 512, tmp414);
+
+	int64_al[1][28][28][512] tmp420;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 28, 28, 512, tmp417, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_15/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 28, 28, 512, tmp417, tmp79, tmp80, 0, 12, tmp420);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(512, tmp80);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(512, tmp79);
+
+	int64_al[1][28][28][512] tmp423;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_15'} *)
+	Relu4(1, 28, 28, 512, tmp420, tmp423, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 28, 28, 512, tmp420);
+
+	int64_al[1][28][28][128] tmp425;
+
+	(* J313 # J83, convDim = 2 *)
+	Conv2DWrapper(1, 28, 28, 512, 1, 1, 128, 0, 0, 0, 0, 1, 1, tmp423, tmp83, tmp425);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 28, 28, 512, tmp423);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 1, 512, 128, tmp83);
+
+	int64_al[1][28][28][128] tmp428;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 28, 28, 128, tmp425, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_16/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 28, 28, 128, tmp425, tmp84, tmp85, 0, 12, tmp428);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 28, 28, 128, tmp425);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(128, tmp84);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(128, tmp85);
+
+	int64_al[1][28][28][128] tmp432;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_16'} *)
+	Relu4(1, 28, 28, 128, tmp428, tmp432, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 28, 28, 128, tmp428);
+
+	int64_al[1][28][28][128] tmp434;
+
+	(* J316 # J88, convDim = 2 *)
+	Conv2DWrapper(1, 28, 28, 128, 3, 3, 128, 1, 1, 1, 1, 1, 1, tmp432, tmp88, tmp434);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 28, 28, 128, tmp432);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(3, 3, 128, 128, tmp88);
+
+	int64_al[1][28][28][128] tmp437;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 28, 28, 128, tmp434, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_17/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 28, 28, 128, tmp434, tmp89, tmp90, 0, 12, tmp437);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 28, 28, 128, tmp434);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(128, tmp90);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(128, tmp89);
+
+	int64_al[1][28][28][128] tmp441;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_17'} *)
+	Relu4(1, 28, 28, 128, tmp437, tmp441, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 28, 28, 128, tmp437);
+
+	int64_al[1][28][28][512] tmp443;
+
+	(* J319 # J93, convDim = 2 *)
+	Conv2DWrapper(1, 28, 28, 128, 1, 1, 512, 0, 0, 0, 0, 1, 1, tmp441, tmp93, tmp443);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 1, 128, 512, tmp93);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 28, 28, 128, tmp441);
+
+	(* Scale up of args needed was found while doing OptimizeTruncations. *)
+	ScaleUp4(1, 28, 28, 512, tmp417, 12);
+
+	(* {'TFOpName': 'AddV2', 'TFNodeName': 'resnet_model/add_5'} *)
+	(* J320 + J311 *)
+	int64_al[1][28][28][512] tmp446;
+
+	for i0 = [0: 1]{
+ 		for i1 = [0: 28]{
+ 			for i2 = [0: 28]{
+ 				for i3 = [0: 512]{
+ 					tmp446[i0][i1][i2][i3] = (tmp443[i0][i1][i2][i3] + tmp417[i0][i1][i2][i3]);
+				};
+			};
+		};
+	};
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 28, 28, 512, tmp443);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 28, 28, 512, tmp417);
+
+	int64_al[1][28][28][512] tmp449;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 28, 28, 512, tmp446, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_18/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 28, 28, 512, tmp446, tmp94, tmp95, 0, 12, tmp449);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(512, tmp95);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(512, tmp94);
+
+	int64_al[1][28][28][512] tmp452;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_18'} *)
+	Relu4(1, 28, 28, 512, tmp449, tmp452, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 28, 28, 512, tmp449);
+
+	int64_al[1][28][28][128] tmp454;
+
+	(* J323 # J98, convDim = 2 *)
+	Conv2DWrapper(1, 28, 28, 512, 1, 1, 128, 0, 0, 0, 0, 1, 1, tmp452, tmp98, tmp454);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 28, 28, 512, tmp452);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 1, 512, 128, tmp98);
+
+	int64_al[1][28][28][128] tmp457;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 28, 28, 128, tmp454, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_19/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 28, 28, 128, tmp454, tmp99, tmp100, 0, 12, tmp457);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(128, tmp100);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(128, tmp99);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 28, 28, 128, tmp454);
+
+	int64_al[1][28][28][128] tmp461;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_19'} *)
+	Relu4(1, 28, 28, 128, tmp457, tmp461, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 28, 28, 128, tmp457);
+
+	int64_al[1][28][28][128] tmp463;
+
+	(* J326 # J103, convDim = 2 *)
+	Conv2DWrapper(1, 28, 28, 128, 3, 3, 128, 1, 1, 1, 1, 1, 1, tmp461, tmp103, tmp463);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(3, 3, 128, 128, tmp103);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 28, 28, 128, tmp461);
+
+	int64_al[1][28][28][128] tmp466;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 28, 28, 128, tmp463, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_20/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 28, 28, 128, tmp463, tmp104, tmp105, 0, 12, tmp466);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 28, 28, 128, tmp463);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(128, tmp104);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(128, tmp105);
+
+	int64_al[1][28][28][128] tmp470;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_20'} *)
+	Relu4(1, 28, 28, 128, tmp466, tmp470, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 28, 28, 128, tmp466);
+
+	int64_al[1][28][28][512] tmp472;
+
+	(* J329 # J108, convDim = 2 *)
+	Conv2DWrapper(1, 28, 28, 128, 1, 1, 512, 0, 0, 0, 0, 1, 1, tmp470, tmp108, tmp472);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 28, 28, 128, tmp470);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 1, 128, 512, tmp108);
+
+	(* Scale up of args needed was found while doing OptimizeTruncations. *)
+	ScaleUp4(1, 28, 28, 512, tmp446, 12);
+
+	(* {'TFOpName': 'AddV2', 'TFNodeName': 'resnet_model/add_6'} *)
+	(* J330 + J321 *)
+	int64_al[1][28][28][512] tmp475;
+
+	for i0 = [0: 1]{
+ 		for i1 = [0: 28]{
+ 			for i2 = [0: 28]{
+ 				for i3 = [0: 512]{
+ 					tmp475[i0][i1][i2][i3] = (tmp472[i0][i1][i2][i3] + tmp446[i0][i1][i2][i3]);
+				};
+			};
+		};
+	};
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 28, 28, 512, tmp472);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 28, 28, 512, tmp446);
+
+	int64_al[1][28][28][512] tmp478;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 28, 28, 512, tmp475, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_21/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 28, 28, 512, tmp475, tmp109, tmp110, 0, 12, tmp478);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 28, 28, 512, tmp475);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(512, tmp109);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(512, tmp110);
+
+	int64_al[1][28][28][512] tmp482;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_21'} *)
+	Relu4(1, 28, 28, 512, tmp478, tmp482, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 28, 28, 512, tmp478);
+
+	int32_pl[4][2] tmp484;
+
+	(* {'TFOpName': 'Const', 'TFNodeName': 'resnet_model/Pad_3/paddings'} *)
+	(* Element assignments for tmp484 *)
+	tmp484[0L][0L] = 0;
+	tmp484[0L][1L] = 0;
+	tmp484[1L][0L] = 0;
+	tmp484[1L][1L] = 0;
+	tmp484[2L][0L] = 0;
+	tmp484[2L][1L] = 0;
+	tmp484[3L][0L] = 0;
+	tmp484[3L][1L] = 0;
+	int64_al[1][28][28][512] tmp485;
+
+	(* {'TFOpName': 'Pad', 'TFNodeName': 'resnet_model/Pad_3'} *)
+	Pad442(1, 28, 28, 512, 1, 28, 28, 512, tmp482, 4, 2, tmp484, tmp485);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemPublic2(4, 2, tmp484);
+
+	int64_al[1][14][14][1024] tmp487;
+
+	(* J335 # J113, convDim = 2 *)
+	Conv2DWrapper(1, 28, 28, 512, 1, 1, 1024, 0, 0, 0, 0, 2, 2, tmp485, tmp113, tmp487);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 28, 28, 512, tmp485);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 1, 512, 1024, tmp113);
+
+	int64_al[1][28][28][256] tmp490;
+
+	(* J333 # J114, convDim = 2 *)
+	Conv2DWrapper(1, 28, 28, 512, 1, 1, 256, 0, 0, 0, 0, 1, 1, tmp482, tmp114, tmp490);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 1, 512, 256, tmp114);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 28, 28, 512, tmp482);
+
+	int64_al[1][28][28][256] tmp493;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 28, 28, 256, tmp490, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_22/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 28, 28, 256, tmp490, tmp115, tmp116, 0, 12, tmp493);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(256, tmp116);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(256, tmp115);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 28, 28, 256, tmp490);
+
+	int64_al[1][28][28][256] tmp497;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_22'} *)
+	Relu4(1, 28, 28, 256, tmp493, tmp497, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 28, 28, 256, tmp493);
+
+	int32_pl[4][2] tmp499;
+
+	(* {'TFOpName': 'Const', 'TFNodeName': 'resnet_model/Pad_4/paddings'} *)
+	(* Element assignments for tmp499 *)
+	tmp499[0L][0L] = 0;
+	tmp499[0L][1L] = 0;
+	tmp499[1L][0L] = 1;
+	tmp499[1L][1L] = 1;
+	tmp499[2L][0L] = 1;
+	tmp499[2L][1L] = 1;
+	tmp499[3L][0L] = 0;
+	tmp499[3L][1L] = 0;
+	int64_al[1][30][30][256] tmp500;
+
+	(* {'TFOpName': 'Pad', 'TFNodeName': 'resnet_model/Pad_4'} *)
+	Pad442(1, 30, 30, 256, 1, 28, 28, 256, tmp497, 4, 2, tmp499, tmp500);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemPublic2(4, 2, tmp499);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 28, 28, 256, tmp497);
+
+	int64_al[1][14][14][256] tmp503;
+
+	(* J341 # J119, convDim = 2 *)
+	Conv2DWrapper(1, 30, 30, 256, 3, 3, 256, 0, 0, 0, 0, 2, 2, tmp500, tmp119, tmp503);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 30, 30, 256, tmp500);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(3, 3, 256, 256, tmp119);
+
+	int64_al[1][14][14][256] tmp506;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 14, 14, 256, tmp503, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_23/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 14, 14, 256, tmp503, tmp120, tmp121, 0, 12, tmp506);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(256, tmp121);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(256, tmp120);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 256, tmp503);
+
+	int64_al[1][14][14][256] tmp510;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_23'} *)
+	Relu4(1, 14, 14, 256, tmp506, tmp510, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 256, tmp506);
+
+	int64_al[1][14][14][1024] tmp512;
+
+	(* J344 # J124, convDim = 2 *)
+	Conv2DWrapper(1, 14, 14, 256, 1, 1, 1024, 0, 0, 0, 0, 1, 1, tmp510, tmp124, tmp512);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 256, tmp510);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 1, 256, 1024, tmp124);
+
+	(* {'TFOpName': 'AddV2', 'TFNodeName': 'resnet_model/add_7'} *)
+	(* J345 + J336 *)
+	int64_al[1][14][14][1024] tmp515;
+
+	for i0 = [0: 1]{
+ 		for i1 = [0: 14]{
+ 			for i2 = [0: 14]{
+ 				for i3 = [0: 1024]{
+ 					tmp515[i0][i1][i2][i3] = (tmp512[i0][i1][i2][i3] + tmp487[i0][i1][i2][i3]);
+				};
+			};
+		};
+	};
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 1024, tmp512);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 1024, tmp487);
+
+	int64_al[1][14][14][1024] tmp518;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 14, 14, 1024, tmp515, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_24/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 14, 14, 1024, tmp515, tmp125, tmp126, 0, 12, tmp518);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(1024, tmp126);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(1024, tmp125);
+
+	int64_al[1][14][14][1024] tmp521;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_24'} *)
+	Relu4(1, 14, 14, 1024, tmp518, tmp521, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 1024, tmp518);
+
+	int64_al[1][14][14][256] tmp523;
+
+	(* J348 # J129, convDim = 2 *)
+	Conv2DWrapper(1, 14, 14, 1024, 1, 1, 256, 0, 0, 0, 0, 1, 1, tmp521, tmp129, tmp523);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 1024, tmp521);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 1, 1024, 256, tmp129);
+
+	int64_al[1][14][14][256] tmp526;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 14, 14, 256, tmp523, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_25/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 14, 14, 256, tmp523, tmp130, tmp131, 0, 12, tmp526);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(256, tmp130);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 256, tmp523);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(256, tmp131);
+
+	int64_al[1][14][14][256] tmp530;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_25'} *)
+	Relu4(1, 14, 14, 256, tmp526, tmp530, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 256, tmp526);
+
+	int64_al[1][14][14][256] tmp532;
+
+	(* J351 # J134, convDim = 2 *)
+	Conv2DWrapper(1, 14, 14, 256, 3, 3, 256, 1, 1, 1, 1, 1, 1, tmp530, tmp134, tmp532);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 256, tmp530);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(3, 3, 256, 256, tmp134);
+
+	int64_al[1][14][14][256] tmp535;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 14, 14, 256, tmp532, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_26/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 14, 14, 256, tmp532, tmp135, tmp136, 0, 12, tmp535);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(256, tmp136);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 256, tmp532);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(256, tmp135);
+
+	int64_al[1][14][14][256] tmp539;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_26'} *)
+	Relu4(1, 14, 14, 256, tmp535, tmp539, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 256, tmp535);
+
+	int64_al[1][14][14][1024] tmp541;
+
+	(* J354 # J139, convDim = 2 *)
+	Conv2DWrapper(1, 14, 14, 256, 1, 1, 1024, 0, 0, 0, 0, 1, 1, tmp539, tmp139, tmp541);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 1, 256, 1024, tmp139);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 256, tmp539);
+
+	(* Scale up of args needed was found while doing OptimizeTruncations. *)
+	ScaleUp4(1, 14, 14, 1024, tmp515, 12);
+
+	(* {'TFOpName': 'AddV2', 'TFNodeName': 'resnet_model/add_8'} *)
+	(* J355 + J346 *)
+	int64_al[1][14][14][1024] tmp544;
+
+	for i0 = [0: 1]{
+ 		for i1 = [0: 14]{
+ 			for i2 = [0: 14]{
+ 				for i3 = [0: 1024]{
+ 					tmp544[i0][i1][i2][i3] = (tmp541[i0][i1][i2][i3] + tmp515[i0][i1][i2][i3]);
+				};
+			};
+		};
+	};
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 1024, tmp515);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 1024, tmp541);
+
+	int64_al[1][14][14][1024] tmp547;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 14, 14, 1024, tmp544, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_27/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 14, 14, 1024, tmp544, tmp140, tmp141, 0, 12, tmp547);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(1024, tmp140);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(1024, tmp141);
+
+	int64_al[1][14][14][1024] tmp550;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_27'} *)
+	Relu4(1, 14, 14, 1024, tmp547, tmp550, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 1024, tmp547);
+
+	int64_al[1][14][14][256] tmp552;
+
+	(* J358 # J144, convDim = 2 *)
+	Conv2DWrapper(1, 14, 14, 1024, 1, 1, 256, 0, 0, 0, 0, 1, 1, tmp550, tmp144, tmp552);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 1, 1024, 256, tmp144);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 1024, tmp550);
+
+	int64_al[1][14][14][256] tmp555;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 14, 14, 256, tmp552, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_28/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 14, 14, 256, tmp552, tmp145, tmp146, 0, 12, tmp555);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 256, tmp552);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(256, tmp145);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(256, tmp146);
+
+	int64_al[1][14][14][256] tmp559;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_28'} *)
+	Relu4(1, 14, 14, 256, tmp555, tmp559, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 256, tmp555);
+
+	int64_al[1][14][14][256] tmp561;
+
+	(* J361 # J149, convDim = 2 *)
+	Conv2DWrapper(1, 14, 14, 256, 3, 3, 256, 1, 1, 1, 1, 1, 1, tmp559, tmp149, tmp561);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 256, tmp559);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(3, 3, 256, 256, tmp149);
+
+	int64_al[1][14][14][256] tmp564;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 14, 14, 256, tmp561, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_29/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 14, 14, 256, tmp561, tmp150, tmp151, 0, 12, tmp564);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(256, tmp150);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(256, tmp151);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 256, tmp561);
+
+	int64_al[1][14][14][256] tmp568;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_29'} *)
+	Relu4(1, 14, 14, 256, tmp564, tmp568, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 256, tmp564);
+
+	int64_al[1][14][14][1024] tmp570;
+
+	(* J364 # J154, convDim = 2 *)
+	Conv2DWrapper(1, 14, 14, 256, 1, 1, 1024, 0, 0, 0, 0, 1, 1, tmp568, tmp154, tmp570);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 256, tmp568);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 1, 256, 1024, tmp154);
+
+	(* Scale up of args needed was found while doing OptimizeTruncations. *)
+	ScaleUp4(1, 14, 14, 1024, tmp544, 12);
+
+	(* {'TFOpName': 'AddV2', 'TFNodeName': 'resnet_model/add_9'} *)
+	(* J365 + J356 *)
+	int64_al[1][14][14][1024] tmp573;
+
+	for i0 = [0: 1]{
+ 		for i1 = [0: 14]{
+ 			for i2 = [0: 14]{
+ 				for i3 = [0: 1024]{
+ 					tmp573[i0][i1][i2][i3] = (tmp570[i0][i1][i2][i3] + tmp544[i0][i1][i2][i3]);
+				};
+			};
+		};
+	};
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 1024, tmp544);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 1024, tmp570);
+
+	int64_al[1][14][14][1024] tmp576;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 14, 14, 1024, tmp573, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_30/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 14, 14, 1024, tmp573, tmp155, tmp156, 0, 12, tmp576);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(1024, tmp155);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(1024, tmp156);
+
+	int64_al[1][14][14][1024] tmp579;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_30'} *)
+	Relu4(1, 14, 14, 1024, tmp576, tmp579, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 1024, tmp576);
+
+	int64_al[1][14][14][256] tmp581;
+
+	(* J368 # J159, convDim = 2 *)
+	Conv2DWrapper(1, 14, 14, 1024, 1, 1, 256, 0, 0, 0, 0, 1, 1, tmp579, tmp159, tmp581);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 1, 1024, 256, tmp159);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 1024, tmp579);
+
+	int64_al[1][14][14][256] tmp584;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 14, 14, 256, tmp581, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_31/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 14, 14, 256, tmp581, tmp160, tmp161, 0, 12, tmp584);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(256, tmp161);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 256, tmp581);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(256, tmp160);
+
+	int64_al[1][14][14][256] tmp588;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_31'} *)
+	Relu4(1, 14, 14, 256, tmp584, tmp588, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 256, tmp584);
+
+	int64_al[1][14][14][256] tmp590;
+
+	(* J371 # J164, convDim = 2 *)
+	Conv2DWrapper(1, 14, 14, 256, 3, 3, 256, 1, 1, 1, 1, 1, 1, tmp588, tmp164, tmp590);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 256, tmp588);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(3, 3, 256, 256, tmp164);
+
+	int64_al[1][14][14][256] tmp593;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 14, 14, 256, tmp590, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_32/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 14, 14, 256, tmp590, tmp165, tmp166, 0, 12, tmp593);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 256, tmp590);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(256, tmp165);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(256, tmp166);
+
+	int64_al[1][14][14][256] tmp597;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_32'} *)
+	Relu4(1, 14, 14, 256, tmp593, tmp597, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 256, tmp593);
+
+	int64_al[1][14][14][1024] tmp599;
+
+	(* J374 # J169, convDim = 2 *)
+	Conv2DWrapper(1, 14, 14, 256, 1, 1, 1024, 0, 0, 0, 0, 1, 1, tmp597, tmp169, tmp599);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 1, 256, 1024, tmp169);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 256, tmp597);
+
+	(* Scale up of args needed was found while doing OptimizeTruncations. *)
+	ScaleUp4(1, 14, 14, 1024, tmp573, 12);
+
+	(* {'TFOpName': 'AddV2', 'TFNodeName': 'resnet_model/add_10'} *)
+	(* J375 + J366 *)
+	int64_al[1][14][14][1024] tmp602;
+
+	for i0 = [0: 1]{
+ 		for i1 = [0: 14]{
+ 			for i2 = [0: 14]{
+ 				for i3 = [0: 1024]{
+ 					tmp602[i0][i1][i2][i3] = (tmp599[i0][i1][i2][i3] + tmp573[i0][i1][i2][i3]);
+				};
+			};
+		};
+	};
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 1024, tmp573);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 1024, tmp599);
+
+	int64_al[1][14][14][1024] tmp605;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 14, 14, 1024, tmp602, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_33/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 14, 14, 1024, tmp602, tmp170, tmp171, 0, 12, tmp605);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(1024, tmp170);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(1024, tmp171);
+
+	int64_al[1][14][14][1024] tmp608;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_33'} *)
+	Relu4(1, 14, 14, 1024, tmp605, tmp608, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 1024, tmp605);
+
+	int64_al[1][14][14][256] tmp610;
+
+	(* J378 # J174, convDim = 2 *)
+	Conv2DWrapper(1, 14, 14, 1024, 1, 1, 256, 0, 0, 0, 0, 1, 1, tmp608, tmp174, tmp610);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 1, 1024, 256, tmp174);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 1024, tmp608);
+
+	int64_al[1][14][14][256] tmp613;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 14, 14, 256, tmp610, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_34/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 14, 14, 256, tmp610, tmp175, tmp176, 0, 12, tmp613);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(256, tmp175);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(256, tmp176);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 256, tmp610);
+
+	int64_al[1][14][14][256] tmp617;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_34'} *)
+	Relu4(1, 14, 14, 256, tmp613, tmp617, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 256, tmp613);
+
+	int64_al[1][14][14][256] tmp619;
+
+	(* J381 # J179, convDim = 2 *)
+	Conv2DWrapper(1, 14, 14, 256, 3, 3, 256, 1, 1, 1, 1, 1, 1, tmp617, tmp179, tmp619);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(3, 3, 256, 256, tmp179);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 256, tmp617);
+
+	int64_al[1][14][14][256] tmp622;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 14, 14, 256, tmp619, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_35/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 14, 14, 256, tmp619, tmp180, tmp181, 0, 12, tmp622);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(256, tmp181);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 256, tmp619);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(256, tmp180);
+
+	int64_al[1][14][14][256] tmp626;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_35'} *)
+	Relu4(1, 14, 14, 256, tmp622, tmp626, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 256, tmp622);
+
+	int64_al[1][14][14][1024] tmp628;
+
+	(* J384 # J184, convDim = 2 *)
+	Conv2DWrapper(1, 14, 14, 256, 1, 1, 1024, 0, 0, 0, 0, 1, 1, tmp626, tmp184, tmp628);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 256, tmp626);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 1, 256, 1024, tmp184);
+
+	(* Scale up of args needed was found while doing OptimizeTruncations. *)
+	ScaleUp4(1, 14, 14, 1024, tmp602, 12);
+
+	(* {'TFOpName': 'AddV2', 'TFNodeName': 'resnet_model/add_11'} *)
+	(* J385 + J376 *)
+	int64_al[1][14][14][1024] tmp631;
+
+	for i0 = [0: 1]{
+ 		for i1 = [0: 14]{
+ 			for i2 = [0: 14]{
+ 				for i3 = [0: 1024]{
+ 					tmp631[i0][i1][i2][i3] = (tmp628[i0][i1][i2][i3] + tmp602[i0][i1][i2][i3]);
+				};
+			};
+		};
+	};
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 1024, tmp602);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 1024, tmp628);
+
+	int64_al[1][14][14][1024] tmp634;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 14, 14, 1024, tmp631, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_36/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 14, 14, 1024, tmp631, tmp185, tmp186, 0, 12, tmp634);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(1024, tmp185);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(1024, tmp186);
+
+	int64_al[1][14][14][1024] tmp637;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_36'} *)
+	Relu4(1, 14, 14, 1024, tmp634, tmp637, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 1024, tmp634);
+
+	int64_al[1][14][14][256] tmp639;
+
+	(* J388 # J189, convDim = 2 *)
+	Conv2DWrapper(1, 14, 14, 1024, 1, 1, 256, 0, 0, 0, 0, 1, 1, tmp637, tmp189, tmp639);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 1024, tmp637);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 1, 1024, 256, tmp189);
+
+	int64_al[1][14][14][256] tmp642;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 14, 14, 256, tmp639, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_37/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 14, 14, 256, tmp639, tmp190, tmp191, 0, 12, tmp642);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(256, tmp190);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 256, tmp639);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(256, tmp191);
+
+	int64_al[1][14][14][256] tmp646;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_37'} *)
+	Relu4(1, 14, 14, 256, tmp642, tmp646, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 256, tmp642);
+
+	int64_al[1][14][14][256] tmp648;
+
+	(* J391 # J194, convDim = 2 *)
+	Conv2DWrapper(1, 14, 14, 256, 3, 3, 256, 1, 1, 1, 1, 1, 1, tmp646, tmp194, tmp648);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(3, 3, 256, 256, tmp194);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 256, tmp646);
+
+	int64_al[1][14][14][256] tmp651;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 14, 14, 256, tmp648, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_38/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 14, 14, 256, tmp648, tmp195, tmp196, 0, 12, tmp651);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(256, tmp195);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 256, tmp648);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(256, tmp196);
+
+	int64_al[1][14][14][256] tmp655;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_38'} *)
+	Relu4(1, 14, 14, 256, tmp651, tmp655, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 256, tmp651);
+
+	int64_al[1][14][14][1024] tmp657;
+
+	(* J394 # J199, convDim = 2 *)
+	Conv2DWrapper(1, 14, 14, 256, 1, 1, 1024, 0, 0, 0, 0, 1, 1, tmp655, tmp199, tmp657);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 1, 256, 1024, tmp199);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 256, tmp655);
+
+	(* Scale up of args needed was found while doing OptimizeTruncations. *)
+	ScaleUp4(1, 14, 14, 1024, tmp631, 12);
+
+	(* {'TFOpName': 'AddV2', 'TFNodeName': 'resnet_model/add_12'} *)
+	(* J395 + J386 *)
+	int64_al[1][14][14][1024] tmp660;
+
+	for i0 = [0: 1]{
+ 		for i1 = [0: 14]{
+ 			for i2 = [0: 14]{
+ 				for i3 = [0: 1024]{
+ 					tmp660[i0][i1][i2][i3] = (tmp657[i0][i1][i2][i3] + tmp631[i0][i1][i2][i3]);
+				};
+			};
+		};
+	};
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 1024, tmp631);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 1024, tmp657);
+
+	int64_al[1][14][14][1024] tmp663;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 14, 14, 1024, tmp660, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_39/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 14, 14, 1024, tmp660, tmp200, tmp201, 0, 12, tmp663);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(1024, tmp201);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 1024, tmp660);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(1024, tmp200);
+
+	int64_al[1][14][14][1024] tmp667;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_39'} *)
+	Relu4(1, 14, 14, 1024, tmp663, tmp667, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 1024, tmp663);
+
+	int32_pl[4][2] tmp669;
+
+	(* {'TFOpName': 'Const', 'TFNodeName': 'resnet_model/Pad_5/paddings'} *)
+	(* Element assignments for tmp669 *)
+	tmp669[0L][0L] = 0;
+	tmp669[0L][1L] = 0;
+	tmp669[1L][0L] = 0;
+	tmp669[1L][1L] = 0;
+	tmp669[2L][0L] = 0;
+	tmp669[2L][1L] = 0;
+	tmp669[3L][0L] = 0;
+	tmp669[3L][1L] = 0;
+	int64_al[1][14][14][1024] tmp670;
+
+	(* {'TFOpName': 'Pad', 'TFNodeName': 'resnet_model/Pad_5'} *)
+	Pad442(1, 14, 14, 1024, 1, 14, 14, 1024, tmp667, 4, 2, tmp669, tmp670);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemPublic2(4, 2, tmp669);
+
+	int64_al[1][7][7][2048] tmp672;
+
+	(* J400 # J204, convDim = 2 *)
+	Conv2DWrapper(1, 14, 14, 1024, 1, 1, 2048, 0, 0, 0, 0, 2, 2, tmp670, tmp204, tmp672);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 1, 1024, 2048, tmp204);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 1024, tmp670);
+
+	int64_al[1][14][14][512] tmp675;
+
+	(* J398 # J205, convDim = 2 *)
+	Conv2DWrapper(1, 14, 14, 1024, 1, 1, 512, 0, 0, 0, 0, 1, 1, tmp667, tmp205, tmp675);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 1024, tmp667);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 1, 1024, 512, tmp205);
+
+	int64_al[1][14][14][512] tmp678;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 14, 14, 512, tmp675, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_40/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 14, 14, 512, tmp675, tmp206, tmp207, 0, 12, tmp678);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(512, tmp207);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 512, tmp675);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(512, tmp206);
+
+	int64_al[1][14][14][512] tmp682;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_40'} *)
+	Relu4(1, 14, 14, 512, tmp678, tmp682, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 512, tmp678);
+
+	int32_pl[4][2] tmp684;
+
+	(* {'TFOpName': 'Const', 'TFNodeName': 'resnet_model/Pad_6/paddings'} *)
+	(* Element assignments for tmp684 *)
+	tmp684[0L][0L] = 0;
+	tmp684[0L][1L] = 0;
+	tmp684[1L][0L] = 1;
+	tmp684[1L][1L] = 1;
+	tmp684[2L][0L] = 1;
+	tmp684[2L][1L] = 1;
+	tmp684[3L][0L] = 0;
+	tmp684[3L][1L] = 0;
+	int64_al[1][16][16][512] tmp685;
+
+	(* {'TFOpName': 'Pad', 'TFNodeName': 'resnet_model/Pad_6'} *)
+	Pad442(1, 16, 16, 512, 1, 14, 14, 512, tmp682, 4, 2, tmp684, tmp685);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemPublic2(4, 2, tmp684);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 14, 14, 512, tmp682);
+
+	int64_al[1][7][7][512] tmp688;
+
+	(* J406 # J210, convDim = 2 *)
+	Conv2DWrapper(1, 16, 16, 512, 3, 3, 512, 0, 0, 0, 0, 2, 2, tmp685, tmp210, tmp688);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 16, 16, 512, tmp685);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(3, 3, 512, 512, tmp210);
+
+	int64_al[1][7][7][512] tmp691;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 7, 7, 512, tmp688, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_41/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 7, 7, 512, tmp688, tmp211, tmp212, 0, 12, tmp691);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(512, tmp211);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 7, 7, 512, tmp688);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(512, tmp212);
+
+	int64_al[1][7][7][512] tmp695;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_41'} *)
+	Relu4(1, 7, 7, 512, tmp691, tmp695, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 7, 7, 512, tmp691);
+
+	int64_al[1][7][7][2048] tmp697;
+
+	(* J409 # J215, convDim = 2 *)
+	Conv2DWrapper(1, 7, 7, 512, 1, 1, 2048, 0, 0, 0, 0, 1, 1, tmp695, tmp215, tmp697);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 1, 512, 2048, tmp215);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 7, 7, 512, tmp695);
+
+	(* {'TFOpName': 'AddV2', 'TFNodeName': 'resnet_model/add_13'} *)
+	(* J410 + J401 *)
+	int64_al[1][7][7][2048] tmp700;
+
+	for i0 = [0: 1]{
+ 		for i1 = [0: 7]{
+ 			for i2 = [0: 7]{
+ 				for i3 = [0: 2048]{
+ 					tmp700[i0][i1][i2][i3] = (tmp697[i0][i1][i2][i3] + tmp672[i0][i1][i2][i3]);
+				};
+			};
+		};
+	};
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 7, 7, 2048, tmp672);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 7, 7, 2048, tmp697);
+
+	int64_al[1][7][7][2048] tmp703;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 7, 7, 2048, tmp700, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_42/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 7, 7, 2048, tmp700, tmp216, tmp217, 0, 12, tmp703);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(2048, tmp217);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(2048, tmp216);
+
+	int64_al[1][7][7][2048] tmp706;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_42'} *)
+	Relu4(1, 7, 7, 2048, tmp703, tmp706, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 7, 7, 2048, tmp703);
+
+	int64_al[1][7][7][512] tmp708;
+
+	(* J413 # J220, convDim = 2 *)
+	Conv2DWrapper(1, 7, 7, 2048, 1, 1, 512, 0, 0, 0, 0, 1, 1, tmp706, tmp220, tmp708);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 1, 2048, 512, tmp220);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 7, 7, 2048, tmp706);
+
+	int64_al[1][7][7][512] tmp711;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 7, 7, 512, tmp708, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_43/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 7, 7, 512, tmp708, tmp221, tmp222, 0, 12, tmp711);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(512, tmp222);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(512, tmp221);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 7, 7, 512, tmp708);
+
+	int64_al[1][7][7][512] tmp715;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_43'} *)
+	Relu4(1, 7, 7, 512, tmp711, tmp715, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 7, 7, 512, tmp711);
+
+	int64_al[1][7][7][512] tmp717;
+
+	(* J416 # J225, convDim = 2 *)
+	Conv2DWrapper(1, 7, 7, 512, 3, 3, 512, 1, 1, 1, 1, 1, 1, tmp715, tmp225, tmp717);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 7, 7, 512, tmp715);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(3, 3, 512, 512, tmp225);
+
+	int64_al[1][7][7][512] tmp720;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 7, 7, 512, tmp717, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_44/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 7, 7, 512, tmp717, tmp226, tmp227, 0, 12, tmp720);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 7, 7, 512, tmp717);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(512, tmp226);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(512, tmp227);
+
+	int64_al[1][7][7][512] tmp724;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_44'} *)
+	Relu4(1, 7, 7, 512, tmp720, tmp724, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 7, 7, 512, tmp720);
+
+	int64_al[1][7][7][2048] tmp726;
+
+	(* J419 # J230, convDim = 2 *)
+	Conv2DWrapper(1, 7, 7, 512, 1, 1, 2048, 0, 0, 0, 0, 1, 1, tmp724, tmp230, tmp726);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 1, 512, 2048, tmp230);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 7, 7, 512, tmp724);
+
+	(* Scale up of args needed was found while doing OptimizeTruncations. *)
+	ScaleUp4(1, 7, 7, 2048, tmp700, 12);
+
+	(* {'TFOpName': 'AddV2', 'TFNodeName': 'resnet_model/add_14'} *)
+	(* J420 + J411 *)
+	int64_al[1][7][7][2048] tmp729;
+
+	for i0 = [0: 1]{
+ 		for i1 = [0: 7]{
+ 			for i2 = [0: 7]{
+ 				for i3 = [0: 2048]{
+ 					tmp729[i0][i1][i2][i3] = (tmp726[i0][i1][i2][i3] + tmp700[i0][i1][i2][i3]);
+				};
+			};
+		};
+	};
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 7, 7, 2048, tmp726);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 7, 7, 2048, tmp700);
+
+	int64_al[1][7][7][2048] tmp732;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 7, 7, 2048, tmp729, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_45/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 7, 7, 2048, tmp729, tmp231, tmp232, 0, 12, tmp732);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(2048, tmp231);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(2048, tmp232);
+
+	int64_al[1][7][7][2048] tmp735;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_45'} *)
+	Relu4(1, 7, 7, 2048, tmp732, tmp735, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 7, 7, 2048, tmp732);
+
+	int64_al[1][7][7][512] tmp737;
+
+	(* J423 # J235, convDim = 2 *)
+	Conv2DWrapper(1, 7, 7, 2048, 1, 1, 512, 0, 0, 0, 0, 1, 1, tmp735, tmp235, tmp737);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 7, 7, 2048, tmp735);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 1, 2048, 512, tmp235);
+
+	int64_al[1][7][7][512] tmp740;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 7, 7, 512, tmp737, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_46/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 7, 7, 512, tmp737, tmp236, tmp237, 0, 12, tmp740);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(512, tmp237);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(512, tmp236);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 7, 7, 512, tmp737);
+
+	int64_al[1][7][7][512] tmp744;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_46'} *)
+	Relu4(1, 7, 7, 512, tmp740, tmp744, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 7, 7, 512, tmp740);
+
+	int64_al[1][7][7][512] tmp746;
+
+	(* J426 # J240, convDim = 2 *)
+	Conv2DWrapper(1, 7, 7, 512, 3, 3, 512, 1, 1, 1, 1, 1, 1, tmp744, tmp240, tmp746);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(3, 3, 512, 512, tmp240);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 7, 7, 512, tmp744);
+
+	int64_al[1][7][7][512] tmp749;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 7, 7, 512, tmp746, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_47/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 7, 7, 512, tmp746, tmp241, tmp242, 0, 12, tmp749);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(512, tmp242);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 7, 7, 512, tmp746);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(512, tmp241);
+
+	int64_al[1][7][7][512] tmp753;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_47'} *)
+	Relu4(1, 7, 7, 512, tmp749, tmp753, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 7, 7, 512, tmp749);
+
+	int64_al[1][7][7][2048] tmp755;
+
+	(* J429 # J245, convDim = 2 *)
+	Conv2DWrapper(1, 7, 7, 512, 1, 1, 2048, 0, 0, 0, 0, 1, 1, tmp753, tmp245, tmp755);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 1, 512, 2048, tmp245);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 7, 7, 512, tmp753);
+
+	(* Scale up of args needed was found while doing OptimizeTruncations. *)
+	ScaleUp4(1, 7, 7, 2048, tmp729, 12);
+
+	(* {'TFOpName': 'AddV2', 'TFNodeName': 'resnet_model/add_15'} *)
+	(* J430 + J421 *)
+	int64_al[1][7][7][2048] tmp758;
+
+	for i0 = [0: 1]{
+ 		for i1 = [0: 7]{
+ 			for i2 = [0: 7]{
+ 				for i3 = [0: 2048]{
+ 					tmp758[i0][i1][i2][i3] = (tmp755[i0][i1][i2][i3] + tmp729[i0][i1][i2][i3]);
+				};
+			};
+		};
+	};
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 7, 7, 2048, tmp729);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 7, 7, 2048, tmp755);
+
+	int64_al[1][7][7][2048] tmp761;
+
+	(* Truncation before FusedBatchNorm node. *)
+	ScaleDown4(1, 7, 7, 2048, tmp758, 12);
+
+	(* {'TFOpName': 'FusedBatchNormV3', 'TFNodeName': 'resnet_model/batch_normalization_48/FusedBatchNormV3'} *)
+	FusedBatchNorm4411(1, 7, 7, 2048, tmp758, tmp246, tmp247, 0, 12, tmp761);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 7, 7, 2048, tmp758);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(2048, tmp246);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(2048, tmp247);
+
+	int64_al[1][7][7][2048] tmp765;
+
+	(* {'TFOpName': 'Relu', 'TFNodeName': 'resnet_model/Relu_48'} *)
+	Relu4(1, 7, 7, 2048, tmp761, tmp765, 12, true);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 7, 7, 2048, tmp761);
+
+	int64_al[1][1][1][2048] tmp767;
+
+	(* {'TFOpName': 'AvgPool', 'TFNodeName': 'resnet_model/AvgPool'} *)
+	AvgPool(1, 1, 1, 2048, 7, 7, 0, 0, 0, 0, 1, 1, 1, 7, 7, 2048, tmp765, tmp767);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	(* ClearMemSecret4(1, 7, 7, 2048, tmp765); *)
+
+	int64_al[1][2048] tmp771;
+
+	int32_pl tmp769 = 1;
+
+	(* Int node, isSecret = False. *)
+	int32_pl tmp770 = 2;
+
+	(* Int node, isSecret = False. *)
+	(* {'TFOpName': 'Squeeze', 'TFNodeName': 'resnet_model/Squeeze'} *)
+	Squeeze24(1, 2048, tmp769, tmp770, 1, 1, 1, 2048, tmp767, tmp771);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret4(1, 1, 1, 2048, tmp767);
+
+	int64_al[1][1001] tmp773;
+
+	(* {'TFOpName': 'MatMul', 'TFNodeName': 'resnet_model/dense/MatMul'} *)
+	(* J435 * J250 *)
+	MatMul2D(1, 2048, 1001, tmp771, tmp250, tmp773, false);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret2(2048, 1001, tmp250);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret2(1, 2048, tmp771);
+
+	(* Scale up of args needed was found while doing OptimizeTruncations. *)
+	ScaleUp1(1001, tmp251, 12);
+
+	(* {'TFOpName': 'BiasAdd', 'TFNodeName': 'resnet_model/dense/BiasAdd'} *)
+	(* J436 + J251 *)
+	int64_al[1][1001] tmp776;
+
+	for i0 = [0: 1]{
+ 		for i1 = [0: 1001]{
+ 			tmp776[i0][i1] = (tmp773[i0][i1] + tmp251[i1]);
+		};
+	};
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret2(1, 1001, tmp773);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret1(1001, tmp251);
+
+	int32_pl tmp779 = 1;
+
+	(* Int node, isSecret = False. *)
+	int64_al[1] tmp780;
+
+	(* {'TFOpName': 'ArgMax', 'TFNodeName': 'ArgMax'} *)
+	ArgMax1(1, 1, 1001, tmp776, tmp779, tmp780);
+
+	(* {'TFOpName': 'No-op: ClearMem', 'TFNodeName': ''} *)
+	ClearMemSecret2(1, 1001, tmp776);
+
+	EndComputation();
+
+	output(CLIENT, tmp780);
+
+}

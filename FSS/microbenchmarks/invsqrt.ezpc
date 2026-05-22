@@ -1,0 +1,15 @@
+extern void Sqrt(int32_pl I, int32_pl J, int32_pl shrA, int32_pl shrB, int32_pl bwA, int32_pl bwB, int64_al[I*J] A, int64_al[I*J] B);
+
+extern void initialize();
+extern void finalize();
+
+def void main() {
+
+    int32_pl size = 100;
+    int64_al[size] A;
+    int64_al[size] B;
+
+    initialize();
+    Sqrt(size, 1, 4096, 2048, 16, 16, A, B);
+    finalize();
+}

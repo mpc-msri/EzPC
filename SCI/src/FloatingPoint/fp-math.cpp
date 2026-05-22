@@ -842,7 +842,184 @@ FPArray FPMath::erf(const FPArray &x) {
   return ret;
 }
 
-vector<FPArray> FPMath::softmax(const vector<FPArray>& x) {
+
+FPArray FPMath::sigmoid_fp32(const FPArray &x) {
+  assert(x.party != PUBLIC) ;
+  assert(x.m_bits == 23) ;
+  assert(x.e_bits == 8) ;
+
+  FPArray one_flat = fp_op->input<float>(ALICE, x.size, (float)1.0, x.m_bits, x.e_bits) ;
+
+  return fp_op->div(
+    one_flat, 
+    fp_op->add(
+      one_flat,
+      this->exp(fp_op->flip_sign(x))
+    )
+  ) ;
+}
+
+FPArray FPMath::sigmoid_bf16(const FPArray &x) {
+  // currently only supports bfloat16
+  assert(x.party != PUBLIC);
+  assert(x.m_bits == 7);
+  assert(x.e_bits == 8);
+
+  BoolArray x_s, x_z;
+  FixArray x_m, x_e;
+  tie(x_s, x_z, x_m, x_e) = fp_op->get_components(x);
+  BoolArray all_0 = bool_op->input(ALICE, x.size, uint8_t(0));
+
+  x_e.signed_ = false;
+  // idx = s || (e + 8) mod 2^4 || m - 2^7 = 12 bits
+  FixArray idx_hi_s = fix->scale_up(fix->mul(fix->B2A(x_s, false, 5), 1ULL << 4), x.m_bits + 5, x.m_bits);
+  // only 4 bits of exponent are needed
+  FixArray idx_hi = fix->scale_up(fix->reduce(fix->add(x_e, 8 - x.e_bias()), 5), x.m_bits + 5, x.m_bits);
+  FixArray idx_lo = fix->extend(fix->sub(x_m, 1ULL << x.m_bits), x.m_bits + 5);
+  FixArray idx = fix->add(idx_hi_s, fix->add(idx_hi, idx_lo));
+  // print_fix(idx);
+
+  // all outputs are positive, so ignoring sign bit
+  FixArray y_int = fix->LUT(sigmoid_bfloat16, idx, false, 15, x.m_bits);
+  FixArray y_m = fix->add(fix->extend(fix->reduce(y_int, x.m_bits), x.m_bits + 1), 1ULL << x.m_bits);
+  FixArray y_e = fix->truncate_reduce(y_int, x.m_bits);
+  y_e.signed_ = true;
+  y_e = fix->extend(y_e, x.e_bits + 2);
+  FPArray y = fp_op->input(x.party, x.size, all_0.data, all_0.data,
+          y_m.data, y_e.data, x.m_bits, x.e_bits);
+  // print_fix(y_int);
+  // print_fp(y);
+  // print_fp(x);
+
+  FPArray pos_x = fp_op->input(x.party, x.size, all_0.data, x_z.data,
+          x_m.data, x_e.data, x.m_bits, x.e_bits);
+  BoolArray cond1 = fp_op->LT(pos_x, 93.0);
+  BoolArray cond2 = fix->GE(x_e, -8 + x.e_bias());
+  FPArray zero_fp = fp_op->input<float>(ALICE, x.size, 0.0, x.m_bits, x.e_bits, false);
+  FPArray y_ = fp_op->if_else(x_s, zero_fp, 1.0);
+
+  y = fp_op->if_else(cond1, y, y_);
+  y = fp_op->if_else(cond2, y, 0.5);
+  return y;
+}
+
+FPArray FPMath::tanh_bf16(const FPArray &x) {
+  assert(x.party != PUBLIC) ;
+  assert(x.m_bits == 7);
+  assert(x.e_bits == 8);
+
+  int sz = x.size ;
+  int m_bits, e_bits ;
+
+  m_bits = x.m_bits ;
+  e_bits = x.e_bits ;
+
+  FPArray one_flat = fp_op->input<float>(ALICE, sz, (float)1.0, m_bits, e_bits) ;
+  FPArray two_flat = fp_op->input<float>(ALICE, sz, (float)2.0, m_bits, e_bits) ;
+
+  FPArray sig = fp_op->mul(
+    this->sigmoid_bf16(
+      fp_op->mul(two_flat, x)
+    ), 
+    two_flat) ;
+  return fp_op->sub(sig, one_flat) ;
+}
+
+FPArray FPMath::tanh_fp32(const FPArray &x) {
+  assert(x.party != PUBLIC) ;
+  assert(x.m_bits == 23);
+  assert(x.e_bits == 8);
+
+  int sz = x.size ;
+  int m_bits, e_bits ;
+
+  m_bits = x.m_bits ;
+  e_bits = x.e_bits ;
+
+  FPArray one_flat = fp_op->input<float>(ALICE, sz, (float)1.0, m_bits, e_bits) ;
+  FPArray two_flat = fp_op->input<float>(ALICE, sz, (float)2.0, m_bits, e_bits) ;
+
+  FPArray sig = fp_op->mul(
+    this->sigmoid_fp32(
+      fp_op->mul(two_flat, x)
+    ), 
+    two_flat) ;
+  return fp_op->sub(sig, one_flat) ;
+}
+
+vector<FPArray> FPMath::softmax_beacon(const vector<FPArray>& x) {
+  int N = x.size();
+  int n = x[0].size;
+  int m_bits = x[0].m_bits;
+  int e_bits = x[0].e_bits;
+  assert(m_bits > 0);
+  for(int i = 1; i < N; i++) {
+    assert(x[i].party != PUBLIC);
+    assert(x[i].m_bits == m_bits);
+    assert(x[i].e_bits == e_bits);
+    assert(x[i].size == n);
+  }
+  if (x[0].m_bits == BFLOAT16_M_BITS && x[0].e_bits == BFLOAT16_E_BITS) {
+    vector<FPArray> y(x.size());
+    for (int i = 0; i < x.size(); i++) {
+      y[i] = fp_op->bfloat16_to_FP32(x[i]);
+    }
+    y = softmax_beacon(y);
+    FPArray y_concat = concat(y);
+    y_concat = fp_op->FP32_to_bfloat16(y_concat);
+    for (int i = 0; i < x.size(); i++) {
+      y[i] = y_concat.subset(i*x[0].size, (i+1)*x[0].size);
+    }
+    return y;
+  }
+  FPArray x_max = fp_op->max(x);
+  FPArray x_max_flat(party, N*n, m_bits, e_bits);
+  for (int i = 0; i < N; i++) {
+    for (int j = 0; j < n; j++) {
+      x_max_flat.s[i*n + j] = x_max.s[i];
+      x_max_flat.z[i*n + j] = x_max.z[i];
+      x_max_flat.m[i*n + j] = x_max.m[i];
+      x_max_flat.e[i*n + j] = x_max.e[i];
+    }
+  }
+  FPArray x_flat = concat(x);
+  FPArray shifted_x_flat = fp_op->flip_sign(fp_op->sub(x_max_flat, x_flat, false, true, true));
+  FPArray e_x_flat = this->exp(shifted_x_flat);
+
+  vector<FPArray> e_x(N);
+  for (int i = 0; i < N; i++) {
+    e_x[i] = FPArray(party, n, m_bits, e_bits);
+    memcpy(e_x[i].s, e_x_flat.s + i*n, n*sizeof(uint8_t));
+    memcpy(e_x[i].z, e_x_flat.z + i*n, n*sizeof(uint8_t));
+    memcpy(e_x[i].m, e_x_flat.m + i*n, n*sizeof(uint64_t));
+    memcpy(e_x[i].e, e_x_flat.e + i*n, n*sizeof(uint64_t));
+  }
+  vector<FPArray> e_x_tr(n);
+  for (int i = 0; i < n; i++) {
+    e_x_tr[i] = FPArray(party, N, m_bits, e_bits);
+    for (int j = 0; j < N; j++) {
+      e_x_tr[i].s[j] = e_x[j].s[i];
+      e_x_tr[i].z[j] = e_x[j].z[i];
+      e_x_tr[i].m[j] = e_x[j].m[i];
+      e_x_tr[i].e[j] = e_x[j].e[i];
+    }
+  }
+  FPArray sum_e_x = fp_op->vector_sum(e_x);
+  vector<FPArray> ret_tr = fp_op->div(e_x_tr, sum_e_x, false);
+  vector<FPArray> ret(N);
+  for (int i = 0; i < N; i++) {
+    ret[i] = FPArray(party, n, m_bits, e_bits);
+    for (int j = 0; j < n; j++) {
+      ret[i].s[j] = ret_tr[j].s[i];
+      ret[i].z[j] = ret_tr[j].z[i];
+      ret[i].m[j] = ret_tr[j].m[i];
+      ret[i].e[j] = ret_tr[j].e[i];
+    }
+  }
+  return ret;
+}
+
+vector<FPArray> FPMath::softmax_secfloat(const vector<FPArray>& x) {
   int N = x.size();
   int n = x[0].size;
   int m_bits = x[0].m_bits;

@@ -84,6 +84,11 @@ do
 	esac
 done
 set -- "${POSITIONAL[@]}" # restore positional parameters
+# if [[ "$BITLEN" -gt 32 ]]; then
+# 	BITLEN="64"
+# else
+# 	BITLEN="32"
+# fi
 
 if [ -z ${HELP} ]; then
 	# Set bitlen to 32 if not specified in command line args
