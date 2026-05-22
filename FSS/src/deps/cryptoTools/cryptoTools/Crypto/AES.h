@@ -1,7 +1,9 @@
 #pragma once
 // This file and the associated implementation has been placed in the public domain, waiving all copyright. No restrictions are placed on its use.
 #include <cryptoTools/Common/Defines.h>
+#if !(defined(__aarch64__) || defined(_M_ARM64))
 #include <wmmintrin.h>
+#endif
 
 namespace osuCrypto {
 
