@@ -30,16 +30,109 @@ Modified by Deevashwer Rathee
 #include <algorithm>
 #include <assert.h>
 #include <bitset>
+#if defined(__aarch64__) || defined(_M_ARM64)
+#include "utils/sse2neon.h"
+#else
 #include <emmintrin.h>
 #include <immintrin.h>
-#include <iostream>
 #include <smmintrin.h>
+#include <wmmintrin.h>
+#include <xmmintrin.h>
+#endif
+#include <iostream>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <wmmintrin.h>
-#include <xmmintrin.h>
+
+#if defined(__aarch64__) || defined(_M_ARM64)
+#define SCI_TARGET(x)
+
+struct alignas(32) __m256i {
+  __m128i lo;
+  __m128i hi;
+};
+
+static inline __m256i _mm256_castsi128_si256(__m128i a) {
+  return {a, _mm_setzero_si128()};
+}
+
+static inline __m128i _mm256_castsi256_si128(__m256i a) { return a.lo; }
+
+static inline __m128i _mm256_extracti128_si256(__m256i a, const int imm) {
+  return imm == 0 ? a.lo : a.hi;
+}
+
+static inline __m256i _mm256_inserti128_si256(__m256i a, __m128i b,
+                                              const int imm) {
+  if (imm == 0)
+    a.lo = b;
+  else
+    a.hi = b;
+  return a;
+}
+
+static inline __m256i _mm256_set_epi64x(int64_t w, int64_t x, int64_t y,
+                                        int64_t z) {
+  return {_mm_set_epi64x(y, z), _mm_set_epi64x(w, x)};
+}
+
+static inline __m128d _mm_shuffle_pd(__m128d a, __m128d b, const int imm) {
+  return (__m128d){a[imm & 1], b[(imm >> 1) & 1]};
+}
+
+static inline __m256i _mm256_load_si256(const __m256i *p) { return *p; }
+
+static inline __m256i _mm256_lddqu_si256(const __m256i *p) { return *p; }
+
+static inline void _mm256_storeu_si256(__m256i *p, __m256i a) { *p = a; }
+
+static inline void _mm256_storeu2_m128i(__m128i *hiaddr, __m128i *loaddr,
+                                        __m256i a) {
+  _mm_storeu_si128(loaddr, a.lo);
+  _mm_storeu_si128(hiaddr, a.hi);
+}
+
+static inline __m256i _mm256_loadu2_m128i(const __m128i *hiaddr,
+                                          const __m128i *loaddr) {
+  return {*loaddr, *hiaddr};
+}
+
+static inline __m256i _mm256_xor_si256(__m256i a, __m256i b) {
+  return {_mm_xor_si128(a.lo, b.lo), _mm_xor_si128(a.hi, b.hi)};
+}
+
+static inline __m256i _mm256_and_si256(__m256i a, __m256i b) {
+  return {_mm_and_si128(a.lo, b.lo), _mm_and_si128(a.hi, b.hi)};
+}
+
+static inline int _mm256_testz_si256(__m256i a, __m256i b) {
+  return _mm_testz_si128(a.lo, b.lo) && _mm_testz_si128(a.hi, b.hi);
+}
+
+#if defined(__ARM_FEATURE_CRYPTO) && !defined(SCI_ARM_AES_DECRYPT_INTRINSICS)
+#define SCI_ARM_AES_DECRYPT_INTRINSICS
+static inline __m128i _mm_aesimc_si128(__m128i a) {
+  return vreinterpretq_m128i_u8(vaesimcq_u8(vreinterpretq_u8_m128i(a)));
+}
+
+static inline __m128i _mm_aesdec_si128(__m128i a, __m128i roundKey) {
+  uint8x16_t zero = vdupq_n_u8(0);
+  return vreinterpretq_m128i_u8(
+      vaesimcq_u8(vaesdq_u8(vreinterpretq_u8_m128i(a), zero)) ^
+      vreinterpretq_u8_m128i(roundKey));
+}
+
+static inline __m128i _mm_aesdeclast_si128(__m128i a, __m128i roundKey) {
+  uint8x16_t zero = vdupq_n_u8(0);
+  return _mm_xor_si128(
+      vreinterpretq_m128i_u8(vaesdq_u8(vreinterpretq_u8_m128i(a), zero)),
+      roundKey);
+}
+#endif
+#else
+#define SCI_TARGET(x) __attribute__((target(x)))
+#endif
 
 namespace sci {
 typedef __m128i block128;
@@ -107,22 +200,21 @@ inline void print(const block256 &value, const char *end = "\n") {
 }
 
 inline bool getLSB(const block128 &x) { return (*((char *)&x) & 1) == 1; }
-__attribute__((target("sse2"))) inline block128 makeBlock128(int64_t x,
-                                                             int64_t y) {
+SCI_TARGET("sse2") inline block128 makeBlock128(int64_t x, int64_t y) {
   return _mm_set_epi64x(x, y);
 }
 
-__attribute__((target("avx"))) inline block256
+SCI_TARGET("avx") inline block256
 makeBlock256(int64_t w, int64_t x, int64_t y,
              int64_t z) { // return w||x||y||z (MSB->LSB)
   return _mm256_set_epi64x(w, x, y, z);
 }
-__attribute__((target("avx2,avx"))) inline block256
+SCI_TARGET("avx2,avx") inline block256
 makeBlock256(block128 x, block128 y) { // return x (MSB) || y (LSB)
   return _mm256_inserti128_si256(_mm256_castsi128_si256(y), x, 1);
   // return _mm256_loadu2_m128i(&x, &y);
 }
-__attribute__((target("sse2"))) inline block128 zero_block() {
+SCI_TARGET("sse2") inline block128 zero_block() {
   return _mm_setzero_si128();
 }
 inline block128 one_block() {
@@ -131,26 +223,22 @@ inline block128 one_block() {
 
 const block128 select_mask[2] = {zero_block(), one_block()};
 
-__attribute__((target("sse2"))) inline block128 make_delta(const block128 &a) {
+SCI_TARGET("sse2") inline block128 make_delta(const block128 &a) {
   return _mm_or_si128(makeBlock128(0L, 1L), a);
 }
 
 typedef __m128i block_tpl[2];
 
-__attribute__((target("sse2"))) inline block128 xorBlocks(block128 x,
-                                                          block128 y) {
+SCI_TARGET("sse2") inline block128 xorBlocks(block128 x, block128 y) {
   return _mm_xor_si128(x, y);
 }
-__attribute__((target("avx2"))) inline block256 xorBlocks(block256 x,
-                                                          block256 y) {
+SCI_TARGET("avx2") inline block256 xorBlocks(block256 x, block256 y) {
   return _mm256_xor_si256(x, y);
 }
-__attribute__((target("sse2"))) inline block128 andBlocks(block128 x,
-                                                          block128 y) {
+SCI_TARGET("sse2") inline block128 andBlocks(block128 x, block128 y) {
   return _mm_and_si128(x, y);
 }
-__attribute__((target("avx2"))) inline block256 andBlocks(block256 x,
-                                                          block256 y) {
+SCI_TARGET("avx2") inline block256 andBlocks(block256 x, block256 y) {
   return _mm256_and_si256(x, y);
 }
 
@@ -184,7 +272,7 @@ inline void xorBlocks_arr(block256 *res, const block256 *x, block256 y,
   }
 }
 
-__attribute__((target("sse4.1,sse2"))) inline bool
+SCI_TARGET("sse4.1,sse2") inline bool
 cmpBlock(const block128 *x, const block128 *y, int nblocks) {
   const block128 *dest = nblocks + x;
   for (; x != dest;) {
@@ -195,7 +283,7 @@ cmpBlock(const block128 *x, const block128 *y, int nblocks) {
   return true;
 }
 
-__attribute__((target("avx2,avx"))) inline bool
+SCI_TARGET("avx2,avx") inline bool
 cmpBlock(const block256 *x, const block256 *y, int nblocks) {
   const block256 *dest = nblocks + x;
   for (; x != dest;) {
@@ -215,15 +303,15 @@ inline bool block_cmp(const block256 *x, const block256 *y, int nblocks) {
   return cmpBlock(x, y, nblocks);
 }
 
-__attribute__((target("sse4.1"))) inline bool isZero(const block128 *b) {
+SCI_TARGET("sse4.1") inline bool isZero(const block128 *b) {
   return _mm_testz_si128(*b, *b) > 0;
 }
 
-__attribute__((target("avx"))) inline bool isZero(const block256 *b) {
+SCI_TARGET("avx") inline bool isZero(const block256 *b) {
   return _mm256_testz_si256(*b, *b) > 0;
 }
 
-__attribute__((target("sse4.1,sse2"))) inline bool isOne(const block128 *b) {
+SCI_TARGET("sse4.1,sse2") inline bool isOne(const block128 *b) {
   __m128i neq = _mm_xor_si128(*b, one_block());
   return _mm_testz_si128(neq, neq) > 0;
 }
@@ -232,11 +320,7 @@ __attribute__((target("sse4.1,sse2"))) inline bool isOne(const block128 *b) {
  * [REF] Implementation of "Efficient and Secure Multiparty Computation from
  * Fixed-Key Block Ciphers" https://eprint.iacr.org/2019/074.pdf
  */
-#ifdef __x86_64__
-__attribute__((target("sse2")))
-#endif
-inline block128
-sigma(block128 a) {
+SCI_TARGET("sse2") inline block128 sigma(block128 a) {
   return _mm_shuffle_epi32(a, 78) ^
          (a & makeBlock128(0xFFFFFFFFFFFFFFFF, 0x00));
 }
@@ -254,7 +338,7 @@ inline block128 set_bit(const block128 &a, int i) {
 #define INP(x, y) inp[(x)*ncols / 8 + (y) / 8]
 #define OUT(x, y) out[(y)*nrows / 8 + (x) / 8]
 
-__attribute__((target("sse2"))) inline void
+SCI_TARGET("sse2") inline void
 sse_trans(uint8_t *out, uint8_t const *inp, uint64_t nrows, uint64_t ncols) {
   uint64_t rr, cc;
   int i, h;
@@ -368,7 +452,7 @@ const char fix_key[] = "\x61\x7e\x8d\xa2\xa0\x51\x1e\x96"
   /
   / Comments are welcome: Ted Krovetz <ted@krovetz.net> - Dedicated to Laurel K
   /------------------------------------------------------------------------- */
-__attribute__((target("sse2"))) inline block128 double_block(block128 bl) {
+SCI_TARGET("sse2") inline block128 double_block(block128 bl) {
   const __m128i mask = _mm_set_epi32(135, 1, 1, 1);
   __m128i tmp = _mm_srai_epi32(bl, 31);
   tmp = _mm_and_si128(tmp, mask);
@@ -377,13 +461,13 @@ __attribute__((target("sse2"))) inline block128 double_block(block128 bl) {
   return _mm_xor_si128(bl, tmp);
 }
 
-__attribute__((target("sse2"))) inline block128 LEFTSHIFT1(block128 bl) {
+SCI_TARGET("sse2") inline block128 LEFTSHIFT1(block128 bl) {
   const __m128i mask = _mm_set_epi32(0, 0, (1 << 31), 0);
   __m128i tmp = _mm_and_si128(bl, mask);
   bl = _mm_slli_epi64(bl, 1);
   return _mm_xor_si128(bl, tmp);
 }
-__attribute__((target("sse2"))) inline block128 RIGHTSHIFT(block128 bl) {
+SCI_TARGET("sse2") inline block128 RIGHTSHIFT(block128 bl) {
   const __m128i mask = _mm_set_epi32(0, 1, 0, 0);
   __m128i tmp = _mm_and_si128(bl, mask);
   bl = _mm_slli_epi64(bl, 1);

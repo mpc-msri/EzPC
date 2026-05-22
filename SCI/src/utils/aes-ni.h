@@ -27,17 +27,21 @@
 #ifndef LIBGARBLE_AES_NI_H
 #define LIBGARBLE_AES_NI_H
 
-#if !defined(__AES__)
+#if !defined(__AES__) && !(defined(__aarch64__) || defined(_M_ARM64))
 #error "AES-NI instructions not enabled"
 #endif
 
+#if defined(__aarch64__) || defined(_M_ARM64)
+#include "utils/block.h"
+#else
 #include <immintrin.h>
 #include <stdlib.h>
 #include <wmmintrin.h>
+#include "utils/block.h"
+#endif
 #if defined(HAVE__ALIGNED_MALLOC)
 #include <malloc.h>
 #endif
-#include "utils/block.h"
 
 #define MODULE_NAME _AESNI
 #define BLOCK_SIZE 16
@@ -296,7 +300,7 @@ static inline void block_decrypt(AESNI_KEY* self, const u8* in, u8* out)
 #pragma GCC optimize("unroll-loops")
 #endif
 #endif
-static inline void __attribute__((target("aes,sse2")))
+static inline void SCI_TARGET("aes,sse2")
 AESNI_ecb_encrypt_blks_8(block128 *blks, const AESNI_KEY *keys) {
   for (unsigned int i = 0; i < 8; ++i)
     blks[i] = _mm_xor_si128(blks[i], keys[i].rk[0]);
@@ -307,7 +311,7 @@ AESNI_ecb_encrypt_blks_8(block128 *blks, const AESNI_KEY *keys) {
     blks[i] = _mm_aesenclast_si128(blks[i], keys[i].rk[keys->rounds]);
 }
 
-static inline void __attribute__((target("aes,sse2")))
+static inline void SCI_TARGET("aes,sse2")
 AESNI_ecb_encrypt_blks_ks(block128 *blks, unsigned int nblks,
                           const AESNI_KEY *key) {
 
@@ -321,7 +325,7 @@ AESNI_ecb_encrypt_blks_ks(block128 *blks, unsigned int nblks,
     blks[i] = _mm_aesenclast_si128(blks[i], key[i].rk[key->rounds]);
 }
 
-static inline void __attribute__((target("aes,sse2")))
+static inline void SCI_TARGET("aes,sse2")
 AESNI_ecb_encrypt_blks_ks_x8(block128 *blks, unsigned int nblks,
                              const AESNI_KEY *key) {
   __m128i b1, b2, b3, b4, b5, b6, b7, b8;
@@ -360,7 +364,7 @@ AESNI_ecb_encrypt_blks_ks_x8(block128 *blks, unsigned int nblks,
   blks[7] = _mm_aesenclast_si128(b8, key[7].rk[key->rounds]);
 }
 
-static inline void __attribute__((target("aes,sse2")))
+static inline void SCI_TARGET("aes,sse2")
 AESNI_ecb_encrypt_blks(block128 *blks, unsigned int nblks,
                        const AESNI_KEY *key) {
   for (unsigned int i = 0; i < nblks; ++i)
@@ -377,7 +381,7 @@ AESNI_ecb_encrypt_blks(block128 *blks, unsigned int nblks,
 #endif
 #endif
 
-static inline void __attribute__((target("aes,sse2")))
+static inline void SCI_TARGET("aes,sse2")
 AESNI_ecb_decrypt_blks(block128 *blks, unsigned nblks, const AESNI_KEY *key) {
   unsigned i, j, rnds = key->rounds;
   for (i = 0; i < nblks; ++i)

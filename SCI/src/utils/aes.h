@@ -72,8 +72,8 @@ typedef struct {
   v2 = _mm_shuffle_epi32(v2, shuff_const);                                     \
   v1 = _mm_xor_si128(v1, v2)
 
-inline void __attribute__((target("aes,sse2")))
-AES_set_encrypt_key(const block128 userkey, AES_KEY *key) {
+inline void SCI_TARGET("aes,sse2") AES_set_encrypt_key(const block128 userkey,
+                                                       AES_KEY *key) {
   block128 x0, x1, x2;
   block128 *kp = key->rd_key;
   kp[0] = x0 = userkey;
@@ -101,7 +101,7 @@ AES_set_encrypt_key(const block128 userkey, AES_KEY *key) {
   key->rounds = 10;
 }
 
-inline void __attribute__((target("aes,sse2")))
+inline void SCI_TARGET("aes,sse2")
 AES_ecb_encrypt_blks(block128 *blks, unsigned int nblks, const AES_KEY *key) {
   for (unsigned int i = 0; i < nblks; ++i)
     blks[i] = _mm_xor_si128(blks[i], key->rd_key[0]);
@@ -112,7 +112,7 @@ AES_ecb_encrypt_blks(block128 *blks, unsigned int nblks, const AES_KEY *key) {
     blks[i] = _mm_aesenclast_si128(blks[i], key->rd_key[key->rounds]);
 }
 
-inline void __attribute__((target("aes,sse2")))
+inline void SCI_TARGET("aes,sse2")
 AES_set_decrypt_key_fast(AES_KEY *dkey, const AES_KEY *ekey) {
   int j = 0;
   int i = ekey->rounds;
@@ -125,14 +125,14 @@ AES_set_decrypt_key_fast(AES_KEY *dkey, const AES_KEY *ekey) {
   dkey->rd_key[i] = ekey->rd_key[j];
 }
 
-inline void __attribute__((target("aes,sse2")))
-AES_set_decrypt_key(block128 userkey, AES_KEY *key) {
+inline void SCI_TARGET("aes,sse2") AES_set_decrypt_key(block128 userkey,
+                                                       AES_KEY *key) {
   AES_KEY temp_key;
   AES_set_encrypt_key(userkey, &temp_key);
   AES_set_decrypt_key_fast(key, &temp_key);
 }
 
-inline void __attribute__((target("aes,sse2")))
+inline void SCI_TARGET("aes,sse2")
 AES_ecb_decrypt_blks(block128 *blks, unsigned nblks, const AES_KEY *key) {
   unsigned i, j, rnds = key->rounds;
   for (i = 0; i < nblks; ++i)
