@@ -110,8 +110,8 @@ static inline int _mm256_testz_si256(__m256i a, __m256i b) {
   return _mm_testz_si128(a.lo, b.lo) && _mm_testz_si128(a.hi, b.hi);
 }
 
-#if defined(__ARM_FEATURE_CRYPTO) && !defined(SCI_ARM_AES_DECRYPT_INTRINSICS)
-#define SCI_ARM_AES_DECRYPT_INTRINSICS
+#if defined(__ARM_FEATURE_CRYPTO) && !defined(EZPC_ARM_AES_DECRYPT_INTRINSICS)
+#define EZPC_ARM_AES_DECRYPT_INTRINSICS
 static inline __m128i _mm_aesimc_si128(__m128i a) {
   return vreinterpretq_m128i_u8(vaesimcq_u8(vreinterpretq_u8_m128i(a)));
 }
