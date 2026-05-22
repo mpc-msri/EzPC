@@ -8,8 +8,8 @@
 #if defined(__aarch64__) || defined(_M_ARM64)
 #include <cryptoTools/Common/sse2neon.h>
 
-#if defined(__ARM_FEATURE_CRYPTO) && !defined(FSS_ARM_AES_DECRYPT_INTRINSICS)
-#define FSS_ARM_AES_DECRYPT_INTRINSICS
+#if defined(__ARM_FEATURE_CRYPTO) && !defined(EZPC_ARM_AES_DECRYPT_INTRINSICS)
+#define EZPC_ARM_AES_DECRYPT_INTRINSICS
 static inline __m128i _mm_aesimc_si128(__m128i a)
 {
     return vreinterpretq_m128i_u8(vaesimcq_u8(vreinterpretq_u8_m128i(a)));
